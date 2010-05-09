@@ -1,0 +1,83 @@
+<section id="blueVariables">
+  <title>Blue Variables</title>
+
+  <para>
+    blue treats special text as special blue variables. Below is a list of those
+    variables.
+  </para>
+
+  <table>
+    <tgroup cols="2">
+
+      <thead>
+        <row>
+          <entry>Variable</entry>
+          <entry>Value</entry>
+        </row>
+      </thead>
+
+      <tbody>
+
+        <row>
+          <entry>&lt;TOTAL_DUR&gt;</entry>
+          <entry>
+            Duration of the generated score from the timeline (Available in
+            Global SCO text area.)
+          </entry>
+        </row>
+
+        <row>
+          <entry>&lt;INSTR_ID&gt;</entry>
+          <entry>
+            Replaces with instrumentId; if the instrument is a named instrument,
+            value is quoted. Generally used when creating notes.(Available
+            within instruments and some SoundObjects.)
+          </entry>
+
+        </row>
+
+        <row>
+          <entry>&lt;INSTR_NAME&gt;</entry>
+          <entry>
+            Replaces with instrumentId; if the instrument is a named instrument,
+            the value is not quoted. Generally used when working with ORC code
+            to give a variable a unique ID, i.e.
+            "gk_var&lt;INSTR_NAME&gt;".(Available within instruments and some
+            SoundObjects.)
+          </entry>
+
+        </row>
+
+        <row>
+          <entry>&lt;RENDER_START&gt;</entry>
+          <entry>
+            The start time of rendering. Does not take into account time warping
+            of score. (Available in Global SCO text area.)
+          </entry>
+        </row>
+
+        <row>
+          <entry>&lt;RENDER_START_ABSOLUTE&gt;</entry>
+          <entry>
+            The start time of rendering. Takes into account time warping of score.
+            (Available in Global SCO text area.)
+          </entry>
+        </row>
+
+        <row>
+          <entry>&lt;PROCESSING_START&gt;</entry>
+          <entry>
+            The time value when always-on effects instruments need to start.
+            Calculated as the time value of the first soundObject that is not a
+            FrozenSoundObject or Comment. (Available in Global SCO text area.)
+          </entry>
+
+        </row>
+
+      </tbody>
+
+    </tgroup>
+
+  </table>
+
+</section>

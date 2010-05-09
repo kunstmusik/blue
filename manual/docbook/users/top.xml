@@ -1,0 +1,23 @@
+<part id="userManual">
+<title>User's Manual</title>
+<partintro>
+    <para>Information here for Users.</para>
+</partintro>
+     
+&gettingStarted;
+
+&concepts;
+
+&tasks;
+
+&reference;
+
+&bestPractices;
+
+&appendixA;
+
+&appendixB;
+
+&glossary;
+    
+</part>

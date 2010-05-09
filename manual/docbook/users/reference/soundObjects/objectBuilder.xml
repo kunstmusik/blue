@@ -1,0 +1,55 @@
+<section id="objectBuilder">
+	<title>ObjectBuilder</title>
+
+	<para>Accepts NoteProcessors: Yes</para>
+
+	<para>
+		This SoundObject allows users to build their own SoundObjects by
+		using the same widgets and features as the
+		<link linkend="blueSynthBuilder">BlueSynthBuilder</link>
+		for creating user interfaces, as well as using either Python
+		script or External Script for the score generation. When
+		generating score, the script has token values replaced by values
+		from the user interface before generating. The scripts generated
+		in the same manner as the
+		<link linkend="pythonObject">PythonObject</link>
+		and as the
+		<link linkend="externalSoundObject">ExternalObject</link>
+		.
+	</para>
+
+	<para>
+		Note: The code completion feature using ctrl-shift-space for
+		values from the UI that is available in BlueSynthBuilder is also
+		available in this SoundObject.
+	</para>
+
+	<simplesect>
+		<title>Interface Editor</title>
+
+
+		<screenshot>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/objectBuilderUI.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</screenshot>
+	</simplesect>
+
+	<simplesect>
+		<title>Code Editor</title>
+
+
+		<screenshot>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/objectBuilderCode.png"
+						format="PNG" />
+				</imageobject>
+			</mediaobject>
+		</screenshot>
+	</simplesect>
+
+</section>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Actions">
+        <folder name="Application">
+            <file name="blue-projects-actions-RevertAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.RevertAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_RevertAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Edit">
+            <file name="blue-projects-actions-NewProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.NewProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.Bundle#CTL_NewProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-OpenProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.OpenProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.Bundle#CTL_OpenProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-CloseProjectAction.instance"/>
+            <file name="blue-projects-actions-RecentProjectsAction.instance"/>
+        </folder>
+        <folder name="Project">
+            <file name="blue-projects-actions-ImportCsdAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.ImportCsdAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_ImportCsdAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-ImportMidiAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.ImportMidiAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_ImportMidiAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-ImportOrcScoAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.ImportOrcScoAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_ImportOrcScoAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-SaveAsProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.SaveAsProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_SaveAsProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-SaveProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.SaveProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_SaveProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Window">
+            <file name="blue-projects-actions-NextProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.NextProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_NextProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-projects-actions-PreviousProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.projects.Bundle"/>
+                <attr name="delegate" newvalue="blue.projects.actions.PreviousProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.projects.actions.Bundle#CTL_PreviousProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Menu">
+        <folder name="File">
+            <file name="blue-projects-actions-NewProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-NewProjectAction.instance"/>
+                <attr name="position" intvalue="1200"/>
+            </file>
+            <file name="blue-projects-actions-GenerateCsdToScreenAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1325"/>
+            </file>
+            <file name="blue-projects-actions-OpenProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-OpenProjectAction.instance"/>
+                <attr name="position" intvalue="1425"/>
+            </file>
+
+            <file name="blue-projects-actions-ImportCsdAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1430"/>
+            </file>
+            <file name="blue-projects-actions-ImportCsdAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-ImportCsdAction.instance"/>
+                <attr name="position" intvalue="1435"/>
+            </file>
+            <file name="blue-projects-actions-ImportOrcScoAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-ImportOrcScoAction.instance"/>
+                <attr name="position" intvalue="1440"/>
+            </file>
+            <file name="blue-projects-actions-ImportMidiAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-ImportMidiAction.instance"/>
+                <attr name="position" intvalue="1445"/>
+            </file>
+
+
+            <file name="blue-projects-actions-CloseProjectAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1450"/>
+            </file>
+            <file name="blue-projects-actions-CloseProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-CloseProjectAction.instance"/>
+                <attr name="position" intvalue="1500"/>
+            </file>
+            <file name="blue-projects-actions-RecentProjectsAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1650"/>
+            </file>
+            <file name="blue-projects-actions-RecentProjectsAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-RecentProjectsAction.instance"/>
+                <attr name="position" intvalue="1700"/>
+            </file>
+            <file name="blue-projects-actions-RecentProjectsAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1750"/>
+            </file>
+            <file name="blue-projects-actions-RevertAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-projects-actions-RevertAction.instance"/>
+                <attr name="position" intvalue="1506"/>
+            </file>
+            <file name="blue-projects-actions-SaveAsProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-SaveAsProjectAction.instance"/>
+                <attr name="position" intvalue="1537"/>
+            </file>
+            <file name="blue-projects-actions-SaveProjectAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1512"/>
+            </file>
+            <file name="blue-projects-actions-SaveProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-SaveProjectAction.instance"/>
+                <attr name="position" intvalue="1525"/>
+            </file>
+        </folder>
+        <folder name="Window">
+            <file name="blue-projects-actions-PreviousProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-projects-actions-PreviousProjectAction.instance"/>
+                <attr name="position" intvalue="2950"/>
+            </file>
+            <file name="blue-projects-actions-NextProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-projects-actions-NextProjectAction.instance"/>
+                <attr name="position" intvalue="2962"/>
+            </file>
+            <file name="blue-projects-actions-NextProjectAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="2968"/>
+            </file>
+            <file name="blue-projects-actions-PreviousProjectAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="2975"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Shortcuts">
+        <file name="D-N.shadow">
+            <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-NewProjectAction.instance"/>
+        </file>
+        <file name="D-O.shadow">
+            <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-OpenProjectAction.instance"/>
+        </file>
+        <file name="D-S.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-SaveProjectAction.instance"/>
+        </file>
+        <file name="DS-PAGE_UP.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-projects-actions-PreviousProjectAction.instance"/>
+        </file>
+        <file name="DS-PAGE_DOWN.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-projects-actions-NextProjectAction.instance"/>
+        </file>
+    </folder>
+    <folder name="blueProjects"/>
+</filesystem>

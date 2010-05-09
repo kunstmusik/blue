@@ -1,0 +1,9 @@
+<section id="comment">
+<title>Comment</title>
+         
+<para>Accepts NoteProcessors: no</para>
+         
+<para>Used to add comment text on the timeline and does not generate any
+notes.</para>
+
+</section>

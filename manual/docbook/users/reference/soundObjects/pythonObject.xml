@@ -1,0 +1,80 @@
+<section id="pythonObject">
+<title>PythonObject</title>
+
+<para>Accepts NoteProcessors: no</para>
+
+<para>Allows for the use of the Python programming language to create score
+data. uses the Jython interpreter to interpret Python scripts. you may add your
+own python classes to the library for use with "import" statements in blue's
+"lib" directory, under "pythonLib". Included with blue is Maurizio Umberto
+Puxeddu's pmask, as well as Steven Yi's Orchestral Composition library, both of
+which you will find in the pythonLib directory.</para>
+
+<para>After writing your script to generate notes, you'll have to bring back
+into blue by assigning the variable 'score' the text string of the generated
+python score.</para>
+
+<simplesect>
+<title>Example</title>
+
+<programlisting>
+[code for generating score]
+...
+
+score = str(ss)
+</programlisting>
+
+<para>(where ss is an object that will give you a score when made into a
+string)</para>
+
+</simplesect>
+
+<simplesect>
+<title>Variables from blue</title>
+
+<para>The following variables are avaialable from blue:</para>
+
+<variablelist>
+<title>Variables from blue</title>
+
+<varlistentry>
+<term>blueDuration</term>
+<listitem>
+<para>
+Duration of the Python SoundObject
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>userConfigDir</term>
+<listitem>
+<para>
+The location of user's .blue configuration directory. Includes path separator at end.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>blueLibDir</term>
+<listitem>
+<para>
+The location of blue's lib directory. Includes path separator at end.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>blueProjectDir</term>
+<listitem>
+<para>
+The location of the current project's directory. Includes path separator at end.
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+</simplesect>
+
+</section>

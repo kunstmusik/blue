@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <attr name="Menu\Script\position" intvalue="1100"/>
+    <attr name="Windows2\Components\output.settings\position" intvalue="600"/>
+    <attr name="Windows2\Components\properties.settings\position" intvalue="700"/>
+    <folder name="Actions">
+        <folder name="Edit">
+            <file name="blue-ui-core-MainToolbarAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.MainToolbarAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.Bundle#CTL_MainToolbarAction"/>
+                <attr name="iconBase" stringvalue="blue/resources/images/BlueIcon.gif"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-blueLive-BlueLiveToolbarAction.instance">
+                <attr name="delegate" newvalue="blue.ui.core.blueLive.BlueLiveToolbarAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.blueLive.Bundle#CTL_BlueLiveToolbarAction"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-tools-CodeRepositoryEditorAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.tools.CodeRepositoryEditorAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tools.Bundle#CTL_CodeRepositoryEditorAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Project">
+            <file name="blue-ui-core-project-AddMarkerAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.AddMarkerAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_AddMarkerAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.AuditionSelectedSoundObjectsAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_AuditionSelectedSoundObjectsAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-GenerateCsdAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.GenerateCsdAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_GenerateCsdAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-GenerateCsdToScreenAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.GenerateCsdToScreenAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_GenerateCsdToScreenAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-RenderStopProjectAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.RenderStopProjectAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_RenderStopProjectAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-RenderToDiskAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.RenderToDiskAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_RenderToDiskAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-RenderToDiskAndPlayAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.RenderToDiskAndPlayAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_RenderToDiskAndPlayAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-ToggleLoopRenderingAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.ToggleLoopRenderingAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_ToggleLoopRenderingAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-ui-core-project-UseCsoundApiAction.instance">
+                <attr name="delegate" newvalue="blue.ui.core.project.UseCsoundApiAction"/>
+            </file>
+        </folder>
+        <folder name="Script">
+            <file name="blue-ui-core-script-ReinitializeJythonAction.instance">
+                <attr name="delegate" newvalue="blue.ui.core.script.ReinitializeJythonAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.script.Bundle#CTL_ReinitializeJythonAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Tools">
+            <file name="blue-ui-core-mixer-EffectsLibraryAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.mixer.EffectsLibraryAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.mixer.Bundle#CTL_EffectsLibraryAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenBlueShareAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.tools.OpenBlueShareAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tools.Bundle#CTL_OpenBlueShareAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenFtableConverterAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.tools.OpenFtableConverterAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tools.Bundle#CTL_OpenFtableConverterAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenSoundFontViewerAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.tools.OpenSoundFontViewerAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tools.Bundle#CTL_OpenSoundFontViewerAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-ui-core-tools-ScannedSynthesisMatrixEditorAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.tools.ScannedSynthesisMatrixEditorAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tools.Bundle#CTL_ScannedSynthesisMatrixEditorAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Window">
+            <file name="blue-ui-core-blueLive-BlueLiveAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.blueLive.BlueLiveTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.blueLive.Bundle#CTL_BlueLiveAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-midi-MidiInputPanelAction.instance">
+                <attr name="component" methodvalue="blue.ui.core.midi.MidiInputPanelTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.midi.Bundle#CTL_MidiInputPanelAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-mixer-MixerAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.mixer.MixerTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.mixer.Bundle#CTL_MixerAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-orchestra-OrchestraAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.orchestra.OrchestraTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.orchestra.Bundle#CTL_OrchestraAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="200"/>
+            </file>
+            <file name="blue-ui-core-score-MarkersAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.score.MarkersTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_MarkersAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-score-ScoreAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.score.ScoreTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_ScoreAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="blue-ui-core-score-SoundObjectEditorAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectEditorTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectEditorAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-score-SoundObjectLibraryAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectLibraryTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectLibraryAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-score-SoundObjectPropertiesAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectPropertiesTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectPropertiesAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-scratchPad-ScratchPadAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.scratchPad.ScratchPadTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.scratchPad.Bundle#CTL_ScratchPadAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-soundFile-AudioFilePlayerAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.soundFile.AudioFilePlayerTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.soundFile.Bundle#CTL_AudioFilePlayerAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+            </file>
+            <file name="blue-ui-core-tables-TablesAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.tables.TablesTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.tables.Bundle#CTL_TablesAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="300"/>
+            </file>
+            <file name="blue-ui-core-udo-UserDefinedOpcodeAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.udo.UserDefinedOpcodeTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.udo.Bundle#CTL_UserDefinedOpcodeAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+            <file name="blue-ui-core-globals-GlobalOrchestraAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.globals.GlobalOrchestraTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.globals.Bundle#CTL_GlobalOrchestraAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="500"/>
+            </file>
+            <file name="blue-ui-core-globals-GlobalScoreAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.globals.GlobalScoreTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.globals.Bundle#CTL_GlobalScoreAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="600"/>
+            </file>
+            <file name="blue-ui-core-project-ProjectPropertiesAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="component" methodvalue="blue.ui.core.project.ProjectPropertiesTopComponent.findInstance"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_ProjectPropertiesAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
+                <attr name="position" intvalue="700"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Menu">
+        <folder name="File">
+            <file name="blue-ui-core-project-RenderToDiskAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1595"/>
+            </file>
+            <file name="blue-ui-core-project-RenderToDiskAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAction.instance"/>
+                <attr name="position" intvalue="1600"/>
+            </file>
+            <file name="blue-ui-core-project-RenderToDiskAndPlayAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAndPlayAction.instance"/>
+                <attr name="position" intvalue="1610"/>
+            </file>
+        </folder>
+
+        <folder name="Project">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+
+            <file name="blue-ui-core-project-GenerateCsdToScreenAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdToScreenAction.instance"/>
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-ui-core-project-GenerateCsdAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdAction.instance"/>
+                <attr name="position" intvalue="50"/>
+            </file>
+            <file name="blue-ui-core-project-RenderStopProjectAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="blue-ui-core-project-AuditionSelectedSoundObjectsAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance"/>
+                <attr name="position" intvalue="150"/>
+            </file>
+            <file name="blue-ui-core-project-ToggleLoopRenderingAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="450"/>
+            </file>
+            <file name="blue-ui-core-project-ToggleLoopRenderingAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-ToggleLoopRenderingAction.instance"/>
+                <attr name="position" intvalue="500"/>
+            </file>
+            <file name="blue-ui-core-project-UseCsoundApiAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="250"/>
+            </file>
+            <file name="blue-ui-core-project-UseCsoundApiAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-UseCsoundApiAction.instance"/>
+                <attr name="position" intvalue="300"/>
+            </file>
+
+            <file name="blue-ui-core-project-AddMarkerAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="350"/>
+            </file>
+            <file name="blue-ui-core-project-AddMarkerAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AddMarkerAction.instance"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+        </folder>
+
+        <folder name="Tools">
+            <attr name="blue-projects-actions-OpenProjectAction.shadow/blue-ui-core-tools-OpenSoundFontViewerAction.shadow" boolvalue="true"/>
+            <attr name="blue-ui-core-tools-OpenSoundFontViewerAction.shadow/blue-projects-actions-CloseProjectAction-separatorBefore.instance" boolvalue="true"/>
+            <file name="blue-ui-core-mixer-EffectsLibraryAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-mixer-EffectsLibraryAction.instance"/>
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-ui-core-tools-CodeRepositoryEditorAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-ui-core-tools-CodeRepositoryEditorAction.instance"/>
+                <attr name="position" intvalue="-100"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenBlueShareAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-OpenBlueShareAction.instance"/>
+                <attr name="position" intvalue="50"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenFtableConverterAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-OpenFtableConverterAction.instance"/>
+                <attr name="position" intvalue="75"/>
+            </file>
+            <file name="blue-ui-core-tools-OpenSoundFontViewerAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-OpenSoundFontViewerAction.instance"/>
+            </file>
+            <file name="blue-ui-core-tools-ScannedSynthesisMatrixEditorAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-ScannedSynthesisMatrixEditorAction.instance"/>
+                <attr name="position" intvalue="-50"/>
+            </file>
+        </folder>
+
+        <folder name="Script">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+            
+            <file name="blue-ui-core-script-ReinitializeJythonAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Script/blue-ui-core-script-ReinitializeJythonAction.instance"/>
+                <attr name="position" intvalue="110"/>
+            </file>
+        </folder> 
+
+        <folder name="Window">
+            <file name="MidiInputPanelAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-midi-MidiInputPanelAction.instance"/>
+            </file>
+            <file name="Output_hidden"/>
+            <file name="SoundObjectEditorAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            
+            <file name="SoundObjectPropertiesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectPropertiesAction.instance"/>
+                <attr name="position" intvalue="200"/>
+            </file>
+            <file name="SoundObjectLibraryAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectLibraryAction.instance"/>
+                <attr name="position" intvalue="300"/>
+            </file>
+            <file name="ScratchPadAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+
+            <file name="AudioFilePlayerAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
+                <attr name="position" intvalue="450"/>
+            </file>
+
+            <file name="blue-ui-core-score-MarkersAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="490"/>
+            </file>
+
+            <file name="MarkersAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-MarkersAction.instance"/>
+                <attr name="position" intvalue="500"/>
+            </file>
+            <file name="MixerAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
+                <attr name="position" intvalue="600"/>
+            </file>
+
+            <file name="blue-ui-core-score-ScoreAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="990"/>
+            </file>
+
+            <file name="ScoreAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
+                <attr name="position" intvalue="1000"/>
+            </file>
+            <file name="OrchestraAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-orchestra-OrchestraAction.instance"/>
+                <attr name="position" intvalue="1100"/>
+            </file>
+            <file name="UserDefinedOpcodeAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
+                <attr name="position" intvalue="1300"/>
+            </file>
+            <file name="TablesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-tables-TablesAction.instance"/>
+                <attr name="position" intvalue="1350"/>
+            </file>
+
+            <file name="GlobalOrchestraAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalOrchestraAction.instance"/>
+                <attr name="position" intvalue="1400"/>
+            </file>
+            <file name="GlobalScoreAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalScoreAction.instance"/>
+                <attr name="position" intvalue="1500"/>
+            </file>
+            <file name="ProjectPropertiesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
+                <attr name="position" intvalue="1600"/>
+            </file>
+            <file name="BlueLiveAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-blueLive-BlueLiveAction.instance"/>
+                <attr name="position" intvalue="1700"/>
+            </file>
+
+            <file name="blue-ui-core-blueLive-BlueLiveAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1750"/>
+            </file>
+
+            <file name="org-netbeans-core-io-ui-IOWindowAction.shadow" url="org-netbeans-core-io-ui-IOWindowAction_1.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
+                <attr name="position" intvalue="1800"/>
+            </file>
+
+
+            <file name="blue-ui-core-CurrentProjectsAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="9990"/>
+            </file>
+            <file name="blue-ui-core-project-CurrentProjectsAction.instance">
+                <attr name="position" intvalue="10000"/>
+            </file>
+            
+        </folder>
+    </folder>
+
+    <folder name="Shortcuts">
+
+        <file name="DS-O.shadow">
+          <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
+        </file>
+
+        <file name="D-1.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
+        </file>
+        <file name="D-2.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-orchestra-OrchestraAction.instance"/>
+        </file>
+        <file name="D-3.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
+        </file>
+        <file name="D-4.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-tables-TablesAction.instance"/>
+        </file>
+        <file name="D-5.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalOrchestraAction.instance"/>
+        </file>
+        <file name="D-6.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalScoreAction.instance"/>
+        </file>
+        <file name="D-7.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
+        </file>
+        <file name="D-8.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-blueLive-BlueLiveAction.instance"/>
+        </file>
+
+        <file name="DS-E.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
+        </file>
+
+
+        <file name="F3.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectPropertiesAction.instance"/>
+        </file>
+        <file name="F4.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectLibraryAction.instance"/>
+        </file>
+        <file name="F5.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>
+        </file>
+        <file name="F6.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
+        </file>
+
+        <file name="F9.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
+        </file>
+        <file name="S-F4.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-MarkersAction.instance"/>
+        </file>
+        <file name="S-F5.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
+        </file>
+
+        <file name="DS-F9.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAction.instance"/>
+        </file>
+        <file name="S-F9.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAndPlayAction.instance"/>
+        </file>
+
+        <file name="D-G.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdAction.instance"/>
+        </file>
+        <file name="DS-G.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdToScreenAction.instance"/>
+        </file>
+
+        <file name="DS-A.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance"/>
+        </file>
+        <file name="D-M.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AddMarkerAction.instance"/>
+        </file>
+        <file name="D-L.shadow">
+            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-ToggleLoopRenderingAction.instance"/>
+        </file>
+
+    </folder>
+
+    <folder name="Toolbars">
+        <folder name="Project">
+            <file name="blue-ui-core-MainToolbarAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-ui-core-MainToolbarAction.instance"/>
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-ui-core-BlueLiveToolbarAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Edit/blue-ui-core-blueLive-BlueLiveToolbarAction.instance"/>
+                <attr name="position" intvalue="10"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Windows2">
+        <folder name="Components">
+            <file name="MidiInputPanelTopComponent.settings" url="MidiInputPanelTopComponentSettings.xml"/>
+            <file name="ScoreTopComponent.settings" url="ScoreTopComponentSettings.xml">
+                <attr name="position" intvalue="1"/>
+            </file>
+            <file name="OrchestraTopComponent.settings" url="OrchestraTopComponentSettings.xml">
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="UserDefinedOpcodeTopComponent.settings" url="UserDefinedOpcodeTopComponentSettings.xml">
+                <attr name="position" intvalue="200"/>
+            </file>
+            <file name="TablesTopComponent.settings" url="TablesTopComponentSettings.xml">
+                <attr name="position" intvalue="300"/>
+            </file>
+            <file name="GlobalOrchestraTopComponent.settings" url="GlobalOrchestraTopComponentSettings.xml">
+                <attr name="position" intvalue="400"/>
+            </file>
+            <file name="GlobalScoreTopComponent.settings" url="GlobalScoreTopComponentSettings.xml">
+                <attr name="position" intvalue="500"/>
+            </file>
+            <file name="ProjectPropertiesTopComponent.settings" url="ProjectPropertiesTopComponentSettings.xml">
+                <attr name="position" intvalue="600"/>
+            </file>
+            <file name="BlueLiveTopComponent.settings" url="BlueLiveTopComponentSettings.xml">
+                <attr name="position" intvalue="700"/>
+            </file>
+         
+            <file name="MarkersTopComponent.settings" url="MarkersTopComponentSettings.xml"/>
+            <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
+            <file name="AudioFilePlayerTopComponent.settings" url="AudioFilePlayerTopComponentSettings.xml"/>
+            <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
+            <file name="SoundObjectEditorTopComponent.settings" url="SoundObjectEditorTopComponentSettings.xml"/>
+            <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
+            <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
+        </folder>
+        <folder name="Modes">
+            <folder name="editor">
+                <file name="BlueLiveTopComponent.wstcref" url="BlueLiveTopComponentWstcref.xml"/>
+                <file name="GlobalOrchestraTopComponent.wstcref" url="GlobalOrchestraTopComponentWstcref.xml">
+                    <attr name="position" intvalue="400"/>
+                </file>
+                <file name="GlobalScoreTopComponent.wstcref" url="GlobalScoreTopComponentWstcref.xml">
+                    <attr name="position" intvalue="500"/>
+                </file>
+                <file name="OrchestraTopComponent.wstcref" url="OrchestraTopComponentWstcref.xml">
+                    <attr name="position" intvalue="100"/>
+                </file>
+                <file name="ProjectPropertiesTopComponent.wstcref" url="ProjectPropertiesTopComponentWstcref.xml">
+                    <attr name="position" intvalue="500"/>
+                </file>
+                <file name="ScoreTopComponent.wstcref" url="ScoreTopComponentWstcref.xml">
+                    <attr name="position" intvalue="0"/>
+                </file>
+                <file name="TablesTopComponent.wstcref" url="TablesTopComponentWstcref.xml">
+                    <attr name="position" intvalue="300"/>
+                </file>
+                <file name="UserDefinedOpcodeTopComponent.wstcref" url="UserDefinedOpcodeTopComponentWstcref.xml">
+                    <attr name="position" intvalue="200"/>
+                </file>
+            </folder>
+            <folder name="output">
+                <file name="MixerTopComponent.wstcref" url="MixerTopComponentWstcref.xml"/>
+                <file name="SoundObjectEditorTopComponent.wstcref" url="SoundObjectEditorTopComponentWstcref.xml"/>
+            </folder>
+            <folder name="properties">
+                <file name="MarkersTopComponent.wstcref" url="MarkersTopComponentWstcref.xml"/>
+                <file name="MidiInputPanelTopComponent.wstcref" url="MidiInputPanelTopComponentWstcref.xml"/>
+                <file name="ScratchPadTopComponent.wstcref" url="ScratchPadTopComponentWstcref.xml"/>
+                <file name="SoundObjectLibraryTopComponent.wstcref" url="SoundObjectLibraryTopComponentWstcref.xml"/>
+                <file name="SoundObjectPropertiesTopComponent.wstcref" url="SoundObjectPropertiesTopComponentWstcref.xml"/>
+                <file name="AudioFilePlayerTopComponent.wstcref" url="AudioFilePlayerTopComponentWstcref.xml"/>
+            </folder>
+        </folder>
+    </folder>
+</filesystem>

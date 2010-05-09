@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.apisupport.project</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
+            <code-name-base>org.mozilla</code-name-base>
+            <suite-component/>
+            <module-dependencies/>
+            <public-packages>
+                <package>org.mozilla.classfile</package>
+                <package>org.mozilla.javascript</package>
+                <package>org.mozilla.javascript.continuations</package>
+                <package>org.mozilla.javascript.debug</package>
+                <package>org.mozilla.javascript.jdk11</package>
+                <package>org.mozilla.javascript.jdk13</package>
+                <package>org.mozilla.javascript.optimizer</package>
+                <package>org.mozilla.javascript.regexp</package>
+                <package>org.mozilla.javascript.serialize</package>
+                <package>org.mozilla.javascript.tools</package>
+                <package>org.mozilla.javascript.tools.debugger</package>
+                <package>org.mozilla.javascript.tools.debugger.downloaded</package>
+                <package>org.mozilla.javascript.tools.idswitch</package>
+                <package>org.mozilla.javascript.tools.jsc</package>
+                <package>org.mozilla.javascript.tools.shell</package>
+                <package>org.mozilla.javascript.xml</package>
+                <package>org.mozilla.javascript.xmlimpl</package>
+            </public-packages>
+            <class-path-extension>
+                <runtime-relative-path>ext/js.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/js.jar</binary-origin>
+            </class-path-extension>
+        </data>
+    </configuration>
+</project>

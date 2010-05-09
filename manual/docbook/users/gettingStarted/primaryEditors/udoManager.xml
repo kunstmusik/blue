@@ -1,0 +1,89 @@
+<section id="udoManager">
+	<title>User-Defined Opcodes Manager</title>
+
+	<screenshot>
+		<screeninfo>User-Defined Opcodes Manager</screeninfo>
+		<mediaobject>
+			<imageobject>
+				<imagedata fileref="images/udoTab.png" format="PNG" />
+			</imageobject>
+			<textobject>
+				<phrase>User-Defined Opcodes Manager</phrase>
+			</textobject>
+			<caption>
+				<para>User-Defined Opcodes Manager</para>
+			</caption>
+		</mediaobject>
+	</screenshot>
+
+
+	<para>
+		This is where users should put their User-Defined Opcodes. UDO's
+		are added by using the "+" button and removed by using the "-"
+		button to the left the table on top.
+	</para>
+
+	<para>
+		To shift the order of the opcodes up and down, select an opcode in the
+		table and use the "^" and "V" buttons to push up and push down.
+	</para>
+
+	<para>
+		To edit the UDO, select one from the table above. After
+		selecting a UDO, it's information will be shown in the editor
+		area below.
+	</para>
+
+	<para>
+		You may also cut, copy, and paste UDO's by right-clicking an
+		entry in the top table. UDO's in the copy buffer can be pasted
+		into other project files.
+	</para>
+
+	<simplesect>
+		<title>Notes on Editing UDO's</title>
+
+		<para>
+			For UDO's, you will need the name of the UDO, the intypes
+			and outtypes, and the body of the code itself. For the body
+			of the code, you will not need anything from the "opcode"
+			line that normally starts a UDO definition (i.e. "opcode
+			myOpcode, a, ak"), as those should be in the text fields for
+			Opcode Name, In Types, and Out Types, and you will not need
+			an "endop", as blue will add that itself.
+		</para>
+
+	</simplesect>
+
+	<simplesect>
+		<title>User-Defined Opcode Repository Browser</title>
+
+		<screenshot>
+			<screeninfo>
+				User-Defined Opcode Repository Browser
+			</screeninfo>
+			<mediaobject>
+				<imageobject>
+					<imagedata fileref="images/udoDB.png" format="PNG" />
+				</imageobject>
+				<textobject>
+					<phrase>
+						User-Defined Opcode Repository Browser
+					</phrase>
+				</textobject>
+				<caption>
+					<para>User-Defined Opcode Repository Browser</para>
+				</caption>
+			</mediaobject>
+		</screenshot>
+
+		<para>
+			Using the "I" Button will open up the UDO Repository
+			browser. The browser shows the available UDO's in the
+			repository on Csounds.com and allows for importing from the
+			repository straight into your project.
+		</para>
+
+	</simplesect>
+
+</section>

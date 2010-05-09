@@ -1,0 +1,37 @@
+blue [credits]
+
+Author: Steven Yi
+
+Contributors:
+
+    Dave Seidel             - Java Code
+
+    Andres Cabrera          - Opcode definitions in opcodes.xml
+                            - Manual Contributions
+
+    Kevin Welsh			    - PHP work on blueShare server
+
+    Josep M Comajuncosas    - Catalan Translation
+
+    Stephane Boussuge		- French Translation
+    Jean Argenty
+
+    Gabriel Maldonado		- Italian Translation
+
+    Takashi Fukui			- Japanese Translation
+
+    Young Choi              - Korean Translation
+
+    Francisco Vila          - Spanish Translation
+    Roberto J. Osorio-Goenaga
+
+    Gaetano Crispo		    - Italian User's Manual
+    Gianfranco de Carluccio
+
+Other Projects:
+
+    Metouia Look and Feel   - http://mlf.sourceforge.net
+    Jython                  - http://www.jython.org
+    JACL                    - http://tcljava.sourceforge.net
+    Rhino                   - http://www.mozilla.org/rhino
+    l2fprod                 - http://www.l2fprod.com

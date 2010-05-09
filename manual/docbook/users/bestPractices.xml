@@ -1,0 +1,24 @@
+<chapter id="bestPractices">
+  <title>Best Practices</title>
+
+  <section>
+    <title>Introduction</title>
+
+    <para>
+      This section provides some advice on best practices for getting the most
+      out of blue.
+    </para>
+
+  </section>
+
+  <section>
+    <title>Encapsulate your instruments</title>
+
+    <para>
+      add information here and link to task section regarding instrument
+      encapsulation
+    </para>
+
+  </section>
+
+</chapter>

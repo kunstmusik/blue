@@ -1,0 +1,1380 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>feldman example 3</title>
+    <author>steven yi</author>
+    <notes>[DESCRIPTION]
+Algorithmically produced music based on Morton Feldman&apos;s early graphic scores (box notation). 
+Uses python scripting to &quot;perform&quot; the score, a simple FM instrument, and a convolution reverb.
+
+This version uses two different instruments and two different &quot;performers&quot; playing the same score.
+
+
+[ABOUT FELDMAN&apos;S EARLY MUSIC]
+Morton Feldman&apos;s early music were beautifully drawn boxes, three on top of each other per measure.  
+Each of the boxes mapped to either &quot;high&quot; pitches, &quot;middle&quot; pitches, and &quot;low&quot; pitches.  In each box,
+were a number of how many notes to play of that type for that measure, which could be none.
+
+To capture this compositional method, I wrote a function that would take in a list of lists.  Each index in the
+top list would be a measure, and in that location of the list would be another list of three numbers, referring
+to how many &quot;high&quot;, &quot;middle&quot;, and &quot;low&quot; pitches to play.  The function randomly picks a start and a random
+frequency bounded to the range set for high, middle, and low and outputs that for that measure.
+</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>b64 - Orch</name>
+        <comment>Inspired by the SID sound chip commonly used in Commodore 64 computers, 
+using simliar waveforms and options for ring modulation.</comment>
+        <globalOrc>
+</globalOrc>
+        <globalSco>
+
+
+</globalSco>
+        <instrumentText>;p3 = p3 + &lt;release&gt;
+
+ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, &lt;attack&gt;, &lt;decay&gt;, &lt;sustain&gt;, &lt;release&gt;
+
+aout1 	multiOscil &lt;waveform1&gt;, kpchline * &lt;freqMultiply1&gt;, &lt;pulseWidth1&gt;
+aout2 	multiOscil &lt;waveform2&gt;, kpchline * &lt;freqMultiply2&gt;, &lt;pulseWidth2&gt;
+aout3 	multiOscil &lt;waveform3&gt;, kpchline * &lt;freqMultiply3&gt;, &lt;pulseWidth3&gt;
+
+aout1 	simpleMultiFilter	aout1 * &lt;amp1&gt;, &lt;filterType1&gt;, &lt;filterFreq1&gt;, &lt;filterBandwidth1&gt;
+aout2 	simpleMultiFilter	aout2 * &lt;amp2&gt;, &lt;filterType2&gt;, &lt;filterFreq2&gt;, &lt;filterBandwidth2&gt;
+aout3 	simpleMultiFilter	aout3 * &lt;amp3&gt;, &lt;filterType3&gt;, &lt;filterFreq3&gt;, &lt;filterBandwidth3&gt;
+
+aout = 0
+
+if (&lt;ringmod1&gt; == 1) then
+	atemp = aout1 * aout3
+	aout = atemp
+else
+	aout = aout1
+endif
+
+if (&lt;ringmod2&gt; == 1) then
+	atemp = aout2 * aout1
+	aout = aout + atemp
+else
+	aout = aout + aout2
+endif
+
+
+if (&lt;ringmod3&gt; == 1) then
+	atemp = aout3 * aout2
+	aout = aout + atemp
+else
+	aout = aout + aout3
+endif
+
+
+;aout butterlp aout, 8000
+;aout butterhp aout, 500
+;aout butterbp aout, 500, 1000
+
+aout = aout * kenv * iamp
+
+blueMixerOut aout, aout</instrumentText>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='21' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform1</objectName>
+            <x>74</x>
+            <y>60</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Triangle</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw</name>
+                <value>3</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Pulse</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw-Pulse</name>
+                <value>5</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw-Pulse</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Noise</name>
+                <value>7</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>1</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>filterType1</objectName>
+            <x>243</x>
+            <y>59</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>No Filter</name>
+                <value>-1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Low Pass</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>High Pass</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Band Pass</name>
+                <value>2</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>1</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform2</objectName>
+            <x>69</x>
+            <y>202</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Triangle</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw</name>
+                <value>3</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Pulse</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw-Pulse</name>
+                <value>5</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw-Pulse</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Noise</name>
+                <value>7</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>0</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>ringmod1</objectName>
+            <x>389</x>
+            <y>58</y>
+            <label>Ring Modulation</label>
+            <selected>false</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>16</x>
+            <y>61</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Osc 1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>202</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Osc 2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>14</x>
+            <y>352</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Osc 3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform3</objectName>
+            <x>72</x>
+            <y>352</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Triangle</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw</name>
+                <value>3</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Pulse</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw-Pulse</name>
+                <value>5</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Tri-Saw-Pulse</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Noise</name>
+                <value>7</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>1</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>ringmod2</objectName>
+            <x>389</x>
+            <y>202</y>
+            <label>Ring Modulation</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>ringmod3</objectName>
+            <x>388</x>
+            <y>350</y>
+            <label>Ring Modulation</label>
+            <selected>false</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply3</objectName>
+            <x>84</x>
+            <y>404</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>8.0</maximum>
+            <value>1.6736685</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply2</objectName>
+            <x>87</x>
+            <y>258</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>8.0</maximum>
+            <value>2.3018932</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply1</objectName>
+            <x>87</x>
+            <y>110</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>8.0</maximum>
+            <value>6.2992525</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>filterType2</objectName>
+            <x>243</x>
+            <y>202</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>No Filter</name>
+                <value>-1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Low Pass</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>High Pass</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Band Pass</name>
+                <value>2</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>3</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>filterType3</objectName>
+            <x>243</x>
+            <y>351</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>No Filter</name>
+                <value>-1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Low Pass</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>High Pass</name>
+                <value>1</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Band Pass</name>
+                <value>2</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>1</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>75</x>
+            <y>89</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>73</x>
+            <y>239</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>76</x>
+            <y>385</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterFreq1</objectName>
+            <x>247</x>
+            <y>110</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>20.0</minimum>
+            <maximum>10000.0</maximum>
+            <value>4545.6396</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterBandwidth1</objectName>
+            <x>303</x>
+            <y>110</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>1000.0</maximum>
+            <value>314.78778</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterFreq2</objectName>
+            <x>245</x>
+            <y>258</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>20.0</minimum>
+            <maximum>10000.0</maximum>
+            <value>4696.599</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterBandwidth2</objectName>
+            <x>301</x>
+            <y>258</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>1000.0</maximum>
+            <value>724.56854</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterFreq3</objectName>
+            <x>247</x>
+            <y>404</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>20.0</minimum>
+            <maximum>10000.0</maximum>
+            <value>7787.3667</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>filterBandwidth3</objectName>
+            <x>303</x>
+            <y>404</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.01</minimum>
+            <maximum>1000.0</maximum>
+            <value>299.48398</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>259</x>
+            <y>385</y>
+            <label>Freq</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>300</x>
+            <y>385</y>
+            <label>Bandwidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>256</x>
+            <y>239</y>
+            <label>Freq</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>297</x>
+            <y>239</y>
+            <label>Bandwidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>258</x>
+            <y>89</y>
+            <label>Freq</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>299</x>
+            <y>89</y>
+            <label>Bandwidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>decay</objectName>
+            <x>615</x>
+            <y>104</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.080503665</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>sustain</objectName>
+            <x>668</x>
+            <y>104</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.86508584</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>release</objectName>
+            <x>721</x>
+            <y>104</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>3.6829162</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>attack</objectName>
+            <x>562</x>
+            <y>104</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>5.7504816</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>566</x>
+            <y>85</y>
+            <label>Attack</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>619</x>
+            <y>85</y>
+            <label>Decay</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>669</x>
+            <y>85</y>
+            <label>Sustain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>722</x>
+            <y>85</y>
+            <label>Release</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>565</x>
+            <y>55</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp Env&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>amp2</objectName>
+            <x>414</x>
+            <y>258</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.427622</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>423</x>
+            <y>239</y>
+            <label>Amp</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>amp1</objectName>
+            <x>419</x>
+            <y>110</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.90561324</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>428</x>
+            <y>89</y>
+            <label>Amp</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>amp3</objectName>
+            <x>417</x>
+            <y>404</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.6555574</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>426</x>
+            <y>385</y>
+            <label>Amp</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>13</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+3&quot;&gt;&lt;b&gt;b64&lt;/b&gt;&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>157</x>
+            <y>89</y>
+            <label>Pulse Width</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulseWidth1</objectName>
+            <x>166</x>
+            <y>110</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.521933</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulseWidth2</objectName>
+            <x>166</x>
+            <y>258</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.9439412</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>158</x>
+            <y>239</y>
+            <label>Pulse Width</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulseWidth3</objectName>
+            <x>166</x>
+            <y>404</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.13465874</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>161</x>
+            <y>385</y>
+            <label>Pulse Width</label>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='334356903' name='amp1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.90561324'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.90561324'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356901' name='amp2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.427622'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.427622'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356905' name='amp3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.6555574'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.6555574'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356883' name='filterBandwidth1' label='' min='0.01' max='1000.0' resolution='-1.0' automationEnabled='false' value='314.78778'>
+            <line name='' version='2' max='1000.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='314.78778'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356887' name='filterBandwidth2' label='' min='0.01' max='1000.0' resolution='-1.0' automationEnabled='false' value='724.56854'>
+            <line name='' version='2' max='1000.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='724.56854'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356891' name='filterBandwidth3' label='' min='0.01' max='1000.0' resolution='-1.0' automationEnabled='false' value='299.48398'>
+            <line name='' version='2' max='1000.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='299.48398'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356881' name='filterFreq1' label='' min='20.0' max='10000.0' resolution='-1.0' automationEnabled='false' value='4545.6396'>
+            <line name='' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4545.6396'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356885' name='filterFreq2' label='' min='20.0' max='10000.0' resolution='-1.0' automationEnabled='false' value='4696.599'>
+            <line name='' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='4696.599'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356889' name='filterFreq3' label='' min='20.0' max='10000.0' resolution='-1.0' automationEnabled='false' value='7787.3667'>
+            <line name='' version='2' max='10000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='7787.3667'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356879' name='freqMultiply1' label='' min='0.01' max='8.0' resolution='-1.0' automationEnabled='false' value='6.2992525'>
+            <line name='' version='2' max='8.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='6.2992525'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356877' name='freqMultiply2' label='' min='0.01' max='8.0' resolution='-1.0' automationEnabled='false' value='2.3018932'>
+            <line name='' version='2' max='8.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='2.3018932'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356875' name='freqMultiply3' label='' min='0.01' max='8.0' resolution='-1.0' automationEnabled='false' value='1.6736685'>
+            <line name='' version='2' max='8.0' min='0.01' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.6736685'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356907' name='pulseWidth1' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.521933'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.521933'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356909' name='pulseWidth2' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.9439412'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.9439412'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='334356911' name='pulseWidth3' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.13465874'>
+            <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='0.13465874'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'>
+          <preset name='preset1'>
+            <setting name='amp1'>ver2:0.9056132436</setting>
+            <setting name='amp2'>ver2:0.4276219904</setting>
+            <setting name='amp3'>ver2:0.655557394</setting>
+            <setting name='attack'>ver2:5.7504816055</setting>
+            <setting name='decay'>ver2:0.0805036649</setting>
+            <setting name='filterBandwidth1'>ver2:314.7877807617</setting>
+            <setting name='filterBandwidth2'>ver2:724.5685424805</setting>
+            <setting name='filterBandwidth3'>ver2:299.4839782715</setting>
+            <setting name='filterFreq1'>ver2:4545.6396484375</setting>
+            <setting name='filterFreq2'>ver2:4696.5991210938</setting>
+            <setting name='filterFreq3'>ver2:7787.3666992188</setting>
+            <setting name='filterType1'>1</setting>
+            <setting name='filterType2'>3</setting>
+            <setting name='filterType3'>1</setting>
+            <setting name='freqMultiply1'>ver2:6.2992525101</setting>
+            <setting name='freqMultiply2'>ver2:2.3018932343</setting>
+            <setting name='freqMultiply3'>ver2:1.6736685038</setting>
+            <setting name='pulseWidth1'>ver2:0.5219330192</setting>
+            <setting name='pulseWidth2'>ver2:0.9439411759</setting>
+            <setting name='pulseWidth3'>ver2:0.134658739</setting>
+            <setting name='release'>ver2:3.6829161644</setting>
+            <setting name='ringmod1'>false</setting>
+            <setting name='ringmod2'>true</setting>
+            <setting name='ringmod3'>false</setting>
+            <setting name='sustain'>ver2:0.8650858402</setting>
+            <setting name='waveform1'>1</setting>
+            <setting name='waveform2'>0</setting>
+            <setting name='waveform3'>1</setting>
+          </preset>
+        </presetGroup>
+        <opcodeList>
+          <udo>
+            <opcodeName>getFrequency</opcodeName>
+            <outTypes>i</outTypes>
+            <inTypes>i</inTypes>
+            <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>simpleMultiFilter</opcodeName>
+            <outTypes>a</outTypes>
+            <inTypes>aikk</inTypes>
+            <codeBody>ain, itype, kfreq, kbandwidth xin
+
+if (itype &lt; 0) then
+	aout = ain
+elseif (itype == 0) then
+	aout butterlp ain, kfreq
+elseif (itype == 1) then
+	aout butterhp ain, kfreq
+elseif (itype == 2) then
+	aout butterbp ain, kfreq, kbandwidth
+endif
+
+xout aout</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>multiOscil</opcodeName>
+            <outTypes>a</outTypes>
+            <inTypes>ikk</inTypes>
+            <codeBody>iwaveform, kpch, kpulsewidth xin
+
+
+isidtable chnget &quot;sid_tables&quot;
+
+if (isidtable == 0) then
+	
+	itabtri 	ftgen 0, 0, 4097, 7, -1, 2048, 1, 2049, -1	; tri
+;	itabsaw		ftgen 0, 0, 4097, 7, -1, 4096, 1, 1, -1	; saw
+	itabsaw		ftgen 0, 0, 4097, 10, 1, .5, .3, .25, .2, .167, .14, .125, .111  
+	;itabpulse	ftgen 0, 0, 4097, 7, 1, 2047, 1, 1, -1, 2048, -1, 1, 1	; pulse
+	itabpulse	ftgen 0, 0, 4097, 10, 1, 1, 1, 1, .7, .5, .3, .1	
+	
+	itabtrisaw	ftgen 0, 0, 4097, 10, 0
+			tableimix	 itabtrisaw, 0, 4097, itabtri, 0, 1, itabsaw, 0, 1
+
+	itabtripulse	ftgen 0, 0, 4097, 10, 0
+			tableimix	 itabtripulse, 0, 4097, itabtri, 0, 1, itabpulse, 0, 1
+
+	itabsawpulse	ftgen 0, 0, 4097, 10, 0
+			tableimix	 itabsawpulse, 0, 4097, itabsaw, 0, 1, itabpulse, 0, 1
+
+	itabtrisawpulse	ftgen 0, 0, 4097, 10, 0
+			tableimix	 itabtrisawpulse, 0, 4097, itabtri, 0, 1, itabsawpulse, 0, 1
+
+	isidtable 	ftgen 0, 0, 8, -2, itabtri, itabsaw, itabpulse, itabtrisaw, itabtripulse, itabsawpulse, itabtrisawpulse
+
+	chnset isidtable, &quot;sid_tables&quot;
+
+endif
+
+aout = 0
+kcount = 0
+
+if (iwaveform == 7) then
+	aout 	noise 1, 0
+	kcount = 1
+endif
+
+if (iwaveform == 0 || iwaveform == 3 || iwaveform == 4 || iwaveform == 6) then
+	;aout 	vco2 	1, kpch, 12
+	
+	kcount = 1
+endif
+
+if (iwaveform == 1 || iwaveform == 3 || iwaveform == 6) then
+	atemp 	vco2 	1, kpch, 0
+	aout = aout + atemp
+	kcount = kcount + 1
+endif
+
+if (iwaveform == 2 || iwaveform == 4 || iwaveform == 5 || iwaveform == 6) then
+	atemp 	vco2 	1, kpch, 2, kpulsewidth
+	aout = aout + atemp
+	kcount = kcount + 1
+endif
+
+aout = aout / kcount
+
+xout aout</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>yiEnvelope</opcodeName>
+            <outTypes>k</outTypes>
+            <inTypes>ioooooo</inTypes>
+            <codeBody>ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+	kenv logcurve kenv, 1.5
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>triangle</name>
+        <comment>Description: 
+
+A simple band-limited fm wave instrument built using an instrument template code snippet I often use from my personal code repository for building my instruments. Instrument parameters are numerous, but often I use instruments I build from this template with python code that simplifies the process of generating these notes, yet I&apos;m still able to have the flexibility and nuance of all of these parameters.
+
+Parameters:
+
+p4	- start frequency, can be either hertz or pch notation 
+p5	- end frequency, can be either hertz or pch notation
+p6	- amplitude, expressed in decibels
+p7	- panning, from range -1 to 1
+p8	- amplitude envelope type, 0 = adsr, 1 = pyramid, 2 = ramp</comment>
+        <globalOrc>;[once]{
+gi_square		ftgen 0, 0, 65537, 10, 1, 0, 0.111111, 0, 0.4, 0, .020408163, 0, .012345679, 0, .008264463
+;}</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+;print ipch, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+itable	= gi_square
+
+kenv	yiEnvelope ienvType, .1, .05, .95, .1
+
+;aout	oscili iamp * kenv, kpchline, itable
+;aout	vco 	iamp * kenv, ipch, 3, .5
+
+aout	vco2	1, kpchline, 12
+aout2	vco2	1, kpchline + .0009, 12
+aout3	vco2	1, kpchline + .0007, 12
+
+aout	sum aout, aout2, aout3
+aout	= aout * .333
+
+kCut	= (kpchline * 4 * kenv) + kpchline
+
+kCut    	limit kCut, sr * 0.0002, sr * 0.48
+
+;if kCut &lt; 20000 kgoto kCutPass
+;  kCut = 20000
+;kCutPass:
+;printk2 kCut
+
+aout 	butterlp aout, kCut
+
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+blueMixerOut aLeft, aRight
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>5.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='768672422' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='768672424' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'>
+        <effect>
+          <name>ReverbSC</name>
+          <enabled>true</enabled>
+          <numIns>2</numIns>
+          <numOuts>2</numOuts>
+          <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+          <comments/>
+          <opcodeList/>
+          <graphicInterface editEnabled='false'>
+            <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>7</x>
+              <y>7</y>
+              <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>feedback</objectName>
+              <x>8</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.85</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>11</x>
+              <y>36</y>
+              <label>Feedback</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>cutoff</objectName>
+              <x>72</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>20.0</minimum>
+              <maximum>20000.0</maximum>
+              <value>8000.0</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>80</x>
+              <y>36</y>
+              <label>Cut-Off</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>wetdry</objectName>
+              <x>136</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.7732706</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>139</x>
+              <y>36</y>
+              <label>Wet/Dry</label>
+            </bsbObject>
+          </graphicInterface>
+          <bsbParameterList>
+            <parameter uniqueId='-1631536220' name='cutoff' label='' min='20.0' max='20000.0' resolution='-1.0' automationEnabled='false' value='8000.0'>
+              <line name='' version='2' max='20000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='8000.0'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='-1631536222' name='feedback' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.85'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.85'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='-1631536218' name='wetdry' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.7732706'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.7732706'/>
+              </line>
+            </parameter>
+          </bsbParameterList>
+        </effect>
+      </effectsChain>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='768672420' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>10</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>0.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>27.6</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Comment on naming of soundObjects</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>The soundObjects below were named so I could see where I defined my feldman function, where I defined my score, and where the performances of that score are.  
+
+The sort of cryptic naming of the &quot;performances&quot; are for referring to what csound instrument I&apos;m using and what the C:M ratio is for that instrument.</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python init script' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>15.1</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>feldman function</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># Below is a python import statement
+# It allows for using functions from the &quot;random&quot; library in this script
+
+import random
+
+#############################################################
+# FUNCTION FOR PERFORMING FELDMAN GRAPHIC SCORE - VERSION 2 #
+#############################################################
+
+# The performFeldmanGraphicScore function takes in an &quot;hmllist&quot; (High-Middle-Low list, 
+# the score in the &quot;My Score&quot; soundObject) and &quot;performs&quot; the score in the duration given.
+
+# This version of the function takes in a new parameter, iNum, which tells the function for
+# what Csound instrument to generate notes for.  This was done so another &quot;performance&quot; of
+# the score on another instrument could be done.
+
+def performFeldmanGraphicScore(hmlList, duration, iNum):
+	returnString = &quot;&quot;
+
+	measureLength = float(duration) / len(hmlList)
+
+	hi_top 		= 1920
+	hi_bottom 		= 960
+	mid_top		= 960
+	mid_bottom 	= 240
+	low_top		= 240
+	low_bottom		= 60
+	noteDur		= float(measureLength) / 2
+
+	for measure in range(0, len(hmlList)):
+		hml = hmlList[measure]
+		for i in range(0, hml[0]):
+			start = (random.random() * measureLength) + (measure * measureLength)
+			duration = noteDur
+			pch = (random.random() * (hi_top - hi_bottom)) + hi_bottom
+			amp = 70
+			space = 0
+			env = 0
+
+			returnString += &quot;i&quot; + str(iNum) + &quot; &quot; + str(start) + &quot;\t&quot; + str(duration) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(amp) + &quot;\t&quot; + str(space) + &quot;\t&quot; + str(env) + &quot;\n&quot;
+
+
+		for i in range(0, hml[1]):
+			start = (random.random() * measureLength) + (measure * measureLength)
+			duration = noteDur
+			pch = (random.random() * (mid_top - mid_bottom)) + mid_bottom
+			amp = 70
+			space = 0
+			env = 0
+
+			returnString += &quot;i&quot; + str(iNum) + &quot; &quot; + str(start) + &quot;\t&quot; + str(duration) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(amp) + &quot;\t&quot; + str(space) + &quot;\t&quot; + str(env) + &quot;\n&quot;
+
+		for i in range(0, hml[2]):
+			start = (random.random() * measureLength) + (measure * measureLength)
+			duration = noteDur
+			pch = (random.random() * (low_top - low_bottom)) + low_bottom
+			amp = 70
+			space = 0
+			env = 0
+
+			returnString += &quot;i&quot; + str(iNum) + &quot; &quot; + str(start) + &quot;\t&quot; + str(duration) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(pch) + &quot;\t&quot; + str(amp) + &quot;\t&quot; + str(space) + &quot;\t&quot; + str(env) + &quot;\n&quot;
+
+	return returnString
+
+
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='score' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>15.5</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>My Score</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>###################################################
+# DEFINING SCORE FOR FELDMAN PERFORMANCE FUNCTION #
+###################################################
+
+# The score here is list (my measures).  It starts off with a blank &quot;score&quot;, then add measures to it.
+# Each measure is itself a list of three numbers, pertaining to the number of &quot;high&quot;, &quot;middle&quot;, and
+# &quot;low&quot; notes to produce for that measure.
+
+measures = []
+
+measures.append([2,0,0])	# this can be read as &quot;two high notes, no middle notes, no low notes&quot;
+measures.append([0,0,0])	# this can be read as &quot;no notes for this measure&quot;
+measures.append([0,1,2])
+measures.append([1,0,5])
+measures.append([2,0,0])
+measures.append([0,0,0])
+measures.append([0,2,0])
+measures.append([1,0,4])
+measures.append([0,0,0])
+measures.append([0,0,0])
+measures.append([0,3,2])
+measures.append([0,2,3])
+measures.append([0,0,0])
+measures.append([0,0,0])
+measures.append([1,1,1])</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>27.6</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Comment on performance</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>The performance of the soundObjects below do not line up.  This was done on purpose as I wanted a little more variation of the performance timing and the durations of the notes.</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='b64 performance' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>32.6</subjectiveDuration>
+        <startTime>1.4</startTime>
+        <name>i3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>###########################################################
+# PERFORMING THE SCORE USING FELDMAN PERFORMANCE FUNCTION #
+###########################################################
+
+# below is the actual &quot;performance&quot; of the score, which uses my &quot;measures&quot; list
+# defined in the &quot;My Score&quot; block. 
+
+score = performFeldmanGraphicScore(measures, blueDuration, 3)</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='triangle performance' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>35.6</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>i4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># PERFORMING THE SCORE
+# below is the actual &quot;performance&quot; of the score, which uses my &quot;measures&quot; list
+# defined in the &quot;My Score&quot; block. 
+
+score = performFeldmanGraphicScore(measures, blueDuration, 4)</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

@@ -1,0 +1,652 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>Piano Roll Example</title>
+    <author>steven yi</author>
+    <notes>This example shows the use of the PianoRoll SoundObject.  These PianoRoll objects are set to use a bohlen-pierce scale, thus the PianoRolls show 13tones to the &quot;octave&quot;.</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>10</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>pianoRoll.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>French Horn (Horner and Ayers)</name>
+        <comment>Need to fix
+</comment>
+        <globalOrc>;[once]{
+gi_horn_seed = .5
+;}
+
+;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco>;Horner and Ayers French Horn tables
+f 1101 0   4097    -9  1 1.0 0
+f 1102 0   16  -2  40 40 80 160 320 640 1280 2560 5120 10240 10240  ;LP Filter Cutoff Lookup table
+f 1103 0   64  -2  11 12 13 52.476 14 15 16 18.006 17 18 19 11.274 20 21 22 6.955 23 24 25 2.260 26 27 10 1.171 28 29 10 1.106 30 10 10 1.019
+f 1104 0   2048    -17 0 0 85 1 114 2 153 3 204 4 272 5 364 6 486 7
+f 1110    0   5   -9  1 0.0 0
+f 1111    0   4097    -9  2 6.236 0 3 12.827 0
+f 1112    0   4097    -9  4 21.591 0 5 11.401 0 6 3.570 0 7 2.833 0
+f 1113    0   4097    -9  8 3.070 0 9 1.053 0 10 0.773 0 11 1.349 0 12 0.819 0 13 0.369 0 14 0.362 0 15 0.165 0 16 0.124 0 18 0.026 0 19 0.042 0
+f 1114    0   4097    -9  2 3.236 0 3 6.827 0
+f 1115    0   4097    -9  4 5.591 0 5 2.401 0 6 1.870 0 7 0.733 0
+f 1116    0   4097    -9  8 0.970 0 9 0.553 0 10 0.373 0 11 0.549 0 12 0.319 0 13 0.119 0 14 0.092 0 15 0.045 0 16 0.034 0
+f 1117    0   4097    -9  2 5.019 0 3 4.281 0
+f 1118    0   4097    -9  4 2.091 0 5 1.001 0 6 0.670 0 7 0.233 0
+f 1119    0   4097    -9  8 0.200 0 9 0.103 0 10 0.073 0 11 0.089 0 12 0.059 0 13 0.029 0
+f 1120    0   4097    -9  2 4.712 0 3 1.847 0
+f 1121    0   4097    -9  4 0.591 0 5 0.401 0 6 0.270 0 7 0.113 0
+f 1122    0   4097    -9  8 0.060 0 9 0.053 0 10 0.023 0
+f 1123    0   4097    -9  2 1.512 0 3 0.247 0
+f 1124    0   4097    -9  4 0.121 0 5 0.101 0 6 0.030 0 7 0.053 0
+f 1125    0   4097    -9  8 0.030 0
+f 1126    0   4097    -9  2 0.412 0 3 0.087 0
+f 1127    0   4097    -9  4 0.071 0 5 0.021 0
+f 1128    0   4097    -9  2 0.309 0 3 0.067 0
+f 1129    0   4097    -9  4 0.031 0
+f 1130    0   4097    -9  2 0.161 0 3 0.047 0</globalSco>
+        <instrumentText>ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, .15, .1, .95, .2
+
+; INSERT SOUND GENERATING CODE HERE 
+
+ifcut	= 2560		; LP FILTER CUTOFF FREQUENCY
+
+
+kenv2	=		kenv * kenv 			; WAVETABLE ENVELOPES
+kenv3	=		kenv2 * kenv
+kenv4	=		kenv3 * kenv
+
+irange	tablei	ipch, 1104
+iwt1	=	gi_sine					; WAVETABLE NUMBERS
+iwt2	table	(irange*4), 1103
+iwt3	table	(irange*4)+1, 1103
+iwt4	table	(irange*4)+2, 1103
+inorm	table	(irange*4)+3, 1103		; NORMALIZATION FACTOR
+
+iiwt1 			=			iwt1
+iiwt2 			=			iwt2 + 1100
+iiwt3 			=			iwt3 + 1100
+iiwt4 			=			iwt4 + 1100
+
+iphase	= gi_horn_seed				; SAME PHASE FOR ALL TABLES
+giseed	= frac(gi_horn_seed*105.947)
+
+awt1	oscil	kenv, kpchline, iiwt1, iphase ; WAVETABLE LOOKUP
+awt2	oscil	kenv2, kpchline, iiwt2, iphase
+awt3	oscil	kenv3, kpchline, iiwt3, iphase
+awt4	oscil	kenv4, kpchline, iiwt4, iphase
+aout	=		(awt1+awt2+awt3+awt4)*iamp/inorm
+
+afilt	tone	aout, ifcut			; LP FILTER...
+asig	balance	afilt, aout			; ... TO CONTROL BRIGHTNESS
+
+aport	oscil	1, p3/10, gi_sine
+aport	=	(aport * 0.02) + 1
+aout	=	asig * aport
+	
+
+
+
+; PANNING CODE
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight </instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Pass Through</name>
+        <comment>Description:
+
+A pass through instruments for all of the sounds.  Use this instrument if you do not want to use the convolution and plain reverbs.</comment>
+        <globalOrc></globalOrc>
+        <globalSco>i &lt;INSTR_ID&gt; 0 [&lt;TOTAL_DUR&gt; + 1]</globalSco>
+        <instrumentText>ga1 = ga1 * .4
+ga2 = ga2 * .4
+
+outs	ga1, ga2
+
+ga1 = 0
+ga2 = 0
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324005' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324003' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324001' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>ga1	init 	0
+ga2	init	0
+ga3	init 	0
+</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>getFrequency</opcodeName>
+      <outTypes>i</outTypes>
+      <inTypes>i</inTypes>
+      <codeBody>ipch 	xin
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)	
+	xout	iout
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooo</inTypes>
+      <codeBody>kout	init 0
+ienvType, iattack, idecay, isus, irel	xin
+if ienvType == 0 kgoto env0  ; adsr
+if ienvType == 1 kgoto env1  ; pyramid
+if ienvType == 2 kgoto env2  ; ramp
+env0:
+	kenv	adsr	iattack, idecay, isus, irel
+	kgoto endEnvelope
+env1:
+	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+;	kenv	oscil3	1, .5 / p3 , gi_sine
+	kgoto endEnvelope
+env2:
+	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+	kgoto endEnvelope
+endEnvelope:
+	xout 	kenv
+</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>bohlen-p_et.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.0881822</ratio>
+            <ratio>1.1841406</ratio>
+            <ratio>1.2885607</ratio>
+            <ratio>1.4021889</ratio>
+            <ratio>1.5258371</ratio>
+            <ratio>1.6603888</ratio>
+            <ratio>1.8068057</ratio>
+            <ratio>1.9661338</ratio>
+            <ratio>2.1395118</ratio>
+            <ratio>2.328179</ratio>
+            <ratio>2.533483</ratio>
+            <ratio>2.756891</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>64</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>4</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>8</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>10</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>9</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>bohlen-p_et.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.0881822</ratio>
+            <ratio>1.1841406</ratio>
+            <ratio>1.2885607</ratio>
+            <ratio>1.4021889</ratio>
+            <ratio>1.5258371</ratio>
+            <ratio>1.6603888</ratio>
+            <ratio>1.8068057</ratio>
+            <ratio>1.9661338</ratio>
+            <ratio>2.1395118</ratio>
+            <ratio>2.328179</ratio>
+            <ratio>2.533483</ratio>
+            <ratio>2.756891</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>64</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>4</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>8</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>10</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>9</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>13.0</subjectiveDuration>
+        <startTime>2.0</startTime>
+        <name>PianoRoll</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>bohlen-p_et.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.0881822</ratio>
+            <ratio>1.1841406</ratio>
+            <ratio>1.2885607</ratio>
+            <ratio>1.4021889</ratio>
+            <ratio>1.5258371</ratio>
+            <ratio>1.6603888</ratio>
+            <ratio>1.8068057</ratio>
+            <ratio>1.9661338</ratio>
+            <ratio>2.1395118</ratio>
+            <ratio>2.328179</ratio>
+            <ratio>2.533483</ratio>
+            <ratio>2.756891</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>40</pixelSecond>
+        <noteHeight>13</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>4</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>8</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>10</scaleDegree>
+          <start>0.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>9</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>4.0</start>
+          <duration>4.0</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;FREQ&gt; 80 0 1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: com.l2fprod.common
+OpenIDE-Module-Localizing-Bundle: com/l2fprod/common/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

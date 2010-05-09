@@ -1,0 +1,26 @@
+<part id="developersManual">
+    <title>Developers</title>
+    <partintro>
+        <para>Information here for Developers.</para>
+    </partintro>
+    
+    <chapter>
+        <title>Plugins</title>
+        
+        <section>
+            <title>Note Processors</title>
+        </section>
+        
+        <section>
+            <title>Instruments</title>
+        </section>
+
+        <section>
+            <title>Sound Objects</title>
+        </section>                   
+        
+    </chapter>
+    
+&devCore;
+
+</part>

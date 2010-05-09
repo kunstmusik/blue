@@ -1,0 +1,476 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>PatternObject Example</title>
+    <author>steven yi</author>
+    <notes></notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>20</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>patternObject.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FM Snare</name>
+        <comment>f1 0 65536 10 1
+
+f2 0   2048 10 1 1 1 1 .7 .5 .3 .1         ;pulse
+f3 0   1024 10  1     </comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>  icps0  = 147
+  iamp   = ampdb(p4)
+
+  icps1  =  2.0 * icps0
+  
+  kcps   port icps0, 0.007, icps1
+  kcpsx  =  kcps * 1.5
+  
+  kfmd   port   0.0, 0.01, 0.7
+  aenv1  expon  1.0, 0.03, 0.5
+  kenv2  port   1.0, 0.008, 0.0
+  aenv2  interp kenv2
+  aenv3  expon  1.0, 0.025, 0.5
+  
+  a_     oscili 1.0, kcps, gi_sine
+  a1     oscili 1.0, kcps * (1.0 + a_*kfmd), gi_sine
+  a_     oscili 1.0, kcpsx, gi_sine
+  a2     oscili 1.0, kcpsx * (1.0 + a_*kfmd), gi_sine
+  
+  a3     unirand 2.0
+  a3     =  a3 - 1.0
+  a3     butterbp a3, 5000, 7500
+  a3     =  a3 * aenv2
+  
+  a0     =  a1 + a2*aenv3 + a3*1.0
+  a0     =  a0 * aenv1
+
+  outs a0*iamp*0.2, a0*iamp*0.2</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Hi Hat</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>  ilen init p3
+  iamp = ampdb(p4)
+
+  kcutfreq  expon     10000, 0.1, 2500
+  aamp      expon     iamp,  0.1,   10
+  arand     rand      aamp
+  alp1      butterlp  arand,kcutfreq
+  alp2      butterlp  alp1,kcutfreq
+  ahp1      butterhp  alp2,3500
+  asigpre   butterhp  ahp1,3500
+  asig      linen    (asigpre+arand/2),0,ilen, .05  
+
+  outs asig*0.2, asig*0.2</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Bass Drum</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>  iamp      = ampdb(p4)
+
+  k1  expon    120, .2, 50    
+  k2  expon    500, .4, 200
+  a1  oscil    iamp, k1, gi_sine
+  a2  reson    a1, k2, 50
+  a3  butterlp  a2+a1,k1,1
+  a4  butterlp  a3,   k1,1
+  a5  butterlp  a4,2500,1
+  a6  butterhp  a5,50
+  a7  butterhp  a6,50
+  a8  linen    a7,0.01,p3, .2  
+
+  a8  declick a8
+  
+  outs a8*0.2,a8*0.2</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324018' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324016' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324014' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324012' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary>
+    <soundObject type='blue.soundObject.PatternObject'>
+      <subjectiveDuration>4.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>Pattern A</name>
+      <backgroundColor>-12566464</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <beats>4</beats>
+      <subDivisions>4</subDivisions>
+      <patterns>
+        <pattern>
+          <patternName>snare</patternName>
+          <patternScore>i1 0 .25 90</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>0000100000001000</values>
+        </pattern>
+        <pattern>
+          <patternName>hihat</patternName>
+          <patternScore>i2 0 .25 80</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>1010101010101010</values>
+        </pattern>
+        <pattern>
+          <patternName>bass drum</patternName>
+          <patternScore>i3 0 .25 55</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>1000000000100000</values>
+        </pattern>
+      </patterns>
+    </soundObject>
+    <soundObject type='blue.soundObject.PatternObject'>
+      <subjectiveDuration>4.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>Pattern B</name>
+      <backgroundColor>-12566464</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <beats>4</beats>
+      <subDivisions>4</subDivisions>
+      <patterns>
+        <pattern>
+          <patternName>snare</patternName>
+          <patternScore>i1 0 .25 90</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>0000100000001000</values>
+        </pattern>
+        <pattern>
+          <patternName>hihat</patternName>
+          <patternScore>i2 0 .25 80</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>1010101010101010</values>
+        </pattern>
+        <pattern>
+          <patternName>bass drum</patternName>
+          <patternScore>i3 0 .25 55</patternScore>
+          <muted>false</muted>
+          <solo>false</solo>
+          <values>1000100010001000</values>
+        </pattern>
+      </patterns>
+    </soundObject>
+  </soundObjectLibrary>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco>t 0 148</globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>declick</opcodeName>
+      <outTypes>a</outTypes>
+      <inTypes>a</inTypes>
+      <codeBody>
+ain     xin
+aenv    linseg 0, 0.02, 1, p3 - 0.05, 1, 0.02, 0, 0.01, 0
+        xout ain * aenv         ; apply envelope and write output
+
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooo</inTypes>
+      <codeBody>ienvType, iattack, idecay, isus, irel	xin
+
+itie	tival
+idur = p3
+
+;kenv init 1
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        kenv adsr iattack, idecay, isus, irel
+  
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>32</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>4</timeUnit>
+    <soundLayer name='Comments' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Comment</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>This example file demonstrates the usage of the PatternObject.  For more infomrmation, please consult the reference section of the blue manual.</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>4.0</startTime>
+        <name>Pattern B</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>12.0</startTime>
+        <name>Pattern B</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>20.0</startTime>
+        <name>Pattern B</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='1'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Pattern A</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>8.0</startTime>
+        <name>Pattern A</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>16.0</startTime>
+        <name>Pattern A</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>24.0</startTime>
+        <name>Pattern A</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PatternObject'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>28.0</startTime>
+        <name>Pattern C</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <beats>4</beats>
+        <subDivisions>4</subDivisions>
+        <patterns>
+          <pattern>
+            <patternName>snare</patternName>
+            <patternScore>i1 0 .25 90</patternScore>
+            <muted>false</muted>
+            <solo>false</solo>
+            <values>0000100000001111</values>
+          </pattern>
+          <pattern>
+            <patternName>hihat</patternName>
+            <patternScore>i2 0 .25 80</patternScore>
+            <muted>false</muted>
+            <solo>false</solo>
+            <values>1010101010101010</values>
+          </pattern>
+          <pattern>
+            <patternName>bass drum</patternName>
+            <patternScore>i3 0 .25 55</patternScore>
+            <muted>false</muted>
+            <solo>false</solo>
+            <values>1000100010001000</values>
+          </pattern>
+        </patterns>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>true</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

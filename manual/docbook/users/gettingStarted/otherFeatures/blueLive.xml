@@ -1,0 +1,159 @@
+<section id="blueLive">
+  <title>Blue Live</title>
+
+  <screenshot>
+    <screeninfo>Blue Live</screeninfo>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="images/blueLive.png" format="PNG" />
+      </imageobject>
+      <textobject>
+        <phrase>Blue Live</phrase>
+      </textobject>
+      <caption>
+        <para>Blue Live</para>
+      </caption>
+    </mediaobject>
+  </screenshot>
+
+  <para>
+    The Blue Live dialog allows you to test ideas and perform in realtime with
+    Commandline Csound via the -L stdin line events mechanism (not all versions
+    of Csound are capable of supporting this feature, particularly all Windows
+    versions; please check with the version of Csound you are using to find out 
+    if it supports this).  Blue Live will work with any version of Csound when
+    using the Csound API.
+  </para>
+
+
+  <simplesect>
+    <title>Motivation</title>
+
+    <para>
+      The motivation of Blue Live is that I wanted to be able to test ideas with
+      the instruments of my current work file and do so in a way that would be
+      easy for me to take my tests and put them in to use for composition. One
+      possible solution to my problem could be to make instruments my
+      instruments multipurposed as to be triggerable by MIDI and SCO. That way I
+      could play the instruments in realtime via MIDI and then, having found
+      some ideas I liked, start working in SCO.
+    </para>
+
+    <para>
+      However, in working out ideas this way I would still have to spend time to
+      notate in SCO the ideas I was working out in MIDI. Also, I found working
+      out ideas on the note level to be hard to work out with MIDI controllers.
+      (The flipside was also true, though, and working on the level of the sound
+      would sometimes be better off by using MIDI than using SCO.)
+    </para>
+
+    <para>
+      Blue Live solved my compositional problems by letting me test out ideas
+      with writing SCO and using them in realtime. That way, after working with
+      the ideas, I could directly transfer the ideas to my score timeline and
+      work with them in the context of the piece at hand.
+    </para>
+
+    <para>
+      Also, I found I enjoyed performing with Blue Live, as I found it a
+      comfortable level of abstraction to work with.
+    </para>
+
+  </simplesect>
+
+
+  <simplesect>
+    <title>Working with Blue Live</title>
+
+    <para>
+      Blue Live is designed to work with the rest of your blue project file. All
+      aspects of your regular blue file that would normally be written out to a
+      CSD file are done so
+      <emphasis>except</emphasis>
+      SCO text that would be generated from the score timeline. The global score
+      are will be written out, but instead of &lt;TOTAL_DUR&gt; being calculated
+      from the score timeline, a default value of 3600 is used. This allows your
+      notes that would be used for effects instruments to run for 3600 seconds
+      (this size can be altered if anyone needs be; just email me a request).
+    </para>
+
+    <para>
+      So in the Blue Live dialog, you'll see a textfield for a commandline at
+      the top, a start/stop button, an area to add/remove soundObjects, and an
+      area for the editors of those soundObjects.
+    </para>
+
+    <para>
+      The commandline is the Csound command you'll use to run Csound with the
+      temp CSD file that is generated. This command must have "-L stdin" as part
+      of its arguments for Csound to expect SCO input from stdin, which blue
+      uses to send SCO text to Csound. The default command of "csound -Wdo
+      devaudio -L stdin" should work as a basic start.
+    </para>
+
+    <para>
+      The start/stop button will start Csound using the user-given commandline
+      and will run it with a temporary CSD file generated from the blue project
+      file (minus the SCO from the score timeline). If already running, the
+      button will stop the previous performance. Also, if you close the dialog
+      while Csound is running, the dialog will stop the performance.
+    </para>
+
+    <para>
+      The main black window holds your soundObjects. Right-Clicking in the main
+      area will bring up a dialog for adding soundObjects. The soundObject GUI's
+      that are added when adding soundObjects in this area consist of a large
+      trigger button that will generate notes from the soundObject and pass it
+      to Csound via stdin, as well as a label. Clicking the label once will
+      bring up the soundObject's editor in the bottom part of the window.
+      Double-Clicking the label will allow you to edit the name of the
+      soundObject.
+    </para>
+
+  </simplesect>
+
+  <simplesect>
+    <title>EXPLORING IDEAS</title>
+
+    <para>
+      Blue Live uses a subset of the same soundObjects that are available on the
+      score timeline within the main editing window of blue. Some possible ways
+      you could explore ideas are:
+    </para>
+
+    <itemizedlist>
+
+      <listitem>
+        <para>trying out SCO ideas with genericScore</para>
+      </listitem>
+
+      <listitem>
+        <para>testing your python functions with the pythonObject</para>
+      </listitem>
+
+      <listitem>
+        <para>testing your javaScript functions with the rhinoObject</para>
+      </listitem>
+
+      <listitem>
+        <para>
+          using Cmask, nGen, Common Music, and other programs with the external
+          soundObject to try out things live
+        </para>
+      </listitem>
+
+    </itemizedlist>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Other Things to Note</title>
+
+    <para>
+      All objects are set to generate as if their time behavior was set to none,
+      meaning no scaling or repetition is done
+    </para>
+
+  </simplesect>
+
+</section>

@@ -1,0 +1,126 @@
+<preface id="credits">
+<title>Credits</title>
+
+<para>I would like to thank the following people following people for their contributions to blue:</para>
+
+<variablelist>
+
+<varlistentry>
+<term>Michael Bechard</term>
+<listitem>
+<para>
+Java development
+</para>
+</listitem>
+</varlistentry>
+    
+<varlistentry>
+<term>Andr&eacute;s Cabrera</term>
+<listitem>
+<para>
+Documentation, Tutorials, and Ideas
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Dave Seidel</term>
+<listitem>
+<para>
+Java development
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Kevin Welsh</term>
+<listitem>
+<para>
+PHP work on blueShare server, Java code
+</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+
+
+<variablelist>
+<title>Translations</title>
+
+<varlistentry>
+<term>Josep M Comajuncosas</term>
+<listitem>
+<para>
+Catalan
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Stephane Boussuge</term>
+<listitem>
+<para>
+French
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Jean Argenty</term>
+<listitem>
+<para>
+French
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Gabriel Maldonado</term>
+<listitem>
+<para>
+Italian
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Takashi Fukui</term>
+<listitem>
+<para>
+Japanese
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Young Choi</term>
+<listitem>
+<para>
+Korean
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Francisco Vila</term>
+<listitem>
+<para>
+Spanish Translation
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>Roberto J. Osorio-Goenaga</term>
+<listitem>
+<para>
+Spanish
+</para>
+</listitem>
+</varlistentry>
+
+
+</variablelist>
+
+
+</preface>

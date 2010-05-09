@@ -1,0 +1,15 @@
+# Supported Locales for blue
+# Format for this file:
+#     comment line start with a hash
+#     language types start with the description, a comma, then the language
+#       short name, the language short name is used to find the language
+#       file, so the short name must match the name of the translation file
+#       i.e. en will match SystemMessages_en.properties
+
+English,en
+Catalan,ca
+French,fr
+Italian,it
+Japanese,jp
+Korean,ko
+Spanish,es

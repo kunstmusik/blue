@@ -1,0 +1,87 @@
+<section id="orchestraManager">
+<title>Orchestra Manager</title>
+
+
+<screenshot>
+<screeninfo>Orchestra Manager</screeninfo>
+<mediaobject>
+<imageobject> <imagedata fileref="images/orchestraTab.png" format="PNG" /> </imageobject>
+<textobject> <phrase>Orchestra Manager</phrase> </textobject>
+<caption>
+<para>Orchestra Manager</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+<simplesect>
+<title>INTRODUCTION</title>
+
+<para>The Orchestra Manager is where the user organizes and edits the orchestra
+for the project as well as their user Instrument Library.</para>
+
+</simplesect>
+
+<simplesect>
+<title>User Instrument Library</title>
+
+<para>In the User Instrument Library (the tree pictured on the left), you can create
+instruments as well as categorize them into groups. Most actions in this editor
+are accessible by right clicking with the mouse to access popup menus. (keyboard
+shortcuts of ctrl-x, ctrl-c, and ctrl-v work for cutting, copying, and pasting
+nodes of the tree). To edit the name of Instruments or Groups, double click the
+name in the tree or hilight the node and press F2. This library of instruments is
+available across projects and is useful for building up and organizing a personal
+instrument library.  To copy instruments into the library from the project's Orchestra,
+you can drag and drop the instrument on the library tree to make a copy of the instrument.
+To copy an instrument from the Library to the project's orchestra, select an instrument in
+the library and use the "&gt;" arrow button.</para> </simplesect>
+
+<simplesect>
+<title>Orchestra</title>
+
+<para>The Orchestra panel (located in the top right of the picture) is where
+you will organized your instruments to be used for your project. The three buttons
+to the left of the Arrangment table will add a selected instrument(&quot;+&quot;),
+add a selected instrument from the user's Instrument Library to the project's orchestra
+(&quot;&gt;&quot;), or remove a selected instrument from the
+Orchestra(&quot;-&quot;). Once instruments are in the Orchestra, you can
+edit what their instrument ID's will be, be it a number in classical Csound
+style or a string for using named-instruments. (i.e. 3 for "instr 3", violin for
+"instr violin"). </para>
+
+</simplesect>
+
+<simplesect>
+<title>Instrument Editor</title>
+
+<para>In the bottom right is where the instrument editor for the selected
+instrument is shown.</para>
+
+<para>Depending on the blue instrument-type, different editors will appear here
+when selected in either the Orchestra table or Instrument Library tree.</para>
+</simplesect>
+
+<simplesect>
+<title>Legacy Projects</title>
+
+<para>For projects before 0.94.0, imported projects will have their instruments
+largely setup in the same way as they were before.</para>
+
+<para>For projects that were in the 0.94.0 beta series, per-project Instrument
+Libraries will be removed.  An option to import the instrument library will
+be presented to the user and if the user agrees, a folder entitled "Imported from
+Project" will be added to the root of the user's InstrumentLibrary.  On the whole,
+it is recommended to import the library, review the instruments, and simply remove
+what is not necessary. Deleting the imported library is as simple as deleting the
+folder for the imported group. Instruments in these project's Arrangements will
+be modified to hold copies of the instruments from the library as opposed to
+being references to instrument in the library.  (Previously, if two instruments
+in the Arrangement pointed to the same instrument in the per-project
+InstrumentLibrary, changes to the instrument in the library would affect all
+instruments in the Arrangment that pointed to it. Now, only copies are made and
+no references are used.)</para>
+</simplesect>
+
+
+
+</section>

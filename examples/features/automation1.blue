@@ -1,0 +1,381 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title></title>
+    <author>Steven Yi</author>
+    <notes></notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>untitled</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>aout	vco2 10000, 440 * &lt;harmonic&gt;
+
+aout	moogladder aout, &lt;cutoff&gt;, .05
+
+kenv 	linseg 0, .01, 1, p3 - .02, 1, .01, 0
+
+aout 	= aout * kenv
+
+blueMixerOut aout, aout</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>cutoff</objectName>
+            <x>18</x>
+            <y>14</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>200.0</minimum>
+            <maximum>10000.0</maximum>
+            <value>200.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>harmonic</objectName>
+            <x>114</x>
+            <y>28</y>
+            <automationAllowed>true</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>5.0</maximum>
+            <resolution>1.0</resolution>
+            <value>1.0</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList>
+          <parameter uniqueId='1852012297' name='cutoff' label='' min='200.0' max='10000.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='10000.0' min='200.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='200.0'/>
+              <linePoint x='1.59375' y='2232.9788'/>
+              <linePoint x='2.515625' y='10000.0'/>
+              <linePoint x='2.515625' y='4370.213'/>
+              <linePoint x='4.640625' y='929.7872'/>
+              <linePoint x='6.0' y='200.0'/>
+            </line>
+          </parameter>
+          <parameter uniqueId='1852924497' name='harmonic' label='' min='1.0' max='5.0' resolution='1.0' automationEnabled='true' value='0.0'>
+            <line name='' version='2' max='5.0' min='1.0' resolution='1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+              <linePoint x='0.0' y='1.0'/>
+              <linePoint x='2.46875' y='5.0'/>
+              <linePoint x='5.453125' y='1.0'/>
+            </line>
+          </parameter>
+        </bsbParameterList>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>-4.8196716</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'>
+          <effect>
+            <name>Tempo-Sync Stereo Delay</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>ibpm = &lt;bpm&gt;
+inl = &lt;notelength&gt;
+
+kfb = &lt;feedback&gt;
+idel = ( 1/(ibpm/60) * inl )
+
+aleft delayr idel
+aright delayr idel
+
+if ( &lt;pingpong&gt; == 0 ) then
+	ado1 = aleft + ain1
+	ado2 = aright + ain2
+else
+	ado1 = aright + ( .5 * (ain1 + ain2) )
+	ado2 = aleft
+endif
+
+delayw ado1 * kfb
+delayw ado2 * kfb
+
+if ( &lt;swap&gt; == 1 ) then
+	aout1 = aright
+	aout2 = aleft
+else
+	aout1 = aleft
+	aout2 = aright
+endif
+
+aout1 = ( aout1 * ( 1 - &lt;bal&gt; )  ) * 2
+aout2 = ( aout2 * &lt;bal&gt; ) * 2
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))</code>
+            <comments/>
+            <opcodeList/>
+            <graphicInterface editEnabled='true'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>bpm</objectName>
+                <x>9</x>
+                <y>24</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>1.0</minimum>
+                <maximum>1000.0</maximum>
+                <value>130.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>28</x>
+                <y>6</y>
+                <label>BPM</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>notelength</objectName>
+                <x>77</x>
+                <y>24</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>4.0</maximum>
+                <value>0.75</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>wetdry</objectName>
+                <x>275</x>
+                <y>24</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>1.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>278</x>
+                <y>5</y>
+                <label>Wet / Dry</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>72</x>
+                <y>5</y>
+                <label>Note Length</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>feedback</objectName>
+                <x>144</x>
+                <y>24</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>148</x>
+                <y>5</y>
+                <label>Feedback</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+                <objectName>pingpong</objectName>
+                <x>121</x>
+                <y>100</y>
+                <label>Ping-Pong mode</label>
+                <selected>false</selected>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+                <objectName>swap</objectName>
+                <x>121</x>
+                <y>122</y>
+                <label>Swap Outputs</label>
+                <selected>false</selected>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>bal</objectName>
+                <x>210</x>
+                <y>24</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>216</x>
+                <y>5</y>
+                <label>Balance</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='-1652918679' name='bal' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.5'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.5'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-1652918677' name='feedback' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.5'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.5'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='1904956352' name='wetdry' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='1.0'/>
+                  <linePoint x='2.390625' y='0.0'/>
+                  <linePoint x='5.859375' y='1.0'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1852012295' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-4.8196716'/>
+            <linePoint x='1.671875' y='3.1475372'/>
+            <linePoint x='5.140625' y='-14.557381'/>
+            <linePoint x='6.21875' y='-96.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='1852012293' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>5</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='5'>
+      <noteProcessorChain/>
+      <parameterId>1852012297</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='5'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>for i in range(60):
+	score += &quot;i1 %i .9\n&quot;%(i)</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='5'>
+      <noteProcessorChain/>
+      <parameterId>1852924497</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='5'>
+      <noteProcessorChain/>
+      <parameterId>1852012295</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='5'>
+      <noteProcessorChain/>
+      <parameterId>1904956352</parameterId>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

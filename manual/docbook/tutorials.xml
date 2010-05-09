@@ -1,0 +1,12 @@
+<part id="tutorials">
+<title>Tutorials</title>
+
+<partintro>
+    <para>Tutorials</para>
+</partintro>
+
+&tutorialFirstProject;
+&tutorialScripting;
+&tutorialSoundSoundObject;
+
+</part>

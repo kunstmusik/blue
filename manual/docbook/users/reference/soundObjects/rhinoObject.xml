@@ -1,0 +1,27 @@
+<section id="rhinoObject">
+<title>RhinoObject</title>
+         
+<para>Accepts NoteProcessors: no</para>
+         
+<para>Allows for the use of the JavaScript programming language to create score
+data. uses the Rhino interpreter to interpret JavaScript scripts.</para>
+         
+<para>After writing your script to generate notes, you'll have to bring back
+into blue by assigning the variable 'score' the text string of the generated
+javaScript score.</para>
+         
+<simplesect>
+<title>Example</title>
+         
+<programlisting>
+[code for generating score]
+...
+         
+score = myScoreGenerator();
+</programlisting>
+         
+<para>(where myScoreGenerator() is a function that will generate Csound SCO)</para>
+  
+</simplesect>
+         
+</section>

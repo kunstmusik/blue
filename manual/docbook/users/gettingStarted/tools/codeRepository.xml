@@ -1,0 +1,36 @@
+<section id="codeRepository">
+<title>Code Repository</title>
+
+<screenshot>
+<screeninfo>Code Repository</screeninfo>
+<mediaobject>
+<imageobject><imagedata fileref="images/codeRepository.png" format="PNG" /></imageobject>
+<textobject><phrase>Code Repository</phrase></textobject>
+<caption>
+<para>Code Repository</para>
+</caption>
+</mediaobject>
+</screenshot>
+
+
+<para>The Code Repository is where you edit the options that will come up from
+the code popup (the popup menu that is accessible by rt-clicking on most of the
+text areas in blue).</para>
+
+<para>The Code Repository features a tree to organize your code. Rt-clicking on
+a folder will give you options shown in the screen shot, to either add another
+code group, remove the current group, or add a code snippet to the group.</para>
+
+<para>If you add either a code group or a code snippet it'll be added with a
+default name. To edit the name, double click on the group or snippet and the
+area on the tree will change into a text field to edit the name.</para>
+
+<para>To edit a snippet, simply click on the snippet in the tree and on the
+right a text area will appear. In that text area, edit the text that is
+associated with the code snippet.</para>
+
+<para>When you're done editing your code repository, the next time you rt-click
+on a text area, the code popup will reflect the changes you've made, including
+any new code groups and snippets you've added.</para>
+
+</section>

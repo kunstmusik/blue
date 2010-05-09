@@ -1,0 +1,32 @@
+<section id="soundFontViewer">
+  <title>Sound Font Viewer</title>
+
+  <screenshot>
+    <screeninfo>Sound Font Viewer</screeninfo>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="images/soundFontViewer.png" format="PNG" />
+      </imageobject>
+      <textobject>
+        <phrase>Sound Font Viewer</phrase>
+      </textobject>
+      <caption>
+        <para>Sound Font Viewer</para>
+      </caption>
+    </mediaobject>
+  </screenshot>
+
+  <para>
+    The Sound Font Viewer allows you to select SoundFonts from the file
+    selection panel (on the left) and get a listing of the instruments and
+    presets within that SoundFont.
+  </para>
+
+  <para>
+    To use, simply navigate using the file selection panel and double-click on a
+    SoundFont. After a moment or so, the tables on the right side will be
+    populated with a listing of instruments and presets held within that
+    SoundFont.
+  </para>
+
+</section>

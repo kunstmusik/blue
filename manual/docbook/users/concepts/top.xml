@@ -1,0 +1,12 @@
+<chapter id="concepts">
+<title>Concepts</title>
+
+&conceptsRendering;
+&conceptsSoundObjects;
+&conceptsPolyObjects;
+&conceptsNoteProcessors;
+&conceptsSoundObjectLibrary;
+&conceptsParameterAutomation;
+&conceptsCommandBlocks;
+
+</chapter>

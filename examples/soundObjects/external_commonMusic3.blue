@@ -1,0 +1,208 @@
+<blueData version='0.106.0_beta3'>
+  <projectProperties>
+    <title></title>
+    <author>S.Boussuge</author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FM1</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>iamp	=	p4			;The maximum amplitude allowed
+icps	=	p5
+iratio	=	p6			;BIG envelope
+ipos	=	p7			;spatial placement
+ienv	=	p8			;envelope function
+ifn	=	p9
+kenv	oscili	1, 1/p3, ienv		;envelope
+;kpos	randi	.5, ischng		;gen amp points/sec
+;kpos	=	kpos+.5			;scale to 0 to 1
+
+kindx	oscili	1, 1/p3, ienv		;index envelope (not scaled)
+asnd	foscili	iamp, icps, 1, iratio, kindx*4, ifn
+
+;THIS ADDS POWER PANNING
+kppan	=	ipos*1.570796325  ; half of PI (radians of 90o angle)
+kpleft	=	cos(kppan)        ; half sign &quot;down&quot;
+kpright	=	sin(kppan)        ; half sign &quot;up&quot;
+
+ax	=	asnd*kenv
+
+;Now to filter out yucky DC offsets caused by &quot;foscili&quot;
+al	buthp	ax*kpleft,  20
+ar	buthp	ax*kpright, 20
+
+	outs al,ar
+
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+    </channel>
+  </mixer>
+  <tables>f1 0 8192 10 1	                    ;sine wave function
+f2 0 1025  -5 4 1025 .01           ;index envelope
+f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
+f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
+f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <heightIndex>2</heightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.External'>
+        <subjectiveDuration>10.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>External</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <text>(load &quot;c:/cm/src/cm.lisp&quot;)
+(in-package :cm)
+
+
+(defparameter *buflen* 4096); used to store file in print-stream function
+
+
+(defobject i1 (i)
+  ((amp :initform 32000)
+   (cps :initform 440)
+    (ratio :initform 1.00)
+    (pos :initform 0)
+    (env :initform 11)
+    (ifn :initform 1))
+(:parameters time dur amp cps ratio pos env ifn))
+
+(define (notes len)
+  (process while (&lt; (now) len)
+           for a = (between 25000 28000)
+           for f = (between 220 440)
+           for ra = (between 1.00 3.00)
+           for p = (pick -1 0 1)
+           for e = (pick 10 11 12)
+           for ry = (pick .25 .5 )
+           output (new i1 :time (now) 
+                       :amp a	
+                       :cps f
+                       :ratio ra
+                       :pos p
+                       :env e
+                       :dur ry)
+           wait ry))
+                       
+
+
+(events (notes 10 ) &quot;tata.sco&quot;)
+
+                       
+
+
+(defun print-stream (filename)
+       (let ((buffer (make-array *buflen*)))
+       (with-open-file (f filename :direction :input
+                     :if-does-not-exist :error
+                     )
+       (do ((j 0))((= j (file-length f)))
+       (setf myline (read-line f t &quot;eofeof&quot;))
+       (if (string-equal myline &quot;eofeof&quot;)(return))
+       (princ myline)
+       (write-char #\Newline)
+       (setf j (+ j ))
+       )
+  ))
+)
+;
+;
+
+;
+(print-stream  &quot;tata.sco&quot;)</text>
+        <commandLine>clisp</commandLine>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText>iamp	=	p4			;The maximum amplitude allowed
+icps	=	p5
+iratio	=	p6			;BIG envelope
+ipos	=	p7			;spatial placement
+ienv	=	p8			;envelope function
+ifn	=	p9</scratchText>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+</blueData>

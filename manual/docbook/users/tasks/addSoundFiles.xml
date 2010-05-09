@@ -1,0 +1,12 @@
+<section id="addSoundFiles">
+  <title>Add Sound Files to Your Project</title>
+
+  <para>
+    If you have audio files you'd like to add to your project to play
+    exactly as they are with perhaps just a little post-processing, the
+    easiest way to do that in blue is to use the
+    <link linkend="audioFile">AudioFile SoundObject</link>.
+
+  </para>
+
+</section>

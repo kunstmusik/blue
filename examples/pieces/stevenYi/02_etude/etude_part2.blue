@@ -1,0 +1,3173 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>Etude - Part 2</title>
+    <author>steven yi</author>
+    <notes>Completed 2006.03.23
+
+Please view separate program notes for more information about this piece, or visit my website: http://www.kunstmusik.com</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings>csound -Wdo etude_part2.wav -m7</diskAdvancedSettings>
+    <diskCompleteOverride>true</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Alpha v1- Orch</name>
+        <comment>Alpha v1
+by Steven Yi
+
+A 3-Oscilator Subtractive Synthesizer
+
+This instrument is designed to work with the author&apos;s python Orchestral Composition library, included with blue.  
+
+This instrument uses the following pfields:
+
+p4 	ipch 	
+p5	ipch2
+
+p6	amp in db
+p7	pan (-1.0 to 1.0)
+p8	articulation (see yiEnvelope UDO below)
+
+
+This instrument uses the following UDO&apos;s:
+
+
+
+	opcode yiEnvelope,k,ioooooo
+
+ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+
+
+	endop
+
+
+	opcode yiFilterEnvelope,k,ioooo
+
+ienvType, iattack, idecay, isus, irel	xin
+
+if (ienvType == 0) then
+    kenv	linseg	0, iattack, 1, idecay, isus, .01, isus
+
+elseif (ienvType == 1) then	
+    kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then
+    kenv	linseg	0, p3 - .1, 1, .1, 1
+
+elseif (ienvType == 3) then
+
+    itie	tival
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv init 1
+
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a single note
+
+        ; TODO - Should Remove, use articulation from other places
+        ;kenv adsr 	.2, 0, 1, 1
+        kenv linseg 0, .2,1, .1, 1
+
+    
+
+    endif  
+
+endif
+
+	xout 	kenv
+
+
+	endop
+
+
+	opcode getFrequency,i,i
+
+ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+
+
+	endop</comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, &lt;attack&gt;, &lt;decay&gt;, &lt;sustain&gt;, &lt;release&gt;
+kFilterEnv	 yiFilterEnvelope ienvType, &lt;attack&gt;, &lt;decay&gt;, &lt;sustain&gt;, &lt;release&gt;
+
+
+iwaveform1		= &lt;waveform1&gt;
+iwaveform2 	= &lt;waveform2&gt;
+iwaveform3 	= &lt;waveform3&gt;
+
+
+iamp1		= &lt;oscAmp1&gt;
+iamp2		= &lt;oscAmp2&gt;
+iamp3		= &lt;oscAmp3&gt;
+
+
+
+/* SOUND GENERATION CODE */
+
+;a1	vco2	1, kpchline + &lt;detune1&gt;, iwaveform1, &lt;pulsewidth1&gt;
+;a2	vco2	1, kpchline + &lt;detune2&gt;, iwaveform2, &lt;pulsewidth2&gt;
+;a3	vco2	1, kpchline + &lt;detune3&gt;, iwaveform3, &lt;pulsewidth3&gt;
+
+a1	vco2	1, kpchline, iwaveform1, &lt;pulsewidth1&gt;
+a2	vco2	1, kpchline, iwaveform2, &lt;pulsewidth2&gt;
+a3	vco2	1, kpchline, iwaveform3, &lt;pulsewidth3&gt;
+
+
+aout	= (a1 * iamp1) + (a2 * iamp2) + (a3 * iamp3)
+
+;aout	moogladder		aout, kpchline + ( (&lt;cutoff&gt;  - kpchline) * kFilterEnv), &lt;resonance&gt;
+aout	moogvcf		aout, kpchline + ( (&lt;cutoff&gt;  - kpchline) * kFilterEnv), &lt;resonance&gt;
+;aout	butterlp	aout, &lt;cutoff&gt;
+
+aout	balance 	aout, a1
+
+aout	= aout * iamp * kenv
+
+krtl     	= sqrt(2) / 2 * cos(iSpace) + sin(iSpace) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * cos(iSpace) - sin(iSpace)	; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	= aout * krtl
+aRight	= aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>decay</objectName>
+            <x>519</x>
+            <y>45</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.15</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>sustain</objectName>
+            <x>572</x>
+            <y>45</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.89667374</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>release</objectName>
+            <x>625</x>
+            <y>45</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.1461223</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>attack</objectName>
+            <x>466</x>
+            <y>45</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.049999997</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>470</x>
+            <y>26</y>
+            <label>Attack</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>523</x>
+            <y>26</y>
+            <label>Decay</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>573</x>
+            <y>26</y>
+            <label>Sustain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>626</x>
+            <y>26</y>
+            <label>Release</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>379</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp Env&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>424</x>
+            <y>161</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;VCF&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>511</x>
+            <y>131</y>
+            <label>Resonance</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>471</x>
+            <y>131</y>
+            <label>Cutoff</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>oscAmp1</objectName>
+            <x>90</x>
+            <y>86</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>cutoff</objectName>
+            <x>466</x>
+            <y>151</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20000.0</maximum>
+            <value>4494.959</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>resonance</objectName>
+            <x>519</x>
+            <y>151</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.44528311</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulsewidth1</objectName>
+            <x>26</x>
+            <y>86</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.7503816</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>9</x>
+            <y>39</y>
+            <label>Waveform</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>25</x>
+            <y>65</y>
+            <label>PulseWidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>12</x>
+            <y>6</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;OSC 1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform1</objectName>
+            <x>75</x>
+            <y>35</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Sawtooth</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square/PWM</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw/Tri/Ramp</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse (not normalized)</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Integrated Sawtooth    </name>
+                <value>8</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square Wave (no PWM)</name>
+                <value>10</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Triangle (no ramp)</name>
+                <value>12</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>1</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>110</x>
+            <y>65</y>
+            <label>Mix</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>163</x>
+            <y>65</y>
+            <label>Detune</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>detune1</objectName>
+            <x>153</x>
+            <y>86</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>-10.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>oscAmp2</objectName>
+            <x>86</x>
+            <y>272</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.16735752</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulsewidth2</objectName>
+            <x>22</x>
+            <y>272</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.93469685</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>5</x>
+            <y>225</y>
+            <label>Waveform</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>21</x>
+            <y>251</y>
+            <label>PulseWidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>8</x>
+            <y>192</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;OSC 2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform2</objectName>
+            <x>71</x>
+            <y>221</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Sawtooth</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square/PWM</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw/Tri/Ramp</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse (not normalized)</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Integrated Sawtooth    </name>
+                <value>8</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square Wave (no PWM)</name>
+                <value>10</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Triangle (no ramp)</name>
+                <value>12</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>4</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>106</x>
+            <y>251</y>
+            <label>Mix</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>159</x>
+            <y>251</y>
+            <label>Detune</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>detune2</objectName>
+            <x>149</x>
+            <y>272</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>-10.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>oscAmp3</objectName>
+            <x>88</x>
+            <y>452</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.8104157</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pulsewidth3</objectName>
+            <x>24</x>
+            <y>452</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.93469685</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>7</x>
+            <y>405</y>
+            <label>Waveform</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>23</x>
+            <y>431</y>
+            <label>PulseWidth</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>10</x>
+            <y>372</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;OSC 3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBDropdown'>
+            <objectName>waveform3</objectName>
+            <x>73</x>
+            <y>401</y>
+            <bsbDropdownItemList>
+              <bsbDropdownItem>
+                <name>Sawtooth</name>
+                <value>0</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square/PWM</name>
+                <value>2</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Saw/Tri/Ramp</name>
+                <value>4</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Pulse (not normalized)</name>
+                <value>6</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Integrated Sawtooth    </name>
+                <value>8</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Square Wave (no PWM)</name>
+                <value>10</value>
+              </bsbDropdownItem>
+              <bsbDropdownItem>
+                <name>Triangle (no ramp)</name>
+                <value>12</value>
+              </bsbDropdownItem>
+            </bsbDropdownItemList>
+            <selectedIndex>6</selectedIndex>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>108</x>
+            <y>431</y>
+            <label>Mix</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>161</x>
+            <y>431</y>
+            <label>Detune</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>detune3</objectName>
+            <x>151</x>
+            <y>452</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>-10.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name=''>
+          <presetGroup name='Snapshots'>
+            <preset name='Snapshot1'>
+              <setting name='attack'>0.01</setting>
+              <setting name='cutoff'>0.049524926</setting>
+              <setting name='decay'>0.014572331</setting>
+              <setting name='detune1'>0.5</setting>
+              <setting name='detune2'>0.5</setting>
+              <setting name='detune3'>0.5</setting>
+              <setting name='oscAmp1'>1.0</setting>
+              <setting name='oscAmp2'>0.559624</setting>
+              <setting name='oscAmp3'>0.8104157</setting>
+              <setting name='pulsewidth1'>0.93469685</setting>
+              <setting name='pulsewidth2'>0.93469685</setting>
+              <setting name='pulsewidth3'>0.93469685</setting>
+              <setting name='release'>0.014612231</setting>
+              <setting name='resonance'>0.065000884</setting>
+              <setting name='sustain'>0.89667374</setting>
+              <setting name='waveform1'>0</setting>
+              <setting name='waveform2'>1</setting>
+              <setting name='waveform3'>6</setting>
+            </preset>
+            <preset name='Snapshot2'>
+              <setting name='attack'>0.01</setting>
+              <setting name='cutoff'>0.05</setting>
+              <setting name='decay'>0.014572331</setting>
+              <setting name='detune1'>0.5</setting>
+              <setting name='detune2'>0.5</setting>
+              <setting name='detune3'>0.5</setting>
+              <setting name='oscAmp1'>1.0</setting>
+              <setting name='oscAmp2'>0.559624</setting>
+              <setting name='oscAmp3'>0.8104157</setting>
+              <setting name='pulsewidth1'>0.7503816</setting>
+              <setting name='pulsewidth2'>0.93469685</setting>
+              <setting name='pulsewidth3'>0.93469685</setting>
+              <setting name='release'>0.014612231</setting>
+              <setting name='resonance'>0.019781437</setting>
+              <setting name='sustain'>0.89667374</setting>
+              <setting name='waveform1'>6</setting>
+              <setting name='waveform2'>1</setting>
+              <setting name='waveform3'>6</setting>
+            </preset>
+          </presetGroup>
+        </presetGroup>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='false'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>monosynth</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	= abs(p3)
+iamp	= ampdb(p4)
+inewpch	= cpspch(p5)
+iSpace	= p6
+
+imode	= 1
+istor = 1
+
+p3	= (p3 &lt; 0) ? p3 - 1 : p3 + 1
+
+itie	tival
+
+tigoto skipinit
+
+ioldpch 	init cpspch(p5)
+kenv	linseg	0, .2, 1, p3 - .2, 1
+;kenv = 1
+imode = 0
+istor = 0
+
+
+skipinit:
+
+if p3 &lt; 0 goto skiprelease
+
+if itie == 0 goto singlenote
+
+kenv	linseg	1, p3 - 1, 1, 1, 0
+
+goto skiprelease
+
+singlenote:
+
+kenv	adsr 	.2, 0, 1, 1
+
+skiprelease:
+
+;islidepch = (iNewPch - ioldpch) * .5
+
+
+;kpch	port	inewpch, p3 * .55, ioldpch
+kpchline	linseg	ioldpch, idur * .5, inewpch, idur * .5, inewpch
+;kpch = inewpch
+;kpch	port	ipch, .02, ipch - islidepch
+ioldpch	= inewpch
+
+
+; SOUND GENERATION CODE
+
+aout	vco2	1, kpchline, imode
+;aout	= aout * aout * aout * aout
+aout	moogvcf  aout, kpchline + (kpchline * 2 * kenv) , .25, 1, istor
+
+;OUTPUT CODE
+aout	= aout * kenv * iamp
+
+;SPATIALISATION
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+outs	aLeft, aRight</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='false'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Orchestra - MonoSynth</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>p3	= (p3 &lt; 0) ? p3 - 1 : p3 + 1
+
+idur	= abs(p3)
+ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+;kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+
+iSpace	= p7
+ienvType	= p8
+
+imode	= 1
+istor 	= 1
+itie	tival
+
+if (itie == 0.00) then
+
+    ioldpch 	init ipch
+    iOldAmp	init iamp
+
+    imode = 0
+    istor = 0
+
+endif
+
+;INSERT SOUND GENERATION CODE HERE
+
+iNewAmp	= iamp
+
+kenv 	yiEnvelope ienvType, .15, .1, .95, .2, iOldAmp, iNewAmp
+kFilterEnv yiFilterEnvelope ienvType
+
+
+inewpch 	= ipch
+
+kpchline	linseg	ioldpch, idur * .5, inewpch, idur * .5, inewpch
+
+ioldpch	= inewpch
+
+
+aout	vco2	1, kpchline, imode
+aout	moogvcf  aout, kpchline + (kpchline * 2 * kFilterEnv) , .05, 1, istor
+
+
+;OUTPUT CODE
+aout	= aout * kenv * iOldAmp
+
+iOldAmp	= iNewAmp
+
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>String Pad</name>
+        <comment>modified instrument by JL Diaz,
+which was itself a modified instrument by Anthony Kozar</comment>
+        <globalOrc>;[once]{
+gi_jl_diaz ftgen 0, 0, 4096, 10, 1, .5, .33, .25,  .0, .1,  .1, .1
+;}
+
+;[once]{
+gi_square		ftgen 0, 0, 65537, 10, 1, 0, 0.111111, 0, 0.4, 0, .020408163, 0, .012345679, 0, .008264463
+;}
+
+;[once]{
+gi_cosine		ftgen 0, 0, 65537, 11, 1
+;}</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>
+p3	= (p3 &lt; 0) ? p3 - 1 : p3 + 1
+
+idur	= abs(p3)
+ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+;kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+
+iSpace	= p7
+ienvType	= p8
+
+imode	= 1
+istor 	= 1
+itie	tival
+
+tigoto skipInit
+
+    ioldpch 	init ipch
+    iOldAmp	init iamp
+
+    imode = 0
+    istor = 0
+
+skipInit:
+;INSERT SOUND GENERATION CODE HERE
+
+iNewAmp	= iamp
+
+kenv 	yiEnvelope ienvType, .15, .1, .95, .2, iOldAmp, iNewAmp
+kFilterEnv yiFilterEnvelope ienvType
+
+
+inewpch 	= ipch
+
+kpchline	linseg	ioldpch, idur * .5, inewpch, idur * .5, inewpch
+
+ioldpch	= inewpch
+
+
+/*afund   oscili   1, kpchline, gi_jl_diaz, istor * -1           ; audio oscillator
+acel1   oscili   1, kpchline - .008, gi_jl_diaz, istor * -1    ; audio oscillator - flat
+acel2   oscili   1, kpchline + .012, gi_jl_diaz, istor * -1    ; audio oscillator - sharp
+
+aout    =   afund + acel1 + acel2
+
+aout	butterlp 	aout, kpchline + (kpchline * 4 * kFilterEnv), istor */
+
+
+knh = (sr * .25) / kpchline
+klh = 1
+kmul = 0.7
+ifn = gi_cosine
+
+aout 	gbuzz 1, kpchline, knh, klh, kmul, ifn, istor * -1
+
+;aout	moogladder	aout, kpchline + (kFilterEnv * kpchline * 4), .9, istor
+
+;aout	vco2	1, kpchline, imode
+aout	moogvcf  aout, kpchline + (kpchline * 2 * kFilterEnv) , .05, 1, istor
+
+
+;OUTPUT CODE
+aout	= aout * kenv * iOldAmp
+
+iOldAmp	= iNewAmp
+
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+
+
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FM String</name>
+        <comment>Modified from:
+
+http://www.adp-gmbh.ch/csound/fm/string.html
+
+Which is an implementation of Bill Schottstaedt&apos;s FM String.</comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv 	yiEnvelope ienvType
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+
+  idur    = p3
+
+  kfqc    = kpchline      ;S = fc +- ifm1 +- kfm2 +- lfm3
+  kfm1    = kfqc
+  kfm2    = kfqc*3
+  kfm3    = kfqc*4
+  kndx1   = 7.5/log(kfqc)    ;range from ca 2 to 1
+  kndx2   = 15/sqrt(kfqc)    ;range from ca 2.6 to .5
+  kndx3   = 1.25/sqrt(kfqc)  ;range from ca .2 to .038
+  
+  inoisdur= .1
+  ivibdel =  1
+  ivibwth = .003
+  ivibrte = 3.5
+
+        kvib    init    0
+;                timout  0,ivibdel,transient   ; delay vibrato ivibdel sec
+;        kvbctl  linen   1,.5,idur-ivibdel,.1  ; vibrato control envelope
+;        krnd    randi   .0075,2               ; random deviation vib width
+;        kvib    oscili  kvbctl*ivibwth+krnd,ivibrte*kvbctl,gi_sine   ; generator
+
+transient:
+                timout  inoisdur,p3,continue  ; execute for .2 secs only
+        ktrans  linseg  1,inoisdur,0,1,0      ; transient envelope
+        anoise  randi   ktrans*iamp/4,.2*kfqc ; attack noise...
+        attack  oscili  anoise,2000,gi_sine         ; ...centered around 2kHz
+
+
+continue:
+        amod1   oscili  kfm1*(kndx1+ktrans),kfm1,gi_sine
+        amod2   oscili  kfm2*(kndx2+ktrans),kfm2,gi_sine
+        amod3   oscili  kfm3*(kndx3+ktrans),kfm3,gi_sine
+        asig    oscili  iamp,(kfqc+amod1+amod2+amod3)*(1+kvib),gi_sine
+        aout    = asig * kenv 
+
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='5' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>French Horn (Horner and Ayers)</name>
+        <comment>Need to fix
+</comment>
+        <globalOrc>;[once]{
+gi_horn_seed = .5
+;}
+
+;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco>;Horner and Ayers French Horn tables
+f 1101 0   4097    -9  1 1.0 0
+f 1102 0   16  -2  40 40 80 160 320 640 1280 2560 5120 10240 10240  ;LP Filter Cutoff Lookup table
+f 1103 0   64  -2  11 12 13 52.476 14 15 16 18.006 17 18 19 11.274 20 21 22 6.955 23 24 25 2.260 26 27 10 1.171 28 29 10 1.106 30 10 10 1.019
+f 1104 0   2048    -17 0 0 85 1 114 2 153 3 204 4 272 5 364 6 486 7
+f 1110    0   5   -9  1 0.0 0
+f 1111    0   4097    -9  2 6.236 0 3 12.827 0
+f 1112    0   4097    -9  4 21.591 0 5 11.401 0 6 3.570 0 7 2.833 0
+f 1113    0   4097    -9  8 3.070 0 9 1.053 0 10 0.773 0 11 1.349 0 12 0.819 0 13 0.369 0 14 0.362 0 15 0.165 0 16 0.124 0 18 0.026 0 19 0.042 0
+f 1114    0   4097    -9  2 3.236 0 3 6.827 0
+f 1115    0   4097    -9  4 5.591 0 5 2.401 0 6 1.870 0 7 0.733 0
+f 1116    0   4097    -9  8 0.970 0 9 0.553 0 10 0.373 0 11 0.549 0 12 0.319 0 13 0.119 0 14 0.092 0 15 0.045 0 16 0.034 0
+f 1117    0   4097    -9  2 5.019 0 3 4.281 0
+f 1118    0   4097    -9  4 2.091 0 5 1.001 0 6 0.670 0 7 0.233 0
+f 1119    0   4097    -9  8 0.200 0 9 0.103 0 10 0.073 0 11 0.089 0 12 0.059 0 13 0.029 0
+f 1120    0   4097    -9  2 4.712 0 3 1.847 0
+f 1121    0   4097    -9  4 0.591 0 5 0.401 0 6 0.270 0 7 0.113 0
+f 1122    0   4097    -9  8 0.060 0 9 0.053 0 10 0.023 0
+f 1123    0   4097    -9  2 1.512 0 3 0.247 0
+f 1124    0   4097    -9  4 0.121 0 5 0.101 0 6 0.030 0 7 0.053 0
+f 1125    0   4097    -9  8 0.030 0
+f 1126    0   4097    -9  2 0.412 0 3 0.087 0
+f 1127    0   4097    -9  4 0.071 0 5 0.021 0
+f 1128    0   4097    -9  2 0.309 0 3 0.067 0
+f 1129    0   4097    -9  4 0.031 0
+f 1130    0   4097    -9  2 0.161 0 3 0.047 0</globalSco>
+        <instrumentText>;ipch 	= p4
+;ipch2	= p5
+
+;ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+;ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType, .15, .1, .95, .2
+
+; INSERT SOUND GENERATING CODE HERE 
+
+ifcut	= 2560		; LP FILTER CUTOFF FREQUENCY
+
+
+kenv2	=		kenv * kenv 			; WAVETABLE ENVELOPES
+kenv3	=		kenv2 * kenv
+kenv4	=		kenv3 * kenv
+
+irange	tablei	ipch, 1104
+iwt1	=	gi_sine					; WAVETABLE NUMBERS
+iwt2	table	(irange*4), 1103
+iwt3	table	(irange*4)+1, 1103
+iwt4	table	(irange*4)+2, 1103
+inorm	table	(irange*4)+3, 1103		; NORMALIZATION FACTOR
+
+iiwt1 			=			iwt1
+iiwt2 			=			iwt2 + 1100
+iiwt3 			=			iwt3 + 1100
+iiwt4 			=			iwt4 + 1100
+
+iphase	= gi_horn_seed				; SAME PHASE FOR ALL TABLES
+giseed	= frac(gi_horn_seed*105.947)
+
+awt1	oscil	kenv, kpchline, iiwt1, iphase ; WAVETABLE LOOKUP
+awt2	oscil	kenv2, kpchline, iiwt2, iphase
+awt3	oscil	kenv3, kpchline, iiwt3, iphase
+awt4	oscil	kenv4, kpchline, iiwt4, iphase
+aout	=		(awt1+awt2+awt3+awt4)*iamp/inorm
+
+afilt	tone	aout, ifcut			; LP FILTER...
+asig	balance	afilt, aout			; ... TO CONTROL BRIGHTNESS
+
+aport	oscil	1, p3/10, gi_sine
+aport	=	(aport * 0.02) + 1
+aout	=	asig * aport
+	
+
+
+
+; PANNING CODE
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight </instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='6' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>triangle</name>
+        <comment>Description: 
+
+A simple band-limited fm wave instrument built using an instrument template code snippet I often use from my personal code repository for building my instruments. Instrument parameters are numerous, but often I use instruments I build from this template with python code that simplifies the process of generating these notes, yet I&apos;m still able to have the flexibility and nuance of all of these parameters.
+
+Parameters:
+
+p4	- start frequency, can be either hertz or pch notation 
+p5	- end frequency, can be either hertz or pch notation
+p6	- amplitude, expressed in decibels
+p7	- panning, from range -1 to 1
+p8	- amplitude envelope type, 0 = adsr, 1 = pyramid, 2 = ramp</comment>
+        <globalOrc>;[once]{
+gi_square		ftgen 0, 0, 65537, 10, 1, 0, 0.111111, 0, 0.4, 0, .020408163, 0, .012345679, 0, .008264463
+;}</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	getFrequency p4
+ipch2 	getFrequency p5
+
+kpchline 	line ipch, p3, ipch2
+
+;print ipch, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+itable	= gi_square
+
+kenv	yiEnvelope ienvType, .1, .05, .95, .1
+
+;aout	oscili iamp * kenv, kpchline, itable
+;aout	vco 	iamp * kenv, ipch, 3, .5
+
+aout	vco2	1, kpchline, 12
+aout2	vco2	1, kpchline + .0009, 12
+aout3	vco2	1, kpchline + .0007, 12
+
+aout	sum aout, aout2, aout3
+aout	= aout * .333
+
+kCut	= (kpchline * 4 * kenv) + kpchline
+
+kCut    	limit kCut, sr * 0.0002, sr * 0.48
+
+;if kCut &lt; 20000 kgoto kCutPass
+;  kCut = 20000
+;kCutPass:
+;printk2 kCut
+
+aout 	butterlp aout, kCut
+
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight </instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='7' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>AddOrgan - Prototype2</name>
+        <comment>AddOrgan 
+by Steven Yi
+
+An Additive-Synth instrument that emulates and organ.
+
+This instrument is designed to work with the author&apos;s python Orchestral Composition library, included with blue.  
+
+This instrument uses the following pfields:
+
+p4 	ipch 	
+p5	ipch2
+
+p6	amp in db
+p7	pan (-1.0 to 1.0)
+p8	articulation (see yiEnvelope UDO below)
+
+
+This instrument uses the following UDO&apos;s:
+
+
+
+	opcode yiEnvelope,k,ioooooo
+
+ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+
+
+	endop
+
+
+
+	opcode getFrequency,i,i
+
+ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+
+
+	endop</comment>
+        <globalOrc>gi_organ_&lt;INSTR_ID&gt; 	ftgen	0, 0, 65537, 10, &lt;harm1&gt;, &lt;harm2&gt;, &lt;harm3&gt;, &lt;harm4&gt;, 0,  &lt;harm5&gt;, 0, &lt;harm6&gt;, 0, &lt;harm7&gt;, 0, &lt;harm8&gt;, 0, 0, 0, &lt;harm9&gt;
+</globalOrc>
+        <globalSco/>
+        <instrumentText>iorgantable = gi_organ_&lt;INSTR_ID&gt;
+
+p3 = p3 + .15
+
+ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv 	yiEnvelope ienvType, .1, 0, 1, .2
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+aout	oscil3	1, kpchline * .5, iorgantable
+
+aout	= aout * kenv * iamp	
+
+aout	butterlp aout, kpchline + (kenv * 8 * kpchline)
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm9</objectName>
+            <x>444</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.0</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm8</objectName>
+            <x>391</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.3</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm7</objectName>
+            <x>338</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.1</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm6</objectName>
+            <x>285</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.4</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm5</objectName>
+            <x>232</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.1</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm4</objectName>
+            <x>179</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.5</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm3</objectName>
+            <x>126</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.2</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm2</objectName>
+            <x>73</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.90000004</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>464</x>
+            <y>236</y>
+            <label>1&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>401</x>
+            <y>236</y>
+            <label>1 1/3&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>349</x>
+            <y>236</y>
+            <label>1 3/5&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>305</x>
+            <y>236</y>
+            <label>2&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>242</x>
+            <y>236</y>
+            <label>2 2/3&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>198</x>
+            <y>236</y>
+            <label>4&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>136</x>
+            <y>236</y>
+            <label>5 1/3&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>93</x>
+            <y>236</y>
+            <label>8&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBVSlider'>
+            <objectName>harm1</objectName>
+            <x>20</x>
+            <y>53</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <resolution>0.1</resolution>
+            <value>0.1</value>
+            <sliderHeight>150</sliderHeight>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>36</x>
+            <y>236</y>
+            <label>16&quot;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>9</x>
+            <y>10</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;AddOrgan&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name=''/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='8' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>wgbow/streson</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_sine	ftgen 0, 0, 65537, 10, 1
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv 	yiEnvelope ienvType
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+
+kpres	linseg 1, p3 * .5, 3, p3 *.5 , 1
+
+krat = 0.127236
+kvibf = .1
+ifn = gi_sine
+
+ilowpch min ipch, ipch2
+
+kvamp = 0
+
+aout wgbow 1, kpchline, kpres, krat, kvibf, kvamp, ifn, ilowpch
+
+ifdbgain = 0.95
+aout streson aout, kpchline, ifdbgain
+
+aout	= aout * iamp * kenv
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='9' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>design1 - string128</name>
+        <comment></comment>
+        <globalOrc>;[once]{
+gi_scanned_initPos		ftgen 0, 0, 128, 7, 0, 128, 0		; initpos
+gi_scanned_masses		ftgen 0, 0, 128, -7, 1, 128, 1		; masses
+gi_scanned_centeringForce	ftgen 0, 0, 128, -7, 0, 128, 2		; centering force
+gi_scanned_damping		ftgen 0, 0, 128, -7, 1, 128, 1		; damping
+gi_scanned_initVelocity	ftgen 0, 0, 128, -7, -.0, 128, 0	; init velocity
+gi_scanned_trajectory	ftgen 0, 0, 128, -7, 0, 128, 128	; trajectory
+;}
+
+
+;[once]{
+gi_scanned_matrix_string128		ftgen 0, 0, 16384, -23, &quot;string-128&quot;
+;}
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+kenv	yiEnvelope ienvType
+
+;iforce	= p5 * .0004
+;iforce = iamp * .0004
+iforce = iamp / 0dbfs
+
+;ain	linseg 0, p3 * .5, iforce, p3 *.5, 0
+
+;ain	= kenv * iforce
+ain	= iforce
+
+ifnmatrix	 = gi_scanned_matrix_string128
+
+iscantable	 = gi_scanned_trajectory
+
+; PARAMETERS FOR SCANU
+iInit	= gi_scanned_initPos
+irate	= .02
+
+ifnvel	= gi_scanned_initVelocity
+ifnmass	= gi_scanned_masses
+ifncenter	= gi_scanned_centeringForce
+ifndamp	= gi_scanned_damping
+
+kmass	= 2
+kstiff	= .05
+kcenter	= .1
+kdamp 	= -.4
+
+ileft	= .1
+iright	= .3
+kpos	= .2
+kstrength	= 0
+
+idisp	= 0
+id	= 2
+
+
+	scanu	iInit,irate,ifnvel,ifnmass,ifnmatrix,ifncenter,ifndamp,kmass,kstiff,kcenter,kdamp,ileft,iright,kpos,kstrength,ain,idisp,id
+
+a1	scans	1, kpchline, iscantable, id
+
+a1 	dcblock a1	
+
+aout	= a1
+
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+aout	butterlp	aout, (kpchline * 6 * kenv) + kpchline 
+
+;aout	nreverb	aout, .1, .2
+aout	nreverb	aout, .05, .2
+
+aout	declick aout
+
+;aout	= aout * kenv * iamp
+;aout	= aout * iamp * .9
+
+aout	= aout * iamp * kenv
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl     	= sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr     	= sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+;	outs aLeft, aRight
+
+ga1 = ga1 + aLeft
+ga2 = ga2 + aRight 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='50' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>reverbsc</name>
+        <comment>Reverb from Josep Comjuncosas&apos;s reverb collection</comment>
+        <globalOrc></globalOrc>
+        <globalSco>i&lt;INSTR_ID&gt; &lt;PROCESSING_START&gt; [&lt;TOTAL_DUR&gt; + 3 - &lt;PROCESSING_START&gt;] </globalSco>
+        <instrumentText>aoutL, aoutR  reverbsc ga1, ga2, 0.85, 9000
+
+idry = .75
+iwet = 1 - idry
+
+aoutL = aoutL * iwet
+aoutR = aoutR * iwet
+
+ga1 = (ga1 * idry) + aoutL
+ga2 = (ga2 * idry) + aoutL
+
+ga3 = 0</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='100' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Pass Through</name>
+        <comment>Description:
+
+A pass through instruments for all of the sounds.  Use this instrument if you do not want to use the convolution and plain reverbs.</comment>
+        <globalOrc>ga1 init 0
+ga2 init 0</globalOrc>
+        <globalSco>i &lt;INSTR_ID&gt; 0 [&lt;TOTAL_DUR&gt; + 7]</globalSco>
+        <instrumentText>ga1 = ga1 * .4
+ga2 = ga2 * .4
+;ga3 = ga3 * .9
+;ga1	butterhp	ga1, 100
+;ga2	butterhp	ga2, 100
+
+;ga1 	chorus ga1, 4
+;ga2 	chorus ga2, 4
+
+;ga1, ga2	chorusStereo ga1, ga2, 4
+
+outs	ga1, ga2
+;outs	ga3, ga3
+
+ga1 = 0
+ga2 = 0
+;ga3 = 0</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738860' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738858' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738856' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738854' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738852' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>6</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738850' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>7</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738848' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>8</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738846' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>9</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738844' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>50</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738842' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>100</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738840' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738838' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738836' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738834' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738832' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738830' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>6</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738828' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>7</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738826' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>8</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738824' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>9</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738822' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>50</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738820' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>60</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738818' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>100</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1910738816' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1910738814' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary>
+    <soundObject type='blue.soundObject.GenericScore'>
+      <subjectiveDuration>13.916667</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>Greater Yin</name>
+      <backgroundColor>-13421773</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 76  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.02 8.02 .  0     1</score>
+    </soundObject>
+  </soundObjectLibrary>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>getFrequency</opcodeName>
+      <outTypes>i</outTypes>
+      <inTypes>i</inTypes>
+      <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+	
+	xout	iout
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>yiEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooooo</inTypes>
+      <codeBody>ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then	
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then	
+	kenv	linseg 	0, p3 - .1, 1, .1, 0	
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+ 
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>declick</opcodeName>
+      <outTypes>a</outTypes>
+      <inTypes>a</inTypes>
+      <codeBody>ain     	xin
+
+aenv    	linseg 0, 0.02, 1, p3 - 0.05, 1, 0.02, 0, 0.01, 0
+
+        	xout ain * aenv         ; apply envelope and write output
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>yiFilterEnvelope</opcodeName>
+      <outTypes>k</outTypes>
+      <inTypes>ioooo</inTypes>
+      <codeBody>ienvType, iattack, idecay, isus, irel	xin
+
+if (ienvType == 0) then
+    kenv	linseg	0, iattack, 1, idecay, isus, .01, isus
+
+elseif (ienvType == 1) then	
+    kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+
+elseif (ienvType == 2) then
+    kenv	linseg	0, p3 - .1, 1, .1, 1
+
+elseif (ienvType == 3) then
+
+    itie	tival
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+       
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv init 1
+
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a single note
+
+        ; TODO - Should Remove, use articulation from other places
+        ;kenv adsr 	.2, 0, 1, 1
+        kenv linseg 0, .2,1, .1, 1
+
+    
+
+    endif  
+
+endif
+
+	xout 	kenv
+</codeBody>
+      <comments></comments>
+    </udo>
+    <udo>
+      <opcodeName>min</opcodeName>
+      <outTypes>i</outTypes>
+      <inTypes>ii</inTypes>
+      <codeBody>ival1, ival2 	xin
+
+iretVal = ival1
+
+if (ival2 &lt; ival1) ithen
+	iretVal = ival2
+endif
+
+	xout	iretVal</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound --sched=98 -d -o dac1 -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+print random.random()
+
+oct = int(random.random() * 3) + 5
+pch = int(random.random() * 10) 
+
+
+score = &quot;&quot;
+
+for num in range(3):
+	dur = random.random() + .2
+	amp = ( random.random() * 10 ) + 70
+	start = 0
+	space = (num * .1 ) - .2
+	for i in range(12):
+		flutter = str(random.random())
+		flutter = flutter[2:]
+		pitch = &quot;%i.0%i%s&quot;%(oct, pch, flutter)
+		vals = (num, start, dur, amp, pitch, space)
+		score += &quot;i2.%i %f %f %f %s %f\n&quot;%vals
+		start += dur
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+print random.random()
+
+oct = int(random.random() * 2) + 8
+pch = int(random.random() * 10) 
+
+
+score = &quot;&quot;
+
+for num in range(3):
+	dur = random.random() + 3
+	amp = ( random.random() * 10 ) + 70
+	start = 0
+	space = (num * .1 ) - .2
+	for i in range(2):
+		flutter = str(random.random())
+		flutter = flutter[2:]
+		pitch = &quot;%i.0%i%s&quot;%(oct, pch + (i * 5), flutter)
+		vals = (num + 3, start, dur, amp, pitch, space)
+		score += &quot;i2.%i %f %f %f %s %f\n&quot;%vals
+		start += dur
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+print random.random()
+
+oct = int(random.random() * 2) + 8
+pch = int(random.random() * 10) 
+
+
+score = &quot;&quot;
+
+for num in range(3):
+	dur = random.random() + 1
+	amp = ( random.random() * 10 ) + 70
+	start = 0
+	space = (num * .2 ) - .4
+	for i in range(8):
+		flutter = str(random.random())
+		flutter = flutter[2:]
+		pitch = &quot;%i.0%i%s&quot;%(oct, pch + ((i % 2) * 4), flutter)
+		vals = (num + 6, start, dur, amp, pitch, space)
+		score += &quot;i2.%i %f %f %f %s %f\n&quot;%vals
+		start += dur
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+print random.random()
+
+oct = int(random.random() * 2) + 8
+pch = int(random.random() * 10) 
+
+
+score = &quot;&quot;
+
+for num in range(3):
+	dur = random.random() + 2
+	amp = ( random.random() * 10 ) + 70
+	start = 0
+	space = (num * .2 ) - .4
+	for i in range(8):
+		flutter = str(random.random())
+		flutter = flutter[2:]
+		pitch = &quot;%i.0%i%s&quot;%(oct, pch + i, flutter)
+		vals = (num + 9, start, dur, amp, pitch, space)
+		score += &quot;i2.%i %f %f %f %s %f\n&quot;%vals
+		start += dur
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+    <liveObject>
+      <keyTrigger>-1</keyTrigger>
+      <midiTrigger>-1</midiTrigger>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>2.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+print random.random()
+
+oct = int(random.random() * 2) + 7
+pch = int(random.random() * 10) 
+
+
+score = &quot;&quot;
+
+for num in range(3):
+	dur = (random.random() * 3) + 2
+	amp = ( random.random() * 10 ) + 70
+	start = 0
+	space = (num * .2 ) - .4
+	for i in range(8):
+		flutter = str(random.random())
+		flutter = flutter[2:]
+		pitch = &quot;%i.0%i%s&quot;%(oct, pch + i, flutter)
+		vals = (num + 12, start, dur, amp, pitch, space)
+		score += &quot;i2.%i %f %f %f %s %f\n&quot;%vals
+		start += dur
+
+</pythonCode>
+      </soundObject>
+    </liveObject>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>4</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>22.625</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Setup</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from orchestra import *
+import random
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>22.75</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Performer Setup</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>groupA = PerformerGroup()
+
+for i in range(8):
+    performerNum = &quot;3.&quot; + str(i )
+    groupA.append(   Performer(performerNum, 1, -.25 + (i / 8.0) * .6)    )
+
+
+groupB = PerformerGroup()
+
+for i in range(8):
+    performerNum = &quot;3.&quot; + str(i + 10)
+    groupB.append(   Performer(performerNum, 1, -.25 + (i / 8.0) * .6)    )
+
+
+groupC = PerformerGroup()
+
+for i in range(12):
+    performerNum = &quot;3.&quot; + str(i + 20)
+    groupC.append(   Performer(performerNum, 1, -.25 + (i / 12.0) * .6)    )
+
+
+groupD = PerformerGroup()
+
+for i in range(12):
+    performerNum = &quot;3.&quot; + str(i + 35)
+    groupD.append(   Performer(performerNum, 1, -.25 + (i / 12.0) * .6)    )
+
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>21.125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Note Gen Scripts</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>def getXValue(index, numNotes):
+    x = index
+
+    halfNum = numNotes / 2.0
+
+    if x &gt; halfNum:
+        x = 1 - ((x - halfNum) / halfNum)
+    else:
+        x = x / halfNum
+
+    return x
+
+
+
+def createUnstableGroup(numNotes, pch, ampStart, ampEnd):
+
+    dur = .4
+    ampM = ampEnd - ampStart
+
+    retVal = &quot;0 -%f %f 1 %f 3\n&quot;%(dur, pch,ampStart)
+
+    for i in range(1, numNotes):
+        x = getXValue(i, numNotes)
+
+        ampVal = (ampM * x) + ampStart
+        pchVal = pchAdd(pch, random.random() * x)
+
+        if(i == (numNotes - 1)):
+            retVal += &quot;+ %f %f . %f .\n&quot;%(dur, pchVal, ampVal)
+        else:
+            retVal += &quot;+ . %f . %f .\n&quot;%(pchVal, ampVal)
+
+    notes = createNoteList(retVal)
+
+    return notes
+
+def createStableGroup(numNotes, pch, ampStart, ampEnd):
+
+    dur = .4
+    ampM = ampEnd - ampStart
+
+    retVal = &quot;0 -%f %f 1 %f 3\n&quot;%(dur, pch,ampStart)
+
+    for i in range(1, numNotes):
+        x = getXValue(i, numNotes)
+
+        ampVal = (ampM * x) + ampStart
+        pchVal = pch + (random.random() * .01 * x)
+
+        if(i == (numNotes - 1)):
+            retVal += &quot;+ %f %f . %f .\n&quot;%(dur, pchVal, ampVal)
+        else:
+            retVal += &quot;+ . %f . %f .\n&quot;%(pchVal, ampVal)
+
+    notes = createNoteList(retVal)
+
+    return notes
+
+
+##########################################################################
+
+def createNoteArc(instrId, pchStart, pchEnd, ampStart, ampEnd, durStart, durEnd, noteLengthStart, noteLengthEnd, space, env, numNotes):
+
+    tuning = TwelveTET()
+
+    freqStart = tuning.convert(pchStart)
+    freqEnd = tuning.convert(pchEnd)
+
+
+    freqM = freqEnd - freqStart
+    ampM = ampEnd - ampStart
+    durM = durEnd - durStart
+    noteLengthM = noteLengthEnd - noteLengthStart
+
+    retVal = &quot;&quot;
+
+    halfNum = numNotes / 2.0
+
+    start = 0
+
+    noteTemplate = &quot;i%i %f %f %f %f %f %f %i&quot;
+
+    for i in range(numNotes):
+    
+        x = getXValue(i)
+
+        freq = (freqM * x) + freqStart
+        amp = (ampM * x) + ampStart
+        dur = (durM * x) + durStart
+        noteLength = (noteLengthM * x) + noteLengthStart
+            
+        retVal += noteTemplate%(instrId, start, noteLength * dur, freq, freq, amp, space, env) + &quot;\n&quot;
+
+        start += dur
+
+    return retVal</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='fm string' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.125</subjectiveDuration>
+        <startTime>148.75</startTime>
+        <name>FM String 8.03</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i4 0 1 8.03 8.03 76  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='fm string' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.125</subjectiveDuration>
+        <startTime>113.25</startTime>
+        <name>FM String 8.01</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i4 0 1 8.01 8.01 76  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='fm string' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.125</subjectiveDuration>
+        <startTime>4.0</startTime>
+        <name>FM String 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i4 0 1 8.00 8.00 76  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.125</subjectiveDuration>
+        <startTime>67.0</startTime>
+        <name>FM String 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i4 0 1 8.00 8.00 76  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.125</subjectiveDuration>
+        <startTime>195.75</startTime>
+        <name>FM String 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i4 0 1 8.00 8.00 76  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='fm string' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='triangle' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>42.5</startTime>
+        <name>Triangle 9.00 - 9.01</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 9.00 9.01 77  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>96.5</startTime>
+        <name>Triangle 9.00 - 9.01</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 9.00 9.01 77  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>144.0</startTime>
+        <name>Triangle 9.00 - 9.01</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 9.00 9.01 77  -.1     1
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='alpha' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>45.25</startTime>
+        <name>Lesser Yang +2</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>2</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>2</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>97.0</startTime>
+        <name>Lesser Yang +2</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>2</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>2</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>176.25</startTime>
+        <name>Lesser Yang +2</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>2</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>2</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='alpha' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>25.25</startTime>
+        <name>Lesser Yang</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>88.0</startTime>
+        <name>Lesser Yang</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>156.25</startTime>
+        <name>Lesser Yang</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='alpha' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>22.833334</subjectiveDuration>
+        <startTime>122.75</startTime>
+        <name>Lesser Yang -1</name>
+        <backgroundColor>-6710887</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>4</pfield>
+            <value>-1</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-1</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i1 0 3 8.00 8.00 73  0     1
+i1 0 . 8.01 8.01 .  0     1
+i1 0 . 8.03 8.03 .  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='horn' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Horn 7.11 - 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>19.0</startTime>
+        <name>Horn - 7.11 - 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>63.0</startTime>
+        <name>Horn</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>82.0</startTime>
+        <name>Horn</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>136.75</startTime>
+        <name>Horn</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>13.583333</subjectiveDuration>
+        <startTime>155.75</startTime>
+        <name>Horn</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i5 0 3 7.11 8.00 79  .1     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='strinPad' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>59.25</subjectiveDuration>
+        <startTime>85.25</startTime>
+        <name>StrA - 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>
+notes = createUnstableGroup(40, 8.01, 50, 77)
+
+score = groupA.performAleatorically(notes, .2, .05, 0, blueDuration, 3) 
+#score = groupA.perform(notes) 
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>59.25</subjectiveDuration>
+        <startTime>158.75</startTime>
+        <name>StrA - 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>
+notes = createUnstableGroup(40, 8.01, 50, 77)
+
+score = groupA.performAleatorically(notes, .2, .05, 0, blueDuration, 3) 
+#score = groupA.perform(notes) 
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>59.25</subjectiveDuration>
+        <startTime>220.0</startTime>
+        <name>StrA - 8.00</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>
+notes = createUnstableGroup(40, 8.01, 50, 77)
+
+score = groupA.performAleatorically(notes, .2, .05, 0, blueDuration, 3) 
+#score = groupA.perform(notes) 
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='stringPad' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>61.0</subjectiveDuration>
+        <startTime>86.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#Orch Instrument Notes Script
+
+score = &quot;&quot;
+
+#noteA = NoteList([Note(0, 1, 8.00, 8.00, 80, 1)])
+noteB = NoteList([Note(0, 1, 8.01, 8.01, 80, 1)])
+noteC = NoteList([Note(0, 1, 8.03, 8.03, 80, 1)])
+
+#score = groupA.perform(noteA) 
+score = groupB.perform(noteB) 
+score += groupC.perform(noteC) 
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>61.0</subjectiveDuration>
+        <startTime>159.5</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#Orch Instrument Notes Script
+
+score = &quot;&quot;
+
+#noteA = NoteList([Note(0, 1, 8.00, 8.00, 80, 1)])
+noteB = NoteList([Note(0, 1, 8.01, 8.01, 80, 1)])
+noteC = NoteList([Note(0, 1, 8.03, 8.03, 80, 1)])
+
+#score = groupA.perform(noteA) 
+score = groupB.perform(noteB) 
+score += groupC.perform(noteC) 
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>61.0</subjectiveDuration>
+        <startTime>221.5</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#Orch Instrument Notes Script
+
+score = &quot;&quot;
+
+#noteA = NoteList([Note(0, 1, 8.00, 8.00, 80, 1)])
+noteB = NoteList([Note(0, 1, 8.01, 8.01, 80, 1)])
+noteC = NoteList([Note(0, 1, 8.03, 8.03, 80, 1)])
+
+#score = groupA.perform(noteA) 
+score = groupB.perform(noteB) 
+score += groupC.perform(noteC) 
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='stringPad' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.5</subjectiveDuration>
+        <startTime>137.25</startTime>
+        <name>Organ</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 6.02 6.02 84  -.1     1
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='organ' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>116.25</startTime>
+        <name>Organ</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 6.00 6.00 84  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>193.5</startTime>
+        <name>Organ</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 6.00 6.00 84  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>58.5</startTime>
+        <name>Organ</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 6.00 6.00 84  -.1     1
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='organ' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>Organ - 5.11</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 5.11 5.11 84  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>95.0</startTime>
+        <name>Organ - 5.11</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 5.11 5.11 84  -.1     1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>31.125</subjectiveDuration>
+        <startTime>172.25</startTime>
+        <name>Organ - 5.11</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i7 0 3 5.11 5.11 84  -.1     1
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='organ' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='scanned string' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>39.75</subjectiveDuration>
+        <startTime>13.5</startTime>
+        <name>scanned string</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i9 0 1 9.02 9.02 63  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>39.75</subjectiveDuration>
+        <startTime>76.5</startTime>
+        <name>scanned string</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i9 0 1 9.02 9.02 63  0     1</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>39.75</subjectiveDuration>
+        <startTime>140.25</startTime>
+        <name>scanned string</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>; #     pch1 pch2 amp space articulation extraFields
+i9 0 1 9.02 9.02 63  0     1</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap>
+    <npc name='Transpose'>
+      <noteProcessorChain>
+        <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+          <pfield>4</pfield>
+          <value>-2</value>
+        </noteProcessor>
+        <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+          <pfield>5</pfield>
+          <value>-2</value>
+        </noteProcessor>
+      </noteProcessorChain>
+    </npc>
+  </noteProcessorChainMap>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

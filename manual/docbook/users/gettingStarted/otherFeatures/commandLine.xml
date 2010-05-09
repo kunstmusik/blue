@@ -1,0 +1,56 @@
+<section id="commandLine">
+<title>Command Line Options for blue</title>
+
+<para>To view the options that blue has from the commandline, type
+"blue --help".  After that, you should see information printed to the console
+much like the following:</para>
+
+<screen>
+Usage: blue [flags] filenames
+
+-c filename     compile a .blue file to .csd
+-o filename     optional output name for .csd if -c used
+-u filename     set user configuration directory to use
+-j filename     interpret a jython file
+</screen>
+
+<!--<section>
+<title>Usage</title>-->
+
+<para>The following are examples of how to use these options.</para>
+
+<screen>
+blue someFile.blue
+</screen>
+
+<para>This should open blue with that file open.</para>
+
+<screen>
+blue -c someFile.blue
+</screen>
+
+<para> This will produce someFile.csd. You can add an optional output filename
+by using:</para>
+
+<screen>
+blue -c someFile.blue -o mySomeFile.csd
+</screen>
+
+<screen>
+blue -j somePythonScript.py
+</screen>
+
+<para>This will interpet a python file using blue (having access to all of
+blue's class libraries) you can use (this doesn't quite work on windows, a bug
+in jython21).</para>
+
+<screen>
+blue -u c:\myBlueConfigDir
+</screen>
+
+<para>This will allow you to use a different user configuration directory 
+instead of the default (userHome)/.blue.</para>
+
+<!--</section>-->
+
+</section>

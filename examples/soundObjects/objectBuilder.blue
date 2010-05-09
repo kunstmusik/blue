@@ -1,0 +1,849 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>ObjectBuilder Example</title>
+    <author>Steven Yi</author>
+    <notes>This example uses a Cmask Script and puts UI controls on it to control the FM Index mask, as well as uses ObjectBuilder objects 
+using python script to create accelerating/decelerating figures.  The SoundLayers with Cmask objects are muted by default 
+as they require CMask to be installed to run.  </notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>10</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>objectBuilder.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FM Instrument</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>	;p2 onset
+	;p3 duration
+	;p4 base frequency
+	;p5 fm index
+	;p6 pan (L=0, R=1)
+ 
+kenv	expon	1,p3,0.01
+kindx	expon	p5,p3,.4
+a1	foscil	kenv*10000,p4,1,1.143,kindx,1
+	outs	a1*(1-p6),a1*p6</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324060' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324058' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco>f1 0 8193 10 1 </globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='cmask' muted='true' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>7.5</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>ObjectBuilder Example</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>f 0 20                    ;field duration: 20 secs
+ 
+p1 const 1
+ 
+p2                        ;decreasing density
+rnd uni                   ;from .03 - .08 sec to .5 - 1 sec
+mask [.03 .5 ipl 3] [.08 1 ipl 3] map 1
+prec 2
+ 
+p3                        ;increasing duration
+rnd uni
+mask [.2 3 ipl 1] [.4 5 ipl 1]
+prec 2
+ 
+p4                        ;narrowing frequency grid
+rnd uni
+mask [3000 90 ipl 1] [5000 150 ipl 1] map 1
+quant [400 50] .95
+prec 2
+ 
+p5                        ;FM index gets higher from 2-4 to 4-7
+rnd uni
+;mask [2 4] [4 7]
+mask [&lt;indexa_min&gt; &lt;indexa_max&gt;] [&lt;indexb_min&gt; &lt;indexb_max&gt;]
+prec 2
+ 
+p6 range 0 1              ;panorama position uniform distributed 
+prec 2                    ;between left and right</code>
+        <commandLine>cmask $infile $outfile</commandLine>
+        <isExternal>true</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexa_min</objectName>
+            <x>65</x>
+            <y>135</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>2.674538</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexa_max</objectName>
+            <x>65</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>3.874195</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexb_min</objectName>
+            <x>193</x>
+            <y>135</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>4.263474</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexb_max</objectName>
+            <x>193</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>6.2574487</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>40</x>
+            <y>7</y>
+            <label>FM Index Start Max</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>42</x>
+            <y>115</y>
+            <label>FM Index Start Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>172</x>
+            <y>115</y>
+            <label>FM Index End Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>170</x>
+            <y>7</y>
+            <label>FM Index End Max</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='cmask' muted='true' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>8.3125</subjectiveDuration>
+        <startTime>1.03125</startTime>
+        <name>CMask Example</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>f 0 20                    ;field duration: 20 secs
+ 
+p1 const 1
+ 
+p2                        ;decreasing density
+rnd uni                   ;from .03 - .08 sec to .5 - 1 sec
+mask [.03 .5 ipl 3] [.08 1 ipl 3] map 1
+prec 2
+ 
+p3                        ;increasing duration
+rnd uni
+mask [.2 3 ipl 1] [.4 5 ipl 1]
+prec 2
+ 
+p4                        ;narrowing frequency grid
+rnd uni
+mask [3000 90 ipl 1] [5000 150 ipl 1] map 1
+quant [400 50] .95
+prec 2
+ 
+p5                        ;FM index gets higher from 2-4 to 4-7
+rnd uni
+;mask [2 4] [4 7]
+mask [&lt;indexa_min&gt; &lt;indexa_max&gt;] [&lt;indexb_min&gt; &lt;indexb_max&gt;]
+prec 2
+ 
+p6 range 0 1              ;panorama position uniform distributed 
+prec 2                    ;between left and right</code>
+        <commandLine>cmask $infile $outfile</commandLine>
+        <isExternal>true</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexa_min</objectName>
+            <x>65</x>
+            <y>135</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>8.101648</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexa_max</objectName>
+            <x>65</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>9.640128</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexb_min</objectName>
+            <x>193</x>
+            <y>135</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>1.7678398</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>indexb_max</objectName>
+            <x>193</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>20.0</maximum>
+            <value>4.534734</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>40</x>
+            <y>7</y>
+            <label>FM Index Start Max</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>42</x>
+            <y>115</y>
+            <label>FM Index Start Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>172</x>
+            <y>115</y>
+            <label>FM Index End Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>170</x>
+            <y>7</y>
+            <label>FM Index End Max</label>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='python' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>6.59375</subjectiveDuration>
+        <startTime>0.390625</startTime>
+        <name>Pyhon Example</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>noteTemplate = &quot;i1 %f %f %f %f %f&quot;
+
+freq = &lt;frequency&gt;
+index = &lt;index&gt;
+pan = &lt;pan&gt;
+max = &lt;maxDuration&gt;
+min = &lt;minDuration&gt;
+numNotes = int(&lt;numNotes&gt;)
+
+r = max - min
+m = 1.0 / r
+
+
+score = &quot;&quot;
+start = 0
+
+for i in range(numNotes * 2):
+    y = 0
+
+    if i &lt; numNotes:
+        x = float(i) / numNotes
+        y = max - (m * x)
+    else:
+        x = float(i - numNotes) / numNotes
+        y = min + (m * x)
+		
+    score += noteTemplate%(start, y, freq, index, pan) + &quot;\n&quot;
+    start += y
+</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>maxDuration</objectName>
+            <x>99</x>
+            <y>23</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>2.580436</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>minDuration</objectName>
+            <x>174</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>1.2039742</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>7</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Duration&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>117</x>
+            <y>7</y>
+            <label>Max</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>194</x>
+            <y>7</y>
+            <label>Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>5</x>
+            <y>128</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Frequency&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>frequency</objectName>
+            <x>104</x>
+            <y>125</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>220.0</minimum>
+            <maximum>880.0</maximum>
+            <resolution>0.1</resolution>
+            <value>220.1</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>334</x>
+            <y>13</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Pan&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>335</x>
+            <y>124</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Index&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>index</objectName>
+            <x>386</x>
+            <y>130</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>10.0</maximum>
+            <value>1.7343175</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pan</objectName>
+            <x>387</x>
+            <y>15</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.42057645</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>4</x>
+            <y>171</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Num Notes&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>numNotes</objectName>
+            <x>103</x>
+            <y>168</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>2.0</minimum>
+            <maximum>30.0</maximum>
+            <resolution>1.0</resolution>
+            <value>11.0</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>6.78125</subjectiveDuration>
+        <startTime>0.046875</startTime>
+        <name>Pyhon Example</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>noteTemplate = &quot;i1 %f %f %f %f %f&quot;
+
+freq = &lt;frequency&gt;
+index = &lt;index&gt;
+pan = &lt;pan&gt;
+max = &lt;maxDuration&gt;
+min = &lt;minDuration&gt;
+numNotes = int(&lt;numNotes&gt;)
+
+r = max - min
+m = 1.0 / r
+
+
+score = &quot;&quot;
+start = 0
+
+for i in range(numNotes * 2):
+    y = 0
+
+    if i &lt; numNotes:
+        x = float(i) / numNotes
+        y = max - (m * x)
+    else:
+        x = float(i - numNotes) / numNotes
+        y = min + (m * x)
+		
+    score += noteTemplate%(start, y, freq, index, pan) + &quot;\n&quot;
+    start += y
+</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>maxDuration</objectName>
+            <x>99</x>
+            <y>23</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>2.580436</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>minDuration</objectName>
+            <x>174</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>1.2039742</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>7</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Duration&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>117</x>
+            <y>7</y>
+            <label>Max</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>194</x>
+            <y>7</y>
+            <label>Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>5</x>
+            <y>128</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Frequency&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>frequency</objectName>
+            <x>104</x>
+            <y>125</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>220.0</minimum>
+            <maximum>880.0</maximum>
+            <resolution>0.1</resolution>
+            <value>336.5</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>334</x>
+            <y>13</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Pan&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>335</x>
+            <y>124</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Index&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>index</objectName>
+            <x>386</x>
+            <y>130</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>10.0</maximum>
+            <value>3.719975</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pan</objectName>
+            <x>387</x>
+            <y>15</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.6392358</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>4</x>
+            <y>171</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Num Notes&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>numNotes</objectName>
+            <x>103</x>
+            <y>168</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>2.0</minimum>
+            <maximum>30.0</maximum>
+            <resolution>1.0</resolution>
+            <value>8.0</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>5.09375</subjectiveDuration>
+        <startTime>1.953125</startTime>
+        <name>Pyhon Example</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>noteTemplate = &quot;i1 %f %f %f %f %f&quot;
+
+freq = &lt;frequency&gt;
+index = &lt;index&gt;
+pan = &lt;pan&gt;
+max = &lt;maxDuration&gt;
+min = &lt;minDuration&gt;
+numNotes = int(&lt;numNotes&gt;)
+
+r = max - min
+m = 1.0 / r
+
+
+score = &quot;&quot;
+start = 0
+
+for i in range(numNotes * 2):
+    y = 0
+
+    if i &lt; numNotes:
+        x = float(i) / numNotes
+        y = max - (m * x)
+    else:
+        x = float(i - numNotes) / numNotes
+        y = min + (m * x)
+		
+    score += noteTemplate%(start, y, freq, index, pan) + &quot;\n&quot;
+    start += y
+</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>maxDuration</objectName>
+            <x>99</x>
+            <y>23</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>1.6820275</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>minDuration</objectName>
+            <x>174</x>
+            <y>25</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.1</minimum>
+            <maximum>10.0</maximum>
+            <value>1.2039742</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>7</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Duration&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>117</x>
+            <y>7</y>
+            <label>Max</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>194</x>
+            <y>7</y>
+            <label>Min</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>5</x>
+            <y>128</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Frequency&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>frequency</objectName>
+            <x>104</x>
+            <y>125</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>220.0</minimum>
+            <maximum>880.0</maximum>
+            <resolution>0.1</resolution>
+            <value>550.0</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>334</x>
+            <y>13</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Pan&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>335</x>
+            <y>124</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Index&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>index</objectName>
+            <x>386</x>
+            <y>130</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>10.0</maximum>
+            <value>1.764324</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>pan</objectName>
+            <x>387</x>
+            <y>15</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.3340599</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>4</x>
+            <y>171</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Num Notes&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+            <objectName>numNotes</objectName>
+            <x>103</x>
+            <y>168</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>2.0</minimum>
+            <maximum>30.0</maximum>
+            <resolution>1.0</resolution>
+            <value>20.0</value>
+            <sliderWidth>150</sliderWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='python' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

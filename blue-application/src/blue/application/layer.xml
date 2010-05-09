@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Actions">
+        <file name="GoTo_hidden"/>
+        <folder name="Application">
+            <file name="blue-application-BlueManualAction.instance">
+                <attr name="delegate" newvalue="blue.application.BlueManualAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_BlueManualAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-application-CsoundManualAction.instance">
+                <attr name="delegate" newvalue="blue.application.CsoundManualAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_CsoundManualAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+            <file name="blue-application-SaveLibrariesAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.application.Bundle"/>
+                <attr name="delegate" newvalue="blue.application.SaveLibrariesAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_SaveLibrariesAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Help">
+            <file name="blue-application-MakeDonationAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.application.Bundle"/>
+                <attr name="delegate" newvalue="blue.application.MakeDonationAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_MakeDonationAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-application-ReportBugAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.application.Bundle"/>
+                <attr name="delegate" newvalue="blue.application.ReportBugAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_ReportBugAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+            <file name="blue-application-RequestFeatureAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.application.Bundle"/>
+                <attr name="delegate" newvalue="blue.application.RequestFeatureAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_RequestFeatureAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" stringvalue="false"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Keymaps">
+        <!-- <file name="NetBeans_hidden"/>
+        <folder name="blue">
+        </folder>--> 
+    </folder>
+    <folder name="Menu">
+        <file name="Edit_hidden"/>
+        <folder name="File">
+            <file name="Separator3.instance_hidden"/>
+            <file name="Separator4.instance_hidden"/>
+            <file name="org-openide-actions-PageSetupAction.instance_hidden"/>
+            <file name="org-openide-actions-PageSetupAction.shadow_hidden"/>
+            <file name="org-openide-actions-PrintAction.instance_hidden"/>
+            <file name="org-openide-actions-PrintAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAction.instance_hidden"/>
+            <file name="org-openide-actions-SaveAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAllAction.instance_hidden"/>
+            <file name="org-openide-actions-SaveAllAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAsAction.shadow_hidden"/>
+
+            <file name="blue-application-SaveLibrariesAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1620"/>
+            </file>
+            <file name="blue-application-SaveLibrariesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-application-SaveLibrariesAction.instance"/>
+                <attr name="position" intvalue="1630"/>
+            </file>
+        </folder>
+        <file name="GoTo_hidden"/>
+        <folder name="Help">
+            <file name="blue-application-CsoundManualAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-application-CsoundManualAction.instance"/>
+                <attr name="position" intvalue="1077"/>
+            </file>
+            <file name="blue-application-MakeDonationAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="462"/>
+            </file>
+            <file name="blue-application-MakeDonationAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Help/blue-application-MakeDonationAction.instance"/>
+                <attr name="position" intvalue="475"/>
+            </file>
+            <file name="blue-application-ReportBugAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Help/blue-application-ReportBugAction.instance"/>
+                <attr name="position" intvalue="450"/>
+            </file>
+            <file name="blue-application-RequestFeatureAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Help/blue-application-RequestFeatureAction.instance"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+            <file name="blue-application-BlueManualAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-application-BlueManualAction.instance"/>
+                <attr name="position" intvalue="1075"/>
+            </file>
+            <file name="blue-application-BlueManualAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1080"/>
+            </file>
+        </folder>
+        <folder name="View">
+            <file name="Separator1.instance_hidden"/>
+            <file name="org-netbeans-core-actions-HTMLViewAction.instance_hidden"/>
+            <!-- <file name="org-netbeans-core-actions-LogAction.shadow_hidden"/> -->
+        </folder>
+        <folder name="Window">
+            <file name="CloneDocumentAction.shadow_hidden"/>
+            <file name="CloseAllButThisAction.shadow_hidden"/>
+            <file name="CloseAllDocumentsAction.shadow_hidden"/>
+            <file name="DocumentsAction.shadow_hidden"/>
+            <file name="ProgressListAction.shadow_hidden"/>
+            <file name="Separator4.instance_hidden"/>
+            <file name="SwitchToRecentDocumentAction.shadow_hidden"/>
+        </folder>
+    </folder>
+    <folder name="Toolbars">
+        <file name="Clipboard_hidden"/>
+        <file name="File_hidden"/>
+        <file name="UndoRedo_hidden"/>
+    </folder>
+    <folder name="Shortcuts">
+        <file name="D-W.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-windows-actions-CloseWindowAction.instance"/>
+        </file>
+        <file name="S-ESCAPE.shadow">
+            <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-windows-actions-MaximizeWindowAction.instance"/>
+        </file>
+    </folder>
+</filesystem>

@@ -1,0 +1,915 @@
+<section id="programOptions">
+  <title>Setting Up Program Options</title>
+
+  <para>
+    The first thing you'll want to do is set up your Program Options. Some
+    settings are required for features of blue to work (i.e. Render Settings,
+    the Csound Documentation Root for opening opcode help), others are there to
+    help setup your project defaults and save you time when creating new
+    projects.
+  </para>
+
+  <para>
+    To open up the Program Options dialog, go to the File menu and click on
+    "Program Options".
+  </para>
+
+  <simplesect>
+    <title>General</title>
+
+    <screenshot>
+      <screeninfo>Program Options - General</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_general.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+
+    <variablelist>
+      <title>General Options</title>
+
+      <varlistentry>
+        <term>Csound Documentation Root</term>
+        <listitem>
+          <para>
+            This is the url of the root of your Csound Documentation. blue uses
+            this for opening up Csound Documentation as well as when opening up
+            help for an opcode. The Csound Documentation Root can be local (i.e.
+            "/home/user/blue/manual/" or "c:/Programs and Files/blue/manual/")
+            or online (i.e. "http://www.csounds.com/manual/html/").
+          </para>
+
+          <para>
+            You can get the Csound html documentation from
+            <ulink url="http://www.csounds.com/manual" />
+            .
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Work Directory</term>
+        <listitem>
+          <para>
+            The default directory that blue should open when loading/saving blue
+            project files.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Maintain Last Window State</term>
+        <listitem>
+          <para>
+            Enables saving of window location and size. If enabled, upon
+            starting of program, window states will be restored.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>New User Defaults Enabled</term>
+        <listitem>
+          <para>
+            Enables default text for different objects in blue. Curently this
+            affects:
+          </para>
+
+          <itemizedlist>
+
+            <listitem>
+              <para>CodeRepository - when adding new Code Snippet</para>
+            </listitem>
+
+          </itemizedlist>
+
+        </listitem>
+
+      </varlistentry>
+
+      <varlistentry>
+        <term>Draw Flat SoundObject Borders</term>
+        <listitem>
+          <para>
+            Enables older flat drawing style of SoundObject borders on the score
+            timeline.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Draw Alpha Background on Marquee</term>
+        <listitem>
+          <para>
+            If this is enabled, when selecting a group of SoundObjects on the
+            Score Timeline the marquee that is drawn to show the selection area
+            will paint with an alpha-transparent white background. (May slow
+            down performance when enabled.)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Show Csound Output</term>
+        <listitem>
+          <para>
+            If this is enabled, output from rendering with Csound will be shown
+            in the Csound Output Dialog (accessible from the Window menu or
+            available with the F7 shortcut).  If disabled, output will be shown
+            in the std.out of the console that opens when blue starts.  (If
+            the blue starter script has been modified not to show the console
+            by using javaw instead of java, then the output will not be able
+            to be seen).  It is recommended to enable this option.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Message Colors Enabled</term>
+        <listitem>
+          <para>
+             Since Csound5, the default for printed messages is to show them
+             with colors by using ANSI text modifiers.  However, this only works
+             within ANSI-compliant consoles, and does not work within blue's
+             Csound Output Dialog.  It is recommended to keep this disabled if
+             the "Show Csound Output" option is enabled.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Language</term>
+        <listitem>
+          <para>
+            Which language to use for blue. This affects the labels of the User
+            Interface, messages given to the user in dialog boxes, menu titles,
+            etc. (Translation files may not always be up to of date so some UI
+            items may not be translated when not in English.)
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+
+  </simplesect>
+
+
+  <simplesect>
+    <title>Project Defaults</title>
+
+    <screenshot>
+      <screeninfo>Program Options - Project Defaults</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_projectDefaults.png"
+            format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+
+    <para>
+      These settings are used whenever new projects are created as defaults for
+      the project, unless a default.blue file is found in the user's blue home
+      directory, in which case the settings from the default.blue file are used.
+    </para>
+
+
+    <variablelist>
+      <title>Project Defaults</title>
+
+      <varlistentry>
+        <term>Author</term>
+        <listitem>
+          <para>Default author to use in new projects.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Mixer Enabled</term>
+        <listitem>
+          <para>Enable using the blue Mixer in new projects by default.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Text Colors</title>
+
+    <screenshot>
+      <screeninfo>Program Options - Text Colors</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_textColors.png"
+            format="PNG" />
+        </imageobject>
+        <textobject>
+          <phrase>Program Options - Text Colors</phrase>
+        </textobject>
+        <caption>
+          <para>Program Options - Text Colors</para>
+        </caption>
+      </mediaobject>
+    </screenshot>
+
+    <para>
+      This section of the program options allows the user to set what colors
+      will be used when hilighting the syntax of code in blue's text editors
+      that support syntax highlighting. The chosen colors will be reflected for
+      each syntax-highlighted language(i.e. the Keyword color will affect the
+      color for both Csound highlighting and Python highlighting).
+    </para>
+
+
+  </simplesect>
+
+  <simplesect>
+    <title>Playback</title>
+    <screenshot>
+      <screeninfo>Program Options - Playback</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_playBack.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+
+    <variablelist>
+      <title>Playback</title>
+
+      <varlistentry>
+        <term>Time Pointer Animation Rate</term>
+        <listitem>
+          <para>
+            Rate of animation for time pointer to update when playing back in
+            realtime, expressed in frames per second. For example, the default
+            value of 20 means the time pointer is updated 20 times per second,
+            giving a smooth animation rate. Slower values may be desirable on
+            slower computers if the playback pointer is affecting performance.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Latency Correction</term>
+        <listitem>
+          <para>
+            Float value in seconds to use as a correction for audio latency in
+            the user's sound playback mechanism. For example, if latency is
+            quite bad on your soundcard and there is a delay of .5 seconds
+            between when audio is passed to your soundcard and when the audio is
+            actually realized from the DAC, the visual time pointer for blue may
+            appear ahead in time of what is being heard. Using a .5 value for
+            latency correction would correct for this.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Utility</title>
+    <screenshot>
+      <screeninfo>Program Options - Utility</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_utility.png" format="PNG" />
+        </imageobject>
+        <textobject>
+          <phrase>Program Options - Utility</phrase>
+        </textobject>
+        <caption>
+          <para>Program Options - Utility</para>
+        </caption>
+      </mediaobject>
+    </screenshot>
+
+    <variablelist>
+      <title>Utility</title>
+
+      <varlistentry>
+        <term>Csound Executable</term>
+        <listitem>
+          <para>
+            This is the command for what version of csound to execute when
+            blue uses utilities that depend on Csound (for example, freezing
+            SoundObjects, the SoundFont Viewer utility). The default value of
+            "csound" works if you have a version of Csound in your path named
+            "csound". You may use any csound command here that would call csound
+            that would work as if you were running csound from a terminal.
+
+            <note>
+              <title>Note</title>
+              <para>
+                The value defined for Csound Executable should only be the
+                command to call Csound and no other flags should be added
+                here.
+              </para>
+            </note>
+
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Freeze Flags</term>
+        <listitem>
+          <para>
+            These are the flags for Csound that blue uses when performing
+            SoundObject freezing. Defaults are "-Ado" for Mac and "-Wdo" for all
+            other operating systems. Users may wish to modify this value if they
+            would their frozen soundObjects to be in a different format, i.e.
+            32-bit float soundfiles.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Realtime Render</title>
+    <screenshot>
+      <screeninfo>Program Options - Realtime</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_realtime.png" format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+
+    <variablelist>
+      <title>Project Settings</title>
+
+      <varlistentry>
+        <term>Csound Executable</term>
+        <listitem>
+          <para>
+            This is a command for what version of csound to execute when
+            blue renders the project in realtime. The default value of
+            "csound" works if you have a version of Csound in your path named
+            "csound". You may use any command here that would call csound
+            that would work as if you were running csound from a terminal.</para>
+
+            <para>Using the button marked "..." on the right will open up a file
+            dialog so that you can find and select the csound executable to use
+            to run Csound.</para>
+
+            <note>
+              <title>Note</title>
+              <para>
+                The value defined for Csound Executable should only be the
+                command to call Csound and no other flags should be added
+                here.
+              </para>
+            </note>
+
+        </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>sr</term>
+          <listitem>
+            <para>
+              Default sr to use for realtime settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>ksmps</term>
+          <listitem>
+            <para>
+              Default ksmps to use for realtime settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>nchnls</term>
+          <listitem>
+            <para>
+              Default nchnls to use for realtime settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Devices</title>
+
+      <varlistentry>
+        <term>Audio Driver</term>
+        <listitem>
+          <para>Driver to use for audio input and output. This is equivalent
+          to using the --rtaudio= flag setting on the commandline.
+          </para>
+
+          <para>Enabling the checkbox determines if this value will be used at
+          all when rendering, and if so, will use the value from the dropdown
+          as the driver setting.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Audio Out</term>
+        <listitem>
+          <para>
+            Audio output device to use.  Equivalent to using -o flag setting
+            on the commandline.  This setting is dependent on the setting used
+            on the audio driver setting.  Using a value of "dac" will use the
+            default device for the driver.
+          </para>
+
+          <para>
+            The value of this setting will be used for all projects that set
+            "Audio Out" enabled in the project-level realtime render settings.
+          </para>
+
+          <para>
+            By selecting the [...] button to the right of this field, blue will
+            try to detect what devices are available for the chosen Audio
+            Driver. If blue is able to find the devices, a popup dialog will
+            appear with a list of available devices.  Selecting from the popup
+            will then populate the textfield with the correct device string that
+            Csound will use to choose the device requested.
+
+            <note>
+              <title>Note</title>
+              <para>
+                If the driver is chosen but not enabled for use via its
+                checkbox, when auto-detecting, blue will check for devices
+                against the default driver and not necessarily what is in the
+                dropdown. Please be sure that if you are planning to use the
+                auto-detect feature with a particular driver that you also
+                select the driver and enable it with the checkbox.
+              </para>
+            </note>
+          </para>
+
+          <para>Enabling the checkbox determines if this device will be enabled
+          by default for new projects.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Audio In</term>
+        <listitem>
+          <para>
+            Audio input device to use.  Equivalent to using -i flag setting
+            on the commandline.  This setting is dependent on the setting used
+            on the audio driver setting.  Using a value of "adc" will use the
+            default device for the driver.
+          </para>
+
+          <para>
+            The value of this setting will be used for all projects that set
+            "Audio In" enabled in the project-level realtime render settings.
+          </para>
+
+          <para>
+            By selecting the [...] button to the right of this field, blue will
+            try to detect what devices are available for the chosen Audio
+            Driver. If blue is able to find the devices, a popup dialog will
+            appear with a list of available devices.  Selecting from the popup
+            will then populate the textfield with the correct device string that
+            Csound will use to choose the device requested.
+
+            <note>
+              <title>Note</title>
+              <para>
+                If the driver is chosen but not enabled for use via its
+                checkbox, when auto-detecting, blue will check for devices
+                against the default driver and not necessarily what is in the
+                dropdown. Please be sure that if you are planning to use the
+                auto-detect feature with a particular driver that you also
+                select the driver and enable it with the checkbox.
+              </para>
+            </note>
+          </para>
+
+
+          <para>Enabling the checkbox determines if this device will be enabled
+          by default for new projects.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>MIDI Driver</term>
+        <listitem>
+          <para>Driver to use for MIDI input and output. This is equivalent
+          to using the --rtmidi= flag setting on the commandline.
+          </para>
+
+          <para>Enabling the checkbox determines if this value will be used at
+          all when rendering, and if so, will use the value from the dropdown
+          as the driver setting.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>MIDI Out</term>
+        <listitem>
+          <para>
+            MIDI output device to use.  Equivalent to using -Q flag setting
+            on the commandline.  This setting is dependent on the setting used
+            on the MIDI driver setting.
+          </para>
+
+          <para>
+            The value of this setting will be used for all projects that set
+            "MIDI Out" enabled in the project-level realtime render settings.
+          </para>
+
+          <para>
+            By selecting the [...] button to the right of this field, blue will
+            try to detect what devices are available for the chosen MIDI
+            Driver. If blue is able to find the devices, a popup dialog will
+            appear with a list of available devices.  Selecting from the popup
+            will then populate the textfield with the correct device string that
+            Csound will use to choose the device requested.
+
+            <note>
+              <title>Note</title>
+              <para>
+                If the driver is chosen but not enabled for use via its
+                checkbox, when auto-detecting, blue will check for devices
+                against the default driver and not necessarily what is in the
+                dropdown. Please be sure that if you are planning to use the
+                auto-detect feature with a particular driver that you also
+                select the driver and enable it with the checkbox.
+              </para>
+            </note>
+          </para>
+
+
+          <para>Enabling the checkbox determines if this device will be enabled
+          by default for new projects.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>MIDI In</term>
+        <listitem>
+          <para>
+            MIDI input device to use.  Equivalent to using -M flag setting
+            on the commandline.  This setting is dependent on the setting used
+            on the audio driver setting.
+          </para>
+
+          <para>
+            The value of this setting will be used for all projects that set
+            "MIDI In" enabled in the project-level realtime render settings.
+          </para>
+
+          <para>
+            By selecting the [...] button to the right of this field, blue will
+            try to detect what devices are available for the chosen MIDI
+            Driver. If blue is able to find the devices, a popup dialog will
+            appear with a list of available devices.  Selecting from the popup
+            will then populate the textfield with the correct device string that
+            Csound will use to choose the device requested.
+
+            <note>
+              <title>Note</title>
+              <para>
+                If the driver is chosen but not enabled for use via its
+                checkbox, when auto-detecting, blue will check for devices
+                against the default driver and not necessarily what is in the
+                dropdown. Please be sure that if you are planning to use the
+                auto-detect feature with a particular driver that you also
+                select the driver and enable it with the checkbox.
+              </para>
+            </note>
+          </para>
+
+
+          <para>Enabling the checkbox determines if this device will be enabled
+          by default for new projects.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Buffer Settings</title>
+
+      <varlistentry>
+        <term>Software Buffer</term>
+        <listitem>
+          <para>Size of software sample buffer to use.  For more information,
+          see CommandFlags section of Csound manual for settings.
+          </para>
+
+          <para>Enabling the checkbox determines if this value will be used at
+          all when rendering.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Hardware Buffer</term>
+        <listitem>
+          <para>Size of hardware sample buffer to use.  For more information,
+          see CommandFlags section of Csound manual for settings.
+          </para>
+
+          <para>Enabling the checkbox determines if this value will be used at
+          all when rendering.
+          </para>
+
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Message Level</title>
+
+      <varlistentry>
+        <term>Note Amplitudes</term>
+        <listitem>
+          <para>
+          Enables note amplitude messages from Csound (-m1)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Out-of-Range Messages</term>
+        <listitem>
+          <para>
+            Enables samples out of range messages from Csound (-m2)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Warnings</term>
+        <listitem>
+          <para>
+            Enables warning messages from Csound (-m4)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Benchmark Information</term>
+        <listitem>
+          <para>
+          Enables benchmark information from Csound (-m128)
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Advanced Settings</title>
+
+      <varlistentry>
+        <term>Advanced Settings</term>
+        <listitem>
+          <para>
+          Extra flags to append to the commandline that might not be covered by
+          options in the UI.  Pressing the [?] button will open the
+          documentation for the Csound command flags (Csound Documentation Root
+          but be set for this to work).
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Disk Render</title>
+    <screenshot>
+      <screeninfo>Program Options - Disk Render</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_diskRender.png"
+            format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
+
+    <variablelist>
+      <title>Project Settings</title>
+
+      <varlistentry>
+        <term>Csound Executable</term>
+        <listitem>
+          <para>
+            This is a command for what version of csound to execute when
+            blue renders the project to disk. The default value of
+            "csound" works if you have a version of Csound in your path named
+            "csound". You may use any command here that would call csound
+            that would work as if you were running csound from a terminal.</para>
+
+            <para>Using the button marked "..." on the right will open up a file
+            dialog so that you can find and select the csound executable to use
+            to run Csound.</para>
+
+            <note>
+              <title>Note</title>
+              <para>
+                The value defined for Csound Executable should only be the
+                command to call Csound and no other flags should be added
+                here.
+              </para>
+            </note>
+
+        </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>sr</term>
+          <listitem>
+            <para>
+              Default sr to use for disk render settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>ksmps</term>
+          <listitem>
+            <para>
+              Default ksmps to use for disk render settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>nchnls</term>
+          <listitem>
+            <para>
+              Default nchnls to use for disk render settings in new projects.
+            </para>
+          </listitem>
+        </varlistentry>
+
+    </variablelist>
+
+
+    <variablelist>
+      <title>File Output Settings</title>
+
+      <varlistentry>
+        <term>File Format</term>
+        <listitem>
+          <para>File format to use (i.e. WAV, AIFF, AU, etc.)</para>
+
+          <para>
+            Enabling the checkbox determines if this value will be used at all
+            when rendering.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Sample Format</term>
+        <listitem>
+          <para>
+            Sample format to use. The default of SHORT is the same as 16-bit
+            integer audio (the same as used for CD's). Other formats are
+            available in the dropdown to use.
+          </para>
+
+          <para>
+            Enabling the checkbox determines if this value will be used at all
+            when rendering.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Save Peak Information in Header</term>
+        <listitem>
+          <para>Save the peak information in the file header.</para>
+
+           <para>
+            Enabling the checkbox determines if this value will be used at all
+            when rendering.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Dither Output</term>
+        <listitem>
+          <para>Use dither on output.</para>
+
+           <para>
+            Enabling the checkbox determines if this value will be used at all
+            when rendering.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Rewrite Header while Rendering</term>
+        <listitem>
+          <para>
+            Rewrite the file header while rendering.  This makes it possible
+            to play the audio file in the middle of a render and is useful
+            when the rendering of the project will take a very long time.
+            However, it does slow down overall render time.
+          </para>
+
+           <para>
+            Enabling the checkbox determines if this value will be used at all
+            when rendering.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Message Level</title>
+
+      <varlistentry>
+        <term>Note Amplitudes</term>
+        <listitem>
+          <para>
+          Enables note amplitude messages from Csound (-m1)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Out-of-Range Messages</term>
+        <listitem>
+          <para>
+            Enables samples out of range messages from Csound (-m2)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Warnings</term>
+        <listitem>
+          <para>
+            Enables warning messages from Csound (-m4)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Benchmark Information</term>
+        <listitem>
+          <para>
+          Enables benchmark information from Csound (-m128)
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <variablelist>
+      <title>Advanced Settings</title>
+
+      <varlistentry>
+        <term>Advanced Settings</term>
+        <listitem>
+          <para>
+          Extra flags to append to the commandline that might not be covered by
+          options in the UI.  Pressing the [?] button will open the
+          documentation for the Csound command flags (Csound Documentation Root
+          but be set for this to work).
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </simplesect>
+
+
+</section>

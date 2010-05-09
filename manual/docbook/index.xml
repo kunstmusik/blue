@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+ "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [ -->
+
+ <!DOCTYPE book SYSTEM "../stylesheets/docbook45/docbookx.dtd" [
+
+    <!ENTITY preface SYSTEM "preface.xml">
+    <!ENTITY credits SYSTEM "credits.xml">
+
+    <!ENTITY users SYSTEM "users/top.xml">
+
+    <!-- GETTING STARTED -->
+    <!ENTITY gettingStarted SYSTEM "users/gettingStarted/top.xml">
+
+    <!ENTITY userIntro SYSTEM "users/gettingStarted/usersIntro.xml">
+    <!ENTITY installation SYSTEM "users/gettingStarted/installation.xml">
+    <!ENTITY programOptions SYSTEM "users/gettingStarted/programOptions.xml">
+
+    <!ENTITY primaryEditors SYSTEM "users/gettingStarted/primaryEditors.xml">
+    <!ENTITY scoreTimeline SYSTEM "users/gettingStarted/primaryEditors/scoreTimeline.xml">
+    <!ENTITY orchManager SYSTEM "users/gettingStarted/primaryEditors/orchestraManager.xml">
+    <!ENTITY tablesManager SYSTEM "users/gettingStarted/primaryEditors/tablesManager.xml">
+    <!ENTITY globalsManager SYSTEM "users/gettingStarted/primaryEditors/globalsManager.xml">
+    <!ENTITY udoManager SYSTEM "users/gettingStarted/primaryEditors/udoManager.xml">
+    <!ENTITY projectProperties SYSTEM "users/gettingStarted/primaryEditors/projectProperties.xml">
+    <!ENTITY mixer SYSTEM "users/gettingStarted/primaryEditors/mixer.xml">
+
+    <!ENTITY tools SYSTEM "users/gettingStarted/tools.xml">
+    <!ENTITY codeRepository SYSTEM "users/gettingStarted/tools/codeRepository.xml">
+    <!ENTITY blueShare SYSTEM "users/gettingStarted/tools/blueShare.xml">
+    <!ENTITY scannedMatrix SYSTEM "users/gettingStarted/tools/scannedMatrix.xml">
+    <!ENTITY soundFontViewer SYSTEM "users/gettingStarted/tools/soundFontViewer.xml">
+    <!ENTITY ftableConverter SYSTEM "users/gettingStarted/tools/ftableConverter.xml">
+    <!ENTITY userTools SYSTEM "users/gettingStarted/tools/userTools.xml">
+
+    <!ENTITY otherFeatures SYSTEM "users/gettingStarted/otherFeatures.xml">
+
+    <!ENTITY autoBackup SYSTEM "users/gettingStarted/otherFeatures/autoBackup.xml">
+    <!ENTITY blueLive SYSTEM "users/gettingStarted/otherFeatures/blueLive.xml">
+    <!ENTITY soundObjectFreezing SYSTEM "users/gettingStarted/otherFeatures/soundObjectFreezing.xml">
+    <!ENTITY auditionSoundObjects SYSTEM "users/gettingStarted/otherFeatures/auditionSoundObjects.xml">
+    <!ENTITY programScripts SYSTEM "users/gettingStarted/otherFeatures/programScripts.xml">
+    <!ENTITY importCSD SYSTEM "users/gettingStarted/otherFeatures/importCSD.xml">
+    <!ENTITY importMIDI SYSTEM "users/gettingStarted/otherFeatures/importMIDI.xml">
+    <!ENTITY blueVariables SYSTEM "users/gettingStarted/otherFeatures/blueVariables.xml">
+    <!ENTITY commandLine SYSTEM "users/gettingStarted/otherFeatures/commandLine.xml">
+
+
+	<!-- CONCEPTS -->
+    <!ENTITY concepts SYSTEM "users/concepts/top.xml">
+    <!ENTITY conceptsSoundObjects SYSTEM "users/concepts/soundObjects.xml">
+    <!ENTITY conceptsPolyObjects SYSTEM "users/concepts/polyObjects.xml">
+    <!ENTITY conceptsNoteProcessors SYSTEM "users/concepts/noteProcessors.xml">
+    <!ENTITY conceptsSoundObjectLibrary SYSTEM "users/concepts/soundObjectLibrary.xml">
+    <!ENTITY conceptsParameterAutomation SYSTEM "users/concepts/parameterAutomation.xml">
+    <!ENTITY conceptsCommandBlocks SYSTEM "users/concepts/commandBlocks.xml">
+    <!ENTITY conceptsRendering SYSTEM "users/concepts/rendering.xml">
+
+    <!-- TASKS -->
+    <!ENTITY tasks SYSTEM "users/tasks/top.xml">
+
+    <!ENTITY addSoundFiles SYSTEM "users/tasks/addSoundFiles.xml">
+	<!ENTITY createEncapsulatedInstruments SYSTEM "users/tasks/createEncapsulatedInstruments.xml">
+
+
+	<!-- REFERENCE -->
+    <!ENTITY reference SYSTEM "users/reference/top.xml">
+
+    <!ENTITY soundObjectsReference SYSTEM "users/reference/soundObjects/top.xml">
+
+    <!ENTITY audioFileObject SYSTEM "users/reference/soundObjects/audioFileObject.xml">
+    <!ENTITY ceciliaModule SYSTEM "users/reference/soundObjects/ceciliaModule.xml">
+    <!ENTITY comment SYSTEM "users/reference/soundObjects/comment.xml">
+    <!ENTITY external SYSTEM "users/reference/soundObjects/external.xml">
+    <!ENTITY genericScore SYSTEM "users/reference/soundObjects/genericScore.xml">
+    <!ENTITY instance SYSTEM "users/reference/soundObjects/instance.xml">
+    <!ENTITY jmask SYSTEM "users/reference/soundObjects/jmask.xml">
+    <!ENTITY objectBuilder SYSTEM "users/reference/soundObjects/objectBuilder.xml">
+    <!ENTITY patternObject SYSTEM "users/reference/soundObjects/patternObject.xml">
+    <!ENTITY polyObject SYSTEM "users/reference/soundObjects/polyObject.xml">
+    <!ENTITY pythonObject SYSTEM "users/reference/soundObjects/pythonObject.xml">
+    <!ENTITY rhinoObject SYSTEM "users/reference/soundObjects/rhinoObject.xml">
+    <!ENTITY sound SYSTEM "users/reference/soundObjects/sound.xml">
+    <!ENTITY tracker SYSTEM "users/reference/soundObjects/tracker.xml">
+    <!ENTITY lineObject SYSTEM "users/reference/soundObjects/lineObject.xml">
+    <!ENTITY pianoRoll SYSTEM "users/reference/soundObjects/pianoRoll.xml">
+    <!ENTITY zakLineObject SYSTEM "users/reference/soundObjects/zakLineObject.xml">
+
+    <!ENTITY noteProcessorsReference SYSTEM "users/reference/noteProcessors/top.xml">
+
+    <!ENTITY addProcessor SYSTEM "users/reference/noteProcessors/addProcessor.xml">
+    <!ENTITY equalsProcessor SYSTEM "users/reference/noteProcessors/equalsProcessor.xml">
+    <!ENTITY inversionProcessor SYSTEM "users/reference/noteProcessors/inversionProcessor.xml">
+    <!ENTITY lineAddProcessor SYSTEM "users/reference/noteProcessors/lineAddProcessor.xml">
+    <!ENTITY lineMultiplyProcessor SYSTEM "users/reference/noteProcessors/lineMultiplyProcessor.xml">
+    <!ENTITY multiplyProcessor SYSTEM "users/reference/noteProcessors/multiplyProcessor.xml">
+    <!ENTITY pchAddProcessor SYSTEM "users/reference/noteProcessors/pchAddProcessor.xml">
+    <!ENTITY pchInversionProcessor SYSTEM "users/reference/noteProcessors/pchInversionProcessor.xml">
+    <!ENTITY pythonProcessor SYSTEM "users/reference/noteProcessors/pythonProcessor.xml">
+    <!ENTITY randomAddProcessor SYSTEM "users/reference/noteProcessors/randomAddProcessor.xml">
+    <!ENTITY randomMultiplyProcessor SYSTEM "users/reference/noteProcessors/randomMultiplyProcessor.xml">
+    <!ENTITY retrogradeProcessor SYSTEM "users/reference/noteProcessors/retrogradeProcessor.xml">
+    <!ENTITY rotateProcessor SYSTEM "users/reference/noteProcessors/rotateProcessor.xml">
+    <!ENTITY subListProcessor SYSTEM "users/reference/noteProcessors/subListProcessor.xml">
+    <!ENTITY switchProcessor SYSTEM "users/reference/noteProcessors/switchProcessor.xml">
+    <!ENTITY timeWarpProcessor SYSTEM "users/reference/noteProcessors/timeWarpProcessor.xml">
+    <!ENTITY tuningProcessor SYSTEM "users/reference/noteProcessors/tuningProcessor.xml">
+
+    <!ENTITY instrumentsReference SYSTEM "users/reference/instruments/top.xml">
+    <!ENTITY genericInstrument SYSTEM "users/reference/instruments/genericInstrument.xml">
+    <!ENTITY pythonInstrument SYSTEM "users/reference/instruments/pythonInstrument.xml">
+    <!ENTITY rhinoInstrument SYSTEM "users/reference/instruments/rhinoInstrument.xml">
+    <!ENTITY blueX7 SYSTEM "users/reference/instruments/blueX7.xml">
+    <!ENTITY blueSynthBuilder SYSTEM "users/reference/instruments/blueSynthBuilder.xml">
+
+    <!ENTITY shortcuts SYSTEM "users/reference/shortcuts.xml">
+
+	<!ENTITY bestPractices SYSTEM "users/bestPractices.xml">
+    <!ENTITY appendixA SYSTEM "users/appendixA.xml">
+    <!ENTITY appendixB SYSTEM "users/appendixB.xml">
+    <!ENTITY glossary SYSTEM "users/glossary.xml">
+
+
+    <!ENTITY tutorials SYSTEM "tutorials.xml">
+    <!ENTITY tutorialFirstProject SYSTEM "tutorials/tutorial_first_project.xml">
+    <!ENTITY tutorialScripting SYSTEM "tutorials/tutorial_scripting.xml">
+    <!ENTITY tutorialSoundSoundObject SYSTEM "tutorials/tutorial_sound_soundObject.xml">
+
+    <!ENTITY developers SYSTEM "developers/top.xml">
+
+    <!ENTITY devCore SYSTEM "developers/core/top.xml">
+    <!ENTITY buildingBlue SYSTEM "developers/core/building.xml">
+
+  <!--<!ENTITY conclusion SYSTEM "conclusion.docbook">-->
+]>
+
+<book lang="en">
+
+<bookinfo>
+    <title>blue</title>
+    <subtitle>a music composition environment for csound</subtitle>
+    <authorgroup>
+        <author>
+            <firstname>Steven</firstname>
+            <surname>Yi</surname>
+        </author>
+
+    </authorgroup>
+
+    <copyright>
+        <year>2000-2008</year>
+        <holder>Steven Yi</holder>
+    </copyright>
+
+
+    <releaseinfo>2.0.9</releaseinfo>
+    <pubdate><?dbtimestamp format="Y.m.d"?></pubdate>
+
+    <abstract>
+        <para>
+        <application>blue</application> is a music composition environment for
+        use with Csound.  It is written in Java.  The homepage for blue is available at <ulink url="http://www.csounds.com/stevenyi/blue/">http://www.csounds.com/stevenyi/blue/</ulink>.
+        </para>
+    </abstract>
+
+    <keywordset>
+        <keyword>blue</keyword>
+        <keyword>csound</keyword>
+    </keywordset>
+</bookinfo>
+
+&preface;
+&credits;
+
+&users;
+&tutorials;
+&developers;
+
+</book>

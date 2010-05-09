@@ -1,0 +1,260 @@
+<section id="installation">
+  <title>Installation</title>
+
+  <section id="requirements">
+    <title>Requirements</title>
+
+    <para>
+      blue requires a Java 1.5 (also known as 5.0) or greater JVM (Java Virtual Machine). To test to
+      see if you have a JVM installed and what version, at a command prompt type
+      "java -version". If you see something along the lines of "command not
+      found" then you need to install a Java Virtual Machine.
+    </para>
+
+    <para>A Java JVM for Linux, Windows, and Solaris can be found at:</para>
+
+    <para>http://java.sun.com/j2se/downloads.html</para>
+
+    <para>
+      From here, select the version of Java you want to use (must be 1.5 or
+      higher for blue), and then choose the download for your platform. There
+      will be an option to download either the "JRE" or the "SDK". The JRE is
+      just what is required to run java programs and is all that is required to
+      run blue. If you're planning to do java development, then download the
+      SDK as it includes the JRE as well as all of the java development tools.
+    </para>
+
+    <para>
+      For Apple Macintosh OSX, a Java 1.5 JVM should be installed with the
+      system. If you don't have it, you can find it at:
+    </para>
+
+    <para>http://developer.apple.com/java/</para>
+
+  </section>
+
+  <section id="installingBlue">
+    <title>Installing blue</title>
+
+    <para>
+      To install blue, you should download the latest ZIP file from
+      the blue Sourceforge page
+      <ulink url="http://www.sourceforge.net/projects/bluemusic">here</ulink>
+      . Unzip the file to a location of your choice. After unzipping, locate the
+      bin folder and use either the "blue" script or "blue.exe", depending if
+      your are on Linux/OSX or Windows.
+    </para>
+
+    <para>Note: After starting blue, you may want to explore the example projects
+    and pieces found in the blue\example folder.</para>
+
+    <section id="platformNotes">
+      <title>Platform Specific Notes</title>
+
+      <para>The section below has notes for individual platforms.</para>
+
+      <simplesect>
+        <title>Mac OSX</title>
+
+        <para>
+          Unless you are using a mouse that emulates a second mouse button, you
+          will have to use a combination of the "open apple" key plus a mouse
+          click for all "rt-clicks" that are mentioned in this documentation.
+        </para>
+
+        <para>
+          To make use of the function key shortcuts (F1-F12), you will also need
+          to tick System Preferences, Keyboard and Mouse, "F1-F12 to control
+          software features". (This affects recent versions of OSX.)
+        </para>
+
+ 
+      </simplesect>
+
+    </section>
+
+  </section>
+
+  <section id="installingCsound">
+    <title>Installing Csound</title>
+
+    <para>
+      blue is able to interact with Csound either by calling Csound like a 
+      command-line program (classic blue), or by directly interacting with 
+      Csound via the Csound API. Instructions on setting up blue for each 
+      method is described below as well as discussion on benefits and 
+      limitations.
+    </para>
+    
+    <section id="commandLineCsound">
+      <title>Using blue with command-line Csound</title>  
+        
+      <para>
+        This may be considered "classical" blue usage and interaction with 
+        Csound as this was the method by which blue ran with Csound for the 
+        first eight years in existance.  The way blue operates in this mode is 
+        by rendering the .blue project into a temporary CSD file on disk, then
+        calling Csound with that temporary CSD file in the same way as if you 
+        were on a command-line shell and executing Csound yourself with that
+        file.
+      </para>
+      
+      <para>
+        The benefit to this mode of Csound usage is that it is easier to switch
+        out your version of Csound or use multiple versions of Csound on the 
+        same computer.  It is also a little more stable than using the API in 
+        that if Csound crashes for some reason, it won't take down blue with it.
+        Also, it may be more performant to use the command-line mode.  These
+        benefits however need to be weighed against the benefits of using the 
+        API, which is described below.
+      </para>
+      
+      <para>
+        To use the command-line version, one needs to set up the Csound 
+        executable option for Realtime and Disk Render settings in 
+        <link linkend="programOptions">Program Options</link>. 
+      </para>
+      
+    </section>
+    
+    <section id="csoundAPI">
+      <title>Using blue with the Csound API</title>
+    
+      <para>
+        Enabling blue to use the Csound API when rendering with Csound opens up
+        the ability to manipulate and edit widget values and automations
+        in realtime during a render, as well as the ability to use blueLive on 
+        Windows.  Because of its enhancement to the user-experience while 
+        rendering and composing, it is now the preferred method of using blue
+        with Csound.  However, it is a little more complicated to setup than
+        using the commandline mode.  The following are instructions on how to 
+        enable blue with using the Csound API.
+      </para>
+      
+      <para>
+        To use the API, you must first have a copy of Csound with the Java 
+        interface built, which is contained in a file called csnd.jar.  If you 
+        used an installer to install Csound like the ones found on Sourceforge, 
+        they should have included the csnd.jar file with them.  If you build
+        Csound yourself, you will need to build the interface jar, which 
+        requires the Java Development Kit (JDK) and SWIG.  
+      </para>
+      
+      <note>
+        <title>Note</title>
+        <para>blue currently
+        only works with the API if the version of Csound used is compiled
+        using 64-bit doubles.  (The float version is not currently supported 
+        when using the API.)  There are technical difficulties in supporting
+        two different versions of Csound API in the same build and it is not
+        known if or when the float build will be supported.  For users 
+        interested in using the float build of Csound with blue, you will need
+        to run blue using the command-line Csound mode.</para>
+      </note>
+          
+      
+      <para>
+        After locating the csnd.jar, take note of the location of the file. You
+        will next have to edit the starter script for your platform (blue.bat, 
+        blue.sh, or blue.command).  These scripts all contain a line that says
+        "CSND_JAR=xxx" where the xxx is a path.  You will need to replace that
+        xxx with the location of the csnd.jar.   It is suggested that
+        one makes a copy of the starter script and gives it new name, such as
+        "myblue.bat" or "myblue.sh", before editing.  This is because if you 
+        upgrade blue by running the installer with a newer version, you copy of
+        the starter script will not be overwritten.</para>
+        
+        <para>Also, you will need to 
+        remove the commenting from the lines that contains "CSND_JAR". On 
+        Windows, you will need to remove the "@rem" at the beginning of the 
+        lines so you should have lines like:
+        
+        <programlisting>
+set CSND_JAR=c:\work\workspace\csound5\csnd.jar
+set BLUE_LIBS=%BLUE_LIBS%;%CSND_JAR%
+        </programlisting>
+        
+        <para>On Linux and OSX, you will need
+        to remove the "#" at the beginning of the lines and so you should have 
+        lines like:</para>
+        
+        <programlisting>
+CSND_JAR=/home/steven/workspace/csound5/csnd.jar
+BLUE_LIBS=$BLUE_LIBS:$CSND_JAR
+        </programlisting>
+
+      </para>
+    
+      <para>If everything is setup correctly, next time you start blue, in the
+      console window that appears before the main blue interface shows up, you
+      should see the following line printed:</para>
+      
+      <programlisting>
+&gt;&gt; Csound API available: true &lt;&lt;
+      </programlisting>
+    
+      <para>This indicates that the Csound API is available to use as an option.
+      To use the API, you must also enable the Csound API option in Program 
+      Options (found from the File Menu).  This allows you to selectively turn
+      on and off the API should you want to switch between the API and using
+      the command-line version.  (If the API is not available on startup, then
+      the Csound API option in Program Options will be disabled and will not be
+      an option for the user to use.)</para>
+    
+      <para>If you have configured the CSND_JAR and enabled adding this to the 
+      BLUE_LIBS correctly but are getting an error message like this:</para>
+      
+      <programlisting>
+_jcsound native code library failed to load.
+java.lang.UnsatisfiedLinkError: no _jcsound in java.library.path</programlisting>
+
+      <para>This means that you have configured things correctly for Java to 
+      find the JAR, but after that, Java can not find the native library which
+      is the actual interface to the Csound API.  This native library is called
+      lib_jcsound.so on Linux and OSX and _jcsound.dll on Windows. If you are
+      getting this message, you will need to add the following to the blue
+      starter script for your platform, on the line that calls Java and starts
+      blue:</para>
+      
+      <programlisting>
+-Djava.library.path=/path/to/where/_jcsnd.so/is/located</programlisting>
+
+      <para>So for example, on Linux you might have the last line look like:</para>
+      
+      <programlisting>
+java -Djava.library.path=/home/steven/workspace/csound5 \
+     -Xms32m -Xmx256m -DBLUE_HOME="$BLUE_HOME" -cp $BLUE_LIBS blue.Blue "$@"</programlisting>
+    
+      <para>After enabling the API, you will still need to setup the Csound 
+        executable option for Realtime and Disk Render settings in 
+        <link linkend="programOptions">Program Options</link>. However, when 
+        using the API, this value gets disregarded, though a value is still
+        required.  The typical value to use in this case is "csound".  Also to
+        note, by having a valid value here that works without the API, you can
+        switch back and forth between using the API or not without having to 
+        reconfigure commandline options.
+      </para>
+      
+      
+    
+    </section>
+
+    <!-- <section id="installCsoundWindows">
+      <title>Windows</title>
+
+      </section>
+
+      <section id="installCsoundLinux">
+      <title>Linux</title>
+
+      </section>
+
+      <section id="installCsoundOSX">
+      <title>Mac OSX</title>
+
+      </section>
+    -->
+
+  </section>
+
+</section>

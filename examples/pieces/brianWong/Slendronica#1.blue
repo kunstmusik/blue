@@ -1,0 +1,1745 @@
+<blueData version='0.125.0'>
+  <projectProperties>
+    <title>Slendronica#1</title>
+    <author>Brian Wong</author>
+    <notes>This is a fractal microtonal composition in 5-TET (Slendro) done with a fractal composition system implemented using Python soundObjects. The panning algorithm used for the swelling pad sounds is pseudo-random, not fractal. Different approaches to application of the fractalization of synthesizer parameters have been used in this piece than the previous two pieces created with this system (Tintinnabulation#1 and 
+Tintinnabulation#2). The maximum and minimum values of the fractal list are determined and then mapped to the appropriate numerical range for some synthesizer parameters.
+
+Thanks to :
+
+William Sethares for his music and research into tuning and timbre. 
+
+Victor Lazzarini for his work on ModFM; the swelling pad is created by a ModFM synth based on his design.
+
+Stephen Yi for blue, and the ReverbSC effect which is used in this song.
+
+Robert Walker (&quot;Robert Inventor&quot;) for Fractal Tune Smithy, which inspired my creation of this system.
+
+Everyone who makes Csound possible.
+
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>100</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>48000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>Modist-00</name>
+        <comment>Modist - A basic score-controlled ModFM synth based on the Victor Lazzarini&apos;s design, as presented in Csound Journal # 11. by Brian Wong 2009</comment>
+        <globalOrc>gi_sine_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 10, 1
+</globalOrc>
+        <globalSco>f100 0 131072 &quot;exp&quot; 0 -50 1</globalSco>
+        <instrumentText>ifq = p4				; base frequency
+
+icfa = p5				; Carrier Factor envelope
+icfb = p6
+icfc = p7
+icft = p8
+icfu = p9
+icfv = p10
+kfc transeg icfa, icft, icfu, icfb, (p3-icft), icfv, icfc
+kfc = ifq * kfc
+
+inpa = p11				; Amplitude envelope
+inta = p12
+inxa = p13
+inpb = p14
+intb = p15
+inxb = p16
+inpc = p17
+inxc = p18
+inpd = p19
+intd = p20
+inxd = p21
+kamp transeg inpa,inta,inxa,inpb,intb,inxb,inpc,p3-inta-intb-intd,inxc,inpd,intd,inxd,0
+kamp = kamp * 10000
+
+imfa = p22				; Modulator Factor envelope
+imfb = p23
+imfc = p24
+imft = p25
+imfu = p26
+imfv = p27
+kfm transeg imfa, imft, imfu, imfb, (p3-imft), imfv, imfc
+kfm = ifq * kfm
+
+imipa = p28				; Modulation Index envelope
+imita = p29
+imixa = p30
+imipb = p31
+imitb = p32
+imixb = p33
+imipc = p34
+imixc = p35
+imipd = p36
+imitd = p37
+imixd = p38
+kndx transeg imipa,imita,imixa,imipb,imitb,imixb,imipc,p3-imita-imitb-imitd,imixc,imipd,imitd,imixd,0
+
+imx = p39				; Maximum value for exponential funtion table
+
+isin = gi_sine_&lt;INSTR_ID&gt;		; sine
+iexp = 100				; exponential function table : does not work with ftgen, can only exist as numbered table in global score
+
+acar oscili kamp,kfc,isin,0.25		; ModFM algorithm
+acos oscili 1,kfm,isin,0.25
+amod table  -kndx*(acos-1)/imx,iexp,1
+aout = acar*amod
+
+kpan line p40, p3, p41			; panning
+aleft = kpan * aout
+aright = (1-kpan) * aout
+
+blueMixerOut aleft, aright
+</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>7pm-02</name>
+        <comment>7pm - A seven oscilator Phase Modulation synth with full modulation matrix</comment>
+        <globalOrc>;[once](
+gi_sine_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 10, 1
+;)
+</globalOrc>
+        <globalSco/>
+        <instrumentText>asig0 init 0	
+asig1 init 0
+asig2 init 0
+asig3 init 0
+asig4 init 0
+asig5 init 0
+asig6 init 0
+aout init 0
+icarcount = 0				; keeps track of how many oscillators are outputting audio for amplitude scaling
+ifq 	= p4				; base frequency
+
+; oscillator 0
+ion0 	= p5				; audio output (1=on)
+invpa0 	= p6				; amplitude envelope point a (0-1)
+invta0 	= p7				; amplitude envelope time a (in seconds)
+invxa0 	= p8				; amplitude envelope curve a 
+invpb0 	= p9				; amplitude envelope point b (0-1)
+invtb0  = p10				; amplitude envelope time a (in seconds)
+invxb0 	= p11				; amplitude envelope curve b
+invpc0 	= p12				; amplitude envelope point c 
+invxc0 	= p13				; amplitude envelope curve c
+invpd0  = p14				; amplitude envelope point d (0-1)
+invtd0  = p15				; amplitude envelope time d (in seconds)
+invxd0  = p16				; amplitude envelope curve d
+ifaca0 	= p17				; frequency factor a
+ibndt0	= p18				; bend time a (in seconds)
+ibndxa0 = p19				; bend curve a
+ifacb0 	= p20				; frequency factor b
+ibndxb0 = p21				; bend curve b
+ifacc0 	= p22				; frequency factor c
+i0mod0 	= p23				; modulation osc0 (1=on)
+i0mod1 	= p24				; modulation osc1 (1=on)
+i0mod2 	= p25				; modulation osc2 (1=on)
+i0mod3 	= p26				; modulation osc3 (1=on)
+i0mod4 	= p27				; modulation osc4 (1=on)
+i0mod5 	= p28				; modulation osc5 (1=on)
+i0mod6 	= p29				; modulation osc6 (1=on)
+kfac0 transeg ifaca0, ibndt0, ibndxa0, ifacb0, (p3-ibndt0), ibndxb0, ifacc0	; frequency envelope
+afq0 = ifq * kfac0			; audio is created with base frequency * frequency envelope
+if (i0mod0 == 1) then			; oscillator 0 modulation
+  afq0 = afq0 + asig0			
+endif
+if (i0mod1 == 1) then			; oscillator 1 modulation
+  afq0 = afq0 + asig1
+endif
+if (i0mod2 == 1) then			; oscillator 2 modulation
+  afq0 = afq0 + asig2
+endif
+if (i0mod3 == 1) then			; oscillator 3 modulation
+  afq0 = afq0 + asig3
+endif
+if (i0mod4 == 1) then			; oscillator 4 modulation
+  afq0 = afq0 + asig4
+endif
+if (i0mod5 == 1) then			; oscillator 5 modulation
+  afq0 = afq0 + asig5
+endif
+if (i0mod6 == 1) then			; oscillator 6 modulation
+  afq0 = afq0 + asig6
+endif
+ifn0 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs0 	phasor	afq0			; here is where the phase modulation is applied			
+asig0	table3	aphs0, ifn0, 1, 0, 1	; phase is used with the wave
+asig0 = asig0 * 32000			; amplitude scaling
+knv0 transeg invpa0,invta0,invxa0,invpb0,invtb0,invxb0,invpc0,(p3-invta0-invtb0-invtd0),invxc0,invpd0,invtd0,invxd0,0	; amplitude envelope
+asig0 = asig0 * knv0			; amplitude envelope is applied to audio
+if (ion0 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig0			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 1
+ion1 	= p30				; audio output (1=on)
+invpa1 	= p31				; amplitude envelope point a (0-1)
+invta1 	= p32				; amplitude envelope time a (in seconds)
+invxa1 	= p33				; amplitude envelope curve a 
+invpb1 	= p34				; amplitude envelope point b (0-1)
+invtb1  = p35				; amplitude envelope time a (in seconds)
+invxb1 	= p36				; amplitude envelope curve b
+invpc1 	= p37				; amplitude envelope point c 
+invxc1 	= p38				; amplitude envelope curve c
+invpd1  = p39				; amplitude envelope point d (0-1)
+invtd1  = p40				; amplitude envelope time d (in seconds)
+invxd1  = p41				; amplitude envelope curve d
+ifaca1 	= p42				; frequency factor a
+ibndt1	= p43				; bend time a (in seconds)
+ibndxa1 = p44				; bend curve a
+ifacb1 	= p45				; frequency factor b
+ibndxb1 = p46				; bend curve b
+ifacc1 	= p47				; frequency factor c
+i1mod0 	= p48				; modulation osc0 (1=on)
+i1mod1 	= p49				; modulation osc1 (1=on)
+i1mod2 	= p50				; modulation osc2 (1=on)
+i1mod3 	= p51				; modulation osc3 (1=on)
+i1mod4 	= p52				; modulation osc4 (1=on)
+i1mod5 	= p53				; modulation osc5 (1=on)
+i1mod6 	= p54				; modulation osc6 (1=on)
+kfac1 transeg ifaca1, ibndt1, ibndxa1, ifacb1, (p3-ibndt1), ibndxb1, ifacc1	; frequency envelope
+afq1 = ifq * kfac1			; audio is created with base frequency * frequency envelope
+if (i1mod0 == 1) then			; oscillator 0 modulation
+  afq1 = afq1 + asig0
+endif
+if (i1mod1 == 1) then			; oscillator 1 modulation
+  afq1 = afq1 + asig1			
+endif
+if (i1mod2 == 1) then			; oscillator 2 modulation
+  afq1 = afq1 + asig2
+endif
+if (i1mod3 == 1) then			; oscillator 3 modulation
+  afq1 = afq1 + asig3
+endif
+if (i1mod4 == 1) then			; oscillator 4 modulation
+  afq1 = afq1 + asig4
+endif
+if (i1mod5 == 1) then			; oscillator 5 modulation
+  afq1 = afq1 + asig5
+endif
+if (i1mod6 == 1) then			; oscillator 6 modulation
+  afq1 = afq1 + asig6
+endif
+ifn1 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs1 	phasor	afq1			; here is where the phase modulation is applied			
+asig1	table3	aphs1, ifn1, 1, 0, 1	; phase is used with the wave
+asig1 = asig1 * 32000			; amplitude scaling
+knv1 transeg invpa1,invta1,invxa1,invpb1,invtb1,invxb1,invpc1,(p3-invta1-invtb1-invtd1),invxc1,invpd1,invtd1,invxd1,0	; amplitude envelope
+asig1 = asig1 * knv1			; amplitude envelope is applied to audio
+if (ion1 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig1			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 2
+ion2 	= p55				; audio output (1=on)
+invpa2 	= p56				; amplitude envelope point a (0-1)
+invta2 	= p57				; amplitude envelope time a (in seconds)
+invxa2 	= p58				; amplitude envelope curve a 
+invpb2 	= p59				; amplitude envelope point b (0-1)
+invtb2  = p60				; amplitude envelope time a (in seconds)
+invxb2 	= p61				; amplitude envelope curve b
+invpc2 	= p62				; amplitude envelope point c 
+invxc2 	= p63				; amplitude envelope curve c
+invpd2  = p64				; amplitude envelope point d (0-1)
+invtd2  = p65				; amplitude envelope time d (in seconds)
+invxd2  = p66				; amplitude envelope curve d
+ifaca2 	= p67				; frequency factor a
+ibndt2	= p68				; bend time a (in seconds)
+ibndxa2 = p69				; bend curve a
+ifacb2 	= p70				; frequency factor b
+ibndxb2 = p71				; bend curve b
+ifacc2 	= p72				; frequency factor c
+i2mod0 	= p73				; modulation osc0 (1=on)
+i2mod1 	= p74				; modulation osc1 (1=on)
+i2mod2 	= p75				; modulation osc2 (1=on)
+i2mod3 	= p76				; modulation osc3 (1=on)
+i2mod4 	= p77				; modulation osc4 (1=on)
+i2mod5 	= p78				; modulation osc5 (1=on)
+i2mod6 	= p79				; modulation osc6 (1=on)
+kfac2 transeg ifaca2, ibndt2, ibndxa2, ifacb2, (p3-ibndt2), ibndxb2, ifacc2	; frequency envelope
+afq2 = ifq * kfac2			; audio is created with base frequency * frequency envelope
+if (i2mod0 == 1) then			; oscillator 0 modulation
+  afq2 = afq2 + asig0
+endif
+if (i2mod1 == 1) then			; oscillator 1 modulation
+  afq2 = afq2 + asig1
+endif
+if (i2mod2 == 1) then			; oscillator 2 modulation
+  afq2 = afq2 + asig2			
+endif
+if (i2mod3 == 1) then			; oscillator 3 modulation
+  afq2 = afq2 + asig3
+endif
+if (i2mod4 == 1) then			; oscillator 4 modulation
+  afq2 = afq2 + asig4
+endif
+if (i2mod5 == 1) then			; oscillator 5 modulation
+  afq2 = afq2 + asig5
+endif
+if (i2mod6 == 1) then			; oscillator 6 modulation
+  afq2 = afq2 + asig6
+endif
+ifn2 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs2 	phasor	afq2			; here is where the phase modulation is applied			
+asig2	table3	aphs2, ifn2, 1, 0, 1	; phase is used with the wave
+asig2 = asig2 * 32000			; amplitude scaling
+knv2 transeg invpa2,invta2,invxa2,invpb2,invtb2,invxb2,invpc2,(p3-invta2-invtb2-invtd2),invxc2,invpd2,invtd2,invxd2,0	; amplitude envelope
+asig2 = asig2 * knv2			; amplitude envelope is applied to audio
+if (ion2 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig2			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 3
+ion3 	= p80				; audio output (1=on)
+invpa3 	= p81				; amplitude envelope point a (0-1)
+invta3 	= p82				; amplitude envelope time a (in seconds)
+invxa3 	= p83				; amplitude envelope curve a 
+invpb3 	= p84				; amplitude envelope point b (0-1)
+invtb3  = p85				; amplitude envelope time a (in seconds)
+invxb3 	= p86				; amplitude envelope curve b
+invpc3 	= p87				; amplitude envelope point c 
+invxc3 	= p88				; amplitude envelope curve c
+invpd3  = p89				; amplitude envelope point d (0-1)
+invtd3  = p90				; amplitude envelope time d (in seconds)
+invxd3  = p91				; amplitude envelope curve d
+ifaca3 	= p92				; frequency factor a
+ibndt3	= p93				; bend time a (in seconds)
+ibndxa3 = p94				; bend curve a
+ifacb3 	= p95				; frequency factor b
+ibndxb3 = p96				; bend curve b
+ifacc3 	= p97				; frequency factor c
+i3mod0 	= p98				; modulation osc0 (1=on)
+i3mod1 	= p99				; modulation osc1 (1=on)
+i3mod2 	= p100				; modulation osc2 (1=on)
+i3mod3 	= p101				; modulation osc3 (1=on)
+i3mod4 	= p102				; modulation osc4 (1=on)
+i3mod5 	= p103				; modulation osc5 (1=on)
+i3mod6 	= p104				; modulation osc6 (1=on)
+kfac3 transeg ifaca3, ibndt3, ibndxa3, ifacb3, (p3-ibndt3), ibndxb3, ifacc3	; frequency envelope
+afq3 = ifq * kfac3			; audio is created with base frequency * frequency envelope
+if (i3mod0 == 1) then			; oscillator 0 modulation
+  afq3 = afq3 + asig0			
+endif
+if (i3mod1 == 1) then			; oscillator 1 modulation
+  afq3 = afq3 + asig1
+endif
+if (i3mod2 == 1) then			; oscillator 2 modulation
+  afq3 = afq3 + asig2
+endif
+if (i3mod3 == 1) then			; oscillator 3 modulation
+  afq3 = afq3 + asig3
+endif
+if (i3mod4 == 1) then			; oscillator 4 modulation
+  afq3 = afq3 + asig4
+endif
+if (i3mod5 == 1) then			; oscillator 5 modulation
+  afq3 = afq3 + asig5
+endif
+if (i3mod6 == 1) then			; oscillator 6 modulation
+  afq3 = afq3 + asig6
+endif
+ifn3 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs3 	phasor	afq3			; here is where the phase modulation is applied			
+asig3	table3	aphs3, ifn3, 1, 0, 1	; phase is used with the wave
+asig3 = asig3 * 32000			; amplitude scaling
+knv3 transeg invpa3,invta3,invxa3,invpb3,invtb3,invxb3,invpc3,(p3-invta3-invtb3-invtd3),invxc3,invpd3,invtd3,invxd3,0	; amplitude envelope
+asig3 = asig3 * knv3			; amplitude envelope is applied to audio
+if (ion3 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig3			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 4
+ion4 	= p105				; audio output (1=on)
+invpa4 	= p106				; amplitude envelope point a (0-1)
+invta4 	= p107				; amplitude envelope time a (in seconds)
+invxa4 	= p108				; amplitude envelope curve a 
+invpb4 	= p109				; amplitude envelope point b (0-1)
+invtb4  = p110				; amplitude envelope time a (in seconds)
+invxb4 	= p111				; amplitude envelope curve b
+invpc4 	= p112				; amplitude envelope point c 
+invxc4 	= p113				; amplitude envelope curve c
+invpd4  = p114				; amplitude envelope point d (0-1)
+invtd4  = p115				; amplitude envelope time d (in seconds)
+invxd4  = p116				; amplitude envelope curve d
+ifaca4 	= p117				; frequency factor a
+ibndt4	= p118				; bend time a (in seconds)
+ibndxa4 = p119				; bend curve a
+ifacb4 	= p120				; frequency factor b
+ibndxb4 = p121				; bend curve b
+ifacc4 	= p122				; frequency factor c
+i4mod0 	= p123				; modulation osc0 (1=on)
+i4mod1 	= p124				; modulation osc1 (1=on)
+i4mod2 	= p125				; modulation osc2 (1=on)
+i4mod3 	= p126				; modulation osc3 (1=on)
+i4mod4 	= p127				; modulation osc4 (1=on)
+i4mod5 	= p128				; modulation osc5 (1=on)
+i4mod6 	= p129				; modulation osc6 (1=on)
+kfac4 transeg ifaca4, ibndt4, ibndxa4, ifacb4, (p3-ibndt4), ibndxb4, ifacc4	; frequency envelope
+afq4 = ifq * kfac4			; audio is created with base frequency * frequency envelope
+if (i4mod0 == 1) then			; oscillator 0 modulation
+  afq4 = afq4 + asig0			
+endif
+if (i4mod1 == 1) then			; oscillator 1 modulation
+  afq4 = afq4 + asig1
+endif
+if (i4mod2 == 1) then			; oscillator 2 modulation
+  afq4 = afq4 + asig2
+endif
+if (i4mod3 == 1) then			; oscillator 3 modulation
+  afq4 = afq4 + asig3
+endif
+if (i4mod4 == 1) then			; oscillator 4 modulation
+  afq4 = afq4 + asig4
+endif
+if (i4mod5 == 1) then			; oscillator 5 modulation
+  afq4 = afq4 + asig5
+endif
+if (i4mod6 == 1) then			; oscillator 6 modulation
+  afq4 = afq4 + asig6
+endif
+ifn4 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs4 	phasor	afq4			; here is where the phase modulation is applied			
+asig4	table3	aphs4, ifn4, 1, 0, 1	; phase is used with the wave
+asig4 = asig4 * 32000			; amplitude scaling
+knv4 transeg invpa4,invta4,invxa4,invpb4,invtb4,invxb4,invpc4,(p3-invta4-invtb4-invtd4),invxc4,invpd4,invtd4,invxd4,0	; amplitude envelope
+asig4 = asig4 * knv4			; amplitude envelope is applied to audio
+if (ion4 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig4			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 5
+ion5 	= p130				; audio output (1=on)
+invpa5 	= p131				; amplitude envelope point a (0-1)
+invta5 	= p132				; amplitude envelope time a (in seconds)
+invxa5 	= p133				; amplitude envelope curve a 
+invpb5 	= p134				; amplitude envelope point b (0-1)
+invtb5  = p135				; amplitude envelope time a (in seconds)
+invxb5 	= p136				; amplitude envelope curve b
+invpc5 	= p137				; amplitude envelope point c 
+invxc5 	= p138				; amplitude envelope curve c
+invpd5  = p139				; amplitude envelope point d (0-1)
+invtd5  = p140				; amplitude envelope time d (in seconds)
+invxd5  = p141				; amplitude envelope curve d
+ifaca5 	= p142				; frequency factor a
+ibndt5	= p143				; bend time a (in seconds)
+ibndxa5 = p144				; bend curve a
+ifacb5 	= p145				; frequency factor b
+ibndxb5 = p146				; bend curve b
+ifacc5 	= p147				; frequency factor c
+i5mod0 	= p148				; modulation osc0 (1=on)
+i5mod1 	= p149				; modulation osc1 (1=on)
+i5mod2 	= p150				; modulation osc2 (1=on)
+i5mod3 	= p151				; modulation osc3 (1=on)
+i5mod4 	= p152				; modulation osc4 (1=on)
+i5mod5 	= p153				; modulation osc5 (1=on)
+i5mod6 	= p154				; modulation osc6 (1=on)
+kfac5 transeg ifaca5, ibndt5, ibndxa5, ifacb5, (p3-ibndt5), ibndxb5, ifacc5	; frequency envelope
+afq5 = ifq * kfac5			; audio is created with base frequency * frequency envelope
+if (i5mod0 == 1) then			; oscillator 0 modulation
+  afq5 = afq5 + asig0			
+endif
+if (i5mod1 == 1) then			; oscillator 1 modulation
+  afq5 = afq5 + asig1
+endif
+if (i5mod2 == 1) then			; oscillator 2 modulation
+  afq5 = afq5 + asig2
+endif
+if (i5mod3 == 1) then			; oscillator 3 modulation
+  afq5 = afq5 + asig3
+endif
+if (i5mod4 == 1) then			; oscillator 4 modulation
+  afq5 = afq5 + asig4
+endif
+if (i5mod5 == 1) then			; oscillator 5 modulation
+  afq5 = afq5 + asig5
+endif
+if (i5mod6 == 1) then			; oscillator 6 modulation
+  afq5 = afq5 + asig6
+endif
+ifn5 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs5 	phasor	afq5			; here is where the phase modulation is applied			
+asig5	table3	aphs5, ifn5, 1, 0, 1	; phase is used with the wave
+asig5 = asig5 * 32000			; amplitude scaling
+knv5 transeg invpa5,invta5,invxa5,invpb5,invtb5,invxb5,invpc5,(p3-invta5-invtb5-invtd5),invxc5,invpd5,invtd5,invxd5,0	; amplitude envelope
+asig5 = asig5 * knv5			; amplitude envelope is applied to audio
+if (ion5 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig5			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+; oscillator 6
+ion6 	= p155				; audio output (1=on)
+invpa6 	= p156				; amplitude envelope point a (0-1)
+invta6 	= p157				; amplitude envelope time a (in seconds)
+invxa6 	= p158				; amplitude envelope curve a 
+invpb6 	= p159				; amplitude envelope point b (0-1)
+invtb6  = p160				; amplitude envelope time a (in seconds)
+invxb6 	= p161				; amplitude envelope curve b
+invpc6 	= p162				; amplitude envelope point c 
+invxc6 	= p163				; amplitude envelope curve c
+invpd6  = p164				; amplitude envelope point d (0-1)
+invtd6  = p165				; amplitude envelope time d (in seconds)
+invxd6  = p166				; amplitude envelope curve d
+ifaca6 	= p167				; frequency factor a
+ibndt6	= p168				; bend time a (in seconds)
+ibndxa6 = p169				; bend curve a
+ifacb6 	= p170				; frequency factor b
+ibndxb6 = p171				; bend curve b
+ifacc6 	= p172				; frequency factor c
+i6mod0 	= p173				; modulation osc0 (1=on)
+i6mod1 	= p174				; modulation osc1 (1=on)
+i6mod2 	= p175				; modulation osc2 (1=on)
+i6mod3 	= p176				; modulation osc3 (1=on)
+i6mod4 	= p177				; modulation osc4 (1=on)
+i6mod5 	= p178				; modulation osc5 (1=on)
+i6mod6 	= p179				; modulation osc6 (1=on)
+kfac6 transeg ifaca6, ibndt6, ibndxa6, ifacb6, (p3-ibndt6), ibndxb6, ifacc6	; frequency envelope
+afq6 = ifq * kfac6			; audio is created with base frequency * frequency envelope
+if (i6mod0 == 1) then			; oscillator 0 modulation
+  afq6 = afq6 + asig0			
+endif
+if (i6mod1 == 1) then			; oscillator 1 modulation
+  afq6 = afq6 + asig1
+endif
+if (i6mod2 == 1) then			; oscillator 2 modulation
+  afq6 = afq6 + asig2
+endif
+if (i6mod3 == 1) then			; oscillator 3 modulation
+  afq6 = afq6 + asig3
+endif
+if (i6mod4 == 1) then			; oscillator 4 modulation
+  afq6 = afq6 + asig4
+endif
+if (i6mod5 == 1) then			; oscillator 5 modulation
+  afq6 = afq6 + asig5
+endif
+if (i6mod6 == 1) then			; oscillator 6 modulation
+  afq6 = afq6 + asig6
+endif
+ifn6 = gi_sine_&lt;INSTR_ID&gt;		; wave
+aphs6 	phasor	afq6			; here is where the phase modulation is applied			
+asig6	table3	aphs6, ifn6, 1, 0, 1	; phase is used with the wave
+asig6 = asig6 * 32000			; amplitude scaling
+knv6 transeg invpa6,invta6,invxa6,invpb6,invtb6,invxb6,invpc6,(p3-invta6-invtb6-invtd6),invxc6,invpd6,invtd6,invxd6,0	; amplitude envelope
+asig6 = asig6 * knv6			; amplitude envelope is applied to audio
+if (ion6 == 1) then			; state of output : 1 = audio output on
+  aout = aout + asig6			; audio is added to output
+  icarcount = icarcount +1		; carrier count is incremented
+endif
+
+aout = aout/(1+icarcount)		; scale amplitude by number of carriers
+
+ipana = p180				; pan point a
+ipanbndt = p181*p3			; pan bend time (0-1)
+ipanbndxa = p182			; pan curve a
+ipanb = p183				; pan point b
+ipanbndxb = p184			; pan curve b
+ipanc = p185				; pan point c
+kpan transeg ipana,ipanbndt,ipanbndxa,ipanb,p3-ipanbndt,ipanbndxb,ipanc		; line for start and end pan values
+aleft = kpan * aout			; create left channel
+aright = (1-kpan) * aout		; create right channel
+
+blueMixerOut aleft, aright
+</instrumentText>
+        <graphicInterface editEnabled='true'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>-20.55294</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1454040925' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='-10.3'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-16763956' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-51.529415'/>
+            <linePoint x='15.5' y='-21.0'/>
+            <linePoint x='164.25' y='-19.0'/>
+            <linePoint x='178.75' y='-32.470592'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>-26.779278</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>ReverbSC</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+            <comments/>
+            <opcodeList/>
+            <graphicInterface editEnabled='true'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>7</x>
+                <y>7</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>feedback</objectName>
+                <x>8</x>
+                <y>55</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.85</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>11</x>
+                <y>36</y>
+                <label>Feedback</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>cutoff</objectName>
+                <x>72</x>
+                <y>55</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>20.0</minimum>
+                <maximum>20000.0</maximum>
+                <value>8000.0</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>80</x>
+                <y>36</y>
+                <label>Cut-Off</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>wetdry</objectName>
+                <x>136</x>
+                <y>55</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.3</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>139</x>
+                <y>36</y>
+                <label>Wet/Dry</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList/>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='1463190278' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='true' value='-14.4'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-3381760' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-96.0'/>
+            <linePoint x='22.25' y='-89.64706'/>
+            <linePoint x='49.5' y='-25.0'/>
+            <linePoint x='64.25' y='-3.8823547'/>
+            <linePoint x='163.5' y='3.5'/>
+            <linePoint x='178.25' y='-67.41176'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>7.4</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='1958189477' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='7.4'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-256' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+          <linePoint x='32.5' y='0.0'/>
+          <linePoint x='154.25' y='0.0'/>
+          <linePoint x='177.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>4</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>175.75</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Pyplate</name>
+        <backgroundColor>-6750106</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from ScriptingUtils import *
+import random
+
+seed = [0,3,1,-7,2,0,1]            # fractal seed
+qt = .125                   # quantization value in seconds
+
+sprout = []
+shoot = []
+for j in range(len(seed)) :                  # create 1st iteration
+    for k in range(len(seed)) :
+        sprout.append(seed[j]+seed[k])
+for j in range(len(sprout)) :                # create 2nd iteration
+    for k in range (len(sprout)) :
+        shoot.append(sprout[j]+sprout[k])
+shootmax = 0
+shootmin = 0
+for a in range(len(shoot)) :
+    if shootmax &lt; int(shoot[a]) : 
+        shootmax = shoot[a]
+    if shootmin &gt; shoot[a] : 
+        shootmin = shoot[a]
+pootmax = shootmax - shootmin
+pootmap = 1.0/pootmax
+
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Swell 0</name>
+        <backgroundColor>-16764007</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>20-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.035265</ratio>
+                <ratio>1.0717734</ratio>
+                <ratio>1.1095694</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.1892071</ratio>
+                <ratio>1.2311444</ratio>
+                <ratio>1.2745606</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.3660402</ratio>
+                <ratio>1.4142135</ratio>
+                <ratio>1.4640857</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.5691682</ratio>
+                <ratio>1.6245048</ratio>
+                <ratio>1.6817929</ratio>
+                <ratio>1.7411011</ratio>
+                <ratio>1.802501</ratio>
+                <ratio>1.866066</ratio>
+                <ratio>1.9318726</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                          # scoreText is cleared
+notetime = 0
+basenote = 42				# starting note
+npo = 5					# notes per octave
+cfa = 1
+cfb = 1
+cfc = 1
+cft = .5
+cfu = 0
+cfv = 0
+npa = 0
+nta = 1
+nxa = 0
+npb = .5
+ntb = 1
+nxb = 0
+npc = .25
+nxc = 0
+npd = .1
+ntd = .5
+nxd = 0
+mfa = 3.297396
+mfb = 3.297396
+mfc = 3.297396
+mft = .5
+mfu = 0
+mfv = 0
+mipa = 0
+mita = 1
+mixa = 0
+mipb = .25
+mitb = 1
+mixb = 0
+mipc = .125
+mixc = 0
+mipd = .0625
+mitd = .5
+mixd = 0
+mx = 50
+pana = .4
+panb = .6
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*2*qt)    # note start time
+    if notetime &gt; blueDuration : break
+    dur = 3.5 + .15*shoot[i]			# note duration
+    if dur &lt; 3.5 : 
+        dur = 3.5
+    note = basenote + shoot[i]			# seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)       # create pch note
+    rpan = random.uniform(0,1)                  # pseudo-random value for panb
+    if i &gt; 0 : pana = shoot[i-1]		# pana value is same as panb value for the previous note (except for the 1st note of course)
+    else : pana = .75
+    panb = rpan
+    scoreText += &quot;i1 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(cfa)+&quot; &quot;+str(cfb)+&quot; &quot;+str(cfc)+&quot; &quot;+str(cft)+&quot; &quot;+str(cfu)+&quot; &quot;+str(cfv)+&quot; &quot;+str(npa)+&quot; &quot;+str(nta)+&quot; &quot;+str(nxa)+&quot; &quot;+str(npb)+&quot; &quot;+str(ntb)+&quot; &quot;+str(nxb)+&quot; &quot;+str(npc)+&quot; &quot;+str(nxc)+&quot; &quot;+str(npd)+&quot; &quot;+str(ntd)+&quot; &quot;+str(nxd)+&quot; &quot;+str(mfa)+&quot; &quot;+str(mfb)+&quot; &quot;+str(mfc)+&quot; &quot;+str(mft)+&quot; &quot;+str(mfu)+&quot; &quot;+str(mfv)+&quot; &quot;+str(mipa)+&quot; &quot;+str(mita)+&quot; &quot;+str(mixa)+&quot; &quot;+str(mipb)+&quot; &quot;+str(mitb)+&quot; &quot;+str(mixb)+&quot; &quot;+str(mipc)+&quot; &quot;+str(mixc)+&quot; &quot;+str(mipd)+&quot; &quot;+str(mitd)+&quot; &quot;+str(mixd)+&quot; &quot;+str(mx)+&quot; &quot;+str(pana)+&quot; &quot;+str(panb)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Swell 1</name>
+        <backgroundColor>-16764007</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>10-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.0717734</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.2311444</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.4142135</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.6245048</ratio>
+                <ratio>1.7411011</ratio>
+                <ratio>1.866066</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                          # scoreText is cleared
+notetime = 0
+basenote = 37				# starting note
+npo = 5					# notes per octave
+cfa = 1
+cfb = 1
+cfc = 1
+cft = .5
+cfu = 0
+cfv = 0
+npa = 0
+nta = 1
+nxa = 0
+npb = .5
+ntb = 1
+nxb = 0
+npc = .25
+nxc = 0
+npd = .1
+ntd = .5
+nxd = 0
+mfa = 3.639014
+mfb = 3.639014
+mfc = 3.639014
+mft = .5
+mfu = 0
+mfv = 0
+mipa = 0
+mita = 1
+mixa = 0
+mipb = .25
+mitb = 1
+mixb = 0
+mipc = .125
+mixc = 0
+mipd = .0625
+mitd = .5
+mixd = 0
+mx = 50
+pana = .4
+panb = .6
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*qt)      # note start time
+    if notetime &gt; blueDuration : break
+    dur = 3.5 + .15*shoot[i]			# note duration
+    if dur &lt; 3.5 : 
+        dur = 3.5
+    note = basenote + shoot[i]			# seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)       # create pch note
+    rpan = random.uniform(0,1)
+    if i &gt; 0 : pana = shoot[i-1]
+    else : pana = .5
+    panb = rpan
+    scoreText += &quot;i1 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(cfa)+&quot; &quot;+str(cfb)+&quot; &quot;+str(cfc)+&quot; &quot;+str(cft)+&quot; &quot;+str(cfu)+&quot; &quot;+str(cfv)+&quot; &quot;+str(npa)+&quot; &quot;+str(nta)+&quot; &quot;+str(nxa)+&quot; &quot;+str(npb)+&quot; &quot;+str(ntb)+&quot; &quot;+str(nxb)+&quot; &quot;+str(npc)+&quot; &quot;+str(nxc)+&quot; &quot;+str(npd)+&quot; &quot;+str(ntd)+&quot; &quot;+str(nxd)+&quot; &quot;+str(mfa)+&quot; &quot;+str(mfb)+&quot; &quot;+str(mfc)+&quot; &quot;+str(mft)+&quot; &quot;+str(mfu)+&quot; &quot;+str(mfv)+&quot; &quot;+str(mipa)+&quot; &quot;+str(mita)+&quot; &quot;+str(mixa)+&quot; &quot;+str(mipb)+&quot; &quot;+str(mitb)+&quot; &quot;+str(mixb)+&quot; &quot;+str(mipc)+&quot; &quot;+str(mixc)+&quot; &quot;+str(mipd)+&quot; &quot;+str(mitd)+&quot; &quot;+str(mixd)+&quot; &quot;+str(mx)+&quot; &quot;+str(pana)+&quot; &quot;+str(panb)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Swell 2</name>
+        <backgroundColor>-16764007</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>5-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                          # scoreText is cleared
+notetime = 0
+basenote = 32				# starting note
+npo = 5					# notes per octave
+cfa = 1
+cfb = 1
+cfc = 1
+cft = .5
+cfu = 0
+cfv = 0
+npa = 0
+nta = 1
+nxa = 0
+npb = .5
+ntb = 1
+nxb = 0
+npc = .25
+nxc = 0
+npd = .1
+ntd = .5
+nxd = 0
+mfa = 4.031432
+mfb = 4.031432
+mfc = 4.031432
+mft = .5
+mfu = 0
+mfv = 0
+mipa = 0
+mita = 1
+mixa = 0
+mipb = .25
+mitb = 1
+mixb = 0
+mipc = .125
+mixc = 0
+mipd = .0625
+mitd = .5
+mixd = 0
+mx = 50
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*.5*qt)   # note start time
+    if notetime &gt; blueDuration : break
+    dur = 3.5 + .15*shoot[i]			# note duration
+    if dur &lt; 3.5 : 
+        dur = 3.5
+    note = basenote + shoot[i]			# seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)       # create pch note
+    rpan = random.uniform(0,1)
+    if i &gt; 0 : pana = shoot[i-1]
+    else : pana = .25
+    panb = rpan
+
+    scoreText += &quot;i1 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(cfa)+&quot; &quot;+str(cfb)+&quot; &quot;+str(cfc)+&quot; &quot;+str(cft)+&quot; &quot;+str(cfu)+&quot; &quot;+str(cfv)+&quot; &quot;+str(npa)+&quot; &quot;+str(nta)+&quot; &quot;+str(nxa)+&quot; &quot;+str(npb)+&quot; &quot;+str(ntb)+&quot; &quot;+str(nxb)+&quot; &quot;+str(npc)+&quot; &quot;+str(nxc)+&quot; &quot;+str(npd)+&quot; &quot;+str(ntd)+&quot; &quot;+str(nxd)+&quot; &quot;+str(mfa)+&quot; &quot;+str(mfb)+&quot; &quot;+str(mfc)+&quot; &quot;+str(mft)+&quot; &quot;+str(mfu)+&quot; &quot;+str(mfv)+&quot; &quot;+str(mipa)+&quot; &quot;+str(mita)+&quot; &quot;+str(mixa)+&quot; &quot;+str(mipb)+&quot; &quot;+str(mitb)+&quot; &quot;+str(mixb)+&quot; &quot;+str(mipc)+&quot; &quot;+str(mixc)+&quot; &quot;+str(mipd)+&quot; &quot;+str(mitd)+&quot; &quot;+str(mixd)+&quot; &quot;+str(mx)+&quot; &quot;+str(pana)+&quot; &quot;+str(panb)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Bellike 0</name>
+        <backgroundColor>-3381760</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>5-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                          # scoreText is cleared
+notetime = 0
+basenote = 37				# starting note
+npo = 5					# notes per octave
+on0 = 1                                 # osc0 audio on
+nvpa0 = 0                               # amplitude envelope point a - osc0
+nvta0 = .01                       	# Amplitude envelope time a - osc0
+nvxa0 = 2             		        # Amplitude envelope curve a - osc0
+nvpc0 = 0                         	# Amplitude envelope point c - osc0
+nvxc0 = 0                 		# Amplitude envelope curve c - osc0
+nvpd0 = 0	                        # Amplitude envelope point d - osc0
+nvtd0 = 0                         	# Amplitude envelope time d - osc0
+nvxd0 = 0	                        # Amplitude envelope curve d - osc0
+faca0 = 1                                 # Frequency factor a - osc0
+bndt0 = .5                                # Bend time - osc0
+bndxa0 = 2                                # Bend curve a - osc0
+facb0 = 1                                 # Frequency factor b - osc0
+bndxb0 = 2                                # Bend curve b - osc0
+facc0 = 1                                 # Frequency factor c - osc0
+c0m0 = 0                                  # Modulation osc0 &lt; osc0 (1=on)
+c0m1 = 1                                  # Modulation osc0 &lt; osc1 (1=on)
+c0m2 = 0                                  # Modulation osc0 &lt; osc2 (1=on)
+c0m3 = 0                                  # Modulation osc0 &lt; osc3 (1=on)
+c0m4 = 0                                  # Modulation osc0 &lt; osc4 (1=on)
+c0m5 = 0                                  # Modulation osc0 &lt; osc5 (1=on)
+c0m6 = 0                                  # Modulation osc0 &lt; osc6 (1=on)
+on1 = 0                                   # Audio on/off for oscillator 1 (1=on)
+nvpa1 = 0                                 # Amplitude envelope point a - osc1
+nvta1 = .01                               # Amplitude envelope time a - osc1
+nvxa1 = 0                                 # Amplitude envelope curve a - osc1
+nvpb1 = .008                              # Amplitude envelope point b - osc1
+nvtb1 = 2                                 # Amplitude envelope time b - osc1
+nvxb1 = -25                               # Amplitude envelope curve b - osc1
+nvpc1 = 0                                 # Amplitude envelope point c - osc1
+nvxc1 = 0                                 # Amplitude envelope curve c - osc1
+nvpd1 = 0                                 # Amplitude envelope point d - osc1
+nvtd1 = 0                                 # Amplitude envelope time d - osc1
+nvxd1 = 0                                 # Amplitude envelope curve d - osc1
+faca1 = 3.297396                          # Frequency factor a - osc1
+bndt1 = .5                                # Bend time - osc1
+bndxa1 = 0                                # Bend curve a - osc1
+facb1 = 3.297396                          # Frequency factor b - osc1
+bndxb1 = 0                                # Bend curve b - osc1
+facc1 = 3.297396                          # Frequency factor c - osc1
+c1m0 = 0                                  # Modulation osc1 &lt; osc0 (1=on)
+c1m1 = 0                                  # Modulation osc1 &lt; osc1 (1=on)
+c1m2 = 0                                  # Modulation osc1 &lt; osc2 (1=on)
+c1m3 = 0                                  # Modulation osc1 &lt; osc3 (1=on)
+c1m4 = 0                                  # Modulation osc1 &lt; osc4 (1=on)
+c1m5 = 0                                  # Modulation osc1 &lt; osc5 (1=on)
+c1m6 = 0                                  # Modulation osc1 &lt; osc6 (1=on)
+on2 = 1                                   # Audio on/off for oscillator 2 (1=on)
+nvpa2 = 0                                 # amplitude envelope point a - osc2
+nvta2 = .01                               # Amplitude envelope time a - osc2
+nvxa2 = 2                                 # Amplitude envelope curve a - osc0
+nvpc2 = 0                         	  # Amplitude envelope point c - osc2
+nvxc2 = 0                 		  # Amplitude envelope curve c - osc2
+nvpd2 = 0                                 # Amplitude envelope point d - osc2
+nvtd2 = 0                                 # Amplitude envelope time d - osc2
+nvxd2 = 0                                 # Amplitude envelope curve d - osc2
+faca2 = 1.01                              # Frequency factor a - osc2
+bndt2 = .5                                # Bend time - osc2
+bndxa2 = 0                                # Bend curve a - osc2
+facb2 = 1.01                              # Frequency factor b - osc2
+bndxb2 = 0                                # Bend curve b - osc2
+facc2 =1.01                               # Frequency factor c - osc2
+c2m0 = 0                                  # Modulation osc2 &lt; osc0 (1=on)
+c2m1 = 0                                  # Modulation osc2 &lt; osc1 (1=on)
+c2m2 = 0                                  # Modulation osc2 &lt; osc2 (1=on)
+c2m3 = 1                                  # Modulation osc2 &lt; osc3 (1=on)
+c2m4 = 0                                  # Modulation osc2 &lt; osc4 (1=on)
+c2m5 = 0                                  # Modulation osc2 &lt; osc5 (1=on)
+c2m6 = 0                                  # Modulation osc2 &lt; osc6 (1=on)
+on3 = 0                                   # Audio on/off (1=on) - osc3
+nvpa3 = 0                                 # Amplitude envelope point a - osc3
+nvta3 = .01                               # Amplitude envelope time a - osc3
+nvxa3 = 0
+nvpb3 = .008
+nvtb3 = 2
+nvxb3 = -25
+nvpc3 = 0                                 # Amplitude envelope point c - osc3
+nvxc3 = 0                                 # Amplitude envelope curve c - osc3
+nvpd3 = 0                                 # Amplitude envelope point d - osc3
+nvtd3 = 0                                 # Amplitude envelope time d - osc3
+nvxd3 = 0                                 # Amplitude envelope curve d - osc3
+faca3 = 3.297396                          # Frequency factor a - osc3
+bndt3 = .5                                # Bend time - osc3
+bndxa3 = 0                                # Bend curve a - osc3
+facb3 = 3.297396                          # Frequency factor b - osc3
+bndxb3 = 0                                # Bend curve b - osc3
+facc3 = 3.297396                          # Frequency factor c - osc3
+c3m0 = 0                                  # Modulation osc3 &lt; osc0 (1=on)
+c3m1 = 0                                  # Modulation osc3 &lt; osc1 (1=on)
+c3m2 = 0                                  # Modulation osc3 &lt; osc2 (1=on)
+c3m3 = 0                                  # Modulation osc3 &lt; osc3 (1=on)
+c3m4 = 0                                  # Modulation osc3 &lt; osc4 (1=on)
+c3m5 = 0                                  # Modulation osc3 &lt; osc5 (1=on)
+c3m6 = 0                                  # Modulation osc3 &lt; osc6 (1=on)
+on4 = 1                                   # Audio on/off (1=on) - osc4
+nvpa4 = 0                                 # Amplitude envelope point a - osc4
+nvta4 = .01                               # Amplitude envelope time a - osc4
+nvxa4 = 2                                 # Amplitude envelope curve a - osc4
+nvpc4 = 0                                 # Amplitude envelope point c - osc4
+nvxc4 = 0                                 # Amplitude envelope curve c - osc4
+nvpd4 = 0                                 # Amplitude envelope point d - osc4
+nvtd4 = 0                                 # Amplitude envelope time d - osc4
+nvxd4 = 0                                 # Amplitude envelope curve d - osc4
+faca4 = .990099                           # Frequency factor a - osc4
+bndt4 = .5                                # Bend time - osc4
+bndxa4 = 0                                # Bend curve a - osc4
+facb4 = .990099                           # Frequency factor b - osc4
+bndxb4 = 0                                # Bend curve b - osc4
+facc4 = .990099                           # Frequency factor c - osc4
+c4m0 = 0                                  # Modulation osc4 &lt; osc0 (1=on)
+c4m1 = 0                                  # Modulation osc4 &lt; osc1 (1=on)
+c4m2 = 0                                  # Modulation osc4 &lt; osc2 (1=on)
+c4m3 = 0                                  # Modulation osc4 &lt; osc3 (1=on)
+c4m4 = 0                                  # Modulation osc4 &lt; osc4 (1=on)
+c4m5 = 1                                  # Modulation osc4 &lt; osc5 (1=on)
+c4m6 = 0                                  # Modulation osc4 &lt; osc6 (1=on)
+on5 = 0                                   # Audio on/off (1=on) - osc5
+nvpa5 = 0                                 # Amplitude envelope point a - osc5
+nvta5 = .01                               # Amplitude envelope time a - osc5
+nvxa5 = 0                                 # Amplitude envelope curve a - osc5
+nvpb5 = .008                              # Amplitude envelope point b - osc5
+nvtb5 = 2                                 # Amplitude envelope time b - osc5
+nvxb5 = -25                               # Amplitude envelope curve b - osc5
+nvpc5 = 0                                 # Amplitude envelope point c - osc5
+nvxc5 = 0                                 # Amplitude envelope curve c - osc5
+nvpd5 = 0                                 # Amplitude envelope point d - osc5
+nvtd5 = 0                                 # Amplitude envelope time d - osc5
+nvxd5 = 0                                 # Amplitude envelope curve d - osc5
+faca5 = 3.297396                          # Frequency factor a - osc5
+bndt5 = .5                                # Bend time - osc5
+bndxa5 = 0                                # Bend curve a - osc5
+facb5 = 3.297396                          # Frequency factor b - osc5
+bndxb5 = 0                                # Bend curve b - osc5
+facc5 = 3.297396                          # Frequency factor c - osc5
+c5m0 = 0                                  # Modulation osc5 &lt; osc0 (1=on)
+c5m1 = 0                                  # Modulation osc5 &lt; osc1 (1=on)
+c5m2 = 0                                  # Modulation osc5 &lt; osc2 (1=on)
+c5m3 = 0                                  # Modulation osc5 &lt; osc3 (1=on)
+c5m4 = 0                                  # Modulation osc5 &lt; osc4 (1=on)
+c5m5 = 0                                  # Modulation osc5 &lt; osc5 (1=on)
+c5m6 = 0                                  # Modulation osc5 &lt; osc6 (1=on)
+on6 = 0                                   # Audio on/off (1=on) - osc6
+nvpa6 = 0                                 # Amplitude envelope point a - osc6
+nvta6 = 2                                 # Amplitude envelope time a - osc6
+nvxa6 = 2                                 # Amplitude envelope curve a - osc6
+nvpb6 = .001                              # Amplitude envelope point b - osc6
+nvtb6 = 2                                 # Amplitude envelope time b - osc6
+nvxb6 = -25                               # Amplitude envelope curve b - osc6
+nvpc6 = 0                                 # Amplitude envelope point c - osc6
+nvxc6 = 0                                 # Amplitude envelope curve c - osc6
+nvpd6 = 0                                 # Amplitude envelope point d - osc6
+nvtd6 = 0                                 # Amplitude envelope time d - osc6
+nvxd6 = 0                                 # Amplitude envelope curve d - osc6
+faca6 = .001                              # Frequency factor a - osc6
+bndt6 = .5                                # Bend time - osc6
+bndxa6 = -25                              # Bend curve a - osc6
+facb6 = .001                              # Frequency factor b - osc6
+bndxb6 = 0                                # Bend curve b - osc6
+facc6 = .001                              # Frequency factor c - osc6
+c6m0 = 0                                  # Modulation osc6 &lt; osc0 (1=on)
+c6m1 = 0                                  # Modulation osc6 &lt; osc1 (1=on)
+c6m2 = 0                                  # Modulation osc6 &lt; osc2 (1=on)
+c6m3 = 0                                  # Modulation osc6 &lt; osc3 (1=on)
+c6m4 = 0                                  # Modulation osc6 &lt; osc4 (1=on)
+c6m5 = 0                                  # Modulation osc6 &lt; osc5 (1=on)
+c6m6 = 0                                  # Modulation osc6 &lt; osc6 (1=on)
+panbndt = .5                              # pan bend time (0-1)
+panbndxa = 0                              # pan curve a
+panbndxb = 0                              # pan curve b
+
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*4*qt)                       # note start time
+    if notetime &gt; blueDuration : break
+    dur = 6 + .15*shoot[i]			                   # note duration
+    if dur &lt; 6 : 
+        dur = 6
+    note = basenote + shoot[i]			                   # seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)                          # create pch note
+    nvpb0=nvpb2=nvpb4= (shoot[i]-shootmin)*pootmap                 # Amplitude envelope point b - osc0
+    nvtb0=nvtb2=nvtb4= 1.3+.05*shoot[i]                            # Amplitude envelope time b - osc0
+    nvxb0=nvxb2=nvxb4= -5		                           # Amplitude envelope curve b - osc0
+    pana = (shoot[i]-shootmin)*pootmap*.25                         # pan point a (0-1)
+    panb = (shoot[i]-shootmin)*pootmap*.25                         # pan point b (0-1)
+    panc = (shoot[i]-shootmin)*pootmap*.25                         # pan point c
+    scoreText += &quot;i2 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(on0)+&quot; &quot;+str(nvpa0)+&quot; &quot;+str(nvta0)+&quot; &quot;+str(nvxa0)+&quot; &quot;+str(nvpb0)+&quot; &quot;+str(nvtb0)+&quot; &quot;+str(nvxb0)+&quot; &quot;+str(nvpc0)+&quot; &quot;+str(nvxc0)+&quot; &quot;+str(nvpd0)+&quot; &quot;+str(nvtd0)+&quot; &quot;+str(nvxd0)+&quot; &quot;+str(faca0)+&quot; &quot;+str(bndt0)+&quot; &quot;+str(bndxa0)+&quot; &quot;+str(facb0)+&quot; &quot;+str(bndxb0)+&quot; &quot;+str(facc0)+&quot; &quot;+str(c0m0)+&quot; &quot;+str(c0m1)+&quot; &quot;+str(c0m2)+&quot; &quot;+str(c0m3)+&quot; &quot;+str(c0m4)+&quot; &quot;+str(c0m5)+&quot; &quot;+str(c0m6)+&quot; &quot;+str(on1)+&quot; &quot;+str(nvpa1)+&quot; &quot;+str(nvta1)+&quot; &quot;+str(nvxa1)+&quot; &quot;+str(nvpb1)+&quot; &quot;+str(nvtb1)+&quot; &quot;+str(nvxb1)+&quot; &quot;+str(nvpc1)+&quot; &quot;+str(nvxc1)+&quot; &quot;+str(nvpd1)+&quot; &quot;+str(nvtd1)+&quot; &quot;+str(nvxd1)+&quot; &quot;+str(faca1)+&quot; &quot;+str(bndt1)+&quot; &quot;+str(bndxa1)+&quot; &quot;+str(facb1)+&quot; &quot;+str(bndxb1)+&quot; &quot;+str(facc1)+&quot; &quot;+str(c1m0)+&quot; &quot;+str(c1m1)+&quot; &quot;+str(c1m2)+&quot; &quot;+str(c1m3)+&quot; &quot;+str(c1m4)+&quot; &quot;+str(c1m5)+&quot; &quot;+str(c1m6)+&quot; &quot;+str(on2)+&quot; &quot;+str(nvpa2)+&quot; &quot;+str(nvta2)+&quot; &quot;+str(nvxa2)+&quot; &quot;+str(nvpb2)+&quot; &quot;+str(nvtb2)+&quot; &quot;+str(nvxb2)+&quot; &quot;+str(nvpc2)+&quot; &quot;+str(nvxc2)+&quot; &quot;+str(nvpd2)+&quot; &quot;+str(nvtd2)+&quot; &quot;+str(nvxd2)+&quot; &quot;+str(faca2)+&quot; &quot;+str(bndt2)+&quot; &quot;+str(bndxa2)+&quot; &quot;+str(facb2)+&quot; &quot;+str(bndxb2)+&quot; &quot;+str(facc2)+&quot; &quot;+str(c2m0)+&quot; &quot;+str(c2m1)+&quot; &quot;+str(c2m2)+&quot; &quot;+str(c2m3)+&quot; &quot;+str(c2m4)+&quot; &quot;+str(c2m5)+&quot; &quot;+str(c2m6)+&quot; &quot;+str(on3)+&quot; &quot;+str(nvpa3)+&quot; &quot;+str(nvta3)+&quot; &quot;+str(nvxa3)+&quot; &quot;+str(nvpb3)+&quot; &quot;+str(nvtb3)+&quot; &quot;+str(nvxb3)+&quot; &quot;+str(nvpc3)+&quot; &quot;+str(nvxc3)+&quot; &quot;+str(nvpd3)+&quot; &quot;+str(nvtd3)+&quot; &quot;+str(nvxd3)+&quot; &quot;+str(faca3)+&quot; &quot;+str(bndt3)+&quot; &quot;+str(bndxa3)+&quot; &quot;+str(facb3)+&quot; &quot;+str(bndxb3)+&quot; &quot;+str(facc3)+&quot; &quot;+str(c3m0)+&quot; &quot;+str(c3m1)+&quot; &quot;+str(c3m2)+&quot; &quot;+str(c3m3)+&quot; &quot;+str(c3m4)+&quot; &quot;+str(c3m5)+&quot; &quot;+str(c3m6)+&quot; &quot;+str(on4)+&quot; &quot;+str(nvpa4)+&quot; &quot;+str(nvta4)+&quot; &quot;+str(nvxa4)+&quot; &quot;+str(nvpb4)+&quot; &quot;+str(nvtb4)+&quot; &quot;+str(nvxb4)+&quot; &quot;+str(nvpc4)+&quot; &quot;+str(nvxc4)+&quot; &quot;+str(nvpd4)+&quot; &quot;+str(nvtd4)+&quot; &quot;+str(nvxd4)+&quot; &quot;+str(faca4)+&quot; &quot;+str(bndt4)+&quot; &quot;+str(bndxa4)+&quot; &quot;+str(facb4)+&quot; &quot;+str(bndxb4)+&quot; &quot;+str(facc4)+&quot; &quot;+str(c4m0)+&quot; &quot;+str(c4m1)+&quot; &quot;+str(c4m2)+&quot; &quot;+str(c4m3)+&quot; &quot;+str(c4m4)+&quot; &quot;+str(c4m5)+&quot; &quot;+str(c4m6)+&quot; &quot;+str(on5)+&quot; &quot;+str(nvpa5)+&quot; &quot;+str(nvta5)+&quot; &quot;+str(nvxa5)+&quot; &quot;+str(nvpb5)+&quot; &quot;+str(nvtb5)+&quot; &quot;+str(nvxb5)+&quot; &quot;+str(nvpc5)+&quot; &quot;+str(nvxc5)+&quot; &quot;+str(nvpd5)+&quot; &quot;+str(nvtd5)+&quot; &quot;+str(nvxd5)+&quot; &quot;+str(faca5)+&quot; &quot;+str(bndt5)+&quot; &quot;+str(bndxa5)+&quot; &quot;+str(facb5)+&quot; &quot;+str(bndxb5)+&quot; &quot;+str(facc5)+&quot; &quot;+str(c5m0)+&quot; &quot;+str(c5m1)+&quot; &quot;+str(c5m2)+&quot; &quot;+str(c5m3)+&quot; &quot;+str(c5m4)+&quot; &quot;+str(c5m5)+&quot; &quot;+str(c5m6)+&quot; &quot;+str(on6)+&quot; &quot;+str(nvpa6)+&quot; &quot;+str(nvta6)+&quot; &quot;+str(nvxa6)+&quot; &quot;+str(nvpb6)+&quot; &quot;+str(nvtb6)+&quot; &quot;+str(nvxb6)+&quot; &quot;+str(nvpc6)+&quot; &quot;+str(nvxc6)+&quot; &quot;+str(nvpd6)+&quot; &quot;+str(nvtd6)+&quot; &quot;+str(nvxd6)+&quot; &quot;+str(faca6)+&quot; &quot;+str(bndt6)+&quot; &quot;+str(bndxa6)+&quot; &quot;+str(facb6)+&quot; &quot;+str(bndxb6)+&quot; &quot;+str(facc6)+&quot; &quot;+str(c6m0)+&quot; &quot;+str(c6m1)+&quot; &quot;+str(c6m2)+&quot; &quot;+str(c6m3)+&quot; &quot;+str(c6m4)+&quot; &quot;+str(c6m5)+&quot; &quot;+str(c6m6)+&quot; &quot;+str(pana)+&quot; &quot;+str(panbndt)+&quot; &quot;+str(panbndxa)+&quot; &quot;+str(panb)+&quot; &quot;+str(panbndxb)+&quot; &quot;+str(panc)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Bellike 1</name>
+        <backgroundColor>-3381760</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>5-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                          # scoreText is cleared
+notetime = 0
+basenote = 42				# starting note
+npo = 5					# notes per octave
+on0 = 1                                 # osc0 audio on
+nvpa0 = 0                               # amplitude envelope point a - osc0
+nvta0 = .01                       	# Amplitude envelope time a - osc0
+nvxa0 = 2             		        # Amplitude envelope curve a - osc0
+nvpc0 = 0                         	# Amplitude envelope point c - osc0
+nvxc0 = 0                 		# Amplitude envelope curve c - osc0
+nvpd0 = 0	                        # Amplitude envelope point d - osc0
+nvtd0 = 0                         	# Amplitude envelope time d - osc0
+nvxd0 = 0	                        # Amplitude envelope curve d - osc0
+faca0 = 1                                 # Frequency factor a - osc0
+bndt0 = .5                                # Bend time - osc0
+bndxa0 = 2                                # Bend curve a - osc0
+facb0 = 1                                 # Frequency factor b - osc0
+bndxb0 = 2                                # Bend curve b - osc0
+facc0 = 1                                 # Frequency factor c - osc0
+c0m0 = 0                                  # Modulation osc0 &lt; osc0 (1=on)
+c0m1 = 1                                  # Modulation osc0 &lt; osc1 (1=on)
+c0m2 = 0                                  # Modulation osc0 &lt; osc2 (1=on)
+c0m3 = 0                                  # Modulation osc0 &lt; osc3 (1=on)
+c0m4 = 0                                  # Modulation osc0 &lt; osc4 (1=on)
+c0m5 = 0                                  # Modulation osc0 &lt; osc5 (1=on)
+c0m6 = 0                                  # Modulation osc0 &lt; osc6 (1=on)
+on1 = 0                                   # Audio on/off for oscillator 1 (1=on)
+nvpa1 = 0                                 # Amplitude envelope point a - osc1
+nvta1 = .01                               # Amplitude envelope time a - osc1
+nvxa1 = 0                                 # Amplitude envelope curve a - osc1
+nvpb1 = .008                              # Amplitude envelope point b - osc1
+nvtb1 = 2                                 # Amplitude envelope time b - osc1
+nvxb1 = -25                               # Amplitude envelope curve b - osc1
+nvpc1 = 0                                 # Amplitude envelope point c - osc1
+nvxc1 = 0                                 # Amplitude envelope curve c - osc1
+nvpd1 = 0                                 # Amplitude envelope point d - osc1
+nvtd1 = 0                                 # Amplitude envelope time d - osc1
+nvxd1 = 0                                 # Amplitude envelope curve d - osc1
+faca1 = 3.639014                          # Frequency factor a - osc1
+bndt1 = .5                                # Bend time - osc1
+bndxa1 = 0                                # Bend curve a - osc1
+facb1 = 3.639014                          # Frequency factor b - osc1
+bndxb1 = 0                                # Bend curve b - osc1
+facc1 = 3.639014                          # Frequency factor c - osc1
+c1m0 = 0                                  # Modulation osc1 &lt; osc0 (1=on)
+c1m1 = 0                                  # Modulation osc1 &lt; osc1 (1=on)
+c1m2 = 0                                  # Modulation osc1 &lt; osc2 (1=on)
+c1m3 = 0                                  # Modulation osc1 &lt; osc3 (1=on)
+c1m4 = 0                                  # Modulation osc1 &lt; osc4 (1=on)
+c1m5 = 0                                  # Modulation osc1 &lt; osc5 (1=on)
+c1m6 = 0                                  # Modulation osc1 &lt; osc6 (1=on)
+on2 = 1                                   # Audio on/off for oscillator 2 (1=on)
+nvpa2 = 0                                 # amplitude envelope point a - osc2
+nvta2 = .01                               # Amplitude envelope time a - osc2
+nvxa2 = 2                                 # Amplitude envelope curve a - osc0
+nvpc2 = 0                         	  # Amplitude envelope point c - osc2
+nvxc2 = 0                 		  # Amplitude envelope curve c - osc2
+nvpd2 = 0                                 # Amplitude envelope point d - osc2
+nvtd2 = 0                                 # Amplitude envelope time d - osc2
+nvxd2 = 0                                 # Amplitude envelope curve d - osc2
+faca2 = 1.01                              # Frequency factor a - osc2
+bndt2 = .5                                # Bend time - osc2
+bndxa2 = 0                                # Bend curve a - osc2
+facb2 = 1.01                              # Frequency factor b - osc2
+bndxb2 = 0                                # Bend curve b - osc2
+facc2 =1.01                               # Frequency factor c - osc2
+c2m0 = 0                                  # Modulation osc2 &lt; osc0 (1=on)
+c2m1 = 0                                  # Modulation osc2 &lt; osc1 (1=on)
+c2m2 = 0                                  # Modulation osc2 &lt; osc2 (1=on)
+c2m3 = 1                                  # Modulation osc2 &lt; osc3 (1=on)
+c2m4 = 0                                  # Modulation osc2 &lt; osc4 (1=on)
+c2m5 = 0                                  # Modulation osc2 &lt; osc5 (1=on)
+c2m6 = 0                                  # Modulation osc2 &lt; osc6 (1=on)
+on3 = 0                                   # Audio on/off (1=on) - osc3
+nvpa3 = 0                                 # Amplitude envelope point a - osc3
+nvta3 = .01                               # Amplitude envelope time a - osc3
+nvxa3 = 0
+nvpb3 = .008
+nvtb3 = 2
+nvxb3 = -25
+nvpc3 = 0                                 # Amplitude envelope point c - osc3
+nvxc3 = 0                                 # Amplitude envelope curve c - osc3
+nvpd3 = 0                                 # Amplitude envelope point d - osc3
+nvtd3 = 0                                 # Amplitude envelope time d - osc3
+nvxd3 = 0                                 # Amplitude envelope curve d - osc3
+faca3 = 3.639014                          # Frequency factor a - osc3
+bndt3 = .5                                # Bend time - osc3
+bndxa3 = 0                                # Bend curve a - osc3
+facb3 = 3.639014                          # Frequency factor b - osc3
+bndxb3 = 0                                # Bend curve b - osc3
+facc3 = 3.639014                          # Frequency factor c - osc3
+c3m0 = 0                                  # Modulation osc3 &lt; osc0 (1=on)
+c3m1 = 0                                  # Modulation osc3 &lt; osc1 (1=on)
+c3m2 = 0                                  # Modulation osc3 &lt; osc2 (1=on)
+c3m3 = 0                                  # Modulation osc3 &lt; osc3 (1=on)
+c3m4 = 0                                  # Modulation osc3 &lt; osc4 (1=on)
+c3m5 = 0                                  # Modulation osc3 &lt; osc5 (1=on)
+c3m6 = 0                                  # Modulation osc3 &lt; osc6 (1=on)
+on4 = 1                                   # Audio on/off (1=on) - osc4
+nvpa4 = 0                                 # Amplitude envelope point a - osc4
+nvta4 = .01                               # Amplitude envelope time a - osc4
+nvxa4 = 2                                 # Amplitude envelope curve a - osc4
+nvpc4 = 0                                 # Amplitude envelope point c - osc4
+nvxc4 = 0                                 # Amplitude envelope curve c - osc4
+nvpd4 = 0                                 # Amplitude envelope point d - osc4
+nvtd4 = 0                                 # Amplitude envelope time d - osc4
+nvxd4 = 0                                 # Amplitude envelope curve d - osc4
+faca4 = .990099                           # Frequency factor a - osc4
+bndt4 = .5                                # Bend time - osc4
+bndxa4 = 0                                # Bend curve a - osc4
+facb4 = .990099                           # Frequency factor b - osc4
+bndxb4 = 0                                # Bend curve b - osc4
+facc4 = .990099                           # Frequency factor c - osc4
+c4m0 = 0                                  # Modulation osc4 &lt; osc0 (1=on)
+c4m1 = 0                                  # Modulation osc4 &lt; osc1 (1=on)
+c4m2 = 0                                  # Modulation osc4 &lt; osc2 (1=on)
+c4m3 = 0                                  # Modulation osc4 &lt; osc3 (1=on)
+c4m4 = 0                                  # Modulation osc4 &lt; osc4 (1=on)
+c4m5 = 1                                  # Modulation osc4 &lt; osc5 (1=on)
+c4m6 = 0                                  # Modulation osc4 &lt; osc6 (1=on)
+on5 = 0                                   # Audio on/off (1=on) - osc5
+nvpa5 = 0                                 # Amplitude envelope point a - osc5
+nvta5 = .01                               # Amplitude envelope time a - osc5
+nvxa5 = 0                                 # Amplitude envelope curve a - osc5
+nvpb5 = .008                              # Amplitude envelope point b - osc5
+nvtb5 = 2                                 # Amplitude envelope time b - osc5
+nvxb5 = -25                               # Amplitude envelope curve b - osc5
+nvpc5 = 0                                 # Amplitude envelope point c - osc5
+nvxc5 = 0                                 # Amplitude envelope curve c - osc5
+nvpd5 = 0                                 # Amplitude envelope point d - osc5
+nvtd5 = 0                                 # Amplitude envelope time d - osc5
+nvxd5 = 0                                 # Amplitude envelope curve d - osc5
+faca5 = 3.639014                          # Frequency factor a - osc5
+bndt5 = .5                                # Bend time - osc5
+bndxa5 = 0                                # Bend curve a - osc5
+facb5 = 3.639014                          # Frequency factor b - osc5
+bndxb5 = 0                                # Bend curve b - osc5
+facc5 = 3.639014                          # Frequency factor c - osc5
+c5m0 = 0                                  # Modulation osc5 &lt; osc0 (1=on)
+c5m1 = 0                                  # Modulation osc5 &lt; osc1 (1=on)
+c5m2 = 0                                  # Modulation osc5 &lt; osc2 (1=on)
+c5m3 = 0                                  # Modulation osc5 &lt; osc3 (1=on)
+c5m4 = 0                                  # Modulation osc5 &lt; osc4 (1=on)
+c5m5 = 0                                  # Modulation osc5 &lt; osc5 (1=on)
+c5m6 = 0                                  # Modulation osc5 &lt; osc6 (1=on)
+on6 = 0                                   # Audio on/off (1=on) - osc6
+nvpa6 = 0                                 # Amplitude envelope point a - osc6
+nvta6 = 2                                 # Amplitude envelope time a - osc6
+nvxa6 = 2                                 # Amplitude envelope curve a - osc6
+nvpb6 = .001                              # Amplitude envelope point b - osc6
+nvtb6 = 2                                 # Amplitude envelope time b - osc6
+nvxb6 = -25                               # Amplitude envelope curve b - osc6
+nvpc6 = 0                                 # Amplitude envelope point c - osc6
+nvxc6 = 0                                 # Amplitude envelope curve c - osc6
+nvpd6 = 0                                 # Amplitude envelope point d - osc6
+nvtd6 = 0                                 # Amplitude envelope time d - osc6
+nvxd6 = 0                                 # Amplitude envelope curve d - osc6
+faca6 = .001                              # Frequency factor a - osc6
+bndt6 = .5                                # Bend time - osc6
+bndxa6 = -25                              # Bend curve a - osc6
+facb6 = .001                              # Frequency factor b - osc6
+bndxb6 = 0                                # Bend curve b - osc6
+facc6 = .001                              # Frequency factor c - osc6
+c6m0 = 0                                  # Modulation osc6 &lt; osc0 (1=on)
+c6m1 = 0                                  # Modulation osc6 &lt; osc1 (1=on)
+c6m2 = 0                                  # Modulation osc6 &lt; osc2 (1=on)
+c6m3 = 0                                  # Modulation osc6 &lt; osc3 (1=on)
+c6m4 = 0                                  # Modulation osc6 &lt; osc4 (1=on)
+c6m5 = 0                                  # Modulation osc6 &lt; osc5 (1=on)
+c6m6 = 0                                  # Modulation osc6 &lt; osc6 (1=on)
+panbndt = .5                              # pan bend time (0-1)
+panbndxa = 0                              # pan curve a
+panbndxb = 0                              # pan curve b
+
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*2*qt)            # note start time
+    if notetime &gt; blueDuration : break
+    dur = 6 + .15*shoot[i]			        # note duration
+    if dur &lt; 6 : 
+        dur = 6
+    note = basenote + shoot[i]			        # seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)               # create pch note
+    nvpb0=nvpb2=nvpb4= (shoot[i]-shootmin)*pootmap*.6   # Amplitude envelope point b - osc0
+    nvtb0=nvtb2=nvtb4= 1.3+.05*shoot[i]                 # Amplitude envelope time b - osc0
+    nvxb0=nvxb2=nvxb4= -5		                # Amplitude envelope curve b - osc0
+    pana = (shoot[i]-shootmin)*pootmap*.75              # pan point a (0-1)
+    panb = (shoot[i]-shootmin)*pootmap*.75              # pan point b (0-1)
+    panc = (shoot[i]-shootmin)*pootmap*.75              # pan point c
+    scoreText += &quot;i2 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(on0)+&quot; &quot;+str(nvpa0)+&quot; &quot;+str(nvta0)+&quot; &quot;+str(nvxa0)+&quot; &quot;+str(nvpb0)+&quot; &quot;+str(nvtb0)+&quot; &quot;+str(nvxb0)+&quot; &quot;+str(nvpc0)+&quot; &quot;+str(nvxc0)+&quot; &quot;+str(nvpd0)+&quot; &quot;+str(nvtd0)+&quot; &quot;+str(nvxd0)+&quot; &quot;+str(faca0)+&quot; &quot;+str(bndt0)+&quot; &quot;+str(bndxa0)+&quot; &quot;+str(facb0)+&quot; &quot;+str(bndxb0)+&quot; &quot;+str(facc0)+&quot; &quot;+str(c0m0)+&quot; &quot;+str(c0m1)+&quot; &quot;+str(c0m2)+&quot; &quot;+str(c0m3)+&quot; &quot;+str(c0m4)+&quot; &quot;+str(c0m5)+&quot; &quot;+str(c0m6)+&quot; &quot;+str(on1)+&quot; &quot;+str(nvpa1)+&quot; &quot;+str(nvta1)+&quot; &quot;+str(nvxa1)+&quot; &quot;+str(nvpb1)+&quot; &quot;+str(nvtb1)+&quot; &quot;+str(nvxb1)+&quot; &quot;+str(nvpc1)+&quot; &quot;+str(nvxc1)+&quot; &quot;+str(nvpd1)+&quot; &quot;+str(nvtd1)+&quot; &quot;+str(nvxd1)+&quot; &quot;+str(faca1)+&quot; &quot;+str(bndt1)+&quot; &quot;+str(bndxa1)+&quot; &quot;+str(facb1)+&quot; &quot;+str(bndxb1)+&quot; &quot;+str(facc1)+&quot; &quot;+str(c1m0)+&quot; &quot;+str(c1m1)+&quot; &quot;+str(c1m2)+&quot; &quot;+str(c1m3)+&quot; &quot;+str(c1m4)+&quot; &quot;+str(c1m5)+&quot; &quot;+str(c1m6)+&quot; &quot;+str(on2)+&quot; &quot;+str(nvpa2)+&quot; &quot;+str(nvta2)+&quot; &quot;+str(nvxa2)+&quot; &quot;+str(nvpb2)+&quot; &quot;+str(nvtb2)+&quot; &quot;+str(nvxb2)+&quot; &quot;+str(nvpc2)+&quot; &quot;+str(nvxc2)+&quot; &quot;+str(nvpd2)+&quot; &quot;+str(nvtd2)+&quot; &quot;+str(nvxd2)+&quot; &quot;+str(faca2)+&quot; &quot;+str(bndt2)+&quot; &quot;+str(bndxa2)+&quot; &quot;+str(facb2)+&quot; &quot;+str(bndxb2)+&quot; &quot;+str(facc2)+&quot; &quot;+str(c2m0)+&quot; &quot;+str(c2m1)+&quot; &quot;+str(c2m2)+&quot; &quot;+str(c2m3)+&quot; &quot;+str(c2m4)+&quot; &quot;+str(c2m5)+&quot; &quot;+str(c2m6)+&quot; &quot;+str(on3)+&quot; &quot;+str(nvpa3)+&quot; &quot;+str(nvta3)+&quot; &quot;+str(nvxa3)+&quot; &quot;+str(nvpb3)+&quot; &quot;+str(nvtb3)+&quot; &quot;+str(nvxb3)+&quot; &quot;+str(nvpc3)+&quot; &quot;+str(nvxc3)+&quot; &quot;+str(nvpd3)+&quot; &quot;+str(nvtd3)+&quot; &quot;+str(nvxd3)+&quot; &quot;+str(faca3)+&quot; &quot;+str(bndt3)+&quot; &quot;+str(bndxa3)+&quot; &quot;+str(facb3)+&quot; &quot;+str(bndxb3)+&quot; &quot;+str(facc3)+&quot; &quot;+str(c3m0)+&quot; &quot;+str(c3m1)+&quot; &quot;+str(c3m2)+&quot; &quot;+str(c3m3)+&quot; &quot;+str(c3m4)+&quot; &quot;+str(c3m5)+&quot; &quot;+str(c3m6)+&quot; &quot;+str(on4)+&quot; &quot;+str(nvpa4)+&quot; &quot;+str(nvta4)+&quot; &quot;+str(nvxa4)+&quot; &quot;+str(nvpb4)+&quot; &quot;+str(nvtb4)+&quot; &quot;+str(nvxb4)+&quot; &quot;+str(nvpc4)+&quot; &quot;+str(nvxc4)+&quot; &quot;+str(nvpd4)+&quot; &quot;+str(nvtd4)+&quot; &quot;+str(nvxd4)+&quot; &quot;+str(faca4)+&quot; &quot;+str(bndt4)+&quot; &quot;+str(bndxa4)+&quot; &quot;+str(facb4)+&quot; &quot;+str(bndxb4)+&quot; &quot;+str(facc4)+&quot; &quot;+str(c4m0)+&quot; &quot;+str(c4m1)+&quot; &quot;+str(c4m2)+&quot; &quot;+str(c4m3)+&quot; &quot;+str(c4m4)+&quot; &quot;+str(c4m5)+&quot; &quot;+str(c4m6)+&quot; &quot;+str(on5)+&quot; &quot;+str(nvpa5)+&quot; &quot;+str(nvta5)+&quot; &quot;+str(nvxa5)+&quot; &quot;+str(nvpb5)+&quot; &quot;+str(nvtb5)+&quot; &quot;+str(nvxb5)+&quot; &quot;+str(nvpc5)+&quot; &quot;+str(nvxc5)+&quot; &quot;+str(nvpd5)+&quot; &quot;+str(nvtd5)+&quot; &quot;+str(nvxd5)+&quot; &quot;+str(faca5)+&quot; &quot;+str(bndt5)+&quot; &quot;+str(bndxa5)+&quot; &quot;+str(facb5)+&quot; &quot;+str(bndxb5)+&quot; &quot;+str(facc5)+&quot; &quot;+str(c5m0)+&quot; &quot;+str(c5m1)+&quot; &quot;+str(c5m2)+&quot; &quot;+str(c5m3)+&quot; &quot;+str(c5m4)+&quot; &quot;+str(c5m5)+&quot; &quot;+str(c5m6)+&quot; &quot;+str(on6)+&quot; &quot;+str(nvpa6)+&quot; &quot;+str(nvta6)+&quot; &quot;+str(nvxa6)+&quot; &quot;+str(nvpb6)+&quot; &quot;+str(nvtb6)+&quot; &quot;+str(nvxb6)+&quot; &quot;+str(nvpc6)+&quot; &quot;+str(nvxc6)+&quot; &quot;+str(nvpd6)+&quot; &quot;+str(nvtd6)+&quot; &quot;+str(nvxd6)+&quot; &quot;+str(faca6)+&quot; &quot;+str(bndt6)+&quot; &quot;+str(bndxa6)+&quot; &quot;+str(facb6)+&quot; &quot;+str(bndxb6)+&quot; &quot;+str(facc6)+&quot; &quot;+str(c6m0)+&quot; &quot;+str(c6m1)+&quot; &quot;+str(c6m2)+&quot; &quot;+str(c6m3)+&quot; &quot;+str(c6m4)+&quot; &quot;+str(c6m5)+&quot; &quot;+str(c6m6)+&quot; &quot;+str(pana)+&quot; &quot;+str(panbndt)+&quot; &quot;+str(panbndxa)+&quot; &quot;+str(panb)+&quot; &quot;+str(panbndxb)+&quot; &quot;+str(panc)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>176.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Bellike 2</name>
+        <backgroundColor>-3381760</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>5-TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <pythonCode>scoreText = &quot;&quot;                            # scoreText is cleared
+notetime = 0
+basenote = 47				  # starting note
+npo = 5					  # notes per octave
+on0 = 1                                   # osc0 audio on
+nvpa0 = 0                                 # amplitude envelope point a - osc0
+nvta0 = .01                       	  # Amplitude envelope time a - osc0
+nvxa0 = 2             		          # Amplitude envelope curve a - osc0
+nvpc0 = 0                         	  # Amplitude envelope point c - osc0
+nvxc0 = 0                 		  # mplitude envelope curve c - osc0
+nvpd0 = 0	                          # Amplitude envelope point d - osc0
+nvtd0 = 0                         	  # Amplitude envelope time d - osc0
+nvxd0 = 0	                          # Amplitude envelope curve d - osc0
+faca0 = 1                                 # Frequency factor a - osc0
+bndt0 = .5                                # Bend time - osc0
+bndxa0 = 2                                # Bend curve a - osc0
+facb0 = 1                                 # Frequency factor b - osc0
+bndxb0 = 2                                # Bend curve b - osc0
+facc0 = 1                                 # Frequency factor c - osc0
+c0m0 = 0                                  # Modulation osc0 &lt; osc0 (1=on)
+c0m1 = 1                                  # Modulation osc0 &lt; osc1 (1=on)
+c0m2 = 0                                  # Modulation osc0 &lt; osc2 (1=on)
+c0m3 = 0                                  # Modulation osc0 &lt; osc3 (1=on)
+c0m4 = 0                                  # Modulation osc0 &lt; osc4 (1=on)
+c0m5 = 0                                  # Modulation osc0 &lt; osc5 (1=on)
+c0m6 = 0                                  # Modulation osc0 &lt; osc6 (1=on)
+on1 = 0                                   # Audio on/off for oscillator 1 (1=on)
+nvpa1 = 0                                 # Amplitude envelope point a - osc1
+nvta1 = .01                               # Amplitude envelope time a - osc1
+nvxa1 = 0                                 # Amplitude envelope curve a - osc1
+nvpb1 = .008                              # Amplitude envelope point b - osc1
+nvtb1 = 2                                 # Amplitude envelope time b - osc1
+nvxb1 = -25                               # Amplitude envelope curve b - osc1
+nvpc1 = 0                                 # Amplitude envelope point c - osc1
+nvxc1 = 0                                 # Amplitude envelope curve c - osc1
+nvpd1 = 0                                 # Amplitude envelope point d - osc1
+nvtd1 = 0                                 # Amplitude envelope time d - osc1
+nvxd1 = 0                                 # Amplitude envelope curve d - osc1
+faca1 = 4.031432                          # Frequency factor a - osc1
+bndt1 = .5                                # Bend time - osc1
+bndxa1 = 0                                # Bend curve a - osc1
+facb1 = 4.031432                          # Frequency factor b - osc1
+bndxb1 = 0                                # Bend curve b - osc1
+facc1 = 4.031432                          # Frequency factor c - osc1
+c1m0 = 0                                  # Modulation osc1 &lt; osc0 (1=on)
+c1m1 = 0                                  # Modulation osc1 &lt; osc1 (1=on)
+c1m2 = 0                                  # Modulation osc1 &lt; osc2 (1=on)
+c1m3 = 0                                  # Modulation osc1 &lt; osc3 (1=on)
+c1m4 = 0                                  # Modulation osc1 &lt; osc4 (1=on)
+c1m5 = 0                                  # Modulation osc1 &lt; osc5 (1=on)
+c1m6 = 0                                  # Modulation osc1 &lt; osc6 (1=on)
+on2 = 1                                   # Audio on/off for oscillator 2 (1=on)
+nvpa2 = 0                                 # amplitude envelope point a - osc2
+nvta2 = .01                               # Amplitude envelope time a - osc2
+nvxa2 = 2                                 # Amplitude envelope curve a - osc0
+nvpc2 = 0                         	  # Amplitude envelope point c - osc2
+nvxc2 = 0                 		  # Amplitude envelope curve c - osc2
+nvpd2 = 0                                 # Amplitude envelope point d - osc2
+nvtd2 = 0                                 # Amplitude envelope time d - osc2
+nvxd2 = 0                                 # Amplitude envelope curve d - osc2
+faca2 = 1.01                              # Frequency factor a - osc2
+bndt2 = .5                                # Bend time - osc2
+bndxa2 = 0                                # Bend curve a - osc2
+facb2 = 1.01                              # Frequency factor b - osc2
+bndxb2 = 0                                # Bend curve b - osc2
+facc2 =1.01                               # Frequency factor c - osc2
+c2m0 = 0                                  # Modulation osc2 &lt; osc0 (1=on)
+c2m1 = 0                                  # Modulation osc2 &lt; osc1 (1=on)
+c2m2 = 0                                  # Modulation osc2 &lt; osc2 (1=on)
+c2m3 = 1                                  # Modulation osc2 &lt; osc3 (1=on)
+c2m4 = 0                                  # Modulation osc2 &lt; osc4 (1=on)
+c2m5 = 0                                  # Modulation osc2 &lt; osc5 (1=on)
+c2m6 = 0                                  # Modulation osc2 &lt; osc6 (1=on)
+on3 = 0                                   # Audio on/off (1=on) - osc3
+nvpa3 = 0                                 # Amplitude envelope point a - osc3
+nvta3 = .01                               # Amplitude envelope time a - osc3
+nvxa3 = 0
+nvpb3 = .008
+nvtb3 = 2
+nvxb3 = -25
+nvpc3 = 0                                 # Amplitude envelope point c - osc3
+nvxc3 = 0                                 # Amplitude envelope curve c - osc3
+nvpd3 = 0                                 # Amplitude envelope point d - osc3
+nvtd3 = 0                                 # Amplitude envelope time d - osc3
+nvxd3 = 0                                 # Amplitude envelope curve d - osc3
+faca3 = 4.031432                          # Frequency factor a - osc3
+bndt3 = .5                                # Bend time - osc3
+bndxa3 = 0                                # Bend curve a - osc3
+facb3 = 4.031432                          # Frequency factor b - osc3
+bndxb3 = 0                                # Bend curve b - osc3
+facc3 = 4.031432                          # Frequency factor c - osc3
+c3m0 = 0                                  # Modulation osc3 &lt; osc0 (1=on)
+c3m1 = 0                                  # Modulation osc3 &lt; osc1 (1=on)
+c3m2 = 0                                  # Modulation osc3 &lt; osc2 (1=on)
+c3m3 = 0                                  # Modulation osc3 &lt; osc3 (1=on)
+c3m4 = 0                                  # Modulation osc3 &lt; osc4 (1=on)
+c3m5 = 0                                  # Modulation osc3 &lt; osc5 (1=on)
+c3m6 = 0                                  # Modulation osc3 &lt; osc6 (1=on)
+on4 = 1                                   # Audio on/off (1=on) - osc4
+nvpa4 = 0                                 # Amplitude envelope point a - osc4
+nvta4 = .01                               # Amplitude envelope time a - osc4
+nvxa4 = 2                                 # Amplitude envelope curve a - osc4
+nvpc4 = 0                                 # Amplitude envelope point c - osc4
+nvxc4 = 0                                 # Amplitude envelope curve c - osc4
+nvpd4 = 0                                 # Amplitude envelope point d - osc4
+nvtd4 = 0                                 # Amplitude envelope time d - osc4
+nvxd4 = 0                                 # Amplitude envelope curve d - osc4
+faca4 = .990099                           # Frequency factor a - osc4
+bndt4 = .5                                # Bend time - osc4
+bndxa4 = 0                                # Bend curve a - osc4
+facb4 = .990099                           # Frequency factor b - osc4
+bndxb4 = 0                                # Bend curve b - osc4
+facc4 = .990099                           # Frequency factor c - osc4
+c4m0 = 0                                  # Modulation osc4 &lt; osc0 (1=on)
+c4m1 = 0                                  # Modulation osc4 &lt; osc1 (1=on)
+c4m2 = 0                                  # Modulation osc4 &lt; osc2 (1=on)
+c4m3 = 0                                  # Modulation osc4 &lt; osc3 (1=on)
+c4m4 = 0                                  # Modulation osc4 &lt; osc4 (1=on)
+c4m5 = 1                                  # Modulation osc4 &lt; osc5 (1=on)
+c4m6 = 0                                  # Modulation osc4 &lt; osc6 (1=on)
+on5 = 0                                   # Audio on/off (1=on) - osc5
+nvpa5 = 0                                 # Amplitude envelope point a - osc5
+nvta5 = .01                               # Amplitude envelope time a - osc5
+nvxa5 = 0                                 # Amplitude envelope curve a - osc5
+nvpb5 = .008                              # Amplitude envelope point b - osc5
+nvtb5 = 2                                 # Amplitude envelope time b - osc5
+nvxb5 = -25                               # Amplitude envelope curve b - osc5
+nvpc5 = 0                                 # Amplitude envelope point c - osc5
+nvxc5 = 0                                 # Amplitude envelope curve c - osc5
+nvpd5 = 0                                 # Amplitude envelope point d - osc5
+nvtd5 = 0                                 # Amplitude envelope time d - osc5
+nvxd5 = 0                                 # Amplitude envelope curve d - osc5
+faca5 = 4.031432                          # Frequency factor a - osc5
+bndt5 = .5                                # Bend time - osc5
+bndxa5 = 0                                # Bend curve a - osc5
+facb5 = 4.031432                          # Frequency factor b - osc5
+bndxb5 = 0                                # Bend curve b - osc5
+facc5 = 4.031432                          # Frequency factor c - osc5
+c5m0 = 0                                  # Modulation osc5 &lt; osc0 (1=on)
+c5m1 = 0                                  # Modulation osc5 &lt; osc1 (1=on)
+c5m2 = 0                                  # Modulation osc5 &lt; osc2 (1=on)
+c5m3 = 0                                  # Modulation osc5 &lt; osc3 (1=on)
+c5m4 = 0                                  # Modulation osc5 &lt; osc4 (1=on)
+c5m5 = 0                                  # Modulation osc5 &lt; osc5 (1=on)
+c5m6 = 0                                  # Modulation osc5 &lt; osc6 (1=on)
+on6 = 0                                   # Audio on/off (1=on) - osc6
+nvpa6 = 0                                 # Amplitude envelope point a - osc6
+nvta6 = 2                                 # Amplitude envelope time a - osc6
+nvxa6 = 2                                 # Amplitude envelope curve a - osc6
+nvpb6 = .001                              # Amplitude envelope point b - osc6
+nvtb6 = 2                                 # Amplitude envelope time b - osc6
+nvxb6 = -25                               # Amplitude envelope curve b - osc6
+nvpc6 = 0                                 # Amplitude envelope point c - osc6
+nvxc6 = 0                                 # Amplitude envelope curve c - osc6
+nvpd6 = 0                                 # Amplitude envelope point d - osc6
+nvtd6 = 0                                 # Amplitude envelope time d - osc6
+nvxd6 = 0                                 # Amplitude envelope curve d - osc6
+faca6 = .001                              # Frequency factor a - osc6
+bndt6 = .5                                # Bend time - osc6
+bndxa6 = -25                              # Bend curve a - osc6
+facb6 = .001                              # Frequency factor b - osc6
+bndxb6 = 0                                # Bend curve b - osc6
+facc6 = .001                              # Frequency factor c - osc6
+c6m0 = 0                                  # Modulation osc6 &lt; osc0 (1=on)
+c6m1 = 0                                  # Modulation osc6 &lt; osc1 (1=on)
+c6m2 = 0                                  # Modulation osc6 &lt; osc2 (1=on)
+c6m3 = 0                                  # Modulation osc6 &lt; osc3 (1=on)
+c6m4 = 0                                  # Modulation osc6 &lt; osc4 (1=on)
+c6m5 = 0                                  # Modulation osc6 &lt; osc5 (1=on)
+c6m6 = 0                                  # Modulation osc6 &lt; osc6 (1=on)
+panbndt = .5                              # pan bend time (0-1)
+panbndxa = 0                              # pan curve a
+panbndxb = 0                              # pan curve b
+
+for i in shoot :
+    notetime = notetime + abs(shoot[i]*qt)                # note start time
+    if notetime &gt; blueDuration : break
+    dur = 6 + .15*shoot[i]			          # note duration
+    if dur &lt; 6 : 
+        dur = 6
+    note = basenote + shoot[i]			          # seed value is added to note
+    pch = str(note/npo)+&quot;.&quot;+str(note%npo)                 # create pch note
+    nvpb0=nvpb2=nvpb4= (shoot[i]-shootmin)*pootmap*.3     # Amplitude envelope point b - osc0
+    nvtb0=nvtb2=nvtb4= 1.3+.05*shoot[i]                   # Amplitude envelope time b - osc0
+    nvxb0=nvxb2=nvxb4= -5		                  # Amplitude envelope curve b - osc0
+    pana = (shoot[i]-shootmin)*pootmap*.5                 # pan point a (0-1)
+    panb = (shoot[i]-shootmin)*pootmap*.5                 # pan point b (0-1)
+    panc = (shoot[i]-shootmin)*pootmap*.5                 # pan point c
+    scoreText += &quot;i2 &quot;+str(notetime)+&quot; &quot;+str(dur)+&quot; &quot;+pch+&quot; &quot;+str(on0)+&quot; &quot;+str(nvpa0)+&quot; &quot;+str(nvta0)+&quot; &quot;+str(nvxa0)+&quot; &quot;+str(nvpb0)+&quot; &quot;+str(nvtb0)+&quot; &quot;+str(nvxb0)+&quot; &quot;+str(nvpc0)+&quot; &quot;+str(nvxc0)+&quot; &quot;+str(nvpd0)+&quot; &quot;+str(nvtd0)+&quot; &quot;+str(nvxd0)+&quot; &quot;+str(faca0)+&quot; &quot;+str(bndt0)+&quot; &quot;+str(bndxa0)+&quot; &quot;+str(facb0)+&quot; &quot;+str(bndxb0)+&quot; &quot;+str(facc0)+&quot; &quot;+str(c0m0)+&quot; &quot;+str(c0m1)+&quot; &quot;+str(c0m2)+&quot; &quot;+str(c0m3)+&quot; &quot;+str(c0m4)+&quot; &quot;+str(c0m5)+&quot; &quot;+str(c0m6)+&quot; &quot;+str(on1)+&quot; &quot;+str(nvpa1)+&quot; &quot;+str(nvta1)+&quot; &quot;+str(nvxa1)+&quot; &quot;+str(nvpb1)+&quot; &quot;+str(nvtb1)+&quot; &quot;+str(nvxb1)+&quot; &quot;+str(nvpc1)+&quot; &quot;+str(nvxc1)+&quot; &quot;+str(nvpd1)+&quot; &quot;+str(nvtd1)+&quot; &quot;+str(nvxd1)+&quot; &quot;+str(faca1)+&quot; &quot;+str(bndt1)+&quot; &quot;+str(bndxa1)+&quot; &quot;+str(facb1)+&quot; &quot;+str(bndxb1)+&quot; &quot;+str(facc1)+&quot; &quot;+str(c1m0)+&quot; &quot;+str(c1m1)+&quot; &quot;+str(c1m2)+&quot; &quot;+str(c1m3)+&quot; &quot;+str(c1m4)+&quot; &quot;+str(c1m5)+&quot; &quot;+str(c1m6)+&quot; &quot;+str(on2)+&quot; &quot;+str(nvpa2)+&quot; &quot;+str(nvta2)+&quot; &quot;+str(nvxa2)+&quot; &quot;+str(nvpb2)+&quot; &quot;+str(nvtb2)+&quot; &quot;+str(nvxb2)+&quot; &quot;+str(nvpc2)+&quot; &quot;+str(nvxc2)+&quot; &quot;+str(nvpd2)+&quot; &quot;+str(nvtd2)+&quot; &quot;+str(nvxd2)+&quot; &quot;+str(faca2)+&quot; &quot;+str(bndt2)+&quot; &quot;+str(bndxa2)+&quot; &quot;+str(facb2)+&quot; &quot;+str(bndxb2)+&quot; &quot;+str(facc2)+&quot; &quot;+str(c2m0)+&quot; &quot;+str(c2m1)+&quot; &quot;+str(c2m2)+&quot; &quot;+str(c2m3)+&quot; &quot;+str(c2m4)+&quot; &quot;+str(c2m5)+&quot; &quot;+str(c2m6)+&quot; &quot;+str(on3)+&quot; &quot;+str(nvpa3)+&quot; &quot;+str(nvta3)+&quot; &quot;+str(nvxa3)+&quot; &quot;+str(nvpb3)+&quot; &quot;+str(nvtb3)+&quot; &quot;+str(nvxb3)+&quot; &quot;+str(nvpc3)+&quot; &quot;+str(nvxc3)+&quot; &quot;+str(nvpd3)+&quot; &quot;+str(nvtd3)+&quot; &quot;+str(nvxd3)+&quot; &quot;+str(faca3)+&quot; &quot;+str(bndt3)+&quot; &quot;+str(bndxa3)+&quot; &quot;+str(facb3)+&quot; &quot;+str(bndxb3)+&quot; &quot;+str(facc3)+&quot; &quot;+str(c3m0)+&quot; &quot;+str(c3m1)+&quot; &quot;+str(c3m2)+&quot; &quot;+str(c3m3)+&quot; &quot;+str(c3m4)+&quot; &quot;+str(c3m5)+&quot; &quot;+str(c3m6)+&quot; &quot;+str(on4)+&quot; &quot;+str(nvpa4)+&quot; &quot;+str(nvta4)+&quot; &quot;+str(nvxa4)+&quot; &quot;+str(nvpb4)+&quot; &quot;+str(nvtb4)+&quot; &quot;+str(nvxb4)+&quot; &quot;+str(nvpc4)+&quot; &quot;+str(nvxc4)+&quot; &quot;+str(nvpd4)+&quot; &quot;+str(nvtd4)+&quot; &quot;+str(nvxd4)+&quot; &quot;+str(faca4)+&quot; &quot;+str(bndt4)+&quot; &quot;+str(bndxa4)+&quot; &quot;+str(facb4)+&quot; &quot;+str(bndxb4)+&quot; &quot;+str(facc4)+&quot; &quot;+str(c4m0)+&quot; &quot;+str(c4m1)+&quot; &quot;+str(c4m2)+&quot; &quot;+str(c4m3)+&quot; &quot;+str(c4m4)+&quot; &quot;+str(c4m5)+&quot; &quot;+str(c4m6)+&quot; &quot;+str(on5)+&quot; &quot;+str(nvpa5)+&quot; &quot;+str(nvta5)+&quot; &quot;+str(nvxa5)+&quot; &quot;+str(nvpb5)+&quot; &quot;+str(nvtb5)+&quot; &quot;+str(nvxb5)+&quot; &quot;+str(nvpc5)+&quot; &quot;+str(nvxc5)+&quot; &quot;+str(nvpd5)+&quot; &quot;+str(nvtd5)+&quot; &quot;+str(nvxd5)+&quot; &quot;+str(faca5)+&quot; &quot;+str(bndt5)+&quot; &quot;+str(bndxa5)+&quot; &quot;+str(facb5)+&quot; &quot;+str(bndxb5)+&quot; &quot;+str(facc5)+&quot; &quot;+str(c5m0)+&quot; &quot;+str(c5m1)+&quot; &quot;+str(c5m2)+&quot; &quot;+str(c5m3)+&quot; &quot;+str(c5m4)+&quot; &quot;+str(c5m5)+&quot; &quot;+str(c5m6)+&quot; &quot;+str(on6)+&quot; &quot;+str(nvpa6)+&quot; &quot;+str(nvta6)+&quot; &quot;+str(nvxa6)+&quot; &quot;+str(nvpb6)+&quot; &quot;+str(nvtb6)+&quot; &quot;+str(nvxb6)+&quot; &quot;+str(nvpc6)+&quot; &quot;+str(nvxc6)+&quot; &quot;+str(nvpd6)+&quot; &quot;+str(nvtd6)+&quot; &quot;+str(nvxd6)+&quot; &quot;+str(faca6)+&quot; &quot;+str(bndt6)+&quot; &quot;+str(bndxa6)+&quot; &quot;+str(facb6)+&quot; &quot;+str(bndxb6)+&quot; &quot;+str(facc6)+&quot; &quot;+str(c6m0)+&quot; &quot;+str(c6m1)+&quot; &quot;+str(c6m2)+&quot; &quot;+str(c6m3)+&quot; &quot;+str(c6m4)+&quot; &quot;+str(c6m5)+&quot; &quot;+str(c6m6)+&quot; &quot;+str(pana)+&quot; &quot;+str(panbndt)+&quot; &quot;+str(panbndxa)+&quot; &quot;+str(panb)+&quot; &quot;+str(panbndxb)+&quot; &quot;+str(panc)+&quot; \n&quot;
+score = scoreText
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <parameterId>1454040925</parameterId>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <parameterId>1463190278</parameterId>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>48.75</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+      <linePoint x='30.0' y='60.0'/>
+      <linePoint x='166.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

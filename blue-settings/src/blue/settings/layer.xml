@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.1//EN" "http://www.netbeans.org/dtds/filesystem-1_1.dtd">
+<filesystem>
+
+ <folder name="OptionsDialog">
+        <folder name="BlueOptionsCategory">
+            <file name="blue-settings-GeneralAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.GeneralOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_General"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_General"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_General"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="blue-settings-ProjectDefaultsAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.ProjectDefaultsOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_ProjectDefaults"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_ProjectDefaults"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_ProjectDefaults"/>
+                <attr name="position" intvalue="200"/>
+            </file>
+            <file name="blue-settings-TextColorsAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.TextColorsOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_TextColors"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_TextColors"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_TextColors"/>
+                <attr name="position" intvalue="300"/>
+            </file>
+            <file name="blue-settings-PlaybackAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.PlaybackOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_Playback"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_Playback"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_Playback"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+            <file name="blue-settings-UtilityAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.UtilityOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_Utility"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_Utility"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_Utility"/>
+                <attr name="position" intvalue="500"/>
+            </file>
+            <file name="blue-settings-RealtimeRenderSettingsAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.RealtimeRenderSettingsOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_RealtimeRenderSettings"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_RealtimeRenderSettings"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_RealtimeRenderSettings"/>
+                <attr name="position" intvalue="600"/>
+            </file>
+            <file name="blue-settings-DiskRenderSettingsAdvancedOption.instance">
+                <attr name="controller" newvalue="blue.settings.DiskRenderSettingsOptionsPanelController"/>
+                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_DiskRenderSettings"/>
+                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
+                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_DiskRenderSettings"/>
+                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
+                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_DiskRenderSettings"/>
+                <attr name="position" intvalue="700"/>
+            </file>
+        </folder>
+        <file name="BlueOptionsCategory.instance">
+            <attr name="advancedOptionsFolder" stringvalue="OptionsDialog/BlueOptionsCategory"/>
+            <attr name="categoryName" bundlevalue="blue.settings.Bundle#OptionsCategory_Name_Blue"/>
+            <attr name="iconBase" stringvalue="blue/ui/core/options/blueIcon_32x32.png"/>
+            <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
+            <attr name="keywords" bundlevalue="blue.settings.Bundle#OptionsCategory_Keywords_Blue"/>
+            <attr name="keywordsCategory" stringvalue="Blue"/>
+            <attr name="title" bundlevalue="blue.settings.Bundle#OptionsCategory_Title_Blue"/>
+        </file>
+    </folder>
+
+</filesystem>

@@ -1,0 +1,964 @@
+<article id="tutorialScripting">
+<articleinfo>
+  <author><firstname>Steven</firstname><surname>Yi</surname></author>
+  <authorinitials>syy</authorinitials>
+  <pubdate>2002</pubdate>
+  <title>Scripting</title>
+  <titleabbrev>Tutorial 1</titleabbrev>
+  <revhistory>
+    <revision>
+        <revnumber>1.1</revnumber>
+        <date>2004.11.7</date>
+        <revremark>Converted to DocBook.  Some information revised as no longer applicable</revremark>
+     </revision>
+     <revision>
+        <revnumber>1.0</revnumber>
+        <date>2002.10.28</date>
+        <revremark>First version of article.</revremark>
+     </revision>
+  </revhistory>
+</articleinfo>
+
+<section>
+<title>Introduction</title>
+
+<para>The blue music composition environment entails the use of timelines on
+which SoundObjects are placed. these SoundObjects are basically lists of notes,
+grouped as a single perceived object. These can be as simple as a single note,
+or a group of notes one might handle as a "motive", the "bassline for the A
+phrase", "the results of an predetermined matrix of sounds and silences through
+28 flippings of coins", or "the stochastic group motion of migrating birds
+mapped to 17 instruments that produce variable timbres", etc. but underneath it
+all, regardless of what SoundObject you use, ultimately the SoundObject will
+produce notes in which blue will add to the running score and output to a .CSD
+file.</para>
+     
+<para>Seen this way, blue represents a sort of visual note-generator scheduling
+system. when blue was earlier on in it's development, I realized that in
+creating blue, I created a simple generic temporal framwork which would allow
+people to create score generators and only worry about generating those scores,
+while easily adding them to the framework of blue which would allow the
+manipulation and scheduling of those score generators without the original
+authors having to worry about developing that aspect of it. as my imagination
+began to wander, I saw that things like cmask, mother, cybil, and other scoring
+languages that have been built over time for csound could be used in the way
+they've always been used, but that they could easily be integrated into
+blue.</para>
+
+     
+<para>for myself, the SoundObjects I've built have offered me the ability to
+separate my concerns: as the author of blue, I concern myself with finding new
+ways to organize and manipulate SoundObjects, and as a SoundObject author, I
+concern myself just with making objects that generate notes, leaving the
+scheduling of that SoundObject to the framework.</para>
+     
+<para>But, not everyone programs in Java, and there are also scripts and script
+libraries to be used in other languages already made.</para>
+     
+<para>Having seen that the SoundObject system and temporal framework of blue was
+a pretty open architecture, I decided at the time to explore the possibilities
+of using script within blue by creating the Python SoundObject so that i could
+use maurizio umberto puxeddu's Python pmask library within blue. what that
+allowed was for the ability to write Python scripts within blue, blue executing
+and bringing back in the generated notes from the Python script and integrating
+that with the other notes of the native Java SoundObjects.</para>
+     
+
+<para>After successfully developing and proving the possibility to myself, I
+continued on to build other SoundObjects as user's requested or as I desired for
+my own compositional explorations.</para>
+     
+<para>One day, some time back, a user suggested that I build a generic external
+SoundObject that would let you write any script within blue, provide a
+commandline to be used, and have blue write the script to a temporary file, run
+the commandline on it, and bring the generated notes back into blue. busy at the
+time, I later did build that SoundObject, and it opened up a world of
+possibilities.</para>
+     
+<para>With the new external SoundObject, it became possible to write script in
+any language within blue. this means one could use not only scripting languages
+like perl, Python, shell scripts, batch files, JavaScript, wscript, etc., but
+also run specially created text input for score generators like CMask, nGen,
+etc. (note: cmask does not currently work within blue, as it is unable to print
+to stdout; more on this and possible ways around it later). It also meant that
+other people's work on score generating libraries and scripts, regardless of
+language, now had the ability to be reused within blue.</para>
+
+     
+<para>As blue has developed the past couple of years, from its initial goals of
+embedding timelines within timelines, to its current state as a generic temporal
+framework and all-around composition environment, I've always developed with the
+mindset of keeping this as open and generic as possible, to build a tool that
+could grow as I knew I'd always be exploring new things in composition. These
+days, the inclusion of these two SoundObjects, the external SoundObject and the
+Python SoundObject, are now becoming part of my everyday use as I work with
+blue, allowing me to explore ideas rapidly, creating objects and functions which
+follow the models of my musical work, and which also serve as possible
+prototypes to new SoundObjects which I may later decide to create in Java and
+add to blue.</para>
+     
+<para>From my own experience, I'd highly recommend to anyone that they learn a
+little bit about scripting and how to use it to achieve their musical goals, as
+I've found the experience highly liberating and musically rewarding .</para>
+     
+</section>
+
+<section>
+<title>Why Use Scripting?</title>
+
+<para>For some, the use of scripting or programming may never be a factor in how
+they go about creating their music, as the tools they have already are enough.
+But for some, it may be easier to go about expressing their needs musically by
+use of script. and for others, there just might not be anything available to do
+what one wants to do.</para>
+     
+<para>Within blue, there are many ways to go about expressing and designing your
+musical work. Included with blue are the built in SoundObjects which can take in
+standard csound scores. Together with the use of the noteProcessors in blue,
+already there are the tools to write standard csound scores, move them in time,
+and manipulate those scores by adding or multiplying pfields by user given
+values(to achieve things like scaling amplitudes or transposing notes) or
+retrograde notes. </para>
+
+     
+<para>However, lets say you might find scripting in your prefered language to be
+easier to achieve your goals, or you want to use a scoring language other than
+csound's standard score format, or someone has advertised a new set of scripts
+or libraries to use. you could do all of this within blue.</para>
+     
+<para>In my case, I was recently modeling an object system that represented a musical
+model that hasn't been used much in current electronic music programs. I enjoy
+using the blue environment, but this was a case where I needed to do some work
+by programming, and the existing tools didn't exist in blue. The process was
+pretty experimental and the use of compiled languages like Java would have been
+slower than using a scripting language, as the prototypes for the object model I
+was building were changing rapidly. What ended up happening is that I worked in
+Python within blue using the Python SoundObject, developing my core objects, and
+was then able to rapidly experiment with composing with these objects by using
+other Python SoundObjects which used my core class definitions, moving them
+around visually and listening to how the musical output. I could have done all
+of this outside of blue, strictly using script, but the visual element and the
+ease of quickly copying blocks of Python script and moving them around, made
+experimentation much quicker and more apparent to me. A great benefit out of all
+of this is now I have a prototype which I can then perhaps use to program
+SoundObjects for blue in Java, maybe adding a GUI to the object to control
+parameters, making the process of using the SoundObjects that much easier.</para>
+     
+<para>The total process of prototyping and experimenting was a great experience,
+as I felt that each part of the process functioned to help me best express what
+I was going after. I used script to quickly create the objects I wanted to use
+to model the musical model I had in mind, and then used blue to experiment with
+those scripts to hear the sounds they could produce.</para>
+
+<para>Finally, it lead to strong candidates for objects which I could go on to
+build in a more generic fashion for everyone to else to use in blue, adding to
+the compositional possibilities.</para>
+     
+<para>In the past, I've also built simple functions to do a very specific task,
+like "add a value to all p4's of all notes". Something like this could be the
+case where you have a simple task that might be monotonous and you could
+probably achieve your goal much more quickly by a little script. (For example, I
+want to generate a test file for my orchestra and all it has are notes lasting
+two seconds duration, whose start times are every three seconds; something like
+this could be done in maybe 6-10 lines of script, regardless of the size of the
+orchestra.)</para>
+     
+<para>Those are some of my reasons for the use of script for musical work, and
+I'm sure others have their own reasons. In the end, it's up to you to evaluate
+your situation and see if it will aid in your work or not.</para>
+     
+</section>
+
+<section>
+<title>Scripting and blue</title>
+
+<para>Every once in a while someone releases a new program for score generation,
+a utility they've decided to make for their own benefit that they've graciously
+shared with the community. Often, these musical tools are exclusive in their
+use, meaning they're good for their use, but are difficult to integrate with
+other work.</para>
+     
+<para>For example: say you're working on a piece and want to use an external 
+ score  generator to generate a score to add to your piece. now, in 
+experimenting,  you might have to:</para>
+
+<orderedlist>
+
+     <listitem><para>Create your csound score</para></listitem>
+     
+     <listitem><para>Create your input file for the external score generator in
+     another file</para></listitem>
+ 
+     <listitem><para>Run the score generator</para></listitem>
+     
+     <listitem><para>Copy the generated score into your csound score file</para></listitem>
+     
+     <listitem><para>Repeat process as you experiment</para></listitem>
+
+</orderedlist>
+     
+<para>Now imagine that process to the nth degree if you decide to use multiple
+external programs!</para> 
+     
+<para>However, with blue, you can do all of that in one environment. You could
+write your standard csound scores as well as your input to your chosen score
+generator within blue, press the play button and then have blue do the work of
+going out to compile the score generator material and bring it back in,
+integrate it with your csound score, and output a single unified score file. You
+get the benefit of using the visual timeline to move your generated score blocks
+around in time, as well as only having to concentrate on the score input to the
+score generator, leaving all of the tedious work to blue to handle.</para>
+     
+<para>Or, say you're working on a score generating library in a scripting
+language. Now that you've finished it, you want to start working with it. but
+say you want to also do standard csound scores along with your scripts; having
+to do the two in the single scripting environment might not be optimal, as you
+would constantly have to use "print()" functions or use note objects, when it
+might just be easier to write "i1 0 1 2 3 4 5" and work with that for some of
+your work, and use your libraries for others. In this case, blue can handle that
+in that you can call your libraries you've developed and script the parts you
+want to script within blue, as well handle all of the standard csound score type
+work.</para>
+
+     
+<para>Within blue there are currently two main objects for scripting, the Python
+SoundObject and the external SoundObject. The external SoundObject runs scripts
+outside of blue and brings the results back into blue, and the execution of
+those scripts is as fast as it would be running the script outside of blue. With
+the external SoundObject, one may also choose from a variety of scripting and
+score generating languages to use. The Python SoundObject is limited to Python,
+and runs Python scripts much slower than they would be for running a Python
+script outside of blue using the external SoundObject. However, the PythonObject
+has two main features which may influence your decision in which to use it or
+not: it does not require Python to be installed on the system as it uses Jython
+to interpret the script (Jython is an all-Java implmentation of the Python
+interpreter; for more information about Jython, visit http://www.jython.org ),
+and it does not reinitialize the interpreter between uses.</para>
+    
+<para>The second point regarding the Python SoundObject may need some
+explanation: by not reinitializing the interpreter between uses, all Python
+SoundObjects in blue all share the same interpreter. By doing this, you can
+define variables, functions, and objects in one block, while using those
+variables in another block. </para>
+    
+
+<para>As an example, in my recent work with the Python SoundObject, I've set up
+the first PythonObject in my blue work file to have nothing but class
+definitions as well as function definitions. The second PythonObject block only
+has script that sets up instances of those classes written in the first
+PythonObject, and in this second block I did all of my initialization work for
+these classes. Finally, throughout the rest of the blue work file, I had
+PythonObjects that used the class objects I set up in the second PythonObject.
+This would not be possible using the external SoundObject, as once a script is
+run, all existing information in memory for that script is lost (unless you
+decided to make some kind of serialization scheme to write data to a file to be
+accessed by other scripts, or perhaps were using a web server to maintain state
+data).</para>
+    
+<para>The next two sections below will explain how to use the two different 
+SoundObjects,  and for the Python programmer, help you determine when you 
+might want to use one object verse the other.</para>
+     
+</section>
+
+<section>
+<title>External SoundObject</title>
+
+<para>The external SoundObject is a generic object that allows you to write
+script within blue to be executed outside of blue and have the generated score
+be brought back in. The way this is implemented, blue will read in anything that
+the external program writes to stdout. for most scripting languages, this
+equates to a "print()" command of some sort in your script.</para>
+    
+<para>The external SoundObject's editor takes in two inputs, a script and a
+commandline to run on that script. technically, when blue is in the score
+generating pass and comes to an external SoundObject, the external SoundObject
+writes your script to a temp file, then runs the commandline given, either
+swapping <quote>$infile</quote> with the name of the temporary file generated,
+or appending the name of the temporary file to the end of the commandline if no
+<quote>$infile</quote> is found.</para>
+ 
+
+<simplesect>
+<title>A Simple Example</title>
+    
+<para>Let's say you're writing a simple perl script:</para>
+    
+<programlisting> print "i1 0 2 3 4 5\n"</programlisting>
+    
+
+<para>and you for your commandline you use:</para>
+    
+<programlisting>perl</programlisting>
+    
+<para>or perhaps:</para>
+    
+<programlisting>/usr/bin/perl $infile</programlisting>
+
+    
+<para>When blue goes to generate a .CSD file and comes across your external
+SoundObject, what will happen is that:</para>
+    
+<orderedlist>
+
+    <listitem> 
+        
+        <para>Your script will get written to a temp file (for this
+    example, let's say it's "/tmp/temp4253.txt")</para> 
+    
+    
+    </listitem>
+    
+    <listitem>
+    
+        <para>blue executes the commandline given with that temp file.</para>
+        
+        <orderedlist>
+        
+            <listitem>
+            
+              <para>For the first commandline, it'll then run:</para>
+    
+              <programlisting>perl /tmp/temp4253.txt</programlisting>
+    
+            </listitem>
+            
+            <listitem>
+    
+              <para>For the second commandline, it'll then run:</para>
+    
+              <programlisting>/usr/bin/perl /tmp/temp4253.txt</programlisting>
+              
+            </listitem>
+    
+        </orderedlist>
+            
+    </listitem> 
+    
+    <listitem>
+    
+        <para>perl runs, and will print "i1 0 2 3 4 5\n" to stdout</para>
+        
+    </listitem>
+    
+    <listitem>
+    
+        <para>blue will get that output from perl, then bring that back in,
+        convert it to blue Note class.</para>
+        
+    </listitem>
+    
+    <listitem>
+    
+        <para>blue then will shift the note over to the start time of your
+        external SoundObject, then scale the note to the duration of the
+        SoundObject.</para>
+    
+    </listitem>
+    
+</orderedlist>
+
+<para>And that's it!</para>
+   
+<formalpara>
+<title>Note</title>
+
+<para>In general, all time values for start are from time-zero within the
+SoundObject. This is like taking a three notes: you know one starts at the
+beginning, one starts 1 second later, and one starts 2 seconds later. No matter
+where you put those three notes, the relationship of that block of notes is the
+same, one at the beginning, one 2 seconds later, etc. so it is with SoundObjects
+in blue. When you make a script to generate notes, have it start at time zero
+and let blue do the scaling and translation of time for the SoundObject. blue
+was made this way so that no matter what you generate within the block, the
+generated notes will start at the start of the SoundObject and will last the
+duration of the SoundObject.</para>
+
+</formalpara>
+
+</simplesect>
+
+<simplesect>
+<title>A More Complex Example</title>
+
+<para>Now, any script that has a commandline that can execute on a file will
+work with blue. so, as another example, let's say you want to use Python and
+you're using the pmask library. You have both of these installed on your system
+and you know they work fine because you've tested them outside of blue. Now,
+let's say you wrote the following Python script (which really, was written by
+Hans Mikelson as a an example for using pmask, taken from the CSound
+Magazine):</para>
+    
+<programlisting>from pmask import *
+
+    
+     density = Mask(UniformRandom(), PowerSegment([(0.0,
+ 0.03),  (20.0, 0.5)], 3.0), PowerSegment([(0.0, 0.08), (20.0, 1.0)], 3.0))
+     duration = Mask(UniformRandom(), PowerSegment([(0.0, 
+ 0.4), (20.0, 3.0)], 1.0), PowerSegment([(0.0, 0.8), (20.0, 5.0)], 1.0))
+     frequency_mask = Mask(UniformRandom(), PowerSegment([(0.0,
+  3000.0), (20.0, 90.0)], 1.0), PowerSegment([(0.0, 5000.0), (20.0, 150.0)],
+  1.0))
+     frequency = Quantizer(frequency_mask, LinearSegment([(0.0,
+  400.0), (20.0, 50.0)]), 0.95)
+
+     index = Mask(UniformRandom(), PowerSegment([(0.0,
+2.0),   (20.0, 3.0)], 1.0), PowerSegment([(0.0, 3.0), (20.0, 5.0)], 1.0))
+     panorama = Range(0, 1)
+    
+     amplitude = Lorenz('x')
+    
+     ss = ScoreSection(0.0, 20.0, 1, density, duration, 
+frequency,  index, panorama, amplitude)
+
+    
+     print str(ss)
+</programlisting> 
+
+<para>and you tested it outside of blue and it worked fine. Well, now you could
+create an external SoundObject in blue, paste in this script, set the
+commandline to "python", and now have the notes imported into blue.</para>
+ 
+</simplesect>
+
+<simplesect>
+<title>Using a Score Generating Language</title>
+
+<para>Let's try a non-scripting example now and use Mark Williamson's drum
+pattern scoring utility to generate a drum pattern(available at
+http://www.junklight.com). Mark's utility is itself a perl script, but it takes
+in a text file using a scoring language he developed.</para>
+   
+<para>copying in the example drum.pat file into the scripting area:</para>
+
+<programlisting>
+instrument1 "i1 $now .2 2000 2.2 0"
+instrument2 "i1 $now .2 2000 2.4 1"
+instrument3 "i1 $now .1 2000 4 1"
+instrument4 "i1 $now .2 2000 1.6 0.5"
+
+instrument5 "i1 $now .1 2000 4 0"
+pattern1 1 1 1 
+pattern2 1 1
+
+pattern3 1 1 1 1
+pattern4 1 1 1 1 1 1 1 1
+pattern5 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+plist1 1 2
+ilist1 3 5 
+
+bar length 1 second
+time error .01
+# poly rhythm example
+loop 5 
+
+ play 1 with 1
+ play 2 with 2
+
+endloop
+# straight 4/4
+
+loop 5  
+ play 2 with 1
+ play 3 with 3
+
+
+endloop
+
+loop 5 
+ play plist 1 with 4
+
+ play 4 with ilist 1 
+
+ play 3 with 1
+endloop
+
+
+loop 5 
+ play plist 1 with 4
+ play 5 with ilist 1 
+
+ play 4 with 1
+
+endloop
+
+</programlisting>
+    
+<para>Having unzipped the drumscript.zip into my home direcotory, I used the
+following commandline:</para>
+   
+<programlisting>perl /home/steven/drumText/drums.pl -input</programlisting>
+   
+<para>I ran the test button and got... nothing! I got alot of exceptions printed
+to the console. Running the drum script outside of blue, I saw that by default,
+some logging information was being printed (the name of the infile and input).
+Modifying mark's perl script a bit to comment out those two print statements, I
+reran the script within blue and... success! The generated output from mark's
+script successfully was rebrought back into blue.</para>
+   
+</simplesect>
+
+<simplesect>
+<title>Notes on Score Generating Programs and the External SoundObject</title>
+  
+<para>Score generation programs can either print out to stdout or write out to a file.  If writing out to a file, care must be taken to use the $outfile parameter of the External SoundObject so that after the external program finishes, blue will know to grab the file's contents back into blue.</para>
+
+</simplesect>
+
+</section>
+   
+
+<section>
+<title>Python SoundObject</title>
+
+<para>The Python SoundObject is a Python-only scripting SoundObject which uses
+the Jython Python interpreter (more information about this all-Java Python
+interpreter is available at http://www.jython.org). Jython is included with
+blue, and being so, it means that if you are using the Python SoundObject in
+blue, you <emphasis>do not need Python installed on your computer</emphasis>.
+The Python SoundObject is made in such a way that it in no way uses any Python
+installations you may or may not have on your computer, but instead only uses
+what is a part of Jython. If you want to add extra packages and libraries to use
+with the Python SoundObject, you may copy them into the lib/PythonLib directory
+or in the userhome/.blue/pythonLib folder. As an example of adding your own
+library, you can see that already included with blue in the lib/PythonLib
+directory is the pmask library by Maurizio Umberto Puxeddu (currently, I do not
+know where this library exists anymore on the internet; if you know where it can
+be downloaded from, please let me know and I will update this part of the
+documentation to better give credit to Maurizio).</para>
+   
+<para>So, to clarify, having a Python interpreter installed on your computer
+does not in any way affect the Python SoundObject within blue; they are two
+completely different entities. also, if you have a library installed for use
+with your Python interpreter installed on your computer, it will *NOT* be
+accessible to the Python SoundObject. to use it, you will have to copy it into
+the lib/PythonLib directory of blue.</para>
+  
+
+<para>Note: what you could do, also, is put the individual libraries you install
+in the lib/PythonLib directory as part of your PythonPATH environment variable,
+such that all of the libraries will be both accessible to your Python
+interpreter on your computer as well as the one in blue. It is not recommended
+to put the entire PythonLib directory as part of your PythonPath, however, as
+the PythonLib has many of the same files from the standard Python installation
+and may cause issues with locating standard library files. However, I find that
+just copying the library twice into both the PythonLib and my standard Python
+install's directory to be sufficient and easier to manage.</para>
+ 
+  
+<section>
+<title>Using Python with the External SoundObject versus the Python SoundObject</title>
+  
+<para>This has been the most often asked question since the addition of the
+external SoundObject blue, and when I initially put in the external SoundObject,
+I thought that the Python SoundObject would become somewhat unnecessary.</para>
+
+<para>But a week or so after the addition the of externalObject, I started using
+Python alot more in conjunction with blue and found that the Python SoundObject
+has a few key benefits which make me use it now everyday.</para>
+  
+<simplesect>
+<title>The Case for Using the External SoundObject</title>
+ 
+<para>First of all, performance of the PythonObject is not as fast as using the
+standard Python interpreter with the external SoundObject. For simple scripts,
+the difference in speed isn't that noticeable, but when using something like
+pmask which has alot of calculations when generating score output, the speed
+difference does become an issue. If speed is an issue, then you might choose to
+use the external SoundObject, if the benefits listed below aren't an
+issue.</para>
+  
+<para>Also, if you have an existing Python interpreter installed on your
+computer and have libraries installed and are just simply used to your setup,
+then it might be just plain easier to use your existing Python setup rather than
+dealing with where things are in blue and managing having libraries installed
+for both the resident Python interpreter and blue's PythonLib.</para>
+
+<para>And to add to all of that, you may be using features which are part of the
+most recent Python interpeter version, and those features may not be available
+as part of Jython (more information as to what Jython supports is available at
+the Jython homepage, http://www.jython.org). Also, if you're using libraries
+which call native code, they will not work with Jython. </para>
+ 
+<para>So, if the Python SoundObject is slower, if you have to manage another set 
+of libraries, and you might not have all of the features of standard Python 
+available, why use the Python SoundObject at all?</para>
+ 
+</simplesect>
+
+<simplesect id="caseUsingPython">
+<title>The Case for Using the Python SoundObject</title>
+   
+<para>Now, just to let you know, I use exclusively the Python SoundObject when 
+I'm doing Python scripts in blue. I haven't come across any of the standard
+libraries I've needed that were't included with Jython, and if it's a sign
+of anything, Maurizio Umberto Puxeddu's pmask library works fine with the
+PythonObject.</para>
+ 
+<para>One of the things I used to do is keep an installation of blue on a zip
+disk, including my work. The nice thing about this was that I was able to take
+this disk and work off it while at work on a windows machine, as well as take it
+home everyday to my linux machine and start up blue without having to do
+anything different. Because I used the PythonObject at that time, I didn't have
+to worry at all about anything installed within either system, as all of it was
+contained within blue. It's also a reassuring thought that if I took my work to
+a friend's computer, be it a macintosh, windows, or linux pc, I wouldn't have to
+worry about if Python was installed on their computer.</para>
+ 
+<para>Besides these very practical issues, the way you can go about using the
+PythonObject differs very much from the usage of Python with the externalObject.</para>
+
+<para>With the externalObject, each script run is its own entity, run with a
+different interpreter. This means that memory is not shared between instances of
+the externalObject: variables and results of execution in one externalObject are
+not accessible to another externalObject. However, with the PythonObject, the
+interpreter is not reinitialized between runs, meaning you
+<emphasis>can</emphasis> share results between one PythonObject and the next.
+This can of course lead to very convoluted methods of developing scripts within
+blue, which is of course not recommended, but it does have some very pragmatic
+possibilities which are very useful.</para>
+ 
+<para>In my latest work with blue, I've been using almost exclusively the
+PythonObject for all of my SoundObjects in blue. I did use some sound
+SoundObjects initially to draft some sounds out, converting them to instruments
+in the orchestra manager later. I also used genericScore objects for writing
+some test notes for my instruments which I keep around also for experimenting,
+but for the piece's final output, they are not being used.</para>
+ 
+<para>For setting up my piece, I developed some classes to use in Python,
+instantiated multiple instances of the classes set with different parameters,
+and then use those instances in different PythonObjects in blue for creating the
+score of my piece. Because the interpreter is not being reinitialized between
+uses by the PythonObject, I'm able to use one PythonObject to hold only
+definitions of functions and classes, another PythonObject which only has my
+initialization scripts that makes instances of the classes defined in the first
+PythonObject, and from all other PythonObjects, I use the instances from the
+second PythonObject as my generators.</para>
+
+<para>to better clarify, my first PythonObject has scripts like:</para>
+ 
+<programlisting>
+class Yo(): 
+    def do(self, a,b):
+        print "doing something with " + str(a) + " : " + str(b)
+
+    def yoyo(self, a,b):
+        print "do something with a and b which are instances of Yo()"
+</programlisting>
+ 
+<para>while my second PythonObject has script like:</para>
+ 
+
+<programlisting> 
+generator1 = Yo()
+generator2 = Yo()
+generator3 = Yo()
+</programlisting>
+
+<para>while all other PythonObjects in my piece have a minimal amount of script, 
+something like:</para>
+ 
+<programlisting>
+generator1.generateNotes(input1, input2, input3)
+</programlisting>
+ 
+<para>I find that it's a nice way to separate the concerns of each object. 
+as I'm currently in the middle of working on the piece, I'm finding 
+that first PythonObject getting a bit big, so I'm thinking i'll split that 
+into different PythonObjects, which I can visually see labeled on the timeline 
+by changing their names to something like "generator classes", "generator 
+utility functions", "constants", etc. and probably in the future, as 
+I get to finishing this piece, I'll probably take all of these class definitions 
+and make a library of Python code out of it and just have it installed into 
+my PythonLib directory. But having the way it is now I've found to be
+very convenient in development as it's easy to find all of my code.</para>
+ 
+<para>Note: the execution order of blue is top-down per soundLayer, meaning it
+will process all SoundObjects in the first soundLayer, and if it finds a
+polyObject, it will go down into that and process the first soundLayer, etc.
+before going on to the next SoundObject. because of the execution order, I can
+put all of my PythonObjects that have nothing to do with note generation (my
+class definitions, utility functions, and intitialization scripts) in the first
+few soundLayers of my piece and know that they'll always get interpreted by the
+jython interpreter and left in the memory space first before trying to process
+the other SoundObjects.</para>
+
+ 
+<para>Note: as a warning, also because of the execution order, if you reopen 
+your piece and try the [test] button on a PythonObject that uses code from 
+the initial PythonObjects and find that it's not generating notes, it's because 
+that code has yet to be entered into the memory space of the interpreter. 
+either individually running all of the PythonObjects that deal with 
+class definitions and initialization or just pressing the [play/stop] button 
+to generate your score will get those objects interpreted and entered into 
+the jython interpreter's memory.</para> 
+ 
+<para>Because of this alone, I find I use the Python SoundObject more than I do 
+using the external SoundObject. if I was to use the external SoundObject 
+and wanted work an even remotely similar manner, I'd have to come up with 
+some strange hack to maybe write script in one external object have the execution 
+of that object write that script into a file which would have to be reimported 
+into other scripts. not a horrible hack, but enough for me to want to
+avoid, especially when it's not necessary. (though, if you're programming 
+in a scripting language besides Python, you would hack to work in a manner 
+like this...)</para>
+ 
+</simplesect>
+
+</section>
+
+<section>
+<title>Usage</title>
+ 
+<para>For the PythonObject, instead of using a print command to stdout to bring
+things back into blue, you simply assign the variable
+<programlisting>score</programlisting> to the text string of your generated
+notes. when the PythonObject is done processing, blue gets whatever value is
+assigned to that variable and parses it as a text score, then proceeds to do the
+standard operations of scaling and translating the notes in time, then applying
+any noteProcessors which may have been added to it.</para>
+ 
+<para>Also, should you need, the variable
+<programlisting>blueDuration</programlisting> is assigned the value of the
+subjective duration of the PythonObject on the timeline.</para>
+
+<para>So, within your scripts, you have access to the duration of the
+SoundObject should you want to make your script use that for any purpose you
+might have. one example might be that you have a score generating function that
+depends on duration, maybe if it has less duration it produces notes with louder
+amplitude and than if it has a longer duration. </para>
+ 
+</section>
+
+<simplesect>
+<title>A Simple Example</title>
+    
+<para>Let's say you're writing a simple Python script:</para>
+    
+<programlisting> score = "i1 0 2 3 4 5\n"</programlisting>
+
+<orderedlist>
+    <listitem>
+    
+        <para>the first thing blue does is clear the
+        <programlisting>score</programlisting> variable in the interpreter and
+        assign the variable <programlisting>blueDuration</programlisting> the
+        value of the duration of the SoundObject on the timeline. For this
+        example, it does not affect the outcome of the score generated</para>
+        
+    </listitem>
+    
+    <listitem>
+    
+        <para>Next, blue runs the script. in this case, the only thing that
+        happens is that the <programlisting>score</programlisting> variable is
+        being assigned the text string of a single note, along with a
+        newline.</para>
+        
+    </listitem>
+
+ 
+    <listitem>
+    
+        <para>At the end of the script's execution, the
+        <programlisting>score</programlisting> variable is read. the score
+        variable may or may not have anything assigned to it, but the script
+        within the PythonObject is still run. this allows for the possibility of
+        code that needs to be run but doesn't necessary need to generate score
+        text at that time. (as mentioned above in <xref
+        linkend="caseUsingPython"/>)</para>
+    
+    </listitem>
+ 
+    <listitem>
+    
+        <para>blue parses the score text, making Note objects for blue to use,
+        applies scaling and translation of time to make the genreated notes
+        start at the time of the PythonObject and last the subjective duration,
+        then applies any noteProcessors.</para>
+
+    </listitem>
+    
+</orderedlist>
+        
+<para>And that's it!</para>
+   
+</simplesect>
+
+<simplesect>
+<title>A More Complex Example</title>
+
+<para>For the following example, I will make a very simple score generator
+that produces as many notes as I give as an argument. the entire code for
+the script is:</para>
+
+<programlisting> 
+def generateNotes(numOfNotes):
+    scoreText = ""
+    
+    for i in range(numOfNotes):
+        scoreText += "i1 " + str(i) + " 2 3 4 5\n"
+    
+    return scoreText
+
+score = generateNotes(10)
+
+</programlisting>
+
+         
+<para>The function I made,<programlisting>generateNotes(numOfNotes)</programlisting>, takes in the 
+number of notes I want to generate. for the above, I wanted it to generate 
+10 notes, and if I printed out the above <programlisting>generateNotes(10)</programlisting>, I would have gotten the result:</para>
+
+<programlisting> 
+i1 0 2 3 4 5 
+i1 1 2 3 4 5
+i1 2 2 3 4 5
+i1 3 2 3 4 5
+i1 4 2 3 4 5
+i1 5 2 3 4 5
+i1 6 2 3 4 5
+i1 7 2 3 4 5
+i1 8 2 3 4 5
+i1 9 2 3 4 5
+</programlisting>
+ 
+<para>This text string above is returned by the
+<programlisting>generateNotes()</programlisting> function and assigned to the
+<programlisting>score</programlisting> variable. blue then grabs that text from
+the <programlisting>score</programlisting> variable and parses it and the
+proceeds with compiling out the .CSD file.</para>
+
+<para>Note: this is a very basic example of a note generator. As you work with
+Python more for score generation, you'll probably either create a slew of
+text-handling classes that use lots of regular expressions or a more
+object-based system that interacts amongst itself before generating score text
+output. I hope to address these types of design decisions in the near future in
+another tutorial which will hopefully help those new to scripting and
+programming learn how to go about analyzing music goals in terms of programming
+and then designing and implementing their solutions.</para>
+ 
+</simplesect>
+</section>
+
+
+<section>                   
+<title>Usage Ideas</title>
+
+<para>Using the external SoundObject and the Python SoundObject, besides their
+general usefulness of allowing scripting in blue, may be considered alternative
+methods of extending blue through script rather than compiling Java programs.
+The extensibility of the system is very open-ended, as whatever is available to
+Python and other languages now becomes accesible to blue, as well as using
+score-generating programs that are able to print to stdout.</para>
+ 
+<para>So if you wanted to write a perl script that hits weather websites on the
+internet, gathers data from them, and then maps that data to different
+parameters of a note generating algorithm, you could build that outside of blue,
+but then have the added benefit of being able to use that within blue.</para>
+ 
+<para>If you build a C++ program to generate scores, you're able to call it from 
+within blue.</para> 
+ 
+<para>Maybe even something simple like doing a text include of a text file could 
+be done rather easily with a few lines of Python or perl script.</para> 
+
+<para>Also, you can approach building scripts for tools as also being prototypes 
+for building fully qualified blue SoundObjects and noteProcessors in Java, 
+which has the added benefit of being able to have a GUI added to it. so 
+if you have a utility script you use often, suggesting it to a Java programmer 
+could lead to it's inclusion into blue, where it could be remade in a way 
+to have it be usable by non-programmers as well.</para>
+
+</section>
+ 
+<section>
+<title>Future Enhancements</title>
+ 
+<para>As blue has developed over time, and as the ways to use it are being
+augmented with each new build, I'm always looking for new ways to make the
+process of working with blue easier. My recent work with the Python SoundObject
+and the External SoundObject have shown me that there's a lot of neat things
+that can be done with blue, things I really didn't account for when I first
+built blue, and would now love to handle. For the future, in addition to
+developing more and more tools for blue itself, it would be nice to be able to
+have more conventional coding tools to aid scripters in the script work for
+blue. I'm aware of the limitations for debugging and console output right now in
+blue, but, then again, all of the scripting additions to blue are rather young,
+and blue's development continues every day.</para>
+
+ 
+<para>For immediate goals, I've written down the following as things I should
+look into now:</para>
+
+<para>Python test console for the PythonObject</para>
+ 
+<para>Like the test button, but would show all output to stdout as it looks before 
+being processed by blue, as well as showing all output to stderr.</para> 
+ 
+
+ 
+<para>Language neutral script library</para>
+ 
+<para>With the PythonLib for the Python SoundObject, it's nice to have a
+portable way of keeping all of the scripts that can be used with blue along with
+blue, if you happen to be carrying your work around with you. I think that this
+ability would be fantastic for the external SoundObject. already i have a method
+that returns the absolute path to the lib directory of blue; with this, I think
+it should be possible that before blue runs any script, it could look for a
+"&lt;BLUE_SCRIPT_LIB&gt;" constant of some sort and do a text replace to put in
+the absolute path to the lib directory. that way, you could do something
+like:</para>
+ 
+
+<programlisting>
+from &lt;BLUE_SCRIPT_LIB&gt;.myLibrary import *</programlisting>
+ 
+<para>as well as use a commandline like:</para>
+ 
+<para>perl &lt;BLUE_SCRIPT_LIB&gt;/myLibrary/myProgram -input $infile</para>
+
+ 
+<para>Which would make the library accessible from any system. the nice thing
+about something like this is that I could then include other people's script
+libraries and programs as part of the blue release, or other people may wish to
+advertise that their scripts are usable within blue and have a place to install
+it in that is easily accessible on any blue system. (For example, using the
+above convention, if I have a blue work file that repeatedly calls a library
+that someone else developed, I can put that library in my lib dir, use the
+convention above, and then say if someone else wanted to run that file or if I
+was bringing that file to another computer, all I'd have to do is install the
+library in the lib directory and everything should work, as opposed to having to
+do a find and replace on ever call to the library to change the path to where it
+is on the new computer.)</para>
+ 
+<para>Finding a text editor component thats made for programming</para>
+ 
+<para>This would be fantastic, to find a Java text component that I can swap in 
+that would handle things like syntax-hilighting of different languages, maybe 
+has some kind of help system for syntax and references, etc. I haven't 
+found one I could easily use or modify yet, but hopefully something will come
+along.</para>
+
+</section>
+
+<section>
+<title>Final Thoughts</title>
+
+<para>As time goes on, I'm sure there will be alot of additions to blue to help
+aid scripting and the use of other score generating programs within blue. I hope
+this tutorial has helped to show how to use the external SoundObject and Python
+SoundObject in blue, as well as helped show what's very possible by using these
+SoundObjects.</para>
+ 
+<para>If you have any comments, suggestions for improving this tutorial, or
+questions, please feel free to email me at <email>stevenyi@gmail.com.</email></para>
+ 
+
+<para>Thanks and good luck!</para>
+ 
+<para>Steven</para>
+
+</section>
+
+</article>

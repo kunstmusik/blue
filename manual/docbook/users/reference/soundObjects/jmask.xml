@@ -1,0 +1,292 @@
+
+<section id="jmask">
+    <title>JMask</title>
+    <para>Accepts NoteProcessors: yes</para>
+    <para>JMask is GUI score generating soundObject based on Andre Bartetzki's
+        <ulink url="http://www.bartetzki.de/en/software.html">CMask
+        </ulink>.
+JMask currently supports all features of CMask except field precision, 
+though support for this feature is planned. Users of JMask are encouraged to
+read the CMask manual available at Andre Bartetzki's site to get familiar with
+CMask concepts as they are represented 1:1 in JMask.
+    </para>
+    <para>JMask builds on top of CMask's concepts and feature set by providing
+the user a graphical way to edit parameter values, tables, masks, etc.  Also, by 
+using JMask, the user's projects are guaranteed to run on all blue 
+installations, while using CMask from blue requires anyone opening and using
+the project to have CMask installed on their system.
+    </para>
+    <para>The following documentation for JMask will assume the user is familiar
+with CMask and that the user has read through the CMask manual available 
+from the link above. The following will discuss how to use JMask, covering how
+the CMask features are implemented in JMask and how to work with the user 
+interface.  Over time, this manual entry for JMask will attempt to grow to be
+self sufficient and not require knowledge of CMask, but for now familiarity
+with CMask is suggested.</para>
+
+<section id="jmaskOverview">
+    <title>Overview</title>
+    
+    <para>A single JMask object is equivalent to one CMask field. A single
+    JMask object holds a collection of Parameters, one for each pfield to be
+    generated in the score. Each of the Parameter types in CMask is
+    available in JMask: </para>
+    
+    <table>
+        <title>Parameter Types</title>
+        <tgroup cols="2">
+            <thead>
+                <row>
+                    <entry>Type</entry>
+                    <entry>Description</entry>
+                </row>
+            </thead>
+            <tbody>
+                <row>
+                    <entry>Constant</entry>
+                    <entry>Generate the given value when generating values 
+                    for notes</entry>
+                </row>
+                
+                <row>
+                    <entry>Item List</entry>
+                    <entry>Generates values from a list of values given by the 
+                    user. Options for generation include cycling through the 
+                    list (cycle), going backwards and forwards through the list 
+                    (swing), going through the list in random order using all 
+                    values once before repeating (heap), and choosing a random 
+                    list item (random).</entry>
+                </row>
+                
+                <row>
+                    <entry>Segment</entry>
+                    <entry>Generates values along a user-defined line.</entry>
+                </row>
+                
+                <row>
+                    <entry>Random</entry>
+                    <entry>Generates a random value.</entry>
+                </row>
+                
+                <row>
+                    <entry>Probability</entry>
+                    <entry>Generates a randomized value that is weighted by the
+                    given probability type and the configuration of the 
+                    parameters of that probability type.</entry>
+                </row>
+                
+                <row>
+                    <entry>Oscillator</entry>
+                    <entry>Generates values that oscillate in a given period 
+                    using different user-chosen shapes.</entry>
+                </row>
+                
+            </tbody>
+        </tgroup>
+    </table>
+    
+    <para>Beyond the Parameters, JMask supports the three modifier types found
+    in CMask: Masks, Quantizers, and Accumulators.  Certain parameters support
+    different modifiers, and their support by paramater type is listed below:
+    </para>
+    
+    <table>
+        <title>Parameter Modifier Support</title>
+        <tgroup cols="4">
+            <thead>
+                <row>
+                    <entry>Type</entry>
+                    <entry>Supports Mask</entry>
+                    <entry>Supports Quantizer</entry>
+                    <entry>Supports Accumulator</entry>
+                </row>
+            </thead>
+            <tbody>
+                <row>
+                    <entry>Constant</entry>
+                    <entry>No</entry>
+                    <entry>No</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+                <row>
+                    <entry>List</entry>
+                    <entry>No</entry>
+                    <entry>No</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+                <row>
+                    <entry>Segment</entry>
+                    <entry>No</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+                <row>
+                    <entry>Random</entry>
+                    <entry>No</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+                <row>
+                    <entry>Probability</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+                <row>
+                    <entry>Oscillator</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                    <entry>Yes</entry>
+                </row>
+                
+            </tbody>
+        </tgroup>
+    </table>
+    
+</section>
+
+<section id="jmaskInterface">
+    <title>Using the JMask Interface</title>
+    
+    <screenshot>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="images/jmask.png"
+                        format="PNG" />
+            </imageobject>
+        </mediaobject>
+    </screenshot>
+    
+    <para>
+        The JMask SoundObject Editor allows for viewing the editors for all of
+        the assigned parameters.  Parameters are each set to generate values for
+        one pfield.  On the left hand side of each row is the Parameter Edit 
+        Panel.  This panel shows a number at the top that corresponds to what
+        pfield this parameter will generate values for. To change things about 
+        the Parameter, right-clicking the panel will show a popup menu as shown
+        in the image above.  The options are described below:
+    </para>
+    
+    <variablelist>
+      <title>Parameter Edit Options</title>
+
+      <varlistentry>
+        <term>Add Parameter Before</term>
+        <listitem>
+          <para>Create a new Parameter and insert it before the Parameter clicked
+          on by mouse. When this option is selected, a dialog will appear with
+          a dropdown of options of what type of Parameter to add.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term>Add Parameter After</term>
+        <listitem>
+          <para>Create a new Parameter and insert it after the Parameter clicked
+          on by mouse. When this option is selected, a dialog will appear with
+          a dropdown of options of what type of Parameter to add.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term>Remove Parameter</term>
+        <listitem>
+          <para>Remove this Parameter.  Will not be allowed if trying to edit 
+          parameters 1-3 as JMask requires a minimum of 3 pfields.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Change Parameter Type</term>
+        <listitem>
+          <para>Choose a different type of Parameter and replace the current one
+          with the selected one.  Any edits from the old Parameter will be lost
+          once a new parameter type is chosen.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Push Up</term>
+        <listitem>
+          <para>Move the selected Parameter to before the previous Parameter.
+          Example: Push up parameter at pfield 5 to pfield 4, moving what was
+          previously at 4 to 5.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term>Push Down</term>
+        <listitem>
+          <para>Move the selected Parameter to after the next Parameter.
+          Example: Push down parameter at pfield 4 to pfield 5, moving what was
+          previously at 5 to 4.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Mask</term>
+        <listitem>
+          <para>Enable/disable using a Mask with this parameter.  If enabled, 
+          the Mask editor will appear, and if disabled, the Mask editor will
+          disappear.  This menu option will not show for those Parameters that
+          do not support Masks.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Quantizer</term>
+        <listitem>
+          <para>Enable/disable using a Quantizer with this parameter.  If enabled, 
+          the Quantizer editor will appear, and if disabled, the Quantizer 
+          editor will disappear.  This menu option will not show for those 
+          Parameters that do not support Quantizers.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term>Accumulator</term>
+        <listitem>
+          <para>Enable/disable using an Accumulator with this parameter.  
+          If enabled, the Accumulator editor will appear, and if disabled, the 
+          Accumulator editor will disappear.  This menu option will not show 
+          for those Parameters which do not support Accumulators.</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+    
+    <para>Beyond the basics of moving around Parameters, adding new ones, and
+    choosing whether to enable Masks, Quantizeres, and Accumulators, one can
+    also choose to show/hide Parameters by using the popup menu that appears
+    when choosing the down arrow button in the JMask title bar, as shown in the
+    screenshot below.        
+    </para>
+    
+    <screenshot>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="images/jmask2.png"
+                        format="PNG" />
+            </imageobject>
+        </mediaobject>
+    </screenshot>
+    
+    <para>Beyond these basics for working with the Parameters in general, each
+    Parameter type has its own editor, each customized for the values and 
+    options allowable for each Parameter.  Currently, documentation is omitted
+    for each Parameter's GUI as they correspond in feature and parameters as
+    CMask, and the user is encouraged to consult the CMask manual for more 
+    information on editing each Parameter. (This section will be expanded for
+    the next release of blue.)
+    </para>
+    
+    
+    
+</section>
+
+</section>

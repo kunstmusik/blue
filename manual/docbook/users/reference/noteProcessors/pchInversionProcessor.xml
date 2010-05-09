@@ -1,0 +1,32 @@
+<section id="pchInversionProcessor">
+<title>Pch Inversion Processor</title>
+         
+<para>Parameters: value, pfield</para>
+         
+<para>This noteProcessor flips all values in designated pfield about an
+axis (value).  The values that are read in the given pfield will be interpreted
+as Csound pch format. The following score:</para>
+
+<programlisting>
+i1 0 2 8.00
+i1 + . 8.04
+i1 + . 8.07
+i1 + . 9.00
+</programlisting>
+
+<para>
+    If processed with a PchInversionProcessor with value 8.06 and pfield 4 would
+    result in:
+</para>
+
+<programlisting>
+i1	0.0	0.5	9.0
+i1	0.5	0.5	8.08
+i1	1.0	0.5	8.05
+i1	1.5	0.5	8.0    
+</programlisting>
+         
+<para>(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior or scale.)</para> 
+
+</section>

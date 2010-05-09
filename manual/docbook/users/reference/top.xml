@@ -1,0 +1,8 @@
+<chapter id="reference">
+<title>Reference</title>
+    
+    &soundObjectsReference;
+    &noteProcessorsReference;    
+    &instrumentsReference;
+    &shortcuts;
+</chapter>

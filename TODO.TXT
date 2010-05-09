@@ -1,0 +1,63 @@
+[general]
+-look at redoing documentation for javahelp
+
+[Major Features]
+-Score Navigator
+-look and feel for tabs
+-highlight colors
+-fix portaudio driver detection
+-add pulseaudio driver detection
+
+
+Time Log
+
+[bugs]
+-SoundObject Properties component does not shrink gracefully
+-fix mnemonics on menus
+-fix program options and command line flags
+
+
+[DEFER]
+-Handle migration from older projects (separate package?)
+-Tools
+  -Manage Tools (user tools)
+-Scripts Menu and user scripts
+
+
+[completed]=====================================================================
+-Markers List
+Mixer
+-ScratchPad
+-EffectLibrary (maybe make openable from Mixer too?)
+-Render/Stop project (F9)
+-Generate CSD to File
+-Generate CSD to Screen
+-csound output dialog (use output?)
+-SoundObject Property Dialog
+-SoundObject Library Dialog
+-Code Repository Editor
+-Scanned Synthesis Matrix Editor
+-blueLive
+-SoundFont viewer
+-FTable Converter
+-Save
+-Save As
+-do full exit check (save all files, then libraries)
+-add auto-save thread
+-blueShare
+-Add Marker
+-Audition Selected SoundObjects
+-Program Options
+-Save Libraries
+-Render to Disk
+-Use Csound API
+-.blueE} directory
+-Project Menu
+-Toggle Loop Rendering
+-SoundFile Utility
+File Menu
+  -Render to Disk and Play
+-NoteProcessorDialog  [blue-projects]
+-re-enable check dependencies
+-renderTime lines
+-python interpeter initializer in background

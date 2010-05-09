@@ -1,0 +1,329 @@
+<blueData version='0.106.0_beta3'>
+  <projectProperties>
+    <title></title>
+    <author>Ben McAllister</author>
+    <notes> -W -o D:\Nuendo\Urban\mel1.wav
+
+consound -W -oD:\Nuendo\Urban\bass_1_ctof.wav</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>2</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>2</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>sine</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur = p3
+iamp = p4 * 16000
+ipitch = p5
+ipan = p6
+idist = p7
+ipct = p8
+
+kamp    linen   iamp, .02, idur, idur*.5
+amod    oscili  1000, ipitch, 1
+acar    oscili  kamp, ipitch+amod, 1
+
+a1, a2	locsig  acar, ipan, idist, ipct
+ar1, ar2  locsend
+outs a1, a2
+ga1 = ga1+ar1
+ga2 = ga2+ar2
+
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>saw</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur = p3
+iamp = p4 * 32768
+ipitch = p5
+ipan = p6
+idist = p7
+ipct = p8
+
+kamp    linen   iamp, .02, idur, idur*.5
+asig    oscili  kamp, ipitch, 2
+
+a1, a2	locsig  asig, ipan, idist, ipct
+ar1, ar2  locsend
+outs a1, a2
+ga1 = ga1+ar1
+ga2 = ga2+ar2
+</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='99' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>reverb</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>a1	reverb	ga1, 1
+a2	reverb	ga2, 1
+	outs	a1,a2
+
+ga1 = 0
+ga2 = 0</instrumentText>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+      </channel>
+      <channel>
+        <name>99</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+    </channel>
+  </mixer>
+  <tables>;sine
+f 1 0 16384 10 1
+
+;saw
+f 2 0 256 7 0 128 1 0 -1 128 0
+;pulse?
+f 3 0 256 7 1 128 1 0 -1 128 -1
+</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>ga1 init 0
+ga2 init 0
+</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <heightIndex>2</heightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.External'>
+        <subjectiveDuration>15.296875</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>external</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <text>;**************************************************************
+; Continuum.blue
+;
+;	Simple Common Music program to demonstrate use of 
+;		print-stream function in conjunction with blue.
+;
+;	Note: This was built on Win2k.  The command line used 
+;		above implies that the directory containing lisp.exe 
+;		(or correlate lisp executable for mac/linux) 
+;		is accessible by the shell running blue. -M param 
+;		points to compiled common music binary.
+;	
+;	Questions/comments - Ben McAllister, benmca_at_listenfaster.com
+;
+;**************************************************************
+(in-package :stella)
+;
+; global variables
+;
+(defparameter *totaldur* 0); used to calculate the duration of reverb note
+(defparameter *buflen* 4096); used to store file in print-stream function
+;
+; object definition for individual score events
+;
+(defobject soundin_indx (csound-note)
+  ((instr :initform &quot;i&quot;) inst mytime dur amp pitch pan dist pct)
+  (:parameters instr inst mytime dur amp pitch pan dist pct))
+(defobject revnote (csound-note)
+  ((name :initform &quot;i99&quot;) mystart dur revtime)
+  (:parameters name mystart dur revtime))
+
+;
+; Function: line1
+; 	simple function to produce growing pitch collection ala Ligeti&apos;s Continuum
+; Args:
+; st - Start time (in seconds)
+; tem - tempo
+; pn - pan - number between 0 and 90
+; len - length - number of notes this alg should produce
+; instrnum - number identifying csound instrument to which these
+; 	score events play.
+;
+(defun line1(st tem pn len instrnum)
+  (algorithm nil soundin_indx (start st length len)
+	(setf inst instrnum )
+	(setf mytime time)
+	(setf rhythm (item 
+		(rhythms 32 16 8 4 in random tempo(tempo tem)))
+	)
+	(setf dur rhythm)
+	(setf pitch (item (items 
+		(pitches c4 d in heap for 32)
+		(pitches c4 d ds in heap for 32)
+		(pitches c4 d ds b3 in heap for 32)
+		(pitches c4 d ds b3 a in heap for 32)
+		(pitches c4 d ds b3 a g in heap for 64)
+		(pitches c4 d ds b3 a g f in heap for 64)
+		(pitches c4 d ds b3 a g f e in heap for 128)
+	)))
+	(setf amp (item 
+		(items 1 .9 in random)	
+	))	
+;pan, dist and pct are used by locsig in orchestra
+	(setf pan pn)
+	(setf dist 1)
+	(setf pct .1)
+; accumulate durations here to determine total duration 
+;	for reverb note
+	(setf *totaldur* (max (+ mytime dur) *totaldur*))
+  )
+)
+;
+; Function: print-stream
+;	 function to read file and print result to console.
+; Note: this is fairly hacky - the entire file is stored in 
+;	an array of *buflen* length.  If your score is longer, 
+; 	consider increasing the value at the top of this file.
+; Args:
+; filename - name of file to read.
+(defun print-stream (filename)
+	(let ((buffer (make-array *buflen*)))
+	(with-open-file (f filename :direction :input
+                      :if-does-not-exist :error
+                      )
+	(do ((j 0))((= j (file-length f)))
+	(setf myline (read-line f t &quot;eofeof&quot;))
+	(if (string-equal myline &quot;eofeof&quot;)(return))
+	(princ myline)
+	(write-char #\Newline)
+	(setf j (+ j ))
+	)
+   ))
+)
+;
+; simple function to generate final reverb note of score.
+;
+(defun mrn (&amp;key (revtime 5.))
+	(algorithm nil revnote (start 10000 length 1 revtime revtime rhythm 0)
+	(setf mystart 0)
+	(setf dur (+ revtime *totaldur* 10))
+	))
+;
+; Function: ms
+; 	&apos;make-score&apos; function - calls algorithms defined and 
+;		writes result to filename provided.
+;
+(defun ms (&amp;key (start-time 1.)(my-scorefile &quot;test.sco&quot;))
+  (let* ((myheader (header &quot;&quot;			   )))	
+	(fheader my-scorefile myheader)	
+	(merge all ()
+;
+;	generate three performances of line1, 
+;	 panned hard-left, center, and hard right
+;
+	   	(line1 0 160 0 (* 32 10) 1)
+		(line1 0 160 45 (* 32 10) 1)
+		(line1 0 160 90 (* 32 10) 1)
+		(mrn)
+	)	
+	(setf mystream (make-string-output-stream))	
+	(open-cmd my-scorefile)
+	(mix-cmd &quot;all 0 play nil&quot;)
+))
+;
+; call ms
+;
+(ms)
+;
+; print result to console.
+;
+(print-stream  &quot;test.sco&quot;)</text>
+        <commandLine>lisp.exe -M c:\CSOUND\cm-1.3\clisp\cm.mem</commandLine>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+</blueData>

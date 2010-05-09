@@ -1,0 +1,12 @@
+<section id="primaryEditors">
+<title>Primary Editors</title>
+
+&scoreTimeline;
+&orchManager;
+&tablesManager;
+&globalsManager;
+&udoManager;
+&projectProperties;
+&mixer;
+
+</section>

@@ -1,0 +1,558 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title></title>
+    <author></author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>mikelsonPmask.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Pinkish Noise</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>iseed	=	p4		; Random generator seed
+iout	=	p5		; Zak output channel
+
+asig	pinkish 2, 0, 20, iseed ; Use multi-rate pink noise
+
+	zaw	asig, iout	; Write to the audio zak channel</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='11' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Kick Drum 2</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3		; Duration
+iamp	=	p4		; Amplitude
+ihif	=	p5		; Low frequency
+ilof	=	p6		; High freqency
+ipanl	=	sqrt(p7)	; Pan left &amp; right use sqrt
+ipanr	=	sqrt(1-p7)	; for smoother panning
+idec	=	p8		; Decay
+itens	=	p9		; Tension
+ihit	=	p10		; Accent
+iq	=	p11		; Pitch Bend Q (oscilation)
+iod	=	p12		; Amplitude of overtones
+ioc	=	p13		; Control of overtone amplitudes
+iof	=	p14		; Control of overtone frequencies
+isus	=	p15		; Sustain
+iqf	=	p16		; FM resonance frequency
+ilpf	=	p17		; Amp low pass frequency
+
+; Freq Envelope
+afqc	linseg	ihif,idec,ilof,idur*-idec,ilof	; Hi-Lo fqc sweep
+afqc2	rezzy	afqc,iqf,iq			; Add some ripples
+afqc3	=	afqc-afqc2*itens		; Mix fqc sweep with ripples
+
+aamp	expseg	1,idur,isus			; Exp amp envelope
+aamp2   butlp	aamp,ilpf			; Low pass version
+aamp3	=	(aamp*ihit+aamp2*(1-ihit))	; Mix the two envelopes for different attacks
+adclk	linseg	0,.002,1,idur-.004,1,.002,0	; Declick envelope
+
+asig	oscil	1,afqc3,1			; Simple sine oscillator
+
+ioc1	=	1+ioc				; Overtone control for base fqc*2
+ioc2	=	1+ioc*2				; ditto fqc*3
+ioc3	=	1+ioc*3				; ditto fqc*5
+
+asig2a	oscil	1,afqc3*2,1,.25			; Sine oscillator 2
+asigo	=	asig2a+.95			; Scale for the tanh
+asig2b	=	-tanh((asig2a+.9)*ioc1)+1		; Create a squarish envelope for the overtones
+asig2c	=	(asig2a*asig2b)*aamp3^ioc1	; This makes pulses of sine waves
+
+asig3a	oscil	1,afqc3*(1+iof*2),1,.25		; Sine oscillator 3
+asig3b	=	-tanh(asigo*ioc2)+1		; Squarish envelope pulses
+asig3c	=	(asig3a*asig3b)*aamp3^ioc2	; Adjust the magnitude with ioc2
+
+asig5a	oscil	1,afqc3*(1+iof*4),1,.25		; Sine oscillator 5
+asig5b	=	-tanh(asigo*ioc2)+1		; Squarish envelope pulses
+asig5c	=	(asig5a*asig5b)*aamp3^ioc3	; Adjust the magnitude
+
+; Prepare for output
+aout	=	(asig*aamp3+(asig2c+asig3c+asig5c)*iod)*adclk*iamp
+aoutl	=	aout
+aoutr	=	aout
+
+       outs      aoutl*ipanl, aoutr*ipanr		; Output the sound
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='24' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Stereo Cymbal 2</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3		; Duration
+iamp	=	p4		; Amplitude
+ifqc	=	cpspch(p5)	; Pitch
+ipanl	=	sqrt(p6)	; Pan left
+ipanr	=	sqrt(1-p6)	; Pan right
+ifco	=	p7		; Fco
+iq	=	p8		; Q
+iotv	=	p9		; Overtone volume
+iotf	=	ifco*p10	; Fco*OTFqc
+iotq	=	iq*p11		; Q*OTQ
+iinchl	=	1		; Noise input for left channel
+iinchr	=	2		; Noise input for right channel
+imix	=	p12
+
+kdclk	linseg	0, .002, 1, idur-.004, 1, .002, 0 ; Declick envelope
+kamp	expseg	1, idur, .01
+kamp2	linseg	0, idur*.2, 1, idur*.4, .3, idur*.4, 0
+kamp2   =       kamp2*imix
+kamp3	linseg	0, .002, 1, .004, .5, .004, 0, idur-.01, 0
+kflp	linseg	8000, .01, 5000, idur-.01, 1000
+
+arndl	zar	iinchl
+arndr	zar	iinchr
+
+;asig0	vco	1, ifqc*.5,  2, .5, 1, 1	; Generate impulse
+asig1	vco	1, ifqc,     2, .5, 1, 1	; Generate impulse
+asig2	vco	1, ifqc*1.5, 2, .5, 1, 1	; Generate impulse
+
+asigl	=	(asig1*asig2*(1+arndl))*kamp+arndl*kamp2
+asigr	=	(asig1*asig2*(1+arndr))*kamp+arndr*kamp2
+
+aoutl1	rezzy	asigl, ifco, iq, 1	; Apply amp envelope and declick
+aoutr1	rezzy	asigr, ifco, iq, 1	; Apply amp envelope and declick
+
+aoutl2	rezzy	asigl, iotf, iotq, 1	; Apply amp envelope and declick
+aoutr2	rezzy	asigr, iotf, iotq, 1	; Apply amp envelope and declick
+
+aoutl	=	aoutl1+aoutl2*iotv	; Mix the signal with the overtone
+aoutr	=	aoutr1+aoutr2*iotv
+
+alpl	butlp	aoutl, 15000		; Low pass filter the very high
+alpr	butlp	aoutr, 15000		; frequencies to get rid of some noise
+
+	outs	alpl*ipanl*iamp*kdclk, alpr*ipanr*iamp*kdclk</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='25' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Snare 4</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3		; Duration
+iamp	=	p4		; Amplitude
+ifqc	=	cpspch(p5)	; Pitch to frequency
+ipanl	=	sqrt(p6)	; Pan left
+ipanr	=	sqrt(1-p6)	; Pan right
+irez	=	p7		; Tone
+ispdec	=	p8		; Spring decay
+ispton	=	p9		; Spring tone
+ispmix	=	p10		; Spring mix
+ispq	=	p11		; Spring Q
+ipbnd	=	p12		; Pitch bend
+ipbtm	=	p13		; Pitch bend time
+
+arndr1 init      0
+arndr2 init      0
+
+kdclk  linseg    1, idur-.002, 1, .002, 0                ; Declick envelope
+aamp   linseg    1, .2/ifqc, 1, .2/ifqc, 0, idur-.002, 0 ; An amplitude pulse
+kptch  linseg    1, ipbtm, ipbnd, ipbtm, 1, .1, 1
+
+aosc1   vco      1, ifqc, 2, 1, 1, 1 ; Use a pulse of the vco to stimulate the filters
+aosc    =        -aosc1*aamp        ; Multiply by the envelope pulse
+aosc2   butterlp aosc, 12000        ; Lowpass at 12K to take the edge off
+
+asig1   moogvcf  aosc,    ifqc*kptch, .9*irez      ; Moof filter with high resonance for basic drum tone
+asig2   moogvcf  aosc*.5, ifqc*2.1*kptch, .75*irez ; Sweeten with an overtone
+
+aampr  expseg    .1, .002, 1, .2, .005
+
+arnd1	zar      1
+arnd2	zar      2
+
+arnd1   =        arnd1*2*asig1
+arndr1 delay     arnd1-arndr2*.6, .01
+
+arnd2   =        arnd2*2*asig1
+arndr2 delay     arnd2-arndr1*.6, .01
+
+ahp1l   rezzy    arnd1+arndr1, 2700*ispton*kptch, 5*ispq, 1 ; High pass rezzy based at 2700
+ahp2l   butterbp arnd1, 2000*ispton*kptch, 500/ispq  ; Generate an undertone
+ahp3l   butterbp arnd1, 5400*ispton*kptch, 500/ispq  ; Generate an overtone
+ahpl    pareq    ahp1l+ahp2l*.7+ahp3l*.3, 15000, .1, .707, 2 ; Attenuate the highs a bit
+
+ahp1r   rezzy    arnd2+arndr2, 2700*ispton*kptch, 5*ispq, 1 ; High pass rezzy based at 2700
+ahp2r   butterbp arnd2, 2000*ispton*kptch, 500/ispq  ; Generate an undertone
+ahp3r   butterbp arnd2, 5400*ispton*kptch, 500/ispq  ; Generate an overtone
+ahpr    pareq    ahp1r+ahp2r*.7+ahp3r*.3, 15000, .1, .707, 2 ; Attenuate the highs a bit
+
+
+; Mix drum tones, pulse and noise signal &amp; declick
+aoutl  =         (asig1+asig2+aosc2*.1+ahpl*ispmix*4)*iamp*kdclk 
+aoutr  =         (asig1+asig2+aosc2*.1+ahpr*ispmix*4)*iamp*kdclk 
+       outs      aoutl*ipanl, aoutr*ipanr              ; Output the sound</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324097' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>11</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324095' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>24</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324093' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>25</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324091' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324089' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables>f 1 0 65536 10 1</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>	zakinit	50,50			; Initialize the zak system</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>1</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='SoundLayer' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>30.015625</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>pythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from pmask import Range, UniformRandom
+from pmask import PowerSegment, LinearSegment
+from pmask import Mask, Quantizer, List
+from pmask import FStatement, ScoreSection
+from pmask import Lorenz, CircleSqr, Bifurcation, Hopalong, Mandelbrot, Julia, Henon
+
+cdur	= 32
+csta	= 0.0
+
+# Snare drum part
+snarei	= 34
+snares  = csta+.5
+snarer = List([1, 1, 1, 1,  1, 1, .25, .75, 1],&apos;cycle&apos;)
+snsdec = List([.2, .3, .5, 1,  1.3, 1],&apos;cycle&apos;)
+snton  = List([.5, 1, .3, 1.3, 2],&apos;cycle&apos;)
+# 						          Amp    Fqc   Pan Q   SprDec SprTone SprMix SprQ PBend PBTime
+snaress = ScoreSection(snares, cdur, snarei, snarer, .25, 30000, 7.00, .3, .7, snsdec,snton,      1,     1,   1.5,  .1)
+score = (str(snaress)+&apos;\n&apos;)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>30.03125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>genericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>i1 0 32.000000 .5 1
+i1 0 32.000000 .1 2
+t0 80
+i 11 0.0 0.25 30000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 1.0 0.25 25000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 1.75 0.25 33000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 2.0 0.25 20000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 3.0 0.25 30000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 4.0 0.25 25000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 5.0 0.25 33000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 6.0 0.25 20000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 6.25 0.25 30000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 7.0 0.25 25000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 8.0 0.25 33000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 9.0 0.25 20000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 9.75 0.25 30000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 10.0 0.25 25000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 11.0 0.25 33000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 12.0 0.25 20000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 13.0 0.25 30000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 14.0 0.25 25000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 14.25 0.25 33000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 15.0 0.25 20000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 16.0 0.25 30000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 17.0 0.25 25000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 17.75 0.25 33000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 18.0 0.25 20000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 19.0 0.25 30000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 20.0 0.25 25000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 21.0 0.25 33000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 22.0 0.25 20000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 22.25 0.25 30000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 23.0 0.25 25000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 24.0 0.25 33000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 25.0 0.25 20000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 25.75 0.25 30000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 26.0 0.25 25000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 27.0 0.25 33000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 28.0 0.25 20000 200 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 29.0 0.25 30000 170 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 30.0 0.25 25000 150 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 30.25 0.25 33000 230 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 11 31.0 0.25 20000 260 90.0 0.5 0.03 0.2 0.5 4.0 0.02 0.1 1.0 0.01 20.0 8.0
+i 24 0.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 0.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 0.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 0.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 1.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 1.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 1.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 1.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 2.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 2.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 2.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 2.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 3.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 3.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 3.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 3.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 4.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 4.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 4.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 4.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 5.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 5.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 5.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 5.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 6.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 6.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 6.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 6.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 7.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 7.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 7.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 7.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 8.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 8.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 8.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 8.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 9.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 9.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 9.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 9.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 10.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 10.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 10.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 10.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 11.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 11.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 11.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 11.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 12.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 12.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 12.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 12.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 13.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 13.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 13.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 13.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 14.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 14.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 14.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 14.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 15.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 15.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 15.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 15.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 16.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 16.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 16.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 16.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 17.0 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 17.25 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 17.5 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 17.75 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 18.0 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.15
+i 24 18.25 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5 0.2 0.23
+i 24 18.5 0.2 30000.0 8.0 0.2 5333.0 40.0 0.5 1.5 0.2 0.2
+i 24 18.75 0.26 30000.0 8.0 0.46 5333.0 40.0 0.5 1.5 0.2 0.26
+i 24 19.0 0.28 30000.0 8.0 0.28 5333.0 40.0 0.5 1.5 0.2 0.31
+i 24 19.25 0.3 30000.0 8.0 0.7 5333.0 40.0 0.5 1.5 0.2 0.12
+i 24 19.5 0.25 30000.0 8.0 0.25 5333.0 40.0 0.5 1.5 0.2 0.3
+i 24 19.75 0.23 30000.0 8.0 0.73 5333.0 40.0 0.5 1.5</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>30.03125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>pythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># HiHat part
+hihati	= 24
+hihatd  = List([.25, .23, .2, .26, .28, .3],&apos;cycle&apos;)
+hhpan   = List([.25, .73, .2, .46, .28, .7],&apos;cycle&apos;)
+hhmix   = List([.15, .23, .2, .26, .31, .12, .3, .3],&apos;cycle&apos;)
+#						        Amp    Pitch Pan    Fc    Q     OTAmp OTFqc OTQ  Mix
+hihatss = ScoreSection(csta, cdur, hihati, .25, hihatd, 30000, 8.00, hhpan, 5333, 40.0, 0.5,  1.5,  0.2, hhmix)
+
+
+score =(str(hihatss)+&apos;\n&apos;)</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>30.046875</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>pythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># Kick drum part
+kicki	= 11
+kickr   = List([1, .75, .25, 1, 1, 1, 1, .25, .75, 1],&apos;cycle&apos;)
+kicka   = List([30000, 25000, 33000, 20000],&apos;cycle&apos;)
+kickhf  = List([200, 170, 150, 230, 260],&apos;cycle&apos;)
+# 						     Amp    HiF  LoF Pan Dec  Tens Hit PBendQ OD   OC  OF Sus  QFmF LPAmpF
+kickss = ScoreSection(csta, cdur, kicki, kickr, .25, kicka, kickhf, 90, .5, .03, .2,  .5, 4,     .02, .1, 1, .01, 20,  8)
+score = (str(kickss)+&apos;\n&apos;)</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

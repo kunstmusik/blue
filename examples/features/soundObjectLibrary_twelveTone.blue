@@ -1,0 +1,725 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>twelve tone example</title>
+    <author>stevenyi</author>
+    <notes>[DESCRIPTION]
+A twelve-tone example that uses extensive use of the soundObject library.  A randomly generated twelve-tone row 
+was made using a python script.  The output of that was put into a genericScore soundObject, and that soundObject 
+was put into the soundObject library.  Instances of the soundObject were made and then used for the composition of 
+the piece, using noteProcessors to change the properties of the soundObject (retrograding, transposing, etc.).  
+All instances point to the original row.  
+
+Try generating a new row with the python script and replacing the soundObject&apos;s material in the library for a new piece 
+that uses the same exact form and transformations.
+		
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>twelveTone.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>simple fm 1:1</name>
+        <comment>A simple FM instruments using 1:1 C:M ratio and index of 5.
+
+Parameters:
+
+p4	- amplitude, expressed in decibels
+p5	- pitch, expressed in PCH notation</comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>iamp	= ampdb(p4)
+ipch	= cpspch(p5)
+icar	= 1
+imod	= 1	
+index	= 5
+
+kenv 	linseg 0, .1, 1, p3 - .2, 1, .1, 0
+
+aout	foscili kenv * iamp, ipch, icar, imod, index, 1
+
+outs aout, aout
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1577324305' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1577324303' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables>f1 0 65537 10 1	; sine wave</tables>
+  <soundObjectLibrary>
+    <soundObject type='blue.soundObject.GenericScore'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>twelve tone row</name>
+      <backgroundColor>-12566464</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <score>i1	0.0	1.0	75	8.08	
+i1	1.0	1.0	75	8.04	
+i1	2.0	1.0	75	8.06	
+i1	3.0	1.0	75	8.05	
+i1	4.0	1.0	75	8.10	
+i1	5.0	1.0	75	8.09	
+i1	6.0	1.0	75	8.07	
+i1	7.0	1.0	75	8.11	
+i1	8.0	1.0	75	8.00	
+i1	9.0	1.0	75	8.01	
+i1	10.0	1.0	75	8.03	
+i1	11.0	1.0	75	8.02	
+</score>
+    </soundObject>
+  </soundObjectLibrary>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>30</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>12.4</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>About the project</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>This project uses extensively a soundObject from the soundObject library.  If you click on any of the soundObjects in the layers marked &quot;motive&quot;, you&apos;ll see that the editor for that object has at the top &quot;Instance of: &quot;.  Now if you open up the soundObject library (F4, or select &quot;Sound Object Library&quot; from the Window menu), you&apos;ll see one soundObject in there.  
+
+All of the soundObjects are &quot;instances&quot; of this soundObject in the library.  They &quot;point&quot; to this soundObject, so when the soundObject generates notes, it first grabs the score from the soundObject in the library, then applies all of its transformations (start time, scales duration to instance&apos;s duration, applies note processors).  The advantage of using the soundObject library is that now if you edit the soundObject in the library, all of the other &quot;instances&quot; will be updated.
+
+So, it&apos;s possible to start with an empty soundObject and build the form of your piece. Using noteProcessors to apply transformations, you can express something like &quot;here, the motive is transposed&quot; without even having a motive filled in! 
+
+In the case of this example, the soundObject in the library is a twelve tone row, generated from the python script in the &quot;row maker object&quot;.  As a test, you can generate a new row with the row maker object with the test button (make sure to do a &quot;test&quot; of the &quot;row setup functions&quot; object to make sure the interpreter knows its functions), copy the output shown in the test window, and then paste it into the &quot;twelve tone row&quot; soundObject in the library.  After this, you can hear a piece that has the exact same form as the original piece, but uses different material.
+
+</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>12.333333</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Twelve Tone Row Functions</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>Below are two python soundObjects, &quot;row setup functions&quot; which creates a twelve-tone row for the simple FM instrument, and &quot;row maker object&quot; which calls the twelve-tone function.</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python script' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>9.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>row setup functions</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+def makeRow():
+	finishedRow = []
+	row = []
+	rowIndex = 0
+
+	for i in range(0,12):
+		finishedRow.append(0)
+
+	while rowIndex &lt; 12:
+		index = int(random.random() * 12)
+		if(finishedRow[index] == 0):
+			finishedRow[index] = 1
+			if index &lt; 10:
+				row.append(&quot;8.0&quot; + str(index))
+			else:
+				row.append(&quot;8.&quot; + str(index))
+			rowIndex += 1
+
+	return row
+
+#print makeRow()
+
+
+def makeTwelveToneNotes():
+	returnScore = &quot;&quot;
+	randomRow = makeRow()
+
+	for i in range(0, 12):
+		returnScore += &quot;i1 &quot; + str(i) + &quot; 1 75 &quot; + randomRow[i] + &quot; \n&quot;
+
+	return returnScore
+
+#score = makeTwelveToneNotes()</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='python script' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>12.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>row maker object</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode># used as material for library source row soundObject
+
+# click the test button to see its output
+# (requires that the &quot;row setup functions&quot; has been introduced to the interpreter,
+# either by doing a test on that soundObject or just generating a CSD file at least once
+# by either the [render/stop] button or &quot;Generate CSD to file&quot; from the Project menu)
+
+score = makeTwelveToneNotes()</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>7.1666665</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Motives</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>Below are parts of the main twelve tone row.  They are made from the twelve tone row by using the &quot;sublist&quot; noteProcessor, a noteProcessor allows for using only part of the generated notes.  
+
+mo 1 	- the first three notes of the row
+mo 2 	- the second three notes of the row
+mo 3 	- the third three notes of the row
+mo 4 	- the fourth three notes of the row
+
+
+</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive templates' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>0.765625</subjectiveDuration>
+        <startTime>0.015625</startTime>
+        <name>I: mo 1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>3</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>0.953125</subjectiveDuration>
+        <startTime>0.96875</startTime>
+        <name>I: mo 2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>4</start>
+            <end>6</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>1.25</subjectiveDuration>
+        <startTime>2.046875</startTime>
+        <name>I: mo 3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>7</start>
+            <end>9</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-11</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>1.171875</subjectiveDuration>
+        <startTime>3.4375</startTime>
+        <name>I: mo 4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>10</start>
+            <end>12</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>7.1666665</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Motives</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>When you explore the soundObjects below, you&apos;ll see that in the editor they&apos;re all the same.  They&apos;re all pointing to the &quot;twelve tone row&quot; object in the soundObject library.  To see what&apos;s different between all of these objects, you&apos;ll have to open the soundObject property dialog (F3, or select &quot;SoundObject Properties&quot; from the Window menu) and look at the noteProcessors on each soundObject.  </commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 1' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>2.0227273</subjectiveDuration>
+        <startTime>11.409091</startTime>
+        <name>I: mo 1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>3</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>2.03125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>I: mo 1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>3</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 1' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>8.818182</startTime>
+        <name>I: mo 1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>3</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-3</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>1.375</startTime>
+        <name>I: mo 1</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>1</start>
+            <end>3</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-3</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 2' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.659091</subjectiveDuration>
+        <startTime>16.133333</startTime>
+        <name>I: mo 2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>4</start>
+            <end>6</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-8.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.659091</subjectiveDuration>
+        <startTime>0.29545453</startTime>
+        <name>I: mo 2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>4</start>
+            <end>6</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-8.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 2' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>2.828125</subjectiveDuration>
+        <startTime>14.5</startTime>
+        <name>I: mo 2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>4</start>
+            <end>6</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-8.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>2.828125</subjectiveDuration>
+        <startTime>3.109375</startTime>
+        <name>I: mo 2</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>4</start>
+            <end>6</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>0</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-8.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 3' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>5.2954545</subjectiveDuration>
+        <startTime>12.340909</startTime>
+        <name>I: mo 3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>7</start>
+            <end>9</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>5.3125</subjectiveDuration>
+        <startTime>4.203125</startTime>
+        <name>I: mo 3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>7</start>
+            <end>9</end>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 3' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>5.090909</subjectiveDuration>
+        <startTime>11.0</startTime>
+        <name>I: mo 3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>7</start>
+            <end>9</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-8</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>5.109375</subjectiveDuration>
+        <startTime>5.765625</startTime>
+        <name>I: mo 3</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>7</start>
+            <end>9</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>-8</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 4' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.828125</subjectiveDuration>
+        <startTime>1.59375</startTime>
+        <name>I: mo 4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>10</start>
+            <end>12</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>13</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-10.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.8</subjectiveDuration>
+        <startTime>15.9</startTime>
+        <name>I: mo 4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>10</start>
+            <end>12</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>13</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-10.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='motive 4' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.7272727</subjectiveDuration>
+        <startTime>7.681818</startTime>
+        <name>I: mo 4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>10</start>
+            <end>12</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>17</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-12.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.7</subjectiveDuration>
+        <startTime>13.733334</startTime>
+        <name>I: mo 4</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.SubListProcessor'>
+            <start>10</start>
+            <end>12</end>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.PchAddProcessor'>
+            <pfield>5</pfield>
+            <value>17</value>
+          </noteProcessor>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>4</pfield>
+            <value>-12.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='testing: prime' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.078125</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Instance: twelve tone row</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='testing: retrograde' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.Instance'>
+        <subjectiveDuration>3.078125</subjectiveDuration>
+        <startTime>1.03125</startTime>
+        <name>I: retrograde</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.RetrogradeProcessor'/>
+        </noteProcessorChain>
+        <soundObjectReference soundObjectLibraryID='0'/>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

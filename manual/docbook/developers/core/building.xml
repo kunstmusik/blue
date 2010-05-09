@@ -1,0 +1,113 @@
+<section id="buildingBlue">
+  <title>Building blue</title>
+
+
+  <section>
+    <title>Requirements</title>
+
+    <para>To build blue, the following programs are used:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>Java Development Kit 1.4+</term>
+        <listitem>
+          <para>Contains javac java compiler and other development tools.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Apache Ant or Apache Maven</term>
+        <listitem>
+          <para>
+            blue comes with both an Apache Ant build file as well as an Apache
+            Maven (1.0.x) build file. Either can be used to build blue from the
+            commandline, though the user can also easily import the sources and
+            libraries of blue into an IDE (i.e. Netbeans, Eclipse, Idea) and use
+            the IDE's project build system.
+          </para>
+
+          <para>
+            The Maven build file is mostly used when doing releases, while the
+            Ant build file will be more useful for those who are simply wanting
+            to build and use blue.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>JUnit</term>
+        <listitem>
+          <para>
+            JUnit is required to run the unit tests and is integrated as part of
+            the build.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>IzPack</term>
+        <listitem>
+          <para>
+            IzPack is used for building the blue installer jar; if you are not
+            building an installer, this library won't be necessary.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xsltproc, Apache FOP, Sun JAI library</term>
+        <listitem>
+          <para>
+            xsltproc is used to build all versions of the manual. To build the
+            PDF manual, Apache FOP and Sun JAI library are required.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </section>
+
+
+
+  <section>
+    <title>Getting the Sources</title>
+
+    <para>
+      To build blue, you will either need to download a src.zip file from the
+      Soureforge release server or use CVS to download the latest sources.
+    </para>
+
+  </section>
+
+
+  <section>
+    <title>Maintaining a Version of blue from CVS</title>
+
+    <para>
+      After checking out from CVS and building, one should modify the
+      appropriate starter script in the blue/bin directory for your platform to
+      correctly point to BLUE_HOME. After that, running CVS update and
+      rebuilding using Ant should keep you up to date.
+    </para>
+
+    <note>
+      <title>Note</title>
+      <para>
+        While checkins to CVS are almost always done in such a way that the
+        program is in a state which it will compile and function cleanly, it
+        sometimes does happen that a broken checkin occurs. Users building from
+        CVS should be careful to depend on using only a version from CVS if they
+        are not able to fix code to make things compile. If you are not able to
+        fix Java code, then it is recommended to keep two copies of builds from
+        CVS, one which to use for your general use and another for using to test
+        if things will build.
+      </para>
+    </note>
+
+
+
+  </section>
+
+</section>

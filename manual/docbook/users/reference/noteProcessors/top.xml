@@ -1,0 +1,41 @@
+<section id="noteProcessors">
+<title>NoteProcessors</title>
+
+<para>NoteProcessors are used in conjunction with soundObjects, and are used
+post-generation of the soundObject's noteList. They are used to modify values
+within the noteList.</para>
+
+<para>NoteProcessors can be added via the soundObject property dialog. When a
+soundObject is selected on the timeline, and if the soundObject supports
+noteProcessors, you can add, remove, push up, or push down noteProcessors on the
+property dialog.</para>
+
+<simplesect>
+<title>Role in Score Generation</title>
+
+<para>NoteProcessors are applied after the notes of the soundObject are
+generated and before time behavior is applied. Processing starts with the first
+NoteProcessor in the chain and the results of that are passed down the
+chain.</para>
+
+</simplesect>
+
+&addProcessor;
+&equalsProcessor;
+&inversionProcessor;
+&lineAddProcessor;
+&lineMultiplyProcessor;
+&multiplyProcessor;
+&pchAddProcessor;
+&pchInversionProcessor;
+&pythonProcessor;
+&randomAddProcessor;
+&randomMultiplyProcessor;
+&retrogradeProcessor;
+&rotateProcessor;
+&subListProcessor;
+&switchProcessor;
+&timeWarpProcessor;
+&tuningProcessor;
+
+</section>

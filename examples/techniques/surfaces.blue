@@ -1,0 +1,1317 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>Surfaces Example</title>
+    <author>Steven Yi</author>
+    <notes>Example of using performSurface function in conjunction with ObjectBuilder objects to achieve compositional affect like Xenakis&apos;s Metastasis.</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>16</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name></name>
+      <maker></maker>
+      <uniqueId>0</uniqueId>
+      <copyright></copyright>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='false'>
+        <name>Reson 6 - Orch</name>
+        <comment>Description: 6 Reson instrument using VCO2 sawtooth as input with feedback
+
+Author: Steven Yi
+
+[HISTORY]
+
+v1.0 - Initial Release</comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>ipch 	= p4
+ipch2	= p5
+
+ipch 	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+ipch2 	= (ipch2 &lt; 15 ? cpspch(ipch2) : ipch2)
+
+kpchline 	line ipch, p3, ipch2
+
+iamp 	= ampdb(p6)
+iSpace	= p7
+ienvType	= p8
+
+iQ    = &lt;baseQ&gt;
+
+kenv 	yiEnvelope ienvType, &lt;attack&gt;, &lt;decay&gt;, &lt;sustain&gt;, &lt;release&gt;
+
+imaxdel = (1/ipch &gt; 1/ipch2) ? 1/ipch : 1/ipch2
+
+
+;INSERT SOUND GENERATION CODE HERE
+
+adel init 0
+
+aexc1	vco2 1, kpchline
+aexc = aexc1 + adel
+
+aout = 0
+
+if (&lt;modeOn0&gt; == 1) then
+	aout0 reson aexc * &lt;gain0&gt;, kpchline * &lt;freqMultiply0&gt;, iQ * &lt;qMultiply0&gt;
+	aout sum aout, aout0
+endif
+
+if (&lt;modeOn1&gt; == 1) then
+	aout1 reson aexc  * &lt;gain1&gt;, kpchline * &lt;freqMultiply1&gt;, iQ * &lt;qMultiply1&gt;
+	aout sum aout, aout1
+endif
+
+if (&lt;modeOn2&gt; == 1) then
+	aout2 reson aexc  * &lt;gain2&gt;, kpchline * &lt;freqMultiply2&gt;, iQ * &lt;qMultiply2&gt;
+	aout sum aout, aout2
+endif
+
+if (&lt;modeOn3&gt; == 1) then
+	aout3 reson aexc  * &lt;gain3&gt;, kpchline * &lt;freqMultiply3&gt;, iQ * &lt;qMultiply3&gt;
+	aout sum aout, aout3
+endif
+
+if (&lt;modeOn4&gt; == 1) then
+	aout4 reson aexc  * &lt;gain4&gt;, kpchline * &lt;freqMultiply4&gt;, iQ * &lt;qMultiply4&gt;
+	aout sum aout, aout4
+endif
+
+if (&lt;modeOn5&gt; == 1) then
+	aout5 reson aexc  * &lt;gain5&gt;, kpchline * &lt;freqMultiply5&gt;, iQ * &lt;qMultiply5&gt;
+	aout sum aout, aout5
+endif
+
+aout	balance aout, aexc1
+
+adel vdelay3 aout * &lt;feedback&gt;, 1/kpchline, imaxdel
+adel = -adel
+
+aout = aout * iamp * kenv
+
+
+;END SOUND GENERATION CODE
+
+iSpace	= iSpace * 3.14159265359 * .5
+krtl    = sqrt(2) / 2 * (cos(iSpace) + sin(iSpace)) ; CONSTANT POWER PANNING
+krtr    = sqrt(2) / 2 * (cos(iSpace) - sin(iSpace)) ; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+
+aLeft 	=	aout * krtl
+aRight	=	aout * krtr
+
+blueMixerOut aLeft, aRight
+</instrumentText>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='20' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>11</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+3&quot;&gt;&lt;b&gt;Reson 6&lt;/b&gt;&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>377</x>
+            <y>392</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Base Q&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>baseQ</objectName>
+            <x>444</x>
+            <y>370</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>100.0</maximum>
+            <value>29.881298</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply0</objectName>
+            <x>99</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply0</objectName>
+            <x>99</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.70333993</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>19</x>
+            <y>181</y>
+            <label>Freq Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>36</x>
+            <y>260</y>
+            <label>Q Multiply</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>123</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;1&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply1</objectName>
+            <x>168</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>2.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply1</objectName>
+            <x>168</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.6287569</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply2</objectName>
+            <x>237</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>3.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply2</objectName>
+            <x>237</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.77589726</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply3</objectName>
+            <x>306</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>4.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply3</objectName>
+            <x>306</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.70936865</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply4</objectName>
+            <x>375</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>6.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply4</objectName>
+            <x>375</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.6634556</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>192</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;2&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>261</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;3&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>330</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;4&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>399</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;5&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>freqMultiply5</objectName>
+            <x>444</x>
+            <y>161</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>1.0</minimum>
+            <maximum>16.0</maximum>
+            <value>8.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>qMultiply5</objectName>
+            <x>444</x>
+            <y>238</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.6587586</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>468</x>
+            <y>57</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;6&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn0</objectName>
+            <x>109</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn1</objectName>
+            <x>180</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn2</objectName>
+            <x>247</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn3</objectName>
+            <x>316</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn4</objectName>
+            <x>385</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>true</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBCheckBox'>
+            <objectName>modeOn5</objectName>
+            <x>454</x>
+            <y>319</y>
+            <label>On</label>
+            <selected>false</selected>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>decay</objectName>
+            <x>151</x>
+            <y>380</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.014572331</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>sustain</objectName>
+            <x>204</x>
+            <y>380</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.89667374</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>release</objectName>
+            <x>257</x>
+            <y>380</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.1461223</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>attack</objectName>
+            <x>98</x>
+            <y>380</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>10.0</maximum>
+            <value>0.099999994</value>
+            <knobWidth>50</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>105</x>
+            <y>361</y>
+            <label>Attack</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>159</x>
+            <y>361</y>
+            <label>Decay</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>209</x>
+            <y>361</y>
+            <label>Sustain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>260</x>
+            <y>361</y>
+            <label>Release</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>11</x>
+            <y>392</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Amp Env&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain0</objectName>
+            <x>99</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>34</x>
+            <y>104</y>
+            <label>Input Gain</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain1</objectName>
+            <x>168</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain2</objectName>
+            <x>237</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain3</objectName>
+            <x>306</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain4</objectName>
+            <x>375</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>gain5</objectName>
+            <x>444</x>
+            <y>84</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>1.0</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>354</x>
+            <y>471</y>
+            <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Feedback&lt;/font&gt;&lt;/html&gt;</label>
+          </bsbObject>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+            <objectName>feedback</objectName>
+            <x>444</x>
+            <y>449</y>
+            <automationAllowed>false</automationAllowed>
+            <minimum>0.0</minimum>
+            <maximum>1.0</maximum>
+            <value>0.12512003</value>
+            <knobWidth>60</knobWidth>
+            <randomizable>true</randomizable>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name='Presets'>
+          <presetGroup name='Harmonic'>
+            <preset name='Flute-esque'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:37.0705451965</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3</setting>
+              <setting name='freqMultiply3'>ver2:4</setting>
+              <setting name='freqMultiply4'>ver2:6</setting>
+              <setting name='freqMultiply5'>ver2:8</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.200000003</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Organ-esque'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:27.6036148071</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.1251200289</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3</setting>
+              <setting name='freqMultiply3'>ver2:4</setting>
+              <setting name='freqMultiply4'>ver2:6</setting>
+              <setting name='freqMultiply5'>ver2:8</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:0.7033399343</setting>
+              <setting name='qMultiply1'>ver2:0.6287568808</setting>
+              <setting name='qMultiply2'>ver2:0.7758972645</setting>
+              <setting name='qMultiply3'>ver2:0.7093686461</setting>
+              <setting name='qMultiply4'>ver2:0.6634556055</setting>
+              <setting name='qMultiply5'>ver2:0.6587585807</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+          <presetGroup name='Inharmonic'>
+            <preset name='Bayan Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:11.485004425</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0175071973</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:2</setting>
+              <setting name='freqMultiply2'>ver2:3.0099999905</setting>
+              <setting name='freqMultiply3'>ver2:4.0100002289</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>true</setting>
+              <setting name='modeOn5'>true</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:0.400000006</setting>
+              <setting name='qMultiply2'>ver2:0.5</setting>
+              <setting name='qMultiply3'>ver2:0.6000000238</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Dahina Table'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+            <preset name='Red Cedar Wood Plate 2'>
+              <setting name='attack'>ver2:0.099999994</setting>
+              <setting name='baseQ'>ver2:33.1700668335</setting>
+              <setting name='decay'>ver2:0.0145723308</setting>
+              <setting name='feedback'>ver2:0.0111588016</setting>
+              <setting name='freqMultiply0'>ver2:1</setting>
+              <setting name='freqMultiply1'>ver2:1.4700000286</setting>
+              <setting name='freqMultiply2'>ver2:2.0899999142</setting>
+              <setting name='freqMultiply3'>ver2:2.5599999428</setting>
+              <setting name='freqMultiply4'>ver2:4.6900000572</setting>
+              <setting name='freqMultiply5'>ver2:5.6300001144</setting>
+              <setting name='gain0'>ver2:1</setting>
+              <setting name='gain1'>ver2:1</setting>
+              <setting name='gain2'>ver2:1</setting>
+              <setting name='gain3'>ver2:1</setting>
+              <setting name='gain4'>ver2:1</setting>
+              <setting name='gain5'>ver2:1</setting>
+              <setting name='modeOn0'>true</setting>
+              <setting name='modeOn1'>true</setting>
+              <setting name='modeOn2'>true</setting>
+              <setting name='modeOn3'>true</setting>
+              <setting name='modeOn4'>false</setting>
+              <setting name='modeOn5'>false</setting>
+              <setting name='qMultiply0'>ver2:1</setting>
+              <setting name='qMultiply1'>ver2:1</setting>
+              <setting name='qMultiply2'>ver2:0.2509221435</setting>
+              <setting name='qMultiply3'>ver2:0.2812690735</setting>
+              <setting name='qMultiply4'>ver2:0.3000000119</setting>
+              <setting name='qMultiply5'>ver2:0.3000000119</setting>
+              <setting name='release'>ver2:0.1461223066</setting>
+              <setting name='sustain'>ver2:0.896673739</setting>
+            </preset>
+          </presetGroup>
+        </presetGroup>
+        <opcodeList>
+          <udo>
+            <opcodeName>getFrequency</opcodeName>
+            <outTypes>i</outTypes>
+            <inTypes>i</inTypes>
+            <codeBody>ipch 	xin
+
+iout	= (ipch &lt; 15 ? cpspch(ipch) : ipch)
+
+	xout	iout
+</codeBody>
+            <comments></comments>
+          </udo>
+          <udo>
+            <opcodeName>yiEnvelope</opcodeName>
+            <outTypes>k</outTypes>
+            <inTypes>ioooooo</inTypes>
+            <codeBody>ienvType, iattack, idecay, isus, irel, iOldAmp, iNewAmp	xin
+
+itie	tival
+idur = p3
+
+iEndAmp = iNewAmp / iOldAmp
+
+
+if (ienvType == 0) then
+	kenv	adsr	iattack, idecay, isus, irel
+elseif (ienvType == 1) then
+	kenv 	linseg	0, p3 * .5, 1, p3 * .5, 0
+	kenv logcurve kenv, 1.5
+elseif (ienvType == 2) then
+	kenv	linseg 	0, p3 - .1, 1, .1, 0
+
+elseif (ienvType == 3) then
+
+    if (itie == 0 &amp;&amp; p3 &lt; 0) then
+        ; this is an initial note within a group of tied notes
+        kenv	linseg	0, .2, 1,  .2, 1
+
+    elseif (p3 &gt; 0 &amp;&amp; itie == 1) then
+        ; this is an end note out of a group of tied notes
+        kenv linseg	1, p3 - 1, 1, 1, 0
+
+    elseif (p3 &gt; 0 &amp;&amp; itie == 0) then
+        ; this is a stand alone note
+        kenv adsr iattack, idecay, isus, irel
+    else
+        ; this is a middle note within a group of tied notes (p3 &lt; 0 &amp;&amp; itie == 1)
+        kenv line 1, abs(p3), iEndAmp
+    endif
+
+endif
+
+	xout 	kenv
+</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>5.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'>
+          <effect>
+            <name>Chorus-02</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>isin		ftgentmp	0, 0, 65537, 10, 1
+
+ilevl		=		0.3		; Output level
+idelay		=		0.01		; Delay in ms
+idpth		=		0.002		; Depth in ms
+imax		=		0.25		; Maximum LFO rate
+imin		=		0.5		; Minimum LFO rate
+iwave		=		isin		; LFO waveform
+
+iwet		=		&lt;wetDry&gt;
+
+ain             =               ain1 + ain2 * .5
+
+ain             =               ain * ilevl
+i01             =               rnd(imax)
+i02             =               rnd(imax)
+i03             =               rnd(imax)
+i04             =               rnd(imax)
+i05             =               rnd(imax)
+i06             =               rnd(imax)
+i07             =               rnd(imax)
+i08             =               rnd(imax)
+i09             =               rnd(imax)
+i10             =               rnd(imax)
+i11             =               rnd(imax)
+i12             =               rnd(imax)
+alfo01          oscil           idpth, i01 + imin, iwave
+alfo02          oscil           idpth, i02 + imin, iwave, .08
+alfo03          oscil           idpth, i03 + imin, iwave, .17
+alfo04          oscil           idpth, i04 + imin, iwave, .25
+alfo05          oscil           idpth, i05 + imin, iwave, .33
+alfo06          oscil           idpth, i06 + imin, iwave, .42
+alfo07          oscil           idpth, i07 + imin, iwave, .50
+alfo08          oscil           idpth, i08 + imin, iwave, .58
+alfo09          oscil           idpth, i09 + imin, iwave, .67
+alfo10          oscil           idpth, i10 + imin, iwave, .75
+alfo11          oscil           idpth, i11 + imin, iwave, .83
+alfo12          oscil           idpth, i12 + imin, iwave, .92
+atemp           delayr          idelay + idpth +.1
+a01             deltapi         idelay + alfo01
+a02             deltapi         idelay + alfo02
+a03             deltapi         idelay + alfo03
+a04             deltapi         idelay + alfo04
+a05             deltapi         idelay + alfo05
+a06             deltapi         idelay + alfo06
+a07             deltapi         idelay + alfo07
+a08             deltapi         idelay + alfo08
+a09             deltapi         idelay + alfo09
+a10             deltapi         idelay + alfo10
+a11             deltapi         idelay + alfo11
+a12             deltapi         idelay + alfo12
+                delayw          ain
+achorusl        sum		a01, a02, a03, a04, a05, a06
+achorusr        sum             a07, a08, a09, a10, a11, a12
+
+aout1		=		ain1 * (1-iwet) + achorusl * iwet
+aout2		=		ain2 * (1-iwet) + achorusr * iwet
+</code>
+            <comments>-Based on Code by Atte Andre Jenson, posted to the Csound Mailing List on May 1, 2006</comments>
+            <opcodeList/>
+            <graphicInterface editEnabled='false'>
+              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>8</x>
+                <y>9</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;Chorus&lt;/font&gt;&lt;/html&gt;</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>8</x>
+                <y>37</y>
+                <label>Wet/Dry Mix</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
+                <objectName>wetDry</objectName>
+                <x>91</x>
+                <y>32</y>
+                <automationAllowed>false</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <resolution>0.01</resolution>
+                <value>0.5</value>
+                <sliderWidth>280</sliderWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>342</x>
+                <y>57</y>
+                <label>Wet</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>98</x>
+                <y>57</y>
+                <label>Dry</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList/>
+          </effect>
+        </effectsChain>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='680005495' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'>
+        <effect>
+          <name>ReverbSC</name>
+          <enabled>true</enabled>
+          <numIns>2</numIns>
+          <numOuts>2</numOuts>
+          <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+          <comments/>
+          <opcodeList/>
+          <graphicInterface editEnabled='false'>
+            <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>7</x>
+              <y>7</y>
+              <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>feedback</objectName>
+              <x>8</x>
+              <y>55</y>
+              <automationAllowed>false</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.92640096</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>11</x>
+              <y>36</y>
+              <label>Feedback</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>cutoff</objectName>
+              <x>72</x>
+              <y>55</y>
+              <automationAllowed>false</automationAllowed>
+              <minimum>20.0</minimum>
+              <maximum>20000.0</maximum>
+              <value>5983.046</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>80</x>
+              <y>36</y>
+              <label>Cut-Off</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>wetdry</objectName>
+              <x>136</x>
+              <y>55</y>
+              <automationAllowed>false</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.8448115</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>139</x>
+              <y>36</y>
+              <label>Wet/Dry</label>
+            </bsbObject>
+          </graphicInterface>
+          <bsbParameterList/>
+        </effect>
+      </effectsChain>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='680004808' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>18</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>18.5</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Setup</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>from orchestra import *
+import random
+
+#performer args (instrNum, baseAmp, space)
+chordPerformer1 = Performer(4, 1, -.1)
+chordPerformer2 = Performer(4, 1, 0)
+chordPerformer3 = Performer(4, 1, .1)
+
+#chordPerformer4 = Performer(4, 1, .2)
+#chordPerformer5 = Performer(4, 1, -.2)
+
+chordGroup = PerformerGroup()
+chordGroup.append(chordPerformer1)
+chordGroup.append(chordPerformer2)
+chordGroup.append(chordPerformer3)
+
+#chordGroup.append(chordPerformer4)
+#chordGroup.append(chordPerformer5)
+
+
+# ADDITIONAL CLASS METHODS FOR PERFORMER GROUP
+
+def performSplit(self, notes):
+	retVal = &quot;&quot;
+
+	counter = 0
+
+	for i in range(len(notes)):
+		retVal += self[counter].perform(NoteList( [notes[i]] ) )
+		counter += 1
+		if counter &gt;= len(self):
+			counter = 0
+
+	return retVal
+
+
+PerformerGroup.performSplit = performSplit
+
+
+
+def createChord(startPch, intervalArray, amp):
+	nl = NoteList()
+	pch = startPch
+
+	nl.append(  Note(0, 1, pch, pch, amp, 1) )
+	for interval in intervalArray:
+		pch = pchAdd(pch, interval)
+		nl.append( Note(0, 1, pch, pch, amp, 1) )
+	return nl
+
+def simpleNote(pch, amp):
+	return NoteList([ Note(0, 1, pch, pch, amp, 1) ])
+
+
+
+#a = createChord(8.00, [5,5], 80)
+#a = a.transpose(4)
+#score = chordGroup.performSplit(a)
+
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>23.61111</subjectiveDuration>
+        <startTime>7.888889</startTime>
+        <name>Surface</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>pointsA = [&lt;linePoints_line0&gt;]
+pointsB = [&lt;linePoints_line1&gt;]
+
+score = chordGroup.performSurface(80, 1, 0, pointsA[1], 0, pointsB[1], 1, pointsA[3], 1, pointsB[3])</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>linePoints</objectName>
+            <x>12</x>
+            <y>13</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>250</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>true</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>true</locked>
+            <lines>
+              <line name='line0' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-14623488' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='1304.2018'/>
+                <linePoint x='1.0' y='676.4706'/>
+              </line>
+              <line name='line1' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-16776961' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='1092.437'/>
+                <linePoint x='1.0' y='1561.3446'/>
+              </line>
+            </lines>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>23.61111</subjectiveDuration>
+        <startTime>25.666666</startTime>
+        <name>Surface</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>pointsA = [&lt;linePoints_line0&gt;]
+pointsB = [&lt;linePoints_line1&gt;]
+
+score = chordGroup.performSurface(80, 1, 0, pointsA[1], 0, pointsB[1], 1, pointsA[3], 1, pointsB[3])</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>linePoints</objectName>
+            <x>12</x>
+            <y>13</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>250</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>true</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>true</locked>
+            <lines>
+              <line name='line0' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-14623488' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='767.2269'/>
+                <linePoint x='1.0' y='676.4706'/>
+              </line>
+              <line name='line1' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-16776961' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='691.5967'/>
+                <linePoint x='1.0' y='842.8572'/>
+              </line>
+            </lines>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>30.555555</subjectiveDuration>
+        <startTime>13.888889</startTime>
+        <name>Surface</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>pointsA = [&lt;linePoints_line0&gt;]
+pointsB = [&lt;linePoints_line1&gt;]
+
+score = chordGroup.performSurface(80, 1, 0, pointsA[1], 0, pointsB[1], 1, pointsA[3], 1, pointsB[3])</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>linePoints</objectName>
+            <x>12</x>
+            <y>13</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>250</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>true</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>true</locked>
+            <lines>
+              <line name='line0' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-14623488' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='373.94962'/>
+                <linePoint x='1.0' y='676.4706'/>
+              </line>
+              <line name='line1' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-16776961' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='525.2101'/>
+                <linePoint x='1.0' y='721.84875'/>
+              </line>
+            </lines>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.ObjectBuilder' editEnabled='true'>
+        <subjectiveDuration>23.61111</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Surface</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <code>pointsA = [&lt;linePoints_line0&gt;]
+pointsB = [&lt;linePoints_line1&gt;]
+
+score = chordGroup.performSurface(80, 1, 0, pointsA[1], 0, pointsB[1], 1, pointsA[3], 1, pointsB[3])</code>
+        <commandLine/>
+        <isExternal>false</isExternal>
+        <graphicInterface editEnabled='false'>
+          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLineObject'>
+            <objectName>linePoints</objectName>
+            <x>12</x>
+            <y>13</y>
+            <canvasWidth>600</canvasWidth>
+            <canvasHeight>250</canvasHeight>
+            <xMax>1.0</xMax>
+            <relativeXValues>true</relativeXValues>
+            <separatorType>Comma</separatorType>
+            <leadingZero>true</leadingZero>
+            <locked>true</locked>
+            <lines>
+              <line name='line0' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-14623488' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='1636.9749'/>
+                <linePoint x='1.0' y='1410.084'/>
+              </line>
+              <line name='line1' version='2' max='2000.0' min='200.0' resolution='-1.0' color='-16776961' rightBound='true' endPointsLinked='false'>
+                <linePoint x='0.0' y='1425.2101'/>
+                <linePoint x='1.0' y='1296.6387'/>
+              </line>
+            </lines>
+          </bsbObject>
+        </graphicInterface>
+        <presetGroup name='Presets'/>
+        <syntaxType>Python</syntaxType>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>true</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>

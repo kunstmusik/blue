@@ -1,0 +1,21 @@
+<section id="conceptsNoteProcessors">
+<title>NoteProcessors</title>
+
+<para>
+	NoteProcessors are a powerful tool for manipulating notes.  Each type of 
+	NoteProcessor serves a different purpose to adjust values for pfields.
+	They can be used to apply musical effects to a group of notes; some 
+	possible uses include humanizing rhythm, added crescendo/decrescendo, 
+	reassigning notes to different instruments, applying time curves, 
+	and transposition of material.  
+</para>
+
+<para>
+	NoteProcessors can be applied on a per-SoundObject basis. They can also
+	be applied to an entire SoundLayer to affect all SoundObjects on that layer, 
+	as well as applied globally to all notes generated in a piece by applying
+	the NoteProcessor to the root PolyObject.  
+</para>
+
+</section>
+

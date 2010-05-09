@@ -1,0 +1,91 @@
+<section id="ceciliaModule">
+  <title>CeciliaModule</title>
+
+  <para>Accepts NoteProcessors: no, Supports TimeBehavior: no</para>
+
+  <note>
+    <title>Note</title>
+    <para>
+      This SoundObject is unfinished and not enabled for normal use. This
+      information is left here for the future if the module is ever finished and
+      reenabled.
+    </para>
+  </note>
+
+  <simplesect>
+    <title>Description</title>
+
+    <para>
+      The CeciliaModule is a soundObject that is meant to be compatible with
+      modules for the program Cecilia
+      (http://www.sourceforge.net/projects/cecilia), created by Alexandre Burton
+      and Jean Piche. The CeciliaModule is not as fully featured as Cecilia
+      itself as some features found in Cecilia do not make sense within the
+      context of blue.
+    </para>
+
+    <para>
+      One major advantage of the CeciliaModule is the ability to have as
+      manyinstances of a module on the timeline as one likes, all without one
+      worrying about variable name clashes or other issues. blue automatically
+      parses and renumbers instruments, ftables, and score statements so that
+      they do not interfere with other instances of the same module.
+    </para>
+
+  </simplesect>
+
+  <simplesect>
+    <title>Differences between Cecilia and CeciliaModule</title>
+  </simplesect>
+
+  <simplesect>
+    <title>
+      Modifications required for Cecilia Modules to run in CeciliaModule
+    </title>
+
+    <para>
+      Cecilia modules require at least one modification before they are able to
+      run in blue, and also must adhere to a few more constraints of design.
+    </para>
+
+    <formalpara>
+      <title>
+        Appending
+        <quote>ftable</quote>
+        in Instrument Definitions
+      </title>
+
+      <para>
+        Instruments are required to append the word
+        <quote>ftable</quote>
+        before any number that is meant to be an ftable. For example:
+      </para>
+
+      <programlisting>
+        instr 1
+
+        aout oscil 10000, 440, 1
+
+        out aout, aout endin
+      </programlisting>
+
+      <para>would have to become:</para>
+
+      <programlisting>
+        instr 1
+
+        aout oscil 10000, 440, ftable1
+
+        out aout, aout endin
+      </programlisting>
+
+      <para>
+        The purpose of this is so that blue will know what ftable references
+        will need to be updated when blue reassigns ftable numbers.
+      </para>
+
+    </formalpara>
+
+  </simplesect>
+
+</section>

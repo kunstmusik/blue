@@ -1,0 +1,32 @@
+<section id="switchProcessor">
+<title>Switch Processor</title>
+         
+<para>parameters: pfield1, pfield2</para>
+         
+<para>switches pfield1 with pfield2 for all notes in soundObject. useful in
+conjunction with RetrogradeProcessor when reversing notes that have start and
+end values in pfields, i.e.</para>
+
+<programlisting>
+;inum start dur   start   end
+i1    0     1     8.04    8.00
+i1    1     2     8.00    8.07
+</programlisting>
+
+<para>with just retrograde processor becomes:</para>
+
+<programlisting>
+;inum start dur   start   end
+i1    0     2     8.00    8.07
+i1    2     1     8.04    8.00
+</programlisting>
+    
+<para>with retrograde and switch on p4 and p5 becomes:</para>
+
+<programlisting>
+;inum start dur   start   end
+i1    0     2     8.07    8.00
+i1    2     1     8.00    8.04
+</programlisting>
+         
+</section>

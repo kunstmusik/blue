@@ -1,0 +1,47 @@
+<section id="tuningProcessor">
+<title>Tuning Processor</title>
+         
+<para>Parameters: pfield, baseFrequency, scalaFile </para>
+         
+<para>Converts blue PCH notation to frequency according to scale values in a 
+Scala scale file. The scale will default to 12TET wheen TuningProcessor is initially
+created. The file selector for choosing a Scala .scl file will default to user's .blue directory, under the scl
+subdirectory.  It is advised that users download the 3000+ scale archive from
+the Scala website at: http://www.huygens-fokker.org/scala/ and place them in
+the .blue/scl directory or whever they find convenient.</para>
+  
+<para> Base frequency determines what 8.00 should be set to, defaulting to
+middle-C below A440 (same as in Scala). Input for the noteProcessor should
+be:</para>
+  
+<programlisting>
+oct.scaleDegree
+</programlisting>
+
+<para>where oct is equal to octave, and scale degree equal to what degree of the
+scale to use. The output will be frequency values, so instruments should be set
+to accept values as frequency.</para>
+
+<simplesect>
+<title>NOTES</title>
+
+<itemizedlist>
+
+<listitem><para>Fractional scaleDegree's are not supported.</para></listitem>
+
+<listitem><para>For the scaleDegree, the blue PCH does not work exactly like Csound pch notation. In
+Csound pch, &quot;8.01&quot; would be different than &quot;8.1&quot;, while for the Tuning
+processor, there is no difference. The tuning processor takes everything from
+the right side of the decimal and converts that to an integer to figure out the
+scale degree. </para></listitem>
+
+<listitem><para>If you enter in a scale degree higher than the number degrees in the
+scale, it will be converted as if the octave is raised. For example, in a 19
+tone scale, an input of &quot;8.21&quot; would get converted to &quot;9.1&quot;.
+</para></listitem>
+
+</itemizedlist>
+  
+</simplesect>
+  
+</section>

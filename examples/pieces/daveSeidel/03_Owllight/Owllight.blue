@@ -1,0 +1,397 @@
+<blueData version='0.124.0'>
+  <projectProperties>
+    <title>Owllight</title>
+    <author>Dave Seidel</author>
+    <notes>Copyright 2007 Dave Seidel, some rights reserved.  This work is licensed under a
+Creative Commons Attribution License (see http://creativecommons.org/licenses/by/3.0/).
+
+For more information, go to http://mysterybear.net/article/22/owllight.
+
+Add the following lines after &lt;CsoundSynthesizer&gt; and before &lt;CsInstruments&gt; below,
+uncomment by removing the leading semicolons, then edit as desired.
+
+*** START OF OPTIONS ***
+&lt;CsOptions&gt;
+; 96K/24-bit
+;--sample-rate=96000 --control-rate=96000 --format=wav:24bit -o &quot;Owllight-(96-24).wav&quot;
+; 44.1K/16-bit
+--sample-rate=44100 --control-rate=44100 --format=wav:short -o &quot;Owllight-(44-16).wav&quot;
+&lt;/CsOptions&gt;
+*** END OF OPTIONS ***
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>Owllight.wav</fileName>
+    <askOnRender>true</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>sine</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3				; duration
+iamp	=	p4				; amplitude
+ifn	=	p5				; function table number (waveform)
+ifreq	=	p6
+ilr	=	p7				; 1.0 = left &lt;-&gt; 0.0 = right
+irise	=	p8
+ifall	=	p9
+index	=	p10				; display only
+
+kenv	linen	iamp, irise, idur, ifall	; envelope for poscil
+asig	poscil3	kenv, ifreq, ifn, -1
+
+gaL	=	gaL + (asig*ilr)
+gaR	=	gaR + (asig*(1-ilr))
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>stereo reverb</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>aL, aR	reverbsc gaL, gaR, p4, p5, sr/1.5, p6, 0
+a1	= gaL+(aL*p7)
+a2	= gaR+(aR*p7)
+	outs	a1, a2
+gaL	=	0
+gaR	=	0</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1869394051' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1980849033' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='1857367033' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>; sine wave table
+giTblSz	init	1048576
+gifn1	ftgen	1, 0, giTblSz, 10, 1
+
+; globals left/right channels
+gaL	init	0
+gaR	init	0</globalOrc>
+    <globalSco>; tempo scaling
+t 0 45</globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>32</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='reverb/mixer' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>i2 0 315 .85 30720 .5 .4
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='code' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#
+# music settings
+#
+# base pitch (Hz)
+g_base   = 60.0
+# base amplitude
+g_amp    = 3000.0
+# duration of every note
+g_dur    = 4
+# maximum arpeggiation speed (seconds)
+g_arp_max    = 0.08
+
+#
+# cellular automata (CA) settings
+#
+# Wolfram rule number
+g_rule   = 150
+# height, or number of states -- translates to length of piece
+g_height = 97
+# width of the cell space -- translates to maximum harmonic number
+g_width  = 61
+
+#from operator import *
+from random import *
+
+# from http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/343386
+def ca_data(height,width,dorandom,rulenum):
+    # Create the first row, either randomly, or with a single 1
+    if dorandom:
+        first_row = [randint(0,1) for i in range(width)]
+    else:
+        first_row = [0]*width
+        first_row[width/2] = 1
+    results = [first_row]
+
+    # Convert the rule number to a list of outcomes. 
+    rule = [(rulenum/pow(2,i)) % 2 for i in range(8)]
+
+    for i in range(height-1):
+        data = results[-1]
+        # Determine the new row based on the old data. We first make an
+        #  integer out of the value of the old row and its two neighbors
+        #  and then use that value to get the outcome from the table we
+        #  computed earlier
+        new = [rule[4*data[(j-1)%width]+2*data[j]+data[(j+1)%width]]
+               for j in range(width)]
+        results.append(new)
+    return results
+
+# odd harmonics &lt;- 1/1 -&gt; even harmonics
+def calcOddEven(n,pivot):
+    x = 0
+    if n == pivot:
+	# 1/1
+        x = 1
+    elif n &lt; pivot:
+	# odd harmonics
+        x = (2*(pivot-n)) - 1
+    else:
+	# even harmonics
+        x = 2*(n-pivot)
+    return x
+
+# first 150 primes (from http://primes.utm.edu/lists/small/1000.txt)
+primes = [
+      2,      3,      5,      7,     11,     13,     17,     19,     23,     29, 
+     31,     37,     41,     43,     47,     53,     59,     61,     67,     71, 
+     73,     79,     83,     89,     97,    101,    103,    107,    109,    113, 
+    127,    131,    137,    139,    149,    151,    157,    163,    167,    173, 
+    179,    181,    191,    193,    197,    199,    211,    223,    227,    229, 
+    233,    239,    241,    251,    257,    263,    269,    271,    277,    281, 
+    283,    293,    307,    311,    313,    317,    331,    337,    347,    349, 
+    353,    359,    367,    373,    379,    383,    389,    397,    401,    409, 
+    419,    421,    431,    433,    439,    443,    449,    457,    461,    463, 
+    467,    479,    487,    491,    499,    503,    509,    521,    523,    541, 
+    547,    557,    563,    569,    571,    577,    587,    593,    599,    601, 
+    607,    613,    617,    619,    631,    641,    643,    647,    653,    659, 
+    661,    673,    677,    683,    691,    701,    709,    719,    727,    733, 
+    739,    743,    751,    757,    761,    769,    773,    787,    797,    809, 
+    811,    821,    823,    827,    829,    839,    853,    857,    859,    863, 
+]
+
+def renderOrc(instr, start, beat, dur, base, pan, data, height, width, h, useArp, usePrimes):
+    out = &quot;&quot;
+    table = 1
+    rise = 1.5
+    fall = 1
+    pivot = int(width/2)
+
+    started = 0
+    yrange = range(height)
+    ylast = len(yrange) - 1
+    offset_incr = g_arp_max / float(len(yrange))
+    arp_val = 0
+    for y in yrange:
+        if y == ylast:
+            # last row only (&quot;coda&quot;)
+            dur *= 5
+            fall = dur/2.0
+        for x in range(width):
+            if data[y][x]:
+                # get an index representing a harmonic
+                i = calcOddEven(x, pivot)
+                # turn it into a frequency
+                if usePrimes:
+                    freq = primes[i-1] * base
+                else:
+                    freq = i * base
+                #if i == 1:
+                #    freq = base
+                #else:
+                #    freq = (i * 0.618) * base 
+                # set amplitude to 1/harmonic
+                amp = (h / float(i)) * g_amp
+                #if i == 1:
+                #    amp = g_amp
+                #else:
+                #    amp = (h / float(randint(2,66))) * g_amp
+                # arpeggiaiton offset
+                if useArp:
+                    offset = i * arp_val
+                else:
+                    offset = 0
+                out += &quot;i%d %f %f %f %d %f %f %f %f %d\n&quot; % (instr, start+offset, dur, amp, table, freq, pan, rise, fall, i)
+        start += beat
+        arp_val += offset_incr
+    return out
+
+def generate(instr,start,beat,dur,base,pan,height,width,rule,h,useArp,usePrimes):
+    data = ca_data(height,width,0,rule)
+    return renderOrc(instr,start,beat,dur,base,pan,data,height,width,h,useArp,usePrimes)
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='1/1' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+score = generate(1, 0, 3.0, g_dur, g_base, 0.5, g_height, g_width, g_rule, 1.0, True, False)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='3/2' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+score = generate(1, 1, 3.0, g_dur, g_base*(3.0/2.0), 1.0, g_height, g_width, g_rule, 1.0, True, False)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='Phi' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject'>
+        <subjectiveDuration>5.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+#score = generate(1, 0, 3.0, g_dur, g_base*(7.0/4.0), 0.7, g_height, g_width, g_rule, 1.0, True, True)
+#score = generate(1, 0, 3.0, g_dur, g_base*(15.0/8.0), 0.6, g_height, g_width, g_rule, 1.0, True, False)
+score = generate(1, 2, 3.0, g_dur, g_base*1.61803, 0.0, g_height, g_width, g_rule, 1.0, True, False)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>
