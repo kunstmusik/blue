@@ -34,6 +34,9 @@ blue
 
     [fix] - blueLive: when using API, no longer tries to update render time
 
+    [fix] - blue Application Log was using black on black text, changed to use
+            white text
+
 
 ================================================================================
 = 2.0.x

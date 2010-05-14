@@ -19,14 +19,13 @@
  */
 package blue.plaf;
 
+import java.awt.Color;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -83,6 +82,8 @@ public class Installer extends ModuleInstall {
         UIManager.put("TabbedContainer.view.contentBorder",
                 new BlueViewBorder( UIManager.getColor("SplitPane.highlight"),
 				    UIManager.getColor("SplitPane.darkShadow")));
+
+        UIManager.put("nb.output.foreground", Color.WHITE); //NOI18N
 
 //        if (isMac && macEntries != null) {
 //            UIManager.put("MenuBarUI", macEntries[0]);
