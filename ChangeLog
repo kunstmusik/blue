@@ -37,6 +37,10 @@ blue
     [fix] - blue Application Log was using black on black text, changed to use
             white text
 
+    [fix] - default creation of codeRepository was broken, resulting in opcode
+            popup not properly creating itself if existing codeRepository not
+            found
+
 
 ================================================================================
 = 2.0.x
