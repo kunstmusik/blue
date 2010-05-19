@@ -42,7 +42,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -54,6 +53,7 @@ import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.GenericFileFilter;
 import blue.utility.ObjectUtilities;
@@ -137,7 +137,7 @@ public class PresetsManagerDialog extends JDialog implements
 
                 Object userObject = path.getLastPathComponent();
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     showPopup(userObject, e.getX(), e.getY());
                 }
 

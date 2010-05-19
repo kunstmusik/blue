@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.pianoRoll.PianoNote;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -78,7 +79,7 @@ public class NoteCanvasMouseListener implements MouseListener,
         canvas.requestFocus();
         Component comp = canvas.getComponentAt(e.getPoint());
 
-        if (SwingUtilities.isRightMouseButton(e) && !SwingUtilities.isLeftMouseButton(e)) {
+        if (UiUtilities.isRightMouseButton(e)) {
             if (comp instanceof PianoNoteView
                     && canvas.noteBuffer.contains(comp)) {
 

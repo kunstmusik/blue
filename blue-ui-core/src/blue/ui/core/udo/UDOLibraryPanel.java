@@ -19,7 +19,6 @@
  */
 package blue.ui.core.udo;
 
-import blue.ui.core.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.dnd.DnDConstants;
@@ -41,7 +40,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
@@ -54,6 +52,7 @@ import blue.event.SelectionListener;
 import blue.udo.UDOCategory;
 import blue.udo.UDOLibrary;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.ObjectUtilities;
 
@@ -133,7 +132,7 @@ public class UDOLibraryPanel extends JComponent {
 
                 Object userObject = path.getLastPathComponent();
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     showPopup(userObject, e.getX(), e.getY());
                 } else {
                     SelectionEvent se = new SelectionEvent(userObject,

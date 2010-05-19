@@ -88,6 +88,7 @@ import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;
 import blue.utility.ObjectUtilities;
@@ -194,7 +195,7 @@ public class ArrangementEditPanel extends JComponent
                     return;
                 }
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     convertPopup.show(arrangementTable, e.getX(), e.getY());
                 }
 

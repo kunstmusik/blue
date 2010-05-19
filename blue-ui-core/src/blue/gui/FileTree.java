@@ -56,10 +56,10 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
-import javax.swing.SwingUtilities;
 
 
 import blue.BlueSystem;
+import blue.ui.utilities.UiUtilities;
 import org.openide.util.ImageUtilities;
 
 /**
@@ -156,7 +156,7 @@ public class FileTree extends JComponent {
                     }
                 } else {
 
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         if (fileTreePopup != null) {
                             fileTreePopup.show(f, e.getComponent(), e.getX(), e
                                     .getY());

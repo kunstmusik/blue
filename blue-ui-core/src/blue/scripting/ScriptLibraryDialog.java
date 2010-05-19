@@ -46,6 +46,7 @@ import blue.actions.UndoAction;
 import blue.event.SimpleDocumentListener;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.utility.GUI;
 import blue.utility.GenericFileFilter;
@@ -115,7 +116,7 @@ public class ScriptLibraryDialog extends javax.swing.JDialog implements
 
             public void mousePressed(MouseEvent e) {
 
-                if (SwingUtilities.isRightMouseButton(e)
+                if (UiUtilities.isRightMouseButton(e)
                         && libraryTree.getSelectionPath() != null) {
                     TreePath path = libraryTree.getSelectionPath();
 

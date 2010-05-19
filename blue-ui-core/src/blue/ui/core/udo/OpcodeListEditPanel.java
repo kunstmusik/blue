@@ -62,6 +62,7 @@ import blue.BlueSystem;
 import blue.gui.DragManager;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 
 /**
@@ -184,7 +185,7 @@ public class OpcodeListEditPanel extends JComponent {
                     return;
                 }
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     popup.show(table, e.getX(), e.getY());
                 }
             }

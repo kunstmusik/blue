@@ -21,6 +21,7 @@ package blue.soundObject.editor.jmask;
 
 import blue.soundObject.jmask.Table;
 import blue.soundObject.jmask.TablePoint;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -382,7 +383,7 @@ public class TableCanvas extends JComponent {
             }
 
             if (selectedPoint != null) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     TablePoint first = table.getTablePoint(0);
                     TablePoint last = table.getTablePoint(table.getRowCount() - 1);
 
@@ -400,7 +401,7 @@ public class TableCanvas extends JComponent {
                         setBoundaryXValues();
                     // repaint();
                    
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
 //                    if (popup == null) {
 //                        popup = new EditPointsPopup();
 //                    }

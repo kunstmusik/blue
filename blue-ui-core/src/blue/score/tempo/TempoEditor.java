@@ -9,6 +9,7 @@ import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.NumberUtilities;
 import java.awt.Color;
@@ -450,7 +451,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
 
             if (selectedPoint != null) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     LinePoint first = tempo.getLine().getLinePoint(0);
 
                     if (selectedPoint != first) {
@@ -478,7 +479,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                     selectedPoint = insertGraphPoint(start, e.getY());
                     setBoundaryXValues();
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {
                         popup = new EditPointsPopup();
                     }

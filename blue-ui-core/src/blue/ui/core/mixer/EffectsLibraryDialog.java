@@ -30,6 +30,7 @@ import javax.swing.tree.TreeSelectionModel;
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
@@ -94,7 +95,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             public void mousePressed(MouseEvent e) {
 
-                if (SwingUtilities.isRightMouseButton(e)
+                if (UiUtilities.isRightMouseButton(e)
                         && libraryTree.getSelectionPath() != null) {
                     TreePath path = libraryTree.getSelectionPath();
 

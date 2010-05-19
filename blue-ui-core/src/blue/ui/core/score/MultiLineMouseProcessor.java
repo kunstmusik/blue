@@ -36,9 +36,9 @@ import javax.swing.SwingUtilities;
 import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
-import blue.ui.core.score.AuditionManager;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.utilities.UiUtilities;
 
 class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
@@ -69,7 +69,7 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
         SoundObjectView sObjView;
 
-        if (SwingUtilities.isRightMouseButton(e)) {
+        if (UiUtilities.isRightMouseButton(e)) {
 //            showPopup(comp, e);
         } else if (SwingUtilities.isLeftMouseButton(e)) {
             AlphaMarquee marquee = sCanvas.marquee;

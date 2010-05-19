@@ -19,7 +19,6 @@
  */
 package blue.ui.core.orchestra;
 
-import blue.BluePlugin;
 import blue.BluePluginManager;
 import blue.BlueSystem;
 import blue.InstrumentLibrary;
@@ -68,6 +67,7 @@ import blue.event.SelectionListener;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -150,7 +150,7 @@ public class UserInstrumentLibrary extends JComponent {
 
                 Object userObject = path.getLastPathComponent();
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     Point p = e.getPoint();
                     p = SwingUtilities.convertPoint(libraryTree, p,
                             UserInstrumentLibrary.this);

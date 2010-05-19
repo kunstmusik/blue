@@ -38,7 +38,6 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JLayeredPane;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
@@ -49,6 +48,7 @@ import blue.event.SelectionListener;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -115,7 +115,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 selectionPerformed(clearSelection);
 
                 if (isEditing()) {
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(BSBEditPanel.this, e.getX(), e.getY());
                     } else if (e.isControlDown() && copyBuffer.size() > 0) {
                         paste(e.getX(), e.getY());
@@ -124,7 +124,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                         marquee.setStart(e.getPoint());
                     }
                 } else {
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         if (nonEditPopup == null) {
                             nonEditPopup = new BSBEditPanelNonEditPopup(
                                     BSBEditPanel.this);

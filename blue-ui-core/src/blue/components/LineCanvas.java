@@ -41,6 +41,7 @@ import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.NumberUtilities;
 
 /**
@@ -391,7 +392,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             if (selectedLine != null) {
 
             } else if (selectedPoint != null) {
-                if (SwingUtilities.isRightMouseButton(e)
+                if (UiUtilities.isRightMouseButton(e)
                         && !lineCanvas.isLocked()) {
                     LinePoint first = currentLine.getLinePoint(0);
                     LinePoint last = currentLine.getLinePoint(currentLine
@@ -411,7 +412,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
                         setBoundaryXValues();
                         // repaint();
                     }
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {
                         popup = new EditPointsPopup();
                     }

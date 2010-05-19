@@ -20,7 +20,6 @@
 
 package blue.ui.core.score;
 
-import blue.BluePlugin;
 import blue.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -44,7 +43,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
@@ -57,6 +55,7 @@ import blue.noteProcessor.NoteProcessorChainMap;
 
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import java.util.HashMap;
 import org.openide.util.Exceptions;
@@ -137,7 +136,7 @@ public class NoteProcessorChainEditor extends JComponent {
             }
 
             public void mouseReleased(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     editPopup.show(npcTable, e.getX(), e.getY());
                 }
             }

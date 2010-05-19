@@ -8,8 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -17,7 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -30,6 +27,7 @@ import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.gui.BlueEditorPane;
 import blue.gui.OpcodePopup;
+import blue.ui.utilities.UiUtilities;
 import electric.xml.Element;
 import electric.xml.ParseException;
 import java.awt.Frame;
@@ -222,7 +220,7 @@ public class CodeRepositoryDialog extends JDialog implements
                     ElementHolder tempElem = (ElementHolder) tempNode
                             .getUserObject();
 
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         showPopup(tempNode, tempElem, e.getX(), e.getY());
                     } else {
                         if (tempElem.isGroup) {

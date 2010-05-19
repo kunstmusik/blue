@@ -37,6 +37,7 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.ui.core.score.SoundObjectBuffer;
 import blue.ui.core.score.SoundObjectSelectionBus;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -167,7 +168,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         liveObjectsTable.addMouseListener(new MouseAdapter() {
 
             public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     bufferPopup.show(liveObjectsTable, e.getX(), e.getY());
                 }
             }
@@ -644,7 +645,7 @@ public final class BlueLiveTopComponent extends TopComponent {
     }//GEN-LAST:event_outputTextAreaKeyPressed
 
     private void noteTemplateTextMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_noteTemplateTextMousePressed
-        if (SwingUtilities.isRightMouseButton(evt)) {
+        if (UiUtilities.isRightMouseButton(evt)) {
             noteTemplatePopup.show(noteTemplateText, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_noteTemplateTextMousePressed

@@ -48,6 +48,7 @@ import blue.MarkersList;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RenderTimeManager;
 import blue.soundObject.PolyObject;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import javax.swing.JPanel;
 import javax.swing.LookAndFeel;
@@ -121,7 +122,7 @@ public final class TimeBar extends JPanel implements
                     } else {
                         data.setRenderStartTime(time);
                     }
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
                     data.setRenderEndTime(time);
                 }
 
@@ -164,7 +165,7 @@ public final class TimeBar extends JPanel implements
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     data.setRenderStartTime(time);
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
                     data.setRenderEndTime(time);
                     checkScroll(e.getPoint());
                 }

@@ -15,13 +15,13 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import blue.soundObject.NotationObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.notation.NotationEditPoint;
 import blue.soundObject.notation.NotationNote;
 import blue.soundObject.notation.NotationStaffRenderer;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * <p>
@@ -81,7 +81,7 @@ public class NotationEditor extends SoundObjectEditor {
         nStaffRenderer.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 nStaffRenderer.requestFocus();
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     showOptionsMenu(e.getX(), e.getY());
                 }
             }

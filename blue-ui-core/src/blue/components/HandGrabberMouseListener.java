@@ -19,6 +19,7 @@
  */
 package blue.components;
 
+import blue.ui.utilities.UiUtilities;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -75,7 +76,7 @@ public class HandGrabberMouseListener implements MouseListener,
     }
 
     public void mousePressed(MouseEvent e) {
-        if (SwingUtilities.isRightMouseButton(e) && e.isShiftDown()) {
+        if (UiUtilities.isRightMouseButton(e) && e.isShiftDown()) {
             isWorking = true;
 
             jsp.getViewport().getView().setCursor(

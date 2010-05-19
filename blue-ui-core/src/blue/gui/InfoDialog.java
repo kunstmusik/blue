@@ -36,9 +36,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
 
 import blue.components.CaretPositionDisplayLabel;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import org.openide.windows.WindowManager;
 
@@ -137,7 +137,7 @@ public class InfoDialog {
             tabs.addMouseListener(new MouseAdapter() {
 
                 public void mousePressed(MouseEvent e) {
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(tabs, e.getX(), e.getY());
                     }
                 }

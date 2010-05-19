@@ -38,9 +38,8 @@ import javax.swing.SwingUtilities;
 
 import blue.components.IconFactory;
 import blue.soundObject.PolyObject;
+import blue.ui.utilities.UiUtilities;
 import java.util.Vector;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -80,7 +79,7 @@ public final class PolyObjectBar extends JComponent implements ActionListener {
         popupListener = new MouseAdapter() {
 
             public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     popup.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
