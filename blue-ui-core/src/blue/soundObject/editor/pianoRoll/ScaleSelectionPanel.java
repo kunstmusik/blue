@@ -32,13 +32,13 @@ import javax.swing.JTextField;
 import blue.BlueSystem;
 import blue.soundObject.pianoRoll.Scale;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Vector;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -102,8 +102,7 @@ public class ScaleSelectionPanel extends JComponent {
         fileNameField.addMouseListener(new MouseAdapter() {
 
             public void mousePressed(MouseEvent evt) {
-                if (SwingUtilities.isRightMouseButton(evt) && !SwingUtilities.
-                        isLeftMouseButton(evt)) {
+                if (UiUtilities.isRightMouseButton(evt)) {
 
                     Component c = evt.getComponent();
 

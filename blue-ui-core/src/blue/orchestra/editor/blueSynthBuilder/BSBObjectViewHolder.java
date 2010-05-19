@@ -37,6 +37,7 @@ import javax.swing.border.Border;
 import blue.event.GroupMovementSelectionList;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -88,7 +89,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
             public void mousePressed(MouseEvent e) {
                 requestFocus();
 
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     if (selected) {
                         BSBEditPanel bsbPanel = (BSBEditPanel) BSBObjectViewHolder.this
                                 .getParent();

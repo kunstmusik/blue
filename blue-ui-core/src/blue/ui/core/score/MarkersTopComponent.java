@@ -24,6 +24,7 @@ import blue.BlueData;
 import blue.Marker;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -31,7 +32,6 @@ import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -127,7 +127,7 @@ public final class MarkersTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     private void markersTableMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_markersTableMousePressed
-         if (SwingUtilities.isRightMouseButton(evt)) {
+         if (UiUtilities.isRightMouseButton(evt)) {
             if (popup == null) {
                 popup = new MarkersPopup();
             }

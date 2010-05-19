@@ -32,11 +32,11 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -116,7 +116,7 @@ public class BSBFileSelectorView extends BSBObjectView {
         fileNameField.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 requestFocus();
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     popup.show(BSBFileSelectorView.this, e.getX(), e.getY());
                 }
             }

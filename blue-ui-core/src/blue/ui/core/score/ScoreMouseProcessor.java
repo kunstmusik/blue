@@ -29,6 +29,7 @@ import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 
@@ -95,7 +96,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
         SoundObjectView sObjView;
 
-        if (SwingUtilities.isRightMouseButton(e) && !SwingUtilities.isLeftMouseButton(e)) {
+        if (UiUtilities.isRightMouseButton(e)) {
             showPopup(comp, e);
         } else if (SwingUtilities.isLeftMouseButton(e)) {
             if (comp instanceof SoundObjectView) {

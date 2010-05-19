@@ -47,8 +47,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import blue.BlueSystem;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Frame;
-import javax.swing.JFrame;
 import org.openide.windows.WindowManager;
 
 /**
@@ -459,7 +459,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
     }// GEN-LAST:event_preListFocusLost
 
     private void postListMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_postListMouseClicked
-        if (SwingUtilities.isRightMouseButton(evt)) {
+        if (UiUtilities.isRightMouseButton(evt)) {
             EffectsPopup popup = EffectsPopup.getInstance();
             popup.setEffectsChain(this.channel.getPostEffects(), postList
                     .getSelectedIndex());
@@ -503,7 +503,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
     private void preListMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_preListMouseClicked
 
-        if (SwingUtilities.isRightMouseButton(evt)) {
+        if (UiUtilities.isRightMouseButton(evt)) {
             EffectsPopup popup = EffectsPopup.getInstance();
             popup.setEffectsChain(this.channel.getPreEffects(), preList
                     .getSelectedIndex());

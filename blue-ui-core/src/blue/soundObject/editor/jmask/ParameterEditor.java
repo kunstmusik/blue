@@ -16,7 +16,6 @@ import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
 import blue.soundObject.jmask.Generator;
@@ -25,6 +24,7 @@ import blue.soundObject.jmask.Maskable;
 import blue.soundObject.jmask.Parameter;
 import blue.soundObject.jmask.Quantizable;
 import blue.soundObject.jmask.Quantizer;
+import blue.ui.utilities.UiUtilities;
 import java.beans.PropertyChangeListener;
 import javax.swing.BorderFactory;
 import javax.swing.border.BevelBorder;
@@ -407,7 +407,7 @@ private void pushDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 
     private void paramLabelPanelMouseReleased(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_paramLabelPanelMouseReleased
 
-        if (SwingUtilities.isRightMouseButton(evt)) {
+        if (UiUtilities.isRightMouseButton(evt)) {
             removeParameter.setEnabled(parameterNum > 3);
             jPopupMenu1.show(paramLabelPanel, evt.getX(), evt.getY());
         }

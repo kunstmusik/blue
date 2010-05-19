@@ -39,11 +39,9 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.Scrollable;
-import javax.swing.SwingUtilities;
 
 import blue.Arrangement;
 import blue.BlueData;
-import blue.BlueSystem;
 import blue.actions.BlueAction;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.Instrument;
@@ -51,6 +49,7 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
 import blue.projects.BlueProjectManager;
+import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -117,7 +116,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         removePanelListener = new MouseAdapter() {
 
             public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)
+                if (UiUtilities.isRightMouseButton(e)
                         && e.getSource() instanceof ChannelPanel) {
                     selectedChannelPanel = (ChannelPanel) e.getSource();
                     removePopup.show(selectedChannelPanel, e.getX(), e.getY());
@@ -128,7 +127,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         this.addMouseListener(new MouseAdapter() {
 
             public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     addPopup.show(SubChannelListPanel.this, e.getX(), e.getY());
                 }
             }

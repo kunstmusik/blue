@@ -62,6 +62,7 @@ import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GenericFileFilter;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
@@ -1189,7 +1190,7 @@ public class ParameterLinePanel extends JComponent implements
             marquee.setVisible(false);
 
             if (currentParameter == null) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {
                         popup = new EditPointsPopup();
                     }
@@ -1202,7 +1203,7 @@ public class ParameterLinePanel extends JComponent implements
             Line currentLine = currentParameter.getLine();
 
             if (selectedPoint != null) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                if (UiUtilities.isRightMouseButton(e)) {
                     LinePoint first = currentLine.getLinePoint(0);
 
                     if (selectedPoint != first) {
@@ -1229,7 +1230,7 @@ public class ParameterLinePanel extends JComponent implements
                         selectedPoint = insertGraphPoint(start, e.getY());
                         setBoundaryXValues();
                     }
-                } else if (SwingUtilities.isRightMouseButton(e)) {
+                } else if (UiUtilities.isRightMouseButton(e)) {
                     if (popup == null) {
                         popup = new EditPointsPopup();
                     }

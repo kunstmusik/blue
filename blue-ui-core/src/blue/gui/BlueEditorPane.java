@@ -63,6 +63,7 @@ import skt.swing.SwingUtil;
 import blue.BlueSystem;
 import blue.components.FindReplaceDialog;
 import blue.settings.GeneralSettings;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import blue.utility.TextUtilities;
 import java.net.URL;
@@ -293,7 +294,7 @@ public class BlueEditorPane extends JEditTextArea {
     }
 
     private void showOpcodePopup(MouseEvent e) {
-        if (isEditable() && isEnabled() && SwingUtilities.isRightMouseButton(e)) {
+        if (isEditable() && isEnabled() && UiUtilities.isRightMouseButton(e)) {
             opcodePopup.setSyntaxSettable(syntaxSettable);
             opcodePopup.show(this, e.getX(), e.getY());
         }

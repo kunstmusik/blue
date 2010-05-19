@@ -41,6 +41,7 @@ import blue.soundObject.CeciliaModule;
 import blue.soundObject.ceciliaModule.CGraph;
 import blue.soundObject.ceciliaModule.CGraphPoint;
 import blue.soundObject.ceciliaModule.CeciliaObject;
+import blue.ui.utilities.UiUtilities;
 import blue.utility.TextUtilities;
 
 /**
@@ -94,7 +95,7 @@ public class Grapher extends JComponent {
                 if (selectedGraph != null) {
 
                 } else if (selectedPoint != null) {
-                    if (SwingUtilities.isRightMouseButton(e)) {
+                    if (UiUtilities.isRightMouseButton(e)) {
                         ArrayList points = currentGraph.getPoints();
                         if (selectedPoint != points.get(0)
                                 && selectedPoint != points
