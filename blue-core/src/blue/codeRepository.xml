@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<customAccelerators>
+  <customGroup name='envelopes'>
+    <customAccelerator>
+      <name>panning code</name>
+      <signature>aLeft, aRight  pan2    aout, kSpace</signature>
+    </customAccelerator>
+    <customAccelerator>
+      <name>half-sine envelope</name>
+      <signature>kenv	oscili  	kamp, .5 / p3, 1</signature>
+    </customAccelerator>
+  </customGroup>
+</customAccelerators>

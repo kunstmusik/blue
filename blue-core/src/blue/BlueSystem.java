@@ -26,6 +26,7 @@ import blue.utility.EnvironmentVars;
 import blue.utility.FileUtilities;
 import electric.xml.Document;
 import electric.xml.ParseException;
+import org.openide.util.Exceptions;
 
 public class BlueSystem {
 
@@ -227,19 +228,22 @@ public class BlueSystem {
     }
 
     public static File getCodeRepository() {
-        File oldRepository = new File(blue.BlueSystem.getLibDir()
-                + File.separator + "codeRepository" + File.separator
-                + "codeRepository.xml");
+        
         File repository = new File(blue.BlueSystem
                 .getUserConfigurationDirectory()
                 + File.separator + "codeRepository.xml");
 
-        boolean wasNotThere = FileUtilities.copyIfNotThere(oldRepository,
-                repository);
-
-        if (wasNotThere) {
+        if (!repository.exists()) {
             System.out
-                    .println("Copying legacy or default code repository to user configuration directory");
+                    .println("Copying default code repository to user configuration directory");
+            try {
+                Document doc = new Document(BlueSystem.class.getResourceAsStream("codeRepository.xml"));
+                doc.write(repository);
+            } catch (ParseException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         return repository;
