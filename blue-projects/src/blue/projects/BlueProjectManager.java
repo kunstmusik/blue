@@ -300,6 +300,14 @@ public class BlueProjectManager {
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
+        if (getCurrentProject().getDataFile() != null) {
+           fcm.setSelectedFile(this.getClass(), getCurrentProject().getDataFile());
+        } else {
+           fcm.setSelectedFile(this.getClass(),
+                new File(
+                GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
+        }
+
         int rValue = fcm.showSaveDialog(this.getClass(),
                 WindowManager.getDefault().getMainWindow());
 
@@ -307,6 +315,19 @@ public class BlueProjectManager {
             File temp = fcm.getSelectedFile(this.getClass());
             if (!(temp.getName().trim().endsWith(".blue"))) {
                 temp = new File(temp.getAbsolutePath() + ".blue");
+            }
+
+            if (temp.exists()) {
+                NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                "Are you sure you would like to overwite the project file: " +
+                 temp.getAbsolutePath(),
+                "Overwrite Project?");
+
+                Object retVal = DialogDisplayer.getDefault().notify(descriptor);
+
+                if (retVal != NotifyDescriptor.YES_OPTION) {
+                    return false;
+                }
             }
 
             if (getCurrentProject().isOpenedFromTempFile()) {

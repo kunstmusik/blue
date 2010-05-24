@@ -35,6 +35,10 @@ blue
             mouse button) that has a "Reset (12TET)" option to reset the scale
             to the default 12TET tuning
 
+    [updated] - When using "Save as" or doing a save when closing a file, if the 
+            save is designated over an existing file, blue will ask for 
+            confirmation from the user
+
     [fix] - Closing project did not ask user to save file
 
     [fix] - blueLive: when using API, no longer tries to update render time
