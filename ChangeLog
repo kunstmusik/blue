@@ -19,6 +19,9 @@ Steven Yi-----------------------------------------------------------------------
 
 blue
 
+    [new] - Added Steven Yi's "Reminisicences" and Brian Wong's "Tritium Tea" to
+            examples/pieces folder
+
     [updated] - moved blueLive buttons for starting/stopping and all notes off
             to and application toolbar
 
@@ -31,6 +34,8 @@ blue
     [updated] - Scale selectin panels now have a popup menu (triggered by right
             mouse button) that has a "Reset (12TET)" option to reset the scale
             to the default 12TET tuning
+
+    [fix] - Closing project did not ask user to save file
 
     [fix] - blueLive: when using API, no longer tries to update render time
 
