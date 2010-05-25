@@ -18,4 +18,5 @@ gensrc$
 \.orig\..*$
 \.chg\..*$
 \.conflict\~$
+manual/docbook/index\.xml
 tempCsd.*\.csd$

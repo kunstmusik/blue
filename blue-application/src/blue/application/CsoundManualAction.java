@@ -33,6 +33,12 @@ public final class CsoundManualAction implements ActionListener {
         String url = GeneralSettings.getInstance().getCsoundDocRoot()
                 + "index.html";
 
+        if (!url.startsWith("http")) {
+            url = "file://" + url;
+        }
+
+        url = url.replace(" ", "%20");
+
         try {
             URLDisplayer.getDefault().showURL(new URL(url));
         } catch (MalformedURLException ex) {

@@ -42,10 +42,22 @@ public final class BlueManualAction implements ActionListener {
         String[] vals = val.split(File.pathSeparator);
 
         for (String path : vals) {
+
+            int index = path.indexOf(".app/Contents");
+
+            if (index > 0) {
+                path = path.substring(0, index + 4);
+                String retVal =  "file://" + path + "/manual/html/index.html";
+                retVal = retVal.replaceAll(" ", "%20");
+                return retVal;
+            }
+
             File f = new File(path + File.separator + "pythonLib");
             if (f.isDirectory()) {
                 path = path.substring(0, path.lastIndexOf(File.separator));
-                return "file://" + path + File.separator + "/manual/html/index.html";
+                String retVal =  "file://" + path + "/manual/html/index.html";
+                retVal = retVal.replaceAll(" ", "%20");
+                return retVal;
             }
         }
 

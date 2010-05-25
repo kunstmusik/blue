@@ -54,6 +54,7 @@ public class BlueProjectManager {
 
 //    Logger logger = Logger.getLogger("BlueProjectManager");
     public static final String CURRENT_PROJECT = "currentProject";
+
     public static final String PROJECT_FILE = "projectFile";
 
     private static BlueProjectManager instance = null;
@@ -92,13 +93,13 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        blueData.getMixer().setEnabled(ProjectDefaultsSettings.getInstance().mixerEnabled);
+        blueData.getMixer().setEnabled(
+                ProjectDefaultsSettings.getInstance().mixerEnabled);
 
         ProjectProperties proj = blueData.getProjectProperties();
         proj.author = ProjectDefaultsSettings.getInstance().defaultAuthor;
 
-        RealtimeRenderSettings rtSettings = RealtimeRenderSettings.
-                getInstance();
+        RealtimeRenderSettings rtSettings = RealtimeRenderSettings.getInstance();
 
         proj.sampleRate = rtSettings.defaultSr;
         proj.ksmps = rtSettings.defaultKsmps;
@@ -172,17 +173,24 @@ public class BlueProjectManager {
             return;
         }
 
-        int index = projects.indexOf(currentProject);
-        projects.remove(currentProject);
+        if (saveCheck()) {
 
-        if (projects.size() == 0) {
-            setCurrentProject(createNewProject());
-        } else if (index >= projects.size()) {
-            currentProject = projects.get(projects.size() - 1);
-            fireUpdatedCurrentProject();
-        } else {
-            currentProject = projects.get(index);
-            fireUpdatedCurrentProject();
+            if (currentProject.getTempFile() != null && !currentProject.isOpenedFromTempFile()) {
+                currentProject.getTempFile().delete();
+            }
+
+            int index = projects.indexOf(currentProject);
+            projects.remove(currentProject);
+
+            if (projects.size() == 0) {
+                setCurrentProject(createNewProject());
+            } else if (index >= projects.size()) {
+                currentProject = projects.get(projects.size() - 1);
+                fireUpdatedCurrentProject();
+            } else {
+                currentProject = projects.get(index);
+                fireUpdatedCurrentProject();
+            }
         }
 
     }
@@ -270,8 +278,8 @@ public class BlueProjectManager {
                 out.close();
 
 
-                StatusDisplayer.getDefault().setStatusText("File saved: " +
-                        getCurrentProject().getDataFile().getName());
+                StatusDisplayer.getDefault().setStatusText("File saved: "
+                        + getCurrentProject().getDataFile().getName());
             } catch (IOException ioe) {
 
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
@@ -292,6 +300,14 @@ public class BlueProjectManager {
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
+        if (getCurrentProject().getDataFile() != null) {
+           fcm.setSelectedFile(this.getClass(), getCurrentProject().getDataFile());
+        } else {
+           fcm.setSelectedFile(this.getClass(),
+                new File(
+                GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
+        }
+
         int rValue = fcm.showSaveDialog(this.getClass(),
                 WindowManager.getDefault().getMainWindow());
 
@@ -299,6 +315,19 @@ public class BlueProjectManager {
             File temp = fcm.getSelectedFile(this.getClass());
             if (!(temp.getName().trim().endsWith(".blue"))) {
                 temp = new File(temp.getAbsolutePath() + ".blue");
+            }
+
+            if (temp.exists()) {
+                NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                "Are you sure you would like to overwite the project file: " +
+                 temp.getAbsolutePath(),
+                "Overwrite Project?");
+
+                Object retVal = DialogDisplayer.getDefault().notify(descriptor);
+
+                if (retVal != NotifyDescriptor.YES_OPTION) {
+                    return false;
+                }
             }
 
             if (getCurrentProject().isOpenedFromTempFile()) {
@@ -336,8 +365,8 @@ public class BlueProjectManager {
                 fireProjectFileChanged();
 
 //                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
-                        //                        getName());
-                        //                setRevertEnabled();
+                //                        getName());
+                //                setRevertEnabled();
             } catch (Exception e) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
                         "Could not save file:\n\n" + e.getLocalizedMessage(),
