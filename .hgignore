@@ -18,4 +18,4 @@ gensrc$
 \.orig\..*$
 \.chg\..*$
 \.conflict\~$
-
+tempCsd.*\.csd$
