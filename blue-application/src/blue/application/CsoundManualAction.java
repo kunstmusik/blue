@@ -33,7 +33,7 @@ public final class CsoundManualAction implements ActionListener {
         String url = GeneralSettings.getInstance().getCsoundDocRoot()
                 + "index.html";
 
-        if (!url.startsWith("http")) {
+        if (!url.startsWith("http") && !url.startsWith("file://")) {
             url = "file://" + url;
         }
 

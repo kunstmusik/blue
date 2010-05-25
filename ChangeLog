@@ -55,6 +55,9 @@ blue
 
     [fix] - opening the blue manual did not work for the OSX release
 
+    [fix] - opening the csound manual and opcode help did not prepend "file://"
+            if opening from the local file system, also would have errors if
+            spaces were in the path (bug 2981573)
 
 ================================================================================
 = 2.0.x

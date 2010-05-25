@@ -91,7 +91,8 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             return null;
         }
 
-        Object retVal = JOptionPane.showInputDialog(WindowManager.getDefault().getMainWindow(),
+        Object retVal = JOptionPane.showInputDialog(WindowManager.getDefault().
+                getMainWindow(),
                 "Choose Device:", "Choose Device",
                 JOptionPane.PLAIN_MESSAGE,
                 null, vals.toArray(), vals.get(0));
@@ -751,6 +752,13 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                 GeneralSettings.getInstance().getCsoundDocRoot()
                 + "CommandFlags.html";
 
+        if (!url.startsWith("http") && !url.startsWith("file://")) {
+            url = "file://" + url;
+        }
+
+        url = url.replace(" ", "%20");
+
+
         try {
             URLDisplayer.getDefault().showURL(new URL(url));
         } catch (MalformedURLException ex) {
@@ -803,7 +811,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 
         settings.csoundExecutable = csoundExecText.getText();
         settings.defaultSr = srText.getText();
-        settings.defaultKsmps =  ksmpsText.getText();
+        settings.defaultKsmps = ksmpsText.getText();
         settings.defaultNchnls = nchnlsText.getText();
 
         settings.audioDriverEnabled = audioDriverCBox.isSelected();
@@ -821,12 +829,12 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         settings.midiInText = midiInText.getText();
 
         settings.hardwareBufferEnabled = hardwareBufferCBox.isSelected();
-        settings.hardwareBufferSize = ((Integer) hardwareBufferSpinner.
-                getValue()).intValue();
+        settings.hardwareBufferSize = ((Integer) hardwareBufferSpinner.getValue()).
+                intValue();
 
         settings.softwareBufferEnabled = softwareBufferCBox.isSelected();
-        settings.softwareBufferSize = ((Integer) softwareBufferSpinner.
-                getValue()).intValue();
+        settings.softwareBufferSize = ((Integer) softwareBufferSpinner.getValue()).
+                intValue();
 
         settings.noteAmpsEnabled = noteAmpCBox.isSelected();
         settings.warningsEnabled = warningsCBox.isSelected();
@@ -842,7 +850,6 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         // TODO check whether form is consistent and complete
         return true;
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField advancedText;
     private javax.swing.JCheckBox audioDriverCBox;

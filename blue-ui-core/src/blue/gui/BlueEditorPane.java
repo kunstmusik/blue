@@ -425,7 +425,13 @@ public class BlueEditorPane extends JEditTextArea {
 
             String url = GeneralSettings.getInstance().getCsoundDocRoot()
                     + word + ".html";
-            
+
+            if (!url.startsWith("http") && !url.startsWith("file://")) {
+                url = "file://" + url;
+            }
+
+            url = url.replace(" ", "%20");
+
             try {
                 URLDisplayer.getDefault().showURL(new URL(url));
             } catch (MalformedURLException ex) {

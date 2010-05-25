@@ -510,6 +510,11 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         String url =
                 GeneralSettings.getInstance().getCsoundDocRoot()
                 + "CommandFlags.html";
+        if (!url.startsWith("http") && !url.startsWith("file://")) {
+            url = "file://" + url;
+        }
+
+        url = url.replace(" ", "%20");
 
         try {
             URLDisplayer.getDefault().showURL(new URL(url));
@@ -571,7 +576,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
     void store() {
         DiskRenderSettings settings = DiskRenderSettings.getInstance();
-        
+
         settings.csoundExecutable = csoundExecText.getText();
         settings.defaultSr = srText.getText();
         settings.defaultKsmps = ksmpsText.getText();
@@ -580,7 +585,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         settings.externalPlayCommandEnabled = externalCommandBox.isSelected();
         settings.externalPlayCommand = externalCommandText.getText();
 
-        settings.fileFormatEnabled =  fileFormatCBox.isSelected();
+        settings.fileFormatEnabled = fileFormatCBox.isSelected();
         settings.fileFormat = fileFormatCombo.getSelectedItem().toString();
 
         settings.sampleFormatEnabled = sampleFormatCBox.isSelected();
@@ -590,7 +595,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         settings.rewriteHeader = rewriteHeaderCBox.isSelected();
 
         settings.noteAmpsEnabled = noteAmpCBox.isSelected();
-        settings.warningsEnabled =  warningsCBox.isSelected();
+        settings.warningsEnabled = warningsCBox.isSelected();
         settings.outOfRangeEnabled = outOfRangeCBox.isSelected();
         settings.benchmarkEnabled = benchmarkCBox.isSelected();
 
@@ -603,7 +608,6 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         // TODO check whether form is consistent and complete
         return true;
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField advancedText;
     private javax.swing.JCheckBox benchmarkCBox;

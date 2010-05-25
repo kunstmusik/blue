@@ -193,6 +193,13 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
             public void actionPerformed(ActionEvent e) {
                 String url = GeneralSettings.getInstance().getCsoundDocRoot() + "index.html";
+
+                if (!url.startsWith("http") && !url.startsWith("file://")) {
+                    url = "file://" + url;
+                }
+
+                url = url.replace(" ", "%20");
+
                 System.out.println(BlueSystem.getString(
                         "playBar.helpButton.executingHelp") + " " + url);
                 try {
@@ -263,7 +270,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
+                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
+                        getPropertyName())) {
                     reinitialize();
                 }
             }
@@ -317,9 +325,9 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         CSDRunner csdRunner;
 
-        if (apiRunner != null &&
-                APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI()) {
+        if (apiRunner != null
+                && APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
             csdRunner = apiRunner;
         } else {
             csdRunner = commandlineRunner;
