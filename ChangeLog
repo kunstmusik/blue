@@ -50,6 +50,9 @@ blue
             popup not properly creating itself if existing codeRepository not
             found
 
+    [fix] - opening the blue manual did not work when blue was installed into a
+            directory where there were spaces in the path name (bug 2982079)
+
 
 ================================================================================
 = 2.0.x
