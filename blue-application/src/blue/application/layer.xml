@@ -16,6 +16,12 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
+            <file name="blue-application-CsoundManualFramesAction.instance">
+                <attr name="delegate" newvalue="blue.application.CsoundManualFramesAction"/>
+                <attr name="displayName" bundlevalue="blue.application.Bundle#CTL_CsoundManualFramesAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
             <file name="blue-application-SaveLibrariesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.application.Bundle"/>
                 <attr name="delegate" newvalue="blue.application.SaveLibrariesAction"/>
@@ -79,10 +85,6 @@
         </folder>
         <file name="GoTo_hidden"/>
         <folder name="Help">
-            <file name="blue-application-CsoundManualAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Application/blue-application-CsoundManualAction.instance"/>
-                <attr name="position" intvalue="1077"/>
-            </file>
             <file name="blue-application-MakeDonationAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="462"/>
@@ -102,6 +104,14 @@
             <file name="blue-application-BlueManualAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Application/blue-application-BlueManualAction.instance"/>
                 <attr name="position" intvalue="1075"/>
+            </file>
+            <file name="blue-application-CsoundManualAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-application-CsoundManualAction.instance"/>
+                <attr name="position" intvalue="1077"/>
+            </file>
+            <file name="blue-application-CsoundManualFramesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Application/blue-application-CsoundManualFramesAction.instance"/>
+                <attr name="position" intvalue="1078"/>
             </file>
             <file name="blue-application-BlueManualAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
