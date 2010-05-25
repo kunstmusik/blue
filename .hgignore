@@ -19,3 +19,4 @@ gensrc$
 \.chg\..*$
 \.conflict\~$
 manual/docbook/index\.xml
+tempCsd.*\.csd$
