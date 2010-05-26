@@ -39,6 +39,9 @@ blue
             save is designated over an existing file, blue will ask for 
             confirmation from the user
 
+    [updated] - BSB Knob - when editing value in textfield, now starts off with
+            text selected for easier editing (RFE 3006108)
+
     [fix] - Closing project did not ask user to save file
 
     [fix] - blueLive: when using API, no longer tries to update render time

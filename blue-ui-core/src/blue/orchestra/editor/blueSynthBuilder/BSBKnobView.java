@@ -160,10 +160,14 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         //
         // val = (val * range) + knob.getMinimum();
 
-        valueField.setText(NumberUtilities.formatFloat(val));
+        String strVal = NumberUtilities.formatFloat(val);
+
+        valueField.setText(strVal);
         cards.show(valuePanel, "edit");
 
         valueField.requestFocus();
+        valueField.setCaretPosition(strVal.length());
+        valueField.moveCaretPosition(0);
     }
 
     protected void setValueFromField() {
