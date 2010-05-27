@@ -36,6 +36,7 @@ import org.python.core.PySystemState;
 public class PythonProxy {
 
     private static PythonInterpreter interp;
+    private static PythonInterpreter expressionInterpreter;
 
     static {
         PySystemState state = new PySystemState();
@@ -47,6 +48,8 @@ public class PythonProxy {
 
     public static final void reinitialize() {
         interp = new PythonInterpreter();
+        expressionInterpreter = new PythonInterpreter();
+        expressionInterpreter.exec("from __future__ import division\n");
 
         System.out.println(BlueSystem
                 .getString("scripting.python.reinitialized"));
@@ -142,8 +145,8 @@ public class PythonProxy {
             reinitialize();
         }
 
-        interp.exec("temp = " + expression);
-        PyObject retVal = interp.get("temp");
+        expressionInterpreter.exec("temp = " + expression);
+        PyObject retVal = expressionInterpreter.get("temp");
 
         if (retVal.isNumberType()) {
             return Float.parseFloat(retVal.toString());
