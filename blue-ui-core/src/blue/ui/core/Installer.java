@@ -72,6 +72,8 @@ import blue.ui.core.soundObject.renderer.TrackerRenderer;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 import org.syntax.jedit.SyntaxStyle;
@@ -114,7 +116,6 @@ public class Installer extends ModuleInstall {
             public void run() {
                 setWindowTitle();
             }
-
         });
 
 //        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
@@ -144,6 +145,12 @@ public class Installer extends ModuleInstall {
 //        });
 
         MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+
+        TextColorsSettings.getInstance().addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                setTextColors();
+            }
+        });
     }
 
     private void setWindowTitle() {
@@ -176,7 +183,7 @@ public class Installer extends ModuleInstall {
         MainToolBar.getInstance().stopRendering();
 
         saveLibraries();
-        
+
         WindowSettingManager.getInstance().save();
 
         super.close();
@@ -217,6 +224,9 @@ public class Installer extends ModuleInstall {
         styles[Token.KEYWORD2] = new SyntaxStyle(settings.blueSyntaxVariable,
                 false,
                 false);
+        styles[Token.KEYWORD3] = new SyntaxStyle(settings.blueSyntaxPfield,
+                false,
+                false);
         styles[Token.COMMENT1] = new SyntaxStyle(settings.blueSyntaxComment,
                 false,
                 false);
@@ -230,12 +240,12 @@ public class Installer extends ModuleInstall {
     }
 
     private void initializeBluePlugins() {
-        
+
         //SOUND OBJECT EDITORS
         BluePluginFactory factory = new BluePluginFactory();
         factory.setPluginType(SoundObjectEditor.class);
         factory.setPropertyType(BluePlugin.PROP_EDIT_CLASS);
-        
+
         factory.appendPlugin(PatternEditor.class, PatternObject.class);
         factory.appendPlugin(JMaskEditor.class, JMask.class);
         factory.appendPlugin(ZakLineEditor.class, ZakLineObject.class);
@@ -251,13 +261,15 @@ public class Installer extends ModuleInstall {
         factory.appendPlugin(ExternalEditor.class, External.class);
         factory.appendPlugin(AudioFileEditor.class, AudioFile.class);
         factory.appendPlugin(NotationEditor.class, NotationObject.class);
-        factory.appendPlugin(FrozenSoundObjectEditor.class, FrozenSoundObject.class);
+        factory.appendPlugin(FrozenSoundObjectEditor.class,
+                FrozenSoundObject.class);
 
 
         // INSTRUMENT EDITORS
         factory.setPluginType(InstrumentEditor.class);
-        
-        factory.appendPlugin(BlueSynthBuilderEditor.class, BlueSynthBuilder.class);
+
+        factory.appendPlugin(BlueSynthBuilderEditor.class,
+                BlueSynthBuilder.class);
         factory.appendPlugin(BlueX7Editor.class, BlueX7.class);
         factory.appendPlugin(blue.ui.core.orchestra.editor.GenericEditor.class,
                 blue.orchestra.editor.GenericEditable.class);
@@ -268,10 +280,12 @@ public class Installer extends ModuleInstall {
         factory.setPluginType(BarRenderer.class);
 
         factory.appendPlugin(AudioFileRenderer.class, AudioFile.class);
-        factory.appendPlugin(AbstractLineObjectRenderer.class, AbstractLineObject.class);
+        factory.appendPlugin(AbstractLineObjectRenderer.class,
+                AbstractLineObject.class);
         factory.appendPlugin(CommentRenderer.class, Comment.class);
         factory.appendPlugin(ExternalRenderer.class, External.class);
-        factory.appendPlugin(FrozenSoundObjectRenderer.class, FrozenSoundObject.class);
+        factory.appendPlugin(FrozenSoundObjectRenderer.class,
+                FrozenSoundObject.class);
         factory.appendPlugin(GenericRenderer.class, GenericViewable.class);
         factory.appendPlugin(InstanceRenderer.class, Instance.class);
         factory.appendPlugin(JMaskRenderer.class, JMask.class);

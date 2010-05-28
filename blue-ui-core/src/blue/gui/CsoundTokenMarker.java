@@ -284,6 +284,15 @@ public class CsoundTokenMarker extends CTokenMarker {
             }
             addToken(len, id);
             lastOffset = i;
+
+        } else if (isPfield(line, i - len)) {
+            id = Token.KEYWORD3;
+
+            if (lastKeyword != lastOffset) {
+                addToken(lastKeyword - lastOffset, Token.NULL);
+            }
+            addToken(len, id);
+            lastOffset = i;
         } else if (isCsoundVariable(line, i - len)) {
             id = Token.KEYWORD2;
 
@@ -315,6 +324,36 @@ public class CsoundTokenMarker extends CTokenMarker {
         }
 
         if (c == 'i' || c == 'k' || c == 'a') {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isPfield(Segment line, int index) {
+        char[] text = line.array;
+        int start = index;
+
+        if (start > text.length - 1) {
+
+            return false;
+        }
+
+        char c = text[start];
+
+        if (c == 'p') {
+            start += 1;
+
+            for(c = text[start]; start < text.length - 1; start++) {
+                if(Character.isDigit(c)) {
+                    continue;
+                } else if(Character.isWhitespace(c)) {
+                    break;
+                } else {
+                    return false;
+                }
+            }
+
             return true;
         }
 

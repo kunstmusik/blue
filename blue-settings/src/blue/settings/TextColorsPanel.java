@@ -50,6 +50,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textQuote.addPropertyChangeListener(pcl);
         textVariable.addPropertyChangeListener(pcl);
         textBackground.addPropertyChangeListener(pcl);
+        textPfield.addPropertyChangeListener(pcl);
     }
 
     /** This method is called from within the constructor to
@@ -74,6 +75,8 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textQuote = new blue.settings.ColorSelectionPanel();
         textVariable = new blue.settings.ColorSelectionPanel();
         textBackground = new blue.settings.ColorSelectionPanel();
+        textPfield = new blue.settings.ColorSelectionPanel();
+        jLabel7 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(TextColorsPanel.class, "TextColorsPanel.jLabel1.text")); // NOI18N
 
@@ -105,7 +108,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textComment.setLayout(textCommentLayout);
         textCommentLayout.setHorizontalGroup(
             textCommentLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textCommentLayout.setVerticalGroup(
             textCommentLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -116,7 +119,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textNormal.setLayout(textNormalLayout);
         textNormalLayout.setHorizontalGroup(
             textNormalLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textNormalLayout.setVerticalGroup(
             textNormalLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -127,7 +130,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textKeyword.setLayout(textKeywordLayout);
         textKeywordLayout.setHorizontalGroup(
             textKeywordLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textKeywordLayout.setVerticalGroup(
             textKeywordLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -138,7 +141,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textQuote.setLayout(textQuoteLayout);
         textQuoteLayout.setHorizontalGroup(
             textQuoteLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textQuoteLayout.setVerticalGroup(
             textQuoteLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -149,7 +152,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textVariable.setLayout(textVariableLayout);
         textVariableLayout.setHorizontalGroup(
             textVariableLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textVariableLayout.setVerticalGroup(
             textVariableLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -160,72 +163,80 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textBackground.setLayout(textBackgroundLayout);
         textBackgroundLayout.setHorizontalGroup(
             textBackgroundLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 310, Short.MAX_VALUE)
+            .add(0, 294, Short.MAX_VALUE)
         );
         textBackgroundLayout.setVerticalGroup(
             textBackgroundLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(0, 14, Short.MAX_VALUE)
         );
 
+        org.jdesktop.layout.GroupLayout textPfieldLayout = new org.jdesktop.layout.GroupLayout(textPfield);
+        textPfield.setLayout(textPfieldLayout);
+        textPfieldLayout.setHorizontalGroup(
+            textPfieldLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 294, Short.MAX_VALUE)
+        );
+        textPfieldLayout.setVerticalGroup(
+            textPfieldLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 14, Short.MAX_VALUE)
+        );
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(TextColorsPanel.class, "TextColorsPanel.jLabel7.text")); // NOI18N
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(layout.createSequentialGroup()
-                                .add(jLabel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(4, 4, 4))
-                            .add(layout.createSequentialGroup()
-                                .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(4, 4, 4))
-                            .add(jLabel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(textBackground, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(textQuote, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(textKeyword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(textNormal, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, useBlueDefaultsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, resetColorsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, textVariable, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .add(layout.createSequentialGroup()
-                        .add(jLabel3)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(textComment, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .add(jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                        .add(jLabel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                        .add(jLabel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                        .add(jLabel7, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                        .add(jLabel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                        .add(jLabel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)))
+                .add(8, 8, 8)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, useBlueDefaultsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, resetColorsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textComment, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textBackground, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textVariable, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textQuote, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textPfield, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textKeyword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, textNormal, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(10, 10, 10))
         );
 
-        layout.linkSize(new java.awt.Component[] {jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
+        layout.linkSize(new java.awt.Component[] {jLabel1, jLabel2, jLabel3, jLabel4, jLabel5, jLabel6, jLabel7}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
 
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .add(17, 17, 17)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel1)
+                    .add(jLabel1)
                     .add(textNormal, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(textComment, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jLabel3))
-                .add(6, 6, 6)
+                    .add(jLabel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel5))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(textKeyword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                    .add(jLabel5)
+                    .add(textKeyword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(textPfield, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel7))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel2)
+                        .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 14, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel4))
                     .add(layout.createSequentialGroup()
@@ -234,14 +245,13 @@ final class TextColorsPanel extends javax.swing.JPanel {
                         .add(textVariable, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createSequentialGroup()
-                        .add(textBackground, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(8, 8, 8)
-                        .add(resetColorsButton)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(useBlueDefaultsButton))
-                    .add(jLabel6))
-                .addContainerGap(57, Short.MAX_VALUE))
+                    .add(jLabel6)
+                    .add(textBackground, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(resetColorsButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(useBlueDefaultsButton)
+                .add(56, 56, 56))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -260,6 +270,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textQuote.setColor(Color.PINK);
         textVariable.setColor(Color.PINK);
         textBackground.setColor(Color.BLACK);
+        textPfield.setColor(Color.WHITE);
     }
 
     protected void resetColors() {
@@ -277,6 +288,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         textQuote.setColor(settings.blueSyntaxQuote);
         textVariable.setColor(settings.blueSyntaxVariable);
         textBackground.setColor(settings.blueSyntaxBackground);
+        textPfield.setColor(settings.blueSyntaxPfield);
 
         loading = false;
     }
@@ -291,6 +303,7 @@ final class TextColorsPanel extends javax.swing.JPanel {
         settings.blueSyntaxQuote = textQuote.getColor();
         settings.blueSyntaxVariable = textVariable.getColor();
         settings.blueSyntaxBackground = textBackground.getColor();
+        settings.blueSyntaxPfield = textPfield.getColor();
 
         settings.save();
     }
@@ -301,19 +314,19 @@ final class TextColorsPanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.settings.ColorSelectionPanel colorSelectionPanel3;
-    private blue.settings.ColorSelectionPanel colorSelectionPanel4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JButton resetColorsButton;
     private blue.settings.ColorSelectionPanel textBackground;
     private blue.settings.ColorSelectionPanel textComment;
     private blue.settings.ColorSelectionPanel textKeyword;
     private blue.settings.ColorSelectionPanel textNormal;
+    private blue.settings.ColorSelectionPanel textPfield;
     private blue.settings.ColorSelectionPanel textQuote;
     private blue.settings.ColorSelectionPanel textVariable;
     private javax.swing.JButton useBlueDefaultsButton;

@@ -16,41 +16,32 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
-              <EmptySpace max="-2" attributes="0"/>
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel4" linkSize="2" alignment="0" min="-2" pref="60" max="-2" attributes="1"/>
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel1" linkSize="2" max="32767" attributes="1"/>
-                              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel2" linkSize="2" max="32767" attributes="1"/>
-                              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="jLabel5" linkSize="2" alignment="0" max="32767" attributes="1"/>
-                          <Component id="jLabel6" linkSize="2" alignment="0" max="32767" attributes="1"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="textBackground" max="32767" attributes="0"/>
-                          <Component id="textQuote" alignment="0" max="32767" attributes="0"/>
-                          <Component id="textKeyword" alignment="0" max="32767" attributes="0"/>
-                          <Component id="textNormal" alignment="0" max="32767" attributes="0"/>
-                          <Component id="useBlueDefaultsButton" alignment="1" pref="310" max="32767" attributes="0"/>
-                          <Component id="resetColorsButton" alignment="1" pref="310" max="32767" attributes="0"/>
-                          <Component id="textVariable" alignment="1" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="jLabel3" linkSize="2" min="-2" max="-2" attributes="1"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Component id="textComment" max="32767" attributes="0"/>
+                  <Component id="jLabel3" linkSize="3" pref="194" max="32767" attributes="1"/>
+                  <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
+                      <Component id="jLabel2" linkSize="3" pref="194" max="32767" attributes="1"/>
+                      <Component id="jLabel5" linkSize="3" alignment="0" pref="194" max="32767" attributes="1"/>
+                      <Component id="jLabel6" linkSize="3" alignment="0" pref="194" max="32767" attributes="1"/>
+                      <Component id="jLabel7" linkSize="3" alignment="0" pref="194" max="32767" attributes="1"/>
+                      <Component id="jLabel4" linkSize="3" alignment="0" pref="194" max="32767" attributes="1"/>
+                      <Component id="jLabel1" linkSize="3" alignment="0" pref="194" max="32767" attributes="1"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="useBlueDefaultsButton" alignment="1" pref="294" max="32767" attributes="0"/>
+                  <Component id="resetColorsButton" alignment="1" pref="294" max="32767" attributes="0"/>
+                  <Component id="textComment" alignment="1" max="32767" attributes="0"/>
+                  <Component id="textBackground" alignment="1" max="32767" attributes="0"/>
+                  <Component id="textVariable" alignment="1" max="32767" attributes="0"/>
+                  <Component id="textQuote" alignment="1" max="32767" attributes="0"/>
+                  <Component id="textPfield" alignment="1" max="32767" attributes="2"/>
+                  <Component id="textKeyword" alignment="1" max="32767" attributes="2"/>
+                  <Component id="textNormal" alignment="1" max="32767" attributes="2"/>
+              </Group>
+              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -59,33 +50,32 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel1" alignment="1" min="-2" max="-2" attributes="1"/>
-                  <Component id="textNormal" alignment="0" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                  <Component id="textComment" max="32767" attributes="1"/>
-                  <Component id="jLabel3" alignment="1" min="-2" max="-2" attributes="1"/>
-              </Group>
-              <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel5" min="-2" max="-2" attributes="1"/>
-                  </Group>
-                  <Group type="102" alignment="1" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="textKeyword" min="-2" max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="jLabel1" min="-2" max="-2" attributes="1"/>
+                  <Component id="textNormal" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="jLabel2" min="-2" max="-2" attributes="1"/>
+                  <Component id="textComment" max="32767" attributes="1"/>
+                  <Component id="jLabel3" alignment="0" max="32767" attributes="1"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jLabel5" min="-2" max="-2" attributes="1"/>
+                  <Component id="textKeyword" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="textPfield" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel7" min="-2" max="-2" attributes="1"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="jLabel2" min="-2" pref="14" max="-2" attributes="1"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel4" min="-2" max="-2" attributes="1"/>
                   </Group>
-                  <Group type="102" attributes="1">
+                  <Group type="102" alignment="0" attributes="1">
                       <Component id="textQuote" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="textVariable" min="-2" max="-2" attributes="0"/>
@@ -93,16 +83,14 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="textBackground" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                      <Component id="resetColorsButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="useBlueDefaultsButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="1"/>
+                  <Component id="jLabel6" min="-2" max="-2" attributes="1"/>
+                  <Component id="textBackground" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="57" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="resetColorsButton" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="useBlueDefaultsButton" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="56" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -175,7 +163,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -190,7 +178,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -205,7 +193,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -220,7 +208,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -235,7 +223,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -250,7 +238,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="310" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -260,5 +248,27 @@
         </DimensionLayout>
       </Layout>
     </Container>
+    <Container class="blue.settings.ColorSelectionPanel" name="textPfield">
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="294" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <EmptySpace min="0" pref="14" max="32767" attributes="0"/>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+    </Container>
+    <Component class="javax.swing.JLabel" name="jLabel7">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="blue/settings/Bundle.properties" key="TextColorsPanel.jLabel7.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
   </SubComponents>
 </Form>

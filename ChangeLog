@@ -42,6 +42,8 @@ blue
     [updated] - BSB Knob - when editing value in textfield, now starts off with
             text selected for easier editing (RFE 3006108)
 
+    [updated] - Added text color setting in options for pfields (RFE 2970509)
+
     [fix] - Closing project did not ask user to save file
 
     [fix] - blueLive: when using API, no longer tries to update render time

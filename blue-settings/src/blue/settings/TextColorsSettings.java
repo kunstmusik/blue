@@ -20,8 +20,11 @@
 package blue.settings;
 
 import java.awt.Color;
+import java.util.Vector;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 
@@ -43,6 +46,8 @@ public class TextColorsSettings {
 
     private static final String TEXT_VARIABLE = "textVariable";
 
+    private static final String TEXT_PFIELD = "textPfield";
+
     public Color blueSyntaxNormal;
 
     public Color blueSyntaxKeyword;
@@ -55,7 +60,11 @@ public class TextColorsSettings {
 
     public Color blueSyntaxBackground;
 
+    public Color blueSyntaxPfield;
+
     private static TextColorsSettings instance = null;
+
+    private Vector<ChangeListener> listeners = new Vector<ChangeListener>();
 
     private TextColorsSettings() {
     }
@@ -80,6 +89,9 @@ public class TextColorsSettings {
             instance.blueSyntaxVariable = new Color(
                     prefs.getInt(TEXT_VARIABLE, Color.PINK.getRGB()));
 
+            instance.blueSyntaxPfield = new Color(
+                    prefs.getInt(TEXT_PFIELD, Color.WHITE.getRGB()));
+
         }
         return instance;
     }
@@ -93,11 +105,26 @@ public class TextColorsSettings {
         prefs.putInt(TEXT_NORMAL, blueSyntaxNormal.getRGB());
         prefs.putInt(TEXT_QUOTE, blueSyntaxQuote.getRGB());
         prefs.putInt(TEXT_VARIABLE, blueSyntaxVariable.getRGB());
+        prefs.putInt(TEXT_PFIELD, blueSyntaxPfield.getRGB());
 
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
             Exceptions.printStackTrace(ex);
         }
+
+        ChangeEvent ce = new ChangeEvent(this);
+
+        for (ChangeListener cl : listeners) {
+            cl.stateChanged(ce);
+        }
+    }
+
+    public void addChangeListener(ChangeListener cl) {
+        listeners.add(cl);
+    }
+
+    public void removeChangeListener(ChangeListener cl) {
+        listeners.remove(cl);
     }
 }
