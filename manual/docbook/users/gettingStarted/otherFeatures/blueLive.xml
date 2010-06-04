@@ -120,12 +120,24 @@
   <section>
     <title>SCO Pad</title>
 
-    
+    <para>
+      This is an experimental feature to record MIDI input in a manner similar to
+      to notation programs (press keys, then press 4 for a quarter note, 8 for
+      and 8th note, etc.).  This feature requires MIDI Input to be turned on.
+      This feature is experimental at this time.
+    </para>
 
   </section>
 
   <section>
     <title>Options</title>
+
+    <para>
+      The options panel allows setting up parameters for blue Live. Currently it
+      contains options for modifying the commandline string used when running
+      blueLive.  For most users, these modification will not be necessary and the
+      default commandline used will be sufficient.
+    </para>
 
   </section>
 
@@ -168,6 +180,22 @@
       instr 3, and notes for MIDI channel 3 will generate with instr 5.
     </para>
 
+    <para>
+      The MIDI key number as well as the velocity will be mapped according to
+      the settings set in the MIDI Input Panel window.  This allows for generating
+      frequency, Csound PCH, and using Scala Tuning files to generate either
+      frequencies or bluePCH format text, amongst other values. 
+    </para>
+
+    <para>
+      Instruments that are intended to be used with blue's MIDI system will have
+      to work with a 5 p-field note format.  This does not mean your instrument
+      can only work with 5 p-fields, but rather that your instrument must support
+      at least that.  An example blue project can be found in
+      examples/features/blueLiveMidi.blue (if you are using the OSX application,
+      you may need to explore the contents of the blue.app program to find the
+      examples folder).
+    </para>
 
   </section>
 
