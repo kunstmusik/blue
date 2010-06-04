@@ -17,52 +17,43 @@
   </screenshot>
 
   <para>
-    The Blue Live dialog allows you to test ideas and perform in realtime with
-    Commandline Csound via the -L stdin line events mechanism (not all versions
-    of Csound are capable of supporting this feature, particularly all Windows
-    versions; please check with the version of Csound you are using to find out 
-    if it supports this).  Blue Live will work with any version of Csound when
-    using the Csound API.
+    Blue Live allows you to work with Csound in realtime. It allows for generating
+    score with SoundObjects and working with MIDI keyboard input to create notes
+    and run with Csound instruments defined in your project. Note: Blue Live
+    works when using the Csound API, or on non-Windows platforms when not using
+    the Csound API. Windows does not allow piping text to executable in a
+    non-blocking way and therefore limits what can be done when not using the
+    API.
   </para>
 
 
-  <simplesect>
+  <section>
     <title>Motivation</title>
 
     <para>
-      The motivation of Blue Live is that I wanted to be able to test ideas with
-      the instruments of my current work file and do so in a way that would be
-      easy for me to take my tests and put them in to use for composition. One
-      possible solution to my problem could be to make instruments my
-      instruments multipurposed as to be triggerable by MIDI and SCO. That way I
-      could play the instruments in realtime via MIDI and then, having found
-      some ideas I liked, start working in SCO.
+      The motivation of Blue Live is primarily to aid the composer in working out
+      ideas and to help configure instrument, effects, and mixer settings. You
+      may find it helpful early on within the life a composition, when you
+      want to try out a number of different ideas in realtime.  You may tweak
+      instrument parameters, mixer settings, try out different notes and chords
+      with a MIDI keyboard, and even work with different SoundObjects.
+      Later, when you have some ideas worked out, you can take your SoundObjects
+      from blueLive into your score timeline and continue working from there.
     </para>
-
+    
     <para>
-      However, in working out ideas this way I would still have to spend time to
-      notate in SCO the ideas I was working out in MIDI. Also, I found working
-      out ideas on the note level to be hard to work out with MIDI controllers.
-      (The flipside was also true, though, and working on the level of the sound
-      would sometimes be better off by using MIDI than using SCO.)
+      Beyond this primary capacity as a mode to aid composition, Blue Live has
+      some capacity to be used for realtime performance.  Though this isn't it's
+      primary aim at this time (as of version 2.1.0), it can certainly be used
+      in this regard.  For now, however, the role of Blue Live is primarily one
+      of aiding the compositional process.  More full realtime performance 
+      capabilities will be introduced as development scheduling allows.
     </para>
 
-    <para>
-      Blue Live solved my compositional problems by letting me test out ideas
-      with writing SCO and using them in realtime. That way, after working with
-      the ideas, I could directly transfer the ideas to my score timeline and
-      work with them in the context of the piece at hand.
-    </para>
-
-    <para>
-      Also, I found I enjoyed performing with Blue Live, as I found it a
-      comfortable level of abstraction to work with.
-    </para>
-
-  </simplesect>
+  </section>
 
 
-  <simplesect>
+  <section>
     <title>Working with Blue Live</title>
 
     <para>
@@ -74,45 +65,115 @@
       are will be written out, but instead of &lt;TOTAL_DUR&gt; being calculated
       from the score timeline, a default value of 3600 is used. This allows your
       notes that would be used for effects instruments to run for 3600 seconds
-      (this size can be altered if anyone needs be; just email me a request).
+      (this size can be modified; please make a request if desired).
+    </para>
+    
+    <para>
+      The main toolbar has four buttons for blue Live: "blueLive" (which starts
+      and stops blueLive), "Recompile" (which regenerates the CSD from your project
+      and restarts blueLive, useful if you modified your orchestra code),
+      "All Notes Off" (turns off any score notes that are actively playing), and
+      "MIDI Input" (turns on and off the configured MIDI devices setup in the
+      program's options, discussed further below). 
     </para>
 
     <para>
-      So in the Blue Live dialog, you'll see a textfield for a commandline at
-      the top, a start/stop button, an area to add/remove soundObjects, and an
-      area for the editors of those soundObjects.
+      The primary Blue Live window is available from the Window Menu, or by using the
+      ctrl-8 shortcut. The Blue Live window has three main tabs: the Live Space,
+      the SCO Pad, and Options. These will be discussed below.
+    </para>
+
+  </section>
+
+  <section>
+    <title>Live Space</title>
+
+    <para>
+      The Live Space is an area to work with SoundObjects.  SoundObjects can be
+      copied to/from the Score Timeline as well as the Live Space. SoundObjects
+      can also be created within the Live Space by using the "+" button. Once a
+      SoundObject is added to the Live Space, it can be triggered by hitting the
+      trigger button for that SoundObject row in the table.  Triggering a
+      soundObject will take the score generated from it and pass it immediately
+      to the active Csound instance for blueLive (blueLive must be running for
+      this to work).  You can edit the properties for a Live Space soundObject
+      by select it in the Live Space table, then using the normal SoundObject
+      Editor window and SoundObject Properties Window to modify settings.
     </para>
 
     <para>
-      The commandline is the Csound command you'll use to run Csound with the
-      temp CSD file that is generated. This command must have "-L stdin" as part
-      of its arguments for Csound to expect SCO input from stdin, which blue
-      uses to send SCO text to Csound. The default command of "csound -Wdo
-      devaudio -L stdin" should work as a basic start.
+      When using the Live Space, you can copy objects from the timeline, then by
+      right-clicking in the Live Space, use the popup menu to paste the copied
+      soundObject into the Live Space. You can then make changes to Live Space
+      objects and try out the different ideas in realtime.  After changes have
+      been made, you can copy the soundObject using the right-click popup menu
+      and paste it back into the score timeline.
     </para>
 
     <para>
-      The start/stop button will start Csound using the user-given commandline
-      and will run it with a temporary CSD file generated from the blue project
-      file (minus the SCO from the score timeline). If already running, the
-      button will stop the previous performance. Also, if you close the dialog
-      while Csound is running, the dialog will stop the performance.
+      NOTE: All objects are set to generate as if their time behavior was set to none,
+      meaning no scaling or repetition is done.
+    </para>
+
+  </section>
+
+  <section>
+    <title>SCO Pad</title>
+
+    
+
+  </section>
+
+  <section>
+    <title>Options</title>
+
+  </section>
+
+  <section>
+    <title>Working with MIDI</title>
+
+    <para>blue's MIDI system, when enabled, will listen to configured MIDI
+    devices for notes, map the key and velocity, and generate Csound notes to
+    achieve MIDI-like note-on and note-off type behavior. This allows working
+    with a MIDI keyboard in realtime with your project instruments without
+    modifying your instruments specifically for MIDI. This also means that when
+    blue's MIDI system is enabled, Csound MIDI processing should be disabled for
+    your project.</para>
+
+    <para>
+      To configure what MIDI devices to use, go to the program Options settings
+      (on OSX it is the application's Preferences, on other platofrms it is the
+      Options menu item in the Tools menu) and under "blue", go to MIDI.  There
+      you will see a list of MIDI devices connected to your computer.  If you
+      connected a device after starting blue, you can rescan to find your MIDI
+      device.  In this window you will configure what MIDI devices you want to
+      use with blue, but these devices will not be opened for listening until
+      you enable MIDI Input on the blueLive toolbar in the main application.
     </para>
 
     <para>
-      The main black window holds your soundObjects. Right-Clicking in the main
-      area will bring up a dialog for adding soundObjects. The soundObject GUI's
-      that are added when adding soundObjects in this area consist of a large
-      trigger button that will generate notes from the soundObject and pass it
-      to Csound via stdin, as well as a label. Clicking the label once will
-      bring up the soundObject's editor in the bottom part of the window.
-      Double-Clicking the label will allow you to edit the name of the
-      soundObject.
+      Once you have configured what devices to use with blue, return to the main
+      program and enable MIDI input using the "MIDI Input" button, then start
+      blueLive.  At this point, when MIDI notes are played, blue will take the
+      incoming note data, map it according to the values configured in the
+      MIDI Input Panel window (available from the Windows Menu), and then
+      generate notes and pass them to Csound.
     </para>
 
-  </simplesect>
+    <para>
+      For a MIDI note on, blue will the channel number of the note and map it to the
+      instrument in the orchestra manager by index.  For example, if you have
+      three instruments numbered 1, 3, and 5, notes for MIDI channel 1 will
+      generate with instr 1, notes for MIDI channel 2 will generate with
+      instr 3, and notes for MIDI channel 3 will generate with instr 5.
+    </para>
 
-  <simplesect>
+
+  </section>
+
+
+
+  <section>
     <title>EXPLORING IDEAS</title>
 
     <para>
@@ -144,16 +205,7 @@
 
     </itemizedlist>
 
-  </simplesect>
+  </section>
 
-  <simplesect>
-    <title>Other Things to Note</title>
-
-    <para>
-      All objects are set to generate as if their time behavior was set to none,
-      meaning no scaling or repetition is done
-    </para>
-
-  </simplesect>
 
 </section>
