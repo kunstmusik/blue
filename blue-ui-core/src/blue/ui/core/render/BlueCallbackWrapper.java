@@ -16,7 +16,7 @@ public class BlueCallbackWrapper extends CsoundCallbackWrapper {
     StrBuilder buffer = null;
 
     public BlueCallbackWrapper(Csound csound) {
-        super(csound);
+        super(csound.GetCsound());
 
     }
 
