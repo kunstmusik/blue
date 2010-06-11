@@ -25,11 +25,19 @@
             </filterset>
         </copy>
 
+        <copy file="README.TXT" tofile="build/README.TXT" overwrite="true">
+            <filterset>
+                <filter token="VERSION" value="${blueVersion}"/>
+                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+            </filterset>
+        </copy>
+
         <zip destfile="${dist.dir}/${app.name}.zip" update="true">
             <zipfileset dir="examples" filemode="755" prefix="${app.name}/examples"
                 excludes="**/.svn"/>
             <zipfileset dir="${blue.manual.dir}" filemode="755" prefix="${app.name}/manual"/>
             <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
+            <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
         </zip>
         <delete dir="${dist.dir}/blue"/>
         <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
@@ -47,6 +55,13 @@
 	<copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="${app.name}.icns" overwrite="true"/>
 
         <copy file="ChangeLog" tofile="${dist.dir}/${app.name}.app/ChangeLog" overwrite="true">
+            <filterset>
+                <filter token="VERSION" value="${blueVersion}"/>
+                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+            </filterset>
+        </copy>
+
+        <copy file="README.TXT" tofile="${dist.dir}/${app.name}.app/README.TXT" overwrite="true">
             <filterset>
                 <filter token="VERSION" value="${blueVersion}"/>
                 <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
