@@ -1,7 +1,8 @@
 package blue.scripting;
 
 import java.io.File;
-import java.util.Properties;
+import java.io.IOException;
+import org.openide.util.Exceptions;
 
 import org.python.core.PyFloat;
 import org.python.core.PyObject;
@@ -11,7 +12,7 @@ import org.python.util.PythonInterpreter;
 import blue.BlueSystem;
 import blue.soundObject.NoteList;
 import blue.utility.FileUtilities;
-import blue.utilities.JythonUtils;
+import org.openide.modules.InstalledFileLocator;
 import org.python.core.Py;
 import org.python.core.PySystemState;
 
@@ -160,15 +161,31 @@ public class PythonProxy {
 //        String home = BlueSystem.getProgramRootDir();
         String sep = File.separator;
 //        String programPythonPath = home + sep + "lib" + sep + "pythonLib";
-        String programPythonPath = JythonUtils.getBluePythonLib();
+
+        File pythonLib = InstalledFileLocator.getDefault().
+                locate("pythonLib", "jython", false);
+
+        String programPythonPath = null;
+
+        try {
+            programPythonPath = pythonLib.getCanonicalPath();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
 
         String userPythonPath = BlueSystem.getUserConfigurationDirectory()
                 + sep + "pythonLib";
 
         FileUtilities.ensureDirectoryExists(userPythonPath);
 
-        String pythonPath = programPythonPath + File.pathSeparator
-                + userPythonPath;
+        String pythonPath;
+
+        if (programPythonPath != null) {
+            pythonPath = programPythonPath + File.pathSeparator + userPythonPath;
+        } else {
+            pythonPath = userPythonPath;
+        }
+         
 
         System.out.println(BlueSystem.getString("scripting.python.libdir")
                 + " " + pythonPath);

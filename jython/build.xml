@@ -6,10 +6,10 @@
     <description>Builds, tests, and runs the project jython.</description>
     <import file="nbproject/build-impl.xml"/>
 
-    <target name="release" depends="projectized-common.release">
+    <!--<target name="release" depends="projectized-common.release">
         <mkdir dir="${cluster}/pythonLib"/>
         <copy todir="${cluster}/pythonLib" overwrite="true">
             <fileset dir="pythonLib" excludes="**.svn"/>
         </copy>
-    </target>
+    </target>-->
 </project>
