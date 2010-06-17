@@ -47,7 +47,7 @@ public class ParameterIdList implements Serializable {
         }
     };
 
-    private ArrayList parameters = new ArrayList();
+    private ArrayList<String> parameters = new ArrayList<String>();
 
     private int selectedIndex = -1;
 
@@ -56,7 +56,7 @@ public class ParameterIdList implements Serializable {
     transient Vector listSelectionListeners = null;
 
     public String getParameterId(int index) {
-        return (String) parameters.get(index);
+        return parameters.get(index);
     }
 
     public void addParameterId(String parameterId) {
@@ -115,11 +115,11 @@ public class ParameterIdList implements Serializable {
         fireRemoveDataEvent(lde);
     }
 
-    public ArrayList getParameters() {
+    public ArrayList<String> getParameters() {
         return parameters;
     }
 
-    public Iterator iterator() {
+    public Iterator<String> iterator() {
         return parameters.iterator();
     }
 
@@ -136,7 +136,7 @@ public class ParameterIdList implements Serializable {
         for (int i = 0; i < size(); i++) {
 
             retVal.addElement("parameterId")
-                    .setText((String) parameters.get(i));
+                    .setText(parameters.get(i));
         }
 
         return retVal;
