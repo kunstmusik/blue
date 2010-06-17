@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
+
+    <attr name="Menu\Project\position" intvalue="350"/>
     <attr name="Menu\Script\position" intvalue="1100"/>
     <attr name="Windows2\Components\output.settings\position" intvalue="600"/>
     <attr name="Windows2\Components\properties.settings\position" intvalue="700"/>
@@ -337,9 +339,6 @@
         </folder> 
 
         <folder name="Window">
-            <file name="MidiInputPanelAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-midi-MidiInputPanelAction.instance"/>
-            </file>
             <file name="Output_hidden"/>
             <file name="SoundObjectEditorAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
@@ -377,6 +376,12 @@
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
                 <attr name="position" intvalue="600"/>
             </file>
+
+            <file name="MidiInputPanelAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-midi-MidiInputPanelAction.instance"/>
+                <attr name="position" intvalue="700"/>
+            </file>
+
 
             <file name="blue-ui-core-score-ScoreAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
@@ -426,7 +431,6 @@
                 <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
                 <attr name="position" intvalue="1800"/>
             </file>
-
 
             <file name="blue-ui-core-CurrentProjectsAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
@@ -526,6 +530,8 @@
 
     <folder name="Toolbars">
         <folder name="Project">
+            <attr name="position" intvalue="0"/>
+            
             <file name="blue-ui-core-MainToolbarAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Edit/blue-ui-core-MainToolbarAction.instance"/>
                 <attr name="position" intvalue="0"/>
@@ -574,7 +580,9 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="BlueLiveTopComponent.wstcref" url="BlueLiveTopComponentWstcref.xml"/>
+                <file name="BlueLiveTopComponent.wstcref" url="BlueLiveTopComponentWstcref.xml">
+                    <attr name="position" intvalue="700"/>
+                </file>
                 <file name="GlobalOrchestraTopComponent.wstcref" url="GlobalOrchestraTopComponentWstcref.xml">
                     <attr name="position" intvalue="400"/>
                 </file>
@@ -585,7 +593,7 @@
                     <attr name="position" intvalue="100"/>
                 </file>
                 <file name="ProjectPropertiesTopComponent.wstcref" url="ProjectPropertiesTopComponentWstcref.xml">
-                    <attr name="position" intvalue="500"/>
+                    <attr name="position" intvalue="600"/>
                 </file>
                 <file name="ScoreTopComponent.wstcref" url="ScoreTopComponentWstcref.xml">
                     <attr name="position" intvalue="0"/>
@@ -598,8 +606,12 @@
                 </file>
             </folder>
             <folder name="output">
-                <file name="MixerTopComponent.wstcref" url="MixerTopComponentWstcref.xml"/>
-                <file name="SoundObjectEditorTopComponent.wstcref" url="SoundObjectEditorTopComponentWstcref.xml"/>
+                <file name="MixerTopComponent.wstcref" url="MixerTopComponentWstcref.xml">
+                    <attr name="position" intvalue="200"/>
+                </file>
+                <file name="SoundObjectEditorTopComponent.wstcref" url="SoundObjectEditorTopComponentWstcref.xml">
+                    <attr name="position" intvalue="100"/>
+                </file>
             </folder>
             <folder name="properties">
                 <file name="MarkersTopComponent.wstcref" url="MarkersTopComponentWstcref.xml"/>
