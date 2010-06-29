@@ -56,6 +56,7 @@ import blue.utility.NumberUtilities;
 import java.net.URL;
 import javax.swing.JToolBar;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
+import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
 
@@ -320,7 +321,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             return;
         }
 
-        StatusBar.updateStatus(BlueSystem.getString("message.generatingCSD"));
+        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
+
         playButton.setEnabled(false);
 
         CSDRunner csdRunner;
@@ -343,7 +345,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     public void generateScoreForTesting() {
-        StatusBar.updateStatus(BlueSystem.getString("message.generatingCSD"));
+        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
 
         try {
             float startTime = data.getRenderStartTime();
@@ -371,7 +373,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             throw new RuntimeException("CSDRender Failed");
         } catch (Exception ex) {
             ex.printStackTrace();
-            StatusBar.updateStatus("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.
+            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.
                     getString("message.generateScore.error"));
             System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.
                     getLocalizedMessage());
@@ -428,10 +430,10 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     public void playModeChanged(int playMode) {
         if (playMode == PLAY_MODE_PLAY) {
             playButton.setEnabled(false);
-            StatusBar.updateStatus(BlueSystem.getString("message.renderingCSD"));
+            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));
         } else if (playMode == PLAY_MODE_STOP) {
             playButton.setEnabled(true);
-            StatusBar.updateStatus(BlueSystem.getString(
+            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                     "message.finishedRenderingCSD"));
         }
 

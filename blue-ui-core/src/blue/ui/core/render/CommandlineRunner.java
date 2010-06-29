@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
-import blue.StatusBar;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.noteProcessor.TempoMapper;
@@ -30,6 +29,7 @@ import blue.utility.FileUtilities;
 import blue.utility.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import org.openide.awt.StatusDisplayer;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -159,7 +159,8 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
         } catch (SoundObjectException soe) {
             throw soe;
         } catch (Exception ex) {
-            StatusBar.updateStatus("[" + BlueSystem.getString("message.error")
+            StatusDisplayer.getDefault().setStatusText(
+                    "[" + BlueSystem.getString("message.error")
                     + "] "
                     + BlueSystem.getString("message.generateScore.error"));
             System.err.println("[" + BlueSystem.getString("message.error")

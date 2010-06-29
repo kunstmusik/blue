@@ -8,10 +8,8 @@ import blue.BlueData;
 //import blue.BlueMainFrame;
 import blue.BlueSystem;
 import blue.LiveData;
-import blue.StatusBar;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
 import blue.noteProcessor.TempoMapper;
 import blue.ui.core.score.AuditionManager;
 import blue.score.tempo.Tempo;
@@ -29,7 +27,6 @@ import csnd.Csound;
 import csnd.CsoundArgVList;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +36,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
@@ -225,7 +223,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
         } catch (SoundObjectException soe) {
             throw soe;
         } catch (Exception ex) {
-            StatusBar.updateStatus("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.getString("message.generateScore.error"));
+            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.getString("message.generateScore.error"));
             System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.getLocalizedMessage());
         }
     }

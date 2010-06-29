@@ -29,7 +29,6 @@ import java.util.StringTokenizer;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.StatusBar;
 import blue.event.PlayModeListener;
 import blue.mixer.Mixer;
 import blue.noteProcessor.TempoMapper;
@@ -47,6 +46,7 @@ import blue.utility.FileUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.ProjectPropertiesUtil;
 import blue.utility.TextUtilities;
+import org.openide.awt.StatusDisplayer;
 
 public class AuditionManager {
 
@@ -238,10 +238,8 @@ public class AuditionManager {
 
     public void notifyPlayModeListeners(int playMode) {
         if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-            StatusBar.updateStatus("Auditioning SoundObjects...");
-        } else {
-            StatusBar.updateStatus(" ");
-        }
+            StatusDisplayer.getDefault().setStatusText("Auditioning SoundObjects...");
+        } 
         
         for (Iterator iter = listeners.iterator(); iter.hasNext();) {
             PlayModeListener listener = (PlayModeListener) iter.next();
