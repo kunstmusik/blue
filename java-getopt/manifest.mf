@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: gnu.getopt
-OpenIDE-Module-Localizing-Bundle: gnu/getopt/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-
