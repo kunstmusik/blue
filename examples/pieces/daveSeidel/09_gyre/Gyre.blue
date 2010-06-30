@@ -1,0 +1,373 @@
+<blueData version='2.0.3'>
+  <projectProperties>
+    <title>Gyre</title>
+    <author>Dave Seidel</author>
+    <notes>Copyright (c) 2010 Dave Seidel, some rights reserved.  This work is licensed under a
+Creative Commons Attribution-Noncommercial 3.0 Unported License (http://creativecommons.org/licenses/by-nc/3.0/).
+
+For more information, go to http://mysterybear.net/article/45/gyre
+</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>Gyre.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>simple binaural beater</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3		; duration
+iamp	=	ampdb(p4)/2	; amplitude
+icent	=	p5		; center frequency (Hz)
+idiff	=	p6		; difference (Hz)
+itab	=       p7		; function table number (waveform)
+irise 	=	p8		; envelope rise time
+ifall	=	p9		; envelope fall time
+
+; amplitude envelope
+ke	linen	iamp, irise, idur, ifall
+
+; determine pitches
+ip1	init	icent + (idiff/2)
+ip2	init	icent - (idiff/2)
+
+	prints	&quot;center=%f beat=%f =&gt; freq1=%f freq2=%f\\n&quot;, icent, idiff, ip1, ip2
+
+; generate tones
+asig1	poscil3	ke, ip1, itab
+asig2	poscil3	ke, ip2, itab
+
+; output
+blueMixerOut	asig1, asig2
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1634199318' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='1634197505' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>0dbfs = 1
+
+giTblSz	init	1048577
+
+; sine wave
+giFn1 	ftgen	1, 0, giTblSz, 10, 1
+</globalOrc>
+    <globalSco>t 0 7.5</globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>14</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>10.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>code</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>INST	=	1
+AMP	= 	-14.5
+TABLE	=	1
+RISE	=	2.0
+FALL	=	2.0
+
+def binBeat2(ratio):
+	freq = 1.875 * float(ratio)
+	beat = 0.029296875 * float(ratio)
+	return &quot;i%d 0 1 %f %f %f %d %f %f\n&quot; % (INST, AMP, freq, beat, TABLE, RISE, FALL)
+
+def binBeat3(ratio):
+	freq = 0.46875 * float(ratio)
+	beat = 0.00732421875 * float(ratio)
+	return &quot;i%d 0 1 %f %f %f %d %f %f\n&quot; % (INST, AMP, freq, beat, TABLE, RISE, FALL)
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1546)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>3.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1512)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>6.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1344)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1152)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>12.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1134)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>15.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1024)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>18.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(1008)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(896)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>24.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(784)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>27.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(768)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>30.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(756)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>32.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(588)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>35.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(567)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>65.0</subjectiveDuration>
+        <startTime>38.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = binBeat3(512)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>
