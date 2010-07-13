@@ -1,0 +1,1171 @@
+<blueData version='2.1.0'>
+  <projectProperties>
+    <title>Pythongorean Wanderers</title>
+    <author>Brian Wong</author>
+    <notes>This song was my successful entry in the 2010 60x60 composition competition, and is an algorithmic just intonation composition which was then heavily edited manually.</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>40</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>48000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>true</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>fmy-02</name>
+        <comment>fmy - A foscili FM synth featuring a lot of score control.
+
+;inst	strt	dur	nvpa	nvta	nvxa	nvpb	nvxb	nvpc	nvtc	nvxc	fqa	bndt	bndxa	fqb	bndxb	fqc	cfa	cfbndt	cfbndxa	cfb	cfbndxb	cfc	mfa	mfbndt	mfbndxa	mfb	mfbndxb	mfc	mipa	mita	mixa	mipb	mixb	mipc	mitc	mixc	phs	pana	panb	wave
+</comment>
+        <globalOrc>;[once](
+gi_sine_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 10, 1
+gi_sawdown_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 7, 1, 16384, -1
+gi_sawup_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 7, -1, 16384, 1
+gi_square_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 7, 1, 8192, -1, 8192
+gi_tri_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 7, -1, 8192, 1, 8192, -1
+gi_pulse_&lt;INSTR_ID&gt;	ftgen 0, 0, 16384, 7, 1, 4096, 1, 0, -1, 12288, -1
+;)
+</globalOrc>
+        <globalSco/>
+        <instrumentText>invpa = p4
+invta = p5
+invxa = p6
+invpb = p7
+invxb = p8
+invpc = p9
+invtc = p10
+invxc = p11
+
+ifqa = p12
+ibndt = p13 * p3
+ibndxa = p14
+ifqb = p15
+ibndxb = p16
+ifqc = p17
+kfq transeg ifqa, ibndt, ibndxa, ifqb, (p3-ibndt), ibndxb, ifqc
+
+icfa = p18
+icfbndt = p19 * p3
+icfbndxa = p20
+icfb = p21
+icfbndxb = p22
+icfc = p23
+kcf transeg icfa, icfbndt, icfbndxa, icfb, (p3-icfbndt), icfbndxb, icfc
+
+imfa = p24
+imfbndt = p25 * p3
+imfbndxa = p26
+imfb = p27
+imfbndxb = p28
+imfc = p29
+kmf transeg imfa, imfbndt, imfbndxa, imfb, (p3-imfbndt), imfbndxb, imfc
+
+imipa = p30
+imita = p31
+imixa = p32
+imipb = p33
+imixb = p34
+imipc = p35
+imitc = p36
+imixc = p37
+kmi 	transeg	 0,.01,0,imipa , imita , imixa , imipb, (p3-imita-imitc), imixb, imipc, imitc, imixc, .001
+
+iphs = p38
+
+if (p41==0) then		; wave selection
+  ifn = gi_sine_&lt;INSTR_ID&gt;
+elseif (p41==1) then
+  ifn = gi_sawup_&lt;INSTR_ID&gt;
+elseif (p41==2) then
+  ifn = gi_sawdown_&lt;INSTR_ID&gt;
+elseif (p41==3) then
+  ifn = gi_square_&lt;INSTR_ID&gt;
+elseif (p41==4) then
+  ifn = gi_tri_&lt;INSTR_ID&gt;
+elseif (p41==5) then
+  ifn = gi_pulse_&lt;INSTR_ID&gt;
+endif
+
+aout	foscili	 32000, kfq, kcf, kmf, kmi, ifn, iphs
+knv 	transeg	 0,.01,0,invpa , invta , invxa , invpb, (p3-invta-invtc), invxb, invpc, invtc, invxc, .001
+aout = aout * knv
+
+kpan line p39, p3, p40
+aleft = kpan * aout
+aright = (1-kpan) * aout
+
+blueMixerOut	aleft, aright
+</instrumentText>
+        <graphicInterface editEnabled='true'/>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1948743297' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>7.05</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1948743317' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='7.05'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='7.05'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>18</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>false</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>17.5</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Pyplate</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+
+notetime = [0,0,0,0,0,0,0,0,0]
+dur = [0,0,0,0,0,0,0,0,0]
+fqa = [0,0,0,0,0,0,0,0,0]
+fqb = [0,0,0,0,0,0,0,0,0]
+fqc = [0,0,0,0,0,0,0,0,0]
+fqa1 = [0,0,0,0,0,0,0,0,0]
+fqb1 = [0,0,0,0,0,0,0,0,0]
+fqc1 = [0,0,0,0,0,0,0,0,0]
+fqa2 = [0,0,0,0,0,0,0,0,0]
+fqb2 = [0,0,0,0,0,0,0,0,0]
+fqc2 = [0,0,0,0,0,0,0,0,0]
+fqa3 = [0,0,0,0,0,0,0,0,0]
+fqb3 = [0,0,0,0,0,0,0,0,0]
+fqc3 = [0,0,0,0,0,0,0,0,0]
+nvpa = [0,0,0,0,0,0,0,0,0]
+nvta = [0,0,0,0,0,0,0,0,0]
+nvxa = [0,0,0,0,0,0,0,0,0]
+nvpb = [0,0,0,0,0,0,0,0,0]
+nvxb = [0,0,0,0,0,0,0,0,0]
+nvpc = [0,0,0,0,0,0,0,0,0]
+nvtc = [0,0,0,0,0,0,0,0,0]
+nvxc = [0,0,0,0,0,0,0,0,0]
+bndt = [0,0,0,0,0,0,0,0,0]
+bndxa = [0,0,0,0,0,0,0,0,0]
+bndxb = [0,0,0,0,0,0,0,0,0]
+cfa = [0,0,0,0,0,0,0,0,0]
+cfbndt = [0,0,0,0,0,0,0,0,0]
+cfbndxa = [0,0,0,0,0,0,0,0,0]
+cfb = [0,0,0,0,0,0,0,0,0]
+cfbndxb = [0,0,0,0,0,0,0,0,0]
+cfc = [0,0,0,0,0,0,0,0,0]
+mfa = [0,0,0,0,0,0,0,0,0]
+mfbndt = [0,0,0,0,0,0,0,0,0]
+mfbndxa = [0,0,0,0,0,0,0,0,0]
+mfb = [0,0,0,0,0,0,0,0,0]
+mfbndxb = [0,0,0,0,0,0,0,0,0]
+mfc = [0,0,0,0,0,0,0,0,0]
+mipa = [0,0,0,0,0,0,0,0,0]
+mita = [0,0,0,0,0,0,0,0,0]
+mixa = [0,0,0,0,0,0,0,0,0]
+mipb = [0,0,0,0,0,0,0,0,0]
+mixb = [0,0,0,0,0,0,0,0,0]
+mipc = [0,0,0,0,0,0,0,0,0]
+mitc = [0,0,0,0,0,0,0,0,0]
+mixc = [0,0,0,0,0,0,0,0,0]
+phs = [0,0,0,0,0,0,0,0,0]
+pana = [0,0,0,0,0,0,0,0,0]
+panb = [0,0,0,0,0,0,0,0,0]
+wave = [0,0,0,0,0,0,0,0,0]
+fqa1 = [0,0,0,0,0,0,0,0,0]
+fqb1 = [0,0,0,0,0,0,0,0,0]
+fqc1 = [0,0,0,0,0,0,0,0,0]
+fqa2 = [0,0,0,0,0,0,0,0,0]
+fqb2 = [0,0,0,0,0,0,0,0,0]
+fqc2 = [0,0,0,0,0,0,0,0,0]
+fqa3 = [0,0,0,0,0,0,0,0,0]
+fqb3 = [0,0,0,0,0,0,0,0,0]
+fqc3 = [0,0,0,0,0,0,0,0,0]
+
+
+
+
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.Comment'>
+        <subjectiveDuration>17.0</subjectiveDuration>
+        <startTime>32.25</startTime>
+        <name>Comment</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <commentText>An algorithmic just intonation composition
+
+</commentText>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>fmy 0a</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+fq = 100				# starting seed frequency
+fqa[0] = fq
+fqb[0] = fq
+fqc[0] = fq
+
+for n in range(notenum-1) :
+  frnd = random.randint(0,3)
+  if frnd == 0 : fq = fq * .6666
+  elif frnd == 1 : fq = fq * 1.5
+  elif frnd == 2 : fq = fq * .8
+  else : fq = fq * 1.25
+  if fq&lt;66 : fq = fq*2
+  if fq&gt;200 : fq = fq*.5
+  fqa[n+1] = fq
+  fqb[n+1] = fq
+  fqc[n+1] = fq
+
+for x in range(notenum) : 
+  mipa[x] = 0
+  nvpa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = 0
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = 0
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(0,.49)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .25
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>fmy 1a</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+fq = fqa[notenum-1]				# starting seed frequency
+fqa1[0] = fq
+fqb1[0] = fq
+fqc1[0] = fq
+
+for n in range(notenum-1) :
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * .6666
+  elif frnd == 1 : fq = fq * 1.5
+  elif frnd == 2 : fq = fq * .8
+  else : fq = fq * 1.25
+  if fq&lt;66 : fq = fq*2
+  if fq&gt;200 : fq = fq*.5
+  fqa1[n+1] = fq
+  fqb1[n+1] = fq
+  fqc1[n+1] = fq
+
+for x in range(notenum) : 
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(0,.49)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .25
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa1[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb1[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc1[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>50.0</startTime>
+        <name>fmy 2a</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+fq = fqa1[notenum-1]				# starting seed frequency
+fqa2[0] = fq
+fqb2[0] = fq
+fqc2[0] = fq
+
+for n in range(notenum-1) :
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * .6666
+  elif frnd == 1 : fq = fq * 1.5
+  elif frnd == 2 : fq = fq * .8
+  else : fq = fq * 1.25
+  if fq&lt;66 : fq = fq*2
+  if fq&gt;200 : fq = fq*.5
+  fqa2[n+1] = fq
+  fqb2[n+1] = fq
+  fqc2[n+1] = fq
+
+for x in range(notenum) : 
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(0,.49)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .25
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa2[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb2[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc2[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>75.0</startTime>
+        <name>fmy 3a</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+fq = fqa2[notenum-1]				# starting seed frequency
+fqa3[0] = fq
+fqb3[0] = fq
+fqc3[0] = fq
+
+for n in range(notenum-1) :
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * .6666
+  elif frnd == 1 : fq = fq * 1.5
+  elif frnd == 2 : fq = fq * .8
+  else : fq = fq * 1.25
+  if fq&lt;66 : fq = fq*2
+  if fq&gt;200 : fq = fq*.5
+  fqa3[n+1] = fq
+  fqb3[n+1] = fq
+  fqc3[n+1] = fq
+
+for x in range(notenum) : 
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(0,.49)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .25
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa3[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb3[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc3[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='true' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>fmy 0b</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 1 to 3
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+for n in range(notenum-1) :
+  fq = fqa[n]
+  frnd = random.randint(0,3)
+  if frnd == 0 : fq = fq * 1.3333
+  elif frnd == 1 : fq = fq * 3
+  elif frnd == 2 : fq = fq * 1.6
+  else : fq = fq * 2.5
+  fqa[n] = fq
+  fqb[n] = fq
+  fqc[n] = fq
+  
+for x in range(notenum) : 
+  mipa[x] = 0
+  nvpa[x] = 0  
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = 0
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = 0
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(.51,1)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .75
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>fmy 1b</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+for n in range(notenum-1) :
+  fq = fqa1[n]
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * 1.3333
+  elif frnd == 1 : fq = fq * 3
+  elif frnd == 2 : fq = fq * 1.6
+  else : fq = fq * 2.5
+  if fq &gt; 400 : fq = fq*.5
+  if fq &lt; 200 : fq = fq*2
+  fqa1[n] = fq
+  fqb1[n] = fq
+  fqc1[n] = fq
+  
+for x in range(notenum) : 
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(.51,1)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .75
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa1[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb1[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc1[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>50.0</startTime>
+        <name>fmy 2b</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+for n in range(notenum-1) :
+  fq = fqa2[n]
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * 1.3333
+  elif frnd == 1 : fq = fq * 3
+  elif frnd == 2 : fq = fq * 1.6
+  else : fq = fq * 2.5
+  if fq &gt; 400 : fq = fq*.5
+  if fq &lt; 200 : fq = fq*2
+  fqa2[n] = fq
+  fqb2[n] = fq
+  fqc2[n] = fq
+  
+for x in range(notenum) : 
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(.51,1)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .75
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa2[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb2[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc2[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>25.0</subjectiveDuration>
+        <startTime>75.0</startTime>
+        <name>fmy 3b</name>
+        <backgroundColor>-6710785</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>notenum = 9				# number of notes
+qt0 = 1.5
+starttime = 0
+for j in range(notenum) :   		# Note start times and durations generator loop
+  k = random.randint(1,3)		# k is a random integer from 0 to 4
+  strtinc = k*qt0
+  starttime = starttime + strtinc 	# note start time is incremented by quantization value multipled by the random k value
+  notetime[j] = starttime		# the start time is read into the notetime[] list
+  if random.randint(0,10)&gt;8 and k&gt;qt0 : strtinc = strtinc*.5	# 20% chance that note will have it&apos;s duration halved if note is longer than qt0
+  if j&gt;0 : dur[j-1] = strtinc		# for every note except the 1st one, the duration is made to end when the next note starts
+  if j==notenum-1 : dur[j]=k*qt0		# assign duration for last note = qt0
+
+for n in range(notenum-1) :
+  fq = fqa3[n]
+  frnd = random.randint(0,2)
+  if frnd == 0 : fq = fq * 1.3333
+  elif frnd == 1 : fq = fq * 3
+  elif frnd == 2 : fq = fq * 1.6
+  else : fq = fq * 2.5
+  if fq &gt; 400 : fq = fq*.5
+  if fq &lt; 200 : fq = fq*2
+  fq = fq * .5
+  fqa3[n] = fq
+  fqb3[n] = fq
+  fqc3[n] = fq
+  
+for x in range(notenum) :
+  nvpa[x] = 0
+  mipa[x] = 0
+  rnvta = .4*random.uniform(.75,1.3333)
+  nvta[x] = rnvta
+  mita[x] = rnvta*5
+  rnvxa = random.randint(0,3)
+  nvxa[x] = rnvxa
+  mixa[x] = rnvxa
+  rnvpb = 23/fq*random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpb[x] = rnvpb
+  else : nvpb[x] = 0
+  rmi = random.normalvariate(5,1.5)
+  mipb[x] = rnvpb*rmi
+  rnvxb = random.randint(0,3)
+  nvxb[x] = rnvxb
+  mixb[x] = rnvxb
+  rnvpc = 17/fq*.3333**random.uniform(.85,.95)
+  if notetime[x] &lt; blueDuration : nvpc[x] = rnvpc
+  else : nvpc[x] = 0
+  mipc[x] = rnvpc*rmi
+  rnvtc = .5
+  nvtc[x] = rnvtc
+  mitc[x] = rnvtc
+  rnvxc = 0
+  nvxc[x] = rnvxc
+  mixc[x] = rnvxc
+  rpan = random.uniform(.51,1)
+  if x &gt; 0 : pana[x] = panb[x-1]
+  else : pana[x] = .75
+  panb[x] = rpan
+
+for x in range(notenum) : bndt[x] = .5
+for x in range(notenum) : bndxa[x] = 0
+for x in range(notenum) : bndxb[x] = 0
+
+for x in range(notenum) : cfa[x] = 1
+for x in range(notenum) : cfbndt[x] = .5
+for x in range(notenum) : cfbndxa[x] = 0
+for x in range(notenum) : cfb[x] = 1
+for x in range(notenum) : cfbndxb[x] = 0
+for x in range(notenum) : cfc[x] = 1
+
+for x in range(notenum) : mfa[x] = 2
+for x in range(notenum) : mfbndt[x] = .5
+for x in range(notenum) : mfbndxa[x] = 0
+for x in range(notenum) : mfb[x] = 2
+for x in range(notenum) : mfbndxb[x] = 0
+for x in range(notenum) : mfc[x] = 2
+
+for x in range(notenum) : phs[x] = 0
+for x in range(notenum) : wave[x] = 0
+
+def generateNotes(numOfNotes):
+    scoreText = &quot;&quot;
+    for i in range(numOfNotes):
+        scoreText += &quot;i1 &quot;+str(notetime[i])+&quot; &quot;+str(dur[i])+&quot; &quot;+str(nvpa[i])+&quot; &quot;+str(nvta[i])+&quot; &quot;+str(nvxa[i])+&quot; &quot;+str(nvpb[i])+&quot; &quot;+str(nvxb[i])+&quot; &quot;+str(nvpc[i])+&quot; &quot;+str(nvtc[i])+&quot; &quot;+str(nvxc[i])+&quot; &quot;+str(fqa3[i])+&quot; &quot;+str(bndt[i])+&quot; &quot;+str(bndxa[i])+&quot; &quot;+str(fqb3[i])+&quot; &quot;+str(bndxb[i])+&quot; &quot;+str(fqc3[i])+&quot; &quot;+str(cfa[i])+&quot; &quot;+str(cfbndt[i])+&quot; &quot;+str(cfbndxa[i])+&quot; &quot;+str(cfb[i])+&quot; &quot;+str(cfbndxb[i])+&quot; &quot;+str(cfc[i])+&quot; &quot;+str(mfa[i])+&quot; &quot;+str(mfbndt[i])+&quot; &quot;+str(mfbndxa[i])+&quot; &quot;+str(mfb[i])+&quot; &quot;+str(mfbndxb[i])+&quot; &quot;+str(mfc[i])+&quot; &quot;+str(mipa[i])+&quot; &quot;+str(mita[i])+&quot; &quot;+str(mixa[i])+&quot; &quot;+str(mipb[i])+&quot; &quot;+str(mixb[i])+&quot; &quot;+str(mipc[i])+&quot; &quot;+str(mitc[i])+&quot; &quot;+str(mixc[i])+&quot; &quot;+str(phs[i])+&quot; &quot;+str(pana[i])+&quot; &quot;+str(panb[i])+&quot; &quot;+str(wave[i])+&quot; \n&quot;
+    
+    return scoreText
+
+score = generateNotes(notenum)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>60.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	strt	dur	nvpa	nvta			nvxa	nvpb			nvxb	nvpc			nvtc	nvxc	fqa			bndt	bndxa	fqb			bndxb	fqc			cfa	cfbndt	cfbndxa	cfb	cfbndxb	cfc	mfa	mfbndt	mfbndxa	mfb	mfbndxb	mfc	mipa	mita			mixa	mipb			mixb	mipc			mitc	mixc	phs	pana			panb			wave
+i1	1.5	4.5	0	1.4749367156181214	7.77	0.10606839798081638	-7	0.030029224088539877	2.5	22	133.33333333333333	0.5	0	133.33333333333333	0	133.33333333333333	1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.224683578090607	3	0.26251517912014066	2	0.07432116719503615	0.5	0	0	0.75			0.8049818646446416	0
+i1	4.5	4	0	0.68022305991582687	0	0.1563742654404468	0	0.05083017477561357	1.5	0	100			0.5	0	100			0	100			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.4011152995791343	0	0.559409083981533	2	0.18183849772056182	0.5	0	0	0.25			0.05742381444276601	0
+
+i1	3.0	1.5	0	0.49343828060852456	0	0.11082722388139009	0	0.050565697588752164	0.5	0	200			0.5	0	200			0	200			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.4171914030426227	0	0.43120497171158073	2	0.12173093406479409	0.5	0	0	0.8049818646446416	0.8385586886158458	0
+i1	6.0	2.5	0	.75608667996332993	0	0.05621839661370762	0	0.047668237726786716	1.5	0	150.0			0.5	0	150.0			0	150.0			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.7804333998166497	3	0.5761643704254905	3	0.1758098967502573	0.5	0	0	0.05742381444276601	0.39339597627146816	0
+
+i1	4.5	4	0	1.2755964302063035	0	0.09907330745205103	0	.05329998613536395	1.5	0	281.25			0.5	0	281.25			0	281.25			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.3779821510315173	3	0.3413558048834369	0	0.11473467336644495	0.5	0	0	0.8385586886158458	0.7485522833779064	0
+i1	5.5	3	0	1.16775121978539826	0	0.15953582353313606	0	0.047559156071868273	1.5	0	112.5			0.5	0	112.5			0	112.5			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.16775121978539826	0	1.5953582353313606	0	.47559156071868273	1.5	0	0	0.39339597627146816	0.46555455400585966	0
+
+i1	7.5	5	0	0.4097606632922796	1	0.10096449360870946	0	0.03293897080439444	2.5	0	100			0.5	0	100			0	100			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.048803316461398	1	0.24682095209055718	0	0.0805236360252728	0.5	0	0	0.7485522833779064	0.678803723258631	0
+i1	10.5	4.5	0	0.5791904084702816	2	0.11010786224494353	0	0.05163998373719257	1.25	0	75			0.5	0	75			0	75			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.895952042351408	2	1.0055864142674826	0	0.3243342666062895	0.5	0	0	0.46555455400585966	0.06524226064009009	0
+
+i1	12.0	4.5	0	0.82298907487216886	0	0.10645167973628074	1.1	0.0303408667384319	1.5	0	150			0.5	0	150			0	150			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.114945374360844	0	0.4693225565326833	2	0.13376635465382114	0.5	0	0	0.678803723258631	0.9294890326792618	0
+i1	15.0	3.5	0	0.6083826500525346	1	0.1054283416352597	1	0.05085670247811568	2	2	93.75			0.5	0	93.75			0	93.75			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.5419132502626731	1	0.49549852186686455	1	0.1621288668450453	0.5	0	0	0.06524226064009009	0.09315958930563761	0
+
+i1	16.5	3	0	0.6573425624279095	1.5	0.10616288444386802	0	0.022899236693703614	1.5	0	187.5			0.5	0	187.5			0	187.5			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.2867128121395472	3	0.5967138456650611	3	0.18491801677944036	0.5	0	0	0.9294890326792618	0.8529298251514998	0
+i1	18.0	3	0	0.4507114904188357	1	0.15639945154846838	1	0.04964933999647872	0.5	0	75			0.5	0	75			0	75			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.2535574520941783	1	0.9571863773981647	1	0.30386086025827036	0.5	0	0	0.09315958930563761	0.4287771021772576	0
+
+i1	19.5	4.5	0	2.4582794289546042	1	0.0417960763329569	1	0.01438727953129779	0.5	0	360			0.5	0	360			0	360			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.011397144773021	1	0.3652783734445482	0	0.1125621282287103	0.5	0	0	0.8529298251514998	0.9339724040830764	0
+i1	21.0	1.5	0	0.4597519409197309	0	0.0424626051037175	0	0.021966891876798205	0.5	0	120			0.5	0	120			0	120			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.3487597045986544	2	0.7053837835660771	0	0.21658737216222726	0.5	0	0	0.4287771021772576	0.3255347508852258	0
+
+i1	24.0	3	0	0.550003595028915764	0	0.0885300492967326	0	0.032101498633237815	0.5	0	200			0.5	0	200			0	200			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.5001797514457882	0	0.7281575562582824	0	0.21473866350413484	0.5	0	0	0.9339724040830764	0.9370967147799133	0
+i1	22.5	3	0	0.23417227525349773	2	0.1152497682133215	1	0.051169323723441	0.5	0	80			0.5	0	80			0	80			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.2208613762674885	2	0.6867891706819725	1	0.21266315701583194	0.5	0	0	0.3255347508852258	0.29966939177646945	0
+
+i1	29.5	2.5	0	1.3499188569653777	1	0.04970474004487529	3	0.01876300377370071	0.5	0	384			0.5	0	384			0	384			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.7495942848268886	1	0.3075260970738889	3	0.09664414107777532	0.5	0	0	0.75			0.7953641843165393	0
+i1	26.5	4.5	0	0.31671571974841295	0	0.10452898066434033	1	0.03224094665768318	0.5	1.8	128			0.5	0	128			0	128			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.5835785987420647	0	0.5061454985405744	1	0.15611565247990744	0.5	0	0	0.25			0.4220725643802984	0
+
+i1	31.0	3	0	0.366804140754954	1	0.05943874576367388	0	0.018000883387166967	0.5	0	288			0.5	0	288			0	288			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.83402070377477	1	0.2850686219687038	0	0.0863323570420145	0.5	0	0	0.7953641843165393	0.9936536185010042	0
+i1	31.0	2.5	0	0.5040608265050704	1	0.10310955222600678	0	0.032493299999495726	0.5	0	192			0.5	0	192			0	192			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.5203041325253523	1	0.19798849251717968	0	0.06239285638354268	0.5	0	0	0.4220725643802984	0.335445159776435	0
+
+i1	34.0	3.5	0	1.3014799226051834	3	0.06023397426434916	3	0.019156979569493766	0.5	0	384			0.5	0	384			0	384			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.507399613025917	3	0.17640334651295583	3	0.056103807633679115	0.5	0	0	0.9936536185010042	0.7406697721584111	0
+i1	32.5	3.5	0	0.5027001649160923	1	0.10330093767226266	1	0.03147675781201873	0.5	0	128			0.5	0	128			0	128			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.5135008245804613	1	0.6433472426436401	1	0.19603389671032354	0.5	0	0	0.335445159776435	0.3240820032517342	0
+
+i1	37.0	3.5	0	0.45948996487050464	1	0.04237544459670463	3	0.01923638492376555	0.5	2	273.06666666666666	0.5	0	273.06666666666666	0	273.06666666666666	1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.2974498243525234	1	0.28975619050605217	3	0.08935986990805087	0.5	0	0	0.7406697721584111	0.8584207972426853	0
+i1	35.5	2.5	0	0.3596416750581462	1	0.10690347897473684	1	0.03288755592211644	0.5	0	102.4			0.5	0	102.4			0	102.4			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.798208375290731	1	0.24712356453304107	1	0.07602456090483041	0.5	0	0	0.3240820032517342	0.4342289081289725	0
+
+i1	41.5	1.5	0	0.3637289315040262	3	0.051631558296677914	3	0.01819887930711494	0.5	0	230.4			0.5	0	230.4			0	230.4			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.818644657520131	3	0.27693481934633113	3	0.08177471886984922	0.5	0	0	0.8584207972426853	0.5780168514313639	0
+i1	37.0	3.5	0	0.46416124797032643	1	0.15058919587121797	3	0.034104466049599685	0.5	2	153.6			0.5	0	153.6			0	153.6			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.320806239851632	1	0.32950277656147975	3	0.10161495585496433	0.5	0	0	0.4342289081289725	0.04788905453186726	0
+
+i1	43.0	3	0	1.3943616504666322	2	0.044968305324784095	3	0.018874831258833488	0.5	0	368.64			0.5	0	368.64			0	368.64			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.9718082523331608	0	0.2841746382382248	3	0.08944305355532164	0.5	0	0	0.5780168514313639	0.7867822657346333	0
+i1	40.0	4.5	0	0.39256012412086416	0	0.1014318048775261	1	0.03254155103800917	0.5	0	115.2			0.5	0	115.2			0	115.2			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.962800620604321	0	0.6412320193889848	1	0.20572131701045668	0.5	0	0	0.04788905453186726	0.3791425420388767	0
+
+i1	46.0	3	0	0.3283954907488532	2	0.06076739968564496	1	0.018573790701731808	0.5	0	276.48			0.5	0	276.48			0	276.48			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.641977453744266	2	0.2068051638783684	1	0.06321079805594437	0.5	0	0	0.7867822657346333	0.5149851937033871	0
+i1	44.5	4.5	0	0.46631019921647887	3	0.10596215753570133	3	0.03090857321956998	0.5	0	172.8			0.5	0	172.8			0	172.8			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.3315509960823944	3	0.7123578469771338	3	0.20779083008393404	0.5	0	0	0.3791425420388767	0.0780062381911167	0
+
+i1	49.0	2.5	0	1.5320835354574154	1	0.05738734457814513	0	0.018813793237477158	0.5	0	345.6			0.5	0	345.6			0	345.6			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.660417677287077	1	0.36053962796571065	0	0.11819884792242222	0.5	0	0	0.5149851937033871	0.549258654321715	0
+i1	49.0	4.5	0	0.30911591099587366	0	0.11062486986313767	1	0.0338967441074558	0.5	0	129.6			0.5	0	129.6			0	129.6			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.5455795549793683	0	0.6030344479092105	1	0.18477675403413688	0.5	0	0	0.0780062381911167	0.06805273676373688	0
+
+i1	53.0	8.5	0	3.84977324739612453	0	0.06531425273240445	3	0.035004959963813365	0.75	2	311.04			0.5	0	311.04			0	311.04			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.0488662369806225	1	0.8451148593375102	3	0.2565442789156637	0.5	0	0	0.75			0.9522162773599566	0
+i1	53.0	8.5	0	4.0620301146284048	0	0.09092704369501462	1	0.05931088177373893	0.75	2	194.4			0.5	0	194.4			0	194.4			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	2.010150573142024	2	0.8046547171713018	1	0.24996344087882916	0.5	0	0	0.25			0.04710785241837599	0
+
+i1	54.5	7	0	2.93120713610035524	0	0.05570268523954906	1	0.03615182208324816	0.75	2	233.28			0.5	0	233.28			0	233.28			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.6560356805017762	0	0.24641980633539398	1	0.07699497187970666	0.5	0	0	0.9522162773599566	0.8770282350490528	0
+i1	55.5	6	0	2.8456565578806114	0	0.07188271655507544	2	0.0600836633571907	0.75	2	145.8			0.5	0	145.8			0	145.8			1	0.5	0	1	0	1	2	0.5	0	2	0	2	0	1.8782827894030572	1	1.1433983184005145	2	0.35802890890507	0.5	0	0	0.04710785241837599	0.3020739148384808	0
+</score>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList>
+    <marker time='0.0' name='Marker 1.5'/>
+  </markersList>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>
