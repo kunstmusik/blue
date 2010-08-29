@@ -14,6 +14,7 @@ import blue.noteProcessor.TempoMapper;
 import blue.settings.PlaybackSettings;
 import csnd.Csound;
 import csnd.CsoundArgVList;
+import csnd.csnd;
 import java.awt.Color;
 import java.io.IOException;
 import org.openide.util.Exceptions;
@@ -60,6 +61,7 @@ public class APIDiskRenderer {
             TempoMapper mapper,
             ArrayList parameters) {
 
+        csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
         BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
@@ -171,6 +173,7 @@ public class APIDiskRenderer {
     public String execWaitAndCollect(String[] args,
             File currentWorkingDirectory) {
         initialize();
+        csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
         BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();

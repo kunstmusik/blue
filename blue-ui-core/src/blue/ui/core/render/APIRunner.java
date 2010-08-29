@@ -25,6 +25,7 @@ import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import csnd.Csound;
 import csnd.CsoundArgVList;
+import csnd.csnd;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
@@ -98,6 +99,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
         }
 
 //        if (csound == null) {
+        csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
         blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
