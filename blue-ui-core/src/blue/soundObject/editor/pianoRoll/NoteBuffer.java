@@ -50,7 +50,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
         int noteHeight = pianoRoll.getNoteHeight();
 
         for (int i = 0; i < this.size(); i++) {
-            PianoNoteView noteView = (PianoNoteView) this.get(i);
+            PianoNoteView noteView = this.get(i);
             startX[i] = noteView.getX();
 
             startLayer[i] = noteView.getY() / noteHeight;
