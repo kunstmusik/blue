@@ -1,0 +1,346 @@
+<blueData version='2.0.9'>
+  <projectProperties>
+    <title></title>
+    <author></author>
+    <notes></notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FMbot-00</name>
+        <comment></comment>
+        <globalOrc>gi_sine_&lt;INSTR_ID&gt;	ftgenonce 0,0,65536,10,1
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>ifn = gi_sine_&lt;INSTR_ID&gt;
+seed 0
+irnd random 1,5
+irnd = round(irnd)*2
+ibeat = p3/irnd
+iter = 1
+start:    timout    0, ibeat, continue    ; BRANCH TO CONTINUE FOR ibeat seconds, THEN...
+          reinit    start               ; REINIT ALL, BEGINNING WITH THE TIMOUT
+continue:           
+iamp random 7000,9500				; random amplitude
+imf random 1,7					
+imf = round(imf)				; random modulation frequency (harmonics 1 to 7)	
+imi random 2,5					; random modulation index
+invat random ibeat*.05,ibeat*.5			; random amplitude envelope value
+invac random -3,3				; random amplitude envelope value
+inva random .001,1				; random amplitude envelope value
+invb random .001,1				; random amplitude envelope value
+invc random -5,5				; random amplitude envelope value
+invd random -3,3				; random amplitude envelope value
+inve random .1,.4				; random amplitude envelope value
+knv transeg .0001,invat,invac,inva,ibeat*.1,invc,invb,ibeat*inve,invd,.0001 ; amplitude envelope
+kmi = imi*knv					; Modulation Index = amplitude envelope (for horn-like sounds)
+ifq random 1,13					; random root note = harmonic 1 to 13 of base frequency
+ifq = round(ifq)*32				; set base frequency = 32Hz
+ipan random -1,1				; random panning
+a0 foscili knv,ifq,1,imf,kmi,ifn      		; FM signal generator
+a0 = (a0/(1+(iter*.1)))*iamp			; amplitude scale and envelope
+a0 dcblock a0					; dcblock filter
+kL = sqrt(2) / 2 * cos(ipan) + sin(ipan) 	; CONSTANT POWER PANNING
+kR = sqrt(2) / 2 * cos(ipan) - sin(ipan)	; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
+aL = a0 * kL					; assign left channel
+aR = a0 * kR					; assign right channel
+blueMixerOut aL,aR	       			; OUTPUT
+iter = iter + 1					; iteration counter
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>2.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>Freeverbw</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>arev1,arev2 freeverb ain1,ain2,&lt;rsize&gt;,&lt;hfdamp&gt;
+aout1 = (arev1*&lt;level&gt;)+(ain1*(1-&lt;level&gt;))/2
+aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))/2
+</code>
+            <comments>A basic wrapper for the freeverb opcode. by Brian Wong, 2009</comments>
+            <opcodeList/>
+            <graphicInterface editEnabled='true'>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>hfdamp</objectName>
+                <x>182</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.61208713</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName>roomsize</objectName>
+                <x>105</x>
+                <y>157</y>
+                <label>Room Size</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName>bsbObj0</objectName>
+                <x>185</x>
+                <y>157</y>
+                <label>HF Damp</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>rsize</objectName>
+                <x>105</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.62028205</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>level</objectName>
+                <x>27</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.5623676</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>43</x>
+                <y>156</y>
+                <label>Level</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>44</x>
+                <y>19</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+3&quot; face=&quot;Comic Sans MS&quot; color=rgb(150,180,127)&gt;Freeverbw&lt;/font&gt;&lt;/htmL&gt;</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='-1019409664' name='hfdamp' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.61208713'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.61208713'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-1019409660' name='level' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.5623676'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.5623676'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='-1019409662' name='rsize' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.62028205'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.62028205'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='-1019409904' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1019409907' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables>                     
+</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>64</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>10.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>Instrument 1701</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>i1	0.0	20
+i1	0.0	20
+i1	0.0	20
+i1	20	10
+i1	20	10
+i1	20	10
+i1	30	5
+i1	30	5
+i1	30	5
+i1      30      10
+i1      30      10
+i1      35      5
+i1      35      5
+i1      35      5
+i1      40      10
+i1      40      10
+i1      45      5
+i1      45      5
+i1      45      5
+i1      50      20
+i1      50      20
+i1      50      20
+i1      50      20
+i1      70      10
+i1      70      10
+i1      70      10
+i1      70      10
+i1      80      20
+i1      80      10
+i1      80      10
+i1      80      10
+i1      80      10
+i1      80      5
+i1      80      5
+i1      85      5
+i1      85      5
+i1      90      20
+i1      90      20
+i1      90      10
+i1      90      10
+i1      90      10
+i1      90      10
+i1      90      5
+i1      90      5
+i1      95      5
+i1      95      5
+i1      95      5
+i1      100      20
+i1      100      20
+i1      100      20
+i1      100      10
+i1      100      10
+i1      100      10
+i1      100      10
+i1      100      10
+i1      100      5
+i1      100      5
+i1      100      5
+i1      105      5
+i1      105      5
+i1      105      5
+i1      110      10
+i1      110      10
+i1      110      10
+i1      110      10
+i1      110      10
+i1      110      10
+i1      110      5
+i1      110      5
+i1      110      5
+i1      110      5
+i1      115      5
+i1      115      5
+i1      115      5
+i1      115      5
+
+
+
+
+</score>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+</blueData>
