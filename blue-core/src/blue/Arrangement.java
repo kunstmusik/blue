@@ -35,6 +35,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import blue.automation.Automatable;
 import blue.automation.AutomatableCollectionListener;
 import blue.mixer.Mixer;
+import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
@@ -388,7 +389,8 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
      * @param mixer
      * @param nchnls
      */
-    public void preGenerateOrchestra(Mixer mixer, int nchnls) {
+    public void preGenerateOrchestra(Mixer mixer, int nchnls,
+            ArrayList<Instrument> alwaysOnInstruments) {
         if (preGenerationCache == null) {
             preGenerationCache = new StrBuilder();
             preGenList = new ArrayList<InstrumentAssignment>();
@@ -405,6 +407,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
             }
 
             appendInstrumentText(preGenerationCache, ia, mixer, nchnls);
+
+            Instrument alwaysOnInstr = createAlwaysOnInstrument(ia, mixer,
+                    nchnls);
+
+            if (alwaysOnInstr != null) {
+                alwaysOnInstruments.add(alwaysOnInstr);
+            }
         }
     }
 
@@ -456,6 +465,26 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
         buffer.append(transformed).append("\n");
         buffer.append("\tendin\n\n");
+    }
+
+    private Instrument createAlwaysOnInstrument(InstrumentAssignment ia,
+            Mixer mixer, int nchnls) {
+        Instrument instr = ia.instr;
+
+        String alwaysOnInstrCode = instr.generateAlwaysOnInstrument();
+
+        if (alwaysOnInstrCode == null || alwaysOnInstrCode.trim().isEmpty()) {
+            return null;
+        }
+
+        String transformed = convertBlueMixerOut(mixer, ia.arrangementId,
+                alwaysOnInstrCode,
+                nchnls);
+
+        GenericInstrument retVal = new GenericInstrument();
+        retVal.setText(transformed);
+
+        return retVal;
     }
 
     public void clearUnusedInstrAssignments() {
@@ -519,16 +548,52 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     // comments
     private String convertBlueMixerOut(Mixer mixer, String arrangementId,
             String input, int nchnls) {
-        if (input.indexOf("blueMixerOut") < 0) {
+        if (input.indexOf("blueMixerOut") < 0 && input.indexOf("blueMixerIn") < 0) {
             return input;
         }
 
         StrBuilder buffer = new StrBuilder();
         String[] lines = NEW_LINES.split(input);
 
+        boolean blueMixerInFound = false;
+
         for (String line : lines) {
 
-            if (line.trim().startsWith("blueMixerOut")) {
+            int mixerInIndex = line.indexOf("blueMixerIn");
+
+            if (mixerInIndex > 0) {
+
+                String noCommentLine = TextUtilities.stripSingleLineComments(
+                        line);
+
+                if(!noCommentLine.contains("blueMixerIn")) {
+                    buffer.append(line).append("\n");
+                    continue;
+                }
+
+                if (mixer == null || !mixer.isEnabled()) {
+                    throw new RuntimeException(
+                            "Error: Instrument uses blueMixerIn but mixer is not enabled");
+                }
+
+                blueMixerInFound = true;
+
+                String argText = noCommentLine.substring(0, mixerInIndex).trim();
+
+                String[] args = argText.split(",");
+
+                for (int i = 0; i < nchnls && i < args.length; i++) {
+                    String arg = args[i];
+
+                    String var = Mixer.getChannelVar(arrangementId, i);
+
+                    buffer.append(argText).append(" = ");
+                    buffer.append(var).append("\n");
+
+                }
+
+            } else if (line.trim().startsWith("blueMixerOut")) {
+
                 String argText = line.trim().substring(12);
 
                 String[] args = argText.split(",");
@@ -560,8 +625,12 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                                     i - 1);
 
                             buffer.append(var).append(" = ");
-                            buffer.append(var).append(" + ").append(arg).append(
-                                    "\n");
+
+                            if (!blueMixerInFound) {
+                                buffer.append(var).append(" + ");
+                            }
+
+                            buffer.append(arg).append("\n");
 
                         }
                     }
@@ -578,8 +647,12 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                             String var = Mixer.getChannelVar(arrangementId, i);
 
                             buffer.append(var).append(" = ");
-                            buffer.append(var).append(" + ").append(arg).append(
-                                    "\n");
+                            
+                            if (!blueMixerInFound) {
+                                buffer.append(var).append(" + ");
+                            }
+
+                            buffer.append(arg).append("\n");
 
                         }
                     }

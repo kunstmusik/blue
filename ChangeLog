@@ -25,6 +25,9 @@ blue
     [new] - Added Brian Wong's "Pythongorean Wanderers" and "FMBot-00" to 
             examples/pieces/brianWong
 
+    [new] - Added ability for BlueSynthBuilder instruments to have Always-On
+            instrument code
+
 >Notes for 2.1.0<
 [released 2010.06.09]
 

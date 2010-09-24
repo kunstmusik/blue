@@ -63,6 +63,8 @@ public class BSBCodeEditor extends JComponent {
 
     BlueEditorPane codePane = new BlueEditorPane();
 
+    BlueEditorPane alwaysOnCodePane = new BlueEditorPane();
+
     BlueEditorPane globalOrcEditPane = new BlueEditorPane();
 
     BlueEditorPane globalScoEditPane = new BlueEditorPane();
@@ -79,6 +81,7 @@ public class BSBCodeEditor extends JComponent {
 
             public void setEditing(boolean isEditing) {
                 codePane.setEnabled(isEditing);
+                alwaysOnCodePane.setEnabled(isEditing);
                 globalOrcEditPane.setEnabled(isEditing);
                 globalScoEditPane.setEnabled(isEditing);
 
@@ -90,6 +93,7 @@ public class BSBCodeEditor extends JComponent {
 
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setInstrumentText(codePane.getText());
@@ -97,8 +101,20 @@ public class BSBCodeEditor extends JComponent {
                     }
                 });
 
+        alwaysOnCodePane.getDocument().addDocumentListener(
+                new SimpleDocumentListener() {
+
+                    public void documentChanged(DocumentEvent e) {
+                        if (bsb != null) {
+                            bsb.setAlwaysOnInstrumentText(alwaysOnCodePane.
+                                    getText());
+                        }
+                    }
+                });
+
         globalOrcEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setGlobalOrc(globalOrcEditPane.getText());
@@ -108,6 +124,7 @@ public class BSBCodeEditor extends JComponent {
 
         globalScoEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setGlobalSco(globalScoEditPane.getText());
@@ -120,6 +137,7 @@ public class BSBCodeEditor extends JComponent {
 
         final JTabbedPane tabs = new JTabbedPane(JTabbedPane.BOTTOM);
         tabs.add(BlueSystem.getString("instrument.instrumentText"), codePane);
+        tabs.add("Always-On Instrument Text", alwaysOnCodePane);
         tabs.add(BlueSystem.getString("global.orchestra"), globalOrcEditPane);
         tabs.add(BlueSystem.getString("global.score"), globalScoEditPane);
 
@@ -140,17 +158,18 @@ public class BSBCodeEditor extends JComponent {
                     undo.addEdit(wrapper);
                 }
             }
-
         };
 
         codePane.getDocument().addUndoableEditListener(ul);
+        alwaysOnCodePane.getDocument().addUndoableEditListener(ul);
         globalOrcEditPane.getDocument().addUndoableEditListener(ul);
         globalScoEditPane.getDocument().addUndoableEditListener(ul);
 
-        Action[] undoActions = new Action[] { new UndoAction(undo),
-                new RedoAction(undo) };
+        Action[] undoActions = new Action[]{new UndoAction(undo),
+            new RedoAction(undo)};
 
         SwingUtil.installActions(codePane, undoActions);
+        SwingUtil.installActions(alwaysOnCodePane, undoActions);
         SwingUtil.installActions(globalOrcEditPane, undoActions);
         SwingUtil.installActions(globalScoEditPane, undoActions);
 
@@ -159,6 +178,7 @@ public class BSBCodeEditor extends JComponent {
         initActions();
 
         codePane.setEnabled(false);
+        alwaysOnCodePane.setEnabled(false);
         globalOrcEditPane.setEnabled(false);
         globalScoEditPane.setEnabled(false);
 
@@ -188,9 +208,9 @@ public class BSBCodeEditor extends JComponent {
             return;
         }
 
-        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem
-                .getString("instrument.bsb.codeComplete.message"), BlueSystem
-                .getString("instrument.bsb.codeComplete.title"),
+        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem.
+                getString("instrument.bsb.codeComplete.message"), BlueSystem.
+                getString("instrument.bsb.codeComplete.title"),
                 JOptionPane.INFORMATION_MESSAGE, null, matches.toArray(),
                 matches.get(0));
 
@@ -226,38 +246,37 @@ public class BSBCodeEditor extends JComponent {
 
         KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
                 KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()
-                        | InputEvent.SHIFT_DOWN_MASK, false);
+                | InputEvent.SHIFT_DOWN_MASK, false);
 
-        InputMap inputMap = codePane.getInputMap(WHEN_FOCUSED);
-        ActionMap actionMap = codePane.getActionMap();
 
-        inputMap.put(codeCompleteKeyStroke, "bsbCodeComplete");
-
-        actionMap.put("bsbCodeComplete", codeCompleteAction);
-
-        inputMap = globalOrcEditPane.getInputMap(WHEN_FOCUSED);
-        actionMap = globalOrcEditPane.getActionMap();
-
-        inputMap.put(codeCompleteKeyStroke, "bsbCodeComplete");
-
-        actionMap.put("bsbCodeComplete", codeCompleteAction);
-
-        inputMap = globalScoEditPane.getInputMap(WHEN_FOCUSED);
-        actionMap = globalScoEditPane.getActionMap();
-
-        inputMap.put(codeCompleteKeyStroke, "bsbCodeComplete");
-
-        actionMap.put("bsbCodeComplete", codeCompleteAction);
+        setupCodeCompleteAction(codePane, codeCompleteKeyStroke,
+                codeCompleteAction);
+        setupCodeCompleteAction(alwaysOnCodePane, codeCompleteKeyStroke,
+                codeCompleteAction);
+        setupCodeCompleteAction(globalOrcEditPane, codeCompleteKeyStroke,
+                codeCompleteAction);
+        setupCodeCompleteAction(globalScoEditPane, codeCompleteKeyStroke,
+                codeCompleteAction);
 
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-                KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem
-                        .getMenuShortcutKey()), "switchEditMode");
+                KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.
+                getMenuShortcutKey()), "switchEditMode");
         this.getActionMap().put("switchEditMode", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
                 editBox.doClick();
             }
         });
+    }
+
+    private void setupCodeCompleteAction(JComponent component,
+            KeyStroke codeCompleteKeyStroke, Action codeCompleteAction) {
+
+        InputMap inputMap = component.getInputMap(WHEN_FOCUSED);
+        ActionMap actionMap = component.getActionMap();
+
+        inputMap.put(codeCompleteKeyStroke, "bsbCodeComplete");
+        actionMap.put("bsbCodeComplete", codeCompleteAction);
     }
 
     /**
@@ -268,6 +287,9 @@ public class BSBCodeEditor extends JComponent {
 
         codePane.setText(bsb.getInstrumentText());
         codePane.setCaretPosition(0);
+
+        alwaysOnCodePane.setText(bsb.getAlwaysOnInstrumentText());
+        alwaysOnCodePane.setCaretPosition(0);
 
         globalOrcEditPane.setText(bsb.getGlobalOrc());
         globalOrcEditPane.setCaretPosition(0);
@@ -287,5 +309,4 @@ public class BSBCodeEditor extends JComponent {
 
         undo.discardAllEdits();
     }
-
 }

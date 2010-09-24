@@ -83,4 +83,7 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
         return ObjectUtilities.clone(this);
     }
 
+    public String generateAlwaysOnInstrument() {
+        return null;
+    }
 }

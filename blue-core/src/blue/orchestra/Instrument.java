@@ -123,6 +123,15 @@ public interface Instrument {
     public String generateInstrument();
 
     /**
+     * Returns a String value that contains Csound instrument text that is
+     * to be used for an always-on instrument code.
+     *
+     * Should not include "instr #" or "endin", as this is added by the
+     * orchestra at compile-time.
+     */
+    public String generateAlwaysOnInstrument();
+
+    /**
      * During CSD generation, an instance of Tables is passed into all
      * Instruments so that Instruments can add Csound ftables if they need to.
      */

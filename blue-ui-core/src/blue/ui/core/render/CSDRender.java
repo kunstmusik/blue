@@ -114,9 +114,19 @@ public class CSDRender {
         }
 
         int nchnls = getNchnls(data, true);
-        arrangement.preGenerateOrchestra(mixer, nchnls);
+
+        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<Instrument>();
+
+        arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
+
+        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
 
         NoteList generatedNotes = null;
+
+        for (Instrument instrument : alwaysOnInstruments) {
+            int instrId = arrangement.addInstrumentAtEnd(instrument);
+            globalSco += "i" + instrId + " 0 " + totalDur + "\n";
+        }
 
         if (usingAPI) {
             ArrayList parameters = ParameterHelper.getAllParameters(
@@ -127,8 +137,7 @@ public class CSDRender {
 
         }
 
-
-        if (mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies())) {
+        if (generateMixer) {
 
             clearUnusedMixerChannels(mixer, arrangement);
 
@@ -136,8 +145,7 @@ public class CSDRender {
             int instrId = arrangement.addInstrumentAtEnd(mixer.
                     getMixerInstrument(udos, nchnls));
 
-            float mixerNoteDur = 3600f;
-            globalSco += "i" + instrId + " 0 " + mixerNoteDur;
+            globalSco += "i" + instrId + " 0 " + totalDur;
 
         }
 
@@ -294,9 +302,29 @@ public class CSDRender {
 
         int nchnls = getNchnls(data, isRealTime);
 
-        arrangement.preGenerateOrchestra(mixer, nchnls);
+        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<Instrument>();
+        
+        arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
 
-        if (mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies())) {
+        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
+
+        if (generateMixer) {
+            globalDur += mixer.getExtraRenderTime();
+        }
+
+        for (Instrument instrument : alwaysOnInstruments) {
+            int instrId = arrangement.addInstrumentAtEnd(instrument);
+
+            try {
+                Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
+                generatedNotes.addNote(n);
+            } catch (NoteParseException ex) {
+                ex.printStackTrace();
+            }
+
+        }
+
+        if (generateMixer) {
 
             globalDur += mixer.getExtraRenderTime();
 

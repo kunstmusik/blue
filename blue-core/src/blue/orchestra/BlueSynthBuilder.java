@@ -58,6 +58,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
     String instrumentText;
 
+    private String alwaysOnInstrumentText;
+
     String globalOrc;
 
     String globalSco;
@@ -85,6 +87,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         }
 
         instrumentText = "";
+        alwaysOnInstrumentText = "";
         globalOrc = "";
         globalSco = "";
     }
@@ -108,6 +111,18 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     public String generateInstrument() {
         String retVal = bsbCompilationUnit
                 .replaceBSBValues(getInstrumentText());
+
+        if (udoReplacementValues != null) {
+            retVal = TextUtilities.replaceOpcodeNames(udoReplacementValues,
+                    retVal);
+        }
+
+        return retVal;
+    }
+
+    public String generateAlwaysOnInstrument() {
+        String retVal = bsbCompilationUnit
+                .replaceBSBValues(getAlwaysOnInstrumentText());
 
         if (udoReplacementValues != null) {
             retVal = TextUtilities.replaceOpcodeNames(udoReplacementValues,
@@ -158,6 +173,8 @@ public class BlueSynthBuilder extends AbstractInstrument implements
                 bsb.setGlobalSco(node.getTextString());
             } else if (nodeName.equals("instrumentText")) {
                 bsb.setInstrumentText(node.getTextString());
+            } else if (nodeName.equals("alwaysOnInstrumentText")) {
+                bsb.setAlwaysOnInstrumentText(node.getTextString());
             } else if (nodeName.equals("graphicInterface")) {
                 bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
             } else if (nodeName.equals("presetGroup")) {
@@ -200,6 +217,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         retVal.addElement("globalOrc").setText(this.getGlobalOrc());
         retVal.addElement("globalSco").setText(this.getGlobalSco());
         retVal.addElement("instrumentText").setText(this.getInstrumentText());
+        retVal.addElement("alwaysOnInstrumentText").setText(this.getAlwaysOnInstrumentText());
 
         retVal.addElement(graphicInterface.saveAsXML());
         retVal.addElement(parameterList.saveAsXML());
@@ -244,6 +262,20 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      */
     public void setInstrumentText(String instrumentText) {
         this.instrumentText = (instrumentText == null) ? "" : instrumentText;
+    }
+
+    /**
+     * @return the alwaysOnInstrumentText
+     */
+    public String getAlwaysOnInstrumentText() {
+        return alwaysOnInstrumentText;
+    }
+
+    /**
+     * @param alwaysOnInstrumentText the alwaysOnInstrumentText to set
+     */
+    public void setAlwaysOnInstrumentText(String alwaysOnInstrumentText) {
+        this.alwaysOnInstrumentText = alwaysOnInstrumentText;
     }
 
     /**
