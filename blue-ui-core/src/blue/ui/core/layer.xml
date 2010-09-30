@@ -57,6 +57,12 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" stringvalue="false"/>
             </file>
+            <file name="blue-ui-core-project-stems-RenderStemsAction.instance">
+                <attr name="delegate" newvalue="blue.ui.core.project.stems.RenderStemsAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.stems.Bundle#CTL_RenderStemsAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
             <file name="blue-ui-core-project-RenderStopProjectAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="delegate" newvalue="blue.ui.core.project.RenderStopProjectAction"/>
@@ -241,6 +247,10 @@
     </folder>
     <folder name="Menu">
         <folder name="File">
+            <file name="blue-ui-core-project-stems-RenderStemsAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-stems-RenderStemsAction.instance"/>
+                <attr name="position" intvalue="1615"/>
+            </file>
             <file name="blue-ui-core-project-RenderToDiskAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="1595"/>
@@ -331,12 +341,12 @@
 
         <folder name="Script">
             <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-            
+
             <file name="blue-ui-core-script-ReinitializeJythonAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Script/blue-ui-core-script-ReinitializeJythonAction.instance"/>
                 <attr name="position" intvalue="110"/>
             </file>
-        </folder> 
+        </folder>
 
         <folder name="Window">
             <file name="Output_hidden"/>
@@ -344,7 +354,7 @@
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            
+
             <file name="SoundObjectPropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectPropertiesAction.instance"/>
                 <attr name="position" intvalue="200"/>
@@ -439,7 +449,7 @@
             <file name="blue-ui-core-project-CurrentProjectsAction.instance">
                 <attr name="position" intvalue="10000"/>
             </file>
-            
+
         </folder>
     </folder>
 
@@ -531,7 +541,7 @@
     <folder name="Toolbars">
         <folder name="Project">
             <attr name="position" intvalue="0"/>
-            
+
             <file name="blue-ui-core-MainToolbarAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Edit/blue-ui-core-MainToolbarAction.instance"/>
                 <attr name="position" intvalue="0"/>
@@ -569,7 +579,7 @@
             <file name="BlueLiveTopComponent.settings" url="BlueLiveTopComponentSettings.xml">
                 <attr name="position" intvalue="700"/>
             </file>
-         
+
             <file name="MarkersTopComponent.settings" url="MarkersTopComponentSettings.xml"/>
             <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
             <file name="AudioFilePlayerTopComponent.settings" url="AudioFilePlayerTopComponentSettings.xml"/>
