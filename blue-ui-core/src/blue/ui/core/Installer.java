@@ -72,6 +72,7 @@ import blue.ui.core.soundObject.renderer.TrackerRenderer;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.ModuleInstall;
@@ -87,8 +88,11 @@ import org.syntax.jedit.tokenmarker.Token;
 public class Installer extends ModuleInstall {
 
     BackupFileSaver backupFileSaver = new BackupFileSaver();
-
+    private ChangeListener textColorChangeListener;
     private boolean textDefaultsInitialized = false;
+    private PropertyChangeListener windowTitlePropertyChangeListener;
+
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
 
     @Override
     public void restored() {
@@ -102,14 +106,25 @@ public class Installer extends ModuleInstall {
 
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+        textColorChangeListener = new ChangeListener() {
+
+            public void stateChanged(ChangeEvent e) {
+                setTextColors();
+            }
+        };
+
+        windowTitlePropertyChangeListener = new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
                 if (WindowManager.getDefault().getMainWindow() != null) {
                     setWindowTitle();
                 }
             }
-        });
+        };
+
+
+
+        BlueProjectManager.getInstance().addPropertyChangeListener(windowTitlePropertyChangeListener);
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
@@ -146,11 +161,17 @@ public class Installer extends ModuleInstall {
 
         MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
 
-        TextColorsSettings.getInstance().addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                setTextColors();
-            }
-        });
+        TextColorsSettings.getInstance().addChangeListener(textColorChangeListener);
+    }
+
+    @Override
+    public void uninstalled() {
+        ParameterTimeManagerFactory.setInstance(null);
+        BlueProjectManager.getInstance().removePropertyChangeListener(windowTitlePropertyChangeListener);
+        MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
+        TextColorsSettings.getInstance().removeChangeListener(textColorChangeListener);
+
+        logger.info("blue-ui-core Installer uninstalled");
     }
 
     private void setWindowTitle() {
