@@ -23,13 +23,14 @@ import blue.soundObject.pianoRoll.Scale;
 import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 import java.text.MessageFormat;
 
 /**
  *
  * @author syi
  */
-public class MidiInputProcessor {
+public class MidiInputProcessor implements Serializable {
 
     private static final MessageFormat PCH_FORMAT = new MessageFormat("{0}.{1}");
 

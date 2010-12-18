@@ -28,6 +28,10 @@ blue
     [new] - Added ability for BlueSynthBuilder instruments to have Always-On
             instrument code
 
+    [fix] - Audition SoundObjects caused a null pointer due to MIDI class
+            introduced in 2.1.0
+
+
 >Notes for 2.1.0<
 [released 2010.06.09]
 
