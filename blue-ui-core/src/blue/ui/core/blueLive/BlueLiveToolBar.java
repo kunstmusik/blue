@@ -50,7 +50,7 @@ public class BlueLiveToolBar extends JToolBar {
 
     APIRunner apiRunner;
 
-    CommandlineRunner commandlineRunner = new CommandlineRunner(this);
+    CommandlineRunner commandlineRunner = new CommandlineRunner();
 
     CSDRunner csdRunner = null;
 

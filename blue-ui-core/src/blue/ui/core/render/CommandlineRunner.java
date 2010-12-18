@@ -1,7 +1,6 @@
 package blue.ui.core.render;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
 import blue.noteProcessor.TempoMapper;
 import blue.ui.core.score.AuditionManager;
 import blue.score.tempo.Tempo;
@@ -30,6 +28,7 @@ import blue.utility.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import org.openide.awt.StatusDisplayer;
+import org.openide.util.Exceptions;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -50,14 +49,12 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
 
     private boolean shouldStop = false;
 
-    private Component parent;
-
     JCheckBox disableMessagesBox = null;
 
     JPanel errorPanel = null;
 
-    public CommandlineRunner(Component parent) {
-        this.parent = parent;
+    public CommandlineRunner() {
+        
         console.addPlayModeListener(this);
 
         AuditionManager audition = AuditionManager.getInstance();
@@ -331,7 +328,9 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
                 try {
                     render();
                 } catch (SoundObjectException e) {
-                    ExceptionDialog.showExceptionDialog(parent, e);
+
+                    Exceptions.printStackTrace(e);
+//                    ExceptionDialog.showExceptionDialog(parent, e);
                     notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
                 }
             } else {

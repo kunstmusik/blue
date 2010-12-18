@@ -98,7 +98,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     APIRunner apiRunner;
 
-    CommandlineRunner commandlineRunner = new CommandlineRunner(this);
+    CommandlineRunner commandlineRunner = new CommandlineRunner();
 
     JCheckBox loopBox = new JCheckBox();
 

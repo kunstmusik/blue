@@ -64,7 +64,7 @@ public class RenderToDiskUtility {
         return instance;
     }
 
-    void renderToDisk(BlueData data, boolean playAfterRender) {
+    public void renderToDisk(BlueData data, boolean playAfterRender) {
 
 //        if (renderToDiskDialog == null) {
 //            renderToDiskDialog = new RenderToDiskDialog(
