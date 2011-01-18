@@ -16,7 +16,7 @@ public class APIUtilities {
     public static boolean isCsoundAPIAvailable() {
         if(!hasBeenInitialized) {
             try {
-                Class c = Class.forName("blue.utility.APITest");
+                Class c = Class.forName("blue.utility.APITest", true, Thread.currentThread().getContextClassLoader());
                 APIInterface apiInterface = (APIInterface) c.newInstance();
                 
                 apiAvailable = apiInterface.isCsoundAPIAvailable();
@@ -24,7 +24,7 @@ public class APIUtilities {
                 apiAvailable = false;
             }
             hasBeenInitialized = true;
-        } 
+        }
         
         return apiAvailable;
     }
