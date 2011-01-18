@@ -176,12 +176,16 @@ public class BlueLiveToolBar extends JToolBar {
 
         csdRunner.setData(data);
 
+        new Thread() {
+            public void run() {
         try {
             csdRunner.renderForBlueLive();
         } catch (SoundObjectException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
+            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
                     soe);
         }
+            }
+        }.run();
     }
 
     public void midiButtonActionPerformed() {
