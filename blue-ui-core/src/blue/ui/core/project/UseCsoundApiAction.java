@@ -20,6 +20,7 @@
 package blue.ui.core.project;
 
 import blue.settings.GeneralSettings;
+import blue.utility.APIUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JCheckBoxMenuItem;
@@ -33,21 +34,28 @@ import org.openide.awt.DynamicMenuContent;
  */
 public class UseCsoundApiAction extends JMenuItem implements DynamicMenuContent {
 
+    private JCheckBoxMenuItem cBoxMenuItem = null;
+
     public JMenuItem getMenuPresenter() {
 
-        JCheckBoxMenuItem cBoxMenuItem = new JCheckBoxMenuItem("Use Csound API");
-        cBoxMenuItem.addActionListener(new ActionListener() {
+        if (cBoxMenuItem == null) {
+            cBoxMenuItem = new JCheckBoxMenuItem("Use Csound API");
+            cBoxMenuItem.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
-                GeneralSettings settings = GeneralSettings.getInstance();
-                settings.setUsingCsoundAPI(!settings.isUsingCsoundAPI());
-                settings.save();
-            }
-        });
+                public void actionPerformed(ActionEvent e) {
+                    GeneralSettings settings = GeneralSettings.getInstance();
+                    settings.setUsingCsoundAPI(!settings.isUsingCsoundAPI());
+                    settings.save();
+                }
+            });
 
+        }
+        
 
         cBoxMenuItem.setSelected(
                 GeneralSettings.getInstance().isUsingCsoundAPI());
+
+        cBoxMenuItem.setEnabled(APIUtilities.isCsoundAPIAvailable());
 
         return cBoxMenuItem;
     }
