@@ -13,6 +13,12 @@
         <os family="windows" />
     </condition>
 
+    <condition property="confReplacementString"
+            value="-J-Xms256m -J-Xmx768m -J-d32"
+            else="-J-Xms256m -J-Xmx768m">
+        <os family="mac"/>
+    </condition>
+
 
     <target name="build-zip" depends="suite.build-zip,blue-manual">
     <!-- <target name="build-zip" depends="suite.build-zip"> -->
@@ -94,7 +100,7 @@
             overwrite="true">
             <filterchain>
                 <replacestring from="$${branding.token}" to="${branding.token}"/>
-                <replacestring from="-J-Xms24m -J-Xmx64m" to="-J-Xms256m -J-Xmx768m"/>
+                <replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>
             </filterchain>
         </copy>
     </target>
