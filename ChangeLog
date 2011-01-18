@@ -28,6 +28,10 @@ blue
     [new] - Added ability for BlueSynthBuilder instruments to have Always-On
             instrument code
 
+    [new] - OSX - made blue.conf default to have -J-d32 in the default_args to
+            force using 32-bit mode Java on OSX; this enables working with
+            Csound API when using the Csound 5.13 OSX Installer
+
     [fix] - Audition SoundObjects caused a null pointer due to MIDI class
             introduced in 2.1.0
 
