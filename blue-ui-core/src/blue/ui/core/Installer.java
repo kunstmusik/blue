@@ -52,6 +52,7 @@ import blue.soundObject.editor.PythonEditor;
 import blue.soundObject.editor.SoundObjectEditor;
 import blue.soundObject.editor.TrackerEditor;
 import blue.soundObject.editor.ZakLineEditor;
+import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import blue.ui.core.orchestra.editor.BlueX7Editor;
@@ -202,6 +203,7 @@ public class Installer extends ModuleInstall {
     public void close() {
         backupFileSaver.quitFileSaver();
         MainToolBar.getInstance().stopRendering();
+        BlueLiveToolBar.getInstance().stopRendering();
 
         saveLibraries();
 

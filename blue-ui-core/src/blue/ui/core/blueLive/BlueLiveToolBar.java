@@ -47,21 +47,13 @@ import javax.swing.SwingUtilities;
 public class BlueLiveToolBar extends JToolBar {
 
     BlueData data = null;
-
     APIRunner apiRunner;
-
     CommandlineRunner commandlineRunner = new CommandlineRunner();
-
     CSDRunner csdRunner = null;
-
     JToggleButton runButton = new JToggleButton("blueLive");
-
     JButton refreshButton = new JButton("Recompile");
-
     JButton allNotesOffButton = new JButton("All Notes Off");
-
     JToggleButton midiButton = new JToggleButton("MIDI Input");
-
     private static BlueLiveToolBar instance = null;
 
     public static BlueLiveToolBar getInstance() {
@@ -98,7 +90,6 @@ public class BlueLiveToolBar extends JToolBar {
             public void actionPerformed(ActionEvent e) {
                 runButtonActionPerformed();
             }
-
         });
 
         allNotesOffButton.addActionListener(new ActionListener() {
@@ -113,7 +104,6 @@ public class BlueLiveToolBar extends JToolBar {
             public void actionPerformed(ActionEvent e) {
                 midiButtonActionPerformed();
             }
-
         });
 
         this.add(runButton);
@@ -141,9 +131,8 @@ public class BlueLiveToolBar extends JToolBar {
 
         if (project != null) {
             this.data = project.getData();
-        } 
+        }
     }
-
 
     protected void runButtonActionPerformed() {
         if (data == null) {
@@ -177,13 +166,14 @@ public class BlueLiveToolBar extends JToolBar {
         csdRunner.setData(data);
 
         new Thread() {
+
             public void run() {
-        try {
-            csdRunner.renderForBlueLive();
-        } catch (SoundObjectException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
-                    soe);
-        }
+                try {
+                    csdRunner.renderForBlueLive();
+                } catch (SoundObjectException soe) {
+                    ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
+                            soe);
+                }
             }
         }.run();
     }
@@ -191,7 +181,7 @@ public class BlueLiveToolBar extends JToolBar {
     public void midiButtonActionPerformed() {
         boolean selected = midiButton.isSelected();
 
-        if(selected) {
+        if (selected) {
             MidiInputManager.getInstance().start();
         } else {
             MidiInputManager.getInstance().stop();
@@ -210,5 +200,19 @@ public class BlueLiveToolBar extends JToolBar {
 
     public boolean isRunning() {
         return csdRunner != null && csdRunner.isRunning();
+    }
+
+    public void stopRendering() {
+        if (csdRunner != null && csdRunner.isRunning()) {
+            csdRunner.stop();
+
+            csdRunner = null;
+
+            if (runButton.isSelected()) {
+                runButton.setSelected(false);
+            }
+
+            return;
+        }
     }
 }

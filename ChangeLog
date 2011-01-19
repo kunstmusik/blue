@@ -35,6 +35,9 @@ blue
     [fix] - Audition SoundObjects caused a null pointer due to MIDI class
             introduced in 2.1.0
 
+    [fix] - shutdown blueLive on application exit to prevent Csound crash if
+            instance is running
+
 
 >Notes for 2.1.0<
 [released 2010.06.09]
