@@ -38,6 +38,9 @@ blue
     [fix] - shutdown blueLive on application exit to prevent Csound crash if
             instance is running
 
+    [fix] - Updated pmask to work with newer jython/python by replacing whrandom
+            with random.WeichmannHill()
+
 
 >Notes for 2.1.0<
 [released 2010.06.09]

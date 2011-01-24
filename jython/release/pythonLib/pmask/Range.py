@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import whrandom
+import random
 from generator import *
 
 class Range(Generator):
@@ -24,7 +24,7 @@ class Range(Generator):
         Generator.__init__(self)
         self.offset = min
         self.delta = max - min
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         return self.offset + self.delta * self.rng.random()

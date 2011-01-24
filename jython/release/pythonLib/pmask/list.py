@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import whrandom
+import random
 from pmask.exception import *
 from pmask.generator import *
 
@@ -40,7 +40,7 @@ class List(Generator):
         return item
 
     def random_next(self):
-        return whrandom.choice(self.list)
+        return random.choice(self.list)
     
     def __init__(self, list, mode = 'cycle'):
         Generator.__init__(self)

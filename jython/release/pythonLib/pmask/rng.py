@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-import whrandom, random
+import random
 from math import tan, pi
 
 from pmask.generator import *
@@ -26,7 +26,7 @@ from pmask.exception import *
 class UniformRandom(Generator):
     def __init__(self):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         return self.rng.random()
@@ -34,7 +34,7 @@ class UniformRandom(Generator):
 class LinearRandom(Generator):
     def __init__(self):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         a = self.rng.random()
@@ -48,7 +48,7 @@ class LinearRandom(Generator):
 class InverseLinearRandom(Generator):
     def __init__(self):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         a = self.rng.random()
@@ -62,7 +62,7 @@ class InverseLinearRandom(Generator):
 class TriangularRandom(Generator):
     def __init__(self):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         while 1:
@@ -75,7 +75,7 @@ class TriangularRandom(Generator):
 class InverseTriangularRandom(Generator):
     def __init__(self):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
 
     def valueAt(self, evaluationTime):
         while 1:
@@ -159,7 +159,7 @@ class CauchyRandom(Generator):
 class BetaRandom(Generator):
     def __init__(self, alpha = 0.1, beta = 0.1):
         Generator.__init__(self)
-        self.rng = whrandom.whrandom()
+        self.rng = random.WichmannHill()
         self.alpha = alpha
         self.beta = beta
 
