@@ -202,12 +202,13 @@ public class Installer extends ModuleInstall {
     @Override
     public void close() {
         backupFileSaver.quitFileSaver();
-        MainToolBar.getInstance().stopRendering();
-        BlueLiveToolBar.getInstance().stopRendering();
 
         saveLibraries();
 
         WindowSettingManager.getInstance().save();
+
+        MainToolBar.getInstance().stopRendering();
+        BlueLiveToolBar.getInstance().stopRendering();
 
         super.close();
     }
