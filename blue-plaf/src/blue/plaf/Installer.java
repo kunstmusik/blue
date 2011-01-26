@@ -76,10 +76,17 @@ public class Installer extends ModuleInstall {
             e.printStackTrace();
         }
 
-        UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,BorderFactory.createEmptyBorder());
+        
         UIManager.put("EditorTabDisplayerUI", "blue.plaf.BlueEditorTabDisplayerUI");
         UIManager.getDefaults().put("ViewTabDisplayerUI", "blue.plaf.BlueViewTabDisplayerUI");
-        UIManager.put("TabbedContainer.view.contentBorder",
+
+        UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,BorderFactory.createEmptyBorder());
+        UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_OUTER_BORDER,
+                new BlueViewBorder( UIManager.getColor("SplitPane.highlight"),
+				    UIManager.getColor("SplitPane.darkShadow")));
+
+        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER,BorderFactory.createEmptyBorder());
+        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_OUTER_BORDER,
                 new BlueViewBorder( UIManager.getColor("SplitPane.highlight"),
 				    UIManager.getColor("SplitPane.darkShadow")));
 
