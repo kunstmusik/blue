@@ -40,6 +40,13 @@ blue
 
     [fix] - Updated pmask to work with newer jython/python by replacing whrandom
             with random.WeichmannHill()
+  
+    [fix] - Fixed issue with Realtime and Disk render settings not saving 
+            correctly
+
+    [fix] - fixed bug where when API was enabled, rendering to disk would not 
+            work if "csound" was not in the system path; instead, always use
+            command given in disk render settings panel
 
 
 >Notes for 2.1.0<
