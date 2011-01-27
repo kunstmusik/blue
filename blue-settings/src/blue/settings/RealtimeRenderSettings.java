@@ -207,7 +207,7 @@ public class RealtimeRenderSettings implements Serializable {
 
     public void save() {
         final Preferences prefs = NbPreferences.forModule(
-                RealtimeRenderSettingsPanel.class);
+                RealtimeRenderSettings.class);
 
         prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
         prefs.put(DEFAULT_SR, defaultSr);

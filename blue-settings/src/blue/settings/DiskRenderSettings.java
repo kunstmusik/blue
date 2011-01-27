@@ -156,7 +156,7 @@ public class DiskRenderSettings implements Serializable {
 
     public void save() {
          final Preferences prefs = NbPreferences.forModule(
-                RealtimeRenderSettingsPanel.class);
+                DiskRenderSettings.class);
 
         prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
         prefs.put(DEFAULT_SR, defaultSr);
@@ -192,12 +192,12 @@ public class DiskRenderSettings implements Serializable {
     public String getCommandLine() {
         StringBuffer buffer = new StringBuffer();
 
-        if (APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            buffer.append("csound ");
-        } else {
+//        if (APIUtilities.isCsoundAPIAvailable() &&
+//                GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//            buffer.append("csound ");
+//        } else {
             buffer.append(csoundExecutable).append(" ");
-        }
+//        }
 
         if (!GeneralSettings.getInstance().isMessageColorsEnabled()) {
             buffer.append("-+msg_color=false ");
