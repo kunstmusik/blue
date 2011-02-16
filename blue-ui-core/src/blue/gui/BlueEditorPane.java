@@ -340,7 +340,7 @@ public class BlueEditorPane extends JEditTextArea {
 
             putValue(Action.SHORT_DESCRIPTION, "Code Completion");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_SPACE, KeyEvent.CTRL_DOWN_MASK));
 
         }
 

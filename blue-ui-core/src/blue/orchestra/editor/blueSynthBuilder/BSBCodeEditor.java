@@ -245,7 +245,7 @@ public class BSBCodeEditor extends JComponent {
         };
 
         KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
-                KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()
+                KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
                 | InputEvent.SHIFT_DOWN_MASK, false);
 
 

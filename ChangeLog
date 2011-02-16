@@ -32,6 +32,10 @@ blue
             force using 32-bit mode Java on OSX; this enables working with
             Csound API when using the Csound 5.13 OSX Installer
 
+    [updated] - modified shortcuts for opcode completion and BSB Object name
+            completion to always use ctrl- shortcut, even on OSX (due to
+            cmd-space being used as system shortcut for Spotlight)
+
     [fix] - Audition SoundObjects caused a null pointer due to MIDI class
             introduced in 2.1.0
 
