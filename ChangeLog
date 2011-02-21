@@ -52,6 +52,8 @@ blue
             work if "csound" was not in the system path; instead, always use
             command given in disk render settings panel
 
+    [fix] - made Send always generate if enabled (bug was that it would get 
+            optimized out if level set to 0, even if automated)
 
 >Notes for 2.1.0<
 [released 2010.06.09]

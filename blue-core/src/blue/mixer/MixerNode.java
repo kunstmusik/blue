@@ -411,7 +411,7 @@ class MixerNode {
             } else if (obj instanceof Send) {
                 Send send = (Send) obj;
 
-                if (send.isEnabled() && send.getLevel() > 0.0f) {
+                if (send.isEnabled()) {
                     String[] parts = signalChannels.split(",");
                     String sendChannelName = send.getSendChannel();
 
