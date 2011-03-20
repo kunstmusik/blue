@@ -36,6 +36,8 @@ blue
             completion to always use ctrl- shortcut, even on OSX (due to
             cmd-space being used as system shortcut for Spotlight)
 
+    [updated] - Jython library for Python objects updated to version 2.5.2
+
     [fix] - Audition SoundObjects caused a null pointer due to MIDI class
             introduced in 2.1.0
 
