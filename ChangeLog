@@ -57,6 +57,9 @@ blue
     [fix] - made Send always generate if enabled (bug was that it would get 
             optimized out if level set to 0, even if automated)
 
+    [fix] - MIDI Driver settings were not being loaded correctly
+
+
 >Notes for 2.1.0<
 [released 2010.06.09]
 

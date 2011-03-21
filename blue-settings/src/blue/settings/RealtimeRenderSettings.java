@@ -177,8 +177,8 @@ public class RealtimeRenderSettings implements Serializable {
             instance.audioInEnabled = prefs.getBoolean(AUDIO_IN_ENABLED, false);
             instance.audioInText = prefs.get(AUDIO_IN_TEXT, "adc");
 
-            instance.midiInEnabled = prefs.getBoolean(MIDI_DRIVER_ENABLED, true);
-            instance.midiInText = prefs.get(MIDI_DRIVER, "PortMidi");
+            instance.midiDriverEnabled = prefs.getBoolean(MIDI_DRIVER_ENABLED, true);
+            instance.midiDriver = prefs.get(MIDI_DRIVER, "PortMidi");
             instance.midiOutEnabled = prefs.getBoolean(MIDI_OUT_ENABLED, false);
             instance.midiOutText = prefs.get(MIDI_OUT_TEXT, "");
             instance.midiInEnabled = prefs.getBoolean(MIDI_IN_ENABLED, false);
