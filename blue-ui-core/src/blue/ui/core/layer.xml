@@ -57,12 +57,12 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" stringvalue="false"/>
             </file>
-            <file name="blue-ui-core-project-stems-RenderStemsAction.instance">
+            <!--<file name="blue-ui-core-project-stems-RenderStemsAction.instance">
                 <attr name="delegate" newvalue="blue.ui.core.project.stems.RenderStemsAction"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.project.stems.Bundle#CTL_RenderStemsAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
+            </file>-->
             <file name="blue-ui-core-project-RenderStopProjectAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="delegate" newvalue="blue.ui.core.project.RenderStopProjectAction"/>

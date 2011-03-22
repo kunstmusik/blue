@@ -52,12 +52,17 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
 
     private String csoundPostCode;
 
+    private boolean useCustomWindowSize = false;
+
+    private int windowSize = 8;
+
     public AudioFile() {
         instrumentNumber = 0;
         this.setName("Audio File");
 
         soundFileName = "";
         csoundPostCode = "\touts\taChannel1, aChannel1";
+
     }
 
 //    public SoundObjectEditor getEditor() {
@@ -114,6 +119,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
      */
 
     public void generateInstruments(Arrangement arrangement) {
+        
         String instrumentText = generateInstrumentText();
         if (instrumentText == null) {
             JOptionPane.showMessageDialog(null, BlueSystem
