@@ -12,6 +12,20 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.2<
+[released 2011.xx.xx]
+
+Steven Yi-----------------------------------------------------------------------
+
+blue
+
+    [fix] - blueMixerIn (used by always-on instrument code) did not properly
+            generate when more than one input arg was used
+
+    [fix] - fixed ftable converter tool to work when there is a space between
+            the 'f' and the table num
+
+
 >Notes for 2.1.1<
 [released 2011.03.22]
 

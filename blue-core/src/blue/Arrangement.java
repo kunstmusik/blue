@@ -587,7 +587,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
                     String var = Mixer.getChannelVar(arrangementId, i);
 
-                    buffer.append(argText).append(" = ");
+                    buffer.append(arg).append(" = ");
                     buffer.append(var).append("\n");
 
                 }

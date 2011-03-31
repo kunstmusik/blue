@@ -113,6 +113,8 @@ public class FTableConverterDialog extends javax.swing.JDialog implements
                 line = line.substring(0, commentIndex);
             }
 
+            line = line.trim();
+
             String[] pfields = line.split("\\s+");
 
             String startLine = "gi_\tftgen 0";
