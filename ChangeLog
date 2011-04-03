@@ -13,11 +13,14 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.1.2<
-[released 2011.xx.xx]
+[released 2011.04.03]
 
 Steven Yi-----------------------------------------------------------------------
 
 blue
+
+    [updated/fix] - On Mac, replaced ctrl- based shortcuts with command- based
+            shortcuts for most components
 
     [fix] - blueMixerIn (used by always-on instrument code) did not properly
             generate when more than one input arg was used

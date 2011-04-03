@@ -20,10 +20,13 @@
 package blue.plaf;
 
 import java.awt.Color;
+import java.awt.event.KeyEvent;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
+import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
+import javax.swing.plaf.InputMapUIResource;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 
@@ -38,7 +41,8 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
 
-//        boolean isMac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    boolean isMac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+
 //
 //        Object[] macEntries = null;
 //
@@ -102,6 +106,52 @@ public class Installer extends ModuleInstall {
 //            UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
 //        }
 
+        if (isMac) {
+            replaceCtrlShortcutsWithMacShortcuts();
+        }
+
         logger.info("Finished blue PLAF installation");
+    }
+
+    /** Replaces ctrl- shortcuts with command- shortcuts for OSX */
+    protected void replaceCtrlShortcutsWithMacShortcuts() {
+
+        for(Object keyObj: UIManager.getLookAndFeelDefaults().keySet()) {
+            String key = keyObj.toString();
+
+            if (key.contains("InputMap")) {
+
+                //System.out.println("MAP: " + key);
+                Object val = UIManager.getLookAndFeelDefaults().get(key);
+
+                if(val instanceof InputMapUIResource) {
+                    InputMapUIResource map = (InputMapUIResource)val;
+
+
+                    for (KeyStroke keyStroke : map.allKeys()) {
+
+                        int modifiers = keyStroke.getModifiers();
+
+                        if((modifiers & KeyEvent.CTRL_MASK) > 0) {
+                            modifiers -= KeyEvent.CTRL_DOWN_MASK;
+                            modifiers -= KeyEvent.CTRL_MASK;
+                            modifiers += KeyEvent.META_DOWN_MASK + KeyEvent.META_MASK;
+
+                            KeyStroke k = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers);
+
+                            Object mapVal = map.get(keyStroke);
+                            map.remove(keyStroke);
+                            map.put(k, mapVal);
+
+//                            System.out.println("Old: " + keyStroke);
+//                            System.out.println("New: " + k);
+                        }
+
+                    }
+                }
+            }
+
+        }
+
     }
 }
