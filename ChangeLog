@@ -12,6 +12,20 @@ information.
 
 [CHANGE LOG]
 
+
+>Notes for 2.1.2<
+[released 2011.04.03]
+
+Steven Yi-----------------------------------------------------------------------
+
+blue
+
+    [updated] - reorganized Project Properties editor to have Realtime and Disk
+            disk render settings first, then have Project Information
+
+    
+
+
 >Notes for 2.1.2<
 [released 2011.04.03]
 

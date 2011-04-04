@@ -102,26 +102,24 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     private void initComponents() {
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        projectInformationPanel1 = new blue.ui.core.project.ProjectInformationPanel();
         realtimeRenderSettingsPanel1 = new blue.ui.core.project.RealtimeRenderSettingsPanel();
         diskRenderSettingsPanel1 = new blue.ui.core.project.DiskRenderSettingsPanel();
+        projectInformationPanel1 = new blue.ui.core.project.ProjectInformationPanel();
         cSLADSPASettingsPanel1 = new blue.ui.core.project.CSLADSPASettingsPanel();
 
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.projectInformationPanel1.TabConstraints.tabTitle"), projectInformationPanel1); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.realtimeRenderSettingsPanel1.TabConstraints.tabTitle"), realtimeRenderSettingsPanel1); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.diskRenderSettingsPanel1.TabConstraints.tabTitle"), diskRenderSettingsPanel1); // NOI18N
+        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.projectInformationPanel1.TabConstraints.tabTitle"), projectInformationPanel1); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.cSLADSPASettingsPanel1.TabConstraints.tabTitle"), cSLADSPASettingsPanel1); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 412, Short.MAX_VALUE)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 412, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 352, Short.MAX_VALUE)
             .add(jTabbedPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
