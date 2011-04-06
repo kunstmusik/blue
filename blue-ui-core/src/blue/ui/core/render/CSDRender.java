@@ -129,10 +129,10 @@ public class CSDRender {
         }
 
         if (usingAPI) {
-            ArrayList parameters = ParameterHelper.getAllParameters(
-                    arrangement, mixer);
+//            ArrayList parameters = ParameterHelper.getAllParameters(
+//                    arrangement, mixer);
             generatedNotes = new NoteList();
-            handleParametersForBlueLive(parameters, globalOrcSco,
+            handleParametersForBlueLive(originalParameters, globalOrcSco,
                     generatedNotes, arrangement);
 
         }
@@ -219,11 +219,11 @@ public class CSDRender {
         }
 
         // get parameters
-        ArrayList parameters;
+        //ArrayList parameters;
 
 //        if (usingAPI) {
-        parameters = ParameterHelper.getAllParameters(
-                arrangement, mixer);
+//        parameters = ParameterHelper.getAllParameters(
+//                arrangement, mixer);
 //        } else {
 //            parameters = ParameterHelper.getActiveParameters(
 //                    arrangement, mixer);
@@ -344,7 +344,7 @@ public class CSDRender {
 
         }
 
-        handleParameters(parameters, globalOrcSco, generatedNotes, arrangement,
+        handleParameters(originalParameters, globalOrcSco, generatedNotes, arrangement,
                 startTime,
                 startTime + globalDur, isRealTime);
 
@@ -894,9 +894,9 @@ public class CSDRender {
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);
-            String varName = PARAM_VAR_NAME.format(varNum);
+            String varName = param.getCompilationVarName();
 
-            param.setCompilationVarName(varName);
+            //param.setCompilationVarName(varName);
 
             float initialVal = param.getLine().getValue(startTime);
 
@@ -969,9 +969,9 @@ public class CSDRender {
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);
-            String varName = PARAM_VAR_NAME.format(varNum);
+            String varName = param.getCompilationVarName();
 
-            param.setCompilationVarName(varName);
+            //param.setCompilationVarName(varName);
 
             float initialVal = param.getFixedValue();
 

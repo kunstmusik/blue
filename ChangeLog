@@ -21,10 +21,16 @@ Steven Yi-----------------------------------------------------------------------
 blue
 
     [updated] - reorganized Project Properties editor to have Realtime and Disk
-            disk render settings first, then have Project Information
+            render settings first, then have Project Information
 
-    
+    [fix] - BlueSynthBuilder - code for instrument would not correctly generate
+            during a session if new object was added that used an objectName
+            that would change the sorting order of widgets (project would
+            generate correctly if reopened in a new session)
 
+    [fix] - BlueSynthBuilder - allow generation of code to succeed for dropdown
+            lists when no items are entered (will simply not replace any values
+            in the generated code)
 
 >Notes for 2.1.2<
 [released 2011.04.03]
