@@ -93,10 +93,15 @@ public class BSBDropdown extends AutomatableBSBObject implements
             }
         }
 
-        BSBDropdownItem item = (BSBDropdownItem) dropdownItems.get(selectedIndex);
-        String replaceVal = item.getValue();
+        if (dropdownItems.size() == 0) {
+            compilationUnit.addReplacementValue(objectName, "0");
+        } else {
+            BSBDropdownItem item = (BSBDropdownItem) dropdownItems.get(selectedIndex);
+            String replaceVal = item.getValue();
 
-        compilationUnit.addReplacementValue(objectName, replaceVal);
+            compilationUnit.addReplacementValue(objectName, replaceVal);
+        }
+
     }
 
     /**
