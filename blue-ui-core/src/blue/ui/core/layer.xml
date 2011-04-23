@@ -540,6 +540,8 @@
     </folder>
 
     <folder name="Toolbars">
+        <file name="Build_hidden"/>
+        <file name="Debugging.xml_hidden"/>
         <folder name="Project">
             <attr name="position" intvalue="0"/>
 
@@ -552,6 +554,8 @@
                 <attr name="position" intvalue="10"/>
             </file>
         </folder>
+        <file name="Standard.xml_hidden"/>
+        <file name="QuickSearch_hidden"/>
     </folder>
     <folder name="Windows2">
         <folder name="Components">
