@@ -19,9 +19,11 @@
  */
 package blue.ui.core.midi;
 
+import blue.gui.TimedKeyListener;
 import blue.midi.MidiInputManager;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -38,19 +40,19 @@ import org.openide.util.Exceptions;
  * @author syi
  */
 public class VirtualKeyboardPanel extends JComponent {
-    
-    private static final int KEY_OFFSET = 21;
 
+    private static final int KEY_OFFSET = 21;
     AtomicBoolean[] keyStates = new AtomicBoolean[88];
     AtomicBoolean[] changedKeyStates = new AtomicBoolean[88];
     int[] whiteKeys = new int[7];
     int lastMidiKey = -1;
     int octave = 5;
     MidiInputManager midiEngine = MidiInputManager.getInstance();
-    
 
     public VirtualKeyboardPanel() {
-
+        
+        setFocusable(true);
+        
         for (int i = 0; i < 88; i++) {
             keyStates[i] = new AtomicBoolean(false);
             changedKeyStates[i] = new AtomicBoolean(false);
@@ -98,7 +100,7 @@ public class VirtualKeyboardPanel extends JComponent {
                 if (SwingUtilities.isLeftMouseButton(me)) {
 
                     int key = getMIDIKey(me.getX(), me.getY());
-                    
+
                     if (key > 87) {
                         key = 87;
                     }
@@ -110,7 +112,7 @@ public class VirtualKeyboardPanel extends JComponent {
                     lastMidiKey = -1;
 
                     try {
-                        
+
                         ShortMessage sme = new ShortMessage();
                         sme.setMessage(ShortMessage.NOTE_OFF, key + KEY_OFFSET, 100);
 
@@ -142,21 +144,21 @@ public class VirtualKeyboardPanel extends JComponent {
 
                         keyStates[key].compareAndSet(false, true);
 
-                        
-                        try {
-                        
-                        ShortMessage sme = new ShortMessage();
-                        
-                        sme.setMessage(ShortMessage.NOTE_OFF, lastMidiKey + KEY_OFFSET, 100);
-                        midiEngine.send(sme, 0L);
-                        
-                        sme.setMessage(ShortMessage.NOTE_ON, key + KEY_OFFSET, 100);
-                        midiEngine.send(sme, 0L);
 
-                    } catch (InvalidMidiDataException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
-                        
+                        try {
+
+                            ShortMessage sme = new ShortMessage();
+
+                            sme.setMessage(ShortMessage.NOTE_OFF, lastMidiKey + KEY_OFFSET, 100);
+                            midiEngine.send(sme, 0L);
+
+                            sme.setMessage(ShortMessage.NOTE_ON, key + KEY_OFFSET, 100);
+                            midiEngine.send(sme, 0L);
+
+                        } catch (InvalidMidiDataException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+
                         lastMidiKey = key;
 
                         repaint();
@@ -166,11 +168,21 @@ public class VirtualKeyboardPanel extends JComponent {
             }
         });
 
+        this.addKeyListener(new TimedKeyListener() {
+
+            @Override
+            public void KeyPressed(KeyEvent e) {
+                handleKey(e.getKeyChar(), true);
+            }
+
+            @Override
+            public void KeyReleased(KeyEvent e) {
+                handleKey(e.getKeyChar(), false);
+            }
+        });
+
     }
 
-    //    @Override 
-    //    public void processKeyEvent(KeyEvent ke) {
-    //    }
     @Override
     public void paint(Graphics g) {
 
@@ -356,4 +368,131 @@ public class VirtualKeyboardPanel extends JComponent {
         return false;
 
     }
+
+    protected void handleKey(char key, boolean keyDown) {
+
+        int index = -1;
+
+        switch (key) {
+            case 'z':
+                index = 0;
+                break;
+            case 's':
+                index = 1;
+                break;
+            case 'x':
+                index = 2;
+                break;
+            case 'd':
+                index = 3;
+                break;
+            case 'c':
+                index = 4;
+                break;
+            case 'v':
+                index = 5;
+                break;
+            case 'g':
+                index = 6;
+                break;
+            case 'b':
+                index = 7;
+                break;
+            case 'h':
+                index = 8;
+                break;
+            case 'n':
+                index = 9;
+                break;
+            case 'j':
+                index = 10;
+                break;
+            case 'm':
+                index = 11;
+                break;
+            case 'q':
+                index = 12;
+                break;
+            case '2':
+                index = 13;
+                break;
+            case 'w':
+                index = 14;
+                break;
+            case '3':
+                index = 15;
+                break;
+            case 'e':
+                index = 16;
+                break;
+            case 'r':
+                index = 17;
+                break;
+            case '5':
+                index = 18;
+                break;
+            case 't':
+                index = 19;
+                break;
+            case '6':
+                index = 20;
+                break;
+            case 'y':
+                index = 21;
+                break;
+            case '7':
+                index = 22;
+                break;
+            case 'u':
+                index = 23;
+                break;
+            case 'i':
+                index = 24;
+                break;
+            case '9':
+                index = 25;
+                break;
+            case 'o':
+                index = 26;
+                break;
+            case '0':
+                index = 27;
+                break;
+            case 'p':
+                index = 28;
+                break;
+            default:
+                return;
+        }
+
+        if (index < 0) {
+            return;
+        }
+
+        index = ((octave * 12) + index) - 21;
+
+        if (index < 0 || index > 87) {
+            return;
+        }
+
+        if (keyStates[index].get() != keyDown) {
+            keyStates[index].set(keyDown);
+
+            try {
+                ShortMessage sme = new ShortMessage();
+                
+                int state = keyDown ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF;
+                
+                sme.setMessage(state, index + KEY_OFFSET, 100);
+
+                midiEngine.send(sme, 0L);
+
+            } catch (InvalidMidiDataException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+
+            repaint();
+        }
+    }
 }
+
