@@ -189,14 +189,22 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
     }
 
     void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
         p.setProperty("version", "1.0");
-        // TODO store your settings
+        
+        p.setProperty("channel", Integer.toString(virtualKeyboardPanel1.getChannel()));
+        p.setProperty("velocity", Integer.toString(virtualKeyboardPanel1.getVelocity()));
+        p.setProperty("octave", Integer.toString(virtualKeyboardPanel1.getOctave()));
     }
 
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
-        // TODO read your settings according to their version
+        
+        virtualKeyboardPanel1.setChannel(Integer.parseInt(p.getProperty("channel", "0")));
+        virtualKeyboardPanel1.setVelocity(Integer.parseInt(p.getProperty("velocity", "127")));
+        virtualKeyboardPanel1.setOctave(Integer.parseInt(p.getProperty("octave", "5")));
+        
+        channelSpinner.setValue(virtualKeyboardPanel1.getChannel() + 1);
+        velocitySpinner.setValue(virtualKeyboardPanel1.getVelocity());
+        octaveSpinner.setValue(virtualKeyboardPanel1.getOctave());
     }
 }
