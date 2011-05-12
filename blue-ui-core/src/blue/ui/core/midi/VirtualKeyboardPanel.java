@@ -42,12 +42,12 @@ import org.openide.util.Exceptions;
 public class VirtualKeyboardPanel extends JComponent {
 
     private static final int KEY_OFFSET = 21;
-    AtomicBoolean[] keyStates = new AtomicBoolean[88];
-    AtomicBoolean[] changedKeyStates = new AtomicBoolean[88];
-    int[] whiteKeys = new int[7];
-    int lastMidiKey = -1;
-    int octave = 5;
-    MidiInputManager midiEngine = MidiInputManager.getInstance();
+    private AtomicBoolean[] keyStates = new AtomicBoolean[88];
+    private AtomicBoolean[] changedKeyStates = new AtomicBoolean[88];
+    private int[] whiteKeys = new int[7];
+    private int lastMidiKey = -1;
+    private int octave = 5;
+    private MidiInputManager midiEngine = MidiInputManager.getInstance();
 
     public VirtualKeyboardPanel() {
         
