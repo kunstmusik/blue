@@ -450,6 +450,7 @@
                 <attr name="position" intvalue="10000"/>
             </file>
 
+            <file name="org-netbeans-core-windows-actions-GlobalPropertiesAction.shadow_hidden"/>
         </folder>
         <file name="org-netbeans-modules-quicksearch-QuickSearchAction.shadow_hidden"/>
     </folder>
