@@ -12,6 +12,17 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.4<
+[released 2011.xx.xx]
+
+Steven Yi-----------------------------------------------------------------------
+
+blue
+
+    [new] - Virtual Midi Keyboard - visual piano keyboard with keyboard 
+            shortcuts for input; generates MIDI note on/off's that route through
+            blue's MIDI system
+
 
 >Notes for 2.1.3<
 [released 2011.04.06]

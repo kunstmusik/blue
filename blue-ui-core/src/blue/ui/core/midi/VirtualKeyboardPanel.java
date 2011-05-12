@@ -47,12 +47,14 @@ public class VirtualKeyboardPanel extends JComponent {
     private int[] whiteKeys = new int[7];
     private int lastMidiKey = -1;
     private int octave = 5;
+    private int channel = 0;
+    private int velocity = 127;
     private MidiInputManager midiEngine = MidiInputManager.getInstance();
 
     public VirtualKeyboardPanel() {
-        
+
         setFocusable(true);
-        
+
         for (int i = 0; i < 88; i++) {
             keyStates[i] = new AtomicBoolean(false);
             changedKeyStates[i] = new AtomicBoolean(false);
@@ -81,7 +83,7 @@ public class VirtualKeyboardPanel extends JComponent {
 
                     try {
                         ShortMessage sme = new ShortMessage();
-                        sme.setMessage(ShortMessage.NOTE_ON, key + KEY_OFFSET, 100);
+                        sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, velocity);
 
                         midiEngine.send(sme, 0L);
 
@@ -114,7 +116,7 @@ public class VirtualKeyboardPanel extends JComponent {
                     try {
 
                         ShortMessage sme = new ShortMessage();
-                        sme.setMessage(ShortMessage.NOTE_OFF, key + KEY_OFFSET, 100);
+                        sme.setMessage(ShortMessage.NOTE_OFF, channel, key + KEY_OFFSET, velocity);
 
                         midiEngine.send(sme, 0L);
 
@@ -149,10 +151,10 @@ public class VirtualKeyboardPanel extends JComponent {
 
                             ShortMessage sme = new ShortMessage();
 
-                            sme.setMessage(ShortMessage.NOTE_OFF, lastMidiKey + KEY_OFFSET, 100);
+                            sme.setMessage(ShortMessage.NOTE_OFF, channel, lastMidiKey + KEY_OFFSET, velocity);
                             midiEngine.send(sme, 0L);
 
-                            sme.setMessage(ShortMessage.NOTE_ON, key + KEY_OFFSET, 100);
+                            sme.setMessage(ShortMessage.NOTE_ON, channel, key + KEY_OFFSET, velocity);
                             midiEngine.send(sme, 0L);
 
                         } catch (InvalidMidiDataException ex) {
@@ -180,6 +182,50 @@ public class VirtualKeyboardPanel extends JComponent {
                 handleKey(e.getKeyChar(), false);
             }
         });
+
+    }
+
+    public int getChannel() {
+        return channel;
+    }
+
+    public void setChannel(int channel) {
+        this.channel = channel;
+    }
+
+    public int getOctave() {
+        return octave;
+    }
+
+    public void setOctave(int octave) {
+        this.octave = octave;
+    }
+
+    public int getVelocity() {
+        return velocity;
+    }
+
+    public void setVelocity(int velocity) {
+        this.velocity = velocity;
+    }
+
+    public void allNotesOff() {
+
+
+        ShortMessage sme = new ShortMessage();
+
+        for (int i = 0; i < 88; i++) {
+            if (keyStates[i].getAndSet(false)) {
+                try {
+                    sme.setMessage(ShortMessage.NOTE_OFF, channel, i + KEY_OFFSET, velocity);
+                    midiEngine.send(sme, 0L);
+                } catch (InvalidMidiDataException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+        
+        repaint();
 
     }
 
@@ -480,10 +526,10 @@ public class VirtualKeyboardPanel extends JComponent {
 
             try {
                 ShortMessage sme = new ShortMessage();
-                
+
                 int state = keyDown ? ShortMessage.NOTE_ON : ShortMessage.NOTE_OFF;
-                
-                sme.setMessage(state, index + KEY_OFFSET, 100);
+
+                sme.setMessage(state, channel, index + KEY_OFFSET, velocity);
 
                 midiEngine.send(sme, 0L);
 
@@ -495,4 +541,3 @@ public class VirtualKeyboardPanel extends JComponent {
         }
     }
 }
-
