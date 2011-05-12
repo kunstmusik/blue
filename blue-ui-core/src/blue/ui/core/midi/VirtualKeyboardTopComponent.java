@@ -38,7 +38,7 @@ autostore = false)
 persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
 @ActionID(category = "Window", id = "blue.ui.core.midi.VirtualKeyboardTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
+@ActionReference(path = "Menu/Window" , position = 705 )
 @TopComponent.OpenActionRegistration(displayName = "#CTL_VirtualKeyboardAction",
 preferredID = "VirtualKeyboardTopComponent")
 public final class VirtualKeyboardTopComponent extends TopComponent {
