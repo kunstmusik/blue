@@ -898,13 +898,21 @@ public class CSDRender {
 
             //param.setCompilationVarName(varName);
 
-            float initialVal = param.getLine().getValue(startTime);
+            float initialVal;
+	    
+	    if (param.isAutomationEnabled()) {
+		
+		initialVal = param.getLine().getValue(startTime);
+	        
+		float resolution = param.getResolution();
 
-            float resolution = param.getResolution();
+		if (resolution > 0.0f) {
+		    initialVal = param.getResolutionAdjustedValue(initialVal);
+		}
 
-            if (resolution > 0.0f) {
-                initialVal = param.getResolutionAdjustedValue(initialVal);
-            }
+	    } else {
+		initialVal = param.getFixedValue();
+	    }
 
 
             // init statements
@@ -916,8 +924,7 @@ public class CSDRender {
             if (useAPI) {
                 apiParamInstr.append(varName).append(" chnget \"");
                 apiParamInstr.append(varName).append("\"\n");
-            } else {
-
+            } else if (param.isAutomationEnabled()) {
 
                 // gk instrument
                 GenericInstrument instr = getParameterInstrument(param);
