@@ -23,6 +23,9 @@ blue
             shortcuts for input; generates MIDI note on/off's that route through
             blue's MIDI system
 
+    [updated] - BlueSynthBuilder - moved "Manage Presets" button from top
+	    level to being a menu option in the "Presets" menu
+
     [fix] - correctly render parameters when they had automation turned off
 
 
