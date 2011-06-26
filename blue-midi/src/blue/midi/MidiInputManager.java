@@ -157,10 +157,10 @@ public class MidiInputManager implements Receiver, ChangeListener {
 
     private void broadcastMessage(MidiMessage message, long timeStamp) {
         if (receivers != null) {
-            Iterator iter = new Vector(receivers).iterator();
+            Iterator<Receiver> iter = new Vector<Receiver>(receivers).iterator();
 
             while (iter.hasNext()) {
-                Receiver receiver = (Receiver) iter.next();
+                Receiver receiver = iter.next();
                 receiver.send(message, timeStamp);
             }
         }
