@@ -136,6 +136,7 @@
     <folder name="Toolbars">
         <file name="Clipboard_hidden"/>
         <file name="File_hidden"/>
+        <file name="Memory_hidden"/>
         <file name="UndoRedo_hidden"/>
     </folder>
     <folder name="Shortcuts">
