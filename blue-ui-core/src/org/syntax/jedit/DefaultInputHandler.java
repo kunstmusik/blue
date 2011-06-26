@@ -216,7 +216,7 @@ public class DefaultInputHandler extends InputHandler {
         char c = evt.getKeyChar();
 
         if (c != KeyEvent.CHAR_UNDEFINED
-                && (modifiers & KeyEvent.ALT_MASK) == 0
+                //&& (modifiers & KeyEvent.ALT_MASK) == 0
                 && (modifiers & BlueSystem.getMenuShortcutKey()) == 0) {
             if (c >= 0x20 && c != 0x7f) {
                 KeyStroke keyStroke = KeyStroke.getKeyStroke(Character
