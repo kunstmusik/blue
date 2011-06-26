@@ -255,7 +255,7 @@ public class TextUtilities {
         char[] chars = in.trim().toCharArray();
         int state = 0;
 
-        ArrayList wordList = new ArrayList();
+        ArrayList<String> wordList = new ArrayList<String>();
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < chars.length; i++) {
@@ -305,13 +305,8 @@ public class TextUtilities {
         wordList.add(buffer.toString());
 
         String[] retVal = new String[wordList.size()];
-
-        int i = 0;
-        for (Iterator iter = wordList.iterator(); iter.hasNext();) {
-            String element = (String) iter.next();
-            retVal[i] = element;
-            i++;
-        }
+		wordList.toArray(retVal);
+		
         return retVal;
     }
 
