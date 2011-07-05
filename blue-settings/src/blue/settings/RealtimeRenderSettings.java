@@ -151,12 +151,15 @@ public class RealtimeRenderSettings implements Serializable {
             int softwareBufferSize = 256;
             int hardwareBufferSize = 1024;
 
+			String csoundExecutableDefault = "csound";
+			
             if (osName.indexOf("Windows") >= 0) {
                 softwareBufferSize = 4096;
                 hardwareBufferSize = 16384;
             } else if (osName.toLowerCase().indexOf("mac") >= 0) {
                 softwareBufferSize = 1024;
                 hardwareBufferSize = 4096;
+				csoundExecutableDefault = "/usr/local/bin/csound";
             }
 
             instance = new RealtimeRenderSettings();
@@ -165,7 +168,7 @@ public class RealtimeRenderSettings implements Serializable {
             final Preferences prefs = NbPreferences.forModule(
                     RealtimeRenderSettings.class);
 
-            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, "csound");
+            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, csoundExecutableDefault);
             instance.defaultSr = prefs.get(DEFAULT_SR, "44100");
             instance.defaultKsmps = prefs.get(DEFAULT_KSMPS, "1");
             instance.defaultNchnls = prefs.get(DEFAULT_NCHNLS, "2");

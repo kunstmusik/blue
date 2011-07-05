@@ -124,7 +124,12 @@ public class DiskRenderSettings implements Serializable {
             final Preferences prefs = NbPreferences.forModule(
                     DiskRenderSettings.class);
 
-            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, "csound");
+            String osName = System.getProperty("os.name");
+
+            String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0) ?
+						"csound" : "/usr/local/bin/csound";
+			
+            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, csoundExecutableDefault);
             instance.defaultSr = prefs.get(DEFAULT_SR, "44100");
             instance.defaultKsmps = prefs.get(DEFAULT_KSMPS, "1");
             instance.defaultNchnls = prefs.get(DEFAULT_NCHNLS, "2");

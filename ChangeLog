@@ -24,13 +24,15 @@ blue
             blue's MIDI system
 
     [updated] - BlueSynthBuilder - moved "Manage Presets" button from top
-	    level to being a menu option in the "Presets" menu
+		    level to being a menu option in the "Presets" menu
 
     [fix] - correctly render parameters when they had automation turned off
 
     [fix] - issue with German Keyboards where ALT key is used to access 
             characters fixed (keys using ALT were blocked)
 
+    [fix] - made "/usr/local/bin/csound" the default for OSX for Realtime and
+            Disk Render settings for new blue installations
 
 >Notes for 2.1.3<
 [released 2011.04.06]
