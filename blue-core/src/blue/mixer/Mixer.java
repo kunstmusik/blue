@@ -62,7 +62,7 @@ public class Mixer implements Serializable {
 
     private float extraRenderTime = 0.0f;
 
-    private transient HashMap subChannelDependencies = null;
+    private transient HashMap<String, String> subChannelDependencies = null;
 
     public Mixer() {
         master.setName(MASTER_CHANNEL);
@@ -372,7 +372,7 @@ public class Mixer implements Serializable {
      */
     public void addSubChannelDependency(String subChannelName) {
         if (subChannelDependencies == null) {
-            subChannelDependencies = new HashMap();
+            subChannelDependencies = new HashMap<String,String>();
         }
         subChannelDependencies.put(subChannelName, subChannelName);
     }
@@ -427,8 +427,8 @@ public class Mixer implements Serializable {
         return null;
     }
 
-    public HashMap getSubChannelCache() {
-        HashMap subChannelCache = new HashMap();
+    public HashMap<String, Channel> getSubChannelCache() {
+        HashMap<String, Channel> subChannelCache = new HashMap<String, Channel>();
 
         for (int i = 0; i < getSubChannels().size(); i++) {
             Channel subChannel = getSubChannel(i);

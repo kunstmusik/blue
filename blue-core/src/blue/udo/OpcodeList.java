@@ -42,7 +42,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     private transient int counter = 0;
 
-    private transient Vector listeners;
+    private transient Vector<TableModelListener> listeners;
 
     public void addOpcode(UserDefinedOpcode udo) {
         this.add(udo);
@@ -125,7 +125,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        UserDefinedOpcode udo = (UserDefinedOpcode) this.get(rowIndex);
+        UserDefinedOpcode udo = this.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -161,7 +161,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<TableModelListener>();
         }
         listeners.add(l);
     }
@@ -180,8 +180,8 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
         TableModelEvent tme = new TableModelEvent(this);
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = (TableModelListener) iter.next();
+        for (Iterator<TableModelListener> iter = listeners.iterator(); iter.hasNext();) {
+            TableModelListener listener = iter.next();
 
             listener.tableChanged(tme);
         }

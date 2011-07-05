@@ -61,7 +61,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
 
     public static final String OUT_CHANNEL = "outChannel";
 
-    private transient Vector listeners;
+    private transient Vector<PropertyChangeListener> listeners;
 
     private EffectsChain preEffects = new EffectsChain();
 
@@ -277,7 +277,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<PropertyChangeListener>();
         }
         listeners.add(pcl);
     }
@@ -309,8 +309,8 @@ public class Channel implements Serializable, Comparable, ParameterListener {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, propertyName,
                 oldVal, newVal);
 
-        for (Iterator it = listeners.iterator(); it.hasNext();) {
-            PropertyChangeListener pcl = (PropertyChangeListener) it.next();
+        for (Iterator<PropertyChangeListener> it = listeners.iterator(); it.hasNext();) {
+            PropertyChangeListener pcl = it.next();
 
             pcl.propertyChange(pce);
 

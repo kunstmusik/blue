@@ -45,7 +45,7 @@ public class ParameterList implements Serializable {
 
     ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
-    transient Vector paramListListeners = null;
+    transient Vector<ParameterListListener> paramListListeners = null;
 
     transient Vector tableListeners = null;
 
@@ -88,7 +88,7 @@ public class ParameterList implements Serializable {
     }
 
     public void removeParameter(int index) {
-        Parameter param = (Parameter) parameters.get(index);
+        Parameter param = parameters.get(index);
 
         parameters.remove(index);
         fireParameterRemoved(param);
@@ -141,7 +141,7 @@ public class ParameterList implements Serializable {
 
     public void addParameterListListener(ParameterListListener l) {
         if (paramListListeners == null) {
-            paramListListeners = new Vector();
+            paramListListeners = new Vector<ParameterListListener>();
         }
         paramListListeners.add(l);
     }
@@ -154,10 +154,9 @@ public class ParameterList implements Serializable {
 
     private void fireParameterAdded(Parameter param) {
         if (paramListListeners != null) {
-            Iterator iter = new Vector(paramListListeners).iterator();
+            Iterator<ParameterListListener> iter = new Vector<ParameterListListener>(paramListListeners).iterator();
             while (iter.hasNext()) {
-                ParameterListListener listener = (ParameterListListener) iter
-                        .next();
+                ParameterListListener listener = iter.next();
                 listener.parameterAdded(param);
             }
         }
@@ -165,10 +164,11 @@ public class ParameterList implements Serializable {
 
     private void fireParameterRemoved(Parameter param) {
         if (paramListListeners != null) {
-            Iterator iter = new Vector(paramListListeners).iterator();
+			
+
+            Iterator<ParameterListListener> iter = new Vector<ParameterListListener>(paramListListeners).iterator();
             while (iter.hasNext()) {
-                ParameterListListener listener = (ParameterListListener) iter
-                        .next();
+                ParameterListListener listener = iter.next();
                 listener.parameterRemoved(param);
             }
         }

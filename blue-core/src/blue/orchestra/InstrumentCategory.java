@@ -40,9 +40,9 @@ public class InstrumentCategory implements Serializable {
 
     private String categoryName = "New Instrument Category";
 
-    private List subCategories = new Vector();
+    private List<InstrumentCategory> subCategories = new Vector<InstrumentCategory>();
 
-    private List instruments = new Vector();
+    private List<Instrument> instruments = new Vector<Instrument>();
 
     private boolean isRoot = false;
 
@@ -128,7 +128,7 @@ public class InstrumentCategory implements Serializable {
      * @param instruments
      *            The instruments to set.
      */
-    public void setInstruments(ArrayList instruments) {
+    public void setInstruments(ArrayList<Instrument> instruments) {
         this.instruments = instruments;
     }
 
@@ -143,7 +143,7 @@ public class InstrumentCategory implements Serializable {
      * @param subCategories
      *            The subCategories to set.
      */
-    public void setSubCategories(ArrayList subCategories) {
+    public void setSubCategories(ArrayList<InstrumentCategory> subCategories) {
         this.subCategories = subCategories;
     }
 
@@ -238,11 +238,10 @@ public class InstrumentCategory implements Serializable {
 
     public Instrument getInstrumentById(int[] idArray, int index) {
         if (index == idArray.length - 1) {
-            return (Instrument) instruments.get(idArray[index]);
+            return instruments.get(idArray[index]);
         }
 
-        InstrumentCategory cat = (InstrumentCategory) subCategories
-                .get(idArray[index]);
+        InstrumentCategory cat = subCategories.get(idArray[index]);
         return cat.getInstrumentById(idArray, index + 1);
     }
 }

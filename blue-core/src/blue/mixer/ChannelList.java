@@ -43,7 +43,7 @@ public class ChannelList implements ListModel, Serializable {
 
     ArrayList<Channel> channels = new ArrayList<Channel>();
 
-    private transient Vector listeners = null;
+    private transient Vector<ListDataListener> listeners = null;
 
     private transient Vector<ChannelListListener> channelListListeners = null;
 
@@ -142,7 +142,7 @@ public class ChannelList implements ListModel, Serializable {
 
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<ListDataListener>();
         }
         listeners.add(l);
     }
@@ -159,8 +159,8 @@ public class ChannelList implements ListModel, Serializable {
             return;
         }
 
-        for (Iterator it = listeners.iterator(); it.hasNext();) {
-            ListDataListener listener = (ListDataListener) it.next();
+        for (Iterator<ListDataListener> it = listeners.iterator(); it.hasNext();) {
+            ListDataListener listener = it.next();
 
             switch (lde.getType()) {
                 case ListDataEvent.INTERVAL_ADDED:
@@ -175,7 +175,7 @@ public class ChannelList implements ListModel, Serializable {
 
     public int indexByName(Object anItem) {
         for (int i = 0; i < channels.size(); i++) {
-            Channel channel = (Channel) channels.get(i);
+            Channel channel = channels.get(i);
             if (channel.getName().equals(anItem)) {
                 return i;
             }

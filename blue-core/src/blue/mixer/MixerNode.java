@@ -270,12 +270,12 @@ class MixerNode {
      * @return
      */
     protected static boolean isValidOut(String channelName,
-            HashMap subChannelCache) {
+            HashMap<String, Channel> subChannelCache) {
         if (channelName.equals(Channel.MASTER)) {
             return true;
         }
 
-        Channel channel = (Channel) subChannelCache.get(channelName);
+        Channel channel = subChannelCache.get(channelName);
 
         Send[] sends = channel.getPreFaderSends();
 
@@ -515,7 +515,7 @@ class MixerNode {
     }
 
     protected static HashMap getValidOutCache(Mixer mixer) {
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        HashMap<String, Channel> subChannelCache = mixer.getSubChannelCache();
 
         HashMap validOutCache = new HashMap();
 
