@@ -9,6 +9,7 @@
 
 package org.syntax.jedit;
 
+import blue.settings.TextColorsSettings;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -47,6 +48,8 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.EventListenerList;
@@ -117,11 +120,20 @@ public class JEditTextArea extends JComponent {
      * @param defaults
      *            The default settings
      */
-    public JEditTextArea(TextAreaDefaults defaults) {
+    public JEditTextArea(final TextAreaDefaults defaults) {
         // Enable the necessary events
         // enableEvents(AWTEvent.KEY_EVENT_MASK);
 
         // Initialize some misc. stuff
+
+		TextColorsSettings.getInstance().addChangeListener(new ChangeListener() {
+			
+			public void stateChanged(ChangeEvent ce) {
+				painter.setFont(new Font("Monospaced", Font.PLAIN, 
+						TextColorsSettings.getInstance().blueSyntaxFontSize));
+			}
+		});
+		
         painter = new TextAreaPainter(this, defaults);
         documentHandler = new DocumentHandler();
         listenerList = new EventListenerList();

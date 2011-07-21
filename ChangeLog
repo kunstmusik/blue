@@ -12,6 +12,18 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.5<
+[released 2011.xx.xx]
+
+Steven Yi-----------------------------------------------------------------------
+
+blue
+
+    [new] - add setting of font size in Text Settings section of program 
+            options, renamed "Text Colors" to "Text Settings" in options
+            RFE 3371772
+
+
 >Notes for 2.1.4<
 [released 2011.07.11]
 

@@ -48,6 +48,8 @@ public class TextColorsSettings {
 
     private static final String TEXT_PFIELD = "textPfield";
 
+    private static final String TEXT_FONT_SIZE = "textFontSize";
+	
     public Color blueSyntaxNormal;
 
     public Color blueSyntaxKeyword;
@@ -61,6 +63,8 @@ public class TextColorsSettings {
     public Color blueSyntaxBackground;
 
     public Color blueSyntaxPfield;
+
+	public int blueSyntaxFontSize = 12;
 
     private static TextColorsSettings instance = null;
 
@@ -92,6 +96,8 @@ public class TextColorsSettings {
             instance.blueSyntaxPfield = new Color(
                     prefs.getInt(TEXT_PFIELD, Color.WHITE.getRGB()));
 
+			instance.blueSyntaxFontSize = prefs.getInt(TEXT_FONT_SIZE, 12);
+
         }
         return instance;
     }
@@ -106,7 +112,8 @@ public class TextColorsSettings {
         prefs.putInt(TEXT_QUOTE, blueSyntaxQuote.getRGB());
         prefs.putInt(TEXT_VARIABLE, blueSyntaxVariable.getRGB());
         prefs.putInt(TEXT_PFIELD, blueSyntaxPfield.getRGB());
-
+		prefs.putInt(TEXT_FONT_SIZE, blueSyntaxFontSize);
+		
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

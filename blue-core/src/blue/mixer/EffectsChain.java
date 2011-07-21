@@ -161,21 +161,18 @@ public class EffectsChain implements Serializable, ListModel,
     }
 
     public Send[] getSends() {
-        ArrayList temp = new ArrayList();
+        ArrayList<Send> temp = new ArrayList<Send>();
 
         for (int i = 0; i < this.size(); i++) {
             Object obj = this.getElementAt(i);
 
             if (obj instanceof Send) {
-                temp.add(obj);
+                temp.add((Send)obj);
             }
         }
 
         Send[] sends = new Send[temp.size()];
-
-        for (int i = 0; i < sends.length; i++) {
-            sends[i] = (Send) temp.get(i);
-        }
+		sends = temp.toArray(sends);
 
         return sends;
     }
