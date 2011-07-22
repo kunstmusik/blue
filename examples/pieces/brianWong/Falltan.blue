@@ -1,0 +1,2048 @@
+<blueData version='2.1.0'>
+  <projectProperties>
+    <title>Falltan</title>
+    <author>Brian Wong</author>
+    <notes>A just intonation composition using FM and additive synthesis.</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>50</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Fmaestro</name>
+        <comment></comment>
+        <globalOrc>;[once](
+gi_sine ftgen 0,0,65536,10,1</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>0dbfs = 1.0
+gi_fq = p4
+kamp linseg 0,p3*.5,ampdbfs(p5),p3*.5,0 
+a0 foscil kamp,p4,1,1,kamp*.0005,gi_sine,p6 
+blueMixerOut a0*(sqrt(2)/2*cos(p7)+sin(p7)),a0*(sqrt(2)/2*cos(p7)-sin(p7)) 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Sinex0</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>0dbfs = 1.0
+seed 0
+irnd random 2, 5
+imul = int(irnd)
+ifq = gi_fq*imul
+kamp expseg .01,.01,ampdbfs(p4),p3*.5,ampdbfs(p4)*.5,p3*.5,.01 
+a0 poscil3 kamp,ifq,gi_sine,p5 
+blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='3' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Sinex1</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>0dbfs = 1.0
+seed 0
+irnd random 2, 5
+imul = int(irnd)*.66
+ifq = gi_fq*imul
+kamp expseg .01,.01,ampdbfs(p4),p3*.4,ampdbfs(p4)*.5,p3*.4,.01 
+a0 poscil3 kamp,ifq,gi_sine,p5 
+blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='4' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FMx0</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>0dbfs = 1.0
+ifq = gi_fq*.5
+kamp linseg 0,p3*.5,ampdbfs(p4),p3*.5,0 
+a0 foscil kamp,ifq,1,1,kamp*.0005,gi_sine,p6 
+blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='5' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>Sinex2</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>0dbfs = 1.0
+ifq = gi_fq*1.5
+kamp linseg 0,p3*.5,ampdbfs(p4),p3*.5,0 
+a0 poscil3 kamp,ifq,gi_sine,p5 
+blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
+</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>2.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>-7.8</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='718945472' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-7.8'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-7.8'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>-5.4</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1935034471' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-5.4'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-5.4'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>3</name>
+        <outChannel>Master</outChannel>
+        <level>-5.4</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1935034473' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-5.4'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-5.4'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>4</name>
+        <outChannel>Master</outChannel>
+        <level>7.1</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1946314222' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='7.1'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='7.1'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>5</name>
+        <outChannel>Master</outChannel>
+        <level>-5.4</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1946314224' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='-5.4'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='-5.4'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>3.6</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'>
+        <effect>
+          <name>Freeverbw</name>
+          <enabled>true</enabled>
+          <numIns>2</numIns>
+          <numOuts>2</numOuts>
+          <code>arev1,arev2 freeverb ain1,ain2,&lt;rsize&gt;,&lt;hfdamp&gt;,sr,1
+aout1 = (arev1*&lt;level&gt;)+(ain1*(1-&lt;level&gt;))
+aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))
+</code>
+          <comments>A wrapper for the freeverb opcode. by Brian Wong, 2010</comments>
+          <opcodeList/>
+          <graphicInterface editEnabled='true'>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>hfdamp</objectName>
+              <x>182</x>
+              <y>78</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.53245187</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName>roomsize</objectName>
+              <x>105</x>
+              <y>157</y>
+              <label>Room Size</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName>bsbObj0</objectName>
+              <x>185</x>
+              <y>157</y>
+              <label>HF Damp</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>rsize</objectName>
+              <x>105</x>
+              <y>78</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.69821036</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>level</objectName>
+              <x>27</x>
+              <y>78</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.666726</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>43</x>
+              <y>156</y>
+              <label>Level</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>44</x>
+              <y>19</y>
+              <label>&lt;html&gt;&lt;font size=&quot;+3&quot; face=&quot;Comic Sans MS&quot; color=rgb(150,180,127)&gt;Freeverbw&lt;/font&gt;&lt;/htmL&gt;</label>
+            </bsbObject>
+          </graphicInterface>
+          <bsbParameterList>
+            <parameter uniqueId='1946314333' name='hfdamp' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.53245187'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.53245187'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='1946314337' name='level' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.666726'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.666726'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='1946314335' name='rsize' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.69821036'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.69821036'/>
+              </line>
+            </parameter>
+          </bsbParameterList>
+        </effect>
+      </effectsChain>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='718945213' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='3.6'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='3.6'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>26</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>1.0</startTime>
+        <name>FMaestro</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	0
+i1	1	1.4	450	-22	.1	.1
+i1	2	1.4	200	-18	.8	-.1
+i1	3	1.4	375	-25	.75	.2</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	500	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	450	-25	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	600	-28	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	500	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	1.4	450	-18	.8	.1
+i1	3	1.4	350	-25	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>17.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	0
+i1	1	1.4	450	-22	.1	.1
+i1	2	1.4	200	-18	.8	-.1
+i1	3	1.4	375	-25	.75	.2</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	500	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	450	-25	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	600	-28	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>29.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	500	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	2.8	450	-18	.8	.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	500	-20	0	0
+i1	1	1.4	750	-22	.1	.1
+i1	2	1.4	666.666	-18	.8	-.1
+i1	3	1.4	333.333	-25	.75	.2</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	500	-20	0	0
+i1	1	1.4	750	-22	.1	.1
+i1	2	2.7	600	-20	.8	-.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>41.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	1 	1.4	500	-20	0	0
+i1	2	1.4	666.666	-22	.1	.1
+i1	3	2.7	375	-18	.8	-.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	750	-20	0	0
+i1	1	1.4	495	-22	.1	.1
+i1	2	2.4	330	-18	.8	-.1
+i1	3	2.4	300	-38	.5	-.1
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>49.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	0
+i1	1	1.4	450	-22	.1	.1
+i1	2	1.4	200	-18	.8	-.1
+i1	3	1.4	375	-25	.75	.2</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>53.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	500	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	450	-25	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	300	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	1.4	200	-18	.8	.1
+i1	3	1.4	600	-28	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>61.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.4	500	-20	0	-1
+i1	1	1.4	400	-22	.1	-.5
+i1	2	1.4	450	-18	.8	.1
+i1	3	1.4	350	-25	.75	.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>65.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.9	525	-20	0	-1
+i1	1.5	1.3	393.75	-22	.1	-.5
+i1	2	1.2	656.25	-26	.8	.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.9	525	-20	0	-1
+i1	1.5	1.3	393.75	-22	.1	-.5
+i1	2	1.2	656.25	-33	.8	.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>73.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.9	393.75	-20	0	-1
+i1	1	2.3	259.875	-22	.1	-.5
+i1	3	1.6	590.625	-46	.8	.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>77.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-6750055</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	freq	amp	phase	pan	
+i1 	0 	1.9	393.75	-20	0	-1
+i1	1	4.1	259.875	-32	.1	-.5
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>1.0</startTime>
+        <name>Sinex0</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>17.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>29.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>41.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>49.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>53.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>61.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>65.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>73.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-20	0	-1
+i2	2.5	1	-22	.1	-.5
+i2	3	1	-18	.8	.1
+i2	3.5	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>77.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-13421569</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i2 	0 	1	-20	0	-1
+i2	.5	1	-22	.1	-.5
+i2	1	1	-18	.8	.1
+i2	1.5	1	-25	.75	.7
+i2 	2 	1	-40	0	-1
+i2	2.5	1	-50	.1	-.5
+i2	3	1	-60	.8	.1
+i2	3.5	1	-70	.75	.7
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>1.0</startTime>
+        <name>Sinex1</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>17.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>29.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>41.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>49.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>53.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>61.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>65.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>73.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-18	.8	.1
+i3	2.75	1	-25	.75	.7
+i3 	3 	1	-20	0	-1
+i3	3.25	1	-22	.1	-.5
+i3	3.5	1	-18	.8	.1
+i3	3.75	1	-25	.75	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>77.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-39424</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i3 	0 	1	-20	0	-1
+i3	.25	1	-22	.1	-.5
+i3	.5	1	-18	.8	.1
+i3	.75	1	-25	.75	.7
+i3 	1 	1	-20	0	-1
+i3	1.25	1	-22	.1	-.5
+i3	1.5	1	-18	.8	.1
+i3	1.75	1	-25	.75	.7
+i3 	2 	1	-20	0	-1
+i3	2.25	1	-22	.1	-.5
+i3	2.5	1	-40	.8	.1
+i3	2.75	1	-50	.75	.7
+i3 	3 	1	-60	0	-1
+i3	3.25	1	-70	.1	-.5
+i3	3.5	1	-80	.8	.1
+i3	3.75	1	-89	.75	.7
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>1.0</startTime>
+        <name>FMx0</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-20	.8	.7
+i4	3	1.6	-18	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>17.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-20	.8	.7
+i4	3	1.6	-18	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>29.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>41.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>49.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>53.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-20	.8	.7
+i4	3	1.6	-18	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>61.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-14	.8	.7
+i4	3	1.6	-12	.75	.6</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>65.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1.5	1.3	-16	.1	.8
+i4	2	1.4	-24	.8	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	1.6	-16	.1	.8
+i4	2	1.6	-24	.8	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>73.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	2.6	-16	.1	.8
+i4	3	1.6	-34	.8	.7
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>77.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-3355648</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i4 	0 	1.6	-18	0	1
+i4	1	4.1	-19	.1	.8
+</score>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>1.0</startTime>
+        <name>Sinex2</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>5.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>9.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-18	.8	-.6
+i5	3	1.8	-17	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>17.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>21.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>25.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-18	.8	-.6
+i5	3	1.8	-17	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>29.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>37.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-18	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>41.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>49.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>53.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-18	.8	-.6
+i5	3	1.8	-17	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>61.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-12	.8	-.6
+i5	3	1.8	-10	.75	-.7</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>65.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1.5	1.3	-14	.1	-.5
+i5	2	1.2	-22	.8	-.6
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-16	0	-1
+i5	1	1.8	-14	.1	-.5
+i5	2	1.8	-22	.8	-.6
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>73.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.8	-26	0	-1
+i5	1	2.8	-24	.1	-.5
+i5	3	1.8	-42	.8	-.6
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>77.0</startTime>
+        <name>GenericScore</name>
+        <backgroundColor>-10027162</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	start	dur	amp	phase	pan	
+i5 	0 	1.7	-26	0	-1
+i5	1	4.1	-20	.1	-.5
+</score>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>true</enabled>
+    <visible>true</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='55.0'/>
+      <linePoint x='73.0' y='55.0'/>
+      <linePoint x='81.0' y='33.0'/>
+    </line>
+  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>
