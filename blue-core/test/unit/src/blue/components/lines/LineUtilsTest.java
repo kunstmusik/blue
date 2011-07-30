@@ -47,6 +47,10 @@ public class LineUtilsTest extends TestCase {
         // condition without resolution
         assertEquals(5.3, LineUtils.snapToResolution(5.3f, .2f, 6.0f, -1.0f),
                 0.0001);
+
+		assertEquals(1.0f, LineUtils.snapToResolution(1.0f, -20.0f, 20.0f, .2f), 0.0001f);
+
+		assertEquals(1.2f, LineUtils.snapToResolution(1.20f, -20.0f, 20.0f, .1f), 0.0001f);
     }
 
 }

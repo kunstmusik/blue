@@ -17,10 +17,10 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.utility;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 
 /**
  * 
@@ -28,23 +28,17 @@ import java.math.BigDecimal;
  */
 public class MathUtils {
 
-    public static double remainder(double f1, double f2) {
-        BigDecimal dec1 = new BigDecimal(f1);
-        BigDecimal dec2 = new BigDecimal(f2);
+	public static double remainder(double f1, double f2) {
+		MathContext mc = new MathContext(5);
 
-        // Not available in Java 1.4
-        // BigDecimal value = dec1.remainder(dec2);
+		BigDecimal a = new BigDecimal(f1);
+		BigDecimal b = new BigDecimal(f2, mc);
 
-        BigDecimal part = dec1.divide(dec2, BigDecimal.ROUND_DOWN);
-        part = new BigDecimal(part.longValue());
+		return a.remainder(b, mc).doubleValue();
+	}
 
-        BigDecimal value = dec1.subtract(part.multiply(dec2));
-
-        return value.doubleValue();
-    }
-
-    public static void main(String args[]) {
-        System.out.println(MathUtils.remainder(5.2, 5));
-        System.out.println(MathUtils.remainder(5.2, 1));
-    }
+	public static void main(String args[]) {
+		System.out.println(MathUtils.remainder(5.2, 5));
+		System.out.println(MathUtils.remainder(5.2, 1));
+	}
 }

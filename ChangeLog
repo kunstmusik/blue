@@ -25,6 +25,8 @@ blue
 
     [new] - added Brian Wong's "Falltan" to examples/pieces/brianWong
 
+    [fix] - BSB - fixed rounding error when setting value in Sliders
+
 
 >Notes for 2.1.4<
 [released 2011.07.11]

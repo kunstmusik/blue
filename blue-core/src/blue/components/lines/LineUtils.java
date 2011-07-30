@@ -20,6 +20,8 @@
 package blue.components.lines;
 
 import blue.utility.MathUtils;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 public class LineUtils {
     /**
