@@ -31,7 +31,7 @@ public class MathUtils {
 	public static double remainder(double f1, double f2) {
 		MathContext mc = new MathContext(5);
 
-		BigDecimal a = new BigDecimal(f1);
+		BigDecimal a = new BigDecimal(f1,mc);
 		BigDecimal b = new BigDecimal(f2, mc);
 
 		return a.remainder(b, mc).doubleValue();
