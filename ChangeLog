@@ -25,6 +25,10 @@ blue
 
     [new] - added Brian Wong's "Falltan" to examples/pieces/brianWong
 
+    [new] - double-clicking SoundObject on timeline (except polyObject) now 
+            opens and focuses SoundObject editor (useful if editor is docked and
+            set to sliding to pop open the editor)
+
     [fix] - BSB - fixed rounding error when setting value in Sliders
 
 
