@@ -60,7 +60,7 @@
         </folder>--> 
     </folder>
     <folder name="Menu">
-        <file name="Edit_hidden"/>
+        <!--<file name="Edit_hidden"/>-->
         <folder name="File">
             <file name="Separator3.instance_hidden"/>
             <file name="Separator4.instance_hidden"/>
