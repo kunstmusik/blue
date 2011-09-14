@@ -124,11 +124,23 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                             addBufferedSoundObject(sObjView, e);
                         }
                     } else if (sCanvas.mBuffer.contains(sObjView)) {
-                        if ((sObjView.getSoundObject() instanceof PolyObject)
-                                && (e.getClickCount() >= 2)) {
-                            PolyObject pObj = (PolyObject) (sObjView
+                        if (e.getClickCount() >= 2) {
+                            if((sObjView.getSoundObject() instanceof PolyObject)) {
+                                 PolyObject pObj = (PolyObject) (sObjView
                                     .getSoundObject());
-                            editPolyObject(pObj);
+                                editPolyObject(pObj);
+                            } else {
+                                if(sCanvas.mBuffer.size() == 1) {
+                                    SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
+                                    
+                                    if (!editor.isOpened()) {
+                                        editor.open();
+                                    } 
+                                    
+                                    editor.requestActive();
+                                    
+                                }
+                            }
                         } else {
                             sCanvas.start = e.getPoint();
                             sCanvas.mBuffer.motionBufferObjects();
