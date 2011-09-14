@@ -20,3 +20,4 @@ gensrc$
 \.conflict\~$
 manual/docbook/index\.xml
 tempCsd.*\.csd$
+jython/release/modules/ext/cachedir/*
