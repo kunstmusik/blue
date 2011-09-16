@@ -74,6 +74,10 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.ModuleInstall;
@@ -81,6 +85,10 @@ import org.openide.windows.WindowManager;
 import org.syntax.jedit.SyntaxStyle;
 import org.syntax.jedit.TextAreaDefaults;
 import org.syntax.jedit.tokenmarker.Token;
+import com.pinkmatter.toolbar.MyRootPaneLayout;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -92,11 +100,34 @@ public class Installer extends ModuleInstall {
     private ChangeListener textColorChangeListener;
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
-
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
 
     @Override
     public void restored() {
+
+//        System.setProperty("netbeans.winsys.no_toolbars", "true");
+//
+//        SwingUtilities.invokeLater(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                //Get the main window of the NetBeans Platform:
+//                JFrame frame = (JFrame) WindowManager.getDefault().getMainWindow();
+//                //Get our custom main toolbar:  
+//                JPanel panel = new JPanel();
+//                panel.setLayout(new FlowLayout(FlowLayout.CENTER));
+//                panel.add(new blue.ui.core.toolbar.MainToolBar(), BorderLayout.CENTER);
+//                panel.setPreferredSize(new Dimension(100, 70));
+//
+//                //Set the new layout of our root pane:
+//                frame.getRootPane().setLayout(new MyRootPaneLayout(panel));
+//                //Install a new toolbar component into the layered pane 
+//                //of the main frame on layer 0: 
+//                panel.putClientProperty(JLayeredPane.LAYER_PROPERTY, 0);
+//                frame.getRootPane().getLayeredPane().add(panel, 0);
+//            }
+//        });
+
         initializeTextDefaults();
         initializeBluePlugins();
 
