@@ -136,6 +136,10 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         playEndText.setEditable(false);
         playTimeText.setEditable(false);
 
+        playStartText.setFocusable(false);
+        playEndText.setFocusable(false);
+        playTimeText.setFocusable(false);
+        
         rewindButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
                 "blue/resources/images/Rewind16.gif")));
 
