@@ -119,6 +119,11 @@ public class BlueLiveToolBar extends JToolBar {
                 }
             }
         });
+        
+        runButton.setFocusable(false);
+        refreshButton.setFocusable(false);
+        allNotesOffButton.setFocusable(false);
+        midiButton.setFocusable(false);
 
         reinitialize();
     }
