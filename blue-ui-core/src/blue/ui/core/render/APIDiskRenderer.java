@@ -90,6 +90,9 @@ public class APIDiskRenderer {
 
         if (retVal != 0) {
            notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+           csound.Stop();
+           csound.SetMessageCallback(null);
+           csound.SetHostData(null);
            csound.Reset();
            return;
         }
@@ -138,7 +141,9 @@ public class APIDiskRenderer {
                 }
             }
         } while (csound.PerformKsmps() == 0 && keepRunning);
-        
+        csound.Stop();
+        csound.SetMessageCallback(null);
+        csound.SetHostData(null);
         csound.Reset();
         
         RenderTimeManager.getInstance().endRender();
@@ -191,6 +196,9 @@ public class APIDiskRenderer {
 
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
+            csound.Stop();
+            csound.SetMessageCallback(null);
+            csound.SetHostData(null);
             csound.Reset();
             return buffer.toString();
         }
@@ -199,7 +207,9 @@ public class APIDiskRenderer {
         while (csound.PerformKsmps() == 0 && keepRunning) {
             // empty
         }
-        
+        csound.Stop();
+        csound.SetMessageCallback(null);
+        csound.SetHostData(null);
         csound.Reset();
         
         keepRunning = false;

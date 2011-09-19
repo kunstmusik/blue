@@ -35,6 +35,9 @@ blue
 
     [fix] - BSB - fixed rounding error when setting value in Sliders
 
+    [fix] - stabilized blue and Csound API usage by clearing MessageCallback
+            and HostData before calling Reset
+
 
 >Notes for 2.1.4<
 [released 2011.07.11]
