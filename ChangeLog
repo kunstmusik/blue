@@ -29,9 +29,11 @@ blue
             opens and focuses SoundObject editor (useful if editor is docked and
             set to sliding to pop open the editor)
 
-    [fix] - BSB - fixed rounding error when setting value in Sliders
+    [new] - implemented blueLive Recompile button   
 
     [updated] - Changed blue Manual link to point to blue wiki
+
+    [fix] - BSB - fixed rounding error when setting value in Sliders
 
 
 >Notes for 2.1.4<

@@ -55,6 +55,8 @@ public class BlueLiveToolBar extends JToolBar {
     JButton allNotesOffButton = new JButton("All Notes Off");
     JToggleButton midiButton = new JToggleButton("MIDI Input");
     private static BlueLiveToolBar instance = null;
+    
+    boolean restartInProgress = false;
 
     public static BlueLiveToolBar getInstance() {
         if (instance == null) {
@@ -70,7 +72,14 @@ public class BlueLiveToolBar extends JToolBar {
 
             public void playModeChanged(int playMode) {
                 if (playMode == PlayModeListener.PLAY_MODE_STOP) {
-                    if (runButton.isSelected()) {
+                    
+                    System.out.println("Play mode stop");
+                    
+                    if(restartInProgress) {
+                        restartInProgress = false;
+
+                        finishRefresh();
+                    } else if (runButton.isSelected()) {
                         runButton.setSelected(false);
                     }
                 }
@@ -92,6 +101,13 @@ public class BlueLiveToolBar extends JToolBar {
             }
         });
 
+        refreshButton.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                refreshButtonActionPerformed();
+            }
+        });
+        
         allNotesOffButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -183,6 +199,46 @@ public class BlueLiveToolBar extends JToolBar {
         }.run();
     }
 
+    protected void refreshButtonActionPerformed() {
+        if (data == null) {
+            return;
+        }
+
+        if (csdRunner != null && csdRunner.isRunning()) {
+            
+            restartInProgress = true;
+            
+            csdRunner.stop();
+
+            csdRunner = null;
+        
+        }
+    }
+    
+    protected void finishRefresh() {
+        if (apiRunner != null
+                && APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+            csdRunner = apiRunner;
+        } else {
+            csdRunner = commandlineRunner;
+        }
+
+        csdRunner.setData(data);
+
+        new Thread() {
+
+            public void run() {
+                try {
+                    csdRunner.renderForBlueLive();
+                } catch (SoundObjectException soe) {
+                    ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
+                            soe);
+                }
+            }
+        }.run();
+    }
+    
     public void midiButtonActionPerformed() {
         boolean selected = midiButton.isSelected();
 
