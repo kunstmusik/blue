@@ -19,9 +19,11 @@
  */
 package blue.ui.core.score;
 
+import blue.BlueSystem;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
@@ -54,7 +56,9 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
     public void mouseWheelMoved(MouseWheelEvent e) {
         final ScoreTimeCanvas sTimeCanvas = (ScoreTimeCanvas) scrollPane.getViewport().getView();
 
-        if (e.isControlDown()) {
+        int shortcutKey = BlueSystem.getMenuShortcutKey();
+        
+        if (e.isAltDown()) {
             int value = e.getWheelRotation();
 
             MouseEvent transPoint = SwingUtilities.convertMouseEvent(
@@ -82,7 +86,19 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
                 }
             });
+        } else if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+            MouseEvent transPoint = SwingUtilities.convertMouseEvent(
+                    scrollPane, e, sTimeCanvas);
 
+            int value = e.getWheelRotation();
+
+            value = (value > 0) ? 1 : -1;
+            
+//            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+//
+//            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+
+            sTimeCanvas.modifyLayerHeight(value, transPoint.getY());
         } else if (e.isShiftDown()) {
             MouseEvent transPoint = SwingUtilities.convertMouseEvent(
                     scrollPane, e, sTimeCanvas);
@@ -90,12 +106,28 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
             int value = e.getWheelRotation();
 
             value = (value > 0) ? 1 : -1;
+            
+            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
 
-            sTimeCanvas.modifyLayerHeight(value, transPoint.getY());
+            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+
+//            sTimeCanvas.modifyLayerHeight(value, transPoint.getY());
         } else {
-            for (int i = 0; i < listeners.length; i++) {
-                listeners[i].mouseWheelMoved(e);
-            }
+//            for (int i = 0; i < listeners.length; i++) {
+//                listeners[i].mouseWheelMoved(e);
+//            }
+            
+             MouseEvent transPoint = SwingUtilities.convertMouseEvent(
+                    scrollPane, e, sTimeCanvas);
+
+            int value = e.getWheelRotation();
+
+            value = (value > 0) ? 1 : -1;
+            
+            JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+
+            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+
         }
     }
 }

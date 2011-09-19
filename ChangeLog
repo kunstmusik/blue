@@ -31,11 +31,17 @@ blue
 
     [new] - implemented blueLive Recompile button   
 
-    [updated] - Changed blue Manual link to point to blue wiki
+    [updated] - modified scroll wheel/trackpad handling on score timeline to 
+            work better with trackpads; horizontal/vertial trackpad motion will 
+            do scrolling, holding down alt- will increase/decrease horizontal
+            zoom, holding down ctrl- (or cmd- on Mac) will increase/decrease
+            vertical zoom
 
     [updated] - Made PortAudio blocking interface (pa_bl) the default audio 
             driver on OSX as "PortAudio" and "pa_cb" uses the callback interface
             which has caused crashes
+
+    [updated] - Changed blue Manual link to point to blue wiki
 
     [fix] - restored use of ctrl-z/ctrl-shift-z to undo/redo operations on the
             score timeline
