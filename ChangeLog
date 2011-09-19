@@ -37,6 +37,9 @@ blue
             driver on OSX as "PortAudio" and "pa_cb" uses the callback interface
             which has caused crashes
 
+    [fix] - restored use of ctrl-z/ctrl-shift-z to undo/redo operations on the
+            score timeline
+
     [fix] - BSB - fixed rounding error when setting value in Sliders
 
     [fix] - stabilized blue and Csound API usage by clearing MessageCallback

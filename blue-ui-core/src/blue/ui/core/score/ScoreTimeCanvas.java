@@ -68,6 +68,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
+import javax.swing.undo.UndoManager;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -288,6 +289,11 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, osCtrlKey), "raisePixelSecond");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, osCtrlKey), "lowerPixelSecond");
 
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, osCtrlKey), "undo");
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, osCtrlKey
+                | KeyEvent.SHIFT_DOWN_MASK), "redo");
+        
         actionMap.put("cutSoundObjects", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
@@ -505,6 +511,31 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
             }
         });
 
+        
+        actionMap.put("undo", new AbstractAction() {
+
+            public void actionPerformed(ActionEvent ae) {
+                BlueUndoManager.setUndoManager("score");
+                UndoManager undoManager = BlueUndoManager.getUndoManager();
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                }
+            }
+            
+        });
+        
+        actionMap.put("redo", new AbstractAction() {
+
+            public void actionPerformed(ActionEvent ae) {
+                BlueUndoManager.setUndoManager("score");
+                UndoManager undoManager = BlueUndoManager.getUndoManager();
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                }
+            }
+            
+        });
+        
     }
 
     // TODO - Respect snap values, Make Undoable
