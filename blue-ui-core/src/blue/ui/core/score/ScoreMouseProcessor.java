@@ -4,6 +4,7 @@
  */
 package blue.ui.core.score;
 
+import blue.BlueData;
 import blue.BlueSystem;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -21,8 +22,10 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import blue.SoundLayer;
+import blue.SoundObjectLibrary;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.projects.BlueProjectManager;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.ui.core.score.undo.MoveSoundObjectsEdit;
 import blue.ui.core.score.undo.ResizeSoundObjectEdit;
@@ -432,13 +435,18 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
             if (sObj instanceof Instance) {
                 Instance instance = (Instance) sObj;
-//                if (!sCanvas.sGUI.soundObjectLibraryDialog
-//                        .containsSoundObject(instance.getSoundObject())) {
-//                    SoundObject clone = (SoundObject) instance.getSoundObject()
-//                            .clone();
-//                    instance.setSoundObject(clone);
-//                    sCanvas.sGUI.soundObjectLibraryDialog.addSoundObject(clone);
-//                }
+                
+                BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+                
+                SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
+                
+                if(!sObjLib.contains(instance.getSoundObject())) {
+                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+                    instance.setSoundObject(clone);
+                    sObjLib.addSoundObject(clone);
+                    SoundObjectLibraryTopComponent.findInstance().reinitialize();
+                }
+         
             }
 
             float startTime = (float) start / pObj.getPixelSecond();
@@ -487,13 +495,17 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
             if (sObj instanceof Instance) {
                 Instance instance = (Instance) sObj;
-//                if (!sCanvas.sGUI.soundObjectLibraryDialog
-//                        .containsSoundObject(instance.getSoundObject())) {
-//                    SoundObject clone = (SoundObject) instance.getSoundObject()
-//                            .clone();
-//                    instance.setSoundObject(clone);
-//                    sCanvas.sGUI.soundObjectLibraryDialog.addSoundObject(clone);
-//                }
+
+                BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+                
+                SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
+                
+                if(!sObjLib.contains(instance.getSoundObject())) {
+                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+                    instance.setSoundObject(clone);
+                    sObjLib.addSoundObject(clone);
+                    SoundObjectLibraryTopComponent.findInstance().reinitialize();
+                }
             }
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);

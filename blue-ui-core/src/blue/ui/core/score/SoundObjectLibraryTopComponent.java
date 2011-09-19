@@ -91,7 +91,7 @@ final class SoundObjectLibraryTopComponent extends TopComponent {
         reinitialize();
     }
 
-    private void reinitialize() {
+    public void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().
                 getCurrentProject();
         if (project != null) {
