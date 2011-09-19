@@ -33,6 +33,10 @@ blue
 
     [updated] - Changed blue Manual link to point to blue wiki
 
+    [updated] - Made PortAudio blocking interface (pa_bl) the default audio 
+            driver on OSX as "PortAudio" and "pa_cb" uses the callback interface
+            which has caused crashes
+
     [fix] - BSB - fixed rounding error when setting value in Sliders
 
     [fix] - stabilized blue and Csound API usage by clearing MessageCallback
