@@ -25,37 +25,33 @@ import org.openide.windows.InputOutput;
 public class APIDiskRenderer {
 
     Vector listeners = new Vector();
-    
     RenderTimeManager renderTimeManager = null;
-    
     private volatile boolean keepRunning = false;
-
     private static APIDiskRenderer instance = null;
-    
+
     public static APIDiskRenderer getInstance() {
-        if(instance == null) {
+        if (instance == null) {
             instance = new APIDiskRenderer();
         }
         return instance;
     }
-    
+
     private APIDiskRenderer() {
-        
     }
-    
+
     public boolean isRunning() {
         return keepRunning;
     }
-    
+
     public void setRenderTimeManager(RenderTimeManager renderTimeManager) {
         this.renderTimeManager = renderTimeManager;
     }
-    
+
     private void initialize() {
         keepRunning = true;
     }
-    
-    private void exec(String[] args, 
+
+    private void exec(String[] args,
             File currentWorkingDirectory,
             float startTime,
             TempoMapper mapper,
@@ -74,52 +70,53 @@ public class APIDiskRenderer {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
-        
+
         IOColors.setColor(ioProvider, IOColors.OutputType.OUTPUT, Color.WHITE);
         blueCallbackWrapper.setInputOutput(ioProvider);
 
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
-        
-        CsoundArgVList argsList = new CsoundArgVList();      
-        
+
+        CsoundArgVList argsList = new CsoundArgVList();
+
         for (int i = 0; i < args.length; i++) {
             argsList.Append(args[i]);
         }
-        
+
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 
         if (retVal != 0) {
-           notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
-           csound.Stop();
-           csound.SetMessageCallback(null);
-           csound.SetHostData(null);
-           csound.Reset();
-           return;
+            notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+            csound.Stop();
+            csound.Cleanup();
+            csound.SetMessageCallback(null);
+            csound.SetHostData(null);
+            csound.Reset();
+            return;
         }
-        
-        int updateRate = (int) (csound.GetKr() /
-                PlaybackSettings.getInstance().getPlaybackFPS());
+
+        int updateRate = (int) (csound.GetKr()
+                / PlaybackSettings.getInstance().getPlaybackFPS());
         int counter = 0;
-        
+
         RenderTimeManager manager = RenderTimeManager.getInstance();
         manager.initiateRender(startTime);
-        
+
         Parameter param;
-        
-        
+
+
         do {
             counter++;
 
             float scoreTime = (float) csound.GetScoreTime();
 
             if (counter > updateRate) {
-                manager.updateTimePointer(scoreTime);     
+                manager.updateTimePointer(scoreTime);
                 counter = 0;
             }
 
             float currentTime = 0.0f;
 
-            if(startTime >= 0.0f) {
+            if (startTime >= 0.0f) {
                 if (mapper != null) {
                     float renderStartSeconds = mapper.beatsToSeconds(startTime);
                     currentTime = mapper.secondsToBeats(scoreTime + renderStartSeconds);
@@ -129,33 +126,34 @@ public class APIDiskRenderer {
                 }
             }
 
-                       
-            if(parameters != null) {
+
+            if (parameters != null) {
                 for (int i = 0; i < parameters.size(); i++) {
                     param = (Parameter) parameters.get(i);
                     String varName = param.getCompilationVarName();
-                
+
                     float value = param.getValue(currentTime);
                     csound.SetChannel(varName, (double) value);
-                    
+
                 }
             }
         } while (csound.PerformKsmps() == 0 && keepRunning);
         csound.Stop();
+        csound.Cleanup();
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
-        
+
         RenderTimeManager.getInstance().endRender();
-        
+
         keepRunning = false;
-        
+
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
 
     }
 
     public void execWait(String[] args,
-            File currentWorkingDirectory, 
+            File currentWorkingDirectory,
             float startTime,
             TempoMapper mapper,
             ArrayList parameters) {
@@ -163,13 +161,13 @@ public class APIDiskRenderer {
 //        Csound csound = new Csound();
 //        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
 //        blueCallbackWrapper.SetMessageCallback();
-        
+
 //        if (GeneralSettings.getInstance().isShowCsoundOutputEnabled()) {
 //            blueCallbackWrapper.setInputOutput(IOProvider.getDefault().getIO("Csound", false));
 //        } else {
 //            blueCallbackWrapper.setInputOutput(null);
 //        }
-        
+
         exec(args, currentWorkingDirectory, startTime, mapper, parameters);
 
 //        blueCallbackWrapper.setInputOutput(null);
@@ -186,43 +184,45 @@ public class APIDiskRenderer {
         StrBuilder buffer = new StrBuilder();
         blueCallbackWrapper.setStringBuffer(buffer);
 
-        CsoundArgVList argsList = new CsoundArgVList();      
-        
+        CsoundArgVList argsList = new CsoundArgVList();
+
         for (int i = 0; i < args.length; i++) {
             argsList.Append(args[i]);
         }
-        
+
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
             csound.Stop();
+            csound.Cleanup();            
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
             return buffer.toString();
         }
-               
-        
+
+
         while (csound.PerformKsmps() == 0 && keepRunning) {
             // empty
         }
         csound.Stop();
+        csound.Cleanup();
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
-        
+
         keepRunning = false;
-        
+
         blueCallbackWrapper.setStringBuffer(null);
-        
+
         return buffer.toString();
     }
-    
+
     public void stop() {
         keepRunning = false;
     }
-    
+
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);
     }
@@ -237,5 +237,4 @@ public class APIDiskRenderer {
             listener.playModeChanged(playMode);
         }
     }
-
 }

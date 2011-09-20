@@ -155,9 +155,10 @@ public class APIRunner implements CSDRunner, PlayModeListener {
                 }
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+            csound.Stop();
+            csound.Cleanup();
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
-            csound.Stop();
             csound.Reset();
             csound = null;
             blueCallbackWrapper = null;
@@ -489,6 +490,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
             } while (csound.PerformKsmps() == 0 && keepRunning);
 
             csound.Stop();
+            csound.Cleanup();
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
