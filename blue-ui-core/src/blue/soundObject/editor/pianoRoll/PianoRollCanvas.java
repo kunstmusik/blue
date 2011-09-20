@@ -124,6 +124,8 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         InputMap inputMap = this.getInputMap();
         ActionMap actionMap = this.getActionMap();
 
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
+                "deleteNotes");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNotes");
         final int osCtrlKey = BlueSystem.getMenuShortcutKey();

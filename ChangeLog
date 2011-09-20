@@ -51,6 +51,9 @@ blue
     [fix] - stabilized blue and Csound API usage by clearing MessageCallback
             and HostData before calling Reset
 
+    [fix] - made backspace as well as delete work for deleting notes in 
+            PianoRoll
+
 
 >Notes for 2.1.4<
 [released 2011.07.11]
