@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -64,7 +65,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
     private BlueCallbackWrapper blueCallbackWrapper;
 
     private InputOutput io = null;
-
+    
     public APIRunner() {
 
         AuditionManager audition = AuditionManager.getInstance();
@@ -96,6 +97,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
         if (runnerThread != null) {
             runnerThread.setKeepRunning(false);
+            runnerThread.await();
         }
 
 //        if (csound == null) {
@@ -168,7 +170,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
                 result.getParameters(), mapper, renderStart);
-
+        
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
         t.setPriority(Thread.MAX_PRIORITY);
@@ -285,11 +287,14 @@ public class APIRunner implements CSDRunner, PlayModeListener {
     public void stop() {
         if (runnerThread != null) {
             shouldStop = true;
-            runnerThread.setKeepRunning(false);
+            APIRunnerThread runner = runnerThread;
             runnerThread = null;
+            runner.setKeepRunning(false);
+            runner.await();
+            runner = null;
         }
 
-        notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+        //notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
     }
 
     public void passToStdin(String text) {
@@ -386,6 +391,10 @@ public class APIRunner implements CSDRunner, PlayModeListener {
         private BlueData blueData;
 
         private float[] valuesCache;
+        
+        public boolean isRunning = true;
+        
+        CountDownLatch latch = new CountDownLatch(1);
 
         public APIRunnerThread(BlueData blueData,
                 Csound csound,
@@ -407,6 +416,14 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
         public void setKeepRunning(boolean val) {
             keepRunning = val;
+        }
+        
+        public void await() {
+            try {
+                latch.await();
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         public void run() {
@@ -501,6 +518,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
             playModeListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);
 
+            latch.countDown();
 
         }
 

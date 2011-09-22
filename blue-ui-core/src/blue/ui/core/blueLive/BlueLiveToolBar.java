@@ -49,7 +49,7 @@ public class BlueLiveToolBar extends JToolBar {
     BlueData data = null;
     APIRunner apiRunner;
     CommandlineRunner commandlineRunner = new CommandlineRunner();
-    CSDRunner csdRunner = null;
+    volatile CSDRunner csdRunner = null;
     JToggleButton runButton = new JToggleButton("blueLive");
     JButton refreshButton = new JButton("Recompile");
     JButton allNotesOffButton = new JButton("All Notes Off");
@@ -162,7 +162,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         if (csdRunner != null && csdRunner.isRunning()) {
             csdRunner.stop();
-
+            
             csdRunner = null;
 
             if (runButton.isSelected()) {
@@ -209,8 +209,6 @@ public class BlueLiveToolBar extends JToolBar {
             restartInProgress = true;
             
             csdRunner.stop();
-
-            csdRunner = null;
         
         }
     }
@@ -253,7 +251,7 @@ public class BlueLiveToolBar extends JToolBar {
         sendEvents("i \"blueAllNotesOff\" 0 1");
     }
 
-    public void sendEvents(String scoText) {
+    public void sendEvents(String scoText) {        
         if (csdRunner != null && csdRunner.isRunning()) {
             csdRunner.passToStdin(scoText);
         }
