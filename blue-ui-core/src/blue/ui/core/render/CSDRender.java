@@ -937,14 +937,19 @@ public class CSDRender {
         }
 
         if (useAPI) {
-            GenericInstrument instr = new GenericInstrument();
-            instr.setText(apiParamInstr.toString());
-            int instrId = arrangement.addInstrumentAtEnd(instr);
+            
+            String str = apiParamInstr.toString().trim();
+                    
+            if(str.length() > 0) {
+                GenericInstrument instr = new GenericInstrument();
+                instr.setText(str);
+                int instrId = arrangement.addInstrumentAtEnd(instr);
 
-            float dur = endTime - startTime;
+                float dur = endTime - startTime;
 
-            paramScore.append("i").append(instrId);
-            paramScore.append(" 0 ").append(dur);
+                paramScore.append("i").append(instrId);
+                paramScore.append(" 0 ").append(dur);
+            }
         }
 
         globalOrcSco.appendGlobalOrc(initStatements.toString());
