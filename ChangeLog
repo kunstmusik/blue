@@ -15,6 +15,10 @@ information.
 >Notes for 2.1.6<
 [released 2011.xx.xx]
 
+NEW
+
+* Added ctrl-shift-w (cmd-shift-w) shortcut to close the current project
+
 FIXES
 
 * If no parameters are used, no longer generate a parameter instrument; fixes

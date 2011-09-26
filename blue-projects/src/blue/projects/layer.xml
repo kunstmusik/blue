@@ -182,6 +182,9 @@
         <file name="D-S.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-projects-actions-SaveProjectAction.instance"/>
         </file>
+        <file name="DS-W.shadow">
+            <attr name="originalFile" stringvalue="Actions/Edit/blue-projects-actions-CloseProjectAction.instance"/>
+        </file>
         <file name="DS-PAGE_UP.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-projects-actions-PreviousProjectAction.instance"/>
         </file>
