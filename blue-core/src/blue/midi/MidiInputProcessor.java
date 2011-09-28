@@ -93,14 +93,28 @@ public class MidiInputProcessor implements Serializable {
     public void setScale(Scale scale) {
         this.scale = scale;
     }
+    
+    private String getPaddedNoteNum(int noteNum) {
+        String noteStr = Integer.toString(noteNum);
+        StringBuilder bdr = new StringBuilder();
+        if(noteStr.length() < 3) {
+            bdr.append("0");
+        }
+        if(noteStr.length() < 2) {
+            bdr.append("1");
+        }
+        bdr.append(noteStr);
+        
+        return bdr.toString();
+    }
 
     public String getNoteOn(String id, int noteNum, int key, int velocity) {
-        return NOTE_FORMAT.format(new Object[]{id, noteNum, processKey(key), processVelocity(
+        return NOTE_FORMAT.format(new Object[]{id, getPaddedNoteNum(noteNum), processKey(key), processVelocity(
                     velocity)});
     }
 
     public String getNoteOff(String id, int noteNum) {
-        return NOTE_OFF_FORMAT.format(new Object[]{id, noteNum});
+        return NOTE_OFF_FORMAT.format(new Object[]{id, getPaddedNoteNum(noteNum)});
     }
 
     protected String processKey(int key) {

@@ -25,6 +25,11 @@ FIXES
   scenario when user is using just global orc/sco to not generate an instr with
   an overlapping instr number
 
+* blueLive MIDI generated notes using bare note number instead of padded number,
+  i.e. "i1.1" instead of "i1.001".  Not padding caused a possible clash if 
+  fractional value collided, i.e. "i1.1", "i1.10", and "i1.100" would clash with
+  each other
+
 
 >Notes for 2.1.5<
 [released 2011.09.22]
