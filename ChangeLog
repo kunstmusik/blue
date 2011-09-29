@@ -19,6 +19,9 @@ NEW
 
 * Added ctrl-shift-w (cmd-shift-w) shortcut to close the current project
 
+* Added .csoundrc Editor to the tools menu, will open file pointed to by 
+  CSOUNDRC environment variable, or if not defined will use $HOME/.csoundrc
+
 FIXES
 
 * If no parameters are used, no longer generate a parameter instrument; fixes
