@@ -326,7 +326,7 @@ public class CSDRender {
 
         if (generateMixer) {
 
-            globalDur += mixer.getExtraRenderTime();
+            //globalDur += mixer.getExtraRenderTime();
 
             clearUnusedMixerChannels(mixer, arrangement);
 

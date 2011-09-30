@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.7<
+[released 2011.xx.xx]
+
+FIX
+
+* Extra render time from mixer was being added twice to the total duration when
+creating note for Mixer instrument
+
+
 >Notes for 2.1.6<
 [released 2011.09.29]
 
