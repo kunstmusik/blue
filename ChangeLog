@@ -15,6 +15,11 @@ information.
 >Notes for 2.1.7<
 [released 2011.xx.xx]
 
+NEW
+
+* Added Help menu link for "blue/Csound IRC Chat" that will open up the Freenode
+  webchat webpage to chat in #bluecsound and #csound channels for help
+
 FIX
 
 * Extra render time from mixer was being added twice to the total duration when
