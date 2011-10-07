@@ -14,6 +14,8 @@ import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Rectangle;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.JSplitPane;
 import javax.swing.border.Border;
@@ -37,6 +39,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  */
 class BlueSplitPaneDivider extends BasicSplitPaneDivider {
     private int inset = 2;
+    
+    private int dividerRestoreLocation = 0;
 
     private Color controlColor = MetalLookAndFeel.getControl();
 
@@ -46,6 +50,39 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
         super(ui);
         setLayout(new BlueDividerLayout());
         this.setBorder(null);
+        this.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                if (me.getClickCount() == 2) {
+                    handleDoubleClick();
+                }
+            }
+            
+        });
+    }
+    
+    protected void handleDoubleClick() {
+        JSplitPane jsp = getSplitPaneFromSuper();
+        
+        int currentLoc = jsp.getDividerLocation();
+        
+        if(currentLoc == jsp.getMinimumDividerLocation() || 
+                currentLoc == jsp.getMaximumDividerLocation()) {
+            
+            jsp.setDividerLocation(dividerRestoreLocation);
+            
+        } else {
+            
+            dividerRestoreLocation = currentLoc;
+            
+            if((currentLoc - jsp.getMinimumDividerLocation()) < (jsp.getMaximumDividerLocation() - currentLoc)) {
+                jsp.setDividerLocation(jsp.getMinimumDividerLocation());
+            } else {
+                jsp.setDividerLocation(jsp.getMaximumDividerLocation());
+            }
+        
+        }
     }
 
     public void paint(Graphics g) {

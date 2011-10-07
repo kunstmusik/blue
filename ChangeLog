@@ -20,6 +20,11 @@ NEW
 * Added Help menu link for "blue/Csound IRC Chat" that will open up the Freenode
   webchat webpage to chat in #bluecsound and #csound channels for help
 
+* Added ability to double click split pane dividers within windows to minimize
+  the divider to the far left or right (or up/down), depending on which side it
+  is closest to; i.e. double-click to minimize the project instrument list and
+  instrument library to maximize the space for the Instrument Editor interface
+
 FIX
 
 * Extra render time from mixer was being added twice to the total duration when
