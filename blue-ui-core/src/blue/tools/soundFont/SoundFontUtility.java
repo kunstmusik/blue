@@ -155,7 +155,7 @@ public class SoundFontUtility {
             System.arraycopy(args, 0, args2, 0, args.length);
             args2[args.length] = temp.getAbsolutePath();
                             
-            APIDiskRenderer renderer = APIDiskRenderer.getInstance();
+            APIDiskRenderer renderer = new APIDiskRenderer();
             csoundOutput = renderer.execWaitAndCollect(args2, null);
         } else {
             

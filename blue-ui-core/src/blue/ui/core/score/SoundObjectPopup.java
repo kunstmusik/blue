@@ -937,7 +937,7 @@ public class SoundObjectPopup extends JPopupMenu {
                 args2[args.length] = fullTempFileName;
                 args2[args.length + 1] = temp.getAbsolutePath();
 
-                APIDiskRenderer renderer = APIDiskRenderer.getInstance();
+                APIDiskRenderer renderer = new APIDiskRenderer();
                 renderer.execWaitAndCollect(args2, projectDir);
             } else {
                 command += "\"" + fullTempFileName + "\"";

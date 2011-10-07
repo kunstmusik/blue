@@ -57,11 +57,11 @@ public class AuditionManager {
     ProcessConsole pConsole = new ProcessConsole();
 
     private blue.ui.core.score.AuditionManager.RunProxy runProxy;
-
-    private APIDiskRenderer apiDiskRenderer = null;
+    
+    PlayModeListener pml;
     
     private AuditionManager() {
-        PlayModeListener pml = new PlayModeListener() {
+        pml = new PlayModeListener() {
 
             public void playModeChanged(int playMode) {
                 notifyPlayModeListeners(playMode);
@@ -70,9 +70,6 @@ public class AuditionManager {
         };
         pConsole.addPlayModeListener(pml);
         
-       
-        apiDiskRenderer = APIDiskRenderer.getInstance();
-        apiDiskRenderer.addPlayModeListener(pml);
     }
 
     public static AuditionManager getInstance() {
@@ -225,7 +222,7 @@ public class AuditionManager {
     }
 
     public boolean isRunning() {
-        return (pConsole.isRunning() || apiDiskRenderer.isRunning());
+        return (pConsole.isRunning() || (runProxy != null && runProxy.isRunning()));
     }
 
     public void addPlayModeListener(PlayModeListener listener) {
@@ -257,6 +254,8 @@ public class AuditionManager {
         private ArrayList parameters = null;
         private BlueData blueData;
         private TempoMapper mapper;
+        
+        APIDiskRenderer apiDiskRenderer = new APIDiskRenderer();
 
         public RunProxy(String command, File currentWorkingDirectory,
                 float renderStart) {
@@ -274,6 +273,10 @@ public class AuditionManager {
             this.mapper = mapper;
             this.parameters = parameters;
         }
+        
+        public boolean isRunning() {
+            return apiDiskRenderer.isRunning();
+        }
 
         public void run() {
             RenderTimeManager manager = RenderTimeManager.getInstance();
@@ -284,6 +287,8 @@ public class AuditionManager {
                     pConsole.setRenderTimeManager(manager);
                     pConsole.execWait(command, currentWorkingDirectory);
                 } else {
+                   
+                    apiDiskRenderer.addPlayModeListener(pml);
                     apiDiskRenderer.setRenderTimeManager(manager);
                     apiDiskRenderer.execWait(args, 
                             currentWorkingDirectory, 

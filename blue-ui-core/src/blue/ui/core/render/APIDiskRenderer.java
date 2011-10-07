@@ -29,14 +29,7 @@ public class APIDiskRenderer {
     private volatile boolean keepRunning = false;
     private static APIDiskRenderer instance = null;
 
-    public static APIDiskRenderer getInstance() {
-        if (instance == null) {
-            instance = new APIDiskRenderer();
-        }
-        return instance;
-    }
-
-    private APIDiskRenderer() {
+    public APIDiskRenderer() {
     }
 
     public boolean isRunning() {
@@ -57,7 +50,7 @@ public class APIDiskRenderer {
             TempoMapper mapper,
             ArrayList parameters) {
 
-        csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
+        //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
         BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
@@ -143,6 +136,7 @@ public class APIDiskRenderer {
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
+        csound.delete();
 
         RenderTimeManager.getInstance().endRender();
 
@@ -176,7 +170,7 @@ public class APIDiskRenderer {
     public String execWaitAndCollect(String[] args,
             File currentWorkingDirectory) {
         initialize();
-        csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
+        //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
         BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
@@ -199,6 +193,7 @@ public class APIDiskRenderer {
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
+            csound.delete();
             return buffer.toString();
         }
 
@@ -211,6 +206,7 @@ public class APIDiskRenderer {
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
+        csound.delete();
 
         keepRunning = false;
 
