@@ -28,8 +28,10 @@ NEW
 FIX
 
 * Extra render time from mixer was being added twice to the total duration when
-creating note for Mixer instrument
+  creating note for Mixer instrument
 
+* Instantiating BSB instruments that previously did not have Always-On Text 
+  could cause exceptions when rendering
 
 >Notes for 2.1.6<
 [released 2011.09.29]

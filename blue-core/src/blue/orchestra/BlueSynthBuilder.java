@@ -275,7 +275,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * @param alwaysOnInstrumentText the alwaysOnInstrumentText to set
      */
     public void setAlwaysOnInstrumentText(String alwaysOnInstrumentText) {
-        this.alwaysOnInstrumentText = alwaysOnInstrumentText;
+        this.alwaysOnInstrumentText = (alwaysOnInstrumentText == null) ? "" : alwaysOnInstrumentText;
     }
 
     /**
