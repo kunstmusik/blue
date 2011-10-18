@@ -220,56 +220,72 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         actionMap.put("up", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeUp(1);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeUp(1);
+                }
             }
         });
 
         actionMap.put("up10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeUp(10);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeUp(10);
+                }
             }
         });
 
         actionMap.put("down", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeDown(1);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeDown(1);
+                }
             }
         });
 
         actionMap.put("down10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeDown(10);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeDown(10);
+                }
             }
         });
 
         actionMap.put("left", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeLeft(1);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeLeft(1);
+                }
             }
         });
 
         actionMap.put("left10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeLeft(10);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeLeft(10);
+                }
             }
         });
 
         actionMap.put("right", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeRight(1);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeRight(1);
+                }
             }
         });
 
         actionMap.put("right10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                selectionList.nudgeRight(10);
+                if (isEditing() && selectionList.size() > 0) {
+                    selectionList.nudgeRight(10);
+                }
             }
         });
     }

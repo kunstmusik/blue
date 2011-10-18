@@ -33,6 +33,9 @@ FIX
 * Instantiating BSB instruments that previously did not have Always-On Text 
   could cause exceptions when rendering
 
+* BSB Interface editor would nudge selected objects after edit enabled turned 
+  off (Bug #3424474)
+
 >Notes for 2.1.6<
 [released 2011.09.29]
 
