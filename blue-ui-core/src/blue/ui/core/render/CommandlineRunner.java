@@ -27,6 +27,7 @@ import blue.utility.FileUtilities;
 import blue.utility.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 
@@ -311,14 +312,20 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
 
                     disableMessagesBox.setSelected(false);
 
-                    JOptionPane.showMessageDialog(null, errorPanel,
+                    
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            JOptionPane.showMessageDialog(null, errorPanel,
                             "Csound Error", JOptionPane.ERROR_MESSAGE);
 
-                    if (disableMessagesBox.isSelected()) {
-                        generalSettings
-                                .setCsoundErrorWarningEnabled(false);
-                        generalSettings.save();
-                    }
+                            if (disableMessagesBox.isSelected()) {
+                                generalSettings
+                                        .setCsoundErrorWarningEnabled(false);
+                                generalSettings.save();
+                            }
+                        }
+                    });
+                    
                 }
                 notifyPlayModeListeners(playMode);
                 return;

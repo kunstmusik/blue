@@ -36,6 +36,9 @@ FIX
 * BSB Interface editor would nudge selected objects after edit enabled turned 
   off (Bug #3424474)
 
+* BlueLive: Recompile button would get a hung dialog if the code that changed 
+  caused a compilation error by Csound
+
 >Notes for 2.1.6<
 [released 2011.09.29]
 

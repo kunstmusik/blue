@@ -38,6 +38,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
@@ -147,14 +148,19 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
                 disableMessagesBox.setSelected(false);
 
-                JOptionPane.showMessageDialog(null, errorPanel,
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        JOptionPane.showMessageDialog(null, errorPanel,
                         "Csound Error", JOptionPane.ERROR_MESSAGE);
 
-                if (disableMessagesBox.isSelected()) {
-                    GeneralSettings.getInstance().setCsoundErrorWarningEnabled(
-                            false);
-                    GeneralSettings.getInstance().save();
-                }
+                        if (disableMessagesBox.isSelected()) {
+                            GeneralSettings.getInstance().setCsoundErrorWarningEnabled(
+                                    false);
+                            GeneralSettings.getInstance().save();
+                        }
+                    }
+                });
+                
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
             csound.Stop();

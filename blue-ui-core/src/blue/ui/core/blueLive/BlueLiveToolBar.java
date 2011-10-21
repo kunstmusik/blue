@@ -39,6 +39,8 @@ import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  *
@@ -192,8 +194,7 @@ public class BlueLiveToolBar extends JToolBar {
                 try {
                     csdRunner.renderForBlueLive();
                 } catch (SoundObjectException soe) {
-                    ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
-                            soe);
+                    Exceptions.printStackTrace(soe);
                 }
             }
         }.run();
@@ -229,9 +230,13 @@ public class BlueLiveToolBar extends JToolBar {
             public void run() {
                 try {
                     csdRunner.renderForBlueLive();
-                } catch (SoundObjectException soe) {
-                    ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(BlueLiveToolBar.this),
-                            soe);
+                } catch (final SoundObjectException soe) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            Exceptions.printStackTrace(soe);
+                        }
+                    });
+                    
                 }
             }
         }.run();
