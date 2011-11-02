@@ -25,6 +25,10 @@ NEW
   is closest to; i.e. double-click to minimize the project instrument list and
   instrument library to maximize the space for the Instrument Editor interface
 
+UPDATED
+
+* Updated opcodes.xml to use latest from 5.14 manual
+
 FIX
 
 * Extra render time from mixer was being added twice to the total duration when

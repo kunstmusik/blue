@@ -172,15 +172,27 @@ for i,filename in enumerate(files):
     entry = ''
     #print file
     source = open(filename, 'r')
-    # Necessary to define entities
-    newfile = headerText + source.read()
+    newfile = source.read()
     source.close()
     
-    if(newfile.find("<refentry") < 0):
+    refStart = newfile.find("<refentry")
+
+    if(refStart < 0):
         continue
+    elif(refStart > 0):
+#        print 'Trimming file: ', filename, ' ', refStart
+        newfile = newfile[refStart:]
+    
+    # Necessary to define entities
+    newfile = headerText + newfile
 
     #print text
-    xmldoc = minidom.parseString(newfile)
+    try:
+        xmldoc = minidom.parseString(newfile)
+    except:
+        print '>>> Failed to parse:', filename
+        continue
+
     xmldocId = xmldoc.documentElement.getAttribute('id')
     opcodeName = newfile[newfile.find('<refname>') + 9: newfile.find('</refname>')]
 

@@ -322,11 +322,11 @@
       </opcode>
       <opcode>
         <name>hvs2</name>
-        <signature>hvs2	 kx, ky, inumParms, inumPointsX, iOutTab, iPositionsTab, iSnapTab [, iConfigTab]</signature>
+        <signature>hvs2	 kx, ky, inumParms, inumPointsX, inumPointsY, iOutTab, iPositionsTab, iSnapTab [, iConfigTab]</signature>
       </opcode>
       <opcode>
         <name>hvs3</name>
-        <signature>hvs3	 kx, ky, kz, inumParms, inumPointsX, iOutTab, iPositionsTab, iSnapTab [, iConfigTab]</signature>
+        <signature>hvs3	 kx, ky, kz, inumParms, inumPointsX, inumPointsY, inumPointsZ, iOutTab, iPositionsTab, iSnapTab [, iConfigTab]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Linear and Exponential Generators">
@@ -353,6 +353,18 @@
       <opcode>
         <name>expsega</name>
         <signature>ares 	expsega	 ia, idur1, ib [, idur2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>expsegb</name>
+        <signature>ares 	expsegb	 ia, itim1, ib [, itim2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>expsegb</name>
+        <signature>kres 	expsegb	 ia, itim1, ib [, itim2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>expsegba</name>
+        <signature>ares 	expsegba	 ia, itim1, ib [, itim2] [, ic] [...]</signature>
       </opcode>
       <opcode>
         <name>expsegr</name>
@@ -391,6 +403,14 @@
         <signature>kres 	linseg	 ia, idur1, ib [, idur2] [, ic] [...]</signature>
       </opcode>
       <opcode>
+        <name>linsegb</name>
+        <signature>ares 	linsegb	 ia, itim1, ib [, itim2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>linsegb</name>
+        <signature>kres 	linsegb	 ia, itim1, ib [, itim2] [, ic] [...]</signature>
+      </opcode>
+      <opcode>
         <name>linsegr</name>
         <signature>ares 	linsegr	 ia, idur1, ib [, idur2] [, ic] [...], irel, iz</signature>
       </opcode>
@@ -414,8 +434,8 @@
       </opcode>
       <opcode>
         <name>looptseg</name>
-        <signature>ksig 	looptseg	 kfreq, ktrig, ktime0, kvalue0, ktype, [, ktime1] [,ktype1] [, kvalue1] \
-      [, ktime2] [,ktype2] [, kvalue2] [...]</signature>
+        <signature>ksig 	looptseg	 kfreq, ktrig, ktime0, kvalue0, ktype0, [, ktime1] [, kvalue1] [,ktype1] \
+      [, ktime2] [, kvalue2] [,ktype2] [...]</signature>
       </opcode>
       <opcode>
         <name>loopxseg</name>
@@ -451,6 +471,14 @@
       <opcode>
         <name>transeg</name>
         <signature>kres 	transeg	 ia, idur, itype, ib [, idur2] [, itype] [, ic] ...</signature>
+      </opcode>
+      <opcode>
+        <name>transegb</name>
+        <signature>ares 	transegb	 ia, itim, itype, ib [, itim2] [, itype] [, ic] ...</signature>
+      </opcode>
+      <opcode>
+        <name>transegb</name>
+        <signature>kres 	transegb	 ia, itim, itype, ib [, itim2] [, itype] [, ic] ...</signature>
       </opcode>
       <opcode>
         <name>transegr</name>
@@ -695,6 +723,18 @@
         <signature>kres 	cauchy	 kalpha</signature>
       </opcode>
       <opcode>
+        <name>cauchyi</name>
+        <signature>ares 	cauchyi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>cauchyi</name>
+        <signature>ires 	cauchyi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>cauchyi</name>
+        <signature>kres 	cauchyi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
         <name>cuserrnd</name>
         <signature>aout 	cuserrnd	 kmin, kmax, ktableNum</signature>
       </opcode>
@@ -731,6 +771,18 @@
         <signature>kres 	exprand	 klambda</signature>
       </opcode>
       <opcode>
+        <name>exprandi</name>
+        <signature>ares 	exprandi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>exprandi</name>
+        <signature>ires 	exprandi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>exprandi</name>
+        <signature>kres 	exprandi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
         <name>gauss</name>
         <signature>ares 	gauss	 krange</signature>
       </opcode>
@@ -741,6 +793,18 @@
       <opcode>
         <name>gauss</name>
         <signature>kres 	gauss	 krange</signature>
+      </opcode>
+      <opcode>
+        <name>gaussi</name>
+        <signature>ares 	gaussi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>gaussi</name>
+        <signature>ires 	gaussi	 klambda, xamp, xcps</signature>
+      </opcode>
+      <opcode>
+        <name>gaussi</name>
+        <signature>kres 	gaussi	 klambda, xamp, xcps</signature>
       </opcode>
       <opcode>
         <name>jitter</name>
@@ -832,19 +896,19 @@
       </opcode>
       <opcode>
         <name>randomh</name>
-        <signature>ares 	randomh	 kmin, kmax, acps</signature>
+        <signature>ares 	randomh	 kmin, kmax, xcps [,imode] [,ifirstval]</signature>
       </opcode>
       <opcode>
         <name>randomh</name>
-        <signature>kres 	randomh	 kmin, kmax, kcps</signature>
+        <signature>kres 	randomh	 kmin, kmax, kcps [,imode] [,ifirstval]</signature>
       </opcode>
       <opcode>
         <name>randomi</name>
-        <signature>ares 	randomi	 kmin, kmax, acps</signature>
+        <signature>ares 	randomi	 kmin, kmax, xcps [,imode] [,ifirstval]</signature>
       </opcode>
       <opcode>
         <name>randomi</name>
-        <signature>kres 	randomi	 kmin, kmax, kcps</signature>
+        <signature>kres 	randomi	 kmin, kmax, kcps [,imode] [,ifirstval]</signature>
       </opcode>
       <opcode>
         <name>rnd31</name>
@@ -889,6 +953,18 @@
       <opcode>
         <name>unirand</name>
         <signature>kres 	unirand	 krange</signature>
+      </opcode>
+      <opcode>
+        <name>urandom</name>
+        <signature>ax 	urandom	 [imin, imax]</signature>
+      </opcode>
+      <opcode>
+        <name>urandom</name>
+        <signature>ix 	urandom	 [imin, imax]</signature>
+      </opcode>
+      <opcode>
+        <name>urandom</name>
+        <signature>kx 	urandom	 [imin, imax]</signature>
       </opcode>
       <opcode>
         <name>urd</name>
@@ -1045,7 +1121,7 @@
       </opcode>
       <opcode>
         <name>sflooper</name>
-        <signature>ar1, ar2 	sflooper	 ivel, inotenum, kamp, kpitch, ipreindex, kloopstart, kloopend, kcrossfade, ifn \
+        <signature>ar1, ar2 	sflooper	 ivel, inotenum, kamp, kpitch, ipreindex, kloopstart, kloopend, kcrossfade \
       [, istart, imode, ifenv, iskip] </signature>
       </opcode>
       <opcode>
@@ -1243,6 +1319,116 @@
         <signature>ares 	wgpluck2	 iplk, kamp, icps, kpick, krefl</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name="STK Opcodes">
+      <opcode>
+        <name>STKBandedWG</name>
+        <signature>asignal 	STKBandedWG	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKBeeThree</name>
+        <signature>asignal 	STKBeeThree	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKBlowBotl</name>
+        <signature>asignal 	STKBlowBotl	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKBlowHole</name>
+        <signature>asignal 	STKBlowHole	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKBowed</name>
+        <signature>asignal 	STKBowed	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKBrass</name>
+        <signature>asignal 	STKBrass	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKClarinet</name>
+        <signature>asignal 	STKClarinet	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKDrummer</name>
+        <signature>asignal 	STKDrummer	 ifrequency, iamplitude</signature>
+      </opcode>
+      <opcode>
+        <name>STKFMVoices</name>
+        <signature>asignal 	STKFMVoices	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKFlute</name>
+        <signature>asignal 	STKFlute	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKHevyMetl</name>
+        <signature>asignal 	STKHevyMetl	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKMandolin</name>
+        <signature>asignal 	STKMandolin	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKModalBar</name>
+        <signature>asignal 	STKModalBar	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKMoog</name>
+        <signature>asignal 	STKMoog	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKPercFlut</name>
+        <signature>asignal 	STKPercFlut	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKPlucked</name>
+        <signature>asignal 	STKPlucked	 ifrequency, iamplitude</signature>
+      </opcode>
+      <opcode>
+        <name>STKResonate</name>
+        <signature>asignal 	STKResonate	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKRhodey</name>
+        <signature>asignal 	STKRhodey	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKSaxofony</name>
+        <signature>asignal 	STKSaxofony	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKShakers</name>
+        <signature>asignal 	STKShakers	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKSimple</name>
+        <signature>asignal 	STKSimple	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKSitar</name>
+        <signature>asignal 	STKSitar	 ifrequency, iamplitude</signature>
+      </opcode>
+      <opcode>
+        <name>STKStifKarp</name>
+        <signature>asignal 	STKStifKarp	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKTubeBell</name>
+        <signature>asignal 	STKTubeBell	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKVoicForm</name>
+        <signature>asignal 	STKVoicForm	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKWhistle</name>
+        <signature>asignal 	STKWhistle	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>STKWurley</name>
+        <signature>asignal 	STKWurley	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+      </opcode>
+    </opcodeGroup>
   </opcodeGroup>
   <opcodeGroup name="Signal I/O">
     <opcodeGroup name="File I/O">
@@ -1330,12 +1516,12 @@
     <opcodeGroup name="Signal Input">
       <opcode>
         <name>diskin</name>
-        <signature>ar1 [, ar2 [, ar3 [, ... ar24]]] 	diskin	 ifilcod, kpitch [, iskiptim] \
+        <signature>ar1 [, ar2 [, ar3 [, ... arN]]] 	diskin	 ifilcod, kpitch [, iskiptim] \
       [, iwraparound] [, iformat] [, iskipinit]</signature>
       </opcode>
       <opcode>
         <name>diskin2</name>
-        <signature>a1[, a2[, ... a24]] 	diskin2	 ifilcod, kpitch[, iskiptim \
+        <signature>a1[, a2[, ... aN]] 	diskin2	 ifilcod, kpitch[, iskiptim \
       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
       </opcode>
       <opcode>
@@ -1350,7 +1536,7 @@
       </opcode>
       <opcode>
         <name>inch</name>
-        <signature>ain 	inch	 kchan</signature>
+        <signature>ain1[, ...] 	inch	 kchan1[,...]</signature>
       </opcode>
       <opcode>
         <name>inh</name>
@@ -1391,7 +1577,7 @@
       </opcode>
       <opcode>
         <name>mp3in</name>
-        <signature>ar1, ar2 	mp3in	 ifilcod, iskptim, iformat, iskipinit, ibufsize</signature>
+        <signature>ar1, ar2 	mp3in	 ifilcod[, iskptim, iformat, iskipinit, ibufsize]</signature>
       </opcode>
       <opcode>
         <name>soundin</name>
@@ -1693,6 +1879,14 @@
       <opcode>
         <name>filesr</name>
         <signature>ir 	filesr	 ifilcod [, iallowraw]</signature>
+      </opcode>
+      <opcode>
+        <name>filevalid</name>
+        <signature>ir 	filevalid	 ifilcod</signature>
+      </opcode>
+      <opcode>
+        <name>mp3len</name>
+        <signature>ir 	mp3len	 ifilcod</signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
@@ -2112,7 +2306,7 @@
       </opcode>
       <opcode>
         <name>i</name>
-        <signature>i	(x) (control-rate args only)</signature>
+        <signature>i	(x) (control-rate or init-rate arg)</signature>
       </opcode>
       <opcode>
         <name>k</name>
@@ -2242,7 +2436,7 @@
         </opcode>
         <opcode>
           <name>lpf18</name>
-          <signature>ares 	lpf18	 asig, kfco, kres, kdist</signature>
+          <signature>ares 	lpf18	 asig, kfco, kres, kdist [, iskip]</signature>
         </opcode>
         <opcode>
           <name>moogladder</name>
@@ -2333,6 +2527,16 @@
         <opcode>
           <name>tonek</name>
           <signature>kres 	tonek	 ksig, khp [, iskip]</signature>
+        </opcode>
+      </opcodeGroup>
+      <opcodeGroup name="Low Pass">
+        <opcode>
+          <name>median</name>
+          <signature>ares 	median	 asig, ksize, imaxsize [, iskip]</signature>
+        </opcode>
+        <opcode>
+          <name>mediank</name>
+          <signature>kres 	mediank	 kin, ksize, imaxsize [, iskip]</signature>
         </opcode>
       </opcodeGroup>
       <opcode>
@@ -2487,11 +2691,11 @@
     <opcodeGroup name="Comparators and Accumulators">
       <opcode>
         <name>max</name>
-        <signature>amax 	max	 ain1 [, ain2] [, ain3] [, ain4] [...]</signature>
+        <signature>amax 	max	 ain1, ain2 [, ain3] [, ain4] [...]</signature>
       </opcode>
       <opcode>
         <name>max</name>
-        <signature>kmax 	max	 kin1 [, kin2] [, kin3] [, kin4] [...]</signature>
+        <signature>kmax 	max	 kin1, kin2 [, kin3] [, kin4] [...]</signature>
       </opcode>
       <opcode>
         <name>max_k</name>
@@ -2499,11 +2703,11 @@
       </opcode>
       <opcode>
         <name>maxabs</name>
-        <signature>amax 	maxabs	 ain1 [, ain2] [, ain3] [, ain4] [...]</signature>
+        <signature>amax 	maxabs	 ain1, ain2 [, ain3] [, ain4] [...]</signature>
       </opcode>
       <opcode>
         <name>maxabs</name>
-        <signature>kmax 	maxabs	 kin1 [, kin2] [, kin3] [, kin4] [...]</signature>
+        <signature>kmax 	maxabs	 kin1, kin2 [, kin3] [, kin4] [...]</signature>
       </opcode>
       <opcode>
         <name>maxabsaccum</name>
@@ -2515,19 +2719,19 @@
       </opcode>
       <opcode>
         <name>min</name>
-        <signature>amin 	min	 ain1 [, ain2] [, ain3] [, ain4] [...]</signature>
+        <signature>amin 	min	 ain1, ain2 [, ain3] [, ain4] [...]</signature>
       </opcode>
       <opcode>
         <name>min</name>
-        <signature>kmin 	min	 kin1 [, kin2] [, kin3] [, kin4] [...]</signature>
+        <signature>kmin 	min	 kin1, kin2 [, kin3] [, kin4] [...]</signature>
       </opcode>
       <opcode>
         <name>minabs</name>
-        <signature>amin 	minabs	 ain1 [, ain2] [, ain3] [, ain4] [...]</signature>
+        <signature>amin 	minabs	 ain1, ain2 [, ain3] [, ain4] [...]</signature>
       </opcode>
       <opcode>
         <name>minabs</name>
-        <signature>kmin 	minabs	 kin1 [, kin2] [, kin3] [, kin4] [...]</signature>
+        <signature>kmin 	minabs	 kin1, kin2 [, kin3] [, kin4] [...]</signature>
       </opcode>
       <opcode>
         <name>minabsaccum</name>
@@ -2761,19 +2965,32 @@
         <name>timout</name>
         <signature>timout	 istrt, idur, label</signature>
       </opcode>
+      <opcode>
+        <name>until</name>
+        <signature>until	  condition 	do	
+    ... 	od</signature>
+      </opcode>
     </opcodeGroup>
     <opcodeGroup name="Realtime Performance Control">
       <opcode>
         <name>active</name>
-        <signature>ir 	active	 insnum</signature>
+        <signature>ir 	active	 insnum [,iopt]</signature>
       </opcode>
       <opcode>
         <name>active</name>
-        <signature>kres 	active	 kinsnum</signature>
+        <signature>ir 	active	 Sinsname [,iopt]</signature>
+      </opcode>
+      <opcode>
+        <name>active</name>
+        <signature>kres 	active	 kinsnum [,iopt]</signature>
       </opcode>
       <opcode>
         <name>cpuprc</name>
         <signature>cpuprc	 insnum, ipercent</signature>
+      </opcode>
+      <opcode>
+        <name>cpuprc</name>
+        <signature>cpuprc	 Sinsname, ipercent</signature>
       </opcode>
       <opcode>
         <name>exitnow</name>
@@ -2786,6 +3003,10 @@
       <opcode>
         <name>maxalloc</name>
         <signature>maxalloc	 insnum, icount</signature>
+      </opcode>
+      <opcode>
+        <name>maxalloc</name>
+        <signature>maxalloc	 Sinsname, icount</signature>
       </opcode>
       <opcode>
         <name>prealloc</name>
@@ -2810,6 +3031,18 @@
         <signature>kres 	=	 karg</signature>
       </opcode>
       <opcode>
+        <name>=</name>
+        <signature>ires, ... 	=	 iarg, ...</signature>
+      </opcode>
+      <opcode>
+        <name>=</name>
+        <signature>kres, ... 	=	 karg, ...</signature>
+      </opcode>
+      <opcode>
+        <name>=</name>
+        <signature>table [ kval] 	=	 karg</signature>
+      </opcode>
+      <opcode>
         <name>init</name>
         <signature>ares 	init	 iarg</signature>
       </opcode>
@@ -2820,6 +3053,22 @@
       <opcode>
         <name>init</name>
         <signature>kres 	init	 iarg</signature>
+      </opcode>
+      <opcode>
+        <name>init</name>
+        <signature>ares, ...  	init	 iarg, ...</signature>
+      </opcode>
+      <opcode>
+        <name>init</name>
+        <signature>ires, ... 	init	 iarg, ...</signature>
+      </opcode>
+      <opcode>
+        <name>init</name>
+        <signature>kres, ... 	init	 iarg, ...</signature>
+      </opcode>
+      <opcode>
+        <name>init</name>
+        <signature>tab 	init	 isize[, ival]</signature>
       </opcode>
       <opcode>
         <name>nstrnum</name>
@@ -2988,7 +3237,7 @@
       </opcode>
       <opcode>
         <name>wiiconnect</name>
-        <signature>kres 	wiiconnect	 [itimeout, imaxnum]</signature>
+        <signature>ires 	wiiconnect	 [itimeout, imaxnum]</signature>
       </opcode>
       <opcode>
         <name>wiidata</name>
@@ -3101,12 +3350,152 @@
         <signature>kres 	times</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name="Realtime Performance Monitor">
+      <opcode>
+        <name>cpumeter</name>
+        <signature>ktot[,kcpu1, kcpu2,...]	cpumeter	 ifreq</signature>
+      </opcode>
+    </opcodeGroup>
+  </opcodeGroup>
+  <opcodeGroup name="Jacko Opcodes">
+    <opcode>
+      <name>JackoAudioIn </name>
+      <signature>asignal 	JackoAudioIn 	ScsoundPortName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoAudioInConnect </name>
+      <signature>JackoAudioInConnect 	SexternalPortName, ScsoundPortName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoAudioOut </name>
+      <signature>JackoAudioOut 	 ScsoundPortName, asignal</signature>
+    </opcode>
+    <opcode>
+      <name>JackoAudioOutConnect </name>
+      <signature>JackoAudioOutConnect 	ScsoundPortName, SexternalPortName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoFreewheel </name>
+      <signature>JackoFreewheel 	[ienabled]</signature>
+    </opcode>
+    <opcode>
+      <name>JackoInfo </name>
+      <signature>JackoInfo </signature>
+    </opcode>
+    <opcode>
+      <name>JackoInit </name>
+      <signature>JackoInit 	SclientName, ServerName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoMidiInConnect </name>
+      <signature>JackoMidiInConnect 	SexternalPortName, ScsoundPortName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoMidiOut </name>
+      <signature>JackoMidiOut 	 ScsoundPortName, kstatus, kchannel, kdata1[, kdata2]</signature>
+    </opcode>
+    <opcode>
+      <name>JackoMidiOutConnect </name>
+      <signature>JackoMidiOutConnect 	ScsoundPortName, SexternalPortName</signature>
+    </opcode>
+    <opcode>
+      <name>JackoNoteOut </name>
+      <signature>JackoNoteOut 	 ScsoundPortName, kstatus, kchannel, kdata1[, kdata2]</signature>
+    </opcode>
+    <opcode>
+      <name>JackoOn </name>
+      <signature>JackoOn 	[iactive] </signature>
+    </opcode>
+    <opcode>
+      <name>JackoTransport </name>
+      <signature>JackoTransport 	 kcommand, [kposition]</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Lua Opcodes">
+    <opcode>
+      <name>lua_exec</name>
+      <signature>lua_exec	 Sluacode</signature>
+    </opcode>
+    <opcode>
+      <name>lua_iopcall</name>
+      <signature>lua_iopcall	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_ikopcall</name>
+      <signature>lua_ikopcall	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_iaopcall</name>
+      <signature>lua_iaopcall	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_iopcall_off</name>
+      <signature>lua_iopcall_off	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_ikopcall_off</name>
+      <signature>lua_ikopcall_off	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_iaopcall_off</name>
+      <signature>lua_iaopcall_off	 Sname, ...</signature>
+    </opcode>
+    <opcode>
+      <name>lua_opdef</name>
+      <signature>lua_opdef	 Sname, Sluacode</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Serial I/O">
+    <opcode>
+      <name>serialBegin</name>
+      <signature>iPort 	serialBegin	 SPortName [, ibaudRate]</signature>
+    </opcode>
+    <opcode>
+      <name>serialEnd</name>
+      <signature> 	serialEnd	 iPort</signature>
+    </opcode>
+    <opcode>
+      <name>serialFlush</name>
+      <signature> 	serialFlush	 iPort</signature>
+    </opcode>
+    <opcode>
+      <name>serialPrint</name>
+      <signature> 	serialPrint	 iPort</signature>
+    </opcode>
+    <opcode>
+      <name>serialRead</name>
+      <signature>kByte 	serialRead	 iPort</signature>
+    </opcode>
+    <opcode>
+      <name>serialWrite</name>
+      <signature> 	serialWrite	 iPort, iByte</signature>
+    </opcode>
+    <opcode>
+      <name>serialWrite</name>
+      <signature> 	serialWrite	 iPort, kByte</signature>
+    </opcode>
+    <opcode>
+      <name>serialWrite</name>
+      <signature> 	serialWrite	 iPort, SBytes</signature>
+    </opcode>
+    <opcode>
+      <name>serialWrite_i</name>
+      <signature> 	serialWrite_i	 iPort, iByte</signature>
+    </opcode>
+    <opcode>
+      <name>serialWrite_i</name>
+      <signature> 	serialWrite_i	 iPort, SBytes</signature>
+    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Table Control">
     <opcodeGroup name="Table Queries">
       <opcode>
         <name>ftchnls</name>
         <signature>ftchnls	(x) (init-rate args only)</signature>
+      </opcode>
+      <opcode>
+        <name>ftcps</name>
+        <signature>ftcps	(x) (init-rate args only)</signature>
       </opcode>
       <opcode>
         <name>ftlen</name>
@@ -3427,7 +3816,7 @@
       <opcode>
         <name>tabmorph</name>
         <signature>kout 	tabmorph	 kindex, kweightpoint, ktabnum1, ktabnum2, \
-      ifn1, ifn2 [, ifn3, ifn4, ... ifnN]</signature>
+      ifn1, ifn2 [, ifn3, ifn4, ...,ifnN]</signature>
       </opcode>
       <opcode>
         <name>tabmorpha</name>
@@ -3442,7 +3831,7 @@
       <opcode>
         <name>tabmorphi</name>
         <signature>kout 	tabmorphi	 kindex, kweightpoint, ktabnum1, ktabnum2, \
-      ifn1, ifn2 [, ifn3, ifn4, ... ifnN]</signature>
+      ifn1, ifn2 [, ifn3, ifn4, ..., ifnN]</signature>
       </opcode>
       <opcode>
         <name>tabplay</name>
@@ -3453,6 +3842,16 @@
         <signature>tabrec	   ktrig_start, ktrig_stop, knumtics, kfn, kin1 [,kin2,...,kinN]</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name="Models and Emulations">
+      <opcode>
+        <name>tablefilter</name>
+        <signature>knumpassed 	tablefilter	 kouttable, kintatble, kmode, kparam</signature>
+      </opcode>
+      <opcode>
+        <name>tablefilteri</name>
+        <signature>inumpassed 	tablefilteri	 iouttable, iintatble, imode, iparam</signature>
+      </opcode>
+    </opcodeGroup>
     <opcode>
       <name>ftfree</name>
       <signature>ftfree	 ifno, iwhen</signature>
@@ -3460,10 +3859,6 @@
     <opcode>
       <name>ftgen</name>
       <signature>gir 	ftgen	 ifn, itime, isize, igen, iarga [, iargb ] [...]</signature>
-    </opcode>
-    <opcode>
-      <name>ftgenonce</name>
-      <signature>ifno 	ftgenonce	 ip1dummy, ip2dummy, isize, igen, iarga, iargb, ...</signature>
     </opcode>
     <opcode>
       <name>ftgentmp</name>
@@ -3961,7 +4356,7 @@
       </opcode>
       <opcode>
         <name>mac</name>
-        <signature>ares 	mac	 asig1, ksig1 [, asig2] [, ksig2] [, asig3] [, ksig3] [...]</signature>
+        <signature>ares 	mac	 ksig1, asig1 [, ksig2] [, asig2] [, ksig3] [, asig3] [...]</signature>
       </opcode>
       <opcode>
         <name>maca</name>
@@ -4004,6 +4399,40 @@
         <signature>kres 	taninv2	 ky, kx</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name=" Vectors">
+      <opcode>
+        <name>maxtab</name>
+        <signature>kmax 	maxtab	 tab</signature>
+      </opcode>
+      <opcode>
+        <name>mintab</name>
+        <signature>kmin 	mintab	 tab</signature>
+      </opcode>
+      <opcode>
+        <name>multtab</name>
+        <signature>tans 	multtab	 tleft, tright</signature>
+      </opcode>
+      <opcode>
+        <name>plustab</name>
+        <signature>tans 	plustab	 tleft, tright</signature>
+      </opcode>
+      <opcode>
+        <name>scalet</name>
+        <signature>scalet	 tab, kmin, kmax[, kleft, kright]</signature>
+      </opcode>
+      <opcode>
+        <name>sumtab</name>
+        <signature>ksum 	sumtab	 tab</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcode>
+      <name>qinf</name>
+      <signature>qinf	(x) (no rate restriction)</signature>
+    </opcode>
+    <opcode>
+      <name>qnan</name>
+      <signature>qnan	(x) (no rate restriction)</signature>
+    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Pitch Converters">
     <opcodeGroup name="Functions">
@@ -4261,6 +4690,14 @@
       <opcode>
         <name>ampmidi</name>
         <signature>iamp 	ampmidi	 iscal [, ifn]</signature>
+      </opcode>
+      <opcode>
+        <name>ampmidid</name>
+        <signature>iamplitude 	ampmidid	 ivelocity, idecibels</signature>
+      </opcode>
+      <opcode>
+        <name>ampmidid</name>
+        <signature>kamplitude 	ampmidid	 kvelocity, idecibels</signature>
       </opcode>
       <opcode>
         <name>cpsmidi</name>
@@ -4541,14 +4978,18 @@
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
-  <opcodeGroup name="Signal Flow Graph">
+  <opcodeGroup name="Signal Flow Graph Opcodes">
     <opcode>
-      <name>alwayson </name>
-      <signature>alwayson 	Tinstrument [p4, ..., pn]</signature>
+      <name>alwayson</name>
+      <signature> 	alwayson	 Tinstrument [p4, ..., pn]</signature>
     </opcode>
     <opcode>
       <name>connect </name>
       <signature>connect 	Tsource1, Soutlet1, Tsink1, Sinlet1</signature>
+    </opcode>
+    <opcode>
+      <name>ftgenonce</name>
+      <signature>ifno 	ftgenonce	 ip1, ip2dummy, isize, igen, iarga, iargb, ...</signature>
     </opcode>
     <opcode>
       <name>inleta </name>
@@ -4563,6 +5004,10 @@
       <signature>ksignal 	inletk 	Sname</signature>
     </opcode>
     <opcode>
+      <name>inletkid </name>
+      <signature>ksignal 	inletkid 	Sname, SinstanceID</signature>
+    </opcode>
+    <opcode>
       <name>outleta </name>
       <signature>outleta 	Sname, asignal</signature>
     </opcode>
@@ -4573,6 +5018,10 @@
     <opcode>
       <name>outletk </name>
       <signature>outletk 	Sname, ksignal</signature>
+    </opcode>
+    <opcode>
+      <name>outletkid </name>
+      <signature>outletkid 	Sname, SinstanceID, ksignal</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Spectral Processing">
@@ -4693,6 +5142,10 @@
         <signature>ftrks 	partials	 ffr, fphs, kthresh, kminpts, kmaxgap, imaxtracks</signature>
       </opcode>
       <opcode>
+        <name>pvs2tab</name>
+        <signature>kframe 	pvs2tab	 tvar, fsig</signature>
+      </opcode>
+      <opcode>
         <name>pvsadsyn</name>
         <signature>ares 	pvsadsyn	 fsrc, inoscs, kfmod [, ibinoffset] [, ibinincr] [, iinit]</signature>
       </opcode>
@@ -4706,13 +5159,13 @@
       </opcode>
       <opcode>
         <name>pvsbandp</name>
-        <signature>fsig 	pvsbandp	 fsigin, xlowcut,
-      xlowfull, xhighfull, xhighcut[, ktype]</signature>
+        <signature>fsig 	pvsbandp	 fsigin, xlowcut, xlowfull, \
+      xhighfull, xhighcut[, ktype]</signature>
       </opcode>
       <opcode>
         <name>pvsbandr</name>
-        <signature>fsig 	pvsbandr	 fsigin, xlowcut,
-    xlowfull, xhighfull, xhighcut[, ktype]</signature>
+        <signature>fsig 	pvsbandr	 fsigin, xlowcut, xlowfull, \
+      xhighfull, xhighcut[, ktype]</signature>
       </opcode>
       <opcode>
         <name>pvsbin</name>
@@ -4728,11 +5181,15 @@
       </opcode>
       <opcode>
         <name>pvsbufread</name>
-        <signature>fsig 	pvsbufread	  ktime, khandle[, ilo, ihi] </signature>
+        <signature>fsig 	pvsbufread	  ktime, khandle[, ilo, ihi, iclear] </signature>
+      </opcode>
+      <opcode>
+        <name>pvsbufread2</name>
+        <signature>fsig 	pvsbufread2	  ktime, khandle, ift1, ift2 </signature>
       </opcode>
       <opcode>
         <name>pvscale</name>
-        <signature>fsig 	pvscale	 fsigin, kscal[, ikeepform, igain]]</signature>
+        <signature>fsig 	pvscale	 fsigin, kscal[, kkeepform, kgain, kcoefs]</signature>
       </opcode>
       <opcode>
         <name>pvscent</name>
@@ -4748,7 +5205,7 @@
       </opcode>
       <opcode>
         <name>pvsdiskin</name>
-        <signature>fsig 	pvsdiskin	SFname,ktscal,kgain[,ioffset, ichan]</signature>
+        <signature>fsig 	pvsdiskin	 SFname,ktscal,kgain[,ioffset, ichan]</signature>
       </opcode>
       <opcode>
         <name>pvsdisp</name>
@@ -4779,8 +5236,12 @@
         <signature>pvsfwrite	 fsig, ifile</signature>
       </opcode>
       <opcode>
+        <name>pvsgain</name>
+        <signature>fsig 	pvsgain	 fsigin, kgain </signature>
+      </opcode>
+      <opcode>
         <name>pvshift</name>
-        <signature>fsig 	pvshift	 fsigin, kshift, klowest[, ikeepform, igain]</signature>
+        <signature>fsig 	pvshift	 fsigin, kshift, klowest[, kkeepform, igain, kcoefs]</signature>
       </opcode>
       <opcode>
         <name>pvsifd</name>
@@ -4788,7 +5249,7 @@
       </opcode>
       <opcode>
         <name>pvsin</name>
-        <signature>fsig 	pvsin	 kchan[,isize,iolap,iwinsize,iwintype,iformat]</signature>
+        <signature>fsig 	pvsin	 kchan[, isize, iolap, iwinsize, iwintype, iformat]</signature>
       </opcode>
       <opcode>
         <name>pvsinfo</name>
@@ -4796,7 +5257,11 @@
       </opcode>
       <opcode>
         <name>pvsinit</name>
-        <signature>fsig 	pvsinit	 isize[,iolap,iwinsize,iwintype, iformat]</signature>
+        <signature>fsig 	pvsinit	 isize[, iolap, iwinsize, iwintype, iformat]</signature>
+      </opcode>
+      <opcode>
+        <name>pvslock</name>
+        <signature>fsig 	pvslock	 fsigin, klock</signature>
       </opcode>
       <opcode>
         <name>pvsmaska</name>
@@ -4832,7 +5297,11 @@
       </opcode>
       <opcode>
         <name>pvsvoc</name>
-        <signature>fsig 	pvsvoc	 famp, fexc, kdepth, kgain</signature>
+        <signature>fsig 	pvsvoc	 famp, fexc, kdepth, kgain [,kcoefs]</signature>
+      </opcode>
+      <opcode>
+        <name>pvswarp</name>
+        <signature>fsig 	pvswarp	 fsigin, kscal, kshift[, klowest, kmeth, kgain, kcoefs]</signature>
       </opcode>
       <opcode>
         <name>pvsynth</name>
@@ -4844,7 +5313,11 @@
       </opcode>
       <opcode>
         <name>sinsyn</name>
-        <signature>asig 	sinsyn	 fin, kscal,  kmaxtracks, ifn</signature>
+        <signature>asig 	sinsyn	 fin, kscal, kmaxtracks, ifn</signature>
+      </opcode>
+      <opcode>
+        <name>tab2pvs</name>
+        <signature>fsig 	tab2pvs	 tvar[,ihopsize, iwinsize, iwintype]</signature>
       </opcode>
       <opcode>
         <name>tradsyn</name>
@@ -4852,7 +5325,7 @@
       </opcode>
       <opcode>
         <name>trcross</name>
-        <signature>fsig 	trcross	 fin1, fin2, ksearch,kdepth[,kmode] </signature>
+        <signature>fsig 	trcross	 fin1, fin2, ksearch, kdepth [, kmode] </signature>
       </opcode>
       <opcode>
         <name>trfilter</name>
@@ -4860,11 +5333,11 @@
       </opcode>
       <opcode>
         <name>trhighest</name>
-        <signature>fsig, kfr,kamp 	trhighest	 fin1, kscal</signature>
+        <signature>fsig, kfr, kamp 	trhighest	 fin1, kscal</signature>
       </opcode>
       <opcode>
         <name>trlowest</name>
-        <signature>fsig, kfr,kamp 	trlowest	 fin1, kscal</signature>
+        <signature>fsig, kfr, kamp 	trlowest	 fin1, kscal</signature>
       </opcode>
       <opcode>
         <name>trmix</name>
@@ -4963,10 +5436,6 @@
       <opcode>
         <name>sprintf</name>
         <signature>Sdst 	sprintf	 Sfmt, xarg1[, xarg2[, ... ]]</signature>
-      </opcode>
-      <opcode>
-        <name>sprintfk</name>
-        <signature>Sdst 	sprintfk	 Sfmt, xarg1[, xarg2[, ... ]]</signature>
       </opcode>
       <opcode>
         <name>sprintfk</name>
@@ -5192,11 +5661,11 @@
       </opcode>
       <opcode>
         <name>vcopy</name>
-        <signature>vcopy	  ifn, ifn2, kelements [, kdstoffset] [, ksrcoffset] [, kverbose]</signature>
+        <signature>vcopy	  ifn1, ifn2, kelements [, kdstoffset] [, ksrcoffset] [, kverbose]</signature>
       </opcode>
       <opcode>
         <name>vcopy_i</name>
-        <signature>vcopy_i	  ifn, ifn2, ielements [,idstoffset, isrcoffset]</signature>
+        <signature>vcopy_i	  ifn1, ifn2, ielements [,idstoffset, isrcoffset]</signature>
       </opcode>
       <opcode>
         <name>vdivv</name>
@@ -5246,11 +5715,11 @@
     <opcodeGroup name="Envelopes">
       <opcode>
         <name>vexpseg</name>
-        <signature>vexpseg	   ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]</signature>
+        <signature>vexpseg	  ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]</signature>
       </opcode>
       <opcode>
         <name>vlinseg</name>
-        <signature>vlinseg	   ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]</signature>
+        <signature>vlinseg	  ifnout, ielements, ifn1, idur1, ifn2 [, idur2, ifn3 [...]]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Limiting and Wrapping">
@@ -5279,19 +5748,18 @@
       </opcode>
       <opcode>
         <name>vport</name>
-        <signature>vport	 ifn, khtime, ielements [, ifnInit]
-</signature>
+        <signature>vport	 ifn, khtime, ielements [, ifnInit]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Random">
       <opcode>
         <name>vrandh</name>
-        <signature>vrandh	  ifn,  krange, kcps, ielements [, idstoffset] [, iseed]
+        <signature>vrandh	  ifn,  krange, kcps, ielements [, idstoffset] [, iseed] \
       [, isize] [, ioffset]</signature>
       </opcode>
       <opcode>
         <name>vrandi</name>
-        <signature>vrandi	  ifn,  krange, kcps, ielements [, idstoffset] [, iseed]
+        <signature>vrandi	  ifn,  krange, kcps, ielements [, idstoffset] [, iseed] \
       [, isize] [, ioffset]</signature>
       </opcode>
     </opcodeGroup>
@@ -5484,19 +5952,19 @@
   <opcodeGroup name="Remote Opcodes">
     <opcode>
       <name>insglobal</name>
-      <signature>insglobal	isource, instrnum [,instrnum...] </signature>
+      <signature>insglobal	 isource, instrnum [,instrnum...] </signature>
     </opcode>
     <opcode>
       <name>insremot</name>
-      <signature>insremot	idestination, isource, instrnum [,instrnum...] </signature>
+      <signature>insremot	 idestination, isource, instrnum [,instrnum...] </signature>
     </opcode>
     <opcode>
       <name>midglobal</name>
-      <signature>midglobal	isource, instrnum [,instrnum...] </signature>
+      <signature>midglobal	 isource, instrnum [,instrnum...] </signature>
     </opcode>
     <opcode>
       <name>midremot</name>
-      <signature>midremot	idestination, isource, instrnum [,instrnum...] </signature>
+      <signature>midremot	 idestination, isource, instrnum [,instrnum...] </signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Mixer Opcodes">
@@ -5549,6 +6017,238 @@
     <opcode>
       <name>pylassignt</name>
       <signature>pylassignt	 ktrigger, &quot;variable&quot;, kvalue</signature>
+    </opcode>
+    <opcode>
+      <name>pycall</name>
+      <signature>                                        	pycall	   &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall1</name>
+      <signature>kresult                                 	pycall1	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall2</name>
+      <signature>kresult1, kresult2                      	pycall2	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall3</name>
+      <signature>kr1, kr2, kr3                           	pycall3	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall4</name>
+      <signature>kr1, kr2, kr3, kr4                      	pycall4	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall5</name>
+      <signature>kr1, kr2, kr3, kr4, kr5                 	pycall5	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall6</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6            	pycall6	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall7</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7       	pycall7	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall8</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7, kr8  	pycall8	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycallt</name>
+      <signature>                                        	pycallt	   ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall1t</name>
+      <signature>kresult                                 	pycall1t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall2t</name>
+      <signature>kresult1, kresult2                      	pycall2t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall3t</name>
+      <signature>kr1, kr2, kr3                           	pycall3t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall4t</name>
+      <signature>kr1, kr2, kr3, kr4                      	pycall4t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall5t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5                 	pycall5t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall6t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6            	pycall6t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall7t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7       	pycall7t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall8t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7, kr8  	pycall8t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycalli</name>
+      <signature>                                        	pycalli	   &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall1i</name>
+      <signature>iresult                                 	pycall1i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall2i</name>
+      <signature>iresult1, iresult2                      	pycall2i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall3i</name>
+      <signature>ir1, ir2, ir3                           	pycall3i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall4i</name>
+      <signature>ir1, ir2, ir3, ir4                      	pycall4i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall5i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5                 	pycall5i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall6i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6            	pycall6i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall7i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6, ir7       	pycall7i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycall8i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6, ir7, ir8  	pycall8i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycalln</name>
+      <signature>pycalln	   &quot;callable&quot;, nresults, kresult1, ..., kresultn, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pycallni</name>
+      <signature>pycallni	  &quot;callable&quot;, nresults, iresult1, ..., iresultn, iarg1,  ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall</name>
+      <signature>                                        	pylcall	   &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall1</name>
+      <signature>kresult                                 	pylcall1	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall2</name>
+      <signature>kresult1, kresult2                      	pylcall2	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall3</name>
+      <signature>kr1, kr2, kr3                           	pylcall3	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall4</name>
+      <signature>kr1, kr2, kr3, kr4                      	pylcall4	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall5</name>
+      <signature>kr1, kr2, kr3, kr4, kr5                 	pylcall5	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall6</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6            	pylcall6	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall7</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7       	pylcall7	  &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall8</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7, kr8  	pylcall8	   &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcallt</name>
+      <signature>                                        	pylcallt	   ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall1t</name>
+      <signature>kresult                                 	pylcall1t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall2t</name>
+      <signature>kresult1, kresult2                      	pylcall2t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall3t</name>
+      <signature>kr1, kr2, kr3                           	pylcall3t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall4t</name>
+      <signature>kr1, kr2, kr3, kr4                      	pylcall4t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall5t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5                 	pylcall5t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall6t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6            	pylcall6t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall7t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7       	pylcall7t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall8t</name>
+      <signature>kr1, kr2, kr3, kr4, kr5, kr6, kr7, kr8  	pylcall8t	  ktrigger, &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcalli</name>
+      <signature>                                        	pylcalli	   &quot;callable&quot;, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall1i</name>
+      <signature>iresult                                 	pylcall1i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall2i</name>
+      <signature>iresult1, iresult2                      	pylcall2i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall3i</name>
+      <signature>ir1, ir2, ir3                           	pylcall3i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall4i</name>
+      <signature>ir1, ir2, ir3, ir4                      	pylcall4i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall5i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5                 	pylcall5i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall6i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6            	pylcall6i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall7i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6, ir7       	pylcall7i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcall8i</name>
+      <signature>ir1, ir2, ir3, ir4, ir5, ir6, ir7, ir8  	pylcall8i	  &quot;callable&quot;, iarg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcalln</name>
+      <signature>pylcalln	   &quot;callable&quot;, nresults, kresult1, ..., kresultn, karg1, ...</signature>
+    </opcode>
+    <opcode>
+      <name>pylcallni</name>
+      <signature>pylcallni	  &quot;callable&quot;, nresults, iresult1, ..., iresultn, iarg1, ...</signature>
     </opcode>
     <opcode>
       <name>pyeval</name>
@@ -5638,11 +6338,11 @@
     </opcode>
     <opcode>
       <name>imagegetpixel</name>
-      <signature>ared agreen ablue 	imagegetpixel	 iimagenum, ax, ay</signature>
+      <signature>ared, agreen, ablue 	imagegetpixel	 iimagenum, ax, ay</signature>
     </opcode>
     <opcode>
       <name>imagegetpixel</name>
-      <signature>kred kgreen kblue 	imagegetpixel	 iimagenum, kx, ky</signature>
+      <signature>kred, kgreen, kblue 	imagegetpixel	 iimagenum, kx, ky</signature>
     </opcode>
     <opcode>
       <name>imageload</name>
@@ -5653,19 +6353,27 @@
       <signature>imagesave	 iimagenum, filename</signature>
     </opcode>
     <opcode>
-      <name>imagegetpixel</name>
-      <signature>imagegetpixel	 iimagenum, ax, ay, ared, agreen, ablue</signature>
+      <name>imagesetpixel</name>
+      <signature>imagesetpixel	 iimagenum, ax, ay, ared, agreen, ablue</signature>
     </opcode>
     <opcode>
-      <name>imagegetpixel</name>
-      <signature>imagegetpixel	 iimagenum, kx, ky, kred, kgreen, kblue</signature>
+      <name>imagesetpixel</name>
+      <signature>imagesetpixel	 iimagenum, kx, ky, kred, kgreen, kblue</signature>
     </opcode>
     <opcode>
       <name>imagesize</name>
-      <signature>iwidth iheight 	imagesize	 iimagenum</signature>
+      <signature>iwidth, iheight 	imagesize	 iimagenum</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Miscellaneous">
+    <opcode>
+      <name>fareylen</name>
+      <signature>kfl 	fareylen	 kfn</signature>
+    </opcode>
+    <opcode>
+      <name>fareyleni</name>
+      <signature>ifl 	fareyleni	 ifn</signature>
+    </opcode>
     <opcode>
       <name>modmatrix</name>
       <signature>modmatrix	 iresfn, isrcmodfn, isrcparmfn, imodscale, inum_mod, \\
@@ -5678,6 +6386,14 @@ inum_parm, kupdate</signature>
     <opcode>
       <name>system</name>
       <signature>kres 	system	 ktrig, Scmd, [knowait]</signature>
+    </opcode>
+    <opcode>
+      <name>tableshuffle</name>
+      <signature>tableshuffle	 ktablenum</signature>
+    </opcode>
+    <opcode>
+      <name>tableshufflei</name>
+      <signature>tableshufflei	 itablenum</signature>
     </opcode>
   </opcodeGroup>
 </CsoundOpcodes>
