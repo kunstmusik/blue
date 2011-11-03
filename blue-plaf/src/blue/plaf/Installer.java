@@ -26,9 +26,11 @@ import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -43,35 +45,35 @@ public class Installer extends ModuleInstall {
 
     boolean isMac = System.getProperty("os.name").toLowerCase().startsWith("mac");
 
-//
-//        Object[] macEntries = null;
-//
-//        if (isMac) {
-//            try {
-//                System.setProperty("apple.laf.useScreenMenuBar", "true");
-//
-//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//
-//                macEntries = new Object[7];
-//
-//                macEntries[0] = UIManager.get("MenuBarUI");
-//                macEntries[1] = UIManager.get("MenuUI");
-//                macEntries[2] = UIManager.get("MenuItemUI");
-//                macEntries[3] = UIManager.get("CheckboxMenuItemUI");
-//                macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
-//                macEntries[5] = UIManager.get("PopupMenuUI");
-//                macEntries[6] = UIManager.get("PopupMenuSeparatorUI");
-//
-//            } catch (ClassNotFoundException ex) {
-//                Exceptions.printStackTrace(ex);
-//            } catch (InstantiationException ex) {
-//                Exceptions.printStackTrace(ex);
-//            } catch (IllegalAccessException ex) {
-//                Exceptions.printStackTrace(ex);
-//            } catch (UnsupportedLookAndFeelException ex) {
-//                Exceptions.printStackTrace(ex);
-//            }
-//        }
+
+        Object[] macEntries = null;
+
+        if (isMac) {
+            try {
+                System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+                macEntries = new Object[7];
+
+                macEntries[0] = UIManager.get("MenuBarUI");
+                macEntries[1] = UIManager.get("MenuUI");
+                //macEntries[2] = UIManager.get("MenuItemUI");
+                macEntries[3] = UIManager.get("CheckboxMenuItemUI");
+                macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
+                macEntries[5] = UIManager.get("PopupMenuUI");
+                macEntries[6] = UIManager.get("PopupMenuSeparatorUI");
+
+            } catch (ClassNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (InstantiationException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IllegalAccessException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (UnsupportedLookAndFeelException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
 
         try {
             LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
@@ -96,15 +98,15 @@ public class Installer extends ModuleInstall {
 
         UIManager.put("nb.output.foreground", Color.WHITE); //NOI18N
 
-//        if (isMac && macEntries != null) {
-//            UIManager.put("MenuBarUI", macEntries[0]);
-//            UIManager.put("MenuUI", macEntries[1]);
-//            UIManager.put("MenuItemUI", macEntries[2]);
-//            UIManager.put("CheckboxMenuItemUI", macEntries[3]);
-//            UIManager.put("RadioButtonMenuItemUI", macEntries[4]);
-//            UIManager.put("PopupMenuUI", macEntries[5]);
-//            UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
-//        }
+        if (isMac && macEntries != null) {
+            UIManager.put("MenuBarUI", macEntries[0]);
+            UIManager.put("MenuUI", macEntries[1]);
+            //UIManager.put("MenuItemUI", macEntries[2]);
+            UIManager.put("CheckboxMenuItemUI", macEntries[3]);
+            UIManager.put("RadioButtonMenuItemUI", macEntries[4]);
+            UIManager.put("PopupMenuUI", macEntries[5]);
+            UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
+        }
 
         if (isMac) {
             replaceCtrlShortcutsWithMacShortcuts();
