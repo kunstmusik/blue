@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.1.7<
-[released 2011.xx.xx]
+[released 2011.11.05]
 
 NEW
 
@@ -47,6 +47,7 @@ FIX
 
 * BlueLive: Recompile button would get a hung dialog if the code that changed 
   caused a compilation error by Csound
+
 
 >Notes for 2.1.6<
 [released 2011.09.29]
