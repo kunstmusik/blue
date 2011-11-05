@@ -1,0 +1,353 @@
+<blueData version='2.1.6'>
+  <projectProperties>
+    <title>Meta-slendro Cloud Study 1</title>
+    <author>Dave Seidel</author>
+    <notes>1/1 37/32 21/16 49/32 7/4 2/1</notes>
+    <sampleRate>41000</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName>C:\Users\dave\Documents\work\blue\meta-slendro_cloud_study_1.wav</fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>chebyshev2</name>
+        <comment></comment>
+        <globalOrc>; percussive envelope
+giEnv	ftgen	10, 0, 64, 5, 1, 2, 120, 60, 1, 1, 0.001, 1
+
+</globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>idur	=	p3		; duration
+iamp	=	ampdb(p4)	; amplitude
+ipitch	=	p5		; center frequency (Hz)
+ipan	=	p6		; pan
+itab	=	p7		; table for oscillator
+ibeat	=	p8		;
+
+; LFOs to drive harmonics
+k1	_lfo	 1, ibeat
+k2	_lfo	 2, ibeat
+k3	_lfo	 3, ibeat
+k5	_lfo	 5, ibeat
+k7	_lfo	 7, ibeat
+k11	_lfo	11, ibeat
+k13	_lfo	13, ibeat
+;k17	_lfo	17, ibeat
+
+; generate wave
+kenv	linen	1, 0, idur, 3 
+ax	poscil3	kenv, ipitch, itab
+
+; waveshape it
+az	chebyshevpoly	ax, 0, k1, k2, k3, 0, k5, 0, k7, 0, 0, 0, k11, 0, k13;, 0, 0, 0, k17
+aout	dcblock2	az
+
+; output
+al,ar	pan_equal_power	aout*iamp, ipan
+blueMixerOut	al, ar
+</instrumentText>
+        <opcodeList>
+          <udo>
+            <opcodeName>_lfo</opcodeName>
+            <outTypes>k</outTypes>
+            <inTypes>ii</inTypes>
+            <codeBody>inum,ibeat	xin
+kout	oscil3	1/inum, ibeat/inum, 10
+	xout	kout
+</codeBody>
+            <comments></comments>
+          </udo>
+        </opcodeList>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>3.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='752389925' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'>
+        <effect>
+          <name>ReverbSC</name>
+          <enabled>true</enabled>
+          <numIns>2</numIns>
+          <numOuts>2</numOuts>
+          <code>aout1, aout2  reverbsc ain1, ain2, &lt;feedback&gt;, &lt;cutoff&gt;
+
+aout1 = (ain1 * &lt;wetdry&gt;) + (aout1 * (1 - &lt;wetdry&gt;))
+aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
+
+</code>
+          <comments/>
+          <opcodeList/>
+          <graphicInterface editEnabled='false'>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>7</x>
+              <y>7</y>
+              <label>&lt;html&gt;&lt;font size=&quot;+1&quot;&gt;ReverbSC&lt;/font&gt;&lt;/html&gt;</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>feedback</objectName>
+              <x>8</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.73543566</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>11</x>
+              <y>36</y>
+              <label>Feedback</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>cutoff</objectName>
+              <x>72</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>20.0</minimum>
+              <maximum>20000.0</maximum>
+              <value>8000.0</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>80</x>
+              <y>36</y>
+              <label>Cut-Off</label>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+              <objectName>wetdry</objectName>
+              <x>136</x>
+              <y>55</y>
+              <automationAllowed>true</automationAllowed>
+              <minimum>0.0</minimum>
+              <maximum>1.0</maximum>
+              <value>0.77777004</value>
+              <knobWidth>60</knobWidth>
+              <randomizable>true</randomizable>
+            </bsbObject>
+            <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+              <objectName></objectName>
+              <x>139</x>
+              <y>36</y>
+              <label>Wet/Dry</label>
+            </bsbObject>
+          </graphicInterface>
+          <bsbParameterList>
+            <parameter uniqueId='752391050' name='cutoff' label='' min='20.0' max='20000.0' resolution='-1.0' automationEnabled='false' value='8000.0'>
+              <line name='' version='2' max='20000.0' min='20.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='8000.0'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='752391048' name='feedback' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.73543566'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.73543566'/>
+              </line>
+            </parameter>
+            <parameter uniqueId='752391052' name='wetdry' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.77777004'>
+              <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                <linePoint x='0.0' y='0.77777004'/>
+              </line>
+            </parameter>
+          </bsbParameterList>
+        </effect>
+      </effectsChain>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='752387876' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>0dbfs = 1
+
+giTblSz	init	1048576
+
+; sine wave
+giFn1	ftgen	1, 0, giTblSz, 10, 1
+
+; &quot;Fibonacci&quot; wave (Mt. Meru A)
+giFn2	ftgen	2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0  144,.0069,0
+
+; prime wave
+giPrime	ftgen	3, 0, giTblSz, 9,  1,1,0,  2,.5,0,  3,.3333,0,  5,.2,0,    7,.143,0,  11,.0909,0,  13,.077,0,   17,.0588,0,  19,.0526,0, 23,.0435,0, 27,.037,0
+
+</globalOrc>
+    <globalSco>;t 0 15</globalSco>
+  </globalOrcSco>
+  <opcodeList>
+    <udo>
+      <opcodeName>pan_equal_power</opcodeName>
+      <outTypes>aa</outTypes>
+      <inTypes>ak</inTypes>
+      <codeBody>ain, kpan	xin
+kangl		= 	1.57079633 * (kpan + 0.5)
+		xout	ain*sin(kangl), ain*cos(kangl)
+</codeBody>
+      <comments></comments>
+    </udo>
+  </opcodeList>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>8</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>1</timeDisplay>
+    <timeUnit>5</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>17.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>instr = 1
+base = 180.0
+beat = 1
+amp = -10
+reduce = 5.0
+table = 1	# sine
+
+def play(ratio):
+ 	return &quot;i%d 0 1 %f %f 0.0 %d %f\n&quot; % (instr, amp, base*ratio, table, ratio/reduce)
+
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>349.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>PythonObject</name>
+        <backgroundColor>-12566464</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>score = &quot;&quot;
+score += play(1.0)
+score += play(37.0/32.0)
+score += play(21.0/16.0)
+score += play(49.0/32.0)
+score += play(7.0/4.0)
+score += play(2.0)
+</pythonCode>
+      </soundObject>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>false</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>

@@ -27,6 +27,9 @@ NEW
 
 * OSX: Made Look and Feel work with System Menu Bar
 
+* Added Dave Seidel's "Cloud Study" pieces to the examples/pieces/daveSeidel 
+  folder
+
 UPDATED
 
 * Updated opcodes.xml to use latest from 5.14 manual
