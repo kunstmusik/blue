@@ -27,7 +27,8 @@ public final class BlueChatAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         
-        String url = "http://webchat.freenode.net/?channels=#csound,#bluecsound";
+        String url = "http://webchat.freenode.net/?channels=%23csound%2C%23bluecsound";
+
 
         try {
             URLDisplayer.getDefault().showURL(new URL(url));
