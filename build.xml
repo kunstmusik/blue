@@ -14,7 +14,7 @@
     </condition>
 
     <condition property="confReplacementString"
-            value="-J-Xms256m -J-Xmx768m -J-d32 -J-Dapple.laf.useScreenMenuBar=true"
+            value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
             else="-J-Xms256m -J-Xmx768m">
         <os family="mac"/>
     </condition>

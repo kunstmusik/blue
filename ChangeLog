@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.8<
+[released 2011.xx.xx]
+
+UPDATED
+
+* OSX - Removed use of -D32 flag when running blue, now will default to whatever
+  version of Java the user has set by default (64-bit, 32-bit) 
+
+
 >Notes for 2.1.7<
 [released 2011.11.05]
 
