@@ -431,15 +431,21 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.isUpdating = false;
     }
 
-    public void playModeChanged(int playMode) {
-        if (playMode == PLAY_MODE_PLAY) {
-            playButton.setEnabled(false);
-            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));
-        } else if (playMode == PLAY_MODE_STOP) {
-            playButton.setEnabled(true);
-            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
-                    "message.finishedRenderingCSD"));
-        }
+    public void playModeChanged(final int playMode) {
+
+        SwingUtilities.invokeLater(new Runnable() {
+
+            public void run() {
+                if (playMode == PLAY_MODE_PLAY) {
+                    playButton.setEnabled(false);
+                    StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));
+                } else if (playMode == PLAY_MODE_STOP) {
+                    playButton.setEnabled(true);
+                    StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
+                            "message.finishedRenderingCSD"));
+                }
+            }
+        });
 
     }
 
