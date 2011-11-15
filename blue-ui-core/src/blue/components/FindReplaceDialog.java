@@ -111,9 +111,8 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
-    // ">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         directionButtonGroup = new javax.swing.ButtonGroup();
         findLabel = new javax.swing.JLabel();
@@ -133,8 +132,9 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
         closeButton = new javax.swing.JButton();
 
         setTitle("Find and Replace");
-        setName("Find and Replace");
+        setName("Find and Replace"); // NOI18N
         setResizable(false);
+
         findLabel.setText("Find:");
 
         replaceLabel.setText("Replace:");
@@ -148,10 +148,9 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
 
         replaceText.setPreferredSize(new java.awt.Dimension(200, 19));
 
+        directionPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Direction"));
         directionPanel.setLayout(new java.awt.GridLayout(2, 0));
 
-        directionPanel.setBorder(javax.swing.BorderFactory
-                .createTitledBorder("Direction"));
         directionButtonGroup.add(forwardsRadio);
         forwardsRadio.setSelected(true);
         forwardsRadio.setText("Forwards");
@@ -161,10 +160,9 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
         backwardsRadio.setText("Backwards");
         directionPanel.add(backwardsRadio);
 
+        optionsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Options"));
         optionsPanel.setLayout(new java.awt.GridLayout(2, 0));
 
-        optionsPanel.setBorder(javax.swing.BorderFactory
-                .createTitledBorder("Options"));
         wrapSearchBox.setSelected(true);
         wrapSearchBox.setText("Wrap Search");
         optionsPanel.add(wrapSearchBox);
@@ -180,12 +178,11 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
         });
 
         replaceFindButton.setText("Replace and Find");
-        replaceFindButton
-                .addActionListener(new java.awt.event.ActionListener() {
-                    public void actionPerformed(java.awt.event.ActionEvent evt) {
-                        replaceAndFind(evt);
-                    }
-                });
+        replaceFindButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                replaceAndFind(evt);
+            }
+        });
 
         jButton1.setText("Replace");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -208,210 +205,67 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
             }
         });
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(
-                getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout
-                .setHorizontalGroup(layout
-                        .createParallelGroup(
-                                org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(
-                                layout
-                                        .createSequentialGroup()
-                                        .addContainerGap()
-                                        .add(
-                                                layout
-                                                        .createParallelGroup(
-                                                                org.jdesktop.layout.GroupLayout.LEADING)
-                                                        .add(
-                                                                layout
-                                                                        .createSequentialGroup()
-                                                                        .add(
-                                                                                layout
-                                                                                        .createParallelGroup(
-                                                                                                org.jdesktop.layout.GroupLayout.LEADING)
-                                                                                        .add(
-                                                                                                optionsPanel,
-                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                314,
-                                                                                                Short.MAX_VALUE)
-                                                                                        .add(
-                                                                                                directionPanel,
-                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                314,
-                                                                                                Short.MAX_VALUE)
-                                                                                        .add(
-                                                                                                layout
-                                                                                                        .createSequentialGroup()
-                                                                                                        .add(
-                                                                                                                20,
-                                                                                                                20,
-                                                                                                                20)
-                                                                                                        .add(
-                                                                                                                findLabel,
-                                                                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                                                                30,
-                                                                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                                                                        .addPreferredGap(
-                                                                                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                                                                                        .add(
-                                                                                                                findText,
-                                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                                252,
-                                                                                                                Short.MAX_VALUE))
-                                                                                        .add(
-                                                                                                layout
-                                                                                                        .createSequentialGroup()
-                                                                                                        .add(
-                                                                                                                replaceLabel,
-                                                                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                                                                50,
-                                                                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                                                                        .addPreferredGap(
-                                                                                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                                                                                        .add(
-                                                                                                                replaceText,
-                                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                                252,
-                                                                                                                Short.MAX_VALUE))
-                                                                                        .add(
-                                                                                                layout
-                                                                                                        .createSequentialGroup()
-                                                                                                        .add(
-                                                                                                                layout
-                                                                                                                        .createParallelGroup(
-                                                                                                                                org.jdesktop.layout.GroupLayout.TRAILING)
-                                                                                                                        .add(
-                                                                                                                                org.jdesktop.layout.GroupLayout.LEADING,
-                                                                                                                                findButton,
-                                                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                                                160,
-                                                                                                                                Short.MAX_VALUE)
-                                                                                                                        .add(
-                                                                                                                                org.jdesktop.layout.GroupLayout.LEADING,
-                                                                                                                                jButton1,
-                                                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                                                160,
-                                                                                                                                Short.MAX_VALUE))
-                                                                                                        .addPreferredGap(
-                                                                                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                                                                                        .add(
-                                                                                                                layout
-                                                                                                                        .createParallelGroup(
-                                                                                                                                org.jdesktop.layout.GroupLayout.TRAILING)
-                                                                                                                        .add(
-                                                                                                                                replaceAllButton,
-                                                                                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                                                                                148,
-                                                                                                                                Short.MAX_VALUE)
-                                                                                                                        .add(
-                                                                                                                                replaceFindButton,
-                                                                                                                                0,
-                                                                                                                                0,
-                                                                                                                                Short.MAX_VALUE))
-                                                                                                        .addPreferredGap(
-                                                                                                                org.jdesktop.layout.LayoutStyle.RELATED)))
-                                                                        .add(
-                                                                                12,
-                                                                                12,
-                                                                                12))
-                                                        .add(
-                                                                org.jdesktop.layout.GroupLayout.TRAILING,
-                                                                layout
-                                                                        .createSequentialGroup()
-                                                                        .add(
-                                                                                closeButton)
-                                                                        .addContainerGap()))));
-        layout
-                .setVerticalGroup(layout
-                        .createParallelGroup(
-                                org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(
-                                layout
-                                        .createSequentialGroup()
-                                        .addContainerGap()
-                                        .add(
-                                                layout
-                                                        .createParallelGroup(
-                                                                org.jdesktop.layout.GroupLayout.BASELINE)
-                                                        .add(
-                                                                findLabel,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                15,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                        .add(
-                                                                findText,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .add(10, 10, 10)
-                                        .add(
-                                                layout
-                                                        .createParallelGroup(
-                                                                org.jdesktop.layout.GroupLayout.BASELINE)
-                                                        .add(
-                                                                replaceLabel,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                15,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                        .add(
-                                                                replaceText,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(
-                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(
-                                                directionPanel,
-                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(
-                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(
-                                                optionsPanel,
-                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(
-                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(
-                                                layout
-                                                        .createParallelGroup(
-                                                                org.jdesktop.layout.GroupLayout.BASELINE)
-                                                        .add(
-                                                                findButton,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                25,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                        .add(
-                                                                replaceFindButton,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                25,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(
-                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(
-                                                layout
-                                                        .createParallelGroup(
-                                                                org.jdesktop.layout.GroupLayout.BASELINE)
-                                                        .add(
-                                                                jButton1,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                25,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                                        .add(
-                                                                replaceAllButton,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-                                                                25,
-                                                                org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                                        .addPreferredGap(
-                                                org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(
-                                                closeButton,
-                                                org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-                                                25, Short.MAX_VALUE)
-                                        .addContainerGap()));
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(optionsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+                            .addComponent(directionPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(20, 20, 20)
+                                .addComponent(findLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(findText, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(replaceLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(replaceText, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(findButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
+                                    .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(replaceAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
+                                    .addComponent(replaceFindButton, 0, 0, Short.MAX_VALUE))))
+                        .addGap(12, 12, 12))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(closeButton)
+                        .addContainerGap())))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(findLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(findText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(10, 10, 10)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(replaceLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(replaceText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(directionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(optionsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(findButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(replaceFindButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(replaceAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -590,37 +444,21 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton backwardsRadio;
-
     private javax.swing.JCheckBox caseSensitiveBox;
-
     private javax.swing.JButton closeButton;
-
     private javax.swing.ButtonGroup directionButtonGroup;
-
     private javax.swing.JPanel directionPanel;
-
     private javax.swing.JButton findButton;
-
     private javax.swing.JLabel findLabel;
-
     private javax.swing.JTextField findText;
-
     private javax.swing.JRadioButton forwardsRadio;
-
     private javax.swing.JButton jButton1;
-
     private javax.swing.JPanel optionsPanel;
-
     private javax.swing.JButton replaceAllButton;
-
     private javax.swing.JButton replaceFindButton;
-
     private javax.swing.JLabel replaceLabel;
-
     private javax.swing.JTextField replaceText;
-
     private javax.swing.JCheckBox wrapSearchBox;
-
     // End of variables declaration//GEN-END:variables
 
     public void loadWindowSettings(Element settings) {

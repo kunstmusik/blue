@@ -304,15 +304,15 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         setLayout(new java.awt.BorderLayout());
 
-        org.jdesktop.layout.GroupLayout emptyPanelLayout = new org.jdesktop.layout.GroupLayout(emptyPanel);
+        javax.swing.GroupLayout emptyPanelLayout = new javax.swing.GroupLayout(emptyPanel);
         emptyPanel.setLayout(emptyPanelLayout);
         emptyPanelLayout.setHorizontalGroup(
-            emptyPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 501, Short.MAX_VALUE)
+            emptyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 501, Short.MAX_VALUE)
         );
         emptyPanelLayout.setVerticalGroup(
-            emptyPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 152, Short.MAX_VALUE)
+            emptyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 152, Short.MAX_VALUE)
         );
 
         add(emptyPanel, java.awt.BorderLayout.CENTER);

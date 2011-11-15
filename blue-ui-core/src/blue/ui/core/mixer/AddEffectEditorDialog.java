@@ -24,24 +24,22 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 
-import org.jdesktop.layout.GroupLayout;
-
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.event.SimpleDocumentListener;
-import blue.utility.GUI;
 import blue.utility.ObjectUtilities;
 
 import com.l2fprod.common.swing.BaseDialog;
 
 import electric.xml.Element;
 import java.awt.Frame;
+import javax.swing.GroupLayout;
+import javax.swing.LayoutStyle;
 
 public class AddEffectEditorDialog extends BaseDialog implements
         WindowSettingsSavable {
@@ -93,18 +91,18 @@ public class AddEffectEditorDialog extends BaseDialog implements
         GroupLayout layout = new GroupLayout(panel);
         panel.setLayout(layout);
         layout.setHorizontalGroup(layout.createParallelGroup(
-                GroupLayout.LEADING).add(
-                layout.createSequentialGroup().addContainerGap().add(label)
+                GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup().addContainerGap().addComponent(label)
                         .addPreferredGap(
-                                org.jdesktop.layout.LayoutStyle.RELATED).add(
+                                LayoutStyle.ComponentPlacement.RELATED).addComponent(
                                 nameText).addContainerGap()));
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.LEADING)
-                .add(
-                        layout.createSequentialGroup().addContainerGap().add(
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addGroup(
+                        layout.createSequentialGroup().addContainerGap().addGroup(
                                 layout
                                         .createParallelGroup(
-                                                GroupLayout.BASELINE)
-                                        .add(label).add(nameText))));
+                                                GroupLayout.Alignment.BASELINE)
+                                        .addComponent(label).addComponent(nameText))));
 
         return panel;
     }

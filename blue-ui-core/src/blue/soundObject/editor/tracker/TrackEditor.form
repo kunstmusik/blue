@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.1" encoding="UTF-8" ?>
 
 <Form version="1.3" maxVersion="1.3" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <NonVisualComponents>
@@ -10,7 +10,7 @@
     <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
     <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
-    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
@@ -22,7 +22,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="columnsScroll" alignment="0" pref="256" max="32767" attributes="0"/>
+                  <Component id="columnsScroll" alignment="0" pref="390" max="32767" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
@@ -42,9 +42,9 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="trackNameTextField" alignment="0" pref="178" max="32767" attributes="0"/>
-                          <Component id="noteTemplateTextField" alignment="0" pref="178" max="32767" attributes="0"/>
-                          <Component id="instrIdTextField" alignment="0" pref="178" max="32767" attributes="0"/>
+                          <Component id="trackNameTextField" alignment="0" pref="284" max="32767" attributes="0"/>
+                          <Component id="noteTemplateTextField" alignment="0" pref="284" max="32767" attributes="0"/>
+                          <Component id="instrIdTextField" alignment="0" pref="284" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="colPropsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -65,8 +65,8 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="numberMaxSpinner" pref="198" max="32767" attributes="0"/>
-                                  <Component id="numberMinSpinner" alignment="0" pref="198" max="32767" attributes="0"/>
+                                  <Component id="numberMaxSpinner" pref="320" max="32767" attributes="0"/>
+                                  <Component id="numberMinSpinner" alignment="0" pref="320" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <Component id="useRangeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -75,7 +75,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="17" pref="17" max="17" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="outputFreqCheckBox" alignment="0" pref="239" max="32767" attributes="0"/>
+                          <Component id="outputFreqCheckBox" alignment="0" pref="373" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="baseFreqLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -84,11 +84,11 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="scaleNameTextField" pref="134" max="32767" attributes="0"/>
+                                      <Component id="scaleNameTextField" pref="220" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="scaleChooserButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="baseFreqText" alignment="0" pref="187" max="32767" attributes="0"/>
+                                  <Component id="baseFreqText" alignment="0" pref="304" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>

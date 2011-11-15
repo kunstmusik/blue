@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.1" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
@@ -7,7 +7,7 @@
     <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
     <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="true"/>
-    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
+    <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
@@ -74,9 +74,9 @@
                       <Component id="audioOutCBox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="208" pref="208" max="208" attributes="0"/>
                   </Group>
-                  <Component id="nchnlsText" alignment="0" pref="282" max="32767" attributes="0"/>
-                  <Component id="ksmpsText" alignment="0" pref="282" max="32767" attributes="0"/>
-                  <Component id="srText" alignment="0" pref="282" max="32767" attributes="0"/>
+                  <Component id="nchnlsText" alignment="0" pref="563" max="32767" attributes="0"/>
+                  <Component id="ksmpsText" alignment="0" pref="563" max="32767" attributes="0"/>
+                  <Component id="srText" alignment="0" pref="563" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>

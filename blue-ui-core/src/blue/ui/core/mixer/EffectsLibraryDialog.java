@@ -169,8 +169,9 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
      */
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc=" Generated Code
-    // ">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+
         splitPane = new javax.swing.JSplitPane();
         treeScroll = new javax.swing.JScrollPane();
         libraryTree = new javax.swing.JTree();
@@ -184,23 +185,28 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
         splitPane.setDividerLocation(200);
         splitPane.setLastDividerLocation(200);
+
         treeScroll.setViewportView(libraryTree);
 
         splitPane.setLeftComponent(treeScroll);
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(
-                getContentPane());
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(
-                org.jdesktop.layout.GroupLayout.LEADING).add(
-                layout.createSequentialGroup().addContainerGap().add(splitPane,
-                        org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 593,
-                        Short.MAX_VALUE).addContainerGap()));
-        layout.setVerticalGroup(layout.createParallelGroup(
-                org.jdesktop.layout.GroupLayout.LEADING).add(
-                layout.createSequentialGroup().addContainerGap().add(splitPane,
-                        org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 414,
-                        Short.MAX_VALUE).addContainerGap()));
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 593, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -227,11 +233,8 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTree libraryTree;
-
     private javax.swing.JSplitPane splitPane;
-
     private javax.swing.JScrollPane treeScroll;
-
     // End of variables declaration//GEN-END:variables
 
     public void loadWindowSettings(Element settings) {
