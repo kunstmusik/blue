@@ -20,14 +20,20 @@
 package blue.plaf;
 
 import java.awt.Color;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
+import javax.swing.RepaintManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
+import org.jdesktop.core.animation.timing.Animator;
+import org.jdesktop.core.animation.timing.TimingSource;
+import org.jdesktop.swing.animation.timing.sources.SwingTimerTimingSource;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
@@ -43,6 +49,12 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
 
+        // Initiate TimingFramework
+//        TimingSource source = new SwingTimerTimingSource(30, TimeUnit.MILLISECONDS);
+//        Animator.setDefaultTimingSource(source); // shared timing source
+//        source.init(); // starts the timer
+
+       //RepaintManager.setCurrentManager(new CheckThreadViolationRepaintManager()); 
     boolean isMac = System.getProperty("os.name").toLowerCase().startsWith("mac");
 
 

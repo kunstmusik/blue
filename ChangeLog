@@ -17,6 +17,9 @@ information.
 
 UPDATED
 
+* Render Time Pointer Animation code redesigned for smoother playback, made 
+  default Playback Setting option for Frames Per Second default to 24 fps
+
 * OSX - Removed use of -D32 flag when running blue, now will default to whatever
   version of Java the user has set by default (64-bit, 32-bit) 
 

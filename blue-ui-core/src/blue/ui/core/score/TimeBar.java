@@ -48,6 +48,7 @@ import blue.MarkersList;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RenderTimeManager;
 import blue.soundObject.PolyObject;
+import blue.ui.core.render.RenderTimeManagerListener;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import javax.swing.JPanel;
@@ -62,7 +63,7 @@ import javax.swing.UIManager;
  * @version 1.0
  */
 public final class TimeBar extends JPanel implements
-        PropertyChangeListener, TableModelListener {
+        PropertyChangeListener, TableModelListener, RenderTimeManagerListener {
 
     private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
 
@@ -175,6 +176,7 @@ public final class TimeBar extends JPanel implements
 
         RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
         renderTimeManager.addPropertyChangeListener(this);
+        renderTimeManager.addRenderTimeManagerListener(this);
     }
 
     public void paintComponent(Graphics g) {
@@ -419,10 +421,11 @@ public final class TimeBar extends JPanel implements
                 this.renderStart = ((Float) evt.getNewValue()).floatValue();
                 this.timePointer = -1.0f;
                 repaint();
-            } else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-                this.timePointer = ((Float) evt.getNewValue()).floatValue();
-                repaint();
-            }
+            } 
+//            else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
+//                this.timePointer = ((Float) evt.getNewValue()).floatValue();
+//                repaint();
+//            }
         }
     }
 
@@ -441,6 +444,20 @@ public final class TimeBar extends JPanel implements
             this.initializeMarkers();
             this.repaint();
         }
+    }
+
+    @Override
+    public void renderInitiated() {
+    }
+
+    @Override
+    public void renderEnded() {
+    }
+
+    @Override
+    public void renderTimeUpdated(float timePointer) {
+        this.timePointer = timePointer;
+        repaint();
     }
 
     class PlayMarker extends JComponent implements PropertyChangeListener {

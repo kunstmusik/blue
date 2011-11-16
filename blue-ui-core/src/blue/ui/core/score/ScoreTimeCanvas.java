@@ -66,6 +66,7 @@ import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.ui.core.score.undo.RemoveSoundObjectEdit;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.render.RenderTimeManagerListener;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import javax.swing.undo.UndoManager;
@@ -78,7 +79,7 @@ import javax.swing.undo.UndoManager;
  * @version 1.0
  */
 public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
-        PropertyChangeListener, ListDataListener, SoundLayerListener {
+        PropertyChangeListener, ListDataListener, SoundLayerListener, RenderTimeManagerListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -218,7 +219,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
         renderTimeManager.addPropertyChangeListener(this);
-
+        renderTimeManager.addRenderTimeManagerListener(this);
     }
 
     public JPanel getSoundObjectPanel() {
@@ -1122,10 +1123,10 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                     this.renderStart = ((Float) evt.getNewValue()).floatValue();
                     this.timePointer = -1.0f;
                     updateRenderTimePointer();
-                } else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
+                } /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
                     this.timePointer = ((Float) evt.getNewValue()).floatValue();
                     updateRenderTimePointer();
-                }
+                } */
             } else {
                 this.timePointer = -1.0f;
                 updateRenderTimePointer();
@@ -1187,5 +1188,19 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         }
 
         layer.setHeightIndex(hIndex + value);
+    }
+
+    @Override
+    public void renderInitiated() {
+    }
+
+    @Override
+    public void renderEnded() {
+    }
+
+    @Override
+    public void renderTimeUpdated(float timePointer) {
+        this.timePointer = timePointer;
+        updateRenderTimePointer();;
     }
 }

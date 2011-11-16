@@ -51,6 +51,7 @@ import blue.ui.core.render.CommandlineRunner;
 import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.AuditionManager;
 import blue.soundObject.SoundObjectException;
+import blue.ui.core.render.RenderTimeManagerListener;
 import blue.utility.APIUtilities;
 import blue.utility.NumberUtilities;
 import java.net.URL;
@@ -64,7 +65,7 @@ import org.openide.util.ImageUtilities;
  * @author steven
  */
 public class MainToolBar extends JToolBar implements PlayModeListener,
-        PropertyChangeListener {
+        PropertyChangeListener, RenderTimeManagerListener {
 
     private static final String EMPTY_TIME = "--:--:--:--";
 
@@ -270,6 +271,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                 }
             }
         });
+        manager.addRenderTimeManagerListener(this);
 
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
@@ -469,6 +471,31 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                 loopBox.setSelected(val.booleanValue());
                 isUpdating = false;
             }
+        }
+    }
+
+    @Override
+    public void renderInitiated() {
+    }
+
+    @Override
+    public void renderEnded() {
+    }
+
+    @Override
+    public void renderTimeUpdated(float timePointer) {
+        float val = timePointer;
+
+        if (val <= 0.0f) {
+            playTimeText.setText(EMPTY_TIME);
+        } else {
+            float latency = PlaybackSettings.getInstance().
+                    getPlaybackLatencyCorrection();
+
+            float newVal = val + RenderTimeManager.getInstance().getRenderStartTime() - latency;
+
+            playTimeText.setText(NumberUtilities.formatTime(
+                    newVal));
         }
     }
 

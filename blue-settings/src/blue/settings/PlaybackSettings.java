@@ -47,7 +47,7 @@ public class PlaybackSettings {
 
             final Preferences prefs = NbPreferences.forModule(PlaybackSettings.class);
 
-            instance.playbackFPS = prefs.getInt(PLAYBACK_FPS, 12);
+            instance.playbackFPS = prefs.getInt(PLAYBACK_FPS, 24);
             instance.playbackLatencyCorrection  =
                     prefs.getFloat(PLAYBACK_LATENCY_CORRECTION, 0.00f);
 
