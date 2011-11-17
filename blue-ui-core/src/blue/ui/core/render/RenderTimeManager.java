@@ -151,7 +151,7 @@ public class RenderTimeManager {
     }
 
     public float getRenderTime() {
-        return timePointer;
+        return timePointer - timeAdjust;
     }
 
     // Property Change Methods
