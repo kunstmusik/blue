@@ -262,7 +262,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
         param.setName(getObjectName());
         param.setResolution(1.0f);
         param.addParameterListener(this);
-        param.setValue(getSelectedIndex());
 
         parameters.addParameter(param);
     }
