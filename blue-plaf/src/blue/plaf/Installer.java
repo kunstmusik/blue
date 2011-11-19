@@ -69,7 +69,7 @@ public class Installer extends ModuleInstall {
                 macEntries = new Object[7];
 
                 macEntries[0] = UIManager.get("MenuBarUI");
-                macEntries[1] = UIManager.get("MenuUI");
+                //macEntries[1] = UIManager.get("MenuUI");
                 //macEntries[2] = UIManager.get("MenuItemUI");
                 macEntries[3] = UIManager.get("CheckboxMenuItemUI");
                 macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
@@ -112,7 +112,7 @@ public class Installer extends ModuleInstall {
 
         if (isMac && macEntries != null) {
             UIManager.put("MenuBarUI", macEntries[0]);
-            UIManager.put("MenuUI", macEntries[1]);
+            //UIManager.put("MenuUI", macEntries[1]);
             //UIManager.put("MenuItemUI", macEntries[2]);
             UIManager.put("CheckboxMenuItemUI", macEntries[3]);
             UIManager.put("RadioButtonMenuItemUI", macEntries[4]);
@@ -123,7 +123,7 @@ public class Installer extends ModuleInstall {
         if (isMac) {
             replaceCtrlShortcutsWithMacShortcuts();
         }
-
+        
         logger.info("Finished blue PLAF installation");
     }
 
