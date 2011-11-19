@@ -23,6 +23,14 @@ UPDATED
 * OSX - Removed use of -D32 flag when running blue, now will default to whatever
   version of Java the user has set by default (64-bit, 32-bit) 
 
+* BSB - Made Checkboxes Automatable [RFE 3419780]
+
+
+FIX
+
+* OSX - Opening sub-popup menus would cause an exception to be thrown, caused by
+  changes in 2.1.7 to get the System Menu Bar working in blue 
+
 
 >Notes for 2.1.7<
 [released 2011.11.05]
