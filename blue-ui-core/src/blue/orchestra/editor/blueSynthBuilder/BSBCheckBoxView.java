@@ -32,7 +32,7 @@ import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 /**
  * @author steven
  */
-public class BSBCheckBoxView extends BSBObjectView implements
+public class BSBCheckBoxView extends AutomatableBSBObjectView implements
         PropertyChangeListener {
 
     BSBCheckBox box;

@@ -21,6 +21,9 @@ package blue.orchestra.blueSynthBuilder;
 
 //import blue.orchestra.editor.blueSynthBuilder.BSBCheckBoxView;
 //import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
+import blue.automation.Parameter;
+import blue.automation.ParameterListener;
+import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -28,7 +31,7 @@ import electric.xml.Elements;
 /**
  * @author steven
  */
-public class BSBCheckBox extends BSBObject implements Randomizable {
+public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable {
 
     String label = "label";
 
@@ -69,11 +72,16 @@ public class BSBCheckBox extends BSBObject implements Randomizable {
         return retVal;
     }
 
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBCheckBoxView(this);
-//    }
-
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
+        if (parameters != null) {
+            Parameter param = parameters.getParameter(this.getObjectName());
+            if (param != null && param.getCompilationVarName() != null) {
+                compilationUnit.addReplacementValue(objectName, param
+                        .getCompilationVarName());
+                return;
+            }
+        }
+
         String replaceVal = this.isSelected() ? "1" : "0";
 
         compilationUnit.addReplacementValue(objectName, replaceVal);
@@ -89,7 +97,19 @@ public class BSBCheckBox extends BSBObject implements Randomizable {
     }
 
     public void setSelected(boolean selected) {
+        boolean oldValue = this.isSelected();
         this.selected = selected;
+
+        if (parameters != null) {
+            Parameter param = parameters.getParameter(this.getObjectName());
+            if (param != null) {
+                param.setValue(selected ? 1 : 0);
+            }
+        }
+        
+        if (propListeners != null) {
+            propListeners.firePropertyChange("selected", oldValue, this.selected);
+        }
     }
 
     public boolean isSelected() {
@@ -141,4 +161,94 @@ public class BSBCheckBox extends BSBObject implements Randomizable {
         this.randomizable = randomizable;
         fireBSBObjectChanged();
     }
+
+    /* Automatable */
+
+    @Override
+    protected void initializeParameters() {
+        if (parameters == null) {
+            return;
+        }
+
+        if (!automationAllowed) {
+            if (objectName != null && !objectName.equals("")) {
+                Parameter param = parameters.getParameter(objectName);
+                if (param != null && param.isAutomationEnabled()) {
+                    automationAllowed = true;
+                } else {
+                    parameters.removeParameter(objectName);
+                    return;
+                }
+            }
+        }
+
+        if (this.objectName == null || this.objectName.trim().length() == 0) {
+            return;
+        }
+
+        Parameter parameter = parameters.getParameter(this.objectName);
+
+        if (parameter != null) {
+            parameter.addParameterListener(this);
+
+            if (!parameter.isAutomationEnabled()) {
+                parameter.setValue(this.isSelected() ? 1 : 0);
+            }
+
+            return;
+        }
+
+        Parameter param = new Parameter();
+        param.setValue(this.isSelected() ? 1 : 0);
+        param.setMax(1.0f, true);
+        param.setMin(0.0f, true);
+        param.setName(getObjectName());
+        param.setResolution(1.0f);
+        param.addParameterListener(this);
+
+        parameters.addParameter(param);
+    }
+
+    @Override
+    public void setAutomationAllowed(boolean allowAutomation) {
+        this.automationAllowed = allowAutomation;
+
+        if (parameters != null) {
+            if (allowAutomation) {
+                initializeParameters();
+            } else if (objectName != null && !objectName.equals("")) {
+                parameters.removeParameter(objectName);
+            }
+        }
+    }
+
+    /* ParameterListener */
+   
+    protected void updateSelected(boolean value) {
+        boolean oldValue = this.isSelected();
+        this.selected = value;
+
+        if (propListeners != null) {
+            propListeners.firePropertyChange("selected", oldValue, this.selected);
+        }
+    }
+    
+    public void parameterChanged(Parameter param) {
+    }
+
+    public void lineDataChanged(Parameter param) {
+        Parameter parameter = parameters.getParameter(this.objectName);
+
+        if (parameter != null) {
+            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            int val = Math.round(parameter.getLine().getValue(time));
+
+            boolean newSelected = (val > 0);
+
+            if(newSelected != isSelected()) {
+                updateSelected(newSelected);
+            }
+        }
+    }
+
 }
