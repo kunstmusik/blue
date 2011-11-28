@@ -42,8 +42,8 @@ public class RenderTimeManager {
     private static RenderTimeManager renderManager;
     private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
     private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<RenderTimeManagerListener>();
-    private float renderStart = -1.0f;
-    private float timePointer = -1.0f;
+    protected float renderStart = -1.0f;
+    private float timePointer = 0.0f;
     private int timeAdjustCounter = 0;
     private float timeAdjust = Float.NEGATIVE_INFINITY;
     private TempoMapper tempoMapper;
@@ -74,18 +74,25 @@ public class RenderTimeManager {
         }
 
         int fps = PlaybackSettings.getInstance().getPlaybackFPS();
-        
-        ts = new SwingTimerTimingSource((int)(1000.0f / fps), TimeUnit.MILLISECONDS);
+
+        ts = new SwingTimerTimingSource((int) (1000.0f / fps), TimeUnit.MILLISECONDS);
         final long initialTime = System.nanoTime();
         ts.addTickListener(new TickListener() {
 
             @Override
             public void timingSourceTick(TimingSource source, long nanoTime) {
-                float elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
-                setTimePointer(elapsedTime);
 
                 if (timeAdjust != Float.NEGATIVE_INFINITY) {
+                    float elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
                     float adjustedTime = elapsedTime - timeAdjust;
+                    setTimePointer(elapsedTime);
+
+                    if (tempoMapper != null) {
+                        float renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
+                        adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
+                        adjustedTime -= getRenderStartTime();
+                    }
+
                     for (RenderTimeManagerListener listener : renderListeners) {
                         listener.renderTimeUpdated(adjustedTime);
                     }
@@ -97,12 +104,13 @@ public class RenderTimeManager {
 
     public void updateTimePointer(float timePointer) {
         if (timeAdjustCounter == 0) {
-            timeAdjust = this.timePointer - timePointer;
-            timeAdjustCounter++;
+            float timeP = (this.timePointer >= 0) ? this.timePointer : 0.0f; 
+            timeAdjust = timeP - timePointer;
+        }
+        timeAdjustCounter++;
 
-            if (timeAdjustCounter == 10) {
-                timeAdjustCounter = 0;
-            }
+        if (timeAdjustCounter == 10) {
+            timeAdjustCounter = 0;
         }
     }
 
@@ -134,11 +142,7 @@ public class RenderTimeManager {
 
         float newVal = timePointer;
 
-        if (this.tempoMapper != null) {
-            float renderStartSeconds = tempoMapper.beatsToSeconds(renderStart);
-            newVal = tempoMapper.secondsToBeats(newVal + renderStartSeconds);
-            newVal -= renderStart;
-        }
+
 
         this.timePointer = newVal;
 

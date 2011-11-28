@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.9<
+[released 2011.11.28]
+
+FIX
+
+* Render Time Pointer code changes were not properly account for tempo and 
+  t-statements
+
+
 >Notes for 2.1.8<
 [released 2011.11.19]
 
