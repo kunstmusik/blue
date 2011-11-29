@@ -9,33 +9,32 @@ package blue.scripting;
  * @version 1.0
  */
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.JavaScriptException;
-import org.mozilla.javascript.Scriptable;
-
+//import org.mozilla.javascript.Context;
+//import org.mozilla.javascript.JavaScriptException;
+//import org.mozilla.javascript.Scriptable;
+import javax.script.*;
 import blue.BlueSystem;
 
 public class RhinoProxy {
-    private static Context cx;
+//    private static Context cx;
+//
+//    private static Scriptable scope;
 
-    private static Scriptable scope;
-
+    private static ScriptEngine engine = null;    
+    
     static {
 
     }
 
     public static final void reinitialize() {
-        if (cx != null) {
-            Context.exit();
-        }
-        cx = Context.enter();
-        scope = cx.initStandardObjects(null);
+        ScriptEngineManager manager = new ScriptEngineManager();
+        engine = manager.getEngineByName("JavaScript");
         System.out.println(BlueSystem.getString("scripting.js.reinitialized"));
     }
 
     public static final String processJavascriptScore(String script,
             float subjectiveDuration, String soundObjectId) {
-        if (cx == null) {
+        if (engine == null) {
             reinitialize();
         }
         String returnScore = "";
@@ -45,14 +44,14 @@ public class RhinoProxy {
         init += "score = '';";
 
         try {
-            cx.evaluateString(scope, init, "init", 1, null);
-            cx.evaluateString(scope, script, soundObjectId, 1, null);
+            engine.eval(init);
+            engine.eval(script);
 
-            Object obj = scope.get("score", scope);
-            if (obj != Scriptable.NOT_FOUND) {
-                returnScore = Context.toString(obj);
+            Object obj = engine.get("score");
+            if (obj != null) {
+                returnScore = obj.toString();
             }
-        } catch (JavaScriptException e) {
+        } catch (ScriptException e) {
             System.out.println(e.getLocalizedMessage());
         }
 
@@ -61,7 +60,7 @@ public class RhinoProxy {
 
     public static final String processJavascriptInstrument(String script,
             String instrumentId) {
-        if (cx == null) {
+        if (engine == null) {
             reinitialize();
         }
         String returnInstrument = "";
@@ -69,47 +68,18 @@ public class RhinoProxy {
         String init = "instrument = '';\n";
 
         try {
-            cx.evaluateString(scope, init, "init", 1, null);
-            cx.evaluateString(scope, script, instrumentId, 1, null);
+            engine.eval(init);
+            engine.eval(script);
 
-            Object obj = scope.get("instrument", scope);
-            if (obj != Scriptable.NOT_FOUND) {
-                returnInstrument = Context.toString(obj);
+            Object obj = engine.get("instrument");
+            if (obj != null) {
+                returnInstrument = obj.toString();
             }
-        } catch (JavaScriptException e) {
+        } catch (ScriptException e) {
             System.out.println(e.getLocalizedMessage());
         }
 
         return returnInstrument;
     }
 
-    /*
-     * private static final String getRhinoLibPath() { String home =
-     * blue.BlueSystem.getHomeDir(); String sep =
-     * System.getProperty("file.separator"); System.out.println("Python Library
-     * Directory set to: " + home + sep + "lib" + sep + "pythonLib"); return
-     * (home + sep + "lib" + sep + "pythonLib"); return ""; }
-     */
-
-    public static void main(String[] args) {
-        String script = "function f(num) {\n";
-        script += "  returnText = '';\n";
-        script += "for(var i = 0; i < num; i++) {\n";
-        script += "returnText += 'i1 ' + i + ' 1 2 3 4 5\\n';\n";
-        script += "}\n";
-        script += "return returnText;\n";
-        script += "}\n";
-        script += "score = f(4);";
-        script += "score += f(5);";
-        System.out.println(RhinoProxy.processJavascriptScore(script, 0.0f,
-                "unit test 1"));
-
-        System.out.println(RhinoProxy.processJavascriptScore(
-                "score += '\\nhi\\n'", 0.0f, "unit test 2"));
-        RhinoProxy.reinitialize();
-
-        System.out.println(RhinoProxy.processJavascriptScore(
-                "score += '\\nhi\\n'", 0.0f, "unit test 3"));
-
-    }
 }
