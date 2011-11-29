@@ -12,6 +12,16 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.1.10<
+[released 2011.xx.xx]
+
+INTERNAL
+
+* removed use of Rhino Javascript interpreter and instead use Java 6's scripting
+  engine and built-in Javascript interpreter (removes a dependency and saves 
+  size)
+
+
 >Notes for 2.1.9<
 [released 2011.11.28]
 
