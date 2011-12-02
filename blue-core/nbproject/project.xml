@@ -62,22 +62,6 @@
                         <specification-version>8.0</specification-version>
                     </run-dependency>
                 </dependency>
-                <dependency>
-                    <code-name-base>tcl.java</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>tcl.lang</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
             </module-dependencies>
             <test-dependencies>
                 <test-type>

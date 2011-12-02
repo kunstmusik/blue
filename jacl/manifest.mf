@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: tcl.lang
-OpenIDE-Module-Localizing-Bundle: tcl/lang/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-

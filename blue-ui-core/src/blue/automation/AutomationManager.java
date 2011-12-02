@@ -48,7 +48,6 @@ import blue.mixer.Send;
 import blue.orchestra.Instrument;
 import blue.soundObject.PolyObject;
 import blue.soundObject.PolyObjectListener;
-import blue.soundObject.editor.ceciliaModule.LineColors;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 

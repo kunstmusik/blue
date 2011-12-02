@@ -36,7 +36,6 @@ import blue.projects.BlueProjectManager;
 import blue.settings.TextColorsSettings;
 import blue.soundObject.*;
 import blue.soundObject.editor.AudioFileEditor;
-import blue.soundObject.editor.CeciliaModuleEditor;
 import blue.soundObject.editor.ExternalEditor;
 import blue.soundObject.editor.FrozenSoundObjectEditor;
 import blue.soundObject.editor.GenericEditor;
@@ -74,10 +73,6 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.ModuleInstall;
@@ -85,10 +80,6 @@ import org.openide.windows.WindowManager;
 import org.syntax.jedit.SyntaxStyle;
 import org.syntax.jedit.TextAreaDefaults;
 import org.syntax.jedit.tokenmarker.Token;
-import com.pinkmatter.toolbar.MyRootPaneLayout;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -305,7 +296,6 @@ public class Installer extends ModuleInstall {
         factory.appendPlugin(JMaskEditor.class, JMask.class);
         factory.appendPlugin(ZakLineEditor.class, ZakLineObject.class);
         factory.appendPlugin(PianoRollEditor.class, PianoRoll.class);
-        factory.appendPlugin(CeciliaModuleEditor.class, CeciliaModule.class);
         factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
         factory.appendPlugin(LineEditor.class, LineObject.class);
         factory.appendPlugin(PythonEditor.class, PythonObject.class);

@@ -13,7 +13,6 @@ import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 
 import blue.BlueSystem;
-import blue.soundObject.editor.ceciliaModule.LineColors;
 
 /**
  * Class extracted from LineTable file, originally written by Steven Yi

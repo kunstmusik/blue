@@ -9,9 +9,9 @@ package blue.soundObject.editor.lineEditor;
 import javax.swing.JOptionPane;
 
 import blue.BlueSystem;
+import blue.automation.LineColors;
 import blue.components.lines.Line;
 import blue.components.lines.LineListTableModel;
-import blue.soundObject.editor.ceciliaModule.LineColors;
 
 /**
  * TableModel for zak lines

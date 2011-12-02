@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.cecilia
+OpenIDE-Module-Install: blue/cecilia/Installer.class
+OpenIDE-Module-Layer: blue/cecilia/layer.xml
+OpenIDE-Module-Localizing-Bundle: blue/cecilia/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

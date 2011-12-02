@@ -6,18 +6,19 @@
             <code-name-base>blue.ui.utilities</code-name-base>
             <suite-component/>
             <module-dependencies/>
-          <test-dependencies>
-              <test-type>
-                  <name>unit</name>
-                  <test-dependency>
-                      <code-name-base>blue.ui.utilities</code-name-base>
-                      <recursive/>
-                      <compile-dependency/>
-                  </test-dependency>
-              </test-type>
+            <test-dependencies>
+                <test-type>
+                    <name>unit</name>
+                    <test-dependency>
+                        <code-name-base>blue.ui.utilities</code-name-base>
+                        <recursive/>
+                        <compile-dependency/>
+                    </test-dependency>
+                </test-type>
             </test-dependencies>
             <public-packages>
                 <package>blue.ui.utilities</package>
+                <package>org.wonderly.awt</package>
             </public-packages>
         </data>
     </configuration>
