@@ -19,6 +19,7 @@
             <public-packages>
                 <package>blue.ui.utilities</package>
                 <package>org.wonderly.awt</package>
+                <package>skt.swing</package>
             </public-packages>
         </data>
     </configuration>

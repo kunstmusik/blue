@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: skt.swing
-OpenIDE-Module-Localizing-Bundle: skt/swing/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-
