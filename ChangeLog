@@ -17,6 +17,9 @@ information.
 
 INTERNAL
 
+* modified to use CsoundMYFLTArray instead of Csound.SetChannel() to optimize
+  setting channel values (avoid cost of ptr lookup by name on each change)
+
 * removed use of Rhino Javascript interpreter and instead use Java 6's scripting
   engine and built-in Javascript interpreter (removes a dependency and saves 
   size)

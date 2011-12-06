@@ -48,7 +48,7 @@ public class APIDiskRenderer {
             File currentWorkingDirectory,
             float startTime,
             TempoMapper mapper,
-            ArrayList parameters) {
+            ArrayList<Parameter> parameters) {
 
         //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
@@ -122,7 +122,7 @@ public class APIDiskRenderer {
 
             if (parameters != null) {
                 for (int i = 0; i < parameters.size(); i++) {
-                    param = (Parameter) parameters.get(i);
+                    param = parameters.get(i);
                     String varName = param.getCompilationVarName();
 
                     float value = param.getValue(currentTime);
@@ -150,7 +150,7 @@ public class APIDiskRenderer {
             File currentWorkingDirectory,
             float startTime,
             TempoMapper mapper,
-            ArrayList parameters) {
+            ArrayList<Parameter> parameters) {
         initialize();
 //        Csound csound = new Csound();
 //        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);

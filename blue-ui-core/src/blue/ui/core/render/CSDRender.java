@@ -65,7 +65,7 @@ public class CSDRender {
         // making copies to use for adding compileTime tables and instruments
         Tables tables = (Tables) data.getTableSet().clone();
 
-        ArrayList originalParameters = null;
+        ArrayList<Parameter> originalParameters = null;
 
         if (usingAPI) {
             originalParameters = ParameterHelper.getAllParameters(

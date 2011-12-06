@@ -34,8 +34,8 @@ import blue.mixer.Mixer;
 import blue.orchestra.Instrument;
 
 public class ParameterHelper {
-    public static ArrayList getAllParameters(Arrangement arr, Mixer mixer) {
-        ArrayList params = new ArrayList();
+    public static ArrayList<Parameter> getAllParameters(Arrangement arr, Mixer mixer) {
+        ArrayList<Parameter> params = new ArrayList<Parameter>();
 
         for (int i = 0; i < arr.size(); i++) {
             InstrumentAssignment ia = arr.getInstrumentAssignment(i);
@@ -106,7 +106,7 @@ public class ParameterHelper {
         return params;
     }
 
-    private static void appendAllParametersFromChannel(ArrayList params,
+    private static void appendAllParametersFromChannel(ArrayList<Parameter> params,
             Channel channel) {
 
         EffectsChain pre = channel.getPreEffects();
@@ -130,7 +130,7 @@ public class ParameterHelper {
         params.add(levelParameter);
     }
     
-    private static void appendParametersFromChannel(ArrayList params,
+    private static void appendParametersFromChannel(ArrayList<Parameter> params,
             Channel channel) {
 
         EffectsChain pre = channel.getPreEffects();
@@ -152,7 +152,7 @@ public class ParameterHelper {
         }
     }
 
-    private static void addActiveParametersFromList(ArrayList params,
+    private static void addActiveParametersFromList(ArrayList<Parameter> params,
             ParameterList list) {
         for (int j = 0; j < list.size(); j++) {
             Parameter param = list.getParameter(j);

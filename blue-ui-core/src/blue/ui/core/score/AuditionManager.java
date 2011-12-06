@@ -29,6 +29,7 @@ import java.util.StringTokenizer;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
+import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.mixer.Mixer;
 import blue.noteProcessor.TempoMapper;
@@ -214,7 +215,7 @@ public class AuditionManager {
     
     public void play(String[] args, File currentWorkingDirectory,
             BlueData blueData, float renderStart, TempoMapper mapper,
-            ArrayList parameters) {
+            ArrayList<Parameter> parameters) {
         runProxy = new RunProxy(args, currentWorkingDirectory, blueData,
                 renderStart, mapper, parameters);
         new Thread(runProxy).start();
@@ -251,7 +252,7 @@ public class AuditionManager {
         File currentWorkingDirectory;
 
         private float renderStart;
-        private ArrayList parameters = null;
+        private ArrayList<Parameter> parameters = null;
         private BlueData blueData;
         private TempoMapper mapper;
         
@@ -265,7 +266,7 @@ public class AuditionManager {
         }
         
         public RunProxy(String[] args, File currentWorkingDirectory,
-                BlueData blueData, float renderStart, TempoMapper mapper, ArrayList parameters) {
+                BlueData blueData, float renderStart, TempoMapper mapper, ArrayList<Parameter> parameters) {
             this.args = args;
             this.currentWorkingDirectory = currentWorkingDirectory;
             this.blueData = blueData;

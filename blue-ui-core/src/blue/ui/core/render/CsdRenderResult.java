@@ -19,6 +19,7 @@
  */
 package blue.ui.core.render;
 
+import blue.automation.Parameter;
 import java.util.ArrayList;
 
 /**
@@ -28,9 +29,9 @@ import java.util.ArrayList;
 public class CsdRenderResult {
 
     private String csdText;
-    private ArrayList parameters;
+    private ArrayList<Parameter> parameters;
 
-    public CsdRenderResult(String csdText, ArrayList parameters) {
+    public CsdRenderResult(String csdText, ArrayList<Parameter> parameters) {
         this.csdText = csdText;
         this.parameters = parameters;
     }
@@ -43,11 +44,11 @@ public class CsdRenderResult {
         this.csdText = csdText;
     }
 
-    public ArrayList getParameters() {
+    public ArrayList<Parameter> getParameters() {
         return parameters;
     }
 
-    public void setParameters(ArrayList parameters) {
+    public void setParameters(ArrayList<Parameter> parameters) {
         this.parameters = parameters;
     }
 }

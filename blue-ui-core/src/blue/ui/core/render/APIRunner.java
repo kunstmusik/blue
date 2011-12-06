@@ -25,7 +25,9 @@ import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import csnd.Csound;
 import csnd.CsoundArgVList;
+import csnd.CsoundMYFLTArray;
 import csnd.csnd;
+import csnd.csndConstants;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
@@ -399,6 +401,8 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
         private float[] valuesCache;
         
+        private CsoundMYFLTArray[] channelPtrCache;
+        
         public boolean isRunning = true;
         
         CountDownLatch latch = new CountDownLatch(1);
@@ -508,7 +512,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        csound.SetChannel(varName, (double) value);
+                        channelPtrCache[i].SetValue(0, (double)value);
                     }
                 }
             } while (csound.PerformKsmps() == 0 && keepRunning);
@@ -534,6 +538,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
             final int size = parameters.size();
 
             valuesCache = new float[size];
+            channelPtrCache = new CsoundMYFLTArray[size];
 
             for (int i = 0; i < size; i++) {
                 param = (Parameter) parameters.get(i);
@@ -546,7 +551,10 @@ public class APIRunner implements CSDRunner, PlayModeListener {
                     valuesCache[i] = param.getFixedValue();
                 }
 
-                csound.SetChannel(varName, (double) valuesCache[i]);
+                channelPtrCache[i] = new CsoundMYFLTArray(1);
+                csound.GetChannelPtr(channelPtrCache[i].GetPtr(), varName, csndConstants.CSOUND_CONTROL_CHANNEL | csndConstants.CSOUND_INPUT_CHANNEL);
+
+                channelPtrCache[i].SetValue(0, valuesCache[i]);
             }
         }
     }
