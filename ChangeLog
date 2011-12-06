@@ -15,6 +15,11 @@ information.
 >Notes for 2.1.10<
 [released 2011.xx.xx]
 
+NEW
+
+* Added Dave Seidel's "Drift Study III" piece to the examples/pieces/daveSeidel 
+  folder
+
 INTERNAL
 
 * modified to use CsoundMYFLTArray instead of Csound.SetChannel() to optimize
