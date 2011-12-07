@@ -639,4 +639,9 @@
             </folder>
         </folder>
     </folder>
+
+    <folder name="WarmUp">
+        <file name="blue-ui-core-CsoundAPIWarmupTask.instance"/>
+    </folder>
+
 </filesystem>
