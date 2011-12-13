@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.osc
+OpenIDE-Module-Localizing-Bundle: blue/osc/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

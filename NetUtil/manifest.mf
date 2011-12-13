@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: de.sciss.net
+OpenIDE-Module-Localizing-Bundle: de/sciss/net/Bundle.properties
+OpenIDE-Module-Specification-Version: 0.39
+

@@ -31,6 +31,8 @@ import blue.midi.MidiInputManager;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.BlueX7;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.osc.OSCAction;
+import blue.osc.OSCManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.settings.TextColorsSettings;
@@ -69,6 +71,7 @@ import blue.ui.core.soundObject.renderer.PythonObjectRenderer;
 import blue.ui.core.soundObject.renderer.RhinoObjectRenderer;
 import blue.ui.core.soundObject.renderer.SoundRenderer;
 import blue.ui.core.soundObject.renderer.TrackerRenderer;
+import de.sciss.net.OSCMessage;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -183,7 +186,11 @@ public class Installer extends ModuleInstall {
 //        });
 
         MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
-
+        
+        OSCManager oscManager = OSCManager.getInstance();
+        OSCActions.installActions(oscManager);
+        oscManager.start();
+        
         TextColorsSettings.getInstance().addChangeListener(textColorChangeListener);
     }
 
