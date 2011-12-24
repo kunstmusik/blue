@@ -24,6 +24,8 @@ NEW
 
 * Added Csound API Warmup Task to prevent first time load pause when rendering
 
+* Added Full Screen support on Mac OSX Lion 
+
 INTERNAL
 
 * modified to use CsoundMYFLTArray instead of Csound.SetChannel() to optimize

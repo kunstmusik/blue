@@ -20,23 +20,20 @@
 package blue.plaf;
 
 import java.awt.Color;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.TimeUnit;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
-import javax.swing.RepaintManager;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
-import org.jdesktop.core.animation.timing.Animator;
-import org.jdesktop.core.animation.timing.TimingSource;
-import org.jdesktop.swing.animation.timing.sources.SwingTimerTimingSource;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -125,6 +122,20 @@ public class Installer extends ModuleInstall {
         }
         
         logger.info("Finished blue PLAF installation");
+
+         try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    MacFullScreenUtil.setWindowCanFullScreen(
+                            WindowManager.getDefault().getMainWindow());
+                }
+            });
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (InvocationTargetException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
     }
 
     /** Replaces ctrl- shortcuts with command- shortcuts for OSX */
