@@ -26,6 +26,12 @@ NEW
 
 * Added Full Screen support on Mac OSX Lion 
 
+* Added "Disable Displays" option to Realtime and Disk render program options,
+  defaults to true; adds "-d" to commandline used when rendering project
+
+* Reinstated printing of commandline used when rendering, now outputs to Output
+  Window of render
+
 INTERNAL
 
 * modified to use CsoundMYFLTArray instead of Csound.SetChannel() to optimize
