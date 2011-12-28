@@ -299,7 +299,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     /**
      * 
      */
-    protected void rewind() {
+    public void rewind() {
         if (this.data != null) {
             data.setRenderStartTime(0.0f);
             data.setRenderEndTime(-1.0f);
