@@ -75,6 +75,8 @@ public class DiskRenderSettings implements Serializable {
 
     private static final String WARNINGS_ENABLED = "warningsEnabled";
 
+    private static final String DISPLAYS_DISABLED = "displaysDisabled";
+    
     public String csoundExecutable = "csound";
 
     public String fileFormat = "WAV";
@@ -109,6 +111,8 @@ public class DiskRenderSettings implements Serializable {
 
     public String externalPlayCommand = "command $outfile";
 
+    public boolean displaysDisabled = true;
+    
     public String advancedSettings = "";
 
     private static DiskRenderSettings instance = null;
@@ -153,6 +157,8 @@ public class DiskRenderSettings implements Serializable {
             instance.warningsEnabled = prefs.getBoolean(WARNINGS_ENABLED, true);
             instance.benchmarkEnabled = prefs.getBoolean(BENCHMARK_ENABLED, true);
 
+            instance.displaysDisabled = prefs.getBoolean(DISPLAYS_DISABLED, true);
+            
             instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
         }
 
@@ -185,6 +191,8 @@ public class DiskRenderSettings implements Serializable {
         prefs.putBoolean(OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
         prefs.putBoolean(BENCHMARK_ENABLED, benchmarkEnabled);
 
+        prefs.putBoolean(DISPLAYS_DISABLED, displaysDisabled);
+        
         prefs.put(ADVANCED_SETTINGS, advancedSettings);
 
         try {
@@ -230,6 +238,9 @@ public class DiskRenderSettings implements Serializable {
             buffer.append("-R ");
         }
 
+        if (displaysDisabled) {
+            buffer.append("-d ");
+        }
         // buffer.append(advancedSettings).append(" ");
 
         return buffer.toString();

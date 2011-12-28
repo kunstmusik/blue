@@ -127,10 +127,14 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
         CsoundArgVList argsList = new CsoundArgVList();
 
+        io.getOut().append("Render Command (");
+        
         for (int i = 0; i < args.length; i++) {
             argsList.Append(args[i]);
+            io.getOut().append(" ").append(args[i]);
 //            System.out.println("[" + i + "] " + args[i] );
         }
+        io.getOut().append(" )\n");
 
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 

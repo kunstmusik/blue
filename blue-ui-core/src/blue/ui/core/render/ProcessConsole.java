@@ -235,8 +235,8 @@ public final class ProcessConsole implements java.io.Serializable {
 //            io = null;
 //        }
 
-        System.out.println(BlueSystem.getString("processConsole.start") + "("
-                + commandLine + ").");
+        io.getOut().append(BlueSystem.getString("processConsole.start") + "("
+                + commandLine + ").").append("\n");
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
         this.commandLine = commandLine;
@@ -269,8 +269,9 @@ public final class ProcessConsole implements java.io.Serializable {
             throws IOException {
         destroy(false);
 
-        System.out.println(BlueSystem.getString("processConsole.start") + "("
-                + commandLine + ").");
+        
+        io.getOut().append(BlueSystem.getString("processConsole.start") + "("
+                + commandLine + ").").append("\n");
 
         this.commandLine = commandLine;
 
@@ -356,8 +357,9 @@ public final class ProcessConsole implements java.io.Serializable {
         stdin = null;
 
         if (commandLine != null) {
-            System.out.println(BlueSystem.getString("processConsole.stop")
-                    + "(" + commandLine + ").");
+            
+        io.getOut().append(BlueSystem.getString("processConsole.stop")
+                    + "(" + commandLine + ").").append("\n");
         }
 
         commandLine = null;

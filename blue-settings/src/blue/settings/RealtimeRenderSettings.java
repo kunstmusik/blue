@@ -58,6 +58,7 @@ public class RealtimeRenderSettings implements Serializable {
     private static final String SOFTWARE_BUFFER_ENABLED = "softwareBufferEnabled";
     private static final String SOFTWARE_BUFFER_SIZE = "softwareBufferSize";
     private static final String WARNINGS_ENABLED = "warningsEnabled";
+    private static final String DISPLAYS_DISABLED = "displaysDisabled";
     private static String[] AUDIO_DRIVERS = null;
     private static String[] MIDI_DRIVERS = null;
     // PROPERTIES
@@ -85,6 +86,7 @@ public class RealtimeRenderSettings implements Serializable {
     public String defaultNchnls = "2";
     public int softwareBufferSize = 256;
     public int hardwareBufferSize = 1024;
+    public boolean displaysDisabled = true;
     public String advancedSettings = "";
     private static RealtimeRenderSettings instance = null;
 
@@ -152,6 +154,8 @@ public class RealtimeRenderSettings implements Serializable {
             instance.warningsEnabled = prefs.getBoolean(WARNINGS_ENABLED, true);
             instance.benchmarkEnabled = prefs.getBoolean(BENCHMARK_ENABLED, true);
 
+            instance.displaysDisabled = prefs.getBoolean(DISPLAYS_DISABLED, true);
+            
             instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
 
         }
@@ -192,6 +196,8 @@ public class RealtimeRenderSettings implements Serializable {
         prefs.putBoolean(OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
         prefs.putBoolean(BENCHMARK_ENABLED, benchmarkEnabled);
 
+        prefs.putBoolean(DISPLAYS_DISABLED, displaysDisabled);
+        
         prefs.put(ADVANCED_SETTINGS, advancedSettings);
 
         try {
@@ -248,6 +254,10 @@ public class RealtimeRenderSettings implements Serializable {
 
         if (hardwareBufferEnabled) {
             buffer.append("-B").append(hardwareBufferSize).append(" ");
+        }
+
+        if (displaysDisabled) {
+            buffer.append("-d ");
         }
 
         return buffer.toString();
