@@ -1,0 +1,3740 @@
+<blueData version='2.1.1'>
+  <projectProperties>
+    <title></title>
+    <author>Brian Wong</author>
+    <notes></notes>
+    <sampleRate>24000</sampleRate>
+    <ksmps>1</ksmps>
+    <channels>2</channels>
+    <diskSampleRate>96000</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings></diskAdvancedSettings>
+    <diskCompleteOverride>false</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+    <csladspaSettings>
+      <name/>
+      <maker/>
+      <uniqueId>0</uniqueId>
+      <copyright/>
+      <portDefinitionList/>
+      <enabled>false</enabled>
+    </csladspaSettings>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>sintun0</name>
+        <comment></comment>
+        <globalOrc>;[once](
+gi_sine ftgen 0,0,131072,10,1 ; for disk render
+;gi_sine ftgen 0,0,2048,10,1 ; for realtime preview
+;)</globalOrc>
+        <globalSco/>
+        <instrumentText>if(p7==0) then
+  kamp transeg .0001,.02,-2, 1,p3-.02,-3, .0001
+elseif(p7==1) then
+  kamp transeg .0001,.3,-2, 1,.2,2, .88,p3-1.0,2, .35,.5,.5, .001
+elseif(p7==2) then
+  kamp transeg .0001,1.0,-2, 1,.2,2, .88,p3-1.7,2, .35,.5,.5, .001
+elseif(p7==3) then
+  kamp transeg .00001,.25,-2.61, 1,.1,2, .88,p3-.5,1.5, .35,.15,-2, .00001
+elseif(p7==4) then
+  kamp transeg .00001,p3-.05,-6, 1.0,.05,2, .00001
+elseif(p7==5) then
+  kamp transeg .0001,.005,-11, 1,p3-.005,-7, .0001
+endif
+kamp = kamp * ampdbfs(p5)
+kbend1 = p4
+kbend2 = p4*3.0
+kbend3 = p4*5.27803164
+if(p6==0) then
+  kbend2 = p4*2.0
+  kbend3 = p4*3.03143314
+  kbend4 = p4*4.0
+  kbend5 = p4*5.27803164
+elseif(p6==1) then
+  kbend2 = p4*1.98701335
+  kbend3 = p4*3.0
+  kbend4 = p4*3.948222
+  kbend5 = p4*5.1961524
+elseif(p6==2) then
+  ; tunebend 2h5TET down to 3h8TET
+  kbend2 = p4*2.0
+  kbend4 = p4*4.0
+  kbend transeg p4,p3*.33,0, p4*0.9659321,p3*.33,0, p4*0.9659321
+  kbend3 transeg p4*3.03143314,p3*.33,0, p4*3.00528856485,p3*.33,0, p4*3.00528856485
+  kbend5 transeg p4*5.1961524,p3*.33,0, p4*5.232511306,p3*.33,0, p4*5.232511306
+elseif(p6==3) then
+  ; tunebend 2h5TET up three notes
+  kbend1 transeg p4,p3*.1,-2, p4,p3*.6,2, p4*1.51571657,p3*.3,2, p4*1.51571657
+  kbend2 = kbend1 * 2.0
+  kbend3 = kbend1 * 4.0
+  kbend4 = kbend1 * 6.06286628
+  kbend5 = kbend1 * 8.0
+endif  
+a0 poscil3 kamp, kbend1, gi_sine
+a1 poscil3 kamp*.5, kbend2, gi_sine
+a2 poscil3 kamp*.33, kbend3, gi_sine
+a3 poscil3 kamp*.25, kbend4, gi_sine
+a4 poscil3 kamp*.2, kbend5, gi_sine 
+a0 = (a0+a1+a2+a3+a4)/5
+blueMixerOut a0*(sqrt(2)/2*cos(p8)+sin(p8)),a0*(sqrt(2)/2*cos(p8)-sin(p8)) ; output
+</instrumentText>
+        <alwaysOnInstrumentText/>
+        <graphicInterface editEnabled='true'/>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>sintun1</name>
+        <comment></comment>
+        <globalOrc/>
+        <globalSco/>
+        <instrumentText>if(p7==0) then
+  kamp transeg .0001,.02,-2, 1,p3,-3, .0001
+elseif(p7==1) then
+  kamp transeg .0001,.3,-2, 1,.2,2, .88,p3-1.0,2, .35,.5,.5, .001
+elseif(p7==2) then
+  kamp transeg .0001,1.0,-2, 1,.2,2, .88,p3-1.7,2, .35,.5,.5, .001
+elseif(p7==3) then
+  kamp transeg .00001,.25,-2.61, 1,.1,2, .88,p3-.5,1.5, .35,.15,-2, .00001
+elseif(p7==4) then
+  kamp transeg .00001,p3*.9,-6, 1.0,p3*.1,2, .00001
+endif
+kamp = kamp * ampdbfs(p5)
+kbend1 = p4
+kbend2 = p4*3.0
+kbend3 = p4*5.27803164
+if(p6==0) then
+  kbend2 = p4*2.0
+  kbend3 = p4*3.03143314
+  kbend4 = p4*4.0
+  kbend5 = p4*5.27803164
+elseif(p6==1) then
+  kbend2 = p4*1.98701335
+  kbend3 = p4*3.0
+  kbend4 = p4*3.948222
+  kbend5 = p4*5.1961524
+elseif(p6==2) then
+  ; tunebend 2h5TET down to 3h8TET
+  kbend2 = p4*2.0
+  kbend4 = p4*4.0
+  kbend transeg p4,p3*.33,0, p4*0.9659321,p3*.33,0, p4*0.9659321
+  kbend3 transeg p4*3.03143314,p3*.33,0, p4*3.00528856485,p3*.33,0, p4*3.00528856485
+  kbend5 transeg p4*5.1961524,p3*.33,0, p4*5.232511306,p3*.33,0, p4*5.232511306
+endif  
+a0 poscil3 kamp, kbend1, gi_sine
+a1 poscil3 kamp*.5, kbend2, gi_sine
+a2 poscil3 kamp*.33, kbend3, gi_sine
+a3 poscil3 kamp*.25, kbend4, gi_sine
+a4 poscil3 kamp*.2, kbend5, gi_sine 
+a0 = (a0+a1+a2+a3+a4)/5
+kpan line p8,p3,p9
+blueMixerOut a0*(sqrt(2)/2*cos(kpan)+sin(kpan)),a0*(sqrt(2)/2*cos(kpan)-sin(kpan)) ; output
+</instrumentText>
+        <alwaysOnInstrumentText/>
+        <graphicInterface editEnabled='true'/>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>2.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>SubChannel1</outChannel>
+        <level>10.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='179803149' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='10.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='10.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='776321312' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'>
+      <channel>
+        <name>SubChannel1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'>
+          <effect>
+            <name>Freeverbw</name>
+            <enabled>true</enabled>
+            <numIns>2</numIns>
+            <numOuts>2</numOuts>
+            <code>arev1,arev2 freeverb ain1,ain2,&lt;rsize&gt;,&lt;hfdamp&gt;,sr,1
+aout1 = (arev1*&lt;level&gt;)+(ain1*(1-&lt;level&gt;))
+aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))
+</code>
+            <comments>A wrapper for the freeverb opcode. by Brian Wong, 2010</comments>
+            <opcodeList/>
+            <graphicInterface editEnabled='true'>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>hfdamp</objectName>
+                <x>182</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.25822037</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName>roomsize</objectName>
+                <x>105</x>
+                <y>157</y>
+                <label>Room Size</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName>bsbObj0</objectName>
+                <x>185</x>
+                <y>157</y>
+                <label>HF Damp</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>rsize</objectName>
+                <x>105</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.71306175</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
+                <objectName>level</objectName>
+                <x>27</x>
+                <y>78</y>
+                <automationAllowed>true</automationAllowed>
+                <minimum>0.0</minimum>
+                <maximum>1.0</maximum>
+                <value>0.67827487</value>
+                <knobWidth>60</knobWidth>
+                <randomizable>true</randomizable>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>43</x>
+                <y>156</y>
+                <label>Level</label>
+              </bsbObject>
+              <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+                <objectName></objectName>
+                <x>44</x>
+                <y>19</y>
+                <label>&lt;html&gt;&lt;font size=&quot;+3&quot; face=&quot;Comic Sans MS&quot; color=rgb(150,180,127)&gt;Freeverbw&lt;/font&gt;&lt;/htmL&gt;</label>
+              </bsbObject>
+            </graphicInterface>
+            <bsbParameterList>
+              <parameter uniqueId='179803260' name='hfdamp' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.25822037'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.25822037'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='179803264' name='level' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.67827487'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.67827487'/>
+                </line>
+              </parameter>
+              <parameter uniqueId='179803262' name='rsize' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.71306175'>
+                <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+                  <linePoint x='0.0' y='0.71306175'/>
+                </line>
+              </parameter>
+            </bsbParameterList>
+          </effect>
+        </effectsChain>
+        <parameter uniqueId='179803151' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>10.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='179803144' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='10.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='10.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>0dbfs = 1.0</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>false</commandLineEnabled>
+    <commandLineOverride>false</commandLineOverride>
+  </liveData>
+  <soundObject type='blue.soundObject.PolyObject'>
+    <subjectiveDuration>2.0</subjectiveDuration>
+    <startTime>0.0</startTime>
+    <name>root</name>
+    <backgroundColor>-10066279</backgroundColor>
+    <timeBehavior>0</timeBehavior>
+    <noteProcessorChain/>
+    <isRoot>true</isRoot>
+    <pixelSecond>36</pixelSecond>
+    <defaultHeightIndex>0</defaultHeightIndex>
+    <snapEnabled>true</snapEnabled>
+    <snapValue>1.0</snapValue>
+    <timeDisplay>0</timeDisplay>
+    <timeUnit>3</timeUnit>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>0.0</startTime>
+        <name>2h5TETa</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq		amp	tun	nv	pan
+i1 	0 	4.0 	7.0		-14	0	2	.2
+i1 	0 	4.0 	8.0		-16	0	2	-.2
+i1 	0 	4.0 	8.2		-20	0	2	-.1
+i1 	0 	4.0 	8.4		-26	0	2	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>6.7</startTime>
+        <name>2h5TETb</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	6.3	-14	0	1	-.2
+i1 	0 	3.3 	7.3	-14	0	1	.2
+i1 	0 	3.3 	8.0	-20	0	1	-.1
+i1 	0 	3.3 	8.2	-26	0	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>12.7</startTime>
+        <name>2h5TETa</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.0	-14	0	1	-.2
+i1 	0 	3.3 	8.0	-16	0	1	.2
+i1 	0 	3.3 	8.2	-20	0	1	-.1
+i1 	0 	3.3 	8.4	-26	0	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>18.7</startTime>
+        <name>2h5TETb</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	6.3	-14	0	1	-.2
+i1 	0 	3.3 	7.3	-16	0	1	.2
+i1 	0 	3.3 	8.0	-20	0	1	-.1
+i1 	0 	3.3 	8.2	-26	0	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>24.7</startTime>
+        <name>2h5TETa</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.0	-14	0	1	-.2
+i1 	0 	3.3 	8.0	-16	0	1	.2
+i1 	0 	3.3 	8.2	-20	0	1	-.1
+i1 	0 	3.3 	8.4	-26	0	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>30.7</startTime>
+        <name>2h5TETa</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	6.3	-16	0	1	-.2
+i1 	0 	3.3 	7.4	-19	0	1	.2
+i1 	0 	3.3 	8.1	-22	0	1	-.1
+i1 	0 	3.3 	8.3	-25	0	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>36.0</startTime>
+        <name>2h5TETpr0</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_0 = 3.0
+beat_0 = .27272727
+inst_0 = []
+strt_0 =[]
+dur_0 = []
+freq_0 = []
+amp_0 = []
+tun_0 = []
+nv_0 = []
+pan_0 = []
+
+for i in range(len(noteList)) :
+   inst_0.append(int(noteList[i].getPField(1)))
+   strt_0.append(float(noteList[i].getPField(2)))
+   dur_0.append(float(noteList[i].getPField(3)))
+   freq_0.append(float(noteList[i].getPField(4)))
+   amp_0.append(float(noteList[i].getPField(5)))
+   tun_0.append(int(noteList[i].getPField(6)))
+   nv_0.append(int(noteList[i].getPField(7)))
+   pan_0.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.8145161</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 3 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.3575269</start>
+          <duration>1.6290323</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 -.1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>39.0</startTime>
+        <name>3h8TETpr1</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_1 = 3.0
+beat_1 = .27272727
+inst_1 = []
+strt_1 =[]
+dur_1 = []
+freq_1 = []
+amp_1 = []
+tun_1 = []
+nv_1 = []
+pan_1 = []
+
+for i in range(len(noteList)) :
+   inst_1.append(int(noteList[i].getPField(1)))
+   strt_1.append(float(noteList[i].getPField(2)))
+   dur_1.append(float(noteList[i].getPField(3)))
+   freq_1.append(float(noteList[i].getPField(4)))
+   amp_1.append(float(noteList[i].getPField(5)))
+   tun_1.append(int(noteList[i].getPField(6)))
+   nv_1.append(int(noteList[i].getPField(7)))
+   pan_1.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>7</scaleDegree>
+          <start>0.0</start>
+          <duration>1.6290323</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.3575269</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 1 3 .9</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>42.0</startTime>
+        <name>2h5TETpr2</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_2 = 3.0
+beat_2 = .27272727
+inst_2 = []
+strt_2 =[]
+dur_2 = []
+freq_2 = []
+amp_2 = []
+tun_2 = []
+nv_2 = []
+pan_2 = []
+
+for i in range(len(noteList)) :
+   inst_2.append(int(noteList[i].getPField(1)))
+   strt_2.append(float(noteList[i].getPField(2)))
+   dur_2.append(float(noteList[i].getPField(3)))
+   freq_2.append(float(noteList[i].getPField(4)))
+   amp_2.append(float(noteList[i].getPField(5)))
+   tun_2.append(int(noteList[i].getPField(6)))
+   nv_2.append(int(noteList[i].getPField(7)))
+   pan_2.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>1.0860215</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.6290323</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>45.0</startTime>
+        <name>3h8TETpr3</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_3 = 3.0
+beat_3 = .27272727
+inst_3 = []
+strt_3 =[]
+dur_3 = []
+freq_3 = []
+amp_3 = []
+tun_3 = []
+nv_3 = []
+pan_3 = []
+
+for i in range(len(noteList)) :
+   inst_3.append(int(noteList[i].getPField(1)))
+   strt_3.append(float(noteList[i].getPField(2)))
+   dur_3.append(float(noteList[i].getPField(3)))
+   freq_3.append(float(noteList[i].getPField(4)))
+   amp_3.append(float(noteList[i].getPField(5)))
+   tun_3.append(int(noteList[i].getPField(6)))
+   nv_3.append(int(noteList[i].getPField(7)))
+   pan_3.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>1.0860215</start>
+          <duration>1.9005376</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>48.0</startTime>
+        <name>2h5TETpr4</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_4 = 3.0
+beat_4 = .27272727
+inst_4 = []
+strt_4 =[]
+dur_4 = []
+freq_4 = []
+amp_4 = []
+tun_4 = []
+nv_4 = []
+pan_4 = []
+
+for i in range(len(noteList)) :
+   inst_4.append(int(noteList[i].getPField(1)))
+   strt_4.append(float(noteList[i].getPField(2)))
+   dur_4.append(float(noteList[i].getPField(3)))
+   freq_4.append(float(noteList[i].getPField(4)))
+   amp_4.append(float(noteList[i].getPField(5)))
+   tun_4.append(int(noteList[i].getPField(6)))
+   nv_4.append(int(noteList[i].getPField(7)))
+   pan_4.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>1.9005376</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.6290323</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>51.0</startTime>
+        <name>3h8TETpr5</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_5 = 3.0
+beat_5 = .27272727
+inst_5 = []
+strt_5 =[]
+dur_5 = []
+freq_5 = []
+amp_5 = []
+tun_5 = []
+nv_5 = []
+pan_5 = []
+
+for i in range(len(noteList)) :
+   inst_5.append(int(noteList[i].getPField(1)))
+   strt_5.append(float(noteList[i].getPField(2)))
+   dur_5.append(float(noteList[i].getPField(3)))
+   freq_5.append(float(noteList[i].getPField(4)))
+   amp_5.append(float(noteList[i].getPField(5)))
+   tun_5.append(int(noteList[i].getPField(6)))
+   nv_5.append(int(noteList[i].getPField(7)))
+   pan_5.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.6290323</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>1.0860215</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 .85</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>54.0</startTime>
+        <name>2h5TETpr6</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_6 = 3.0
+beat_6 = .27272727
+inst_6 = []
+strt_6 =[]
+dur_6 = []
+freq_6 = []
+amp_6 = []
+tun_6 = []
+nv_6 = []
+pan_6 = []
+
+for i in range(len(noteList)) :
+   inst_6.append(int(noteList[i].getPField(1)))
+   strt_6.append(float(noteList[i].getPField(2)))
+   dur_6.append(float(noteList[i].getPField(3)))
+   freq_6.append(float(noteList[i].getPField(4)))
+   amp_6.append(float(noteList[i].getPField(5)))
+   tun_6.append(int(noteList[i].getPField(6)))
+   nv_6.append(int(noteList[i].getPField(7)))
+   pan_6.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.8145161</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>1.6290323</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>57.0</startTime>
+        <name>3h8TETpr7</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_7 = 3.0
+beat_7 = .27272727
+inst_7 = []
+strt_7 =[]
+dur_7 = []
+freq_7 = []
+amp_7 = []
+tun_7 = []
+nv_7 = []
+pan_7 = []
+
+for i in range(len(noteList)) :
+   inst_7.append(int(noteList[i].getPField(1)))
+   strt_7.append(float(noteList[i].getPField(2)))
+   dur_7.append(float(noteList[i].getPField(3)))
+   freq_7.append(float(noteList[i].getPField(4)))
+   amp_7.append(float(noteList[i].getPField(5)))
+   tun_7.append(int(noteList[i].getPField(6)))
+   nv_7.append(int(noteList[i].getPField(7)))
+   pan_7.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>1.9005376</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -28 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.5430108</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>60.0</startTime>
+        <name>2h5TETpr8</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_8 = 3.0
+beat_8 = .27272727
+inst_8 = []
+strt_8 =[]
+dur_8 = []
+freq_8 = []
+amp_8 = []
+tun_8 = []
+nv_8 = []
+pan_8 = []
+
+for i in range(len(noteList)) :
+   inst_8.append(int(noteList[i].getPField(1)))
+   strt_8.append(float(noteList[i].getPField(2)))
+   dur_8.append(float(noteList[i].getPField(3)))
+   freq_8.append(float(noteList[i].getPField(4)))
+   amp_8.append(float(noteList[i].getPField(5)))
+   tun_8.append(int(noteList[i].getPField(6)))
+   nv_8.append(int(noteList[i].getPField(7)))
+   pan_8.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.5430108</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>1.0860215</start>
+          <duration>1.3575269</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.9005376</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>63.0</startTime>
+        <name>3h8TETpr9</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_9 = 3.0
+beat_9 = .27272727
+inst_9 = []
+strt_9 =[]
+dur_9 = []
+freq_9 = []
+amp_9 = []
+tun_9 = []
+nv_9 = []
+pan_9 = []
+
+for i in range(len(noteList)) :
+   inst_9.append(int(noteList[i].getPField(1)))
+   strt_9.append(float(noteList[i].getPField(2)))
+   dur_9.append(float(noteList[i].getPField(3)))
+   freq_9.append(float(noteList[i].getPField(4)))
+   amp_9.append(float(noteList[i].getPField(5)))
+   tun_9.append(int(noteList[i].getPField(6)))
+   nv_9.append(int(noteList[i].getPField(7)))
+   pan_9.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.9005376</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.5430108</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>66.0</startTime>
+        <name>2h5TETpr10</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_10 = 3.0
+beat_10 = .27272727
+inst_10 = []
+strt_10 =[]
+dur_10 = []
+freq_10 = []
+amp_10 = []
+tun_10 = []
+nv_10 = []
+pan_10 = []
+
+for i in range(len(noteList)) :
+   inst_10.append(int(noteList[i].getPField(1)))
+   strt_10.append(float(noteList[i].getPField(2)))
+   dur_10.append(float(noteList[i].getPField(3)))
+   freq_10.append(float(noteList[i].getPField(4)))
+   amp_10.append(float(noteList[i].getPField(5)))
+   tun_10.append(int(noteList[i].getPField(6)))
+   nv_10.append(int(noteList[i].getPField(7)))
+   pan_10.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.0860215</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.5430108</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>1.6290323</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>2.172043</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>69.0</startTime>
+        <name>3h8TETpr11</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_11 = 3.0
+beat_11 = .27272727
+inst_11 = []
+strt_11 =[]
+dur_11 = []
+freq_11 = []
+amp_11 = []
+tun_11 = []
+nv_11 = []
+pan_11 = []
+
+for i in range(len(noteList)) :
+   inst_11.append(int(noteList[i].getPField(1)))
+   strt_11.append(float(noteList[i].getPField(2)))
+   dur_11.append(float(noteList[i].getPField(3)))
+   freq_11.append(float(noteList[i].getPField(4)))
+   amp_11.append(float(noteList[i].getPField(5)))
+   tun_11.append(int(noteList[i].getPField(6)))
+   nv_11.append(int(noteList[i].getPField(7)))
+   pan_11.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>1.9005376</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -26 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.5430108</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>2.172043</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>72.0</startTime>
+        <name>2h5TETpr12</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_12 = 3.0
+beat_12 = .27272727
+inst_12 = []
+strt_12 =[]
+dur_12 = []
+freq_12 = []
+amp_12 = []
+tun_12 = []
+nv_12 = []
+pan_12 = []
+
+for i in range(len(noteList)) :
+   inst_12.append(int(noteList[i].getPField(1)))
+   strt_12.append(float(noteList[i].getPField(2)))
+   dur_12.append(float(noteList[i].getPField(3)))
+   freq_12.append(float(noteList[i].getPField(4)))
+   amp_12.append(float(noteList[i].getPField(5)))
+   tun_12.append(int(noteList[i].getPField(6)))
+   nv_12.append(int(noteList[i].getPField(7)))
+   pan_12.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.8145161</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -26 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.2715054</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.6290323</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19.5 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>2.172043</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>75.0</startTime>
+        <name>3h8TETpr13</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>bar_13 = 3.0
+beat_13 = .27272727
+inst_13 = []
+strt_13 =[]
+dur_13 = []
+freq_13 = []
+amp_13 = []
+tun_13 = []
+nv_13 = []
+pan_13 = []
+
+for i in range(len(noteList)) :
+   inst_13.append(int(noteList[i].getPField(1)))
+   strt_13.append(float(noteList[i].getPField(2)))
+   dur_13.append(float(noteList[i].getPField(3)))
+   freq_13.append(float(noteList[i].getPField(4)))
+   amp_13.append(float(noteList[i].getPField(5)))
+   tun_13.append(int(noteList[i].getPField(6)))
+   nv_13.append(int(noteList[i].getPField(7)))
+   pan_13.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>7</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>5</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -17 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.0860215</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.5430108</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>2.172043</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -16 1 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>1.9005376</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -18 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>78.0</startTime>
+        <name>2h5TETpr14</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.PythonProcessor'>
+            <code>from ScriptingUtils import *
+
+bar_14 = 3.0
+beat_14 = .27272727
+inst_14 = []
+strt_14 =[]
+dur_14 = []
+freq_14 = []
+amp_14 = []
+tun_14 = []
+nv_14 = []
+pan_14 = []
+
+for i in range(len(noteList)) :
+   inst_14.append(int(noteList[i].getPField(1)))
+   strt_14.append(float(noteList[i].getPField(2)))
+   dur_14.append(float(noteList[i].getPField(3)))
+   freq_14.append(float(noteList[i].getPField(4)))
+   amp_14.append(float(noteList[i].getPField(5)))
+   tun_14.append(int(noteList[i].getPField(6)))
+   nv_14.append(int(noteList[i].getPField(7)))
+   pan_14.append(float(noteList[i].getPField(8)))
+</code>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.5430108</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -26 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.2715054</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>1.0860215</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.3575269</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19.5 0 3 1.0</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.9005376</start>
+          <duration>1.0860215</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>1.35</subjectiveDuration>
+        <startTime>81.0</startTime>
+        <name>3h8pr16</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>372</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.5430108</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 1 3 .95</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>45.666668</subjectiveDuration>
+        <startTime>82.35</startTime>
+        <name>2h5TETpr17</name>
+        <backgroundColor>-16751616</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pana&gt; &lt;panb&gt;</noteTemplate>
+        <instrumentId>2</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>96</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -45 0 4 .9 .8</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -27 0 4 .6 .5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -39 0 4 .8 .7</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -33 0 4 .7 .6</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>4</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -15 0 4 .3 .2</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>5</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 4 .5 .4</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>4</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -9 0 4 .2 .1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>3.7</startTime>
+        <name>3h8TETa</name>
+        <backgroundColor>-3342388</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.2	-14	1	1	.2
+i1 	0 	3.3 	7.5	-16	1	1	-.2
+i1 	0 	3.3	7.7	-23	1	1	.1
+i1 	0 	3.3 	8.1	-26	1	1	-.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>15.7</startTime>
+        <name>3h8TETc</name>
+        <backgroundColor>-3342388</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.2	-16	1	1	.2
+i1 	0 	3.3 	7.7	-16	1	1	-.2
+i1 	0 	3.3	8.1	-23	1	1	.1
+i1 	0 	3.3 	8.3	-26	1	1	-.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>9.7</startTime>
+        <name>3h8TETb</name>
+        <backgroundColor>-3342388</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.1	-14	1	1	.2
+i1 	0 	3.3 	7.4	-14	1	1	-.2
+i1 	0 	3.3	7.7	-23	1	1	.1
+i1 	0 	3.3 	8.1	-26	1	1	-.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>21.7</startTime>
+        <name>3h8TETd</name>
+        <backgroundColor>-3342388</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.0	-14	1	1	-.2
+i1 	0 	3.3 	7.5	-16	1	1	.2
+i1 	0 	3.3	7.7	-23	1	1	-.1
+i1 	0 	3.3 	8.1	-26	1	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.3</subjectiveDuration>
+        <startTime>27.7</startTime>
+        <name>3h8TETg</name>
+        <backgroundColor>-3342388</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.3 	7.2	-19	1	1	.2
+i1 	0 	3.3 	7.5	-23	1	1	-.2
+i1 	0 	3.3	7.7	-27	1	1	.1
+i1 	0 	3.3 	8.1	-31	1	1	-.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>33.0</startTime>
+        <name>bend1</name>
+        <backgroundColor>-10053121</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	strt	dur	fq		amp	tun	nv	pan
+i1 	0 	4.0 	130.81278265	-16	2	2	.2
+i1 	0 	4.0 	261.62556530	-20	2	2	-.2
+;i1 	0 	4.0 	345.217003	-24	2	2	-.1
+;i1 	0 	4.0 	455.516566489	-28	2	2	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>38.175</startTime>
+        <name>2h5TETpo0a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_0)) :
+  amp_0[i] += 3.0
+  pan = pan_0[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_0[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_0[i]*1.14869835
+  else :
+    fq = freq_0[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_0[i])+&quot; &quot;+str(strt_0[i])+&quot; &quot;+str(dur_0[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_0[i])+&quot; &quot;+str(tun_0[i])+&quot; &quot;+str(nv_0[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>41.175</startTime>
+        <name>3h8TETpo1a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_1)) :
+  amp_1[i] += 3.0
+  pan = pan_1[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_1[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_1[i]*1.14720269
+  else :
+    fq = freq_1[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_1[i])+&quot; &quot;+str(strt_1[i])+&quot; &quot;+str(dur_1[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_1[i])+&quot; &quot;+str(tun_1[i])+&quot; &quot;+str(nv_1[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>44.175</startTime>
+        <name>2h5TETpo2a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_2)) :
+  amp_2[i] += 3.0
+  pan = pan_2[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_2[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_2[i]*1.14869835
+  else :
+    fq = freq_2[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_2[i])+&quot; &quot;+str(strt_2[i])+&quot; &quot;+str(dur_2[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_2[i])+&quot; &quot;+str(tun_2[i])+&quot; &quot;+str(nv_2[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>47.175</startTime>
+        <name>3h8TETpo3a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_3)) :
+  amp_3[i] += 3.0
+  pan = pan_3[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_3[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_3[i]*1.14720269
+  else :
+    fq = freq_3[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_3[i])+&quot; &quot;+str(strt_3[i])+&quot; &quot;+str(dur_3[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_3[i])+&quot; &quot;+str(tun_3[i])+&quot; &quot;+str(nv_3[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>50.175</startTime>
+        <name>2h5TETpo4a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_4)) :
+  amp_4[i] += 3.0
+  pan = pan_4[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_4[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_4[i]*1.14869835
+  else :
+    fq = freq_4[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_4[i])+&quot; &quot;+str(strt_4[i])+&quot; &quot;+str(dur_4[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_4[i])+&quot; &quot;+str(tun_4[i])+&quot; &quot;+str(nv_4[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>53.175</startTime>
+        <name>3h8TETpo5a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_5)) :
+  amp_5[i] += 3.0
+  pan = pan_5[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_5[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_5[i]*1.14720269
+  else :
+    fq = freq_5[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_5[i])+&quot; &quot;+str(strt_5[i])+&quot; &quot;+str(dur_5[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_5[i])+&quot; &quot;+str(tun_5[i])+&quot; &quot;+str(nv_5[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>56.175</startTime>
+        <name>2h5TETpo6a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_6)) :
+  amp_6[i] += 3.0
+  pan = pan_6[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_6[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_6[i]*1.14869835
+  else :
+    fq = freq_6[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_6[i])+&quot; &quot;+str(strt_6[i])+&quot; &quot;+str(dur_6[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_6[i])+&quot; &quot;+str(tun_6[i])+&quot; &quot;+str(nv_6[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>59.175</startTime>
+        <name>3h8TETpo7a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_7)) :
+  amp_7[i] += 3.0
+  pan = pan_7[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_7[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_7[i]*1.14720269
+  else :
+    fq = freq_7[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_7[i])+&quot; &quot;+str(strt_7[i])+&quot; &quot;+str(dur_7[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_7[i])+&quot; &quot;+str(tun_7[i])+&quot; &quot;+str(nv_7[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>62.175</startTime>
+        <name>2h5TETpo8a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_8)) :
+  amp_8[i] += 3.0
+  pan = pan_8[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_8[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_8[i]*1.14869835
+  else :
+    fq = freq_8[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_8[i])+&quot; &quot;+str(strt_8[i])+&quot; &quot;+str(dur_8[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_8[i])+&quot; &quot;+str(tun_8[i])+&quot; &quot;+str(nv_8[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>65.175</startTime>
+        <name>3h8TETpo9a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_9)) :
+  amp_9[i] += 3.0
+  pan = pan_9[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_9[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_9[i]*1.14720269
+  else :
+    fq = freq_9[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_9[i])+&quot; &quot;+str(strt_9[i])+&quot; &quot;+str(dur_9[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_9[i])+&quot; &quot;+str(tun_9[i])+&quot; &quot;+str(nv_9[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>68.175</startTime>
+        <name>2h5TETpo10a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_10)) :
+  amp_10[i] += 3.0
+  pan = pan_10[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_10[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_10[i]*1.14869835
+  else :
+    fq = freq_10[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_10[i])+&quot; &quot;+str(strt_10[i])+&quot; &quot;+str(dur_10[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_10[i])+&quot; &quot;+str(tun_10[i])+&quot; &quot;+str(nv_10[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>71.175</startTime>
+        <name>3h8TETpo11a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_11)) :
+  amp_11[i] += 3.0
+  pan = pan_11[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_11[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_11[i]*1.14720269
+  else :
+    fq = freq_11[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_11[i])+&quot; &quot;+str(strt_11[i])+&quot; &quot;+str(dur_11[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_11[i])+&quot; &quot;+str(tun_11[i])+&quot; &quot;+str(nv_11[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>74.175</startTime>
+        <name>2h5TETpo12a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+
+for i in range(len(inst_12)) :
+  amp_12[i] += 3.0
+  pan = pan_12[i] -.3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_12[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_12[i]*1.14869835
+  else :
+    fq = freq_12[i]
+  fq = fq * 0.65975395
+  scoreText += &quot;i&quot;+str(inst_12[i])+&quot; &quot;+str(strt_12[i])+&quot; &quot;+str(dur_12[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_12[i])+&quot; &quot;+str(tun_12[i])+&quot; &quot;+str(nv_12[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>77.175</startTime>
+        <name>3h8TETpo13a</name>
+        <backgroundColor>-13500316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_13)) :
+  amp_13[i] += 3.0
+  pan = pan_13[i] -.3
+  fq = freq_13[i]
+  fq = fq * 0.66233778
+  scoreText += &quot;i&quot;+str(inst_13[i])+&quot; &quot;+str(strt_13[i])+&quot; &quot;+str(dur_13[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_13[i])+&quot; &quot;+str(tun_13[i])+&quot; &quot;+str(nv_13[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>2.175</subjectiveDuration>
+        <startTime>80.175</startTime>
+        <name>2h5TETpr15</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.MultiplyProcessor'>
+            <pfield>4</pfield>
+            <value>0.659754</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>340</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 3 .9</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.5411765</start>
+          <duration>0.8145161</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -26 0 3 .85</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.2715054</start>
+          <duration>0.5430108</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 3 .95</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.8117647</start>
+          <duration>0.5411765</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 3 1.0</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>45.666668</subjectiveDuration>
+        <startTime>82.35</startTime>
+        <name>3h8TETpr17</name>
+        <backgroundColor>-16751616</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.MultiplyProcessor'>
+            <pfield>8</pfield>
+            <value>-1.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pana&gt; &lt;panb&gt;</noteTemplate>
+        <instrumentId>2</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>142</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.272727</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -45 0 4 .9 .8</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -27 0 4 .6 .5</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -39 0 4 .8 .7</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -33 0 4 .7 .6</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>5</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -15 0 4 .4 .3</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>14.985915</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 4 .5 .4</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>5</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.0</start>
+          <duration>15.166667</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -9 0 4 .3 .2</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>1.5</subjectiveDuration>
+        <startTime>5.5</startTime>
+        <name>3h8TETh</name>
+        <backgroundColor>-10197816</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	1.2 	7.6	-14	1	1	.9
+i1 	.6 	1.2 	7.5	-10	1	1	-.9
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>7.0</startTime>
+        <name>2h5TETd</name>
+        <backgroundColor>-10172316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	1.8 	1.5 	7.0	-16	1	1	.95
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>2h5TETe</name>
+        <backgroundColor>-10172316</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p3	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	1.5 	1.2 	7.3	-15	1	1	1.0
+i1 	2.1 	1.2 	7.2	-15	1	1	-1.0
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>22.0</startTime>
+        <name>3h8TETf</name>
+        <backgroundColor>-10197816</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h8TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1472027</ratio>
+                <ratio>1.316074</ratio>
+                <ratio>1.5098037</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>1.9870133</ratio>
+                <ratio>2.2795072</ratio>
+                <ratio>2.6150565</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;p1	p2	p3	p4	p5	p6	p7	p8
+;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	1.2 	1.8 	7.2	-16	1	2	-.95
+i1 	1.5 	1.5 	7.7	-18	1	1	.95
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>40.35</startTime>
+        <name>2h5TETpo0b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+ampaddb = 6.0
+for i in range(len(inst_0)) :
+  amp_0[i] += ampaddb
+  pan = pan_0[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_0[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_0[i]*1.14869835
+  else :
+    fq = freq_0[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_0[i])+&quot; &quot;+str(strt_0[i])+&quot; &quot;+str(dur_0[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_0[i])+&quot; &quot;+str(tun_0[i])+&quot; &quot;+str(nv_0[i])+&quot; &quot;+str(pan_0[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>43.35</startTime>
+        <name>3h8TETpo1b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_1)) :
+  amp_1[i] += ampaddb
+  pan = pan_1[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_1[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_1[i]*1.14720269
+  else :
+    fq = freq_1[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_1[i])+&quot; &quot;+str(strt_1[i])+&quot; &quot;+str(dur_1[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_1[i])+&quot; &quot;+str(tun_1[i])+&quot; &quot;+str(nv_1[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>46.35</startTime>
+        <name>2h5TETpo2b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_2)) :
+  amp_2[i] += ampaddb
+  pan = pan_2[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_2[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_2[i]*1.14869835
+  else :
+    fq = freq_2[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_2[i])+&quot; &quot;+str(strt_2[i])+&quot; &quot;+str(dur_2[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_2[i])+&quot; &quot;+str(tun_2[i])+&quot; &quot;+str(nv_2[i])+&quot; &quot;+str(pan_2[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>49.35</startTime>
+        <name>3h8TETpo3b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_3)) :
+  amp_3[i] += ampaddb
+  pan = pan_3[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_3[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_3[i]*1.14720269
+  else :
+    fq = freq_3[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_3[i])+&quot; &quot;+str(strt_3[i])+&quot; &quot;+str(dur_3[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_3[i])+&quot; &quot;+str(tun_3[i])+&quot; &quot;+str(nv_3[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>52.35</startTime>
+        <name>2h5TETpo4b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_4)) :
+  amp_4[i] += ampaddb
+  pan = pan_4[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_4[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_4[i]*1.14869835
+  else :
+    fq = freq_4[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_4[i])+&quot; &quot;+str(strt_4[i])+&quot; &quot;+str(dur_4[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_4[i])+&quot; &quot;+str(tun_4[i])+&quot; &quot;+str(nv_4[i])+&quot; &quot;+str(pan_4[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>55.35</startTime>
+        <name>3h8TETpo5b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_5)) :
+  amp_5[i] += ampaddb
+  pan = pan_5[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_5[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_5[i]*1.14720269
+  else :
+    fq = freq_5[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_5[i])+&quot; &quot;+str(strt_5[i])+&quot; &quot;+str(dur_5[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_5[i])+&quot; &quot;+str(tun_5[i])+&quot; &quot;+str(nv_5[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>58.35</startTime>
+        <name>2h5TETpo6b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_6)) :
+  amp_6[i] += ampaddb
+  pan = pan_6[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_6[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_6[i]*1.14869835
+  else :
+    fq = freq_6[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_6[i])+&quot; &quot;+str(strt_6[i])+&quot; &quot;+str(dur_6[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_6[i])+&quot; &quot;+str(tun_6[i])+&quot; &quot;+str(nv_6[i])+&quot; &quot;+str(pan_6[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>61.35</startTime>
+        <name>3h8TETpo7b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_7)) :
+  amp_7[i] += ampaddb
+  pan = pan_7[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_7[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_7[i]*1.14720269
+  else :
+    fq = freq_7[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_7[i])+&quot; &quot;+str(strt_7[i])+&quot; &quot;+str(dur_7[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_7[i])+&quot; &quot;+str(tun_7[i])+&quot; &quot;+str(nv_7[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>64.35</startTime>
+        <name>2h5TETpo8b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_8)) :
+  amp_8[i] += ampaddb
+  pan = pan_8[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_8[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_8[i]*1.14869835
+  else :
+    fq = freq_8[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_8[i])+&quot; &quot;+str(strt_8[i])+&quot; &quot;+str(dur_8[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_8[i])+&quot; &quot;+str(tun_8[i])+&quot; &quot;+str(nv_8[i])+&quot; &quot;+str(pan_8[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>67.35</startTime>
+        <name>3h8TETpo9b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_9)) :
+  amp_9[i] += ampaddb
+  pan = pan_9[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_9[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_9[i]*1.14720269
+  else :
+    fq = freq_9[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_9[i])+&quot; &quot;+str(strt_9[i])+&quot; &quot;+str(dur_9[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_9[i])+&quot; &quot;+str(tun_9[i])+&quot; &quot;+str(nv_9[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>70.35</startTime>
+        <name>2h5TETpo10b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_10)) :
+  amp_10[i] += ampaddb
+  pan = pan_10[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_10[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_10[i]*1.14869835
+  else :
+    fq = freq_10[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_10[i])+&quot; &quot;+str(strt_10[i])+&quot; &quot;+str(dur_10[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_10[i])+&quot; &quot;+str(tun_10[i])+&quot; &quot;+str(nv_10[i])+&quot; &quot;+str(pan_10[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>73.35</startTime>
+        <name>3h8TETpo11b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+for i in range(len(inst_11)) :
+  amp_11[i] += ampaddb
+  pan = pan_11[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_11[i]*0.8716855432
+  elif(randy &gt; .66666666) :
+    fq = freq_11[i]*1.14720269
+  else :
+    fq = freq_11[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_11[i])+&quot; &quot;+str(strt_11[i])+&quot; &quot;+str(dur_11[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_11[i])+&quot; &quot;+str(tun_11[i])+&quot; &quot;+str(nv_11[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>76.35</startTime>
+        <name>2h5TETpo12b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>import random
+scoreText = &quot;&quot;
+
+for i in range(len(inst_12)) :
+  amp_12[i] += ampaddb
+  pan = pan_12[i] + .3
+  randy = random.random()
+  if(randy &lt; .3333333) :
+    fq = freq_12[i]*.870550567
+  elif(randy &gt; .66666666) :
+    fq = freq_12[i]*1.14869835
+  else :
+    fq = freq_12[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_12[i])+&quot; &quot;+str(strt_12[i])+&quot; &quot;+str(dur_12[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_12[i])+&quot; &quot;+str(tun_12[i])+&quot; &quot;+str(nv_12[i])+&quot; &quot;+str(pan_12[i])+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>79.35</startTime>
+        <name>3h8TETpo13b</name>
+        <backgroundColor>-16751516</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <pythonCode>scoreText = &quot;&quot;
+#dur_13[5] += .65
+for i in range(len(inst_13)) :
+  amp_13[i] += ampaddb
+  pan = pan_13[i] + .3
+  fq = freq_13[i]
+  fq = fq * 0.5
+  scoreText += &quot;i&quot;+str(inst_13[i])+&quot; &quot;+str(strt_13[i])+&quot; &quot;+str(dur_13[i])+&quot; &quot;+str(fq)+&quot; &quot;+str(amp_13[i])+&quot; &quot;+str(tun_13[i])+&quot; &quot;+str(nv_13[i])+&quot; &quot;+str(pan)+&quot;\n&quot;
+score = scoreText</pythonCode>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>2.4</subjectiveDuration>
+        <startTime>26.8</startTime>
+        <name>bend0</name>
+        <backgroundColor>-10053121</backgroundColor>
+        <timeBehavior>0</timeBehavior>
+        <noteProcessorChain/>
+        <score>;inst	strt	dur	fq		amp	tun	nv	pan
+i1 	0 	2.4 	130.81278265	-12	2	1	.2
+;i1 	0 	2.4 	261.62556530	-20	2	1	-.2
+;i1 	0 	2.4 	345.217003	-24	2	1	-.1
+;i1 	0 	2.4 	455.516566489	-28	2	1	.1
+
+
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>31.0</startTime>
+        <name>2h5TETg</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	9.4	-40	0	0	.5
+i1 	0 	3.0 	10.2	-45	0	0	-.5
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>7.0</subjectiveDuration>
+        <startTime>91.0</startTime>
+        <name>2h5TETpr18</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>162</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>5.962963</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -34 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>4.4074073</start>
+          <duration>5.617284</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -38 0 5 .3</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>4.4074073</start>
+          <duration>5.617284</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -28 0 5 .3</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>105.0</startTime>
+        <name>2h5TETpr20</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>306</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>2.5588236</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -30 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.7941176</start>
+          <duration>2.3823528</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -32 0 5 -.1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.9705882</start>
+          <duration>2.0294118</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -34 0 5 -.2</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>1.3235294</start>
+          <duration>4.6764708</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 5 -.2</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>117.0</startTime>
+        <name>2h5TETpr22</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>306</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>1.3235294</start>
+          <duration>1.8529412</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 3 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.0</start>
+          <duration>2.6470587</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19 0 5 .1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>125.0</startTime>
+        <name>2h5TETpr24</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>5</pfield>
+            <value>-2.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>2h5TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>2.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1486983</ratio>
+            <ratio>1.319508</ratio>
+            <ratio>1.5157166</ratio>
+            <ratio>1.7411011</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>306</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>9</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.0</start>
+          <duration>2.4705882</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -30 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.1764706</start>
+          <duration>2.4705882</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -28 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.3529412</start>
+          <duration>2.5588236</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -26 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.5294118</start>
+          <duration>2.6470587</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.7058824</start>
+          <duration>2.6470587</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.88235295</start>
+          <duration>2.6470587</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -20 0 5 .1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>4.0</startTime>
+        <name>3h8TETb</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h6TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.2009369</ratio>
+                <ratio>1.4422495</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>2.0800838</ratio>
+                <ratio>2.4980495</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	10.4	-45	0	0	.5
+i1 	0 	3.0 	10.7	-50	0	0	-.5
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>7.0</startTime>
+        <name>2h5TETc</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	10.1	-45	0	0	-.5
+i1 	0 	3.0 	10.4	-50	0	0	.5
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>13.0</startTime>
+        <name>2h5TETf</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	10.0	-45	0	0	.5
+i1 	0 	3.0 	10.3	-50	0	0	-.5
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>16.0</startTime>
+        <name>3h8TETe</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>3h6TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>3.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.2009369</ratio>
+                <ratio>1.4422495</ratio>
+                <ratio>1.7320508</ratio>
+                <ratio>2.0800838</ratio>
+                <ratio>2.4980495</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	9.7	-45	0	0	-.5
+i1 	0 	3.0 	10.2	-50	0	0	.5
+i1 	1.2 	1.8 	9.4	-45	0	0	.1
+i1 	1.2 	1.8 	10.1	-50	0	0	-.1
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.GenericScore'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>19.0</startTime>
+        <name>2h5TETg</name>
+        <backgroundColor>-3355393</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.TuningProcessor'>
+            <pfield>4</pfield>
+            <scale>
+              <scaleName>2h5TET.scl</scaleName>
+              <baseFrequency>261.62558</baseFrequency>
+              <octave>2.0</octave>
+              <ratios>
+                <ratio>1.0</ratio>
+                <ratio>1.1486983</ratio>
+                <ratio>1.319508</ratio>
+                <ratio>1.5157166</ratio>
+                <ratio>1.7411011</ratio>
+              </ratios>
+            </scale>
+          </noteProcessor>
+        </noteProcessorChain>
+        <score>;inst	strt	dur	fq	amp	tun	nv	pan
+i1 	0 	3.0 	9.3	-45	0	0	-.5
+i1 	0 	3.0 	10.0	-50	0	0	.5
+</score>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>7.0</subjectiveDuration>
+        <startTime>91.0</startTime>
+        <name>3h8TETpr19</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>196</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>0.0</start>
+          <duration>5.984694</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -31 0 5 -.1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>4.4234695</start>
+          <duration>5.5510206</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -34 0 5 -.3</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>4.4234695</start>
+          <duration>5.5510206</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -24 0 5 -.3</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>6.0</subjectiveDuration>
+        <startTime>105.0</startTime>
+        <name>3h8TETpr21</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>298</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>7</scaleDegree>
+          <start>0.0</start>
+          <duration>2.4463086</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -27 0 5 -.2</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>1</scaleDegree>
+          <start>1.1778524</start>
+          <duration>2.4463086</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -29 0 5 -.3</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>1.3590604</start>
+          <duration>4.2583895</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -30 0 5 -.4</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>3.0</subjectiveDuration>
+        <startTime>117.0</startTime>
+        <name>3h8TETpr23</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain/>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>298</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.45302013</start>
+          <duration>1.5402684</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -25 0 5 -.2</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.81543624</start>
+          <duration>0.90604025</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -27 0 5 -.2</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>6</octave>
+          <scaleDegree>3</scaleDegree>
+          <start>0.0</start>
+          <duration>2.7181208</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -22 0 5 -.2</noteTemplate>
+        </pianoNote>
+      </soundObject>
+      <soundObject type='blue.soundObject.PianoRoll'>
+        <subjectiveDuration>4.0</subjectiveDuration>
+        <startTime>125.0</startTime>
+        <name>3h8TETpr25</name>
+        <backgroundColor>-6908161</backgroundColor>
+        <timeBehavior>2</timeBehavior>
+        <noteProcessorChain>
+          <noteProcessor type='blue.noteProcessor.AddProcessor'>
+            <pfield>5</pfield>
+            <value>-2.0</value>
+          </noteProcessor>
+        </noteProcessorChain>
+        <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; &lt;amp&gt; &lt;tun&gt; &lt;nv&gt; &lt;pan&gt;</noteTemplate>
+        <instrumentId>1</instrumentId>
+        <scale>
+          <scaleName>3h8TET.scl</scaleName>
+          <baseFrequency>261.62558</baseFrequency>
+          <octave>3.0</octave>
+          <ratios>
+            <ratio>1.0</ratio>
+            <ratio>1.1472027</ratio>
+            <ratio>1.316074</ratio>
+            <ratio>1.5098037</ratio>
+            <ratio>1.7320508</ratio>
+            <ratio>1.9870133</ratio>
+            <ratio>2.2795072</ratio>
+            <ratio>2.6150565</ratio>
+          </ratios>
+        </scale>
+        <pixelSecond>298</pixelSecond>
+        <noteHeight>15</noteHeight>
+        <snapEnabled>true</snapEnabled>
+        <snapValue>0.090909</snapValue>
+        <timeDisplay>1</timeDisplay>
+        <timeUnit>3</timeUnit>
+        <pchGenerationMethod>0</pchGenerationMethod>
+        <transposition>0</transposition>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.09060403</start>
+          <duration>3.0805368</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -29 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.27181208</start>
+          <duration>3.0805368</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -27 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>8</octave>
+          <scaleDegree>0</scaleDegree>
+          <start>0.45302013</start>
+          <duration>3.171141</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -25 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>6</scaleDegree>
+          <start>0.63422817</start>
+          <duration>3.352349</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -23 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>4</scaleDegree>
+          <start>0.81543624</start>
+          <duration>3.171141</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -21 0 5 .1</noteTemplate>
+        </pianoNote>
+        <pianoNote>
+          <octave>7</octave>
+          <scaleDegree>2</scaleDegree>
+          <start>0.9966443</start>
+          <duration>2.9899328</duration>
+          <noteTemplate>i &lt;INSTR_ID&gt; &lt;START&gt; &lt;DUR&gt; &lt;FREQ&gt; -19 0 5 .1</noteTemplate>
+        </pianoNote>
+      </soundObject>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+      <noteProcessorChain/>
+    </soundLayer>
+  </soundObject>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>-1.0</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <tempo>
+    <enabled>true</enabled>
+    <visible>false</visible>
+    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+      <linePoint x='0.0' y='60.0'/>
+    </line>
+  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>
