@@ -20,13 +20,12 @@
 
 package blue.soundObject;
 
-import java.io.Serializable;
-
 import blue.SoundObjectLibrary;
 import blue.automation.LineColors;
 import blue.components.lines.Line;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 
 /**
  * @author Steven Yi

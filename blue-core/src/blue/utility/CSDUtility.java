@@ -9,21 +9,11 @@ package blue.utility;
  * @version 1.0
  */
 
-import blue.csladspa.CSLADSPASettings;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.Map.Entry;
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
+import blue.csladspa.CSLADSPASettings;
 import blue.csladspa.PortDefinition;
 import blue.csladspa.PortDefinitionList;
 import blue.orchestra.GenericInstrument;
@@ -33,6 +23,11 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.Map.Entry;
+import java.util.*;
 
 public class CSDUtility {
     public static final int IMPORT_GLOBAL = 0;

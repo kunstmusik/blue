@@ -1,11 +1,10 @@
 package blue.noteProcessor;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Title: blue Description: an object composition environment for csound

@@ -1,13 +1,12 @@
 package blue.noteProcessor;
 
-import java.util.Collections;
-
 import blue.BlueSystem;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.util.Collections;
 
 /**
  * Title: blue Description: an object composition environment for csound

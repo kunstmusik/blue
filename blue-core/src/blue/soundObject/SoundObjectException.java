@@ -19,9 +19,8 @@
  */
 package blue.soundObject;
 
-import java.text.MessageFormat;
-
 import blue.utility.ObjectUtilities;
+import java.text.MessageFormat;
 
 /**
  * @author steven

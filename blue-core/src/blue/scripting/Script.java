@@ -20,10 +20,9 @@
 
 package blue.scripting;
 
-import java.io.Serializable;
-
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 
 /**
  * 

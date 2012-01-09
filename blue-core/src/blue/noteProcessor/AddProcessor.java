@@ -1,12 +1,11 @@
 package blue.noteProcessor;
 
-import java.io.Serializable;
-
 import blue.BlueSystem;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * Title: blue Description: an object composition environment for csound

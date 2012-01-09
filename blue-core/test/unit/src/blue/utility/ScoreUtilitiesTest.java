@@ -19,9 +19,9 @@
  */
 package blue.utility;
 
+import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import junit.framework.TestCase;
-import blue.soundObject.NoteList;
 import org.openide.util.Exceptions;
 
 public class ScoreUtilitiesTest extends TestCase {

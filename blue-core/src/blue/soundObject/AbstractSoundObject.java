@@ -1,11 +1,10 @@
 package blue.soundObject;
 
+import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-
-import blue.utility.ObjectUtilities;
 
 /**
  * Title: blue Description: an object composition environment for csound

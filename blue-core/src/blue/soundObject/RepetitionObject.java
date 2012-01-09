@@ -1,7 +1,5 @@
 package blue.soundObject;
 
-import java.io.Serializable;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -10,6 +8,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * DEPRECATED - GENERICSCORE WITH TIME BEHAVIOR OF REPEAT SHOULD BE USED

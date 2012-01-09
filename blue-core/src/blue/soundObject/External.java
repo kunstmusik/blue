@@ -1,23 +1,16 @@
 package blue.soundObject;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-
-import blue.Arrangement;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-//import blue.soundObject.renderer.BarRenderer;
-//import blue.soundObject.renderer.LetterRenderer;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * <p>

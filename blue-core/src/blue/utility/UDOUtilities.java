@@ -20,12 +20,11 @@
 
 package blue.utility;
 
+import blue.udo.OpcodeList;
+import blue.udo.UserDefinedOpcode;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-
-import blue.udo.OpcodeList;
-import blue.udo.UserDefinedOpcode;
 
 /**
  * @author Steven Yi

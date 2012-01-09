@@ -1,11 +1,5 @@
 package blue.soundObject;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -18,6 +12,11 @@ import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author steven yi

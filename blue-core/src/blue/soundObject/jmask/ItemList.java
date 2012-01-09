@@ -21,24 +21,20 @@
  */
 package blue.soundObject.jmask;
 
+import blue.utility.XMLUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-//import blue.soundObject.editor.jmask.ItemListEditor;
-import blue.utility.XMLUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
-import java.lang.ref.WeakReference;
 
 public class ItemList implements Generator, Serializable, TableModel,
         Accumulatable {

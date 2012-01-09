@@ -19,11 +19,10 @@
  */
 package blue.noteProcessor;
 
-import java.util.HashMap;
-import java.util.Iterator;
-
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * @author steven

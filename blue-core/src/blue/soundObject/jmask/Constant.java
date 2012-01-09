@@ -21,16 +21,11 @@
  */
 package blue.soundObject.jmask;
 
-import java.io.Serializable;
-
-import javax.swing.JComponent;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
-//import blue.soundObject.editor.jmask.ConstantEditor;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Constant implements Generator, Serializable, Accumulatable {
     double value = 1.0d;

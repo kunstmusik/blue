@@ -20,21 +20,18 @@
 
 package blue.mixer;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author Steven Yi

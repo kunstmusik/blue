@@ -1,7 +1,5 @@
 package blue.soundObject;
 
-import java.io.Serializable;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -9,6 +7,7 @@ import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * <p>

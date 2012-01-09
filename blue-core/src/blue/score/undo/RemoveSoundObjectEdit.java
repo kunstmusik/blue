@@ -4,13 +4,12 @@
  */
 package blue.score.undo;
 
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-
 import blue.BlueSystem;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 
 /**
  * @author steven

@@ -20,18 +20,11 @@
 
 package blue.utility;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
-import java.lang.reflect.Method;
-
 import blue.BlueSystem;
 import blue.SoundObjectLibrary;
 import electric.xml.Element;
+import java.io.*;
+import java.lang.reflect.Method;
 
 public class ObjectUtilities {
 

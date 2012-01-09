@@ -19,6 +19,12 @@
  */
 package blue.soundObject.tracker;
 
+import blue.soundObject.Note;
+import blue.soundObject.NoteList;
+import blue.soundObject.NoteParseException;
+import blue.utility.TextUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
@@ -26,19 +32,10 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-import blue.soundObject.Note;
-import blue.soundObject.NoteList;
-import blue.soundObject.NoteParseException;
-import blue.utility.TextUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 public class Track implements Serializable, TableModel {
 

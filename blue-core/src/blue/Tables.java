@@ -9,11 +9,10 @@ package blue;
  * @version 1.0
  */
 
+import electric.xml.Element;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.StringTokenizer;
-
-import electric.xml.Element;
 
 public class Tables implements java.io.Serializable, Cloneable {
     private String tables = "";

@@ -21,26 +21,14 @@
  */
 package blue.soundObject.jmask;
 
-import java.io.Serializable;
-
-import javax.swing.JComponent;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
-import blue.soundObject.jmask.probability.Beta;
-import blue.soundObject.jmask.probability.Cauchy;
-import blue.soundObject.jmask.probability.Exponential;
-import blue.soundObject.jmask.probability.Gaussian;
-import blue.soundObject.jmask.probability.Linear;
-import blue.soundObject.jmask.probability.ProbabilityGenerator;
-import blue.soundObject.jmask.probability.Triangle;
-import blue.soundObject.jmask.probability.Uniform;
-import blue.soundObject.jmask.probability.Weibull;
+import blue.soundObject.jmask.probability.*;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Probability implements Generator, Serializable, Maskable,
         Quantizable, Accumulatable {

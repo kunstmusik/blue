@@ -8,6 +8,7 @@ package blue.utility;
  * @version 1.0
  */
 
+import blue.BlueSystem;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -18,16 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
-import javax.swing.UIManager;
-
-import blue.BlueSystem;
-import javax.swing.JDialog;
+import javax.swing.*;
 
 public class GUI {
 

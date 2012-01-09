@@ -20,15 +20,13 @@
 
 package blue.utility;
 
+import blue.BlueSystem;
 import java.io.File;
 import java.io.IOException;
-
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
-
-import blue.BlueSystem;
 
 public class SoundFileUtilities {
 

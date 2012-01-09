@@ -20,20 +20,15 @@
 
 package blue.noteProcessor;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.StringTokenizer;
-
 import blue.BlueSystem;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.pianoRoll.Scale;
-import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.File;
+import java.io.Serializable;
 
 /**
  * @author Steven Yi

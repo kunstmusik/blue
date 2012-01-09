@@ -20,11 +20,7 @@
 package blue.actions;
 
 import blue.utility.GUI;
-import java.awt.Dimension;
-import java.awt.HeadlessException;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-
 import javax.swing.JDialog;
 import javax.swing.KeyStroke;
 

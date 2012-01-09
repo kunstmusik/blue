@@ -19,19 +19,15 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-import java.util.Iterator;
-
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
-//import blue.orchestra.editor.blueSynthBuilder.BSBLineObjectView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.Iterator;
+import org.apache.commons.lang.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
 

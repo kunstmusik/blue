@@ -19,8 +19,6 @@
  */
 package blue.mixer;
 
-import blue.mixer.*;
-
 public interface ChannelListListener {
     public void channelAdded(Channel channel);
 

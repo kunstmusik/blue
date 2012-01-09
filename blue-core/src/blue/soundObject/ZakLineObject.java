@@ -6,12 +6,11 @@
 
 package blue.soundObject;
 
-import java.io.Serializable;
-
 import blue.SoundObjectLibrary;
 import blue.components.lines.Line;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 
 /**
  * An implementation of AbstractLineObject specifically for lines whose output

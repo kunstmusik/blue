@@ -20,20 +20,14 @@ package blue.utility;
  * USA
  */
 
+import blue.noteProcessor.NoteProcessor;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorException;
+import blue.soundObject.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.StringTokenizer;
-
-import blue.noteProcessor.NoteProcessor;
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorException;
-import blue.soundObject.Comment;
-import blue.soundObject.Note;
-import blue.soundObject.NoteList;
-import blue.soundObject.NoteParseException;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
 
 public class ScoreUtilities {
     private static int RAMP_END_NOT_FOUND = -1;

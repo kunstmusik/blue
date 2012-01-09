@@ -20,16 +20,13 @@
 
 package blue.components.lines;
 
+import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-import electric.xml.Element;
 
 /**
  * @author Steven Yi

@@ -21,7 +21,6 @@
 package blue.orchestra;
 
 import blue.Tables;
-import blue.orchestra.editor.InstrumentEditor;
 import blue.udo.OpcodeList;
 import electric.xml.Element;
 

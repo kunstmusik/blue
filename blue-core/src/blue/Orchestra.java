@@ -20,14 +20,13 @@
 
 package blue;
 
+import blue.orchestra.Instrument;
+import blue.utility.ObjectUtilities;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
-
-import blue.orchestra.Instrument;
-import blue.utility.ObjectUtilities;
 
 /**
  * Title: blue Description: an object composition environment for csound

@@ -19,14 +19,11 @@
  */
 package blue.mixer;
 
-import junit.framework.TestCase;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import blue.automation.Parameter;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import junit.framework.TestCase;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class MixerTest extends TestCase {
     

@@ -1,9 +1,8 @@
 package blue.orchestra.editor.flowGraph;
 
-import javax.swing.JFrame;
-
 import blue.orchestra.flowGraph.FlowGraph;
 import blue.orchestra.flowGraph.UnitLibrary;
+import javax.swing.JFrame;
 
 public class TestFlowGraphEditor {
 

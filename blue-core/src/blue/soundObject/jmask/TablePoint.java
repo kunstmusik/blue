@@ -21,16 +21,14 @@
  */
 package blue.soundObject.jmask;
 
-import java.io.Serializable;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import electric.xml.Element;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class TablePoint implements Serializable {
     private double time = 0.0;

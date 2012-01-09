@@ -1,19 +1,10 @@
 package blue.ftable.genRoutine;
 
+import blue.ftable.FTable;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-
-import blue.ftable.FTable;
+import javax.swing.*;
 
 /**
  * Title: blue Description: an object composition environment for csound

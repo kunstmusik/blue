@@ -20,12 +20,12 @@
 
 package blue.soundObject;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import blue.soundObject.jmask.FieldTest;
 import blue.soundObject.jmask.QuantizerTest;
 import blue.soundObject.tracker.ColumnTest;
 import blue.soundObject.tracker.TrackListTest;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * @author steven

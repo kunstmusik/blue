@@ -20,19 +20,12 @@
 
 package blue.utility;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.StringTokenizer;
-
 import Silence.XMLSerializer;
 import blue.BlueData;
 import blue.Orchestra;
 import blue.orchestra.GenericInstrument;
+import java.io.*;
+import java.util.StringTokenizer;
 
 /**
  * Description of the Class

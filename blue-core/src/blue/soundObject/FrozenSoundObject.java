@@ -20,19 +20,13 @@
 
 package blue.soundObject;
 
-import java.io.Serializable;
-
-import javax.swing.JOptionPane;
-
-import blue.Arrangement;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
+import javax.swing.JOptionPane;
 
 /**
  * @author steven

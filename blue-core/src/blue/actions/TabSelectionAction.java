@@ -20,7 +20,6 @@
 package blue.actions;
 
 import java.awt.event.ActionEvent;
-
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 

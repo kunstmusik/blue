@@ -19,13 +19,11 @@
  */
 package blue.soundObject.pattern;
 
-import java.io.Serializable;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Pattern implements Serializable {
     public boolean[] values;

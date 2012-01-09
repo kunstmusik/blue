@@ -20,18 +20,14 @@
 
 package blue.soundObject;
 
-import java.io.Serializable;
-import java.util.StringTokenizer;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
 import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
-import blue.soundObject.GenericEditable;
-//import blue.soundObject.renderer.BarRenderer;
-//import blue.soundObject.renderer.GenericRenderer;
 import electric.xml.Element;
+import java.io.Serializable;
+import java.util.StringTokenizer;
 
 /**
  * THIS SOUND OBJECT IS DEPRECATED AND SHOULD NOT BE USED IT IS LEFT IN ONLY FOR

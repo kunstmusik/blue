@@ -20,14 +20,13 @@
 
 package blue.blueLive;
 
-import java.io.Serializable;
-
 import blue.SoundObjectLibrary;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 
 /**
  * 

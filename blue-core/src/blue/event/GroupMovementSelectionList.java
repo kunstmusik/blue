@@ -22,7 +22,6 @@ package blue.event;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JComponent;
 
 /**

@@ -19,13 +19,11 @@
  */
 package blue.actions;
 
+import blue.BlueSystem;
 import java.awt.AWTKeyStroke;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
-
-import blue.BlueSystem;
 
 public abstract class BlueAction extends AbstractAction {
 

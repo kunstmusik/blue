@@ -20,8 +20,6 @@
 package blue.soundObject.jmask.probability;
 
 import blue.soundObject.jmask.Table;
-import javax.swing.JComponent;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;

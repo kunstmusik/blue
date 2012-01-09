@@ -6,9 +6,8 @@
 
 package blue.noteProcessor;
 
-import java.text.MessageFormat;
-
 import blue.utility.ObjectUtilities;
+import java.text.MessageFormat;
 
 /**
  * Exception class for NoteProcessors to utilize when an error has occured.

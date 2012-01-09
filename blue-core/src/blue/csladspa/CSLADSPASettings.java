@@ -23,7 +23,6 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
-import java.util.Iterator;
 import org.apache.commons.lang.text.StrBuilder;
 
 /**

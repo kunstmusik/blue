@@ -22,21 +22,18 @@
 package blue.soundObject.jmask;
 
 import blue.components.lines.LineUtils;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.table.AbstractTableModel;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Table extends AbstractTableModel implements Serializable {
 

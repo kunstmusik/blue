@@ -1,15 +1,13 @@
 package blue;
 
 import blue.csladspa.CSLADSPASettings;
-import java.io.Serializable;
-
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import blue.utility.ObjectUtilities;
 import blue.utility.ValuesUtility;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * Title: blue Description: an object composition environment for csound

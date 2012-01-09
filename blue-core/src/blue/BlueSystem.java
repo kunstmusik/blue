@@ -8,6 +8,11 @@ package blue;
  * @version 1.0
  */
 
+import blue.udo.UDOLibrary;
+import blue.utility.EnvironmentVars;
+import blue.utility.FileUtilities;
+import electric.xml.Document;
+import electric.xml.ParseException;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.File;
@@ -17,15 +22,8 @@ import java.io.PrintWriter;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-
-import blue.udo.UDOLibrary;
-import blue.utility.EnvironmentVars;
-import blue.utility.FileUtilities;
-import electric.xml.Document;
-import electric.xml.ParseException;
 import org.openide.util.Exceptions;
 
 public class BlueSystem {

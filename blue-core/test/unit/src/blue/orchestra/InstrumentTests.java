@@ -20,10 +20,10 @@
 
 package blue.orchestra;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import blue.orchestra.blueSynthBuilder.BSBCloneTest;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterfaceTest;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * @author steven

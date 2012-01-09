@@ -1,16 +1,10 @@
 package blue.orchestra.editor.flowGraph;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JSlider;
-
 import blue.orchestra.flowGraph.FlowGraph;
 import blue.orchestra.flowGraph.UnitLibrary;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import javax.swing.*;
 
 public class FlowGraphPanel extends JPanel {
     private UnitLibrary unitLibrary;

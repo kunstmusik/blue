@@ -1,18 +1,12 @@
 package blue.mixer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.automation.Parameter;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import blue.utility.MusicFunctions;
 import blue.utility.NumberUtilities;
+import java.util.*;
+import org.apache.commons.lang.text.StrBuilder;
 
 /**
  * A Mixer's channels and subchannels are translated to a MixerNode graph that

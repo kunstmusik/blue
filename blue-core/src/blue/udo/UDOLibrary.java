@@ -20,18 +20,16 @@
 
 package blue.udo;
 
+import blue.utility.ListUtil;
+import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-
-import blue.utility.ListUtil;
-import electric.xml.Element;
 
 /**
  * @author steven

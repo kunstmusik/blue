@@ -1,7 +1,5 @@
 package blue.soundObject;
 
-import java.io.Serializable;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -11,6 +9,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * Title: blue Description: an object composition environment for csound

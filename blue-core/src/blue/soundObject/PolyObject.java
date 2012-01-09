@@ -19,6 +19,13 @@
  */
 package blue.soundObject;
 
+import blue.*;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorException;
+import blue.utility.ScoreUtilities;
+import blue.utility.XMLUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -26,23 +33,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundLayer;
-import blue.SoundLayerException;
-import blue.SoundObjectLibrary;
-import blue.Tables;
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorException;
-import blue.utility.ScoreUtilities;
-import blue.utility.XMLUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:

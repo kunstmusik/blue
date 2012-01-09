@@ -20,16 +20,16 @@
 
 package blue.scripting;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import blue.BlueSystem;
+import blue.utility.ListUtil;
+import electric.xml.Document;
+import electric.xml.Element;
+import electric.xml.ParseException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -37,12 +37,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-
-import blue.BlueSystem;
-import blue.utility.ListUtil;
-import electric.xml.Document;
-import electric.xml.Element;
-import electric.xml.ParseException;
 
 /**
  * 

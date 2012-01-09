@@ -20,31 +20,20 @@
 
 package blue.components.lines;
 
+import blue.utility.TextUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.awt.Color;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.rmi.dgc.VMID;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.StringTokenizer;
-import java.util.Vector;
-
+import java.util.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.text.StrBuilder;
-
-import blue.utility.TextUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * This Line class is used in a number of places in blue. For situations like

@@ -19,17 +19,7 @@
  */
 package blue.soundObject;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.python.core.PyException;
-
-import blue.Arrangement;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
@@ -42,6 +32,10 @@ import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.File;
+import java.io.IOException;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.python.core.PyException;
 
 public class ObjectBuilder extends AbstractSoundObject {
 //    private static BarRenderer renderer = new LetterRenderer("O");

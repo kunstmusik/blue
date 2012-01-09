@@ -19,14 +19,13 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
+import java.rmi.dgc.VMID;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import electric.xml.Element;
-import electric.xml.Elements;
-import java.rmi.dgc.VMID;
 
 /**
  * @author steven

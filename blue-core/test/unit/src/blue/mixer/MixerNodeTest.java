@@ -19,11 +19,10 @@
  */
 package blue.mixer;
 
+import blue.udo.OpcodeList;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import junit.framework.TestCase;
-import blue.udo.OpcodeList;
 
 public class MixerNodeTest extends TestCase {
     public void testGetMixerGraph1() {

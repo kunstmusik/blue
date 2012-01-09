@@ -19,13 +19,12 @@
  */
 package blue.utility;
 
+import blue.BlueData;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.rmi.dgc.VMID;
-
-import blue.BlueData;
 
 /**
  * Randomizes all values in Object, descending into child objects. Useful for

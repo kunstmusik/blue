@@ -1,9 +1,8 @@
 package blue;
 
-import java.util.HashMap;
-
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import java.util.HashMap;
 
 /**
  * <p>

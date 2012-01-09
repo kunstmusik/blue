@@ -19,17 +19,15 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import blue.utility.ObjectUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-import blue.utility.ObjectUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * Stores BSBObjects, notification of changes used by BSBParameterList to keep

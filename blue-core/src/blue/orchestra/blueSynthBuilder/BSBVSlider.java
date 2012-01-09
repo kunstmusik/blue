@@ -24,8 +24,6 @@ import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.components.lines.LineUtils;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBVSliderView;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;

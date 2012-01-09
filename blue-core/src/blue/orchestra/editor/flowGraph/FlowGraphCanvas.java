@@ -1,14 +1,12 @@
 package blue.orchestra.editor.flowGraph;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.geom.Point2D;
-
-import javax.swing.JPanel;
-
 import blue.orchestra.flowGraph.Cable;
 import blue.orchestra.flowGraph.Port;
 import blue.orchestra.flowGraph.Unit;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.geom.Point2D;
+import javax.swing.JPanel;
 
 public class FlowGraphCanvas extends JPanel {
     private FlowGraphPanel fGPanel;

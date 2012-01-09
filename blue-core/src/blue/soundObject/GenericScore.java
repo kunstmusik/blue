@@ -28,17 +28,15 @@ package blue.soundObject;
  * @version 1.0
  */
 
-import java.io.Serializable;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
 import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.soundObject.GenericEditable;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
 
 public class GenericScore extends AbstractSoundObject implements Serializable,
         Cloneable, GenericEditable, GenericViewable {

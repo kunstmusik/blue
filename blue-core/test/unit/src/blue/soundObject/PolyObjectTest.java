@@ -19,8 +19,8 @@
  */
 package blue.soundObject;
 
-import junit.framework.TestCase;
 import blue.SoundLayer;
+import junit.framework.TestCase;
 
 public class PolyObjectTest extends TestCase {
 

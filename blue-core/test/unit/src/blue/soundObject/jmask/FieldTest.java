@@ -7,8 +7,8 @@
 
 package blue.soundObject.jmask;
 
-import junit.framework.TestCase;
 import blue.soundObject.NoteList;
+import junit.framework.TestCase;
 
 /**
  * 

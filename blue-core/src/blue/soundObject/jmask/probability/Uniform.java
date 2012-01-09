@@ -19,9 +19,8 @@
  */
 package blue.soundObject.jmask.probability;
 
-import javax.swing.JComponent;
-
 import electric.xml.Element;
+import javax.swing.JComponent;
 
 public class Uniform implements ProbabilityGenerator {
 

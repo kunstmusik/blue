@@ -20,8 +20,6 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.mixer.Channel;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBSubChannelDropdownView;
 import electric.xml.Element;
 import electric.xml.Elements;
 

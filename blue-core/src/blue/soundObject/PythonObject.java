@@ -19,20 +19,14 @@
  */
 package blue.soundObject;
 
-import java.io.Serializable;
-
-import org.python.core.PyException;
-
-import blue.Arrangement;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.scripting.PythonProxy;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
+import org.python.core.PyException;
 
 /**
  * Title: blue Description: an object composition environment for csound

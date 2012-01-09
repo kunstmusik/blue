@@ -20,10 +20,9 @@
 
 package blue.orchestra.blueSynthBuilder;
 
-import java.io.Serializable;
-
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
 import java.rmi.dgc.VMID;
 
 /**

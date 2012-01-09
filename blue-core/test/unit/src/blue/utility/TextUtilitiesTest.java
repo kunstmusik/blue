@@ -20,7 +20,6 @@
 package blue.utility;
 
 import java.util.HashMap;
-
 import junit.framework.TestCase;
 
 public class TextUtilitiesTest extends TestCase {

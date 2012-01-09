@@ -4,9 +4,8 @@
  */
 package blue;
 
-import java.io.Serializable;
-
 import electric.xml.Element;
+import java.io.Serializable;
 
 public class ScratchPadData implements Serializable {
 

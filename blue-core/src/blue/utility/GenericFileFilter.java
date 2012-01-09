@@ -1,7 +1,6 @@
 package blue.utility;
 
 import java.io.File;
-
 import javax.swing.filechooser.FileFilter;
 
 /**

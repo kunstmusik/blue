@@ -1,8 +1,7 @@
 package blue.soundObject.notation;
 
-import java.util.ArrayList;
-
 import blue.soundObject.NoteList;
+import java.util.ArrayList;
 
 /**
  * <p>

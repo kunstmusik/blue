@@ -20,24 +20,10 @@
 
 package blue.mixer;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.JComponent;
-
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.automation.Automatable;
 import blue.automation.ParameterList;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.blueSynthBuilder.BSBParameterList;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
@@ -46,6 +32,15 @@ import blue.utility.UDOUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Vector;
+import org.apache.commons.lang.text.StrBuilder;
 
 public class Effect implements Serializable, Automatable {
 

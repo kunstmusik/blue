@@ -1,18 +1,15 @@
 package blue.orchestra;
 
+import Silence.XMLSerializer;
+import blue.Tables;
+import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.EventListener;
-
 import javax.swing.ListModel;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
 import org.apache.commons.lang.text.StrBuilder;
-
-import Silence.XMLSerializer;
-import blue.Tables;
-import blue.utility.ObjectUtilities;
 
 /**
  * Title: blue Description: an object composition environment for csound

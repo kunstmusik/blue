@@ -1,20 +1,14 @@
 package blue.scripting;
 
-import java.io.File;
-import java.io.IOException;
-import org.openide.util.Exceptions;
-
-import org.python.core.PyFloat;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.util.PythonInterpreter;
-
 import blue.BlueSystem;
 import blue.soundObject.NoteList;
 import blue.utility.FileUtilities;
+import java.io.File;
+import java.io.IOException;
 import org.openide.modules.InstalledFileLocator;
-import org.python.core.Py;
-import org.python.core.PySystemState;
+import org.openide.util.Exceptions;
+import org.python.core.*;
+import org.python.util.PythonInterpreter;
 
 /**
  * <p>

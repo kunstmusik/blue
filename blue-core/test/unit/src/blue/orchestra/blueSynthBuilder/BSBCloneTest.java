@@ -19,16 +19,13 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import junit.framework.TestCase;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import junit.framework.TestCase;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class BSBCloneTest extends TestCase {
 

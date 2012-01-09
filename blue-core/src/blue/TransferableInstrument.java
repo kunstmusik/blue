@@ -20,13 +20,12 @@
 
 package blue;
 
+import blue.orchestra.Instrument;
+import blue.orchestra.InstrumentCategory;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-
-import blue.orchestra.Instrument;
-import blue.orchestra.InstrumentCategory;
 
 /**
  * @author Steven Yi

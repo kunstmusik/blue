@@ -20,16 +20,13 @@
 
 package blue.soundObject;
 
-import java.awt.Color;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
 import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
-//import blue.soundObject.editor.SoundObjectEditor;
-//import blue.soundObject.renderer.BarRenderer;
 import electric.xml.Element;
+import java.awt.Color;
 
 /**
  * Plugin interface for SoundObjects.

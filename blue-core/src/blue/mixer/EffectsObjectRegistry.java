@@ -19,19 +19,7 @@
  */
 package blue.mixer;
 
-import blue.orchestra.blueSynthBuilder.BSBCheckBox;
-import blue.orchestra.blueSynthBuilder.BSBDropdown;
-import blue.orchestra.blueSynthBuilder.BSBFileSelector;
-import blue.orchestra.blueSynthBuilder.BSBHSlider;
-import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
-import blue.orchestra.blueSynthBuilder.BSBKnob;
-import blue.orchestra.blueSynthBuilder.BSBLabel;
-import blue.orchestra.blueSynthBuilder.BSBLineObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
-import blue.orchestra.blueSynthBuilder.BSBTextField;
-import blue.orchestra.blueSynthBuilder.BSBVSlider;
-import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
-import blue.orchestra.blueSynthBuilder.BSBXYController;
+import blue.orchestra.blueSynthBuilder.*;
 
 /**
  * Registry of available objects for Effects.

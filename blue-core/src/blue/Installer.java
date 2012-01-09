@@ -4,46 +4,9 @@
  */
 package blue;
 
-import blue.noteProcessor.AddProcessor;
-import blue.noteProcessor.EqualsProcessor;
-import blue.noteProcessor.InversionProcessor;
-import blue.noteProcessor.LineAddProcessor;
-import blue.noteProcessor.LineMultiplyProcessor;
-import blue.noteProcessor.MultiplyProcessor;
-import blue.noteProcessor.NoteProcessor;
-import blue.noteProcessor.PchAddProcessor;
-import blue.noteProcessor.PchInversionProcessor;
-import blue.noteProcessor.PythonProcessor;
-import blue.noteProcessor.RandomAddProcessor;
-import blue.noteProcessor.RandomMultiplyProcessor;
-import blue.noteProcessor.RetrogradeProcessor;
-import blue.noteProcessor.RotateProcessor;
-import blue.noteProcessor.SubListProcessor;
-import blue.noteProcessor.SwitchProcessor;
-import blue.noteProcessor.TimeWarpProcessor;
-import blue.noteProcessor.TuningProcessor;
-import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.BlueX7;
-import blue.orchestra.GenericInstrument;
-import blue.orchestra.Instrument;
-import blue.orchestra.PythonInstrument;
-import blue.orchestra.RhinoInstrument;
-import blue.soundObject.AudioFile;
-import blue.soundObject.Comment;
-import blue.soundObject.External;
-import blue.soundObject.GenericScore;
-import blue.soundObject.JMask;
-import blue.soundObject.LineObject;
-import blue.soundObject.ObjectBuilder;
-import blue.soundObject.PatternObject;
-import blue.soundObject.PianoRoll;
-import blue.soundObject.PolyObject;
-import blue.soundObject.PythonObject;
-import blue.soundObject.RhinoObject;
-import blue.soundObject.Sound;
-import blue.soundObject.SoundObject;
-import blue.soundObject.TrackerObject;
-import blue.soundObject.ZakLineObject;
+import blue.noteProcessor.*;
+import blue.orchestra.*;
+import blue.soundObject.*;
 import org.openide.modules.ModuleInstall;
 
 /**

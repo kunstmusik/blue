@@ -19,18 +19,16 @@
  */
 package blue.soundObject.pianoRoll;
 
+import blue.utility.TextUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-
-import blue.utility.TextUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author steven

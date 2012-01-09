@@ -20,13 +20,12 @@
 
 package blue.mixer;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Steven Yi

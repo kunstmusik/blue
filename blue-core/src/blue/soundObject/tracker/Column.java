@@ -19,15 +19,13 @@
  */
 package blue.soundObject.tracker;
 
-import java.io.Serializable;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.EqualsBuilder;
 
 public class Column implements Serializable {
     public static final int TYPE_PCH = 0;

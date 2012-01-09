@@ -20,6 +20,13 @@
 
 package blue.orchestra.blueSynthBuilder;
 
+import blue.automation.Parameter;
+import blue.automation.ParameterListener;
+import blue.automation.ParameterTimeManagerFactory;
+import blue.utility.NumberUtilities;
+import blue.utility.XMLUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -27,16 +34,6 @@ import java.io.ObjectInputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import blue.automation.Parameter;
-import blue.automation.ParameterListener;
-//import blue.orchestra.editor.blueSynthBuilder.BSBHSliderBankView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
-import blue.automation.ParameterTimeManagerFactory;
-import blue.utility.NumberUtilities;
-import blue.utility.XMLUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author Steven Yi

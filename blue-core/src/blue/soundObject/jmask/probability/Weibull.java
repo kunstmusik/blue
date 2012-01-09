@@ -21,7 +21,6 @@ package blue.soundObject.jmask.probability;
 
 //import blue.soundObject.editor.jmask.probability.WeibullEditor;
 import blue.soundObject.jmask.Table;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;

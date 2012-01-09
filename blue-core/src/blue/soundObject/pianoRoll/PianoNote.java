@@ -19,14 +19,13 @@
  */
 package blue.soundObject.pianoRoll;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author steven

@@ -19,23 +19,16 @@
  */
 package blue.automation;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Vector;
-
+import java.util.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 public class ParameterIdList implements Serializable {
     private static final Comparator comparator = new Comparator() {

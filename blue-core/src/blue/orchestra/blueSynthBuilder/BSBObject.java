@@ -20,17 +20,14 @@
 
 package blue.orchestra.blueSynthBuilder;
 
+import blue.utility.ObjectUtilities;
+import electric.xml.Element;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
-import blue.utility.ObjectUtilities;
-import electric.xml.Element;
 
 /**
  * @author Steven Yi

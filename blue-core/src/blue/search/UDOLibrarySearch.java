@@ -19,9 +19,8 @@
  */
 package blue.search;
 
-import java.util.Vector;
-
 import blue.udo.UDOLibrary;
+import java.util.Vector;
 
 public class UDOLibrarySearch implements BlueSearchType {
 

@@ -19,10 +19,9 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import blue.utility.TextUtilities;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import blue.utility.TextUtilities;
 
 /**
  * @author steven

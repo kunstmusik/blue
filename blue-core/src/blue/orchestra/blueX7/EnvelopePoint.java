@@ -1,8 +1,7 @@
 package blue.orchestra.blueX7;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import electric.xml.Element;
+import org.apache.commons.lang.builder.EqualsBuilder;
 
 /**
  * <p>

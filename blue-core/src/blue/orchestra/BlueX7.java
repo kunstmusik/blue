@@ -1,13 +1,5 @@
 package blue.orchestra;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Serializable;
-import java.util.Properties;
-
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.Tables;
 import blue.orchestra.blueX7.AlgorithmCommonData;
 import blue.orchestra.blueX7.EnvelopePoint;
@@ -17,6 +9,12 @@ import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Serializable;
+import java.util.Properties;
+import org.apache.commons.lang.text.StrBuilder;
 
 /**
  * <p>

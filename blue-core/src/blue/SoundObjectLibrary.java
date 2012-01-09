@@ -8,15 +8,14 @@ package blue;
  * @version 1.0
  */
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public final class SoundObjectLibrary extends ArrayList {
 

@@ -6,10 +6,6 @@
 
 package blue.soundObject;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -22,6 +18,9 @@ import blue.orchestra.GenericInstrument;
 import blue.utility.NumberUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Base class for line objects. Most of this functionality was extracted from

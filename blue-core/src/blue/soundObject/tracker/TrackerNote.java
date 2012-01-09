@@ -19,15 +19,13 @@
  */
 package blue.soundObject.tracker;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import org.apache.commons.lang.builder.EqualsBuilder;
 
 public class TrackerNote implements Serializable {
 

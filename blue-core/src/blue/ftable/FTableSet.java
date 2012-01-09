@@ -9,9 +9,8 @@ package blue.ftable;
  * @version 1.0
  */
 
-import java.util.ArrayList;
-
 import blue.utility.ObjectUtilities;
+import java.util.ArrayList;
 
 public class FTableSet extends ArrayList {
     public FTableSet() {

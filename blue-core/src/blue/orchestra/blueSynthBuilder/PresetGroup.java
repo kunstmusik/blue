@@ -19,14 +19,12 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author steven

@@ -1,14 +1,12 @@
 package blue.undo;
 
+import blue.BlueSystem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
-
 import javax.swing.JMenuItem;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
-
-import blue.BlueSystem;
 
 /**
  * Title: blue Description: an object composition environment for csound

@@ -20,9 +20,8 @@
 
 package blue.orchestra;
 
-import java.io.Serializable;
-
 import blue.utility.ObjectUtilities;
+import java.io.Serializable;
 
 /**
  * @author Steven Yi

@@ -20,11 +20,10 @@
 
 package blue;
 
-import java.io.Serializable;
-
 import blue.orchestra.Instrument;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * @author Steven Yi

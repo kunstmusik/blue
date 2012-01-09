@@ -20,24 +20,21 @@
 
 package blue.automation;
 
+import blue.components.lines.Line;
+import blue.components.lines.LinePoint;
+import blue.components.lines.LineUtils;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.rmi.dgc.VMID;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-import blue.components.lines.Line;
-import blue.components.lines.LinePoint;
-import blue.components.lines.LineUtils;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * Data class to describe an automatable parameter's properties. This class

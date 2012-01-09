@@ -1,8 +1,7 @@
 package blue.orchestra.editor;
 
-import javax.swing.JComponent;
-
 import blue.orchestra.Instrument;
+import javax.swing.JComponent;
 
 /**
  * Title: blue Description: an object composition environment for csound

@@ -19,12 +19,10 @@
  */
 package blue.soundObject;
 
+import blue.soundObject.pattern.Pattern;
 import junit.framework.TestCase;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-import blue.soundObject.pattern.Pattern;
 
 public class PatternObjectTest extends TestCase {
     public void testClone() {

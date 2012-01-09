@@ -20,22 +20,16 @@
 
 package blue;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.Vector;
-
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
-
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
 import blue.utility.ListUtil;
 import electric.xml.Element;
+import java.io.Serializable;
+import java.util.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 
 /**
  * @author steven

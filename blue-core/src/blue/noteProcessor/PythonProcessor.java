@@ -19,13 +19,11 @@
  */
 package blue.noteProcessor;
 
-import java.io.Serializable;
-
-import org.python.core.PyException;
-
 import blue.scripting.PythonProxy;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
+import java.io.Serializable;
+import org.python.core.PyException;
 
 public class PythonProcessor implements NoteProcessor, Serializable {
 

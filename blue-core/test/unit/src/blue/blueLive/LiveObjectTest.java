@@ -7,9 +7,9 @@
 
 package blue.blueLive;
 
-import junit.framework.TestCase;
 import blue.soundObject.GenericScore;
 import electric.xml.Element;
+import junit.framework.TestCase;
 
 /**
  * 

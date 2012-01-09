@@ -19,19 +19,6 @@
  */
 package blue;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
-
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.automation.Automatable;
 import blue.automation.AutomatableCollectionListener;
 import blue.mixer.Mixer;
@@ -42,7 +29,13 @@ import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.*;
 import java.util.regex.Pattern;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+import org.apache.commons.lang.text.StrBuilder;
 
 /**
  * @author steven

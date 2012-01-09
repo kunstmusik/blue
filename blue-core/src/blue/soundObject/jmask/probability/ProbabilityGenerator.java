@@ -19,8 +19,6 @@
  */
 package blue.soundObject.jmask.probability;
 
-import javax.swing.JComponent;
-
 import electric.xml.Element;
 import java.io.Serializable;
 

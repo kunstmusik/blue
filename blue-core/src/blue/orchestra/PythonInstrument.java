@@ -1,17 +1,15 @@
 package blue.orchestra;
 
-import java.io.Serializable;
-import java.util.HashMap;
-
 import blue.Tables;
 import blue.orchestra.editor.GenericEditable;
-import blue.orchestra.editor.InstrumentEditor;
 import blue.scripting.PythonProxy;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * <p>

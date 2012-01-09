@@ -19,11 +19,11 @@
  */
 package blue.soundObject;
 
-import junit.framework.TestCase;
 import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;
 import blue.soundObject.tracker.TrackList;
 import blue.soundObject.tracker.TrackerNote;
+import junit.framework.TestCase;
 
 public class TrackerObjectTest extends TestCase {
 

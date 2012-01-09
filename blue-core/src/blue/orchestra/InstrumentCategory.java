@@ -20,16 +20,15 @@
 
 package blue.orchestra;
 
+import blue.utility.ListUtil;
+import blue.utility.ObjectUtilities;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
-
-import blue.utility.ListUtil;
-import blue.utility.ObjectUtilities;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author Steven Yi

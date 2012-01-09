@@ -20,16 +20,15 @@
 
 package blue;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import blue.blueLive.LiveObject;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class LiveData implements Serializable {
 

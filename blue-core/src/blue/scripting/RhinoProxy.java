@@ -12,8 +12,10 @@ package blue.scripting;
 //import org.mozilla.javascript.Context;
 //import org.mozilla.javascript.JavaScriptException;
 //import org.mozilla.javascript.Scriptable;
-import javax.script.*;
 import blue.BlueSystem;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 public class RhinoProxy {
 //    private static Context cx;

@@ -19,9 +19,8 @@
  */
 package blue.soundObject.jmask.probability;
 
-import java.io.Serializable;
-
 import blue.soundObject.jmask.Table;
+import java.io.Serializable;
 
 public class DoubleOrTable implements Serializable {
     double value = 0.0;

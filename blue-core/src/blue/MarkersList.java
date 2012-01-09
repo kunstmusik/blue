@@ -19,6 +19,8 @@
  */
 package blue;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
@@ -26,13 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 public class MarkersList implements Serializable, TableModel,
         PropertyChangeListener {

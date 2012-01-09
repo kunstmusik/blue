@@ -22,14 +22,11 @@
 package blue.soundObject.jmask;
 
 //import blue.soundObject.editor.jmask.SegmentEditor;
-import java.io.Serializable;
-
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 public class Segment implements Generator, Serializable, Quantizable,
         Accumulatable {

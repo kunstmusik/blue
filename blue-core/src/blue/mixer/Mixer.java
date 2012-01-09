@@ -20,19 +20,17 @@
 
 package blue.mixer;
 
-import java.io.Serializable;
-import java.text.MessageFormat;
-import java.util.HashMap;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.orchestra.GenericInstrument;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.text.MessageFormat;
+import java.util.HashMap;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.text.StrBuilder;
 
 /**
  * TODO - need to create dependency graph, then do depth first crawl to create

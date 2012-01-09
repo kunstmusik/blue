@@ -20,7 +20,6 @@
 package blue.noteProcessor;
 
 import java.util.StringTokenizer;
-
 import org.apache.commons.lang.text.StrBuilder;
 
 public class TempoMapper {

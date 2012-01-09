@@ -20,25 +20,22 @@
 
 package blue.mixer;
 
+import blue.automation.Automatable;
+import blue.automation.AutomatableCollectionListener;
+import blue.utility.ListUtil;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-
-import blue.automation.Automatable;
-import blue.automation.AutomatableCollectionListener;
-import blue.utility.ListUtil;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 public class EffectsChain implements Serializable, ListModel,
         PropertyChangeListener {

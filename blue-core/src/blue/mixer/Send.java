@@ -20,6 +20,11 @@
 
 package blue.mixer;
 
+import blue.automation.*;
+import blue.components.lines.Line;
+import blue.components.lines.LinePoint;
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -27,17 +32,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-
-import blue.automation.Automatable;
-import blue.automation.Parameter;
-import blue.automation.ParameterList;
-import blue.automation.ParameterListener;
-import blue.automation.ParameterTimeManager;
-import blue.automation.ParameterTimeManagerFactory;
-import blue.components.lines.Line;
-import blue.components.lines.LinePoint;
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author Steven Yi

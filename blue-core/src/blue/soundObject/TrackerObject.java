@@ -20,14 +20,6 @@
 
 package blue.soundObject;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
-import java.util.Iterator;
-import java.util.Vector;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-
 import blue.Arrangement;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
@@ -39,6 +31,12 @@ import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.Vector;
+import org.apache.commons.lang.builder.EqualsBuilder;
 
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 

@@ -20,18 +20,16 @@
 
 package blue.udo;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 /**
  * @author Steven Yi

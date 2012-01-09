@@ -19,12 +19,11 @@
  */
 package blue.components.lines;
 
+import electric.xml.Element;
+import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import electric.xml.Element;
-import electric.xml.Elements;
 
 public class LineList extends ArrayList implements Serializable {
 
