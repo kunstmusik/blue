@@ -19,6 +19,7 @@
  */
 package blue.plaf;
 
+import blue.plaf.netbeans.BlueLFCustoms;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
@@ -33,6 +34,7 @@ import javax.swing.plaf.InputMapUIResource;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 
 /**
@@ -85,6 +87,12 @@ public class Installer extends ModuleInstall {
         }
 
         try {
+
+            UIManager.getDefaults().clear();
+            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
+            UIManager.put("ClassLoader", cl);
+            UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
+
             LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
             UIManager.setLookAndFeel(plaf);
         } catch (Exception e) {
@@ -92,8 +100,8 @@ public class Installer extends ModuleInstall {
         }
 
         
-        UIManager.put("EditorTabDisplayerUI", "blue.plaf.BlueEditorTabDisplayerUI");
-        UIManager.getDefaults().put("ViewTabDisplayerUI", "blue.plaf.BlueViewTabDisplayerUI");
+//        UIManager.put("EditorTabDisplayerUI", "blue.plaf.BlueEditorTabDisplayerUI");
+//        UIManager.getDefaults().put("ViewTabDisplayerUI", "blue.plaf.BlueViewTabDisplayerUI");
 
         UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,BorderFactory.createEmptyBorder());
         UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_OUTER_BORDER,
