@@ -19,8 +19,8 @@ NEW
 
 * Added Brian Wong's "Syzygyr" piece to the examples/pieces/brianWong folder
 
-* Added Dave Seidel's "Drift Study III" piece to the examples/pieces/daveSeidel 
-  folder
+* Added Dave Seidel's "Drift Study III" and "Ansible Cathedral" pieces to the 
+  examples/pieces/daveSeidel folder
 
 * Added Csound API Warmup Task to prevent first time load pause when rendering
 
@@ -31,6 +31,10 @@ NEW
 
 * Reinstated printing of commandline used when rendering, now outputs to Output
   Window of render
+
+Updated
+
+* Worked on theme
 
 INTERNAL
 
