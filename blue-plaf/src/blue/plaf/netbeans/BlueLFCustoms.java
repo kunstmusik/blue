@@ -105,8 +105,8 @@ public final class BlueLFCustoms extends LFCustoms {
             
             "NbTabControl.borderColor", Color.BLACK,
             "NbTabControl.borderShadowColor", new Color(0,0,0, 32),
-"NbTabControl.editorTabBackground", tabBarColor,
-                "NbTabControl.focusedTabBackground", tabBarColor,
+            "NbTabControl.editorTabBackground", new Color(38,51,76).darker(),
+            "NbTabControl.focusedTabBackground", tabBarColor,
 
                 
         }; 
