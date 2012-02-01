@@ -17,6 +17,12 @@ information.
 
 NEW
 
+* New 0dbfs field in project properties for Disk and Realtime render settings;
+  Checkbox enables if 0dbfs will be used. If older projects are found that have
+  0dbfs set in their Global Orchestra, it will be parsed and the field set in 
+  the project, and the old line removed from Global Orchestra.  Program settings
+  added to set defaults for projects (if using 0dbfs and what default value). 
+
 * Added Brian Wong's "Syzygyr" piece to the examples/pieces/brianWong folder
 
 * Added Dave Seidel's "Drift Study III" and "Ansible Cathedral" pieces to the 

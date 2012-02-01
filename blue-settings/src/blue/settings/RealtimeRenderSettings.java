@@ -59,6 +59,8 @@ public class RealtimeRenderSettings implements Serializable {
     private static final String SOFTWARE_BUFFER_SIZE = "softwareBufferSize";
     private static final String WARNINGS_ENABLED = "warningsEnabled";
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
+    private static final String USE_ZERO_DBFS = "useZeroDbFS";
+    private static final String ZERO_DB_FS = "zeroDbFS";
     private static String[] AUDIO_DRIVERS = null;
     private static String[] MIDI_DRIVERS = null;
     // PROPERTIES
@@ -88,6 +90,9 @@ public class RealtimeRenderSettings implements Serializable {
     public int hardwareBufferSize = 1024;
     public boolean displaysDisabled = true;
     public String advancedSettings = "";
+    public boolean useZeroDbFS = true;
+    public String zeroDbFS = "1";
+    
     private static RealtimeRenderSettings instance = null;
 
     private RealtimeRenderSettings() {
@@ -158,6 +163,8 @@ public class RealtimeRenderSettings implements Serializable {
             
             instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
 
+            instance.useZeroDbFS = prefs.getBoolean(USE_ZERO_DBFS, true);
+            instance.zeroDbFS = prefs.get(ZERO_DB_FS, "1");
         }
         return instance;
     }
@@ -200,6 +207,9 @@ public class RealtimeRenderSettings implements Serializable {
         
         prefs.put(ADVANCED_SETTINGS, advancedSettings);
 
+        prefs.putBoolean(USE_ZERO_DBFS, useZeroDbFS);
+        prefs.put(ZERO_DB_FS, zeroDbFS);
+        
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

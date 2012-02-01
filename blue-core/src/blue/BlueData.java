@@ -34,18 +34,18 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.RepetitionObject;
 import blue.soundObject.SoundObject;
 import blue.udo.OpcodeList;
+import blue.upgrades.ProjectUpgrader;
+import blue.upgrades.UpgradeManager;
 import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
+import electric.xml.Attribute;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.Serializable;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Map.Entry;
 import java.util.*;
 
@@ -59,6 +59,8 @@ public class BlueData implements Serializable {
 
     private InstrumentLibrary instrumentLibrary = null; // No Longer in Use
 
+    private String version;
+    
     private Arrangement arrangement;
 
     private Mixer mixer;
@@ -156,6 +158,20 @@ public class BlueData implements Serializable {
         tempo = new Tempo();
 
         midiInputProcessor = new MidiInputProcessor();
+    }
+
+    /**
+     * @return the version
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public PolyObject getPolyObject() {
@@ -300,6 +316,7 @@ public class BlueData implements Serializable {
                 this.liveData.setLiveSoundObjects(temp);
             }
         }
+        
     }
 
     /**
@@ -448,6 +465,11 @@ public class BlueData implements Serializable {
 
         Mixer m = null;
 
+        Attribute versionAttribute = data.getAttribute("version");
+        if (versionAttribute != null) {
+            blueData.setVersion(versionAttribute.getValue());
+        }
+        
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
@@ -530,10 +552,16 @@ public class BlueData implements Serializable {
             blueData.mixer.setEnabled(false);
         }
 
+        UpgradeManager.getInstance().performUpgrades(blueData);
+        
         return blueData;
     }
 
     public Element saveAsXML() {
+        
+        // update version
+        this.version = BlueConstants.getVersion();
+        
         Element retVal = new Element("blueData");
         retVal.setAttribute("version", BlueConstants.getVersion());
 
@@ -710,4 +738,5 @@ public class BlueData implements Serializable {
     public MidiInputProcessor getMidiInputProcessor() {
         return midiInputProcessor;
     }
+
 }

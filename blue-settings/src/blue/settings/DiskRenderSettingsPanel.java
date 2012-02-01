@@ -60,6 +60,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         externalCommandText.getDocument().addDocumentListener(changeListener);
 
         advancedText.getDocument().addDocumentListener(changeListener);
+        zeroDBFSText.getDocument().addDocumentListener(changeListener);
     }
 
     private void fireUpdate() {
@@ -86,6 +87,8 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         csoundExecText = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
+        zeroDBFSCheckBox = new javax.swing.JCheckBox();
+        zeroDBFSText = new javax.swing.JTextField();
         jPanel3 = new javax.swing.JPanel();
         fileFormatCBox = new javax.swing.JCheckBox();
         fileFormatCombo = new javax.swing.JComboBox();
@@ -134,6 +137,15 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(zeroDBFSCheckBox, org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.zeroDBFSCheckBox.text")); // NOI18N
+        zeroDBFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zeroDBFSCheckBoxActionPerformed(evt);
+            }
+        });
+
+        zeroDBFSText.setText(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.zeroDBFSText.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -144,11 +156,13 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel3)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel4))
+                    .addComponent(jLabel4)
+                    .addComponent(zeroDBFSCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(zeroDBFSText)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+                        .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1))
                     .addComponent(srText, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
@@ -175,7 +189,11 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(nchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(zeroDBFSCheckBox)
+                    .addComponent(zeroDBFSText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.jPanel3.border.title_1"))); // NOI18N
@@ -464,7 +482,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 1, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(2, 2, 2)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -562,6 +580,10 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private void disableDisplaysCBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_disableDisplaysCBoxActionPerformed
         fireUpdate();     }//GEN-LAST:event_disableDisplaysCBoxActionPerformed
 
+    private void zeroDBFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDBFSCheckBoxActionPerformed
+        fireUpdate();
+    }//GEN-LAST:event_zeroDBFSCheckBoxActionPerformed
+
     void load() {
         loading = true;
 
@@ -591,6 +613,9 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         disableDisplaysCBox.setSelected(settings.displaysDisabled);
         
         advancedText.setText(settings.advancedSettings);
+        
+        zeroDBFSCheckBox.setSelected(settings.useZeroDbFS);
+        zeroDBFSText.setText(settings.zeroDbFS);
 
         loading = false;
     }
@@ -623,6 +648,9 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         settings.displaysDisabled = disableDisplaysCBox.isSelected();
         
         settings.advancedSettings = advancedText.getText();
+        
+        settings.useZeroDbFS = zeroDBFSCheckBox.isSelected();
+        settings.zeroDbFS = zeroDBFSText.getText();
 
         settings.save();
     }
@@ -664,5 +692,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox savePeakCBox;
     private javax.swing.JTextField srText;
     private javax.swing.JCheckBox warningsCBox;
+    private javax.swing.JCheckBox zeroDBFSCheckBox;
+    private javax.swing.JTextField zeroDBFSText;
     // End of variables declaration//GEN-END:variables
 }

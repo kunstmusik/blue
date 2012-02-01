@@ -55,6 +55,16 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
                         }
                     }
                 });
+        
+        zeroDbFSText.getDocument().addDocumentListener(
+                new SimpleDocumentListener() {
+
+                    public void documentChanged(DocumentEvent e) {
+                        if (projectProperties != null) {
+                            projectProperties.diskZeroDbFS = zeroDbFSText.getText();
+                        }
+                    }
+                });
 
         fileNameText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
@@ -97,6 +107,9 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
             alwayRenderFromStartCBox.setSelected(projectProperties.diskAlwaysRenderEntireProject);
 
+            zeroDbFSCheckBox.setSelected(projectProperties.diskUseZeroDbFS);
+            zeroDbFSText.setText(projectProperties.diskZeroDbFS);
+            
             this.projectProperties = projectProperties;
         }
     }
@@ -129,6 +142,8 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         diskAdvancedSettingsText = new javax.swing.JTextField();
         jButton2 = new javax.swing.JButton();
         alwayRenderFromStartCBox = new javax.swing.JCheckBox();
+        zeroDbFSCheckBox = new javax.swing.JCheckBox();
+        zeroDbFSText = new javax.swing.JTextField();
 
         jLabel5.setText(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.jLabel5.text")); // NOI18N
 
@@ -211,50 +226,48 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        zeroDbFSCheckBox.setText(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.zeroDbFSCheckBox.text")); // NOI18N
+        zeroDbFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zeroDbFSCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(zeroDbFSCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel5)
-                    .addComponent(jLabel15)
-                    .addComponent(jLabel11)
+                    .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel6)
                     .addComponent(jLabel7)
                     .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskAdvancedSettingsText, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
+                        .addComponent(diskAdvancedSettingsText)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton2))
+                    .addComponent(fileNameText)
+                    .addComponent(diskNchnlsText)
+                    .addComponent(diskKsmpsText)
+                    .addComponent(diskSrText)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskOverrideCBox)
-                        .addGap(169, 169, 169))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(alwayRenderFromStartCBox)
-                        .addGap(119, 119, 119))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskBenchmarkCBox)
-                        .addGap(145, 145, 145))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskWarningsCBox)
-                        .addGap(211, 211, 211))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskOutOfRangeCBox)
-                        .addGap(139, 139, 139))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(diskNoteAmpCBox)
-                        .addGap(179, 179, 179))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(askOnRenderCBox)
-                        .addGap(187, 187, 187))
-                    .addComponent(fileNameText, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
-                    .addComponent(diskNchnlsText, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
-                    .addComponent(diskKsmpsText, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
-                    .addComponent(diskSrText, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(diskOverrideCBox)
+                            .addComponent(alwayRenderFromStartCBox)
+                            .addComponent(diskBenchmarkCBox)
+                            .addComponent(diskWarningsCBox)
+                            .addComponent(diskOutOfRangeCBox)
+                            .addComponent(diskNoteAmpCBox)
+                            .addComponent(askOnRenderCBox))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(zeroDbFSText))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -272,7 +285,11 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(diskNchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(zeroDbFSCheckBox)
+                    .addComponent(zeroDbFSText, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel11)
                     .addComponent(fileNameText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -350,6 +367,14 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
                     alwayRenderFromStartCBox.isSelected();
         }
 }//GEN-LAST:event_alwayRenderFromStartCBoxActionPerformed
+
+    private void zeroDbFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDbFSCheckBoxActionPerformed
+         if (projectProperties != null) {
+            projectProperties.diskUseZeroDbFS =
+                    zeroDbFSCheckBox.isSelected();
+        }
+    }//GEN-LAST:event_zeroDbFSCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alwayRenderFromStartCBox;
     private javax.swing.JCheckBox askOnRenderCBox;
@@ -370,6 +395,8 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JCheckBox zeroDbFSCheckBox;
+    private javax.swing.JTextField zeroDbFSText;
     // End of variables declaration//GEN-END:variables
 
 }

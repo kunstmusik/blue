@@ -54,6 +54,16 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                         }
                     }
                 });
+       
+        zeroDbFSText.getDocument().addDocumentListener(
+                new blue.ui.utilities.SimpleDocumentListener() {
+
+                    public void documentChanged(DocumentEvent e) {
+                        if (projectProperties != null) {
+                            projectProperties.zeroDbFS = zeroDbFSText.getText();
+                        }
+                    }
+                });
 
         advancedSettingsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
@@ -86,6 +96,9 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             advancedSettingsText.setText(projectProperties.advancedSettings);
             overrideCBox.setSelected(projectProperties.completeOverride);
 
+            zeroDbFSCheckBox.setSelected(projectProperties.useZeroDbFS);
+            zeroDbFSText.setText(projectProperties.zeroDbFS);
+            
             this.projectProperties = projectProperties;
         }
     }
@@ -119,21 +132,22 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         nchnlsText = new javax.swing.JTextField();
         advancedSettingsText = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
+        zeroDbFSCheckBox = new javax.swing.JCheckBox();
+        zeroDbFSText = new javax.swing.JTextField();
 
-        jLabel4.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel4.text")); // NOI18N
+        jLabel4.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel4.text_1")); // NOI18N
 
-        jLabel3.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel3.text")); // NOI18N
+        jLabel3.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel3.text_1")); // NOI18N
 
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel2.text")); // NOI18N
+        jLabel2.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel2.text_1")); // NOI18N
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel1.text")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel1.text_1")); // NOI18N
 
-        jLabel9.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel9.text")); // NOI18N
+        jLabel9.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel9.text_1")); // NOI18N
 
-        jLabel14.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel14.text")); // NOI18N
+        jLabel14.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel14.text_1")); // NOI18N
 
-        audioInCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInCBox.text")); // NOI18N
-        audioInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        audioInCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInCBox.text_1")); // NOI18N
         audioInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         audioInCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -141,8 +155,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        midiInCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInCBox.text")); // NOI18N
-        midiInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        midiInCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInCBox.text_1")); // NOI18N
         midiInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         midiInCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -150,8 +163,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        midiOutCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutCBox.text")); // NOI18N
-        midiOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        midiOutCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutCBox.text_1")); // NOI18N
         midiOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         midiOutCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -159,8 +171,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        noteAmpCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.noteAmpCBox.text")); // NOI18N
-        noteAmpCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        noteAmpCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.noteAmpCBox.text_1")); // NOI18N
         noteAmpCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         noteAmpCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -168,8 +179,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        overrideCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.overrideCBox.text")); // NOI18N
-        overrideCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        overrideCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.overrideCBox.text_1")); // NOI18N
         overrideCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         overrideCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -177,8 +187,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        benchmarkCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.benchmarkCBox.text")); // NOI18N
-        benchmarkCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        benchmarkCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.benchmarkCBox.text_1")); // NOI18N
         benchmarkCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         benchmarkCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -186,8 +195,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        warningsCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.warningsCBox.text")); // NOI18N
-        warningsCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        warningsCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.warningsCBox.text_1")); // NOI18N
         warningsCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         warningsCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -195,8 +203,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        outOfRangeCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.outOfRangeCBox.text")); // NOI18N
-        outOfRangeCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        outOfRangeCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.outOfRangeCBox.text_1")); // NOI18N
         outOfRangeCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         outOfRangeCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -204,8 +211,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        audioOutCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutCBox.text")); // NOI18N
-        audioOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        audioOutCBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutCBox.text_1")); // NOI18N
         audioOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
         audioOutCBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -213,10 +219,17 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        jButton1.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton1.text")); // NOI18N
+        jButton1.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton1.text_1")); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1openAdvancedFlags(evt);
+            }
+        });
+
+        zeroDbFSCheckBox.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDbFSCheckBox.text")); // NOI18N
+        zeroDbFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zeroDbFSCheckBoxActionPerformed(evt);
             }
         });
 
@@ -227,52 +240,36 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel3)
-                        .addComponent(jLabel2)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 11, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(94, 94, 94)))
-                    .addComponent(jLabel9)
-                    .addComponent(jLabel14)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(zeroDbFSCheckBox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 115, Short.MAX_VALUE)
+                        .addComponent(jLabel9, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(midiOutCBox, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(176, 176, 176))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(overrideCBox, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(148, 148, 148))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(advancedSettingsText, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
+                    .addComponent(ksmpsText)
+                    .addComponent(nchnlsText)
+                    .addComponent(midiOutCBox, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(benchmarkCBox)
+                    .addComponent(warningsCBox)
+                    .addComponent(outOfRangeCBox)
+                    .addComponent(noteAmpCBox)
+                    .addComponent(midiInCBox)
+                    .addComponent(audioInCBox)
+                    .addComponent(audioOutCBox)
+                    .addComponent(srText)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(overrideCBox, javax.swing.GroupLayout.DEFAULT_SIZE, 298, Short.MAX_VALUE)
+                            .addComponent(advancedSettingsText))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(benchmarkCBox)
-                        .addGap(151, 151, 151))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(warningsCBox)
-                        .addGap(217, 217, 217))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(outOfRangeCBox)
-                        .addGap(145, 145, 145))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(noteAmpCBox)
-                        .addGap(185, 185, 185))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(midiInCBox)
-                        .addGap(220, 220, 220))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(audioInCBox)
-                        .addGap(216, 216, 216))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(audioOutCBox)
-                        .addGap(208, 208, 208))
-                    .addComponent(nchnlsText, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE)
-                    .addComponent(ksmpsText, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE)
-                    .addComponent(srText, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addComponent(zeroDbFSText))
+                .addGap(6, 6, 6))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -289,7 +286,11 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(nchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(zeroDbFSCheckBox)
+                    .addComponent(zeroDbFSText, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(1, 1, 1)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(audioOutCBox))
@@ -380,6 +381,13 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 //            + "CommandFlags.html";
 //         URLOpener.openURL(url);
     }//GEN-LAST:event_jButton1openAdvancedFlags
+
+    private void zeroDbFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDbFSCheckBoxActionPerformed
+        if (projectProperties != null) {
+            projectProperties.useZeroDbFS = zeroDbFSCheckBox.isSelected();
+        }
+    }//GEN-LAST:event_zeroDbFSCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField advancedSettingsText;
     private javax.swing.JCheckBox audioInCBox;
@@ -401,6 +409,8 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox overrideCBox;
     private javax.swing.JTextField srText;
     private javax.swing.JCheckBox warningsCBox;
+    private javax.swing.JCheckBox zeroDbFSCheckBox;
+    private javax.swing.JTextField zeroDbFSText;
     // End of variables declaration//GEN-END:variables
 
 }

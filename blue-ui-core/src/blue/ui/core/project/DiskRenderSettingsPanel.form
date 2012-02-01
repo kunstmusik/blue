@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
@@ -18,10 +18,11 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="zeroDbFSCheckBox" max="32767" attributes="0"/>
                   <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel15" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel11" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel15" alignment="0" max="32767" attributes="0"/>
+                  <Component id="jLabel11" alignment="0" max="32767" attributes="0"/>
                   <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -29,42 +30,27 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskAdvancedSettingsText" pref="244" max="32767" attributes="0"/>
+                      <Component id="diskAdvancedSettingsText" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jButton2" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskOverrideCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="169" pref="169" max="169" attributes="0"/>
+                  <Component id="fileNameText" alignment="0" max="32767" attributes="0"/>
+                  <Component id="diskNchnlsText" alignment="0" max="32767" attributes="0"/>
+                  <Component id="diskKsmpsText" alignment="0" max="32767" attributes="0"/>
+                  <Component id="diskSrText" alignment="0" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="diskOverrideCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="alwayRenderFromStartCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="diskBenchmarkCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="diskWarningsCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="diskOutOfRangeCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="diskNoteAmpCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="askOnRenderCBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="157" max="32767" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="alwayRenderFromStartCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="119" pref="119" max="119" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskBenchmarkCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="145" pref="145" max="145" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskWarningsCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="211" pref="211" max="211" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskOutOfRangeCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="139" pref="139" max="139" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="diskNoteAmpCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="179" pref="179" max="179" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="askOnRenderCBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="187" pref="187" max="187" attributes="0"/>
-                  </Group>
-                  <Component id="fileNameText" alignment="0" pref="559" max="32767" attributes="0"/>
-                  <Component id="diskNchnlsText" alignment="0" pref="559" max="32767" attributes="0"/>
-                  <Component id="diskKsmpsText" alignment="0" pref="559" max="32767" attributes="0"/>
-                  <Component id="diskSrText" alignment="0" pref="559" max="32767" attributes="0"/>
+                  <Component id="zeroDbFSText" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -88,7 +74,12 @@
                   <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="diskNchnlsText" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="zeroDbFSCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="zeroDbFSText" alignment="0" min="-2" pref="19" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="fileNameText" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -306,6 +297,18 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="alwayRenderFromStartCBoxActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="zeroDbFSCheckBox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="blue/ui/core/project/Bundle.properties" key="DiskRenderSettingsPanel.zeroDbFSCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zeroDbFSCheckBoxActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JTextField" name="zeroDbFSText">
     </Component>
   </SubComponents>
 </Form>

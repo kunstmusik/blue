@@ -104,6 +104,8 @@ public class BlueProjectManager {
         proj.sampleRate = rtSettings.defaultSr;
         proj.ksmps = rtSettings.defaultKsmps;
         proj.channels = rtSettings.defaultNchnls;
+        proj.useZeroDbFS = rtSettings.useZeroDbFS;
+        proj.zeroDbFS = rtSettings.zeroDbFS;
 
         proj.useAudioOut = rtSettings.audioOutEnabled;
         proj.useAudioIn = rtSettings.audioInEnabled;
@@ -124,6 +126,8 @@ public class BlueProjectManager {
         proj.diskSampleRate = diskSettings.defaultSr;
         proj.diskKsmps = diskSettings.defaultKsmps;
         proj.diskChannels = diskSettings.defaultNchnls;
+        proj.diskUseZeroDbFS = diskSettings.useZeroDbFS;
+        proj.diskZeroDbFS = diskSettings.zeroDbFS;
 
         proj.diskNoteAmpsEnabled = diskSettings.noteAmpsEnabled;
         proj.diskOutOfRangeEnabled = diskSettings.outOfRangeEnabled;

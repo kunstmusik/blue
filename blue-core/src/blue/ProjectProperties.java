@@ -32,17 +32,16 @@ public final class ProjectProperties implements Serializable, Cloneable {
 
 
     public String sampleRate = "44100";
-
     public String ksmps = "1";
-
     public String channels = "2";
-
+    public boolean useZeroDbFS = false; // set false by default for legacy projects
+    public String zeroDbFS = "1";
 
     public String diskSampleRate = "44100";
-
     public String diskKsmps = "1";
-
     public String diskChannels = "2";
+    public boolean diskUseZeroDbFS = false; // set false by default for legacy projects
+    public String diskZeroDbFS = "1";
 
     public String CsOptions = null; // for legacy data
     public String controlRate = null; // to be removed
@@ -136,6 +135,10 @@ public final class ProjectProperties implements Serializable, Cloneable {
                 kr = nodeVal;
             } else if (nodeName.equals("ksmps")) {
                 retVal.ksmps = nodeVal;
+            } else if (nodeName.equals("useZeroDbFS")) {
+                retVal.useZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
+            } else if (nodeName.equals("zeroDbFS")) {
+                retVal.zeroDbFS = nodeVal;
             } else if (nodeName.equals("channels")) {
                 retVal.channels = nodeVal;
             } else if (nodeName.equals("commandLine")) {
@@ -148,6 +151,10 @@ public final class ProjectProperties implements Serializable, Cloneable {
                 retVal.diskChannels = nodeVal;
             } else if (nodeName.equals("diskCommandLine")) {
                 diskCommandLine = nodeVal;
+            } else if (nodeName.equals("diskUseZeroDbFS")) {
+                retVal.diskUseZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
+            } else if (nodeName.equals("diskZeroDbFS")) {
+                retVal.diskZeroDbFS = nodeVal;
             } else if (nodeName.equals("useAudioOut")) {
                 retVal.useAudioOut = Boolean.valueOf(nodeVal).booleanValue();
             } else if (nodeName.equals("useAudioIn")) {
@@ -244,11 +251,15 @@ public final class ProjectProperties implements Serializable, Cloneable {
         retVal.addElement("sampleRate").setText(sampleRate);
         retVal.addElement("ksmps").setText(ksmps);
         retVal.addElement("channels").setText(channels);
+        retVal.addElement(XMLUtilities.writeBoolean("useZeroDbFS", useZeroDbFS));
+        retVal.addElement("zeroDbFS").setText(zeroDbFS);
 
         retVal.addElement("diskSampleRate").setText(diskSampleRate);
         retVal.addElement("diskKsmps").setText(diskKsmps);
         retVal.addElement("diskChannels").setText(diskChannels);
-
+        retVal.addElement(XMLUtilities.writeBoolean("diskUseZeroDbFS", diskUseZeroDbFS));
+        retVal.addElement("diskZeroDbFS").setText(diskZeroDbFS);
+        
         retVal
                 .addElement(XMLUtilities.writeBoolean("useAudioOut",
                         useAudioOut));

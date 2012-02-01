@@ -21,7 +21,6 @@ package blue.settings;
 
 import java.io.Serializable;
 
-import blue.utility.APIUtilities;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
@@ -77,6 +76,10 @@ public class DiskRenderSettings implements Serializable {
 
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
     
+    private static final String USE_ZERO_DBFS = "useZeroDbFS";
+    
+    private static final String ZERO_DB_FS = "zeroDbFS";
+    
     public String csoundExecutable = "csound";
 
     public String fileFormat = "WAV";
@@ -114,6 +117,10 @@ public class DiskRenderSettings implements Serializable {
     public boolean displaysDisabled = true;
     
     public String advancedSettings = "";
+    
+    public boolean useZeroDbFS = true;
+    
+    public String zeroDbFS = "1";
 
     private static DiskRenderSettings instance = null;
 
@@ -160,6 +167,10 @@ public class DiskRenderSettings implements Serializable {
             instance.displaysDisabled = prefs.getBoolean(DISPLAYS_DISABLED, true);
             
             instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
+            
+            instance.useZeroDbFS = prefs.getBoolean(USE_ZERO_DBFS, true);
+            instance.zeroDbFS = prefs.get(ZERO_DB_FS, "1");
+
         }
 
         return instance;
@@ -195,6 +206,9 @@ public class DiskRenderSettings implements Serializable {
         
         prefs.put(ADVANCED_SETTINGS, advancedSettings);
 
+        prefs.putBoolean(USE_ZERO_DBFS, useZeroDbFS);
+        prefs.put(ZERO_DB_FS, zeroDbFS);        
+        
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

@@ -572,6 +572,10 @@ public class CSDRender {
             score.append("sr=").append(projProps.sampleRate).append("\n");
             score.append("ksmps=").append(projProps.getKsmps()).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
+            
+            if(projProps.useZeroDbFS) {
+                score.append("0dbfs=").append(projProps.zeroDbFS).append("\n");
+            }
 
         } else {
 
@@ -584,6 +588,10 @@ public class CSDRender {
             score.append("sr=").append(projProps.diskSampleRate).append("\n");
             score.append("ksmps=").append(projProps.diskKsmps).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
+            
+            if(projProps.diskUseZeroDbFS) {
+                score.append("0dbfs=").append(projProps.diskZeroDbFS).append("\n");
+            }
         }
 
         score.append("\n");

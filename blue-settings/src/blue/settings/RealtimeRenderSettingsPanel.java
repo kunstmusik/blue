@@ -71,6 +71,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         midiInText.getDocument().addDocumentListener(changeListener);
 
         advancedText.getDocument().addDocumentListener(changeListener);
+        zeroDBFSText.getDocument().addDocumentListener(changeListener);
     }
 
     private void fireUpdate() {
@@ -118,6 +119,8 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         jLabel4 = new javax.swing.JLabel();
         csoundExecText = new javax.swing.JTextField();
         jButton5 = new javax.swing.JButton();
+        zeroDBFSCheckBox = new javax.swing.JCheckBox();
+        zeroDBFSText = new javax.swing.JTextField();
         jPanel2 = new javax.swing.JPanel();
         softwareBufferCBox = new javax.swing.JCheckBox();
         hardwareBufferCBox = new javax.swing.JCheckBox();
@@ -176,6 +179,15 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(zeroDBFSCheckBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSCheckBox.text")); // NOI18N
+        zeroDBFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zeroDBFSCheckBoxActionPerformed(evt);
+            }
+        });
+
+        zeroDBFSText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSText.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -186,14 +198,16 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel4)
                     .addComponent(jLabel3)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel1))
+                    .addComponent(jLabel1)
+                    .addComponent(zeroDBFSCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(zeroDBFSText)
                     .addComponent(nchnlsText, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
                     .addComponent(ksmpsText, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
                     .addComponent(srText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
+                        .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jButton5)))
                 .addContainerGap())
@@ -217,7 +231,10 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(nchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(zeroDBFSCheckBox)
+                    .addComponent(zeroDBFSText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel2.border.title_1"))); // NOI18N
@@ -497,9 +514,9 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
                             .addComponent(audioOutText, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(midiOutButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 0, Short.MAX_VALUE)
-                            .addComponent(midiInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 0, Short.MAX_VALUE)
-                            .addComponent(audioInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 0, Short.MAX_VALUE)
+                            .addComponent(midiOutButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
+                            .addComponent(midiInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
+                            .addComponent(audioInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
                             .addComponent(audioOutButton, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addComponent(audioDriverCombo, 0, 519, Short.MAX_VALUE)
                     .addComponent(midiDriverCombo, 0, 519, Short.MAX_VALUE))
@@ -785,6 +802,10 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         fireUpdate();
     }//GEN-LAST:event_disableDisplaysCBoxActionPerformed
 
+    private void zeroDBFSCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zeroDBFSCheckBoxActionPerformed
+        fireUpdate();
+    }//GEN-LAST:event_zeroDBFSCheckBoxActionPerformed
+
     void load() {
         loading = true;
 
@@ -823,6 +844,9 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         disableDisplaysCBox.setSelected(settings.displaysDisabled);
         
         advancedText.setText(settings.advancedSettings);
+        
+        zeroDBFSCheckBox.setSelected(settings.useZeroDbFS);
+        zeroDBFSText.setText(settings.zeroDbFS);
 
         loading = false;
     }
@@ -866,6 +890,9 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 
         settings.advancedSettings = advancedText.getText();
 
+        settings.useZeroDbFS = zeroDBFSCheckBox.isSelected();
+        settings.zeroDbFS = zeroDBFSText.getText();
+        
         settings.save();
     }
 
@@ -916,5 +943,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JSpinner softwareBufferSpinner;
     private javax.swing.JTextField srText;
     private javax.swing.JCheckBox warningsCBox;
+    private javax.swing.JCheckBox zeroDBFSCheckBox;
+    private javax.swing.JTextField zeroDBFSText;
     // End of variables declaration//GEN-END:variables
 }
