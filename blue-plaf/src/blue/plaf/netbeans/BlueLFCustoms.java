@@ -98,15 +98,15 @@ public final class BlueLFCustoms extends LFCustoms {
             
             "NbTabControl.selectedTabDarkerBackground", tabBarColor.darker(),
             "NbTabControl.selectedTabBrighterBackground", tabBarColor,
-            "NbTabControl.mouseoverTabBrighterBackground", tabBarColor.darker().darker(),
-            "NbTabControl.mouseoverTabDarkerBackground",tabBarColor.darker(),
-            "NbTabControl.inactiveTabBrighterBackground", tabBarColor.darker().darker().darker(),
-            "NbTabControl.inactiveTabDarkerBackground",tabBarColor.darker().darker(),
+            "NbTabControl.mouseoverTabBrighterBackground", tabBarColor.darker().darker().darker(),
+            "NbTabControl.mouseoverTabDarkerBackground",tabBarColor.darker().darker(),
+            "NbTabControl.inactiveTabBrighterBackground", tabBarColor.darker().darker(),
+            "NbTabControl.inactiveTabDarkerBackground",tabBarColor.darker(),
             
             "NbTabControl.borderColor", Color.BLACK,
             "NbTabControl.borderShadowColor", new Color(0,0,0, 32),
             "NbTabControl.editorTabBackground", new Color(38,51,76).darker(),
-            "NbTabControl.focusedTabBackground", tabBarColor,
+            "NbTabControl.focusedTabBackground", tabBarColor.brighter(),
 
                 
         }; 
