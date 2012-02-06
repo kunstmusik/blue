@@ -6,7 +6,7 @@ import blue.udo.UserDefinedOpcode;
 import blue.utility.MusicFunctions;
 import blue.utility.NumberUtilities;
 import java.util.*;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * A Mixer's channels and subchannels are translated to a MixerNode graph that

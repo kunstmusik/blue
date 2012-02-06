@@ -12,8 +12,6 @@ import blue.noteProcessor.TempoMapper;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
-import org.apache.commons.lang.text.StrBuilder;
-
 import blue.Arrangement;
 import blue.BlueConstants;
 import blue.BlueData;
@@ -45,7 +43,8 @@ import blue.utility.ScoreUtilities;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrBuilder;
 
 public class CSDRender {
 

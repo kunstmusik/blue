@@ -29,8 +29,8 @@ import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.HashMap;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * TODO - need to create dependency graph, then do depth first crawl to create

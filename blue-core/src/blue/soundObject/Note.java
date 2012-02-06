@@ -26,7 +26,7 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ScoreExpressionParser;
 import java.io.Serializable;
 import java.util.ArrayList;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:

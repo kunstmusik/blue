@@ -109,7 +109,7 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.apache.commons.lang</code-name-base>
+                    <code-name-base>org.apache.commons.lang3</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>

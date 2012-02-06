@@ -3,7 +3,7 @@ package blue.soundObject;
 import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * Title: blue Description: an object composition environment for csound

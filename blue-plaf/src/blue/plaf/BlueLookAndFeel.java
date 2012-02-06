@@ -7,14 +7,12 @@ import java.awt.Insets;
 
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.UIDefaults;
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.InputMapUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
 
@@ -115,61 +113,34 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
-        table.put("Table.gridColor", new javax.swing.plaf.ColorUIResource(
-                Color.darkGray));
-        table.put("SplitPane.highlight", table.getColor("controlShadow"));
-        table.put("SplitPane.darkShadow", table.getColor("window"));
-        table.put("SplitPane.dividerSize", new Integer(5));
+        
+                Object[] defaults = {
+        
+            "Table.gridColor", new javax.swing.plaf.ColorUIResource(
+                Color.darkGray),
+            
+            "SplitPane.highlight", table.getColor("controlShadow"),
+            "SplitPane.darkShadow", table.getColor("window"),
+            "SplitPane.dividerSize", new Integer(5),
 
-        table.put("TableHeader.cellBorder", new BlueTableBorder());
+            "TableHeader.cellBorder", new BlueTableBorder(),
 
-        table.put("ToolTip.foreground", new ColorUIResource(Color.black));
+            "ToolTip.foreground", new ColorUIResource(Color.black),
 
-        // Object a = table.get("Scrollbar.hilight");
-        // table.put("Scrollbar.hilight", table.get("Scrollbar.shadow"));
-        // table.put("Scrollbar.shadow", a);
+            "Button.border", BlueBorderUtilities.getButtonBorder(),
+            "ToggleButton.border", BlueBorderUtilities
+                    .getToggleButtonBorder(),
+            "TextField.border", BlueBorderUtilities.getTextFieldBorder(),
+            "TableHeader.cellBorder", new BlueTableHeaderBorder(),
 
-        table.put("Button.border", BlueBorderUtilities.getButtonBorder());
-        table.put("ToggleButton.border", BlueBorderUtilities
-                .getToggleButtonBorder());
-        table.put("TextField.border", BlueBorderUtilities.getTextFieldBorder());
-        table.put("TableHeader.cellBorder", new BlueTableHeaderBorder());
+            "SplitPane.dividerSize", new Integer(6),
 
-        table.put("SplitPane.dividerSize", new Integer(6));
+            "ScrollPane.border", BorderFactory.createLineBorder(getCurrentTheme().getControl()),
+            //"ScrollPane.border", BlueBorderUtilities.getTextBorder(),
+            "ScrollPane.viewportBorder", null,
+        };
 
-        table.put("ScrollPane.border", BlueBorderUtilities.getTextBorder());
-
-        // table.put("Menu.font", new FontUIResource("Dialog", Font.PLAIN, 12));
-        // table.put("MenuItem.font", new FontUIResource("Dialog", Font.PLAIN,
-        // 12));
-
-//        String osName = System.getProperty("os.name");
-//
-//        if (osName.toLowerCase().indexOf("mac") >= 0) {
-//
-//            Enumeration keys = table.keys();
-//
-//            ArrayList inputMapKeys = new ArrayList();
-//
-//            while (keys.hasMoreElements()) {
-//                String key = keys.nextElement().toString();
-//
-//                if (key.indexOf("InputMap") >= 0) {
-//                    inputMapKeys.add(key);
-//                }
-//            }
-//
-//            for (int i = 0; i < inputMapKeys.size(); i++) {
-//                Object obj = table.get(inputMapKeys.get(i));
-//
-//                if (obj instanceof InputMapUIResource) {
-//                    InputMapUIResource inputMap = (InputMapUIResource) obj;
-//
-//                    setupForOSX(inputMap);
-//                }
-//            }
-//
-//        }
+        table.putDefaults(defaults);
     }
 
     private void setupForOSX(InputMap inputMap) {

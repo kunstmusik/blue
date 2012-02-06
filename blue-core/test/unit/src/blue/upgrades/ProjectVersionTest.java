@@ -19,8 +19,8 @@
  */
 package blue.upgrades;
 
-import org.junit.*;
 import static org.junit.Assert.*;
+import org.junit.*;
 
 /**
  *

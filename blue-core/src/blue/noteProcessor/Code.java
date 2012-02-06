@@ -20,7 +20,7 @@
 package blue.noteProcessor;
 
 import java.io.Serializable;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class Code implements Serializable {
 

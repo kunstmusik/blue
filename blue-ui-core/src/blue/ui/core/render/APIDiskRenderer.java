@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Vector;
 
 
-import org.apache.commons.lang.text.StrBuilder;
 
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
@@ -14,9 +13,9 @@ import blue.noteProcessor.TempoMapper;
 import blue.settings.PlaybackSettings;
 import csnd.Csound;
 import csnd.CsoundArgVList;
-import csnd.csnd;
 import java.awt.Color;
 import java.io.IOException;
+import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;

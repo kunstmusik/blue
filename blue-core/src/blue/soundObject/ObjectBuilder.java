@@ -34,7 +34,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
 public class ObjectBuilder extends AbstractSoundObject {

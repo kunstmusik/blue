@@ -32,8 +32,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * This Line class is used in a number of places in blue. For situations like

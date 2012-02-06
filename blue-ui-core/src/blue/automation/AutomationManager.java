@@ -32,8 +32,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.InstrumentAssignment;
@@ -48,6 +46,7 @@ import blue.mixer.Send;
 import blue.orchestra.Instrument;
 import blue.soundObject.PolyObject;
 import blue.soundObject.PolyObjectListener;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 

@@ -2,10 +2,10 @@ package blue.ui.core.render;
 
 
 import java.io.IOException;
-import org.apache.commons.lang.text.StrBuilder;
 
 import csnd.Csound;
 import csnd.CsoundCallbackWrapper;
+import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
 import org.openide.windows.InputOutput;
 

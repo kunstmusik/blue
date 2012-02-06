@@ -36,7 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 

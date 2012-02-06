@@ -23,8 +23,8 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.*;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.text.StrBuilder;
 
 public class ParameterList implements Serializable {
     private static final Comparator<Parameter> comparator = new Comparator<Parameter>() {
