@@ -138,6 +138,11 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             "ScrollPane.border", BorderFactory.createLineBorder(getCurrentTheme().getControl()),
             //"ScrollPane.border", BlueBorderUtilities.getTextBorder(),
             "ScrollPane.viewportBorder", null,
+            
+            "ScrollBar.width", 14,
+            "ScrollBar.background", getCurrentTheme().getControl().darker(),
+            "ScrollBar.shadow", getCurrentTheme().getControl().darker(),
+            "ScrollBar.darkShadow", getCurrentTheme().getControl().darker(),
         };
 
         table.putDefaults(defaults);
