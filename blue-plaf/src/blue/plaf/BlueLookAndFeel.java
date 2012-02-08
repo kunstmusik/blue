@@ -7,12 +7,19 @@ import java.awt.Insets;
 
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.UIDefaults;
 import javax.swing.border.AbstractBorder;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.InputMapUIResource;
+import javax.swing.plaf.basic.BasicBorders;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
 
@@ -55,8 +62,8 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
     protected void initClassDefaults(UIDefaults table) {
         super.initClassDefaults(table);
 
-        // putDefault(table, "ButtonUI");
-        // putDefault(table, "ToggleButtonUI");
+        putDefault(table, "ButtonUI");
+        putDefault(table, "ToggleButtonUI");
         putDefault(table, "TabbedPaneUI");
         putDefault(table, "TextFieldUI");
         // putDefault(table, "TextFieldUI");
@@ -114,7 +121,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
         
-                Object[] defaults = {
+        Object[] defaults = {
         
             "Table.gridColor", new javax.swing.plaf.ColorUIResource(
                 Color.darkGray),
@@ -128,6 +135,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             "ToolTip.foreground", new ColorUIResource(Color.black),
 
             "Button.border", BlueBorderUtilities.getButtonBorder(),
+//            "Button.border", new BorderUIResource.CompoundBorderUIResource(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), new BasicBorders.MarginBorder()),
             "ToggleButton.border", BlueBorderUtilities
                     .getToggleButtonBorder(),
             "TextField.border", BlueBorderUtilities.getTextFieldBorder(),
@@ -136,7 +144,6 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             "SplitPane.dividerSize", new Integer(6),
 
             "ScrollPane.border", BorderFactory.createLineBorder(getCurrentTheme().getControl()),
-            //"ScrollPane.border", BlueBorderUtilities.getTextBorder(),
             "ScrollPane.viewportBorder", null,
             
             "ScrollBar.width", 14,
@@ -146,6 +153,38 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         };
 
         table.putDefaults(defaults);
+
+        // table.put("Menu.font", new FontUIResource("Dialog", Font.PLAIN, 12));
+        // table.put("MenuItem.font", new FontUIResource("Dialog", Font.PLAIN,
+        // 12));
+
+//        String osName = System.getProperty("os.name");
+//
+//        if (osName.toLowerCase().indexOf("mac") >= 0) {
+//
+//            Enumeration keys = table.keys();
+//
+//            ArrayList inputMapKeys = new ArrayList();
+//
+//            while (keys.hasMoreElements()) {
+//                String key = keys.nextElement().toString();
+//
+//                if (key.indexOf("InputMap") >= 0) {
+//                    inputMapKeys.add(key);
+//                }
+//            }
+//
+//            for (int i = 0; i < inputMapKeys.size(); i++) {
+//                Object obj = table.get(inputMapKeys.get(i));
+//
+//                if (obj instanceof InputMapUIResource) {
+//                    InputMapUIResource inputMap = (InputMapUIResource) obj;
+//
+//                    setupForOSX(inputMap);
+//                }
+//            }
+//
+//        }
     }
 
     private void setupForOSX(InputMap inputMap) {
@@ -198,6 +237,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // being very difficult to see
         table.put("textHighlight", getTranslucentColor(getTextHighlightColor(),
                 128));
+        table.put("text", getWhite());
     }
 
     // helper to simplify creation of translucent colors
