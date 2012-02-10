@@ -271,8 +271,8 @@ public class BlueBorderUtilities {
         drawSimple3DBorder(g, x + 1, y + 1, w - 2, h - 2, BlueLookAndFeel
                 .getControlDarkShadow(), BlueLookAndFeel.getControlHighlight());
 
-        g.setColor(Color.WHITE);
-        g.drawLine( x + 1, y + 1, x + w - 3, y + 1);
+        g.setColor(new Color(255,255,255, 128));
+        g.drawLine( x + 2, y + 2, x + w - 3, y + 2);
         //g.drawRect(x, y, w - 1, h - 1);
     }
 
