@@ -53,12 +53,13 @@ public class BlueToggleButtonUI extends MetalToggleButtonUI {
 
             Dimension size = c.getSize();
 
-            if (gp == null || cachedWidth != size.width || cachedHeight != size.height) {
-                
-                Color bgColor = c.getBackground();
-                if (bgColor == null) {
-                    bgColor = BlueLookAndFeel.getControl();
-                }
+            Color bgColor = c.getBackground();
+            if (bgColor == null) {
+                bgColor = BlueLookAndFeel.getControl();
+            }
+
+            if (gp == null || !gp.getColor2().equals(bgColor) ||
+                cachedWidth != size.width || cachedHeight != size.height) {
 
                 gp = new GradientPaint(0, 0, bgColor.brighter(), 0, size.height / 2, bgColor);
 

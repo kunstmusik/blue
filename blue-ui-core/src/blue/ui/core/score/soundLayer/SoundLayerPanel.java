@@ -486,7 +486,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         } else {
             noteProcessorButton.setBackground(null);
         }
-        noteProcessorButton.updateUI();
     }// GEN-LAST:event_noteProcessorButtonActionPerformed
 
     private void soloToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_soloToggleButtonActionPerformed
