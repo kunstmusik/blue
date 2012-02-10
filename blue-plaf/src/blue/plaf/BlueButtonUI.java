@@ -1,6 +1,23 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * blue - object composition environment for csound
+ * Copyright (c) 2012 Steven Yi (stevenyi@gmail.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published
+ * by  the Free Software Foundation; either version 2 of the License or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
+ * Boston, MA  02111-1307 USA
+ *
+ * This file uses code from MetouiaButtonBorder.java by Taoufik Romdhane.
  */
 package blue.plaf;
 
@@ -20,7 +37,10 @@ public class BlueButtonUI extends MetalButtonUI {
 
     int cachedWidth = -1;
     int cachedHeight = -1;
+    int pressedCachedWidth = -1;
+    int pressedCachedHeight = -1;
     GradientPaint gp = null;
+    GradientPaint pressedGp = null;
 
     public static ComponentUI createUI(JComponent c) {
         return new BlueButtonUI();
@@ -31,19 +51,27 @@ public class BlueButtonUI extends MetalButtonUI {
         super.update(g, c);
 
 //        if (!(c.getParent() instanceof JToolBar)) {
-            Graphics2D g2d = (Graphics2D) g;
+        Graphics2D g2d = (Graphics2D) g;
 
-            Dimension size = c.getSize();
+        Dimension size = c.getSize();
 
-            if (gp == null || cachedWidth != size.width || cachedHeight != size.height) {
-                gp = new GradientPaint(0, 0, BlueLookAndFeel.getControl().brighter(), 0, size.height / 2, BlueLookAndFeel.getControl());
+        if (gp == null || cachedWidth != size.width || cachedHeight != size.height) {
+            
+            Color bgColor = c.getBackground();
+            if (bgColor == null) {
+                bgColor = BlueLookAndFeel.getControl();
             }
+            
+            gp = new GradientPaint(0, 0, bgColor.brighter(), 0, size.height / 2, bgColor);
+            cachedWidth = size.width;
+            cachedHeight = size.height;
+        }
 
-            Paint p = g2d.getPaint();
-            g2d.setPaint(gp);
+        Paint p = g2d.getPaint();
+        g2d.setPaint(gp);
 //            g2d.fillRoundRect(0, 0, size.width, size.height, 4, 4);
-            g2d.fillRect(0, 0, size.width, size.height);
-            g2d.setPaint(p);
+        g2d.fillRect(0, 0, size.width, size.height);
+        g2d.setPaint(p);
 //        }
 
         paint(g, c);
@@ -61,10 +89,30 @@ public class BlueButtonUI extends MetalButtonUI {
     @Override
     protected void paintButtonPressed(Graphics g, AbstractButton b) {
         if (b.isContentAreaFilled()) {
+//            Dimension size = b.getSize();
+//            g.setColor(getSelectColor());
+////            g.fillRoundRect(2, 2, size.width - 4, size.height - 4, 4, 4);
+//            g.fillRect(0, 0, size.width - 1, size.height - 1);
+
+            Graphics2D g2d = (Graphics2D) g;
+
             Dimension size = b.getSize();
-            g.setColor(getSelectColor());
-//            g.fillRoundRect(2, 2, size.width - 4, size.height - 4, 4, 4);
-            g.fillRect(0, 0, size.width - 1, size.height - 1);
+
+            if (pressedGp == null || pressedCachedWidth != size.width
+                    || pressedCachedHeight != size.height) {
+                pressedGp = new GradientPaint(0, 0, getSelectColor().brighter(),
+                        0, size.height / 2, getSelectColor());
+
+                pressedCachedWidth = size.width;
+                pressedCachedHeight = size.height;
+            }
+
+            Paint p = g2d.getPaint();
+            g2d.setPaint(pressedGp);
+//            g2d.fillRoundRect(0, 0, size.width, size.height, 4, 4);
+            g2d.fillRect(0, 0, size.width, size.height);
+            g2d.setPaint(p);
+
         }
     }
 }

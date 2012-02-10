@@ -76,8 +76,8 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         initComponents();
         setSelected(false);
 
-        muteToggleButton.setUI(new ToggleButtonColorUI(Color.ORANGE.darker()));
-        soloToggleButton.setUI(new ToggleButtonColorUI(Color.GREEN.darker()));
+        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
     }
 
     public void setAutomatable(boolean val) {
@@ -486,6 +486,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         } else {
             noteProcessorButton.setBackground(null);
         }
+        noteProcessorButton.updateUI();
     }// GEN-LAST:event_noteProcessorButtonActionPerformed
 
     private void soloToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_soloToggleButtonActionPerformed
@@ -621,19 +622,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     private javax.swing.JToggleButton soloToggleButton;
 
     // End of variables declaration//GEN-END:variables
-
-    class ToggleButtonColorUI extends
-            javax.swing.plaf.metal.MetalToggleButtonUI {
-        Color color;
-
-        public ToggleButtonColorUI(Color c) {
-            color = c;
-        }
-
-        public Color getSelectColor() {
-            return color;
-        }
-    }
 
     static class SoundLayerPanelMenu extends JPopupMenu {
         SoundLayer soundLayer = null;

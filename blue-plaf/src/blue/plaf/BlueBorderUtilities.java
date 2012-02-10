@@ -269,10 +269,11 @@ public class BlueBorderUtilities {
      */
     static void drawDefaultButtonBorder(Graphics g, int x, int y, int w, int h) {
         drawSimple3DBorder(g, x + 1, y + 1, w - 2, h - 2, BlueLookAndFeel
-                .getControlHighlight(), BlueLookAndFeel.getControlShadow());
+                .getControlDarkShadow(), BlueLookAndFeel.getControlHighlight());
 
-        g.setColor(BlueLookAndFeel.getControlDarkShadow());
-        g.drawRect(x, y, w - 1, h - 1);
+        g.setColor(Color.WHITE);
+        g.drawLine( x + 1, y + 1, x + w - 3, y + 1);
+        //g.drawRect(x, y, w - 1, h - 1);
     }
 
     /**
