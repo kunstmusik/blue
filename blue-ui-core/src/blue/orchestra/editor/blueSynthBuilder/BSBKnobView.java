@@ -20,24 +20,11 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -48,7 +35,7 @@ import blue.utility.NumberUtilities;
 
 /**
  * @author steven
- * 
+ *
  * To change the template for this generated type comment go to Window -
  * Preferences - Java - Code Generation - Code and Comments
  */
@@ -56,21 +43,11 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         PropertyChangeListener {
 
     private static final int VALUE_HEIGHT = 14;
-
     BSBKnob knob;
-
     Knob knobView;
-
-    JLabel valueDisplay = new JLabel("0.0");
-
-    JTextField valueField = new JTextField();
-
-    JPanel valuePanel = new JPanel();
-
-    CardLayout cards = new CardLayout();
+    ValuePanel valuePanel = new ValuePanel();
 
     ChangeListener cl;
-
     boolean updating = false;
 
     /**
@@ -91,48 +68,39 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
                     updateKnobValue();
                 }
             }
-
         };
 
-        knobView.setPreferredSize(new Dimension(knob.getKnobWidth(), knob
-                .getKnobWidth()));
+        knobView.setPreferredSize(new Dimension(knob.getKnobWidth(), knob.getKnobWidth()));
         knobView.addChangeListener(cl);
-
-        valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
-        valueDisplay.setPreferredSize(new Dimension(knob.getKnobWidth(),
-                VALUE_HEIGHT));
-        valueDisplay.setBorder(new LineBorder(Color.gray, 1));
-
-        valueDisplay.addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                if (e.getClickCount() >= 2) {
-                    editField();
-                }
-            }
-        });
-
-        valueField.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                setValueFromField();
-            }
-
-        });
-
-        valueField.addFocusListener(new FocusAdapter() {
-
-            public void focusLost(FocusEvent e) {
-                cards.show(valuePanel, "display");
-            }
-
-        });
 
         valuePanel.setPreferredSize(new Dimension(knob.getKnobWidth(),
                 VALUE_HEIGHT));
-        valuePanel.setLayout(cards);
-        valuePanel.add(valueDisplay, "display");
-        valuePanel.add(valueField, "edit");
-        cards.show(valuePanel, "display");
+
+        valuePanel.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+
+                if ("value".equals(evt.getPropertyName())) {
+                    try {
+                        float val = Float.parseFloat(valuePanel.getPendingValue());
+
+                        BSBKnob knob = BSBKnobView.this.knob;
+
+                        if (val <= knob.getMaximum() && val >= knob.getMinimum()) {
+                            float range = knob.getMaximum() - knob.getMinimum();
+                            float newVal = (val - knob.getMinimum()) / range;
+
+                            knobView.setVal(newVal);
+                            knob.setValue(val);
+                            updateValueDisplay();
+                        }
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+
+            }
+        });
 
         float val = knob.getValue();
         val = (val - knob.getMinimum())
@@ -154,40 +122,6 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         updating = false;
     }
 
-    protected void editField() {
-        float val = knob.getValue();
-        // float range = knob.getMaximum() - knob.getMinimum();
-        //
-        // val = (val * range) + knob.getMinimum();
-
-        String strVal = NumberUtilities.formatFloat(val);
-
-        valueField.setText(strVal);
-        cards.show(valuePanel, "edit");
-
-        valueField.requestFocus();
-        valueField.setCaretPosition(strVal.length());
-        valueField.moveCaretPosition(0);
-    }
-
-    protected void setValueFromField() {
-        try {
-            float val = Float.parseFloat(valueField.getText());
-
-            if (val <= knob.getMaximum() && val >= knob.getMinimum()) {
-                float range = knob.getMaximum() - knob.getMinimum();
-                float newVal = (val - knob.getMinimum()) / range;
-
-                knobView.setVal(newVal);
-                knob.setValue(val);
-                updateValueDisplay();
-            }
-        } catch (NumberFormatException nfe) {
-
-        }
-        cards.show(valuePanel, "display");
-    }
-
     protected void updateKnobValue() {
         float value = knobView.getValue();
         value = (value * (knob.getMaximum() - knob.getMinimum()))
@@ -207,8 +141,8 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             strVal = strVal.substring(0, 7);
         }
 
-        valueDisplay.setText(strVal);
-        valueDisplay.setToolTipText(strVal);
+        valuePanel.setValue(strVal);
+
     }
 
     public float getMinimum() {
@@ -266,7 +200,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         knobView.setPreferredSize(d);
         knobView.setSize(d);
 
-        d = new Dimension(knobWidth, knobWidth + valueDisplay.getHeight());
+        d = new Dimension(knobWidth, knobWidth + valuePanel.getHeight());
 
         this.setPreferredSize(d);
         this.setSize(d);

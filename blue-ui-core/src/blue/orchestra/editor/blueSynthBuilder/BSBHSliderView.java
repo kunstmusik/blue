@@ -20,14 +20,11 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -47,7 +44,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
 
     private final ValueSlider valSlider;
 
-    private final JLabel valueDisplay = new JLabel();
+    ValuePanel valuePanel = new ValuePanel();
 
     private boolean updating = false;
 
@@ -77,18 +74,41 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
 
         updateSliderSettings();
 
-        valueDisplay.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
+        valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
-        valueDisplay.setBorder(new LineBorder(Color.gray, 1));
 
         this.setLayout(new BorderLayout());
         this.add(valSlider, BorderLayout.CENTER);
-        this.add(valueDisplay, BorderLayout.EAST);
+        this.add(valuePanel, BorderLayout.EAST);
 
         updateValueText();
 
         slider.addPropertyChangeListener(this);
         updating = false;
+        
+        valuePanel.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+
+                if ("value".equals(evt.getPropertyName())) {
+                    try {
+                        float val = Float.parseFloat(valuePanel.getPendingValue());
+                        
+                        updating = true;
+                        
+                        BSBHSliderView.this.slider.setValue(val);
+                        
+                        updateSliderSettings();
+                        updateValueText();
+
+                        updating = false;
+                        
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -121,8 +141,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
             newVal = (valSlider.getValue() * .01f) + this.slider.getMinimum();
         }
         String valueStr = NumberUtilities.formatFloat(newVal);
-        valueDisplay.setText(valueStr);
-        valueDisplay.setToolTipText(valueStr);
+        valuePanel.setValue(valueStr);
     }
 
     protected void updateValue() {
@@ -135,7 +154,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
             newVal = (valSlider.getValue() * .01f) + slider.getMinimum();
         }
 
-        valueDisplay.setText(NumberUtilities.formatFloat(newVal));
+        valuePanel.setValue(NumberUtilities.formatFloat(newVal));
         slider.setValue(newVal);
     }
 
@@ -220,7 +239,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
         valSlider.setPreferredSize(d);
         valSlider.setSize(d);
 
-        d = new Dimension(sliderWidth + valueDisplay.getWidth(), 30);
+        d = new Dimension(sliderWidth + valuePanel.getWidth(), 30);
 
         this.setPreferredSize(d);
         this.setSize(d);

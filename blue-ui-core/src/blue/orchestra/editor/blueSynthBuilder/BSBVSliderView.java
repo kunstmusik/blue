@@ -25,7 +25,6 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
@@ -44,15 +43,10 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
         PropertyChangeListener {
 
     private static final int VALUE_DISPLAY_HEIGHT = 30;
-
     private static final int VALUE_DISPLAY_WIDTH = 50;
-
     private final BSBVSlider slider;
-
     private final ValueSlider valSlider;
-
-    private final JLabel valueDisplay = new JLabel();
-
+    ValuePanel valuePanel = new ValuePanel();
     private boolean updating = false;
 
     /**
@@ -82,19 +76,41 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
 
         updateSliderSettings();
 
-        valueDisplay.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
+        valuePanel.setPreferredSize(new Dimension(VALUE_DISPLAY_WIDTH,
                 VALUE_DISPLAY_HEIGHT));
-        valueDisplay.setBorder(new LineBorder(Color.gray, 1));
-        valueDisplay.setHorizontalAlignment(SwingConstants.CENTER);
 
         this.setLayout(new BorderLayout());
         this.add(valSlider, BorderLayout.CENTER);
-        this.add(valueDisplay, BorderLayout.SOUTH);
+        this.add(valuePanel, BorderLayout.SOUTH);
 
         updateValueText();
 
         slider.addPropertyChangeListener(this);
         updating = false;
+        
+        valuePanel.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+
+                if ("value".equals(evt.getPropertyName())) {
+                    try {
+                        float val = Float.parseFloat(valuePanel.getPendingValue());
+                        
+                        updating = true;
+                        
+                        BSBVSliderView.this.slider.setValue(val);
+                        
+                        updateSliderSettings();
+                        updateValueText();
+
+                        updating = false;
+                        
+                    } catch (NumberFormatException nfe) {
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -127,8 +143,7 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
             newVal = (valSlider.getValue() * .01f) + this.slider.getMinimum();
         }
         String valueStr = NumberUtilities.formatFloat(newVal);
-        valueDisplay.setText(valueStr);
-        valueDisplay.setToolTipText(valueStr);
+        valuePanel.setValue(valueStr);
     }
 
     protected void updateValue() {
@@ -141,7 +156,7 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
             newVal = (valSlider.getValue() * .01f) + slider.getMinimum();
         }
 
-        valueDisplay.setText(NumberUtilities.formatFloat(newVal));
+        valuePanel.setValue(NumberUtilities.formatFloat(newVal));
         slider.setValue(newVal);
     }
 
@@ -163,7 +178,9 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
         updateSliderSettings();
     }
 
-    /** used by BSBVSliderBankView */
+    /**
+     * used by BSBVSliderBankView
+     */
     public void setMinimum(float minimum, boolean truncate) {
         slider.setMinimum(minimum, truncate);
         updateSliderSettings();
@@ -196,7 +213,9 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
         updateSliderSettings();
     }
 
-    /** used by BSBVSliderBankView */
+    /**
+     * used by BSBVSliderBankView
+     */
     public void setMaximum(float maximum, boolean truncate) {
         slider.setMaximum(maximum, truncate);
         updateSliderSettings();
@@ -226,7 +245,7 @@ public class BSBVSliderView extends AutomatableBSBObjectView implements
         valSlider.setPreferredSize(d);
         valSlider.setSize(d);
 
-        d = new Dimension(valueDisplay.getWidth(), sliderHeight + 30);
+        d = new Dimension(valuePanel.getWidth(), sliderHeight + 30);
 
         this.setPreferredSize(d);
         this.setSize(d);
