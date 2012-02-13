@@ -39,6 +39,12 @@ public class BlueTextFieldUI extends BasicTextFieldUI {
 
     protected void paintBackground(Graphics g) {
         super.paintBackground(g);
+//        Color c = BlueLookAndFeel.getControlShadow().darker();
+//        g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 64));
+//        g.drawLine(0, 1, myComponent.getWidth() - 1, 1);
+//        
+//        g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 32));
+//        g.drawLine(0, 2, myComponent.getWidth() - 1, 2);
         // Rectangle editorRect = getVisibleEditorRect();
         // Graphics2D g2D = (Graphics2D) g;
         // // paint one gradient in the upper half of the text field

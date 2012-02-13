@@ -72,17 +72,25 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         if (!(c instanceof JTextComponent)) {
             if (c.isEnabled()) {
-                BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
+//                BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
+                g.setColor(BlueLookAndFeel.getControlShadow());
+                g.drawRect(x, y, w -1, h -1);
             } else {
-                BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
+//                BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
+                g.setColor(BlueLookAndFeel.getControlShadow().darker());
+                g.drawRect(x, y, w -1, h -1);
             }
             return;
         }
 
         if (c.isEnabled() && ((JTextComponent) c).isEditable()) {
-            BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
+//            BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
+            g.setColor(BlueLookAndFeel.getControlShadow());
+            g.drawRect(x, y, w -1, h -1);
         } else {
-            BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
+//            BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
+            g.setColor(BlueLookAndFeel.getControlShadow().darker());
+            g.drawRect(x, y, w -1, h -1);
         }
     }
 }
