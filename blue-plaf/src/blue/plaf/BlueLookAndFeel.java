@@ -123,6 +123,10 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         
         Object[] defaults = {
         
+            "CheckBox.icon", BlueIconFactory.getCheckBoxIcon(),
+            "RadioButton.icon", BlueIconFactory.getRadioButtonIcon(),
+          
+            
             "Table.gridColor", new javax.swing.plaf.ColorUIResource(
                 Color.darkGray),
             
