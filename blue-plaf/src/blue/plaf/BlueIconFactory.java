@@ -6,6 +6,7 @@ package blue.plaf;
 
 import java.awt.*;
 import java.io.Serializable;
+import java.util.HashMap;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
@@ -21,7 +22,18 @@ public class BlueIconFactory {
 
     private static Icon checkBoxIcon;
     private static Icon radioButtonIcon;
+    private static HashMap<Color, GradientPaint> gpCache = new HashMap<Color, GradientPaint>();
 
+    public static GradientPaint getGradientPaint(Color c) {
+        GradientPaint gp = gpCache.get(c);
+        if(gp == null) {
+            gp = new GradientPaint(0, 0, c.brighter(),
+                0, 6, c);
+            gpCache.put(c, gp);
+        }
+        return gp;
+    }
+    
     public static Icon getCheckBoxIcon() {
         if (checkBoxIcon == null) {
             checkBoxIcon = new BlueIconFactory.CheckBoxIcon();
@@ -64,7 +76,7 @@ public class BlueIconFactory {
                     Paint p = g2d.getPaint();
 
                     // need to find a way to cache this GradientPaint...
-                    g2d.setPaint(gp);
+                    g2d.setPaint(BlueIconFactory.getGradientPaint(c.getBackground()));
 
                     g2d.translate(x, y);
 
@@ -129,8 +141,7 @@ public class BlueIconFactory {
             Graphics2D g2d = (Graphics2D) g;
             Paint p = g2d.getPaint();
 
-            // need to find a way to cache this GradientPaint...
-            g2d.setPaint(gp);
+            g2d.setPaint(BlueIconFactory.getGradientPaint(c.getBackground()));
 
             g2d.fillOval(0, 0, controlSize - 2, controlSize - 2);
             g2d.setPaint(p);
