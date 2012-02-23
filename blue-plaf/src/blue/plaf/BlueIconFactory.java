@@ -7,10 +7,7 @@ package blue.plaf;
 import java.awt.*;
 import java.io.Serializable;
 import java.util.HashMap;
-import javax.swing.ButtonModel;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JRadioButton;
+import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
@@ -22,18 +19,21 @@ public class BlueIconFactory {
 
     private static Icon checkBoxIcon;
     private static Icon radioButtonIcon;
+    private static Icon horizontalSliderThumbIcon;
+    private static Icon verticalSliderThumbIcon;
+    
     private static HashMap<Color, GradientPaint> gpCache = new HashMap<Color, GradientPaint>();
 
     public static GradientPaint getGradientPaint(Color c) {
         GradientPaint gp = gpCache.get(c);
-        if(gp == null) {
+        if (gp == null) {
             gp = new GradientPaint(0, 0, c.brighter(),
-                0, 6, c);
+                    0, 6, c);
             gpCache.put(c, gp);
         }
         return gp;
     }
-    
+
     public static Icon getCheckBoxIcon() {
         if (checkBoxIcon == null) {
             checkBoxIcon = new BlueIconFactory.CheckBoxIcon();
@@ -46,6 +46,20 @@ public class BlueIconFactory {
             radioButtonIcon = new BlueIconFactory.RadioButtonIcon();
         }
         return radioButtonIcon;
+    }
+
+    public static Icon getHorizontalSliderThumbIcon() {
+        if (horizontalSliderThumbIcon == null) {
+            horizontalSliderThumbIcon = new BlueIconFactory.HorizontalSliderThumbIcon();
+        }
+        return horizontalSliderThumbIcon;
+    }
+    
+    public static Icon getVerticalSliderThumbIcon() {
+        if (verticalSliderThumbIcon == null) {
+            verticalSliderThumbIcon = new BlueIconFactory.VerticalSliderThumbIcon();
+        }
+        return verticalSliderThumbIcon;
     }
 
     private static class CheckBoxIcon implements Icon, UIResource, Serializable {
@@ -149,56 +163,6 @@ public class BlueIconFactory {
             g2d.setColor(MetalLookAndFeel.getControlShadow());
             g2d.drawOval(0, 0, controlSize - 2, controlSize - 2);
 
-            // Set up colors per RadioButtonModel condition
-//            if (!model.isEnabled()) {
-//                whiteInnerLeftArc = whiteOuterRightArc = background;
-//                darkCircle = dotColor = shadow;
-//            } else if (model.isPressed() && model.isArmed()) {
-//                whiteInnerLeftArc = interiorColor = shadow;
-//            }
-
-
-
-//            // fill interior
-//            g.setColor(interiorColor);
-//            g.fillRect(2, 2, 9, 9);
-//
-//            // draw Dark Circle (start at top, go clockwise)
-//            g.setColor(darkCircle);
-//            g.drawLine(4, 0, 7, 0);
-//            g.drawLine(8, 1, 9, 1);
-//            g.drawLine(10, 2, 10, 3);
-//            g.drawLine(11, 4, 11, 7);
-//            g.drawLine(10, 8, 10, 9);
-//            g.drawLine(9, 10, 8, 10);
-//            g.drawLine(7, 11, 4, 11);
-//            g.drawLine(3, 10, 2, 10);
-//            g.drawLine(1, 9, 1, 8);
-//            g.drawLine(0, 7, 0, 4);
-//            g.drawLine(1, 3, 1, 2);
-//            g.drawLine(2, 1, 3, 1);
-//
-//            // draw Inner Left (usually) White Arc
-//            //  start at lower left corner, go clockwise
-//            g.setColor(whiteInnerLeftArc);
-//            g.drawLine(2, 9, 2, 8);
-//            g.drawLine(1, 7, 1, 4);
-//            g.drawLine(2, 2, 2, 3);
-//            g.drawLine(2, 2, 3, 2);
-//            g.drawLine(4, 1, 7, 1);
-//            g.drawLine(8, 2, 9, 2);
-//            // draw Outer Right White Arc
-//            //  start at upper right corner, go clockwise
-//            g.setColor(whiteOuterRightArc);
-//            g.drawLine(10, 1, 10, 1);
-//            g.drawLine(11, 2, 11, 3);
-//            g.drawLine(12, 4, 12, 7);
-//            g.drawLine(11, 8, 11, 9);
-//            g.drawLine(10, 10, 10, 10);
-//            g.drawLine(9, 11, 8, 11);
-//            g.drawLine(7, 12, 4, 12);
-//            g.drawLine(3, 11, 2, 11);
-
             // selected dot
             if (drawDot) {
                 g.setColor(dotColor);
@@ -220,4 +184,147 @@ public class BlueIconFactory {
             return 13;
         }
     }  // End class RadioButtonIcon
+
+    private static class HorizontalSliderThumbIcon implements Icon, Serializable, UIResource {
+
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            JSlider slider = (JSlider) c;
+
+            g.translate(x, y);
+
+            // Draw the frame
+            if (slider.hasFocus()) {
+                g.setColor(BlueLookAndFeel.getPrimaryControlInfo());
+            } else {
+                g.setColor(slider.isEnabled() ? BlueLookAndFeel.getPrimaryControlInfo()
+                        : BlueLookAndFeel.getControlDarkShadow());
+            }
+
+            g.drawLine(1, 0, 13, 0);  // top
+            g.drawLine(0, 1, 0, 8);  // left
+            g.drawLine(14, 1, 14, 8);  // right
+            g.drawLine(1, 9, 7, 15); // left slant
+            g.drawLine(7, 15, 14, 8);  // right slant
+
+            // Fill in the background
+            if (slider.hasFocus()) {
+                g.setColor(c.getForeground());
+            } else {
+                g.setColor(MetalLookAndFeel.getControl());
+            }
+            g.fillRect(1, 1, 13, 8);
+
+            g.drawLine(2, 9, 12, 9);
+            g.drawLine(3, 10, 11, 10);
+            g.drawLine(4, 11, 10, 11);
+            g.drawLine(5, 12, 9, 12);
+            g.drawLine(6, 13, 8, 13);
+            g.drawLine(7, 14, 7, 14);
+
+            // Draw the highlight
+            if (slider.isEnabled()) {
+                g.setColor(slider.hasFocus() ? BlueLookAndFeel.getPrimaryControl()
+                        : BlueLookAndFeel.getControlHighlight());
+                g.drawLine(1, 1, 13, 1);
+                g.drawLine(1, 1, 1, 8);
+            }
+
+            g.translate(-x, -y);
+        }
+
+        public int getIconWidth() {
+            return 15;
+        }
+
+        public int getIconHeight() {
+            return 16;
+        }
+    }
+    
+    private static class VerticalSliderThumbIcon implements Icon, Serializable, UIResource {
+
+    public void paintIcon( Component c, Graphics g, int x, int y ) {
+        JSlider slider = (JSlider)c;
+
+	boolean leftToRight = slider.getComponentOrientation().isLeftToRight();
+
+        g.translate( x, y );
+
+	// Draw the frame
+	if ( slider.hasFocus() ) {
+	    g.setColor( MetalLookAndFeel.getPrimaryControlInfo() );
+	}
+	else {
+	    g.setColor( slider.isEnabled() ? BlueLookAndFeel.getPrimaryControlInfo() :
+			                     BlueLookAndFeel.getControlDarkShadow() );
+	}
+
+	if (leftToRight) {
+	    g.drawLine(  1,0  ,  8,0  ); // top
+	    g.drawLine(  0,1  ,  0,13 ); // left
+	    g.drawLine(  1,14 ,  8,14 ); // bottom
+	    g.drawLine(  9,1  , 15,7  ); // top slant
+	    g.drawLine(  9,13 , 15,7  ); // bottom slant
+	}
+	else {
+	    g.drawLine(  7,0  , 14,0  ); // top
+	    g.drawLine( 15,1  , 15,13 ); // right
+	    g.drawLine(  7,14 , 14,14 ); // bottom
+	    g.drawLine(  0,7  ,  6,1  ); // top slant
+	    g.drawLine(  0,7  ,  6,13 ); // bottom slant
+	}
+
+	// Fill in the background
+	if ( slider.hasFocus() ) {
+	    g.setColor( c.getForeground() );
+	}
+	else {
+	    g.setColor( BlueLookAndFeel.getControl() );
+	}
+
+	if (leftToRight) {
+	    g.fillRect(  1,1 ,  8,13 );
+
+	    g.drawLine(  9,2 ,  9,12 );
+	    g.drawLine( 10,3 , 10,11 );
+	    g.drawLine( 11,4 , 11,10 );
+	    g.drawLine( 12,5 , 12,9 );
+	    g.drawLine( 13,6 , 13,8 );
+	    g.drawLine( 14,7 , 14,7 );
+	}
+	else {
+	    g.fillRect(  7,1,   8,13 );
+
+	    g.drawLine(  6,3 ,  6,12 );
+	    g.drawLine(  5,4 ,  5,11 );
+	    g.drawLine(  4,5 ,  4,10 );
+	    g.drawLine(  3,6 ,  3,9 );
+	    g.drawLine(  2,7 ,  2,8 );
+	}
+
+	// Draw the highlight
+	if ( slider.isEnabled() ) {
+	    g.setColor( slider.hasFocus() ? BlueLookAndFeel.getPrimaryControl()
+			: BlueLookAndFeel.getControlHighlight() );
+	    if (leftToRight) {
+	        g.drawLine( 1, 1, 8, 1 );
+		g.drawLine( 1, 1, 1, 13 );
+	    }
+	    else {
+	        g.drawLine(  8,1  , 14,1  ); // top
+		g.drawLine(  1,7  ,  7,1  ); // top slant
+	    }
+	}
+
+        g.translate( -x, -y );
+    }
+
+    public int getIconWidth() {
+        return 16;
+    }
+
+    public int getIconHeight() {
+        return 15;
+    }
+}
 }

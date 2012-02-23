@@ -74,6 +74,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
         putDefault(table, "SplitPaneUI");
 
+        putDefault(table, "SliderUI");
         // putDefault(table, "MenuItemUI");
         // putDefault(table, "MenuUI");
         putDefault(table, "ToolBarUI");
@@ -154,6 +155,9 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             "ScrollBar.background", getCurrentTheme().getControl().darker(),
             "ScrollBar.shadow", getCurrentTheme().getControl().darker(),
             "ScrollBar.darkShadow", getCurrentTheme().getControl().darker(),
+            
+            "Slider.horizontalThumbIcon", BlueIconFactory.getHorizontalSliderThumbIcon(),
+            "Slider.verticalThumbIcon", BlueIconFactory.getVerticalSliderThumbIcon(),
         };
 
         table.putDefaults(defaults);
