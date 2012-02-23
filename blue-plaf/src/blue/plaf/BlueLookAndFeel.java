@@ -63,6 +63,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         super.initClassDefaults(table);
 
         putDefault(table, "ButtonUI");
+        putDefault(table, "ComboBoxUI");
         putDefault(table, "ToggleButtonUI");
         putDefault(table, "TabbedPaneUI");
         putDefault(table, "TextFieldUI");

@@ -24,23 +24,14 @@ package blue.plaf;
 import java.awt.*;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
-import javax.swing.JToolBar;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalButtonUI;
-import sun.awt.AppContext;
 
 /**
  *
  * @author stevenyi
  */
 public class BlueButtonUI extends MetalButtonUI {
-
-    int cachedWidth = -1;
-    int cachedHeight = -1;
-    int pressedCachedWidth = -1;
-    int pressedCachedHeight = -1;
-    GradientPaint gp = null;
-    GradientPaint pressedGp = null;
 
     public static ComponentUI createUI(JComponent c) {
         return new BlueButtonUI();
@@ -60,13 +51,7 @@ public class BlueButtonUI extends MetalButtonUI {
             bgColor = BlueLookAndFeel.getControl();
         }
         
-        if (gp == null || !gp.getColor2().equals(bgColor) ||
-            cachedWidth != size.width || cachedHeight != size.height) {
-            
-            gp = new GradientPaint(0, 0, bgColor.brighter(), 0, size.height / 2, bgColor);
-            cachedWidth = size.width;
-            cachedHeight = size.height;
-        }
+        GradientPaint gp = BlueGradientFactory.getGradientPaint(BlueLookAndFeel.getControl());
 
         Paint p = g2d.getPaint();
         g2d.setPaint(gp);
@@ -99,14 +84,7 @@ public class BlueButtonUI extends MetalButtonUI {
 
             Dimension size = b.getSize();
 
-            if (pressedGp == null || pressedCachedWidth != size.width
-                    || pressedCachedHeight != size.height) {
-                pressedGp = new GradientPaint(0, 0, getSelectColor().brighter(),
-                        0, size.height / 2, getSelectColor());
-
-                pressedCachedWidth = size.width;
-                pressedCachedHeight = size.height;
-            }
+            GradientPaint pressedGp = BlueGradientFactory.getGradientPaint(getSelectColor());
 
             Paint p = g2d.getPaint();
             g2d.setPaint(pressedGp);
