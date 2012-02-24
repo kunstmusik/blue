@@ -49,8 +49,9 @@ import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RenderTimeManager;
 import blue.soundObject.PolyObject;
 import blue.ui.core.render.RenderTimeManagerListener;
+import blue.ui.utilities.BlueGradientFactory;
 import blue.ui.utilities.UiUtilities;
-import java.awt.Component;
+import java.awt.*;
 import javax.swing.JPanel;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
@@ -66,7 +67,7 @@ public final class TimeBar extends JPanel implements
         PropertyChangeListener, TableModelListener, RenderTimeManagerListener {
 
     private static final Font LABEL_FONT = new Font("dialog", Font.PLAIN, 11);
-
+    
     // BufferedImage bufferedImage;
 
     // Image image;
@@ -180,8 +181,12 @@ public final class TimeBar extends JPanel implements
     }
 
     public void paintComponent(Graphics g) {
-        g.setColor(getBackground());
-        g.fillRect(0,0, getWidth(), getHeight());
+        
+        Graphics2D g2d = (Graphics2D)g;
+        Paint p = g2d.getPaint();
+        g2d.setPaint(BlueGradientFactory.getGradientPaint(getBackground()));        
+        g2d.fillRect(0,0, getWidth(), getHeight());
+        g2d.setPaint(p);
 
         if (pObj == null || this.getHeight() == 0 || this.getWidth() == 0) {
             return;
