@@ -158,6 +158,9 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             
             "Slider.horizontalThumbIcon", BlueIconFactory.getHorizontalSliderThumbIcon(),
             "Slider.verticalThumbIcon", BlueIconFactory.getVerticalSliderThumbIcon(),
+            
+            "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
+            "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
         };
 
         table.putDefaults(defaults);
