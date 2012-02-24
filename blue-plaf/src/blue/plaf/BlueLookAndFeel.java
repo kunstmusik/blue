@@ -66,6 +66,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         putDefault(table, "ComboBoxUI");
         putDefault(table, "ToggleButtonUI");
         putDefault(table, "TabbedPaneUI");
+        putDefault(table, "TableHeaderUI");
         putDefault(table, "TextFieldUI");
         // putDefault(table, "PasswordFieldUI");
         // putDefault(table, "ListUI"); // you might want to delete this line
