@@ -10,6 +10,7 @@ import java.awt.RenderingHints;
 import blue.SoundLayer;
 import blue.soundObject.Comment;
 import blue.ui.core.score.SoundObjectView;
+import blue.ui.utilities.BlueGradientFactory;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -66,7 +67,7 @@ public class CommentRenderer implements BarRenderer {
             fontColor = normalFontColor;
         }
 
-        g.setColor(bgColor);
+        g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
         g.fillRect(0, 2, w, h - 4);
 
         // DRAW BORDERS

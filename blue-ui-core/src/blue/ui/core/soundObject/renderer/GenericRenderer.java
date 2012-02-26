@@ -10,6 +10,7 @@ import blue.SoundLayer;
 import blue.ui.core.score.SoundObjectView;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.SoundObject;
+import blue.ui.utilities.BlueGradientFactory;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -83,7 +84,7 @@ public class GenericRenderer implements BarRenderer {
 
         }
 
-        g.setPaint(bgColor);
+        g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
         g.fillRect(0, 2, w, h - 4);
 
