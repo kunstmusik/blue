@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.1.10<
-[released 2011.xx.xx]
+[released 2012.02.27]
 
 NEW
 
@@ -40,7 +40,7 @@ NEW
 
 Updated
 
-* Extensive work on theme
+* Worked on updating look and feel
 
 * RFE 3473214: Made Text fields that show values in BSB HSlider and VSlider
   clickable and editable, as found previous in BSBKnob.  Applies to HSliderBank
