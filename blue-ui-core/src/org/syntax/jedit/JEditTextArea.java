@@ -153,7 +153,7 @@ public class JEditTextArea extends JComponent {
         horizontal.setValues(0, 0, 0, 0);
 
         if (UIManager.getLookAndFeel() instanceof MetalLookAndFeel) {
-            setBorder(new TextAreaBorder());
+            //setBorder(new TextAreaBorder());
             vertical.putClientProperty("JScrollBar.isFreeStanding",
                     Boolean.FALSE);
             horizontal.putClientProperty("JScrollBar.isFreeStanding",
