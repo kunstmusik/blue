@@ -19,13 +19,7 @@
  */
 package blue.ui.core.blueLive;
 
-import blue.Arrangement;
-import blue.BlueData;
-import blue.BluePluginManager;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.LiveData;
-import blue.Tables;
+import blue.*;
 import blue.blueLive.LiveObject;
 import blue.event.SelectionEvent;
 import blue.event.SimpleDocumentListener;
@@ -33,12 +27,14 @@ import blue.gui.ExceptionDialog;
 import blue.midi.*;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.ui.core.score.SoundObjectBuffer;
 import blue.ui.core.score.SoundObjectSelectionBus;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -51,14 +47,7 @@ import java.util.HashMap;
 import java.util.logging.Logger;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.Receiver;
-import javax.swing.JButton;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -80,30 +69,22 @@ autostore = false)
 public final class BlueLiveTopComponent extends TopComponent {
 
     private static BlueLiveTopComponent instance;
-
-    /** path to the icon used by the component and its open action */
+    /**
+     * path to the icon used by the component and its open action
+     */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
     private static final String PREFERRED_ID = "BlueLiveTopComponent";
-
     BlueData data = null;
-
     SoundObjectBuffer buffer = SoundObjectBuffer.getInstance();
-
     LiveObjectsTableModel model;
-
-    AddMenu addPopup = null;
-
-    BufferMenu bufferPopup = new BufferMenu();
-
+    BufferMenu bufferPopup;
     MidiInputManager midiManager;
-
     ScoPadReceiver scoPadReceiver = new ScoPadReceiver();
-
     JPopupMenu noteTemplatePopup;
-
     ArrayList<Class> plugins = BluePluginManager.getInstance().getLiveSoundObjectClasses();
-
     BlueLiveToolBar blueLiveToolBar;
+    int mouseColumn = -1;
+    int mouseRow = -1;
 
     public BlueLiveTopComponent() {
         initComponents();
@@ -117,16 +98,17 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         setupNoteTemplatePopup();
 
-        model = new LiveObjectsTableModel();
+        model = new LiveObjectsTableModel(null);
 
-        liveObjectsTable.setDefaultRenderer(JButton.class,
-                new ButtonCellRenderer());
-        liveObjectsTable.setDefaultEditor(JButton.class, new ButtonCellEditor(
-                this));
-        liveObjectsTable.setDefaultRenderer(MidiKeyRenderer.class,
-                new MidiKeyRenderer());
-        liveObjectsTable.setDefaultRenderer(KeyboardKeyRenderer.class,
-                new KeyboardKeyRenderer());
+//        liveObjectsTable.setDefaultRenderer(JButton.class,
+//                new ButtonCellRenderer());
+//        liveObjectsTable.setDefaultEditor(JButton.class, new ButtonCellEditor(
+//                this));
+//        liveObjectsTable.setDefaultRenderer(MidiKeyRenderer.class,
+//                new MidiKeyRenderer());
+//        liveObjectsTable.setDefaultRenderer(KeyboardKeyRenderer.class,
+//                new KeyboardKeyRenderer());
+        liveObjectsTable.setDefaultRenderer(LiveObject.class, new LiveObjectRenderer());
 
         liveObjectsTable.setModel(model);
         liveObjectsTable.setRowHeight(24);
@@ -139,28 +121,37 @@ public final class BlueLiveTopComponent extends TopComponent {
                             if (data == null) {
                                 return;
                             }
-                            int index = liveObjectsTable.getSelectedRow();
+                            int row = liveObjectsTable.getSelectedRow();
+                            int column = liveObjectsTable.getSelectedColumn();
 
-                            ArrayList liveObjects = data.getLiveData().
-                                    getLiveSoundObjects();
+                            final LiveObject lObj = (LiveObject) model.getValueAt(row, column);
 
-                            if (index >= 0 && index < liveObjects.size()) {
-                                final LiveObject liveObj = (LiveObject) liveObjects.
-                                        get(index);
-
+                            if (lObj != null) {
                                 SwingUtilities.invokeLater(new Runnable() {
 
                                     public void run() {
                                         SelectionEvent se = new SelectionEvent(
-                                                liveObj.getSoundObject(),
+                                                lObj.getSoundObject(),
                                                 SelectionEvent.SELECTION_SINGLE,
                                                 SelectionEvent.SELECTION_BLUE_LIVE);
                                         SoundObjectSelectionBus.getInstance().
                                                 selectionPerformed(se);
                                     }
                                 });
+                            } else {
+                                SwingUtilities.invokeLater(new Runnable() {
 
+                                    public void run() {
+                                        SelectionEvent se = new SelectionEvent(
+                                                null,
+                                                SelectionEvent.SELECTION_CLEAR,
+                                                SelectionEvent.SELECTION_BLUE_LIVE);
+                                        SoundObjectSelectionBus.getInstance().
+                                                selectionPerformed(se);
+                                    }
+                                });
                             }
+
                         }
                     }
                 });
@@ -169,10 +160,26 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             public void mousePressed(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
+                    if (bufferPopup == null) {
+                        bufferPopup = new BufferMenu();
+                    }
+                    mouseRow = liveObjectsTable.rowAtPoint(e.getPoint());
+                    mouseColumn = liveObjectsTable.columnAtPoint(e.getPoint());
                     bufferPopup.show(liveObjectsTable, e.getX(), e.getY());
+                } else if(e.getClickCount() == 2) {
+                    mouseRow = liveObjectsTable.rowAtPoint(e.getPoint());
+                    mouseColumn = liveObjectsTable.columnAtPoint(e.getPoint());
+                    LiveObject lObj = (LiveObject)liveObjectsTable.getValueAt(mouseRow, mouseColumn);
+                    
+                    if(lObj != null) {
+                        lObj.setEnabled(!lObj.isEnabled());
+                        liveObjectsTable.repaint();
+                    }
                 }
             }
         });
+        
+        liveObjectsTable.setColumnSelectionAllowed(true);
 
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
@@ -237,7 +244,10 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             LiveData liveData = currentData.getLiveData();
 
-            this.model.setLiveObjects(liveData.getLiveSoundObjects());
+            this.liveObjectsTable.setAutoCreateColumnsFromModel(true);
+            model = new LiveObjectsTableModel(liveData.getLiveObjectBins());
+            this.liveObjectsTable.setModel(model);
+
             this.commandLineText.setText(liveData.getCommandLine());
 
             this.enableAdvancedFlags.setSelected(liveData.isCommandLineEnabled());
@@ -245,9 +255,9 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             commandLineText.setEnabled(liveData.isCommandLineEnabled());
 
-            liveObjectsTable.getColumnModel().getColumn(2).setMaxWidth(100);
-            liveObjectsTable.getColumnModel().getColumn(2).setMinWidth(100);
-            liveObjectsTable.getColumnModel().getColumn(2).setWidth(100);
+//            liveObjectsTable.getColumnModel().getColumn(2).setMaxWidth(100);
+//            liveObjectsTable.getColumnModel().getColumn(2).setMinWidth(100);
+//            liveObjectsTable.getColumnModel().getColumn(2).setWidth(100);
 
             // csoundCommand.setText(data.getLiveData().getCommandLine());
             // liveSpace.setLiveObjects(data.getLiveData().getLiveSoundObjects());
@@ -261,10 +271,10 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -273,10 +283,13 @@ public final class BlueLiveTopComponent extends TopComponent {
         liveSpacePanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         liveObjectsTable = new JTable() {      public boolean getScrollableTracksViewportHeight() {         return getPreferredSize().height < getParent().getHeight();     }      };
-        addButton = new javax.swing.JButton();
-        removeButton = new javax.swing.JButton();
-        pushUpBUtton = new javax.swing.JButton();
-        pushDownButton = new javax.swing.JButton();
+        triggerButton = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        tempoSpinner = new javax.swing.JSpinner();
+        jLabel7 = new javax.swing.JLabel();
+        repeatSpinner = new javax.swing.JSpinner();
+        repeatProgress = new javax.swing.JProgressBar();
+        repeatButton = new javax.swing.JToggleButton();
         scoPadPanel = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         startSpinner = new javax.swing.JSpinner();
@@ -307,31 +320,25 @@ public final class BlueLiveTopComponent extends TopComponent {
         ));
         jScrollPane1.setViewportView(liveObjectsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(addButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.addButton.text")); // NOI18N
-        addButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(triggerButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.triggerButton.text")); // NOI18N
+        triggerButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addButtonActionPerformed(evt);
+                triggerButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.removeButton.text")); // NOI18N
-        removeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeButtonActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel6.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(pushUpBUtton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.pushUpBUtton.text")); // NOI18N
-        pushUpBUtton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pushUpBUttonActionPerformed(evt);
-            }
-        });
+        tempoSpinner.setModel(new javax.swing.SpinnerNumberModel(60, 1, 300, 1));
 
-        org.openide.awt.Mnemonics.setLocalizedText(pushDownButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.pushDownButton.text")); // NOI18N
-        pushDownButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel7.text")); // NOI18N
+
+        repeatSpinner.setModel(new javax.swing.SpinnerNumberModel(16, 1, 256, 1));
+
+        org.openide.awt.Mnemonics.setLocalizedText(repeatButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.repeatButton.text")); // NOI18N
+        repeatButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pushDownButtonActionPerformed(evt);
+                repeatButtonActionPerformed(evt);
             }
         });
 
@@ -342,28 +349,43 @@ public final class BlueLiveTopComponent extends TopComponent {
             .addGroup(liveSpacePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 465, Short.MAX_VALUE)
-                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
-                        .addComponent(addButton)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, liveSpacePanelLayout.createSequentialGroup()
+                        .addComponent(jLabel6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(removeButton)
+                        .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pushUpBUtton)
+                        .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pushDownButton)))
+                        .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(repeatProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(repeatButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(triggerButton)))
                 .addContainerGap())
         );
         liveSpacePanelLayout.setVerticalGroup(
             liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(liveSpacePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addButton)
-                    .addComponent(removeButton)
-                    .addComponent(pushUpBUtton)
-                    .addComponent(pushDownButton))
+                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(triggerButton)
+                                .addComponent(jLabel6)
+                                .addComponent(jLabel7)
+                                .addComponent(repeatButton))
+                            .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(repeatProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -405,7 +427,7 @@ public final class BlueLiveTopComponent extends TopComponent {
             .addGroup(scoPadPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(scoPadPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
                     .addComponent(jLabel3)
                     .addGroup(scoPadPanelLayout.createSequentialGroup()
                         .addGroup(scoPadPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -423,7 +445,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                                 .addComponent(jLabel2)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(quarterNoteSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(noteTemplateText, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE))))
+                            .addComponent(noteTemplateText, javax.swing.GroupLayout.DEFAULT_SIZE, 468, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         scoPadPanelLayout.setVerticalGroup(
@@ -444,7 +466,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -478,7 +500,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completeOverride)
-                    .addComponent(commandLineText, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE))
+                    .addComponent(commandLineText, javax.swing.GroupLayout.DEFAULT_SIZE, 432, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -490,7 +512,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                     .addComponent(commandLineText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(completeOverride)
-                .addContainerGap(282, Short.MAX_VALUE))
+                .addContainerGap(294, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jPanel1.TabConstraints.tabTitle"), jPanel1); // NOI18N
@@ -501,14 +523,14 @@ public final class BlueLiveTopComponent extends TopComponent {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -531,51 +553,6 @@ public final class BlueLiveTopComponent extends TopComponent {
         commandLineText.setEnabled(enableAdvancedFlags.isSelected());
     }//GEN-LAST:event_enableAdvancedFlagsActionPerformed
 
-    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        if (addPopup == null) {
-            addPopup = new AddMenu();
-        }
-
-        int x = addButton.getWidth();
-        int y = 0;
-
-        addPopup.show(addButton, x, y);
-    }//GEN-LAST:event_addButtonActionPerformed
-
-    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        int index = liveObjectsTable.getSelectedRow();
-
-        if (index >= 0) {
-            model.removeLiveObject(index);
-            SoundObjectSelectionBus.getInstance().selectionPerformed(
-                    new SelectionEvent(null, SelectionEvent.SELECTION_CLEAR));
-        }
-    }//GEN-LAST:event_removeButtonActionPerformed
-
-    private void pushUpBUttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pushUpBUttonActionPerformed
-        int row = liveObjectsTable.getSelectedRow();
-
-        if (row < 1 || row > model.getRowCount()) {
-            return;
-        }
-
-        model.pushUp(row);
-
-        liveObjectsTable.setRowSelectionInterval(row - 1, row - 1);
-    }//GEN-LAST:event_pushUpBUttonActionPerformed
-
-    private void pushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pushDownButtonActionPerformed
-        int row = liveObjectsTable.getSelectedRow();
-
-        if (row < 0 || row > model.getRowCount() - 1) {
-            return;
-        }
-
-        model.pushDown(row);
-
-        liveObjectsTable.setRowSelectionInterval(row + 1, row + 1);
-    }//GEN-LAST:event_pushDownButtonActionPerformed
-
     private void outputTextAreaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_outputTextAreaKeyPressed
 //        if (!midiManager.isMidiDeviceOpen()) {
 //            return;
@@ -585,8 +562,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         double time = 0;
         String txt;
 
-        if ((evt.getModifiers() & BlueSystem.getMenuShortcutKey()) == BlueSystem.
-                getMenuShortcutKey()) {
+        if ((evt.getModifiers() & BlueSystem.getMenuShortcutKey()) == BlueSystem.getMenuShortcutKey()) {
             switch (key) {
                 case KeyEvent.VK_PERIOD:
 
@@ -638,8 +614,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         float quarterNote = ((Double) quarterNoteSpinner.getValue()).floatValue();
         float dur = quarterNote * (float) time;
 
-        outputTextArea.setText(outputTextArea.getText() + scoPadReceiver.
-                getNotes(template, instrId, start, dur));
+        outputTextArea.setText(outputTextArea.getText() + scoPadReceiver.getNotes(template, instrId, start, dur));
 
         startSpinner.setValue(new Double(start + dur));
     }//GEN-LAST:event_outputTextAreaKeyPressed
@@ -650,8 +625,55 @@ public final class BlueLiveTopComponent extends TopComponent {
         }
     }//GEN-LAST:event_noteTemplateTextMousePressed
 
+    private void triggerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_triggerButtonActionPerformed
+        
+        if (data == null) {
+            return;
+        }
+
+        ArrayList<LiveObject> liveObjects = data.getLiveData().getLiveObjectBins().getEnabledLiveObjects();
+
+        if (liveObjects.size() > 0) {
+            
+            NoteList nl = new NoteList();
+            try {
+            
+                for(LiveObject liveObj : liveObjects) {
+
+                    SoundObject sObj = liveObj.getSoundObject();
+
+                    if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
+                        sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+                    }
+
+                    sObj.generateGlobals(new GlobalOrcSco());
+                    sObj.generateFTables(new Tables());
+                    sObj.generateInstruments(new Arrangement());
+                    nl.addAll(sObj.generateNotes(0.0f, -1.0f));
+                }
+            } catch (SoundObjectException e) {
+                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
+                        e);
+            }
+
+            int tempo = (Integer)tempoSpinner.getValue();
+            ScoreUtilities.scaleScore(nl, 60.0f / tempo);
+            
+            String scoreText = nl.toString();
+            
+            if (scoreText != null && scoreText.length() > 0) {
+                blueLiveToolBar.sendEvents(scoreText);
+            }
+
+        }
+        
+    }//GEN-LAST:event_triggerButtonActionPerformed
+
+    private void repeatButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_repeatButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addButton;
     private javax.swing.JTextField commandLineText;
     private javax.swing.JCheckBox completeOverride;
     private javax.swing.JCheckBox enableAdvancedFlags;
@@ -661,6 +683,8 @@ public final class BlueLiveTopComponent extends TopComponent {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -669,18 +693,20 @@ public final class BlueLiveTopComponent extends TopComponent {
     private javax.swing.JPanel liveSpacePanel;
     private javax.swing.JTextField noteTemplateText;
     private javax.swing.JTextArea outputTextArea;
-    private javax.swing.JButton pushDownButton;
-    private javax.swing.JButton pushUpBUtton;
     private javax.swing.JSpinner quarterNoteSpinner;
-    private javax.swing.JButton removeButton;
+    private javax.swing.JToggleButton repeatButton;
+    private javax.swing.JProgressBar repeatProgress;
+    private javax.swing.JSpinner repeatSpinner;
     private javax.swing.JPanel scoPadPanel;
     private javax.swing.JSpinner startSpinner;
+    private javax.swing.JSpinner tempoSpinner;
+    private javax.swing.JButton triggerButton;
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
+     * Gets default instance. Do not use directly: reserved for *.settings files
+     * only, i.e. deserialization routines; otherwise you could get a
+     * non-deserialized instance. To obtain the singleton instance, use {@link #findInstance}.
      */
     public static synchronized BlueLiveTopComponent getDefault() {
         if (instance == null) {
@@ -690,7 +716,8 @@ public final class BlueLiveTopComponent extends TopComponent {
     }
 
     /**
-     * Obtain the BlueLiveTopComponent instance. Never call {@link #getDefault} directly!
+     * Obtain the BlueLiveTopComponent instance. Never call {@link #getDefault}
+     * directly!
      */
     public static synchronized BlueLiveTopComponent findInstance() {
         TopComponent win = WindowManager.getDefault().findTopComponent(
@@ -704,8 +731,8 @@ public final class BlueLiveTopComponent extends TopComponent {
             return (BlueLiveTopComponent) win;
         }
         Logger.getLogger(BlueLiveTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
+                "There seem to be multiple components with the '" + PREFERRED_ID
+                + "' ID. That is a potential source of errors and unexpected behavior.");
         return getDefault();
     }
 
@@ -786,64 +813,69 @@ public final class BlueLiveTopComponent extends TopComponent {
     }
 
     protected void triggerLiveObject(int index) {
-        if (data == null || index < 0) {
-            return;
-        }
+//        if (data == null || index < 0) {
+//            return;
+//        }
+//
+//        ArrayList liveObjects = data.getLiveData().getLiveSoundObjects();
+//
+//        if (index < liveObjects.size()) {
+//            LiveObject liveObj = (LiveObject) liveObjects.get(index);
+//            SoundObject sObj = liveObj.getSoundObject();
+//
+//            if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
+//                sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+//            }
+//            String scoreText = null;
+//
+//            try {
+//
+//                sObj.generateGlobals(new GlobalOrcSco());
+//                sObj.generateFTables(new Tables());
+//                sObj.generateInstruments(new Arrangement());
+//                scoreText = sObj.generateNotes(0.0f, -1.0f).toString();
+//            } catch (SoundObjectException e) {
+//                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
+//                        e);
+//            }
+//
+//            if (scoreText != null && scoreText.length() > 0) {
+//                blueLiveToolBar.sendEvents(scoreText);
+//            }
+//
+//        }
+    }
 
-        ArrayList liveObjects = data.getLiveData().getLiveSoundObjects();
-
-        if (index < liveObjects.size()) {
-            LiveObject liveObj = (LiveObject) liveObjects.get(index);
-            SoundObject sObj = liveObj.getSoundObject();
-
-            if (sObj.getTimeBehavior() != SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
-                sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+    protected void addSoundObject(int column, int row, SoundObject sObj) {
+        model.setValueAt(new LiveObject(sObj), row, column);
+    }
+    
+    class PerformanceThread extends Thread {
+        int beatCounter = 0;
+        boolean keepRunning = true;
+        public void run() {
+            while(keepRunning) {
+                
             }
-            String scoreText = null;
-
-            try {
-
-                sObj.generateGlobals(new GlobalOrcSco());
-                sObj.generateFTables(new Tables());
-                sObj.generateInstruments(new Arrangement());
-                scoreText = sObj.generateNotes(0.0f, -1.0f).toString();
-            } catch (SoundObjectException e) {
-                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                        e);
-            }
-
-            if (scoreText != null && scoreText.length() > 0) {
-                blueLiveToolBar.sendEvents(scoreText);
-            }
-
         }
     }
 
-    protected void addSoundObject(SoundObject sObj) {
-        int index = liveObjectsTable.getSelectedRow();
-
-        if (index < 0 || index >= model.getRowCount() - 1) {
-            model.addLiveObject(new LiveObject(sObj));
-        } else {
-            model.addLiveObject(index + 1, new LiveObject(sObj));
-        }
-    }
-
-    class AddMenu extends JPopupMenu implements ActionListener {
+    class AddMenu extends JMenu implements ActionListener {
 
         HashMap<String, Class> sObjNameClassMap = new HashMap<String, Class>();
 
         public AddMenu() {
 
+            super("Add SoundObject");
+
             for (Class sObjClass : plugins) {
-              
+
                 String className = sObjClass.getName();
 
                 sObjNameClassMap.put(className, sObjClass);
 
                 JMenuItem temp = new JMenuItem();
-                temp.setText(BlueSystem.getString("soundLayerPopup.addNew") + " " + BlueSystem.
-                        getShortClassName(className));
+                temp.setText(BlueSystem.getString("soundLayerPopup.addNew") + " " + BlueSystem.getShortClassName(className));
                 temp.setActionCommand(className);
                 temp.addActionListener(this);
                 this.add(temp);
@@ -859,112 +891,90 @@ public final class BlueLiveTopComponent extends TopComponent {
                 Class c = BlueSystem.getClassLoader().loadClass(sObjName);
 
                 SoundObject sObj = (SoundObject) c.newInstance();
-                addSoundObject(sObj);
+                addSoundObject(mouseColumn, mouseRow, sObj);
             } catch (ClassNotFoundException cnfe) {
                 JOptionPane.showMessageDialog(
                         null,
                         BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.
-                        getActionCommand());
+                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
             } catch (IllegalAccessException iae) {
                 JOptionPane.showMessageDialog(
                         null,
                         BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.
-                        getActionCommand());
+                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
             } catch (InstantiationException ie) {
                 JOptionPane.showMessageDialog(
                         null,
                         BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.
-                        getActionCommand());
+                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
             }
         }
     }
 
     class BufferMenu extends JPopupMenu {
 
+        JMenu addMenu = new AddMenu();
         JMenuItem removeInstrumentMenuItem = new JMenuItem(BlueSystem.getString(
                 "common.remove"));
-
         JMenuItem cutMenuItem = new JMenuItem(BlueSystem.getString("common.cut"));
-
         JMenuItem copyMenuItem = new JMenuItem(BlueSystem.getString(
                 "common.copy"));
-
         JMenuItem pasteMenuItem = new JMenuItem(BlueSystem.getString(
                 "common.paste"));
-
         JMenuItem convertToBSB = new JMenuItem();
+        JMenuItem insertRowBefore = new JMenuItem("Insert Row Before");
+        JMenuItem insertRowAfter = new JMenuItem("Insert Row After");
+        JMenuItem removeRow = new JMenuItem("Remove Row");
+        JMenuItem insertColumnBefore = new JMenuItem("Insert Column Before");
+        JMenuItem insertColumnAfter = new JMenuItem("Insert Column After");
+        JMenuItem removeColumn = new JMenuItem("Remove Column");
 
         public BufferMenu() {
             removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
-                    if (buffer == null) {
-                        return;
-                    }
 
-                    int index = liveObjectsTable.getSelectedRow();
+                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(mouseRow, mouseColumn);
 
-                    ArrayList liveObjects = data.getLiveData().
-                            getLiveSoundObjects();
-
-                    if (index >= 0 && index < liveObjects.size()) {
-                        model.removeLiveObject(index);
+                    if (lObj != null) {
+                        model.setValueAt(null, mouseRow, mouseColumn);
                         SoundObjectSelectionBus.getInstance().selectionPerformed(
-                            new SelectionEvent(null, SelectionEvent.SELECTION_CLEAR));
+                                new SelectionEvent(null, SelectionEvent.SELECTION_CLEAR));
                     }
                 }
             });
             cutMenuItem.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
-                    if (buffer == null) {
-                        return;
-                    }
+                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(mouseRow, mouseColumn);
 
-                    int index = liveObjectsTable.getSelectedRow();
+                    if (lObj != null) {
 
-                    ArrayList liveObjects = data.getLiveData().
-                            getLiveSoundObjects();
-
-                    if (index >= 0 && index < liveObjects.size()) {
-
-                        LiveObject liveObj = (LiveObject) liveObjects.get(index);
-
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(liveObj.
-                                getSoundObject());
+                        SoundObject copy = (SoundObject) ObjectUtilities.clone(lObj.getSoundObject());
 
                         buffer.setBufferedObject(copy, 0, 0);
 
-                        model.removeLiveObject(index);
+                        model.setValueAt(null, mouseRow, mouseColumn);
                         SoundObjectSelectionBus.getInstance().selectionPerformed(
-                            new SelectionEvent(null, SelectionEvent.SELECTION_CLEAR));
+                                new SelectionEvent(null, SelectionEvent.SELECTION_CLEAR));
                     }
+
                 }
             });
             copyMenuItem.addActionListener(new ActionListener() {
 
                 public void actionPerformed(ActionEvent e) {
-                    if (buffer == null) {
-                        return;
-                    }
 
-                    int index = liveObjectsTable.getSelectedRow();
+                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(mouseRow, mouseColumn);
 
-                    ArrayList liveObjects = data.getLiveData().
-                            getLiveSoundObjects();
+                    if (lObj != null) {
 
-                    if (index >= 0 && index < liveObjects.size()) {
-
-                        LiveObject liveObj = (LiveObject) liveObjects.get(index);
-
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(liveObj.
-                                getSoundObject());
+                        SoundObject copy = (SoundObject) ObjectUtilities.clone(lObj.getSoundObject());
 
                         buffer.setBufferedObject(copy, 0, 0);
+
                     }
+
                 }
             });
             pasteMenuItem.addActionListener(new ActionListener() {
@@ -978,15 +988,61 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                     SoundObject copy = (SoundObject) ObjectUtilities.clone(sObj);
                     copy.setStartTime(0.0f);
-                    addSoundObject(copy);
+                    addSoundObject(mouseColumn, mouseRow, copy);
                 }
             });
 
+            /*
+             * Row and Column Handling
+             */
+
+            insertRowBefore.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.insertRow(mouseRow);
+                }
+            });
+
+            insertRowAfter.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.insertRow(mouseRow + 1);
+                }
+            });
+
+
+            insertColumnBefore.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.insertColumn(mouseColumn);
+                }
+            });
+
+            insertColumnAfter.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.insertColumn(mouseColumn + 1);
+                }
+            });
+
+            /*
+             * Setup Menu
+             */
+
+            this.add(addMenu);
             this.add(removeInstrumentMenuItem);
             this.addSeparator();
             this.add(cutMenuItem);
             this.add(copyMenuItem);
             this.add(pasteMenuItem);
+            this.addSeparator();
+            this.add(insertRowBefore);
+            this.add(insertRowAfter);
+            this.add(removeRow);
+            this.addSeparator();
+            this.add(insertColumnBefore);
+            this.add(insertColumnAfter);
+            this.add(removeColumn);
 
             setupPopupListener();
         }
@@ -995,17 +1051,16 @@ public final class BlueLiveTopComponent extends TopComponent {
             this.addPopupMenuListener(new PopupMenuListener() {
 
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-                    int rowIndex = liveObjectsTable.getSelectedRow();
+                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(mouseRow, mouseColumn);
 
-                    boolean selected = (rowIndex >= 0);
+                    boolean objectAvailable = (lObj != null);
 
-                    cutMenuItem.setEnabled(selected);
-                    copyMenuItem.setEnabled(selected);
-                    removeInstrumentMenuItem.setEnabled(selected);
+                    cutMenuItem.setEnabled(objectAvailable);
+                    copyMenuItem.setEnabled(objectAvailable);
+                    removeInstrumentMenuItem.setEnabled(objectAvailable);
 
-                    if (buffer == null || buffer.hasBufferedSoundObject()) {
-                        pasteMenuItem.setEnabled(plugins.contains(buffer.
-                                getBufferedSoundObject().getClass()));
+                    if (!objectAvailable && buffer.hasBufferedSoundObject()) {
+                        pasteMenuItem.setEnabled(plugins.contains(buffer.getBufferedSoundObject().getClass()));
                     } else {
                         pasteMenuItem.setEnabled(false);
                     }

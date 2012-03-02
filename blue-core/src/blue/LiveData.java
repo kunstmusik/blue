@@ -21,6 +21,7 @@
 package blue;
 
 import blue.blueLive.LiveObject;
+import blue.blueLive.LiveObjectBins;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
@@ -28,13 +29,12 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class LiveData implements Serializable {
 
     private String commandLine = "csound -Wdo devaudio -L stdin";
-
-    private ArrayList liveSoundObjects = new ArrayList();
+    
+    private LiveObjectBins liveObjectBins = new LiveObjectBins();
 
     private boolean commandLineEnabled = false;
 
@@ -44,26 +44,27 @@ public class LiveData implements Serializable {
         return commandLine;
     }
 
-    public ArrayList getLiveSoundObjects() {
-        return liveSoundObjects;
-    }
-
     public void setCommandLine(String string) {
         commandLine = string;
     }
-
-    public void setLiveSoundObjects(ArrayList list) {
-        liveSoundObjects = list;
+    
+    public LiveObjectBins getLiveObjectBins() {
+        return liveObjectBins;
     }
+    
+    
 
     public static LiveData loadFromXML(Element data,
             SoundObjectLibrary sObjLibrary) throws Exception {
         LiveData liveData = new LiveData();
+        
 
         Elements nodes = data.getElements();
 
         boolean doCommandLineUpgrade = true;
 
+        ArrayList<LiveObject> oldFormat = new ArrayList<LiveObject>();
+        
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String name = node.getName();
@@ -81,12 +82,23 @@ public class LiveData implements Serializable {
                         node, sObjLibrary);
                 LiveObject lObj = new LiveObject();
                 lObj.setSObj(sObj);
-                liveData.liveSoundObjects.add(lObj);
+                oldFormat.add(lObj);
             } else if (name.equals("liveObject")) {
-                liveData.liveSoundObjects.add(LiveObject.loadFromXML(node,
+                oldFormat.add(LiveObject.loadFromXML(node,
                         sObjLibrary));
+            } else if (name.equals("liveObjectBins")) {
+                liveData.liveObjectBins = LiveObjectBins.loadFromXML(node, sObjLibrary);
             }
 
+        }
+        
+        if(oldFormat.size() > 0) {
+            LiveObject[][] liveObjectBins = new LiveObject[1][oldFormat.size()];
+            
+            for(int i = 0; i < oldFormat.size(); i++) {
+                liveObjectBins[0][i] = oldFormat.get(i);
+            }
+            liveData.liveObjectBins = new LiveObjectBins(liveObjectBins);
         }
 
         if (doCommandLineUpgrade) {
@@ -109,10 +121,7 @@ public class LiveData implements Serializable {
         retVal.addElement(XMLUtilities.writeBoolean("commandLineOverride",
                 commandLineOverride));
 
-        for (Iterator iter = liveSoundObjects.iterator(); iter.hasNext();) {
-            LiveObject element = (LiveObject) iter.next();
-            retVal.addElement(element.saveAsXML(sObjLibrary));
-        }
+        retVal.addElement(liveObjectBins.saveAsXML(sObjLibrary));
 
         return retVal;
     }

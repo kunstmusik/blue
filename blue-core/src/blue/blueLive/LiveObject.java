@@ -39,6 +39,8 @@ public class LiveObject implements Serializable {
     private int midiTrigger = -1;
 
     private int keyTrigger = -1;
+    
+    private boolean enabled = false;
 
     /** Creates a new instance of LiveObject */
     public LiveObject() {
@@ -72,11 +74,21 @@ public class LiveObject implements Serializable {
         this.keyTrigger = keyTrigger;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+    
+
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         Element retVal = new Element("liveObject");
 
         retVal.addElement(XMLUtilities.writeInt("keyTrigger", keyTrigger));
         retVal.addElement(XMLUtilities.writeInt("midiTrigger", midiTrigger));
+        retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
         retVal.addElement(this.sObj.saveAsXML(sObjLibrary));
 
         return retVal;
@@ -99,6 +111,8 @@ public class LiveObject implements Serializable {
             } else if (name.equals("soundObject")) {
                 liveObj.setSObj((SoundObject) ObjectUtilities.loadFromXML(node,
                         sObjLibrary));
+            } else if (name.equals("enabled")) {
+                liveObj.setEnabled(XMLUtilities.readBoolean(node));
             }
         }
 

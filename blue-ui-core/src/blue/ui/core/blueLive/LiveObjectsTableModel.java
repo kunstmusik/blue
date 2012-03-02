@@ -20,17 +20,15 @@
 
 package blue.ui.core.blueLive;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
-import javax.swing.JButton;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
-import blue.BlueSystem;
 import blue.blueLive.LiveObject;
+import blue.blueLive.LiveObjectBins;
 
 /**
  * 
@@ -38,98 +36,53 @@ import blue.blueLive.LiveObject;
  */
 public class LiveObjectsTableModel implements TableModel {
 
-    ArrayList liveObjects = null;
+    LiveObjectBins bins = null;
 
     Vector tableListeners = null;
 
     /** Creates a new instance of LiveObjectsTableModel */
-    public LiveObjectsTableModel() {
-    }
-
-    public void setLiveObjects(ArrayList liveObjects) {
-        this.liveObjects = liveObjects;
-        fireTableDataChanged();
+    public LiveObjectsTableModel(LiveObjectBins bins) {
+        this.bins = bins;
     }
 
     public int getRowCount() {
-        if (liveObjects == null) {
+        if (bins == null) {
             return 0;
         }
-        return liveObjects.size();
+        return bins.getRowCount();
     }
 
     public int getColumnCount() {
-        // return 5;
-        return 3;
+        if(bins == null) {
+            return 0;
+        }
+        return bins.getColumnCount();
     }
 
     public String getColumnName(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-                return "Name";
-            case 1:
-                return "Type";
-                // case 2:
-                // return "MIDI Trigger";
-                // case 3:
-                // return "Key Trigger";
-            case 2:
-                return "Trigger";
-        }
-
-        return "xxx";
+        return Integer.toString(columnIndex + 1);
     }
 
     public Class getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 0:
-            case 1:
-                return String.class;
-                // case 2:
-                // return MidiKeyRenderer.class;
-                // case 3:
-                // return KeyboardKeyRenderer.class;
-            case 2:
-                return JButton.class;
-        }
-        return null;
+        return LiveObject.class;
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == 0 || columnIndex == 2;
+        return false;
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        if (liveObjects == null) {
+        if (bins == null || rowIndex < 0 || columnIndex < 0) {
             return null;
         }
 
-        LiveObject liveObj = (LiveObject) liveObjects.get(rowIndex);
-
-        if (rowIndex > liveObjects.size() - 1) {
-            return null;
-        }
-
-        switch (columnIndex) {
-            case 0:
-                return liveObj.getSoundObject().getName();
-            case 1:
-                String name = liveObj.getSoundObject().getClass().getName();
-                return BlueSystem.getShortClassName(name);
-                // case 2:
-                // return new Integer(liveObj.getMidiTrigger());
-                // case 3:
-                // return new Integer(liveObj.getKeyTrigger());
-            case 2:
-                return new Integer(rowIndex);
-        }
-        return null;
+        return (LiveObject) bins.getLiveObject(columnIndex, rowIndex);
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if (columnIndex == 0) {
-            LiveObject liveObj = (LiveObject) liveObjects.get(rowIndex);
-            liveObj.getSoundObject().setName((String) aValue);
+        if(rowIndex >= 0 && rowIndex < bins.getRowCount() &&
+                columnIndex >= 0 && columnIndex < bins.getColumnCount()) {
+            bins.setLiveObject(columnIndex, rowIndex, (LiveObject)aValue);
             fireTableDataChanged();
         }
     }
@@ -151,75 +104,95 @@ public class LiveObjectsTableModel implements TableModel {
     }
 
     private void fireTableDataChanged() {
+        fireTableDataChanged(new TableModelEvent(this));
+    }
+    
+    private void fireTableDataChanged(TableModelEvent tme) {
         if (tableListeners == null) {
             return;
         }
 
-        TableModelEvent tme = new TableModelEvent(this);
-
         for (Iterator iter = tableListeners.iterator(); iter.hasNext();) {
             TableModelListener listener = (TableModelListener) iter.next();
-
             listener.tableChanged(tme);
         }
     }
 
     /* DATA EDITING METHODS */
 
-    public void addLiveObject(LiveObject liveObj) {
-        if (liveObjects == null) {
-            return;
-        }
-
-        liveObjects.add(liveObj);
+    public void insertRow(int index) {
+        bins.insertRow(index);
         fireTableDataChanged();
     }
-
-    public void addLiveObject(int index, LiveObject liveObj) {
-        if (liveObjects == null) {
-            return;
-        }
-
-        if (index >= 0 && index < liveObjects.size()) {
-            liveObjects.add(index, liveObj);
-            fireTableDataChanged();
-        }
+    
+    public void removeRow(int index) {
+//        bins.removeRow(index);
+//        fireTableDataChanged();
     }
-
-    public void removeLiveObject(int index) {
-        if (liveObjects == null) {
-            return;
-        }
-
-        if (index >= 0 && index < liveObjects.size()) {
-            liveObjects.remove(index);
-            fireTableDataChanged();
-        }
+    
+    public void insertColumn(int index) {
+        bins.insertColumn(index);
+        fireTableDataChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
     }
-
-    public void pushUp(int index) {
-        if (index < 1 || index >= liveObjects.size()) {
-            return;
-        }
-
-        Object obj = liveObjects.remove(index - 1);
-        liveObjects.add(index, obj);
-
-        fireTableDataChanged();
+    
+    public void removeColumn(int index) {
+        
     }
-
-    public void pushDown(int index) {
-        if (liveObjects == null) {
-            return;
-        }
-
-        if (index < 0 || index > liveObjects.size() - 2) {
-            return;
-        }
-
-        Object obj = liveObjects.remove(index + 1);
-        liveObjects.add(index, obj);
-
-        fireTableDataChanged();
-    }
+    
+//    public void addLiveObject(LiveObject liveObj) {
+//        if (liveObjects == null) {
+//            return;
+//        }
+//
+//        liveObjects.add(liveObj);
+//        fireTableDataChanged();
+//    }
+//
+//    public void addLiveObject(int index, LiveObject liveObj) {
+//        if (liveObjects == null) {
+//            return;
+//        }
+//
+//        if (index >= 0 && index < liveObjects.size()) {
+//            liveObjects.add(index, liveObj);
+//            fireTableDataChanged();
+//        }
+//    }
+//
+//    public void removeLiveObject(int index) {
+//        if (liveObjects == null) {
+//            return;
+//        }
+//
+//        if (index >= 0 && index < liveObjects.size()) {
+//            liveObjects.remove(index);
+//            fireTableDataChanged();
+//        }
+//    }
+//
+//    public void pushUp(int index) {
+//        if (index < 1 || index >= liveObjects.size()) {
+//            return;
+//        }
+//
+//        Object obj = liveObjects.remove(index - 1);
+//        liveObjects.add(index, obj);
+//
+//        fireTableDataChanged();
+//    }
+//
+//    public void pushDown(int index) {
+//        if (liveObjects == null) {
+//            return;
+//        }
+//
+//        if (index < 0 || index > liveObjects.size() - 2) {
+//            return;
+//        }
+//
+//        Object obj = liveObjects.remove(index + 1);
+//        liveObjects.add(index, obj);
+//
+//        fireTableDataChanged();
+//    }
 }

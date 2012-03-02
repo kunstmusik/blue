@@ -296,28 +296,6 @@ public class BlueData implements Serializable {
         convertRepetitionObjects(this.pObj);
 
         convertOrchestra();
-
-        // fix for liveData object
-
-        ArrayList liveDataObjects = this.liveData.getLiveSoundObjects();
-
-        if (liveDataObjects.size() > 0) {
-            if (liveDataObjects.get(0) instanceof SoundObject) {
-
-                ArrayList temp = new ArrayList();
-
-                Iterator iter = new ArrayList(liveDataObjects).iterator();
-
-                while (iter.hasNext()) {
-                    SoundObject sObj = (SoundObject) iter.next();
-                    LiveObject liveObj = new LiveObject(sObj);
-
-                    temp.add(liveObj);
-                }
-
-                this.liveData.setLiveSoundObjects(temp);
-            }
-        }
         
     }
 
