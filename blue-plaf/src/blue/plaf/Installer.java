@@ -126,7 +126,18 @@ public class Installer extends ModuleInstall {
         }
 
         if (isMac) {
-            replaceCtrlShortcutsWithMacShortcuts();
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                       replaceCtrlShortcutsWithMacShortcuts();
+                    }
+                });
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (InvocationTargetException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+            
         }
         
         logger.info("Finished blue PLAF installation");
