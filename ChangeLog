@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.2.0<
-[released 2012.03.xx]
+[released 2012.03.03]
 
 UPDATED
 
@@ -38,6 +38,12 @@ UPDATED
   * careful attention should be made while editing SoundObjects in case a repeat
     trigger fires and the score is not quite valid; can cause unpredictable and
     very loud results due to typos!
+
+  * Ctrl-T (on Mac, Cmd-T): Triggers currently selected SoundObject (whether 
+    enabled or not)
+  
+  * Ctrl-Shift-T(on Mac, Cmd-Shift-T): Triggers currently enabled SoundObjects,
+    same as using the trigger button
 
 * csLADSPA removed from Project Properties
 
