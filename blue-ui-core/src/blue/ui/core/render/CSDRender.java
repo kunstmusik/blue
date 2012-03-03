@@ -7,7 +7,6 @@ package blue.ui.core.render;
  * @author steven yi
  * @version 1.0
  */
-import blue.csladspa.CSLADSPASettings;
 import blue.noteProcessor.TempoMapper;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -364,12 +363,6 @@ public class CSDRender {
 
         StrBuilder csd = new StrBuilder();
         appendProjectInfo(data, csd);
-
-        CSLADSPASettings csladspaSettings =
-                data.getProjectProperties().csladspaSettings;
-        if (csladspaSettings.isEnabled()) {
-            csd.append(csladspaSettings.getCSDText());
-        }
 
         csd.append("<CsoundSynthesizer>\n\n");
 

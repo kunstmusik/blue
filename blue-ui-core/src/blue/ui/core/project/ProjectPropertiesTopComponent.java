@@ -83,12 +83,10 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
             this.projectInformationPanel1.setProjectProperties(null);
             this.realtimeRenderSettingsPanel1.setProjectProperties(null);
             this.diskRenderSettingsPanel1.setProjectProperties(null);
-            this.cSLADSPASettingsPanel1.setCsladspaSettings(null);
         } else {
             this.projectInformationPanel1.setProjectProperties(projectProperties);
             this.realtimeRenderSettingsPanel1.setProjectProperties(projectProperties);
             this.diskRenderSettingsPanel1.setProjectProperties(projectProperties);
-            this.cSLADSPASettingsPanel1.setCsladspaSettings(projectProperties.csladspaSettings);
         }
 
     }
@@ -107,7 +105,6 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         jScrollPane2 = new javax.swing.JScrollPane();
         diskRenderSettingsPanel1 = new blue.ui.core.project.DiskRenderSettingsPanel();
         projectInformationPanel1 = new blue.ui.core.project.ProjectInformationPanel();
-        cSLADSPASettingsPanel1 = new blue.ui.core.project.CSLADSPASettingsPanel();
 
         jScrollPane1.setViewportView(realtimeRenderSettingsPanel1);
 
@@ -117,7 +114,6 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
 
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.jScrollPane2.TabConstraints.tabTitle"), jScrollPane2); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.projectInformationPanel1.TabConstraints.tabTitle"), projectInformationPanel1); // NOI18N
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.cSLADSPASettingsPanel1.TabConstraints.tabTitle"), cSLADSPASettingsPanel1); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -132,7 +128,6 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.ui.core.project.CSLADSPASettingsPanel cSLADSPASettingsPanel1;
     private blue.ui.core.project.DiskRenderSettingsPanel diskRenderSettingsPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

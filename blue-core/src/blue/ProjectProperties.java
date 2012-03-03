@@ -1,6 +1,5 @@
 package blue;
 
-import blue.csladspa.CSLADSPASettings;
 import blue.utility.ObjectUtilities;
 import blue.utility.ValuesUtility;
 import blue.utility.XMLUtilities;
@@ -88,8 +87,6 @@ public final class ProjectProperties implements Serializable, Cloneable {
     
     public boolean diskAlwaysRenderEntireProject = false;
     
-    public CSLADSPASettings csladspaSettings = new CSLADSPASettings();
-
     public ProjectProperties() {
         /*
          * title = ""; author = ""; notes = ""; sampleRate = "44100";
@@ -201,8 +198,6 @@ public final class ProjectProperties implements Serializable, Cloneable {
             } else if (nodeName.equals("diskCompleteOverride")) {
                 retVal.diskCompleteOverride = Boolean.valueOf(nodeVal)
                         .booleanValue();
-            } else if (nodeName.equals("csladspaSettings")) {
-                retVal.csladspaSettings = CSLADSPASettings.loadFromXML(node);
             } else if (nodeName.equals("diskAlwaysRenderEntireProject")) {
                 retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
                         .booleanValue();
@@ -295,8 +290,7 @@ public final class ProjectProperties implements Serializable, Cloneable {
                 diskCompleteOverride));
         retVal.addElement(XMLUtilities.writeBoolean("diskAlwaysRenderEntireProject", 
                 diskAlwaysRenderEntireProject));
-        retVal.addElement(csladspaSettings.saveAsXML());
-
+        
         return retVal;
     }
 

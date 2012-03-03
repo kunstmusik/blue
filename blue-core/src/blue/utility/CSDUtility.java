@@ -13,9 +13,6 @@ import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.csladspa.CSLADSPASettings;
-import blue.csladspa.PortDefinition;
-import blue.csladspa.PortDefinitionList;
 import blue.orchestra.GenericInstrument;
 import blue.soundObject.GenericScore;
 import blue.soundObject.Note;
@@ -81,18 +78,6 @@ public class CSDUtility {
         // data.getProjectProperties().CsOptions = csOptions.trim();
         // }
 
-        String csladspaText = TextUtilities.getTextBetweenTags("csLADSPA", CSD);
-                
-        if(csladspaText != null) {
-            CSLADSPASettings csladspaSettings = 
-                    data.getProjectProperties().csladspaSettings;
-            try {
-                csladspaSettings.setEnabled(true);
-                parseCSLADSPA(csladspaSettings, csladspaText);
-            } catch(Exception e) {
-                // swallow
-            }
-        }
         
         String orc = TextUtilities.getTextBetweenTags("CsInstruments", CSD);
         String sco = TextUtilities.getTextBetweenTags("CsScore", CSD);
@@ -101,63 +86,6 @@ public class CSDUtility {
         parseCsScore(data, sco, importMode);
 
         return data;
-    }
-    
-    
-    /**
-     * This code may throw an Exception.  If so, just catch and fail in the 
-     * calling code.
-     * 
-     * @param csladspaSettings
-     * @param csladspaText
-     */
-    private static void parseCSLADSPA(CSLADSPASettings csladspaSettings, String csladspaText) {
-        StringTokenizer st = new StringTokenizer(csladspaText, "\n");
-        PortDefinitionList portDefinitionList = 
-                csladspaSettings.getPortDefinitionList();
-        String line;
-        String[] parts;
-        
-        while (st.hasMoreTokens()) {
-            line = st.nextToken().trim();
-
-            parts = line.split("=");
-
-            if (parts.length != 2) {
-                continue;
-            }
-
-            String propName = parts[0].trim();
-            String propVal = parts[1].trim();
-
-            if (propName.equals("Name")) {
-                csladspaSettings.setName(propVal);
-            } else if (propName.equals("Maker")) {
-                csladspaSettings.setMaker(propVal);
-            } else if (propName.equals("UniqueID")) {
-                csladspaSettings.setUniqueId(Integer.parseInt(propVal));
-            } else if (propName.equals("Copyright")) {
-                csladspaSettings.setCopyright(propVal);
-            } else if (propName.equals("ControlPort")) {
-                PortDefinition pd = new PortDefinition();
-                String[] names = propVal.split("\\|");
-                pd.setDisplayName(names[0]);
-                pd.setChannelName(names[1]);
-                portDefinitionList.addPortDefinition(pd);
-            } else if (propName.equals("Range")) {
-                PortDefinition pd = portDefinitionList.getPortDefinition(portDefinitionList.size() - 1);
-                                
-                if(propVal.indexOf("&log") > 0) {
-                    pd.setLogarithmic(true);
-                    propVal = propVal.substring(0, propVal.indexOf("&log"));
-                }
-                
-                String[] rangeVals = propVal.split("\\|");
-                
-                pd.setRangeMin(Float.parseFloat(rangeVals[0].trim()));
-                pd.setRangeMax(Float.parseFloat(rangeVals[1].trim()));
-            } 
-        }
     }
 
     protected static void parseCsScore(BlueData data, String scoreText, int importMode) {

@@ -39,6 +39,16 @@ UPDATED
     trigger fires and the score is not quite valid; can cause unpredictable and
     very loud results due to typos!
 
+* csLADSPA removed from Project Properties
+
+FIX
+
+* Upgrade code for 2.1.10 caused incorrect loading of projects that have data 
+  in Global Orchestra (newlines were getting removed)
+
+* Bug 3495199 - Added scrollpanes to panels within Project Properties to 
+  facilitate resizing
+
 
 >Notes for 2.1.10<
 [released 2012.02.27]
