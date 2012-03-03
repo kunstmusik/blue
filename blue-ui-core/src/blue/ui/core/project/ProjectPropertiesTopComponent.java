@@ -102,13 +102,20 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     private void initComponents() {
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
         realtimeRenderSettingsPanel1 = new blue.ui.core.project.RealtimeRenderSettingsPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
         diskRenderSettingsPanel1 = new blue.ui.core.project.DiskRenderSettingsPanel();
         projectInformationPanel1 = new blue.ui.core.project.ProjectInformationPanel();
         cSLADSPASettingsPanel1 = new blue.ui.core.project.CSLADSPASettingsPanel();
 
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.realtimeRenderSettingsPanel1.TabConstraints.tabTitle"), realtimeRenderSettingsPanel1); // NOI18N
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.diskRenderSettingsPanel1.TabConstraints.tabTitle"), diskRenderSettingsPanel1); // NOI18N
+        jScrollPane1.setViewportView(realtimeRenderSettingsPanel1);
+
+        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.jScrollPane1.TabConstraints.tabTitle"), jScrollPane1); // NOI18N
+
+        jScrollPane2.setViewportView(diskRenderSettingsPanel1);
+
+        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.jScrollPane2.TabConstraints.tabTitle"), jScrollPane2); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.projectInformationPanel1.TabConstraints.tabTitle"), projectInformationPanel1); // NOI18N
         jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ProjectPropertiesTopComponent.class, "ProjectPropertiesTopComponent.cSLADSPASettingsPanel1.TabConstraints.tabTitle"), cSLADSPASettingsPanel1); // NOI18N
 
@@ -116,7 +123,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 412, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -127,6 +134,8 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private blue.ui.core.project.CSLADSPASettingsPanel cSLADSPASettingsPanel1;
     private blue.ui.core.project.DiskRenderSettingsPanel diskRenderSettingsPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
     private blue.ui.core.project.ProjectInformationPanel projectInformationPanel1;
     private blue.ui.core.project.RealtimeRenderSettingsPanel realtimeRenderSettingsPanel1;
