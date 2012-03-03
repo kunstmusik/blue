@@ -1,4 +1,4 @@
-<blueData version='2.1.0'>
+<blueData version='2.2.0_beta'>
   <projectProperties>
     <title>Pythongorean Wanderers</title>
     <author>Brian Wong</author>
@@ -6,12 +6,16 @@
     <sampleRate>44100</sampleRate>
     <ksmps>40</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>48000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
-    <useMidiIn>true</useMidiIn>
+    <useMidiIn>false</useMidiIn>
     <useMidiOut>false</useMidiOut>
     <noteAmpsEnabled>true</noteAmpsEnabled>
     <outOfRangeEnabled>true</outOfRangeEnabled>
@@ -124,6 +128,7 @@ aright = (1-kpan) * aout
 
 blueMixerOut	aleft, aright
 </instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
         <graphicInterface editEnabled='true'/>
         <bsbParameterList/>
         <presetGroup name='Presets'/>
@@ -177,6 +182,20 @@ blueMixerOut	aleft, aright
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
   <soundObject type='blue.soundObject.PolyObject'>
     <subjectiveDuration>2.0</subjectiveDuration>

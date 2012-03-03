@@ -1,4 +1,4 @@
-<blueData version='2.1.8'>
+<blueData version='2.2.0_beta'>
   <projectProperties>
     <title>Drift Study III</title>
     <author>Dave Seidel</author>
@@ -6,9 +6,13 @@
     <sampleRate>44100</sampleRate>
     <ksmps>1</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>96000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>true</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
     <useMidiIn>false</useMidiIn>
@@ -203,15 +207,14 @@ aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
   <tables></tables>
   <soundObjectLibrary/>
   <globalOrcSco>
-    <globalOrc>0dbfs = 1
-
+    <globalOrc>
 giTblSz	init	1048576
 
 ; sine wave
 giFn1	ftgen	 1, 0, giTblSz, 10, 1
 
 ; &quot;Fibonacci&quot; wave (Mt. Meru A) + 7
-giFn2	ftgen	 2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  7,.143,0,   8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0  144,.0069,0
+giFn2	ftgen	 2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  7,.143,0,   8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0,  144,.0069,0
 
 ; prime wave
 giPrime	ftgen	 3, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  7,.143,0,  11,.0909,0,  13,.077,0,   17,.0588,0,  19,.0526,0,  23,.0435,0,  27,.037,0
@@ -234,6 +237,20 @@ kangl		= 	1.57079633 * (kpan + 0.5)
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
   <soundObject type='blue.soundObject.PolyObject'>
     <subjectiveDuration>2.0</subjectiveDuration>

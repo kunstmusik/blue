@@ -1,4 +1,4 @@
-<blueData version='0.124.0'>
+<blueData version='2.2.0_beta'>
   <projectProperties>
     <title>Second Sleep</title>
     <author>Dave Seidel</author>
@@ -22,9 +22,13 @@ uncomment by removing the leading semicolons, then edit as desired.
     <sampleRate>44100</sampleRate>
     <ksmps>100</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>96000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
     <useMidiIn>false</useMidiIn>
@@ -133,8 +137,8 @@ aout	atone		aout, khpfreq
 aoutl, aoutr	yipan	ipan, aout
 	blueMixerOut aoutl, aoutr
 </instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
         <graphicInterface editEnabled='false'>
-          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
           <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
             <objectName>detune</objectName>
             <x>276</x>
@@ -281,12 +285,13 @@ aoutl, aoutr	yipan	ipan, aout
             <objectName>waveform</objectName>
             <x>25</x>
             <y>107</y>
+            <automationAllowed>false</automationAllowed>
             <bsbDropdownItemList>
-              <bsbDropdownItem>
+              <bsbDropdownItem uniqueId='-652255944'>
                 <name>Saw/Tri</name>
                 <value>4</value>
               </bsbDropdownItem>
-              <bsbDropdownItem>
+              <bsbDropdownItem uniqueId='-652255943'>
                 <name>Sqr/Pulse</name>
                 <value>2</value>
               </bsbDropdownItem>
@@ -459,8 +464,8 @@ aout	atone		aout, khpfreq
 aoutl, aoutr	yipan	ipan, aout
 	blueMixerOut aoutl, aoutr
 </instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
         <graphicInterface editEnabled='false'>
-          <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
           <bsbObject type='blue.orchestra.blueSynthBuilder.BSBKnob' version='2'>
             <objectName>detune</objectName>
             <x>276</x>
@@ -607,12 +612,13 @@ aoutl, aoutr	yipan	ipan, aout
             <objectName>waveform</objectName>
             <x>25</x>
             <y>107</y>
+            <automationAllowed>false</automationAllowed>
             <bsbDropdownItemList>
-              <bsbDropdownItem>
+              <bsbDropdownItem uniqueId='-652255930'>
                 <name>Saw/Tri</name>
                 <value>4</value>
               </bsbDropdownItem>
-              <bsbDropdownItem>
+              <bsbDropdownItem uniqueId='-652255929'>
                 <name>Sqr/Pulse</name>
                 <value>2</value>
               </bsbDropdownItem>
@@ -699,7 +705,6 @@ aout2	= aout2 * &lt;MakeUp&gt;
             <comments>This compressor introduces a look-ahead delay of 0.05s which you should compensate for with an artificially added delay to all the tracks that dont have compression on. Based around compress opcode. Switchable peak/RMS compression (if you can tell the difference).</comments>
             <opcodeList/>
             <graphicInterface editEnabled='true'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBHSlider'>
                 <objectName>Threshhold</objectName>
                 <x>0</x>
@@ -830,12 +835,13 @@ aout2	= aout2 * &lt;MakeUp&gt;
                 <objectName>CompType</objectName>
                 <x>198</x>
                 <y>253</y>
+                <automationAllowed>false</automationAllowed>
                 <bsbDropdownItemList>
-                  <bsbDropdownItem>
+                  <bsbDropdownItem uniqueId='-652256029'>
                     <name>Peak</name>
                     <value>0</value>
                   </bsbDropdownItem>
-                  <bsbDropdownItem>
+                  <bsbDropdownItem uniqueId='-652256028'>
                     <name>RMS</name>
                     <value>1</value>
                   </bsbDropdownItem>
@@ -947,7 +953,6 @@ aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='false'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
                 <objectName></objectName>
                 <x>7</x>
@@ -1038,7 +1043,6 @@ aout2	=	ain2
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='true'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBTextField'>
                 <objectName>filename-left</objectName>
                 <x>37</x>
@@ -1097,7 +1101,6 @@ aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='false'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
                 <objectName></objectName>
                 <x>7</x>
@@ -1188,7 +1191,6 @@ aout2	=	ain2
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='true'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBTextField'>
                 <objectName>filename-left</objectName>
                 <x>37</x>
@@ -1247,7 +1249,6 @@ aout2 = (ain2 * &lt;wetdry&gt;) + (aout2 * (1 - &lt;wetdry&gt;))
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='false'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
                 <objectName></objectName>
                 <x>7</x>
@@ -1338,7 +1339,6 @@ aout2	=	ain2
             <comments/>
             <opcodeList/>
             <graphicInterface editEnabled='true'>
-              <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
               <bsbObject type='blue.orchestra.blueSynthBuilder.BSBTextField'>
                 <objectName>filename-left</objectName>
                 <x>37</x>
@@ -1393,9 +1393,7 @@ aout2	butterlp ain2, sr/2
 </code>
           <comments/>
           <opcodeList/>
-          <graphicInterface editEnabled='true'>
-            <uniqueNameManager nameIndex='-1' defaultPrefix='bsbObj'/>
-          </graphicInterface>
+          <graphicInterface editEnabled='true'/>
           <bsbParameterList/>
         </effect>
       </effectsChain>
@@ -1416,7 +1414,7 @@ aout2	butterlp ain2, sr/2
 giFn1	ftgen	1, 0, giTblSz, 10, 1
 
 ; &quot;Fibonacci&quot; wave (Mt. Meru A)
-giFn2	ftgen	2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0  144,.0069,0</globalOrc>
+giFn2	ftgen	2, 0, giTblSz, 9,  1,1,0,   2,.5,0,   3,.3333,0,  5,.2,0,  8,.125,0,  13,.0769,0,  21,.0476,0,  34,.0294,0,  55,.0182,0,  89,.0112,0,  144,.0069,0</globalOrc>
     <globalSco>t 0 20</globalSco>
   </globalOrcSco>
   <opcodeList>
@@ -1489,6 +1487,20 @@ endif
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
   <soundObject type='blue.soundObject.PolyObject'>
     <subjectiveDuration>2.0</subjectiveDuration>
@@ -1705,4 +1717,29 @@ i19 0 1 1400 2 120 43 32 0.011  0 3 3
       <linePoint x='0.0' y='60.0'/>
     </line>
   </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant></pitchConstant>
+    <ampConstant></ampConstant>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
 </blueData>
