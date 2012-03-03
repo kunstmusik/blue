@@ -126,8 +126,8 @@ public class LiveObjectsTableModel implements TableModel {
     }
     
     public void removeRow(int index) {
-//        bins.removeRow(index);
-//        fireTableDataChanged();
+        bins.removeRow(index);
+        fireTableDataChanged();
     }
     
     public void insertColumn(int index) {
@@ -136,7 +136,8 @@ public class LiveObjectsTableModel implements TableModel {
     }
     
     public void removeColumn(int index) {
-        
+        bins.removeColumn(index);
+        fireTableDataChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
     }
     
 //    public void addLiveObject(LiveObject liveObj) {

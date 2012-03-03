@@ -144,6 +144,9 @@
                   <SpinnerModel initial="60" maximum="300" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="tempoSpinnerStateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel7">
               <Properties>
@@ -158,6 +161,9 @@
                   <SpinnerModel initial="4" maximum="256" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="repeatSpinnerStateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JToggleButton" name="repeatButton">
               <Properties>

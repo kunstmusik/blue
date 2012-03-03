@@ -34,6 +34,10 @@ public class LiveData implements Serializable {
 
     private String commandLine = "csound -Wdo devaudio -L stdin";
     
+    private int tempo = 60;
+    
+    private int repeat = 4;
+    
     private LiveObjectBins liveObjectBins = new LiveObjectBins();
 
     private boolean commandLineEnabled = false;
@@ -50,6 +54,22 @@ public class LiveData implements Serializable {
     
     public LiveObjectBins getLiveObjectBins() {
         return liveObjectBins;
+    }
+
+    public int getRepeat() {
+        return repeat;
+    }
+
+    public void setRepeat(int repeat) {
+        this.repeat = repeat;
+    }
+
+    public int getTempo() {
+        return tempo;
+    }
+
+    public void setTempo(int tempo) {
+        this.tempo = tempo;
     }
     
     
@@ -88,6 +108,10 @@ public class LiveData implements Serializable {
                         sObjLibrary));
             } else if (name.equals("liveObjectBins")) {
                 liveData.liveObjectBins = LiveObjectBins.loadFromXML(node, sObjLibrary);
+            } else if (name.equals("repeat")) {
+                liveData.repeat = XMLUtilities.readInt(node);
+            } else if (name.equals("tempo")) {
+                liveData.tempo = XMLUtilities.readInt(node);
             }
 
         }
@@ -122,6 +146,8 @@ public class LiveData implements Serializable {
                 commandLineOverride));
 
         retVal.addElement(liveObjectBins.saveAsXML(sObjLibrary));
+        retVal.addElement(XMLUtilities.writeInt("repeat", repeat));
+        retVal.addElement(XMLUtilities.writeInt("tempo", tempo));
 
         return retVal;
     }

@@ -12,6 +12,34 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.2.0<
+[released 2012.03.xx]
+
+UPDATED
+
+* Modified UDO Editor to have In Types, Out Types, and Test button on single 
+  line 
+
+* blueLive: 
+
+  * moved from List of SoundObjects to table with bins (columns and rows added
+    from popup menu, accesible by right-click)
+
+  * double-clicking SoundObject toggles enabled state (orange color)
+
+  * trigger button sends score events from enabled SoundObjects
+
+  * tempo will be applied before score events sent to Csound, for example, using
+    tempo 120, score "i1 0 2" will be sent as "i1 0 1" 
+
+  * repeat button will repeat trigger every n-number of beats, as specified by
+    user
+
+  * careful attention should be made while editing SoundObjects in case a repeat
+    trigger fires and the score is not quite valid; can cause unpredictable and
+    very loud results due to typos!
+
+
 >Notes for 2.1.10<
 [released 2012.02.27]
 

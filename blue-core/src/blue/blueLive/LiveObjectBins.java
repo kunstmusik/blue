@@ -129,6 +129,30 @@ public class LiveObjectBins {
         
         listeners.firePropertyChange("rowCount", oldCount, newBins[0].length);
     }
+    
+    public void removeRow(int index) {
+        if(index < 0 || index >= liveObjectBins[0].length || liveObjectBins[0].length <= 1) {
+            return;
+        }
+        
+        LiveObject[][] newBins = new LiveObject[liveObjectBins.length][liveObjectBins[0].length - 1];
+        
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            int writeCounter = 0;
+
+            for (int j = 0; j < liveObjectBins[i].length; j++) {
+                if (j != index) {
+                    newBins[i][writeCounter] = liveObjectBins[i][j];
+                    writeCounter++;
+                }
+            }
+        }
+        
+        int oldCount = liveObjectBins[0].length;
+        liveObjectBins = newBins;
+        
+        listeners.firePropertyChange("rowCount", oldCount, newBins[0].length);
+    }
 
     public void insertColumn(int index) {
 
@@ -157,6 +181,31 @@ public class LiveObjectBins {
 
         listeners.firePropertyChange("columnCount", oldCount, newBins.length);
     }
+    
+    public void removeColumn(int index) {
+        if(index < 0 || index >= liveObjectBins.length || liveObjectBins.length <= 1) {
+            return;
+        }
+        
+        LiveObject[][] newBins = new LiveObject[liveObjectBins.length - 1][liveObjectBins[0].length];
+        
+        int writeCounter = 0;
+        boolean inserted = false;
+
+        for (int i = 0; i < liveObjectBins.length; i++) {
+            if (i != index) {
+                
+                System.arraycopy(liveObjectBins[i], 0, newBins[writeCounter], 0, liveObjectBins[0].length);
+                writeCounter++;
+            }
+        }
+
+        int oldCount = liveObjectBins.length;
+        liveObjectBins = newBins;
+
+        listeners.firePropertyChange("columnCount", oldCount, newBins.length);
+    }
+    
 
     public int getColumnCount() {
         return liveObjectBins.length;

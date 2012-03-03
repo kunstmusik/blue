@@ -333,10 +333,20 @@ public final class BlueLiveTopComponent extends TopComponent {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel6.text")); // NOI18N
 
         tempoSpinner.setModel(new javax.swing.SpinnerNumberModel(60, 1, 300, 1));
+        tempoSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                tempoSpinnerStateChanged(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel7.text")); // NOI18N
 
         repeatSpinner.setModel(new javax.swing.SpinnerNumberModel(4, 1, 256, 1));
+        repeatSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                repeatSpinnerStateChanged(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(repeatButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.repeatButton.text")); // NOI18N
         repeatButton.addActionListener(new java.awt.event.ActionListener() {
@@ -686,6 +696,14 @@ public final class BlueLiveTopComponent extends TopComponent {
         
         
     }//GEN-LAST:event_repeatButtonActionPerformed
+
+    private void tempoSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tempoSpinnerStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tempoSpinnerStateChanged
+
+    private void repeatSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatSpinnerStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_repeatSpinnerStateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField commandLineText;
@@ -1064,6 +1082,13 @@ public final class BlueLiveTopComponent extends TopComponent {
                     model.insertRow(mouseRow + 1);
                 }
             });
+            
+            removeRow.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.removeRow(mouseRow);
+                }
+            });
 
 
             insertColumnBefore.addActionListener(new ActionListener() {
@@ -1077,6 +1102,13 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                 public void actionPerformed(ActionEvent e) {
                     model.insertColumn(mouseColumn + 1);
+                }
+            });
+            
+            removeColumn.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    model.removeColumn(mouseColumn);
                 }
             });
 
@@ -1113,6 +1145,9 @@ public final class BlueLiveTopComponent extends TopComponent {
                     cutMenuItem.setEnabled(objectAvailable);
                     copyMenuItem.setEnabled(objectAvailable);
                     removeInstrumentMenuItem.setEnabled(objectAvailable);
+                    
+                    removeRow.setEnabled(liveObjectsTable.getRowCount() > 1);
+                    removeColumn.setEnabled(liveObjectsTable.getColumnCount() > 1);
 
                     if (!objectAvailable && buffer.hasBufferedSoundObject()) {
                         pasteMenuItem.setEnabled(plugins.contains(buffer.getBufferedSoundObject().getClass()));

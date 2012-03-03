@@ -108,4 +108,32 @@ public class LiveObjectBinsTest {
         assertEquals(1, instance.getColumnForObject(liveObject));
         assertEquals(3, instance.getRowForObject(liveObject));
     }
+    
+    @Test 
+    public void testRemoveRow_Column() {
+        LiveObjectBins instance = new LiveObjectBins();
+        LiveObject liveObject = new LiveObject(new GenericScore());
+        instance.setLiveObject(0, 2, liveObject);
+        
+        instance.insertColumn(0);
+        instance.insertRow(0);
+        assertEquals(1, instance.getColumnForObject(liveObject));
+        assertEquals(3, instance.getRowForObject(liveObject));
+        
+        instance.removeRow(0);
+        assertEquals(1, instance.getColumnForObject(liveObject));
+        assertEquals(2, instance.getRowForObject(liveObject));
+        instance.removeColumn(-1);
+        assertEquals(1, instance.getColumnForObject(liveObject));
+        assertEquals(2, instance.getRowForObject(liveObject));
+                
+        instance.removeColumn(0);
+        assertEquals(0, instance.getColumnForObject(liveObject));
+        assertEquals(2, instance.getRowForObject(liveObject));
+        
+        instance.removeColumn(0);
+
+        assertEquals(1, instance.getColumnCount());
+        assertEquals(8, instance.getRowCount());
+    }
 }
