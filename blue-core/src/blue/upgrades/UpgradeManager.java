@@ -81,7 +81,7 @@ public class UpgradeManager {
                             projectProperties.diskUseZeroDbFS = true;
                             projectProperties.diskZeroDbFS = str;
                         } else {
-                            buffer.append(str);
+                            buffer.append(str).append("\n");
                         }
                     }
 
