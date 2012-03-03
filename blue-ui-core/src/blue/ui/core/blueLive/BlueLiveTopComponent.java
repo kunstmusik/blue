@@ -60,6 +60,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 //import org.openide.util.ImageUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.util.Exceptions;
 
 /**
  * Top component which displays something.
@@ -85,6 +86,8 @@ public final class BlueLiveTopComponent extends TopComponent {
     BlueLiveToolBar blueLiveToolBar;
     int mouseColumn = -1;
     int mouseRow = -1;
+    
+    PerformanceThread performanceThread = null;
 
     public BlueLiveTopComponent() {
         initComponents();
@@ -228,6 +231,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         });
 
         reinitialize();
+        
     }
 
     private void reinitialize() {
@@ -288,7 +292,6 @@ public final class BlueLiveTopComponent extends TopComponent {
         tempoSpinner = new javax.swing.JSpinner();
         jLabel7 = new javax.swing.JLabel();
         repeatSpinner = new javax.swing.JSpinner();
-        repeatProgress = new javax.swing.JProgressBar();
         repeatButton = new javax.swing.JToggleButton();
         scoPadPanel = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -333,7 +336,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.jLabel7.text")); // NOI18N
 
-        repeatSpinner.setModel(new javax.swing.SpinnerNumberModel(16, 1, 256, 1));
+        repeatSpinner.setModel(new javax.swing.SpinnerNumberModel(4, 1, 256, 1));
 
         org.openide.awt.Mnemonics.setLocalizedText(repeatButton, org.openide.util.NbBundle.getMessage(BlueLiveTopComponent.class, "BlueLiveTopComponent.repeatButton.text")); // NOI18N
         repeatButton.addActionListener(new java.awt.event.ActionListener() {
@@ -358,32 +361,26 @@ public final class BlueLiveTopComponent extends TopComponent {
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(repeatProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(repeatButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(triggerButton)))
                 .addContainerGap())
         );
         liveSpacePanelLayout.setVerticalGroup(
             liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(liveSpacePanelLayout.createSequentialGroup()
-                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(triggerButton)
-                                .addComponent(jLabel6)
-                                .addComponent(jLabel7)
-                                .addComponent(repeatButton))
-                            .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(repeatProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap()
+                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(triggerButton)
+                            .addComponent(repeatButton))
+                        .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(repeatSpinner, javax.swing.GroupLayout.Alignment.LEADING)))
+                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
                 .addContainerGap())
@@ -670,7 +667,24 @@ public final class BlueLiveTopComponent extends TopComponent {
     }//GEN-LAST:event_triggerButtonActionPerformed
 
     private void repeatButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatButtonActionPerformed
-        // TODO add your handling code here:
+        if(!blueLiveToolBar.isRunning()) {
+            repeatButton.setSelected(false);
+            return;
+        }
+        
+        if(repeatButton.isSelected()) {
+            if(performanceThread == null) {
+                performanceThread = new PerformanceThread();
+                performanceThread.start();
+            }
+        } else {
+            if(performanceThread != null) {
+                performanceThread.turnOff();
+                performanceThread = null;
+            }
+        }
+        
+        
     }//GEN-LAST:event_repeatButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -695,7 +709,6 @@ public final class BlueLiveTopComponent extends TopComponent {
     private javax.swing.JTextArea outputTextArea;
     private javax.swing.JSpinner quarterNoteSpinner;
     private javax.swing.JToggleButton repeatButton;
-    private javax.swing.JProgressBar repeatProgress;
     private javax.swing.JSpinner repeatSpinner;
     private javax.swing.JPanel scoPadPanel;
     private javax.swing.JSpinner startSpinner;
@@ -853,10 +866,52 @@ public final class BlueLiveTopComponent extends TopComponent {
     class PerformanceThread extends Thread {
         int beatCounter = 0;
         boolean keepRunning = true;
+        
+        int currentRepeatTempo;
+        int currentRepeat;
+        long waitTime;
+        
         public void run() {
             while(keepRunning) {
                 
+                if(!blueLiveToolBar.isRunning()) {
+                    keepRunning = false;
+                    performanceThread = null;
+                    repeatButton.setSelected(false);
+                    break;
+                }
+                
+                if(beatCounter == 0) {
+                    
+                    currentRepeatTempo = ((Integer)tempoSpinner.getValue()).intValue();
+                    currentRepeat = ((Integer)repeatSpinner.getValue()).intValue();
+                    waitTime = (long)(1000 * (60.0f / currentRepeatTempo));
+                    
+                    new Thread() {
+                        public void run() {
+                            triggerButtonActionPerformed(null);
+                        }
+                    }.start();
+                }
+                
+                beatCounter++;
+
+                if(beatCounter >= currentRepeat) {
+                    beatCounter = 0;
+                }
+                
+                
+                try {
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException ex) {
+                    keepRunning = false;
+                    repeatButton.setSelected(false);
+                }
             }
+        }
+        
+        public void turnOff() {
+            keepRunning = false;
         }
     }
 
