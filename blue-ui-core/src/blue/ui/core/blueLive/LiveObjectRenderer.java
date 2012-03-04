@@ -46,7 +46,11 @@ public class LiveObjectRenderer extends JLabel implements TableCellRenderer {
         
         if(lObj != null && lObj.isEnabled()) {
             setForeground(Color.BLACK);
-            setBackground(Color.ORANGE);
+            if(isSelected) {
+                setBackground(Color.ORANGE.brighter());
+            } else {
+                setBackground(Color.ORANGE);
+            }
         } else if (isSelected) {
             setForeground(table.getSelectionForeground());
             setBackground(table.getSelectionBackground());

@@ -12,6 +12,17 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.2.1<
+[released 2012.03.xx]
+
+UPDATED
+
+* blueLive:
+  
+  * when a SoundObject is selected and also enabled, made color render as 
+    brighter orange color to differentiate from non-selected enabled objects
+
+
 >Notes for 2.2.0<
 [released 2012.03.03]
 
