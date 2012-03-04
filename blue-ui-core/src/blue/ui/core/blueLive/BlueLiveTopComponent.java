@@ -300,6 +300,9 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             // sObjEditPanel.editSoundObject(null);
 
+            repeatSpinner.setValue(liveData.getRepeat());
+            tempoSpinner.setValue(liveData.getTempo());
+            
             this.data = currentData;
 
             this.repaint();
@@ -763,11 +766,19 @@ public final class BlueLiveTopComponent extends TopComponent {
     }//GEN-LAST:event_repeatButtonActionPerformed
 
     private void tempoSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tempoSpinnerStateChanged
-        // TODO add your handling code here:
+        if (data == null) {
+            return;
+        }
+        
+        data.getLiveData().setTempo((Integer)tempoSpinner.getValue());
     }//GEN-LAST:event_tempoSpinnerStateChanged
 
     private void repeatSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatSpinnerStateChanged
-        // TODO add your handling code here:
+        if (data == null) {
+            return;
+        }
+        
+        data.getLiveData().setRepeat((Integer)repeatSpinner.getValue());
     }//GEN-LAST:event_repeatSpinnerStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField commandLineText;

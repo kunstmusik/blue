@@ -22,6 +22,7 @@ UPDATED
   * when a SoundObject is selected and also enabled, made color render as 
     brighter orange color to differentiate from non-selected enabled objects
 
+  * fixed saving/loading of repeat and tempo settings
 
 >Notes for 2.2.0<
 [released 2012.03.03]
