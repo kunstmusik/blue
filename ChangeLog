@@ -27,6 +27,9 @@ UPDATED
   * update name of SoundObject in bins when updated from SoundObject Properties
     Window
 
+* SoundObject Property Window: setting repeat point with enter key shows value
+  reformatted as float
+
 
 >Notes for 2.2.0<
 [released 2012.03.03]

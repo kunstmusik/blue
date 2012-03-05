@@ -252,6 +252,7 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
             return;
         } else {
             sObj.setRepeatPoint(newValue);
+            repeatePointText.setText(Float.toString(newValue));
         }
 
     }
