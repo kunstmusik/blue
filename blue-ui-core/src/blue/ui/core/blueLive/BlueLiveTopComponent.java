@@ -100,7 +100,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         setupNoteTemplatePopup();
 
-        model = new LiveObjectsTableModel(null);
+        model = new LiveObjectsTableModel();
 
 //        liveObjectsTable.setDefaultRenderer(JButton.class,
 //                new ButtonCellRenderer());
@@ -281,7 +281,7 @@ public final class BlueLiveTopComponent extends TopComponent {
             LiveData liveData = currentData.getLiveData();
 
             this.liveObjectsTable.setAutoCreateColumnsFromModel(true);
-            model = new LiveObjectsTableModel(liveData.getLiveObjectBins());
+            model.setLiveObjectBins(liveData.getLiveObjectBins());
             this.liveObjectsTable.setModel(model);
 
             this.commandLineText.setText(liveData.getCommandLine());
@@ -429,15 +429,18 @@ public final class BlueLiveTopComponent extends TopComponent {
             .addGroup(liveSpacePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, liveSpacePanelLayout.createSequentialGroup()
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
+                    .addGroup(liveSpacePanelLayout.createSequentialGroup()
+                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(liveSpacePanelLayout.createSequentialGroup()
+                                .addGap(124, 124, 124)
+                                .addComponent(jLabel7))
+                            .addGroup(liveSpacePanelLayout.createSequentialGroup()
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(58, 58, 58)
+                                .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(repeatButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -448,18 +451,15 @@ public final class BlueLiveTopComponent extends TopComponent {
             liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(liveSpacePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(triggerButton)
-                            .addComponent(repeatButton))
-                        .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(repeatSpinner, javax.swing.GroupLayout.Alignment.LEADING)))
+                .addGroup(liveSpacePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(triggerButton)
+                    .addComponent(repeatButton)
+                    .addComponent(repeatSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tempoSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7)
                     .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
                 .addContainerGap())
         );
 

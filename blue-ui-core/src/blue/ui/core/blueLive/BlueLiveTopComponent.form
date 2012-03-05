@@ -55,15 +55,21 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane1" alignment="0" pref="566" max="32767" attributes="0"/>
-                          <Group type="102" alignment="1" attributes="0">
-                              <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="tempoSpinner" min="-2" pref="69" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="repeatSpinner" min="-2" pref="71" max="-2" attributes="0"/>
+                          <Component id="jScrollPane1" alignment="1" pref="566" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="-2" pref="124" max="-2" attributes="0"/>
+                                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tempoSpinner" min="-2" pref="69" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="58" max="-2" attributes="0"/>
+                                      <Component id="repeatSpinner" min="-2" pref="71" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="repeatButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
@@ -77,23 +83,17 @@
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="triggerButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="repeatButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <Component id="tempoSpinner" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                                  <Component id="jLabel7" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="repeatSpinner" alignment="0" max="32767" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Component id="jLabel6" min="-2" pref="29" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="2" attributes="0">
+                          <Component id="triggerButton" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="repeatButton" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="repeatSpinner" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="tempoSpinner" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel7" alignment="2" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel6" alignment="2" min="-2" pref="29" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="309" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="127" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>

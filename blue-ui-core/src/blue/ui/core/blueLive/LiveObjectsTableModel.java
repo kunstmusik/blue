@@ -29,22 +29,47 @@ import javax.swing.table.TableModel;
 
 import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
+import blue.soundObject.SoundObject;
+import blue.soundObject.SoundObjectEvent;
+import blue.soundObject.SoundObjectListener;
 
 /**
  * 
  * @author steven
  */
-public class LiveObjectsTableModel implements TableModel {
+public class LiveObjectsTableModel implements TableModel, SoundObjectListener {
 
     LiveObjectBins bins = null;
 
     Vector tableListeners = null;
 
-    /** Creates a new instance of LiveObjectsTableModel */
-    public LiveObjectsTableModel(LiveObjectBins bins) {
+    public void setLiveObjectBins(LiveObjectBins bins) {
+        
+        if(this.bins != null) {
+            for(int i = 0; i < this.bins.getColumnCount(); i++) {
+                for(int j = 0; j < this.bins.getRowCount(); j++) {
+                    LiveObject lObj = this.bins.getLiveObject(i, j);
+                    if(lObj != null && lObj.getSoundObject() != null) {
+                        lObj.getSoundObject().removeSoundObjectListener(this);
+                    }
+                }
+            }
+        }
+        
         this.bins = bins;
+        
+        for(int i = 0; i < bins.getColumnCount(); i++) {
+            for(int j = 0; j < bins.getRowCount(); j++) {
+                LiveObject lObj = bins.getLiveObject(i, j);
+                if(lObj != null && lObj.getSoundObject() != null) {
+                    lObj.getSoundObject().addSoundObjectListener(this);
+                }
+            }
+        }
+        
+        fireTableDataChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
     }
-
+    
     public int getRowCount() {
         if (bins == null) {
             return 0;
@@ -82,7 +107,20 @@ public class LiveObjectsTableModel implements TableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if(rowIndex >= 0 && rowIndex < bins.getRowCount() &&
                 columnIndex >= 0 && columnIndex < bins.getColumnCount()) {
-            bins.setLiveObject(columnIndex, rowIndex, (LiveObject)aValue);
+            
+            LiveObject oldLiveObj = bins.getLiveObject(columnIndex, rowIndex);
+            LiveObject newObj = (LiveObject)aValue;
+            
+            if(oldLiveObj != null && oldLiveObj.getSoundObject() != null) {
+                oldLiveObj.getSoundObject().removeSoundObjectListener(this);
+            }
+            
+            bins.setLiveObject(columnIndex, rowIndex, newObj);
+            
+            if(newObj != null && newObj.getSoundObject() != null) {
+                newObj.getSoundObject().addSoundObjectListener(this);
+            }
+            
             fireTableDataChanged();
         }
     }
@@ -139,61 +177,36 @@ public class LiveObjectsTableModel implements TableModel {
         bins.removeColumn(index);
         fireTableDataChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
     }
+
+    @Override
+    public void soundObjectChanged(SoundObjectEvent event) {
+        if(event.getPropertyChanged() == SoundObjectEvent.NAME) {
+            LiveObject lObj = getLiveObjectForSoundObject(event.getSoundObject());
+            
+            if(lObj != null) {
+                int row = bins.getRowForObject(lObj);
+                int column = bins.getColumnForObject(lObj);
+                
+                fireTableDataChanged(new TableModelEvent(this, row, row, column, TableModelEvent.UPDATE));
+            }
+        }
+    }
     
-//    public void addLiveObject(LiveObject liveObj) {
-//        if (liveObjects == null) {
-//            return;
-//        }
-//
-//        liveObjects.add(liveObj);
-//        fireTableDataChanged();
-//    }
-//
-//    public void addLiveObject(int index, LiveObject liveObj) {
-//        if (liveObjects == null) {
-//            return;
-//        }
-//
-//        if (index >= 0 && index < liveObjects.size()) {
-//            liveObjects.add(index, liveObj);
-//            fireTableDataChanged();
-//        }
-//    }
-//
-//    public void removeLiveObject(int index) {
-//        if (liveObjects == null) {
-//            return;
-//        }
-//
-//        if (index >= 0 && index < liveObjects.size()) {
-//            liveObjects.remove(index);
-//            fireTableDataChanged();
-//        }
-//    }
-//
-//    public void pushUp(int index) {
-//        if (index < 1 || index >= liveObjects.size()) {
-//            return;
-//        }
-//
-//        Object obj = liveObjects.remove(index - 1);
-//        liveObjects.add(index, obj);
-//
-//        fireTableDataChanged();
-//    }
-//
-//    public void pushDown(int index) {
-//        if (liveObjects == null) {
-//            return;
-//        }
-//
-//        if (index < 0 || index > liveObjects.size() - 2) {
-//            return;
-//        }
-//
-//        Object obj = liveObjects.remove(index + 1);
-//        liveObjects.add(index, obj);
-//
-//        fireTableDataChanged();
-//    }
+    protected LiveObject getLiveObjectForSoundObject(SoundObject sObj) {
+        if(this.bins == null) {
+            return null;
+        }
+        
+        for(int i = 0; i < bins.getColumnCount(); i++) {
+            for(int j = 0; j < bins.getRowCount(); j++) {
+                LiveObject lObj = bins.getLiveObject(i, j);
+                
+                if(lObj != null && lObj.getSoundObject() == sObj) {
+                    return lObj;
+                }
+            }
+        }
+        
+        return null;
+    }
 }

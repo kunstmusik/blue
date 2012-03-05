@@ -24,6 +24,10 @@ UPDATED
 
   * fixed saving/loading of repeat and tempo settings
 
+  * update name of SoundObject in bins when updated from SoundObject Properties
+    Window
+
+
 >Notes for 2.2.0<
 [released 2012.03.03]
 
