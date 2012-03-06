@@ -30,6 +30,7 @@ UPDATED
 * SoundObject Property Window: setting repeat point with enter key shows value
   reformatted as float
 
+* Added blueIcon.png to bin folder in zip release, for use on Linux
 
 >Notes for 2.2.0<
 [released 2012.03.03]
