@@ -9,17 +9,18 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  *
  * @author stevenyi
  */
-public class LiveObjectBins {
+public class LiveObjectBins implements Serializable {
 
     private LiveObject[][] liveObjectBins;
    
-    PropertyChangeSupport listeners = new PropertyChangeSupport(this);
+    transient PropertyChangeSupport listeners = new PropertyChangeSupport(this);
     
     public LiveObjectBins() {
         this(new LiveObject[1][8]);

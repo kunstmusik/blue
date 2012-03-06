@@ -32,6 +32,11 @@ UPDATED
 
 * Added blueIcon.png to bin folder in zip release, for use on Linux
 
+FIX
+
+* Auditioning of SoundObjects was not working due to serialization bug
+
+
 >Notes for 2.2.0<
 [released 2012.03.03]
 
