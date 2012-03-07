@@ -585,44 +585,52 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             yTranslation = sCanvas.pObj.getSize() - maxLayer - 1;
         }
 
-        if (sCanvas.pObj.isSnapEnabled()) {
-            int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj
-                    .getPixelSecond());
-            int correction = sCanvas.mBuffer.point[0][0]
-                    - Math.round((float) sCanvas.mBuffer.point[0][0]
-                            / snapPixels) * snapPixels;
-
-            xTranslation = (xTranslation / snapPixels) * snapPixels;
-            xTranslation -= correction;
-            // System.out.println("correction: " + correction + " : " +
-            // "xTranslation: " + xTranslation);
-        }
-
         if (xTranslation < -sCanvas.mBuffer.point[0][0]) {
             xTranslation = -sCanvas.mBuffer.point[0][0];
         }
-
-        int newX, newY;
         
+        float timeAdjust = (float)xTranslation / sCanvas.pObj.getPixelSecond();
+        
+        if (sCanvas.pObj.isSnapEnabled()) {
+            
+            float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
+            
+            float tempStart = initialStartTime + timeAdjust;
+            float snappedStart = Math.round(tempStart / sCanvas.pObj.getSnapValue()) * sCanvas.pObj.getSnapValue();
+            
+            timeAdjust = snappedStart - initialStartTime;
+            
+        }
+
+
+
+        //FIXME - needs to use time instead of x value
         sCanvas.automationPanel.setMultiLineTranslation(xTranslation);
 
         for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-            newX = sCanvas.mBuffer.point[i][0] + xTranslation;
+            
 
             int originalLayer = sCanvas.pObj
                     .getLayerNumForY(sCanvas.mBuffer.point[i][1]);
 
-            newY = sCanvas.pObj.getYForLayerNum(originalLayer + yTranslation);
-
-            float newStart = (float) newX / sCanvas.pObj.getPixelSecond();
+            int newY = sCanvas.pObj.getYForLayerNum(originalLayer + yTranslation);
 
             SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
+            SoundObject sObj = sObjView.getSoundObject();
+            
+            float newStart;
+            
+            if(sCanvas.pObj.isSnapEnabled()) {
+                newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;    
+            } else {
+                int newX = sCanvas.mBuffer.point[i][0] + xTranslation;
+                newStart = (float) newX / sCanvas.pObj.getPixelSecond();
+            }
+            
             sObjView.setLocation(sObjView.getX(), newY);
 
             sObjView.setSize(sObjView.getWidth(), sCanvas.pObj
                     .getSoundLayerHeight(originalLayer + yTranslation));
-
-            SoundObject sObj = sObjView.getSoundObject();
 
             sObj.setStartTime(newStart);
 
@@ -636,20 +644,28 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
         newWidth += (xVal - sCanvas.start.x);
 
-        if (sCanvas.pObj.isSnapEnabled()) {
-            int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj
-                    .getPixelSecond());
-            newWidth = (Math.round(xVal / (float) snapPixels) * snapPixels)
-                    - sCanvas.mBuffer.point[0][0];
-        }
-
-        if (newWidth < EDGE) {
-            newWidth = EDGE;
-        }
-
-        float newDuration = (float) newWidth / sCanvas.pObj.getPixelSecond();
-
+        float newDuration;
+        
         SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
+        
+        if (sCanvas.pObj.isSnapEnabled()) {
+            
+            float endTime = newDuration = Math.round(xVal / (float) sCanvas.pObj
+                    .getPixelSecond() / sCanvas.pObj.getSnapValue()) * sCanvas.pObj.getSnapValue();
+            
+            newDuration = endTime - sObj.getStartTime();
+            
+            float minTime = (float)EDGE / sCanvas.pObj.getPixelSecond();
+            
+            newDuration = (newDuration < minTime) ? minTime : newDuration;
+            
+        } else {
+            if (newWidth < EDGE) {
+                newWidth = EDGE;
+            }
+            
+            newDuration = (float) newWidth / sCanvas.pObj.getPixelSecond();
+        }
 
         sObj.setSubjectiveDuration(newDuration);
     }
