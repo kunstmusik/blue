@@ -940,8 +940,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         if (getPolyObject().isSnapEnabled()) {
             int snapPixels = (int) (getPolyObject().getSnapValue() * getPolyObject().getPixelSecond());
-            // System.out.println("snap: " + snapPixels + " : " +
-            // pObj.getPixelSecond());
+
             int x = 0;
             if (snapPixels <= 0) {
                 return;
@@ -955,10 +954,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                  x = (int)((i * snapValue) * pixelSecond);
                  g.drawLine(x, 0, x, height);
             }
-//            for (int i = 0; i < width / snapPixels; i++) {
-//                x = i * snapPixels;
-//                
-//            }
+            
         }
 
         if (getPolyObject().isRoot()) {
