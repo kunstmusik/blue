@@ -328,15 +328,21 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         if (p.isSnapEnabled()) {
             int snapPixels = (int) (p.getSnapValue() * p.getPixelSecond());
 
-            int x;
+            int x = 0;
             if (snapPixels <= 0) {
                 return;
             }
 
-            for (int i = 0; i <= (w / snapPixels); i++) {
-                x = i * snapPixels;
-                g.drawLine(x, 0, x, h);
+             
+            float snapValue = p.getSnapValue();
+            int pixelSecond = p.getPixelSecond();
+            float time;
+            
+            for(int i = 0; x < w; i++) {
+                 x = (int)((i * snapValue) * pixelSecond);
+                 g.drawLine(x, 0, x, h);
             }
+            
         }
 
     }
