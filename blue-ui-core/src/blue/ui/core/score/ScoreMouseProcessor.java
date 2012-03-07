@@ -35,6 +35,7 @@ import blue.soundObject.SoundObject;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
 
 /**
  * ScoreMouseProcessor handles mouse actions for ScoreTimeCanvas
@@ -166,33 +167,22 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                         SelectionEvent.SELECTION_CLEAR));
 
                 int soundLayerIndex = getSoundLayerIndex(e.getY());
-                int start = e.getX();
+                float start = getTimeForX(e.getX());
 
                 if (sCanvas.pObj.isSnapEnabled()) {
-                    int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj
-                            .getPixelSecond());
-                    int fraction = start % snapPixels;
-
-                    start = start - fraction;
-                    
-                    if(fraction > snapPixels / 2) {
-                        start += snapPixels;
-                    }
-                
+                    start = ScoreUtilities.getSnapValue(start, sCanvas.pObj.getSnapValue());
                 }
 
                 pasteSoundObject(soundLayerIndex, start);
                 this.justSelected = true;
             } else if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY){
                 int soundLayerIndex = getSoundLayerIndex(e.getY());
-                int start = e.getX();
+                float start = getTimeForX(e.getX());
 
                 if (sCanvas.pObj.isSnapEnabled()) {
-                    int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj
-                            .getPixelSecond());
-
-                    start = start - (start % snapPixels);
+                    start = ScoreUtilities.getSnapValue(start, sCanvas.pObj.getSnapValue());
                 }
+
                 pasteSoundObjects(soundLayerIndex, start);
                 this.justSelected = true;
             } else if (e.getClickCount() >= 2) {
@@ -420,7 +410,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         this.justSelected = true;
     }
 
-    public void pasteSoundObject(int soundLayerIndex, int start) {
+    public void pasteSoundObject(int soundLayerIndex, float startTime) {
         PolyObject pObj = sCanvas.getPolyObject();
         int size = pObj.getSize();
 
@@ -449,7 +439,6 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
          
             }
 
-            float startTime = (float) start / pObj.getPixelSecond();
             sObj.setStartTime(startTime);
 
             pObj.addSoundObject(soundLayerIndex, sObj);
@@ -461,7 +450,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         }
     }
 
-    public void pasteSoundObjects(int soundLayerIndex, int start) {
+    public void pasteSoundObjects(int soundLayerIndex, float startTime) {
         int size = sCanvas.getPolyObject().getSize();
 
         SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
@@ -470,14 +459,12 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             return;
         }
 
-        float insertTime = getTimeForX(start);
-
         int minLayer = getLayerMin(sObjBuffer);
         int maxLayer = getLayerMax(sObjBuffer);
         float bufferStart = getStartTime(sObjBuffer);
 
         int layerTranslation = soundLayerIndex - minLayer;
-        float startTranslation = insertTime - bufferStart;
+        float startTranslation = startTime - bufferStart;
 
         if ((maxLayer + layerTranslation) > size - 1) {
             JOptionPane.showMessageDialog(null, "Not Enough Layers to Paste");
@@ -596,7 +583,9 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
             
             float tempStart = initialStartTime + timeAdjust;
-            float snappedStart = Math.round(tempStart / sCanvas.pObj.getSnapValue()) * sCanvas.pObj.getSnapValue();
+            float snappedStart = ScoreUtilities.getSnapValue(tempStart,
+                    sCanvas.pObj.getSnapValue());
+                    
             
             timeAdjust = snappedStart - initialStartTime;
             
@@ -649,15 +638,16 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
         
         if (sCanvas.pObj.isSnapEnabled()) {
+            final float snapValue = sCanvas.pObj.getSnapValue();
             
-            float endTime = newDuration = Math.round(xVal / (float) sCanvas.pObj
-                    .getPixelSecond() / sCanvas.pObj.getSnapValue()) * sCanvas.pObj.getSnapValue();
+            float endTime = ScoreUtilities.getSnapValue(
+                    xVal / (float) sCanvas.pObj.getPixelSecond(), snapValue);
+            
+            float minTime = ScoreUtilities.getSnapValue(sObj.getStartTime() + snapValue / 2, snapValue);
+
+            endTime = (endTime < minTime) ? minTime : endTime;
             
             newDuration = endTime - sObj.getStartTime();
-            
-            float minTime = (float)EDGE / sCanvas.pObj.getPixelSecond();
-            
-            newDuration = (newDuration < minTime) ? minTime : newDuration;
             
         } else {
             if (newWidth < EDGE) {
@@ -677,26 +667,38 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         
 //        newWidth += (xVal - sCanvas.start.x);
 
+        float newStart;
+        
+        SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
+
+        
         if (sCanvas.pObj.isSnapEnabled()) {
-            int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj
-                    .getPixelSecond());
-            newX = (Math.round(newX / (float) snapPixels) * snapPixels);
+            float snapValue = sCanvas.pObj.getSnapValue();
+            float endTime = sObj.getStartTime() + sObj.getSubjectiveDuration();
+
+            newStart = ScoreUtilities.getSnapValue(newX / (float)sCanvas.pObj.getPixelSecond(), 
+                    snapValue);
+            newStart = (newStart < 0.0f) ? 0.0f : newStart;
+            
+            if(newStart > endTime) {
+                newStart = ScoreUtilities.getSnapValue(endTime - snapValue / 2, snapValue);
+            }
+            
+        } else {
+            if (newX < 0) {
+                newX = 0;
+            }
+
+            if (newX > endX - EDGE) {
+                newX = endX - EDGE;
+            }
+
+            newStart = (float) newX / sCanvas.pObj.getPixelSecond();
         }
-        
-        if (newX < 0) {
-            newX = 0;
-        }
-                
-        if (newX > endX - EDGE) {
-            newX = endX - EDGE;
-        }
-        
-        float newStart = (float) newX / sCanvas.pObj.getPixelSecond();
-               
+          
 
         float newDuration = initialEndTime - newStart;
 
-        SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
 
         sObj.setStartTime(newStart);
         sObj.setSubjectiveDuration(newDuration);
