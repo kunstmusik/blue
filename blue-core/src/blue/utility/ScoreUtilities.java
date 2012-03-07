@@ -590,7 +590,11 @@ public class ScoreUtilities {
 
     }
     
-    public static float getSnapValue(float time, float snapValue) {
+    public static float getSnapValueStart(float time, float snapValue) {
+        return (int)(time / snapValue) * snapValue;
+    }
+    
+    public static float getSnapValueMove(float time, float snapValue) {
         return Math.round(time / snapValue) * snapValue;
     }
 

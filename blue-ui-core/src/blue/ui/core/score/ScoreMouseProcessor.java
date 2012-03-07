@@ -170,7 +170,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                 float start = getTimeForX(e.getX());
 
                 if (sCanvas.pObj.isSnapEnabled()) {
-                    start = ScoreUtilities.getSnapValue(start, sCanvas.pObj.getSnapValue());
+                    start = ScoreUtilities.getSnapValueStart(start, sCanvas.pObj.getSnapValue());
                 }
 
                 pasteSoundObject(soundLayerIndex, start);
@@ -180,7 +180,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                 float start = getTimeForX(e.getX());
 
                 if (sCanvas.pObj.isSnapEnabled()) {
-                    start = ScoreUtilities.getSnapValue(start, sCanvas.pObj.getSnapValue());
+                    start = ScoreUtilities.getSnapValueStart(start, sCanvas.pObj.getSnapValue());
                 }
 
                 pasteSoundObjects(soundLayerIndex, start);
@@ -583,7 +583,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
             
             float tempStart = initialStartTime + timeAdjust;
-            float snappedStart = ScoreUtilities.getSnapValue(tempStart,
+            float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
                     sCanvas.pObj.getSnapValue());
                     
             
@@ -640,10 +640,10 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         if (sCanvas.pObj.isSnapEnabled()) {
             final float snapValue = sCanvas.pObj.getSnapValue();
             
-            float endTime = ScoreUtilities.getSnapValue(
+            float endTime = ScoreUtilities.getSnapValueMove(
                     xVal / (float) sCanvas.pObj.getPixelSecond(), snapValue);
             
-            float minTime = ScoreUtilities.getSnapValue(sObj.getStartTime() + snapValue / 2, snapValue);
+            float minTime = ScoreUtilities.getSnapValueMove(sObj.getStartTime() + snapValue / 2, snapValue);
 
             endTime = (endTime < minTime) ? minTime : endTime;
             
@@ -676,12 +676,12 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             float snapValue = sCanvas.pObj.getSnapValue();
             float endTime = sObj.getStartTime() + sObj.getSubjectiveDuration();
 
-            newStart = ScoreUtilities.getSnapValue(newX / (float)sCanvas.pObj.getPixelSecond(), 
+            newStart = ScoreUtilities.getSnapValueMove(newX / (float)sCanvas.pObj.getPixelSecond(), 
                     snapValue);
             newStart = (newStart < 0.0f) ? 0.0f : newStart;
             
             if(newStart > endTime) {
-                newStart = ScoreUtilities.getSnapValue(endTime - snapValue / 2, snapValue);
+                newStart = ScoreUtilities.getSnapValueMove(endTime - snapValue / 2, snapValue);
             }
             
         } else {

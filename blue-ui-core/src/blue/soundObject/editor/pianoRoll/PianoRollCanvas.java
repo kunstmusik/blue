@@ -381,16 +381,15 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      * @param x
      * @param y
      */
-    public PianoNoteView addNote(int x, int y) {
+    public PianoNoteView addNote(float startTime, int y, int dummy) {
         PianoNote note = new PianoNote();
         note.setNoteTemplate(p.getNoteTemplate());
 
-        return addNote(note, x, y);
+        return addNote(note, startTime, y, dummy);
     }
 
-    public PianoNoteView addNote(PianoNote note, int x, int y) {
-        float start = ((float) x / p.getPixelSecond());
-        note.setStart(start);
+    public PianoNoteView addNote(PianoNote note, float startTime, int y, int dummy) {
+        note.setStart(startTime);
 
         int h = getHeight() - y;
         int noteHeight = p.getNoteHeight();

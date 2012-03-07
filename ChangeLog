@@ -36,6 +36,12 @@ FIX
 
 * Auditioning of SoundObjects was not working due to serialization bug
 
+* Score: Fixed Snap (rendering in timeline, time bar, dragging soundObjects, 
+  resizing soundObjects)
+
+* PianoRoll: Fixed Snap (rendering in timeline, time bar, dragging of notes,
+  resizing of notes)
+
 
 >Notes for 2.2.0<
 [released 2012.03.03]

@@ -38,6 +38,7 @@ import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.utilities.UiUtilities;
+import blue.utility.ScoreUtilities;
 
 /**
  * @author steven
@@ -123,21 +124,20 @@ public class NoteCanvasMouseListener implements MouseListener,
 
                 int x = e.getX();
                 int y = e.getY();
+                
+                float startTime = (float)x / canvas.p.getPixelSecond();
 
                 if (canvas.p.isSnapEnabled()) {
-                    int snapPixels = (int) (canvas.p.getSnapValue() * canvas.p
-                            .getPixelSecond());
-
-                    x = x - (x % snapPixels);
-                }
-
+                    float snapValue = canvas.p.getSnapValue();
+                    startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
+                } 
                 PianoNote note = (PianoNote) canvas.bufferedNote.clone();
 
                 fireSelectionEvent(new SelectionEvent(null,
                         SelectionEvent.SELECTION_CLEAR));
                 start = null;
 
-                canvas.addNote(note, x, y);
+                canvas.addNote(note, startTime, y, 0);
             } else if (e.isShiftDown() && ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY)) {
                 fireSelectionEvent(new SelectionEvent(null,
                         SelectionEvent.SELECTION_CLEAR));
@@ -146,19 +146,22 @@ public class NoteCanvasMouseListener implements MouseListener,
                 int x = e.getX();
                 int y = e.getY();
 
+                float startTime = (float)x / canvas.p.getPixelSecond();
+                float duration = 5.0f / canvas.p.getPixelSecond();
+                
+                
                 if (canvas.p.isSnapEnabled()) {
-                    int snapPixels = (int) (canvas.p.getSnapValue() * canvas.p
-                            .getPixelSecond());
+                    float snapValue = canvas.p.getSnapValue();
+                    startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
+                    
+                    duration = canvas.p.getSnapValue();
+                } 
 
-                    x = x - (x % snapPixels);
-                }
-
-                PianoNoteView noteView = canvas.addNote(x, y);
+                PianoNoteView noteView = canvas.addNote(startTime, y, 0);
                 SelectionEvent selEvt = new SelectionEvent(noteView,
                         SelectionEvent.SELECTION_ADD);
 
-                noteView.getPianoNote().setDuration(
-                        5.0f / canvas.p.getPixelSecond());
+                noteView.getPianoNote().setDuration(duration);
 
                 start = new Point(noteView.getX() + noteView.getWidth(), y);
 
@@ -184,10 +187,12 @@ public class NoteCanvasMouseListener implements MouseListener,
         }
 
         if (start != null) {
-            if (canvas.getCursor() == NORMAL_CURSOR) {
-                canvas.noteBuffer.endMove();
-            } else {
-                canvas.noteBuffer.endResize();
+            if(!canvas.p.isSnapEnabled()) {
+                if (canvas.getCursor() == NORMAL_CURSOR) {
+                    canvas.noteBuffer.endMove();
+                } else {
+                    canvas.noteBuffer.endResize();
+                }
             }
             start = null;
         }
@@ -236,24 +241,30 @@ public class NoteCanvasMouseListener implements MouseListener,
     private void moveNotes(MouseEvent e) {
         int diffX = e.getPoint().x - start.x;
 
-        if (canvas.p.isSnapEnabled()) {
-            int snapPixels = (int) (canvas.p.getSnapValue() * canvas.p
-                    .getPixelSecond());
-
-            int leftBound = -canvas.noteBuffer.leftBoundary;
-
-            int correction = leftBound
-                    - Math.round((float) leftBound / snapPixels) * snapPixels;
-
-            diffX = (diffX / snapPixels) * snapPixels;
-            diffX -= correction;
-        }
-
         int noteHeight = canvas.getNoteHeight();
-
         int layerDiff = (e.getPoint().y / noteHeight) - (start.y / noteHeight);
-
-        canvas.noteBuffer.move(diffX, layerDiff);
+        
+        if (canvas.p.isSnapEnabled()) {
+            float timeAdjust = (float)diffX / canvas.p.getPixelSecond();
+        
+           
+            float initialStartTime = canvas.noteBuffer.initialStartTimes[0];
+            
+            float tempStart = initialStartTime + timeAdjust;
+            
+            if(tempStart < 0.0f) {
+                timeAdjust = -initialStartTime;
+            } else {
+                float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
+                    canvas.p.getSnapValue());
+            
+                timeAdjust = snappedStart - initialStartTime;
+            }
+            
+            canvas.noteBuffer.moveByTime(timeAdjust, layerDiff);
+        } else {
+            canvas.noteBuffer.move(diffX, layerDiff);
+        }
 
     }
 
@@ -261,21 +272,30 @@ public class NoteCanvasMouseListener implements MouseListener,
         int mouseX = e.getPoint().x;
 
         if (canvas.p.isSnapEnabled()) {
-            int snapPixels = (int) (canvas.p.getSnapValue() * canvas.p
-                    .getPixelSecond());
+            
+            float snapValue = canvas.p.getSnapValue();
+            
+            float endTime = ScoreUtilities.getSnapValueMove(mouseX / canvas.p.getPixelSecond(), 
+                    snapValue);
+            
+           
+            float minTime = ScoreUtilities.getSnapValueMove(
+                    canvas.noteBuffer.initialStartTimes[0] + snapValue / 2, 
+                    snapValue);
 
-            int correction = mouseX % snapPixels;
+            endTime = (endTime < minTime) ? minTime : endTime;
+            
+            float newDuration = endTime - canvas.noteBuffer.initialStartTimes[0];
+            
+            canvas.noteBuffer.setDuration(newDuration);
+            
+        } else {
+              int diffX = mouseX - start.x;
 
-            mouseX = mouseX - correction;
-
-            if (correction > (snapPixels / 2)) {
-                mouseX += snapPixels;
-            }
+              canvas.noteBuffer.resize(diffX);
         }
 
-        int diffX = mouseX - start.x;
-
-        canvas.noteBuffer.resize(diffX);
+      
     }
 
     /*

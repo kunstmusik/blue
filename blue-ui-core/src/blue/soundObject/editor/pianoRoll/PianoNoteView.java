@@ -39,7 +39,8 @@ import blue.soundObject.pianoRoll.Scale;
  * 
  */
 
-public class PianoNoteView extends JPanel implements PropertyChangeListener {
+public class PianoNoteView extends JPanel implements PropertyChangeListener,
+        Comparable {
     private static final int OCTAVES = 16;
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
@@ -89,12 +90,18 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener {
 
     public void updateNoteStartFromLocation() {
         int pixelSecond = p.getPixelSecond();
+        
+        float start = this.getX() / (float) pixelSecond;
 
+        this.note.setStart(start);
+
+        updateNotePitchFromY();
+    }
+
+    public void updateNotePitchFromY() {
         int scaleDegrees;
-
         int total;
         int yVal;
-
         if (p.getPchGenerationMethod() == PianoRoll.GENERATE_MIDI) {
             scaleDegrees = 12;
 
@@ -106,18 +113,11 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener {
             total = scaleDegrees * p.getNoteHeight() * OCTAVES;
             yVal = total - this.getY();
         }
-
         int layerIndex = (yVal / p.getNoteHeight()) - 1;
-
         int oct = layerIndex / scaleDegrees;
         int pch = layerIndex % scaleDegrees;
-
-        float start = this.getX() / (float) pixelSecond;
-
-        this.note.setStart(start);
         this.note.setOctave(oct);
         this.note.setScaleDegree(pch);
-
     }
 
     private void updatePropertiesFromNote() {
@@ -189,5 +189,20 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener {
     public void updateNoteDurFromWidth() {
         int pixelSecond = p.getPixelSecond();
         this.note.setDuration((float) this.getWidth() / pixelSecond);
+    }
+
+    @Override
+    public int compareTo(Object pianoNoteView) {
+        PianoNoteView a = (PianoNoteView) pianoNoteView;
+
+        int x1 = this.getX();
+        int x2 = a.getX();
+
+        if (x1 > x2) {
+            return 1;
+        } else if (x1 < x2) {
+            return -1;
+        }
+        return 0;
     }
 }
