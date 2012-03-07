@@ -914,6 +914,9 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     /** *********************************** */
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
+//        Rectangle b = g.getClipBounds();
+//        System.out.println("Bounds " + b.x + " : " + b.y + " : " + b.width + " : " + b.height);
 
         int width = this.getWidth();
 
@@ -930,6 +933,8 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         for (int i = 0; i < getPolyObject().getSize(); i++) {
             SoundLayer layer = (SoundLayer) getPolyObject().getElementAt(i);
             y += layer.getSoundLayerHeight();
+            
+            
             g.drawLine(0, y, width, y);
         }
 
@@ -937,17 +942,23 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
             int snapPixels = (int) (getPolyObject().getSnapValue() * getPolyObject().getPixelSecond());
             // System.out.println("snap: " + snapPixels + " : " +
             // pObj.getPixelSecond());
-            int x;
+            int x = 0;
             if (snapPixels <= 0) {
                 return;
             }
 
             int height = getPolyObject().getTotalHeight();
-
-            for (int i = 0; i < width / snapPixels; i++) {
-                x = i * snapPixels;
-                g.drawLine(x, 0, x, height);
+            float snapValue = getPolyObject().getSnapValue();
+            int pixelSecond = getPolyObject().getPixelSecond();
+            float time;
+            for(int i = 0; x < width; i++) {
+                 x = (int)((i * snapValue) * pixelSecond);
+                 g.drawLine(x, 0, x, height);
             }
+//            for (int i = 0; i < width / snapPixels; i++) {
+//                x = i * snapPixels;
+//                
+//            }
         }
 
         if (getPolyObject().isRoot()) {
