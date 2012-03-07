@@ -120,6 +120,14 @@ public class PianoRollEditor extends SoundObjectEditor implements
 
         });
 
+        noteScrollPane.getViewport().addComponentListener(
+        new ComponentAdapter() {
+
+            public void componentResized(ComponentEvent e) {
+                noteCanvas.recalculateSize();
+            }
+        });
+        
     }
 
     /**

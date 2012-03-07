@@ -243,7 +243,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         repaint();
     }
 
-    private void recalculateSize() {
+    public void recalculateSize() {
         if (p == null) {
             return;
         }
