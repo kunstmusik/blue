@@ -103,19 +103,14 @@ public final class TimeBar extends JPanel implements
                     start = 0;
                 }
 
+                
+                float time = (float) start / pObj.getPixelSecond();
+                
                 if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                    int snapPixels = (int) (pObj.getSnapValue() * pObj.
-                            getPixelSecond());
-                    int fraction = start % snapPixels;
-
-                    start = start - fraction;
-
-                    if (fraction > snapPixels / 2) {
-                        start += snapPixels;
-                    }
+                    time = Math.round(time / pObj.getSnapValue()) * pObj.getSnapValue();
                 }
 
-                float time = (float) start / pObj.getPixelSecond();
+              
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     if (e.isShiftDown() && pObj.isRoot()) {
@@ -150,20 +145,12 @@ public final class TimeBar extends JPanel implements
                 if (start < 0) {
                     start = 0;
                 }
+                
+                float time = (float) start / pObj.getPixelSecond();
 
                 if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                    int snapPixels = (int) (pObj.getSnapValue() * pObj.
-                            getPixelSecond());
-                    int fraction = start % snapPixels;
-
-                    start = start - fraction;
-
-                    if (fraction > snapPixels / 2) {
-                        start += snapPixels;
-                    }
+                    time = Math.round(time / pObj.getSnapValue()) * pObj.getSnapValue();
                 }
-
-                float time = (float) start / pObj.getPixelSecond();
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     data.setRenderStartTime(time);
