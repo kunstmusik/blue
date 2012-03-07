@@ -589,6 +589,10 @@ public class ScoreUtilities {
         return (octave * 12) + pitch;
 
     }
+    
+    public static float getSnapValue(float time, float snapValue) {
+        return Math.round(time / snapValue) * snapValue;
+    }
 
     public static void main(String args[]) {
         NoteList n = new NoteList();
