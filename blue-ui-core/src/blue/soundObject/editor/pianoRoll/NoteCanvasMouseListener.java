@@ -275,7 +275,7 @@ public class NoteCanvasMouseListener implements MouseListener,
             
             float snapValue = canvas.p.getSnapValue();
             
-            float endTime = ScoreUtilities.getSnapValueMove(mouseX / canvas.p.getPixelSecond(), 
+            float endTime = ScoreUtilities.getSnapValueMove((float)mouseX / canvas.p.getPixelSecond(), 
                     snapValue);
             
            
