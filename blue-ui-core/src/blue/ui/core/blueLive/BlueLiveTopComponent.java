@@ -745,10 +745,10 @@ public final class BlueLiveTopComponent extends TopComponent {
     }//GEN-LAST:event_triggerButtonActionPerformed
 
     private void repeatButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatButtonActionPerformed
-        if (!blueLiveToolBar.isRunning()) {
-            repeatButton.setSelected(false);
-            return;
-        }
+//        if (!blueLiveToolBar.isRunning()) {
+//            repeatButton.setSelected(false);
+//            return;
+//        }
 
         if (repeatButton.isSelected()) {
             if (performanceThread == null) {
@@ -933,12 +933,12 @@ public final class BlueLiveTopComponent extends TopComponent {
         public void run() {
             while (keepRunning) {
 
-                if (!blueLiveToolBar.isRunning()) {
-                    keepRunning = false;
-                    performanceThread = null;
-                    repeatButton.setSelected(false);
-                    break;
-                }
+//                if (!blueLiveToolBar.isRunning()) {
+//                    keepRunning = false;
+//                    performanceThread = null;
+//                    repeatButton.setSelected(false);
+//                    break;
+//                }
 
                 if (beatCounter == 0) {
 
@@ -946,12 +946,14 @@ public final class BlueLiveTopComponent extends TopComponent {
                     currentRepeat = ((Integer) repeatSpinner.getValue()).intValue();
                     waitTime = (long) (1000 * (60.0f / currentRepeatTempo));
 
-                    new Thread() {
+                    if(blueLiveToolBar.isRunning()) {
+                        new Thread() {
 
-                        public void run() {
-                            triggerButtonActionPerformed(null);
-                        }
-                    }.start();
+                            public void run() {
+                                triggerButtonActionPerformed(null);
+                            }
+                        }.start();
+                    }
                 }
 
                 beatCounter++;
