@@ -207,10 +207,6 @@ public class Parameter implements TableModelListener, Serializable {
         return uniqueId;
     }
 
-    public void setUniqueId(String uniqueId) {
-        this.uniqueId = uniqueId;
-    }
-
     /* Listening to Line Value Changes to fire events to update UI */
 
     public void tableChanged(TableModelEvent e) {
