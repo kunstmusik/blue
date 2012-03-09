@@ -27,6 +27,7 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
+import java.rmi.dgc.VMID;
 
 /**
  * 
@@ -41,12 +42,16 @@ public class LiveObject implements Serializable {
     private int keyTrigger = -1;
     
     private boolean enabled = false;
+    
+    private String uniqueId;
 
     /** Creates a new instance of LiveObject */
     public LiveObject() {
+        uniqueId = Integer.toString(new VMID().hashCode());
     }
 
     public LiveObject(SoundObject sObj) {
+        this();
         this.sObj = sObj;
     }
 
@@ -82,9 +87,14 @@ public class LiveObject implements Serializable {
         this.enabled = enabled;
     }
     
+    public String getUniqueId() {
+        return uniqueId;
+    }
 
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         Element retVal = new Element("liveObject");
+        
+        retVal.setAttribute("uniqueId", uniqueId);
 
         retVal.addElement(XMLUtilities.writeInt("keyTrigger", keyTrigger));
         retVal.addElement(XMLUtilities.writeInt("midiTrigger", midiTrigger));
@@ -97,6 +107,11 @@ public class LiveObject implements Serializable {
     public static LiveObject loadFromXML(Element data,
             SoundObjectLibrary sObjLibrary) throws Exception {
         LiveObject liveObj = new LiveObject();
+        
+        String val = data.getAttributeValue("uniqueId");
+        if (val != null && val.length() > 0) {
+            liveObj.uniqueId = val;
+        }
 
         Elements nodes = data.getElements();
 
