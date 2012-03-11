@@ -312,8 +312,6 @@
         </folder>
 
         <folder name="Tools">
-            <attr name="blue-projects-actions-OpenProjectAction.shadow/blue-ui-core-tools-OpenSoundFontViewerAction.shadow" boolvalue="true"/>
-            <attr name="blue-ui-core-tools-OpenSoundFontViewerAction.shadow/blue-projects-actions-CloseProjectAction-separatorBefore.instance" boolvalue="true"/>
             <file name="blue-ui-core-mixer-EffectsLibraryAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-mixer-EffectsLibraryAction.instance"/>
                 <attr name="position" intvalue="0"/>
@@ -332,6 +330,7 @@
             </file>
             <file name="blue-ui-core-tools-OpenSoundFontViewerAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-OpenSoundFontViewerAction.instance"/>
+                <attr name="position" intvalue="10"/>
             </file>
             <file name="blue-ui-core-tools-ScannedSynthesisMatrixEditorAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/blue-ui-core-tools-ScannedSynthesisMatrixEditorAction.instance"/>

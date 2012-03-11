@@ -99,7 +99,7 @@
             </file>
             <file name="blue-application-RequestFeatureAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Help/blue-application-RequestFeatureAction.instance"/>
-                <attr name="position" intvalue="400"/>
+                <attr name="position" intvalue="401"/>
             </file>
             <file name="blue-application-BlueManualAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Application/blue-application-BlueManualAction.instance"/>

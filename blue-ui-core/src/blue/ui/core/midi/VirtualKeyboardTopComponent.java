@@ -36,7 +36,7 @@ autostore = false)
 @TopComponent.Description(preferredID = "VirtualKeyboardTopComponent",
 //iconBase="SET/PATH/TO/ICON/HERE", 
 persistenceType = TopComponent.PERSISTENCE_ALWAYS)
-@TopComponent.Registration(mode = "output", openAtStartup = false)
+@TopComponent.Registration(mode = "output", openAtStartup = false, position=800)
 @ActionID(category = "Window", id = "blue.ui.core.midi.VirtualKeyboardTopComponent")
 @ActionReference(path = "Menu/Window" , position = 705 )
 @TopComponent.OpenActionRegistration(displayName = "#CTL_VirtualKeyboardAction",
