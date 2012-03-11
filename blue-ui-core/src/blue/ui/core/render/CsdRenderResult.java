@@ -20,6 +20,7 @@
 package blue.ui.core.render;
 
 import blue.automation.Parameter;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import java.util.ArrayList;
 
 /**
@@ -30,10 +31,13 @@ public class CsdRenderResult {
 
     private String csdText;
     private ArrayList<Parameter> parameters;
+    private ArrayList<StringChannel> stringChannels;
 
-    public CsdRenderResult(String csdText, ArrayList<Parameter> parameters) {
+    public CsdRenderResult(String csdText, ArrayList<Parameter> parameters, 
+            ArrayList<StringChannel> stringChannels) {
         this.csdText = csdText;
         this.parameters = parameters;
+        this.stringChannels = stringChannels;
     }
 
     public String getCsdText() {
@@ -51,4 +55,13 @@ public class CsdRenderResult {
     public void setParameters(ArrayList<Parameter> parameters) {
         this.parameters = parameters;
     }
+
+    public ArrayList<StringChannel> getStringChannels() {
+        return stringChannels;
+    }
+
+    public void setStringChannels(ArrayList<StringChannel> stringChannels) {
+        this.stringChannels = stringChannels;
+    }
+    
 }

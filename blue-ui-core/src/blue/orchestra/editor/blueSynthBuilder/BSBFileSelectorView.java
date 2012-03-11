@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
@@ -35,25 +34,29 @@ import javax.swing.JTextField;
 
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.soundObject.AudioFile;
+import blue.soundObject.PolyObject;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
+import blue.utility.SoundFileUtilities;
+import java.awt.Point;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
+import java.net.URLDecoder;
+import java.util.List;
 
 /**
  * @author steven
  * @author Michael Bechard
  */
-
 public class BSBFileSelectorView extends BSBObjectView {
+
     private static final int FILE_BUTTON_WIDTH = 30;
-
     private static int OBJECT_HEIGHT = 30;
-
     private static String FILE_SELECTOR_ID = "BSBFileSelector";
-
     private final BSBFileSelector selector;
-
     JTextField fileNameField = new JTextField();
-    
     private BSBFileSelectorPopup popup;
 
     public BSBFileSelectorView(BSBFileSelector _selector) {
@@ -74,7 +77,8 @@ public class BSBFileSelectorView extends BSBObjectView {
                     File file = BlueSystem.findFile(fileName);
 
                     if (file != null) {
-                        FileChooserManager.getDefault().setSelectedFile(FILE_SELECTOR_ID,
+                        FileChooserManager.getDefault().setSelectedFile(
+                                FILE_SELECTOR_ID,
                                 file);
                     }
                 }
@@ -83,13 +87,13 @@ public class BSBFileSelectorView extends BSBObjectView {
                         FILE_SELECTOR_ID, null);
 
                 if (rValue == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault()
-                            .getSelectedFile(FILE_SELECTOR_ID);
-                    
+                    File f = FileChooserManager.getDefault().getSelectedFile(
+                            FILE_SELECTOR_ID);
+
                     try {
                         String absFilePath = f.getCanonicalPath();
                         String relPath = BlueSystem.getRelativePath(absFilePath);
-                        
+
                         System.out.println("Rel Path: " + relPath);
                         selector.setFileName(relPath);
                         updateDisplay();
@@ -97,10 +101,9 @@ public class BSBFileSelectorView extends BSBObjectView {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
                     }
-                    
+
                 }
             }
-
         });
 
         fileButton.setPreferredSize(new Dimension(FILE_BUTTON_WIDTH,
@@ -114,6 +117,7 @@ public class BSBFileSelectorView extends BSBObjectView {
         this.add(fileButton, BorderLayout.EAST);
 
         fileNameField.addMouseListener(new MouseAdapter() {
+
             public void mousePressed(MouseEvent e) {
                 requestFocus();
                 if (UiUtilities.isRightMouseButton(e)) {
@@ -121,7 +125,9 @@ public class BSBFileSelectorView extends BSBObjectView {
                 }
             }
         });
-        
+
+        new BSBFileSelectorDropTargetListener(this, fileNameField);
+
         updateDisplay();
         revalidate();
     }
@@ -149,11 +155,131 @@ public class BSBFileSelectorView extends BSBObjectView {
 
         revalidate();
     }
-    
+
     public void resetText() {
         selector.setFileName("");
         updateDisplay();
     }
+    
+    public boolean isStringChannelEnabled() {
+        return selector.isStringChannelEnabled();
+    }
+    
+    public void setStringChannelEnabled(boolean enabled) {
+        selector.setStringChannelEnabled(enabled);
+    }
 
-    public void cleanup() {}
+    public void cleanup() {
+    }
+
+    static class BSBFileSelectorDropTargetListener extends DropTargetAdapter {
+
+        private final BSBFileSelectorView bsbFileSelectorView;
+        private DropTarget target;
+
+        private BSBFileSelectorDropTargetListener(BSBFileSelectorView bsbFileSelectorView, 
+                JTextField fileNameField) {
+            this.bsbFileSelectorView = bsbFileSelectorView;
+            target = new DropTarget(fileNameField, this);
+        }
+
+        @Override
+        public void dragEnter(DropTargetDragEvent dtde) {
+
+            boolean isFile = dtde.isDataFlavorSupported(
+                    DataFlavor.javaFileListFlavor);
+
+            if (!isFile) {
+                if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                    isFile = true;
+                }
+            }
+
+            if (isFile) {
+                dtde.acceptDrag(DnDConstants.ACTION_LINK);
+            } else {
+                dtde.rejectDrag();
+            }
+        }
+
+        @Override
+        public void drop(DropTargetDropEvent dtde) {
+            try {
+                Transferable tr = dtde.getTransferable();
+
+                if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    dtde.acceptDrop(DnDConstants.ACTION_LINK);
+
+                    List list = (List) tr.getTransferData(
+                            DataFlavor.javaFileListFlavor);
+
+                    if (list.size() != 1) {
+                        dtde.dropComplete(false);
+                        return;
+                    }
+
+                    String s = list.get(0).toString().trim();
+
+                    File f = new File(s);
+
+                    if (f.exists() && f.isFile()) {
+
+                        try {
+                            String absFilePath = f.getCanonicalPath();
+                            String relPath = BlueSystem.getRelativePath(
+                                    absFilePath);
+
+                            bsbFileSelectorView.selector.setFileName(relPath);
+                            bsbFileSelectorView.updateDisplay();
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+
+                        dtde.dropComplete(true);
+                        return;
+                    }
+                    dtde.dropComplete(false);
+                    dtde.rejectDrop();
+                } else if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                    dtde.acceptDrop(DnDConstants.ACTION_LINK);
+
+                    String str = (String) tr.getTransferData(
+                            DataFlavor.stringFlavor);
+
+                    if (!str.startsWith("file://")) {
+                        dtde.dropComplete(false);
+                        return;
+                    }
+
+                    str = str.substring(7).trim();
+                    str = URLDecoder.decode(str);
+                    str = str.replaceAll(" ", "\\ ");
+
+                    File f = new File(str);
+
+                    if (f.exists() && f.isFile()) {
+
+                        try {
+                            String absFilePath = f.getCanonicalPath();
+                            String relPath = BlueSystem.getRelativePath(
+                                    absFilePath);
+
+                            bsbFileSelectorView.selector.setFileName(relPath);
+                            bsbFileSelectorView.updateDisplay();
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        dtde.dropComplete(true);
+                        return;
+                    }
+                }
+                dtde.rejectDrop();
+            } catch (Exception e) {
+                e.printStackTrace();
+                dtde.rejectDrop();
+            }
+        }
+    }
 }

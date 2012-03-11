@@ -33,6 +33,7 @@ import electric.xml.Elements;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -362,5 +363,23 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
     public void setOpcodeList(OpcodeList opcodeList) {
         this.opcodeList = opcodeList;
+    }
+
+    @Override
+    public ArrayList<StringChannel> getStringChannels() {
+        ArrayList<StringChannel> stringChannels = new ArrayList<StringChannel>();
+        
+        for(int i = 0; i < graphicInterface.size(); i++) {
+            BSBObject bsbObj = graphicInterface.getBSBObject(i);
+            
+            if(bsbObj instanceof StringChannelProvider) {
+                StringChannelProvider provider = (StringChannelProvider)bsbObj;
+                if(provider.isStringChannelEnabled()) {
+                    stringChannels.add(provider.getStringChannel());
+                }
+            }
+        }
+        
+        return stringChannels;
     }
 }

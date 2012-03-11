@@ -8,6 +8,7 @@ package blue.ui.core.render;
  * @version 1.0
  */
 import blue.noteProcessor.TempoMapper;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
@@ -18,6 +19,7 @@ import blue.GlobalOrcSco;
 import blue.InstrumentAssignment;
 import blue.ProjectProperties;
 import blue.Tables;
+import blue.automation.Automatable;
 import blue.automation.Parameter;
 import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
@@ -25,6 +27,7 @@ import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
+import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
 import blue.score.tempo.Tempo;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
@@ -53,10 +56,12 @@ public class CSDRender {
     public static synchronized CsdRenderResult generateCSDForBlueLive(
             BlueData data) {
 
+        ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
+
         ParameterHelper.clearCompilationVarNames(data);
 
-        boolean usingAPI = APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI();
+        boolean usingAPI = APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI();
 
         float totalDur = 3600f;
 
@@ -125,12 +130,12 @@ public class CSDRender {
             int instrId = arrangement.addInstrumentAtEnd(instrument);
             globalSco += "i" + instrId + " 0 " + totalDur + "\n";
         }
-
+        
         if (usingAPI) {
 //            ArrayList parameters = ParameterHelper.getAllParameters(
 //                    arrangement, mixer);
             generatedNotes = new NoteList();
-            handleParametersForBlueLive(originalParameters, globalOrcSco,
+            handleParametersForBlueLive(originalParameters, stringChannels, globalOrcSco,
                     generatedNotes, arrangement);
 
         }
@@ -140,8 +145,8 @@ public class CSDRender {
             clearUnusedMixerChannels(mixer, arrangement);
 
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(nchnls));
-            int instrId = arrangement.addInstrumentAtEnd(mixer.
-                    getMixerInstrument(udos, nchnls));
+            int instrId = arrangement.addInstrumentAtEnd(mixer.getMixerInstrument(
+                    udos, nchnls));
 
             globalSco += "i" + instrId + " 0 " + totalDur;
 
@@ -160,7 +165,8 @@ public class CSDRender {
         score.append("</CsoundSynthesizer>");
 
         CsdRenderResult renderResult =
-                new CsdRenderResult(score.toString(), originalParameters);
+                new CsdRenderResult(score.toString(), originalParameters, 
+                    stringChannels);
 
 
         return renderResult;
@@ -180,10 +186,12 @@ public class CSDRender {
             float startTime, float endTime, boolean isRealTime)
             throws SoundObjectException {
 
+        ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
+        
         ParameterHelper.clearCompilationVarNames(data);
 
-        boolean usingAPI = isRealTime && APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI();
+        boolean usingAPI = isRealTime && APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI();
 
         float renderStartTime = data.getRenderStartTime();
 
@@ -277,8 +285,8 @@ public class CSDRender {
         float totalDur = blue.utility.ScoreUtilities.getTotalDuration(
                 generatedNotes);
 
-        float processingStart = blue.utility.ScoreUtilities.
-                getProcessingStartTime(tempPObj);
+        float processingStart = blue.utility.ScoreUtilities.getProcessingStartTime(
+                tempPObj);
 
         System.out.println("<TOTAL_DUR> = " + totalDur);
         System.out.println("<RENDER_START> = " + renderStartTime);
@@ -301,7 +309,7 @@ public class CSDRender {
         int nchnls = getNchnls(data, isRealTime);
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<Instrument>();
-        
+
         arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
 
         boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
@@ -330,8 +338,8 @@ public class CSDRender {
 
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(nchnls) + "\n");
 
-            int instrId = arrangement.addInstrumentAtEnd(mixer.
-                    getMixerInstrument(udos, nchnls));
+            int instrId = arrangement.addInstrumentAtEnd(mixer.getMixerInstrument(
+                    udos, nchnls));
 
             try {
                 Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
@@ -342,14 +350,15 @@ public class CSDRender {
 
         }
 
-        handleParameters(originalParameters, globalOrcSco, generatedNotes, arrangement,
+        handleParameters(originalParameters, stringChannels, globalOrcSco, generatedNotes,
+                arrangement,
                 startTime,
                 startTime + globalDur, isRealTime);
 
 
-        if (isRealTime &&
-                !(APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI())) {
+        if (isRealTime
+                && !(APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI())) {
             Instrument instr = createBlueTimePointerInstrument();
             int instrId = arrangement.addInstrument(instr);
 
@@ -373,11 +382,40 @@ public class CSDRender {
         csd.append("</CsoundSynthesizer>");
 
         CsdRenderResult renderResult =
-                new CsdRenderResult(csd.toString(), originalParameters);
+                new CsdRenderResult(csd.toString(), originalParameters, stringChannels);
 
         return renderResult;
     }
 
+    private static ArrayList<StringChannel> getStringChannels(Arrangement arrangement) {
+        ArrayList<StringChannel> params = new ArrayList<StringChannel>();
+        StringChannelNameManager scnm = new StringChannelNameManager();
+
+        for (int i = 0; i < arrangement.size(); i++) {
+            InstrumentAssignment ia = arrangement.getInstrumentAssignment(i);
+            if (ia.enabled) {
+                Instrument instr = ia.instr;
+
+                if (instr instanceof Automatable) {
+                    Automatable auto = (Automatable) instr;
+                    ArrayList<StringChannel> stringChannels = auto.getStringChannels();
+                   
+                    if(stringChannels != null) {
+                        params.addAll(stringChannels);
+                    }
+                    
+                }
+
+            }
+        }
+        
+        for(StringChannel strChannel : params) {
+            strChannel.setChannelName(scnm.getUniqueStringChannel());
+        }
+
+        return params;
+    }
+    
     private static void clearUnusedMixerChannels(Mixer mixer,
             Arrangement arrangement) {
 
@@ -482,8 +520,8 @@ public class CSDRender {
         GenericInstrument instr = new GenericInstrument();
         StrBuilder buffer = new StrBuilder();
 
-        buffer.append("koff init 0\n" +
-                "if (koff == 0) then\n");
+        buffer.append("koff init 0\n"
+                + "if (koff == 0) then\n");
 
         for (int i = 0; i < instrIds.length; i++) {
             String id = instrIds[i];
@@ -564,8 +602,8 @@ public class CSDRender {
             score.append("sr=").append(projProps.sampleRate).append("\n");
             score.append("ksmps=").append(projProps.getKsmps()).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
-            
-            if(projProps.useZeroDbFS) {
+
+            if (projProps.useZeroDbFS) {
                 score.append("0dbfs=").append(projProps.zeroDbFS).append("\n");
             }
 
@@ -580,9 +618,10 @@ public class CSDRender {
             score.append("sr=").append(projProps.diskSampleRate).append("\n");
             score.append("ksmps=").append(projProps.diskKsmps).append("\n");
             score.append("nchnls=").append(nchnls).append("\n");
-            
-            if(projProps.diskUseZeroDbFS) {
-                score.append("0dbfs=").append(projProps.diskZeroDbFS).append("\n");
+
+            if (projProps.diskUseZeroDbFS) {
+                score.append("0dbfs=").append(projProps.diskZeroDbFS).append(
+                        "\n");
             }
         }
 
@@ -590,8 +629,8 @@ public class CSDRender {
         score.append(globalOrcSco.getGlobalOrc()).append("\n");
         score.append("\n");
         score.append(
-                CommandProcessor.processCommandBlocks(arrangement.
-                generateGlobalOrc())).append("\n");
+                CommandProcessor.processCommandBlocks(
+                arrangement.generateGlobalOrc())).append("\n");
         score.append("\n");
         score.append(udos.toString()).append("\n");
         score.append("\n");
@@ -878,6 +917,7 @@ public class CSDRender {
     }
 
     private static void handleParameters(ArrayList parameters,
+            ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement,
             float startTime, float endTime, boolean isRealTime) {
 
@@ -886,11 +926,27 @@ public class CSDRender {
         StrBuilder initStatements = new StrBuilder();
         StrBuilder paramScore = new StrBuilder();
 
-        boolean useAPI = (isRealTime && APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI());
+        boolean useAPI = (isRealTime && APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI());
 
         StrBuilder apiParamInstr = new StrBuilder();
 
+        for(StringChannel strChannel : stringChannels) {
+            String varName = strChannel.getChannelName();
+            
+            initStatements.append(varName);
+            initStatements.append(" = ");
+            initStatements.append("\"").append(strChannel.getValue()).append("\"\n");
+            
+            if (useAPI) {
+                initStatements.append(varName).append(" chnexport \"");
+                initStatements.append(varName).append("\", 3\n");
+                
+                apiParamInstr.append(varName).append(" chnget \"");
+                apiParamInstr.append(varName).append("\"\n");
+            } 
+        }
+        
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);
@@ -899,20 +955,20 @@ public class CSDRender {
             //param.setCompilationVarName(varName);
 
             float initialVal;
-	    
-	    if (param.isAutomationEnabled()) {
-		
-		initialVal = param.getLine().getValue(startTime);
-	        
-		float resolution = param.getResolution();
 
-		if (resolution > 0.0f) {
-		    initialVal = param.getResolutionAdjustedValue(initialVal);
-		}
+            if (param.isAutomationEnabled()) {
 
-	    } else {
-		initialVal = param.getFixedValue();
-	    }
+                initialVal = param.getLine().getValue(startTime);
+
+                float resolution = param.getResolution();
+
+                if (resolution > 0.0f) {
+                    initialVal = param.getResolutionAdjustedValue(initialVal);
+                }
+
+            } else {
+                initialVal = param.getFixedValue();
+            }
 
 
             // init statements
@@ -937,10 +993,10 @@ public class CSDRender {
         }
 
         if (useAPI) {
-            
+
             String str = apiParamInstr.toString().trim();
-                    
-            if(str.length() > 0) {
+
+            if (str.length() > 0) {
                 GenericInstrument instr = new GenericInstrument();
                 instr.setText(str);
                 int instrId = arrangement.addInstrumentAtEnd(instr);
@@ -966,6 +1022,7 @@ public class CSDRender {
     }
 
     private static void handleParametersForBlueLive(ArrayList parameters,
+            ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement) {
 
         Object[] varNum = new Object[1];
@@ -973,11 +1030,27 @@ public class CSDRender {
         StrBuilder initStatements = new StrBuilder();
         StrBuilder paramScore = new StrBuilder();
 
-        boolean useAPI = (APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI());
+        boolean useAPI = (APIUtilities.isCsoundAPIAvailable()
+                && GeneralSettings.getInstance().isUsingCsoundAPI());
 
         StrBuilder apiParamInstr = new StrBuilder();
 
+        for(StringChannel strChannel : stringChannels) {
+            String varName = strChannel.getChannelName();
+            
+            initStatements.append(varName);
+            initStatements.append(" = ");
+            initStatements.append("\"").append(strChannel.getValue()).append("\"\n");
+
+            if (useAPI) {
+                initStatements.append(varName).append(" chnexport \"");
+                initStatements.append(varName).append("\", 3\n");            
+                
+                apiParamInstr.append(varName).append(" chnget \"");
+                apiParamInstr.append(varName).append("\"\n");
+            } 
+        }
+        
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);

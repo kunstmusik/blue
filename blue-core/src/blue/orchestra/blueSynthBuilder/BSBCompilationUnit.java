@@ -20,6 +20,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.utility.TextUtilities;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -39,8 +40,7 @@ public class BSBCompilationUnit {
     public String replaceBSBValues(final String instrText) {
         String retVal = instrText;
 
-        for (Iterator iter = replacementValues.keySet().iterator(); iter
-                .hasNext();) {
+        for (Iterator iter = replacementValues.keySet().iterator(); iter.hasNext();) {
             String key = (String) iter.next();
 
             String val = (String) replacementValues.get(key);
@@ -53,5 +53,4 @@ public class BSBCompilationUnit {
 
         return retVal;
     }
-
 }

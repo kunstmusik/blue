@@ -12,6 +12,34 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.2.2<
+
+NEW
+
+* BSBFileSelector: 
+
+  * Accepts dragging and dropping a file from filesystem onto the
+    textfield porting of the FileSelector
+
+  * Added property "stringChannelEnabled" that replaces the object name with a
+    gS_blue_strX variable instead of static text replacement; when enabled,
+    blue generates the string variable as well as uses a string channel to allow
+    live modification of the string when the API is enabled; useful for things 
+    like switching what sample to use in sample player instrument; by default,
+    the property is enabled, but legacy projects will correctly read in as 
+    disabled
+
+
+UPDATED
+
+* blueLive: leave repeat on even if blueLive turns off or recompiles; useful if
+  recompiling often
+
+FIX
+
+* Snap on PianoRoll did not work correctly note resizing
+
+
 >Notes for 2.2.1<
 [released 2012.03.07]
 

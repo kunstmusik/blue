@@ -75,7 +75,7 @@ public class GeneralSettings implements Serializable {
 
             instance.csoundDocRoot = prefs.get(CSOUND_DOC_ROOT, "http://www.csounds.com/manual/html/");
             instance.defaultDirectory = new File(prefs.get(DEFAULT_WORK_DIRECTORY, ""));
-            instance.usingCsoundAPI = prefs.getBoolean(USE_CSOUND_API, false);
+            instance.usingCsoundAPI = prefs.getBoolean(USE_CSOUND_API, true);
             instance.newUserDefaultsEnabled = prefs.getBoolean(NEW_USER_DEFAULTS_ENABLED, true);
             instance.alphaEnabled = prefs.getBoolean(DRAW_ALPHA_BACKGROUND_ON_MARQUEE, false);
             instance.messageColorsEnabled = prefs.getBoolean(MESSAGE_COLORS_ENABLED, false);

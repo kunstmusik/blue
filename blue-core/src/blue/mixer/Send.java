@@ -23,6 +23,7 @@ package blue.mixer;
 import blue.automation.*;
 import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +31,7 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -266,5 +268,10 @@ public class Send implements Serializable, Automatable, ParameterListener {
         stream.defaultReadObject();
 
         levelParameter.addParameterListener(this);
+    }
+
+    @Override
+    public ArrayList<StringChannel> getStringChannels() {
+        return null;
     }
 }

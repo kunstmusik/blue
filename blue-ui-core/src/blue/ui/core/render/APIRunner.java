@@ -11,6 +11,7 @@ import blue.LiveData;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.ui.core.score.AuditionManager;
 import blue.score.tempo.Tempo;
 import blue.settings.GeneralSettings;
@@ -182,7 +183,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
         }
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
-                result.getParameters(), mapper, renderStart);
+                result.getParameters(), result.getStringChannels(), mapper, renderStart);
         
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
@@ -245,7 +246,7 @@ public class APIRunner implements CSDRunner, PlayModeListener {
             throw soe;
         } catch (Exception ex) {
             StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.getString("message.generateScore.error"));
-            System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.getLocalizedMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -396,6 +397,8 @@ public class APIRunner implements CSDRunner, PlayModeListener {
         private PlayModeListener playModeListener;
 
         private ArrayList parameters;
+        
+        private ArrayList<StringChannel> stringChannels;
 
         private TempoMapper mapper;
 
@@ -415,12 +418,14 @@ public class APIRunner implements CSDRunner, PlayModeListener {
                 Csound csound,
                 PlayModeListener playModeListener,
                 ArrayList parameters,
+                ArrayList<StringChannel> stringChannels,
                 TempoMapper mapper,
                 float startTime) {
             this.blueData = blueData;
             this.csound = csound;
             this.playModeListener = playModeListener;
             this.parameters = parameters;
+            this.stringChannels = stringChannels;
             this.mapper = mapper;
             this.startTime = startTime;
         }
@@ -473,6 +478,10 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
             createValuesCache(currentTime);
 
+            for (StringChannel strChannel : stringChannels) {
+                csound.SetChannel(strChannel.getChannelName(), strChannel.getValue());             
+            }
+            
             do {
                 counter++;
 
@@ -517,6 +526,13 @@ public class APIRunner implements CSDRunner, PlayModeListener {
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
                         channelPtrCache[i].SetValue(0, (double)value);
+                    }
+                }
+                
+                for (StringChannel strChannel : stringChannels) {
+                    if(strChannel.isDirty()) {
+                        System.out.println("Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
+                        csound.SetChannel(strChannel.getChannelName(), strChannel.getValue());
                     }
                 }
             } while (csound.PerformKsmps() == 0 && keepRunning);

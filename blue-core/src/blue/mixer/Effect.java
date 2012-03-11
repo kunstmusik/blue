@@ -25,6 +25,7 @@ import blue.automation.ParameterList;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBParameterList;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import blue.utility.TextUtilities;
@@ -37,6 +38,7 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
@@ -358,5 +360,10 @@ public class Effect implements Serializable, Automatable {
         stream.defaultReadObject();
 
         parameterList.setBSBGraphicInterface(graphicInterface);
+    }
+
+    @Override
+    public ArrayList<StringChannel> getStringChannels() {
+        return null;
     }
 }

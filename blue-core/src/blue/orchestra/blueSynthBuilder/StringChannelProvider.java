@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2006 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2012 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -17,19 +17,13 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
-package blue.automation;
-
-import blue.orchestra.blueSynthBuilder.StringChannel;
-import java.util.ArrayList;
+package blue.orchestra.blueSynthBuilder;
 
 /**
- * 
- * @author steven
+ *
+ * @author stevenyi
  */
-public interface Automatable {
-    ParameterList getParameterList();
-    ArrayList<StringChannel> getStringChannels();
-    // public void addAutomatableListener(AutomatableListener listener);
-    // public void removeAutomatableListener(AutomatableListener listener);
+public interface StringChannelProvider {
+    public StringChannel getStringChannel();
+    public boolean isStringChannelEnabled();
 }
