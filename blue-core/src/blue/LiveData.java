@@ -17,11 +17,12 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue;
 
 import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
+import blue.blueLive.LiveObjectSet;
+import blue.blueLive.LiveObjectSetList;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
@@ -33,15 +34,11 @@ import java.util.ArrayList;
 public class LiveData implements Serializable {
 
     private String commandLine = "csound -Wdo devaudio -L stdin";
-    
     private int tempo = 60;
-    
     private int repeat = 4;
-    
     private LiveObjectBins liveObjectBins = new LiveObjectBins();
-
+    private LiveObjectSetList liveObjectSets = new LiveObjectSetList();
     private boolean commandLineEnabled = false;
-
     private boolean commandLineOverride = false;
 
     public String getCommandLine() {
@@ -51,10 +48,14 @@ public class LiveData implements Serializable {
     public void setCommandLine(String string) {
         commandLine = string;
     }
-    
+
     public LiveObjectBins getLiveObjectBins() {
         return liveObjectBins;
     }
+
+    public LiveObjectSetList getLiveObjectSets() {
+        return liveObjectSets;
+    }    
 
     public int getRepeat() {
         return repeat;
@@ -71,20 +72,19 @@ public class LiveData implements Serializable {
     public void setTempo(int tempo) {
         this.tempo = tempo;
     }
-    
-    
 
     public static LiveData loadFromXML(Element data,
             SoundObjectLibrary sObjLibrary) throws Exception {
         LiveData liveData = new LiveData();
-        
 
         Elements nodes = data.getElements();
 
         boolean doCommandLineUpgrade = true;
 
         ArrayList<LiveObject> oldFormat = new ArrayList<LiveObject>();
-        
+
+        Element liveObjectSetsNode = null;
+
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String name = node.getName();
@@ -107,19 +107,22 @@ public class LiveData implements Serializable {
                 oldFormat.add(LiveObject.loadFromXML(node,
                         sObjLibrary));
             } else if (name.equals("liveObjectBins")) {
-                liveData.liveObjectBins = LiveObjectBins.loadFromXML(node, sObjLibrary);
+                liveData.liveObjectBins = LiveObjectBins.loadFromXML(node,
+                        sObjLibrary);
             } else if (name.equals("repeat")) {
                 liveData.repeat = XMLUtilities.readInt(node);
             } else if (name.equals("tempo")) {
                 liveData.tempo = XMLUtilities.readInt(node);
+            } else if (name.equals("liveObjectSetList")) {
+                liveObjectSetsNode = node;
             }
 
         }
-        
-        if(oldFormat.size() > 0) {
+
+        if (oldFormat.size() > 0) {
             LiveObject[][] liveObjectBins = new LiveObject[1][oldFormat.size()];
-            
-            for(int i = 0; i < oldFormat.size(); i++) {
+
+            for (int i = 0; i < oldFormat.size(); i++) {
                 liveObjectBins[0][i] = oldFormat.get(i);
             }
             liveData.liveObjectBins = new LiveObjectBins(liveObjectBins);
@@ -128,6 +131,12 @@ public class LiveData implements Serializable {
         if (doCommandLineUpgrade) {
             liveData.setCommandLineEnabled(true);
             liveData.setCommandLineOverride(true);
+        }
+
+        if (liveObjectSetsNode != null) {
+
+            liveData.liveObjectSets = LiveObjectSetList.loadFromXML(liveObjectSetsNode, liveData.liveObjectBins);
+
         }
 
         return liveData;
@@ -146,6 +155,8 @@ public class LiveData implements Serializable {
                 commandLineOverride));
 
         retVal.addElement(liveObjectBins.saveAsXML(sObjLibrary));
+        retVal.addElement(liveObjectSets.saveAsXML());
+
         retVal.addElement(XMLUtilities.writeInt("repeat", repeat));
         retVal.addElement(XMLUtilities.writeInt("tempo", tempo));
 
@@ -167,5 +178,4 @@ public class LiveData implements Serializable {
     public void setCommandLineOverride(boolean commandLineOverride) {
         this.commandLineOverride = commandLineOverride;
     }
-
 }

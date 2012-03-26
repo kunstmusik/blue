@@ -13,6 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.2.2<
+[released 2012.03.xx]
 
 NEW
 
@@ -29,6 +30,18 @@ NEW
     the property is enabled, but legacy projects will correctly read in as 
     disabled
 
+* blueLive: 
+
+  * added ctrl-c/ctrl-v (cmd-c/cmd-v on OSX) for copying/pasting SoundObjects in
+    the SoundObject bins
+
+  * added LiveObject Sets List: 
+        * save sets of enabled LiveObjects by using + button
+        * Rename Set by using popup menu
+        * Use - button to remove a set
+        * Use ^/V buttons to push up and push down
+        * Rollover a set to see what items are Enabled for that set (highlights
+          in LiveObject table)
 
 UPDATED
 

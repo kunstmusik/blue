@@ -25,7 +25,6 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
-import java.util.ArrayList;
 
 /**
  *
@@ -275,9 +274,9 @@ public class LiveObjectBins implements Serializable {
         listeners.removePropertyChangeListener(cl);
     }
 
-    public ArrayList<LiveObject> getEnabledLiveObjects() {
+    public LiveObjectSet getEnabledLiveObjectSet() {
         
-        ArrayList<LiveObject> retVal = new ArrayList<LiveObject>();
+        LiveObjectSet retVal = new LiveObjectSet();
         
         for(int i = 0; i < liveObjectBins.length; i++) {
             for(int j = 0; j < liveObjectBins[0].length; j++) {
@@ -290,6 +289,24 @@ public class LiveObjectBins implements Serializable {
         }
     
         return retVal;
+    }
+    
+    public void setEnabledFromLiveObjectSet(LiveObjectSet liveObjectSet) {
+        
+        for(int i = 0; i < liveObjectBins.length; i++) {
+            for(int j = 0; j < liveObjectBins[0].length; j++) {
+                LiveObject lObj = liveObjectBins[i][j];
+                
+                if(lObj != null && liveObjectSet.contains(lObj)) {
+                    lObj.setEnabled(true);
+                } else {
+                    lObj.setEnabled(false);
+                }
+            }
+        }
+        
+        listeners.firePropertyChange("enabledStateChanged", false, false);
+
     }
 
     public LiveObject getLiveObjectByUniqueId(String uniqueId) {

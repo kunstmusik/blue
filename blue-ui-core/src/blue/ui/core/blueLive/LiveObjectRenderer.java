@@ -21,11 +21,16 @@
 package blue.ui.core.blueLive;
 
 import blue.blueLive.LiveObject;
+import blue.blueLive.LiveObjectSet;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import javax.swing.BorderFactory;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
 /**
@@ -34,11 +39,20 @@ import javax.swing.table.TableCellRenderer;
  */
 public class LiveObjectRenderer extends JLabel implements TableCellRenderer {
 
-    /** Creates a new instance of MidiKeyRenderer */
+    private LiveObjectSet set;
+    Border highlightedBorder = BorderFactory.createLineBorder(Color.WHITE);
+    
+    private static Object HIGHGLIGHTED = new Object();
+    private static Color HIGHLIGHT_PAINT = new Color(255, 255, 255, 128);
+    
     public LiveObjectRenderer() {
         setOpaque(true);
     }
 
+    public void setLiveObjectSet(LiveObjectSet set) {
+        this.set = set;
+    }
+    
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int column) {
         
@@ -65,7 +79,27 @@ public class LiveObjectRenderer extends JLabel implements TableCellRenderer {
             setText("");
         }
         
+        if(set != null && set.contains(lObj)) {
+            putClientProperty(HIGHGLIGHTED, Boolean.TRUE);
+        } else {
+            putClientProperty(HIGHGLIGHTED, Boolean.FALSE);
+        }
+        
         return this;
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Boolean b = (Boolean)getClientProperty(HIGHGLIGHTED);
+        
+        if(b) {
+            g.setColor(HIGHLIGHT_PAINT);
+            Rectangle r = g.getClipBounds();
+            g.fillRect(r.x, r.y, r.width, r.height);
+        }
+        
+    }
+
+    
 }

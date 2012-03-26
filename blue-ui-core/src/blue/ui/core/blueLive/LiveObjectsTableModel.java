@@ -20,6 +20,7 @@
 
 package blue.ui.core.blueLive;
 
+import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -29,15 +30,18 @@ import javax.swing.table.TableModel;
 
 import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
+import blue.blueLive.LiveObjectSet;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
+import java.beans.PropertyChangeEvent;
 
 /**
  * 
  * @author steven
  */
-public class LiveObjectsTableModel implements TableModel, SoundObjectListener {
+public class LiveObjectsTableModel implements TableModel, SoundObjectListener, 
+        PropertyChangeListener {
 
     LiveObjectBins bins = null;
 
@@ -54,6 +58,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener {
                     }
                 }
             }
+            bins.removePropertyChangeListener(this);
         }
         
         this.bins = bins;
@@ -68,6 +73,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener {
         }
         
         fireTableDataChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
+        bins.addPropertyChangeListener(this);
     }
     
     public int getRowCount() {
@@ -208,5 +214,29 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener {
         }
         
         return null;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if("enableStatedChanged".equals(evt.getPropertyName())) {
+            fireTableDataChanged();
+        }
+    }
+
+    public void setEnabled(LiveObjectSet lObjSet) {
+        if(bins == null || lObjSet == null) {
+            return;
+        }
+        
+        for(int i = 0; i < bins.getColumnCount(); i++) {
+            for(int j = 0; j < bins.getRowCount(); j++) {
+                LiveObject lObj = bins.getLiveObject(i, j);
+                
+                if(lObj != null) {
+                    lObj.setEnabled(lObjSet.contains(lObj));
+                }
+            }
+        }
+        fireTableDataChanged();
     }
 }
