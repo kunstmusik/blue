@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+
+    <folder name="blue">
+        
+        <folder name="noteProcessors">
+         
+            <file name="blue-noteProcessor-AddProcessor.instance">
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-noteProcessor-PchAddProcessor.instance">
+                <attr name="position" intvalue="10"/>
+            </file>
+            <file name="blue-noteProcessor-MultiplyProcessor.instance">
+                <attr name="position" intvalue="20"/>
+            </file>
+            <file name="blue-noteProcessor-RandomAddProcessor.instance">
+                <attr name="position" intvalue="30"/>
+            </file>
+            <file name="blue-noteProcessor-RandomMultiplyProcessor.instance">
+                <attr name="position" intvalue="40"/>
+            </file>
+            <file name="blue-noteProcessor-SubListProcessor.instance">
+                <attr name="position" intvalue="50"/>
+            </file>
+            <file name="blue-noteProcessor-RotateProcessor.instance">
+                <attr name="position" intvalue="60"/>
+            </file>
+            <file name="blue-noteProcessor-RetrogradeProcessor.instance">
+                <attr name="position" intvalue="70"/>
+            </file>
+            <file name="blue-noteProcessor-InversionProcessor.instance">
+                <attr name="position" intvalue="80"/>
+            </file>
+            <file name="blue-noteProcessor-PchInversionProcessor.instance">
+                <attr name="position" intvalue="90"/>
+            </file>
+            <file name="blue-noteProcessor-EqualsProcessor.instance">
+                <attr name="position" intvalue="100"/>
+            </file>            
+            <file name="blue-noteProcessor-SwitchProcessor.instance">
+                <attr name="position" intvalue="110"/>
+            </file>
+            <file name="blue-noteProcessor-TimeWarpProcessor.instance">
+                <attr name="position" intvalue="120"/>
+            </file>
+            <file name="blue-noteProcessor-LineAddProcessor.instance">
+                <attr name="position" intvalue="130"/>
+            </file>
+            <file name="blue-noteProcessor-LineMultiplyProcessor.instance">
+                <attr name="position" intvalue="140"/>
+            </file>
+            <file name="blue-noteProcessor-TuningProcessor.instance">
+                <attr name="position" intvalue="150"/>
+            </file>
+            <file name="blue-noteProcessor-PythonProcessor.instance">
+                <attr name="position" intvalue="160"/>
+            </file>
+            
+        </folder>
+        
+        <folder name="soundObjects">
+            <file name="blue-soundObject-AudioFile.instance">
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-soundObject-Comment.instance">
+                <attr name="position" intvalue="10"/>
+            </file>
+            <file name="blue-soundObject-External.instance">
+                <attr name="position" intvalue="20"/>
+            </file>
+            <file name="blue-soundObject-GenericScore.instance">
+                <attr name="position" intvalue="30"/>
+            </file>
+            <file name="blue-soundObject-JMask.instance">
+                <attr name="position" intvalue="40"/>
+            </file>
+            <file name="blue-soundObject-LineObject.instance">
+                <attr name="position" intvalue="50"/>
+            </file>
+            <file name="blue-soundObject-ObjectBuilder.instance">
+                <attr name="position" intvalue="60"/>
+            </file>
+            <file name="blue-soundObject-PatternObject.instance">
+                <attr name="position" intvalue="70"/>
+            </file>
+            <file name="blue-soundObject-PianoRoll.instance">
+                <attr name="position" intvalue="80"/>
+            </file>
+            <file name="blue-soundObject-PolyObject.instance">
+                <attr name="position" intvalue="90"/>
+            </file>
+            <file name="blue-soundObject-PythonObject.instance">
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="blue-soundObject-RhinoObject.instance">
+                <attr name="position" intvalue="110"/>
+            </file>
+            <file name="blue-soundObject-Sound.instance">
+                <attr name="position" intvalue="120"/>
+            </file>
+            <file name="blue-soundObject-TrackerObject.instance">
+                <attr name="position" intvalue="130"/>
+            </file>
+            <file name="blue-soundObject-ZakLineObject.instance">
+                <attr name="position" intvalue="140"/>
+            </file>
+        </folder>
+        
+        <folder name="instruments">
+            <file name="blue-orchestra-GenericInstrument.instance">
+                <attr name="position" intvalue="0"/>
+            </file>
+            <file name="blue-orchestra-PythonInstrument.instance">
+                <attr name="position" intvalue="10"/>
+            </file>
+            <file name="blue-orchestra-RhinoInstrument.instance">
+                <attr name="position" intvalue="20"/>
+            </file>
+            <file name="blue-orchestra-BlueX7.instance">    
+                <attr name="position" intvalue="30"/>
+            </file>
+            <file name="blue-orchestra-BlueSynthBuilder.instance">    
+                <attr name="position" intvalue="40"/>
+            </file>
+            
+        </folder>
+        
+        <!-- SHADOW FILES FOR SOUNDOBJECTS -->
+        
+        <folder name="score">
+            <folder name="soundObjects">
+                
+                <file name="AudioFile.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-AudioFile.instance"/>
+                </file>
+                <file name="Comment.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-Comment.instance"/>
+                </file>                
+                <file name="External.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-External.instance"/>
+                </file>                
+                <file name="GenericScore.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-GenericScore.instance"/>
+                </file>                
+                <file name="JMask.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-JMask.instance"/>
+                </file>                
+                <file name="LineObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file>                
+                <file name="ObjectBuilder.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-ObjectBuilder.instance"/>
+                </file>                
+                <file name="PatternObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PatternObject.instance"/>
+                </file>                
+                <file name="PianoRoll.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PianoRoll.instance"/>
+                </file>                
+                <file name="PolyObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PolyObject.instance"/>
+                </file>                
+                <file name="PythonObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PythonObject.instance"/>
+                </file>                
+                <file name="RhinoObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file>   
+                <file name="Sound.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-Sound.instance"/>
+                </file> 
+                <file name="TrackerObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file> 
+                <file name="ZakLineObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file> 
+               
+            </folder>
+        </folder>
+        
+        <folder name="live">
+            <folder name="soundObjects">
+                          
+                <file name="External.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-External.instance"/>
+                </file>                
+                <file name="GenericScore.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-GenericScore.instance"/>
+                </file>                
+                <file name="JMask.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-JMask.instance"/>
+                </file>                            
+                <file name="ObjectBuilder.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-ObjectBuilder.instance"/>
+                </file>                
+                <file name="PatternObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PatternObject.instance"/>
+                </file>                
+                <file name="PianoRoll.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PianoRoll.instance"/>
+                </file>                            
+                <file name="PythonObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-PythonObject.instance"/>
+                </file>                
+                <file name="RhinoObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file>   
+                <file name="TrackerObject.shadow">
+                    <attr name="originalFile" 
+                          stringvalue="blue/soundObjects/blue-soundObject-LineObject.instance"/>
+                </file> 
+              
+            </folder>
+        </folder>
+        
+    </folder>
+
+</filesystem>
