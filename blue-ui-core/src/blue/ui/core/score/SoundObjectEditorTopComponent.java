@@ -20,27 +20,21 @@
 
 package blue.ui.core.score;
 
-import blue.BluePlugin;
-import blue.BluePluginManager;
+import blue.plugin.BluePlugin;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.SoundObjectEditor;
+import blue.ui.core.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;

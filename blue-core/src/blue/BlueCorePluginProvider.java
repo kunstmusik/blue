@@ -6,19 +6,19 @@ package blue;
 
 import blue.noteProcessor.*;
 import blue.orchestra.*;
+import blue.plugin.BluePlugin;
+import blue.plugin.BluePluginFactory;
+import blue.plugin.DefaultBluePluginProvider;
 import blue.soundObject.*;
-import org.openide.modules.ModuleInstall;
 
 /**
- * Manages a module's lifecycle. Remember that an installer is optional and
- * often not needed at all.
+ *
+ * @author stevenyi
  */
-public class Installer extends ModuleInstall {
-
-    @Override
-    public void restored() {
-
-        BluePluginFactory factory = new BluePluginFactory();
+public class BlueCorePluginProvider extends DefaultBluePluginProvider {
+    
+    public BlueCorePluginProvider() {
+        BluePluginFactory factory = new BluePluginFactory(this);
         factory.setPluginType(NoteProcessor.class);
 
         // Note Processors
@@ -71,6 +71,5 @@ public class Installer extends ModuleInstall {
         factory.appendPlugin(Sound.class, false);
         factory.appendPlugin(TrackerObject.class, true);
         factory.appendPlugin(ZakLineObject.class, false);
-        
     }
 }

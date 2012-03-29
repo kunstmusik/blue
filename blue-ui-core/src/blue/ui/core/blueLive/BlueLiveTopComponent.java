@@ -33,6 +33,7 @@ import blue.projects.BlueProjectManager;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.ui.core.BluePluginManager;
 import blue.ui.core.score.SoundObjectBuffer;
 import blue.ui.core.score.SoundObjectSelectionBus;
 import blue.ui.utilities.UiUtilities;

@@ -1,7 +1,6 @@
 package blue.ui.core.score;
 
-import blue.BluePlugin;
-import blue.BluePluginManager;
+import blue.plugin.BluePlugin;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -23,6 +22,7 @@ import blue.event.SelectionListener;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.SoundObjectEditor;
+import blue.ui.core.BluePluginManager;
 import java.util.ArrayList;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;

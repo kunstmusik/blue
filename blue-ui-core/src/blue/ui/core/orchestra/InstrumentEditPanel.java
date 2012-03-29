@@ -1,7 +1,6 @@
 package blue.ui.core.orchestra;
 
-import blue.BluePlugin;
-import blue.BluePluginManager;
+import blue.plugin.BluePlugin;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -22,6 +21,7 @@ import javax.swing.event.DocumentListener;
 
 import blue.orchestra.Instrument;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.ui.core.BluePluginManager;
 import java.util.ArrayList;
 import org.openide.util.Exceptions;
 

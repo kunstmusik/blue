@@ -3,8 +3,13 @@
 <filesystem>
 
     <folder name="blue">
+        <folder name="pluginProviders">
+            <file name="blue-BlueCorePluginProvider.instance">
+                <attr name="position" intvalue="0"/>
+            </file>
+        </folder>
         
-        <folder name="noteProcessors">
+<!--        <folder name="noteProcessors">
          
             <file name="blue-noteProcessor-AddProcessor.instance">
                 <attr name="position" intvalue="0"/>
@@ -127,7 +132,7 @@
             
         </folder>
         
-        <!-- SHADOW FILES FOR SOUNDOBJECTS -->
+         SHADOW FILES FOR SOUNDOBJECTS 
         
         <folder name="score">
             <folder name="soundObjects">
@@ -237,7 +242,7 @@
                 </file> 
               
             </folder>
-        </folder>
+        </folder>-->
         
     </folder>
 

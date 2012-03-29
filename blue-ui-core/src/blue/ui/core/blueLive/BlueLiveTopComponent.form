@@ -93,7 +93,7 @@
                           <Component id="jLabel6" alignment="2" min="-2" pref="29" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jSplitPane1" pref="560" max="32767" attributes="0"/>
+                      <Component id="jSplitPane1" pref="442" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>

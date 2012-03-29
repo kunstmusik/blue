@@ -20,58 +20,18 @@
 package blue.ui.core;
 
 import blue.BlueConstants;
-import blue.BluePlugin;
-import blue.BluePluginFactory;
 import blue.BlueSystem;
 import blue.MainToolBar;
 import blue.WindowSettingManager;
 import blue.automation.ParameterTimeManagerFactory;
 import blue.automation.ParameterTimeManagerImpl;
 import blue.midi.MidiInputManager;
-import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.BlueX7;
-import blue.orchestra.editor.InstrumentEditor;
-import blue.osc.OSCAction;
 import blue.osc.OSCManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.settings.TextColorsSettings;
-import blue.soundObject.*;
-import blue.soundObject.editor.AudioFileEditor;
-import blue.soundObject.editor.ExternalEditor;
-import blue.soundObject.editor.FrozenSoundObjectEditor;
-import blue.soundObject.editor.GenericEditor;
-import blue.soundObject.editor.InstanceEditor;
-import blue.soundObject.editor.JMaskEditor;
-import blue.soundObject.editor.LineEditor;
-import blue.soundObject.editor.NotationEditor;
-import blue.soundObject.editor.ObjectBuilderEditor;
-import blue.soundObject.editor.PatternEditor;
-import blue.soundObject.editor.PianoRollEditor;
-import blue.soundObject.editor.PolyObjectEditor;
-import blue.soundObject.editor.PythonEditor;
-import blue.soundObject.editor.SoundObjectEditor;
-import blue.soundObject.editor.TrackerEditor;
-import blue.soundObject.editor.ZakLineEditor;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
-import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
-import blue.ui.core.orchestra.editor.BlueX7Editor;
-import blue.ui.core.soundObject.renderer.AbstractLineObjectRenderer;
-import blue.ui.core.soundObject.renderer.AudioFileRenderer;
-import blue.ui.core.soundObject.renderer.BarRenderer;
-import blue.ui.core.soundObject.renderer.CommentRenderer;
-import blue.ui.core.soundObject.renderer.ExternalRenderer;
-import blue.ui.core.soundObject.renderer.FrozenSoundObjectRenderer;
-import blue.ui.core.soundObject.renderer.GenericRenderer;
-import blue.ui.core.soundObject.renderer.InstanceRenderer;
-import blue.ui.core.soundObject.renderer.JMaskRenderer;
-import blue.ui.core.soundObject.renderer.ObjectBuilderRenderer;
-import blue.ui.core.soundObject.renderer.PythonObjectRenderer;
-import blue.ui.core.soundObject.renderer.RhinoObjectRenderer;
-import blue.ui.core.soundObject.renderer.SoundRenderer;
-import blue.ui.core.soundObject.renderer.TrackerRenderer;
-import de.sciss.net.OSCMessage;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -123,7 +83,6 @@ public class Installer extends ModuleInstall {
 //        });
 
         initializeTextDefaults();
-        initializeBluePlugins();
 
         Thread t = new Thread(backupFileSaver);
         t.setPriority(Thread.MIN_PRIORITY);
@@ -292,59 +251,4 @@ public class Installer extends ModuleInstall {
         defaults.bracketHighlightColor = settings.blueSyntaxNormal;
     }
 
-    private void initializeBluePlugins() {
-
-        //SOUND OBJECT EDITORS
-        BluePluginFactory factory = new BluePluginFactory();
-        factory.setPluginType(SoundObjectEditor.class);
-        factory.setPropertyType(BluePlugin.PROP_EDIT_CLASS);
-
-        factory.appendPlugin(PatternEditor.class, PatternObject.class);
-        factory.appendPlugin(JMaskEditor.class, JMask.class);
-        factory.appendPlugin(ZakLineEditor.class, ZakLineObject.class);
-        factory.appendPlugin(PianoRollEditor.class, PianoRoll.class);
-        factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
-        factory.appendPlugin(LineEditor.class, LineObject.class);
-        factory.appendPlugin(PythonEditor.class, PythonObject.class);
-        factory.appendPlugin(GenericEditor.class, GenericEditable.class);
-        factory.appendPlugin(ObjectBuilderEditor.class, ObjectBuilder.class);
-        factory.appendPlugin(TrackerEditor.class, TrackerObject.class);
-        factory.appendPlugin(InstanceEditor.class, Instance.class);
-        factory.appendPlugin(ExternalEditor.class, External.class);
-        factory.appendPlugin(AudioFileEditor.class, AudioFile.class);
-        factory.appendPlugin(NotationEditor.class, NotationObject.class);
-        factory.appendPlugin(FrozenSoundObjectEditor.class,
-                FrozenSoundObject.class);
-
-
-        // INSTRUMENT EDITORS
-        factory.setPluginType(InstrumentEditor.class);
-
-        factory.appendPlugin(BlueSynthBuilderEditor.class,
-                BlueSynthBuilder.class);
-        factory.appendPlugin(BlueX7Editor.class, BlueX7.class);
-        factory.appendPlugin(blue.ui.core.orchestra.editor.GenericEditor.class,
-                blue.orchestra.editor.GenericEditable.class);
-
-
-        // BAR RENDERERS
-
-        factory.setPluginType(BarRenderer.class);
-
-        factory.appendPlugin(AudioFileRenderer.class, AudioFile.class);
-        factory.appendPlugin(AbstractLineObjectRenderer.class,
-                AbstractLineObject.class);
-        factory.appendPlugin(CommentRenderer.class, Comment.class);
-        factory.appendPlugin(ExternalRenderer.class, External.class);
-        factory.appendPlugin(FrozenSoundObjectRenderer.class,
-                FrozenSoundObject.class);
-        factory.appendPlugin(GenericRenderer.class, GenericViewable.class);
-        factory.appendPlugin(InstanceRenderer.class, Instance.class);
-        factory.appendPlugin(JMaskRenderer.class, JMask.class);
-        factory.appendPlugin(ObjectBuilderRenderer.class, ObjectBuilder.class);
-        factory.appendPlugin(PythonObjectRenderer.class, PythonObject.class);
-        factory.appendPlugin(RhinoObjectRenderer.class, RhinoObject.class);
-        factory.appendPlugin(SoundRenderer.class, Sound.class);
-        factory.appendPlugin(TrackerRenderer.class, TrackerObject.class);
-    }
 }

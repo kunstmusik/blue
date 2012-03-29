@@ -20,7 +20,6 @@
 
 package blue.ui.core.score;
 
-import blue.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -52,6 +51,7 @@ import blue.BlueSystem;
 import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorChainMap;
+import blue.ui.core.BluePluginManager;
 
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;

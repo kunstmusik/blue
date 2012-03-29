@@ -18,7 +18,7 @@
  * USA
  */
 
-package blue;
+package blue.plugin;
 
 import java.util.HashMap;
 import java.util.Map;

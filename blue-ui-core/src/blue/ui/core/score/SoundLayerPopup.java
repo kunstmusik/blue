@@ -22,14 +22,13 @@
  */
 package blue.ui.core.score;
 
-import blue.BluePlugin;
-import blue.BluePluginManager;
 import blue.BlueSystem;
 import blue.actions.BlueAction;
 import blue.score.undo.AddSoundObjectEdit;
 import blue.settings.GeneralSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.BluePluginManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;

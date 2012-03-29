@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package blue;
+package blue.plugin;
 
 /**
  *
@@ -12,8 +12,12 @@ package blue;
 public class BluePluginFactory {
     private Class pluginType = null;
     private String propertyType = null;
+    
+    DefaultBluePluginProvider pluginProvider;
 
-    public BluePluginFactory() {}
+    public BluePluginFactory(DefaultBluePluginProvider pluginProvider) {
+        this.pluginProvider = pluginProvider;
+    }
 
     /**
      * @return the pluginType
@@ -62,7 +66,7 @@ public class BluePluginFactory {
     }
 
     public void appendPlugin(Class pluginClass, Object property) {
-        BluePluginManager.getInstance().addPlugin(
+        pluginProvider.addPlugin(
                 createPlugin(pluginClass, property));
     }
 

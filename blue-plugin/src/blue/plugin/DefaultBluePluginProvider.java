@@ -18,27 +18,16 @@
  * USA
  */
 
-package blue;
+package blue.plugin;
 
-import blue.noteProcessor.NoteProcessor;
-import blue.orchestra.Instrument;
-import blue.soundObject.SoundObject;
 import java.util.ArrayList;
 
 /**
  *
  * @author syi
  */
-public class BluePluginManager {
+public class DefaultBluePluginProvider implements BluePluginProvider {
     ArrayList<BluePlugin> plugins = new ArrayList<BluePlugin>();
-
-    private static BluePluginManager instance = new BluePluginManager();
-
-    private BluePluginManager() {}
-
-    public static BluePluginManager getInstance() {
-        return instance;
-    }
 
     public void addPlugin(BluePlugin plugin) {
         plugins.add(plugin);
@@ -56,7 +45,7 @@ public class BluePluginManager {
         return returnValue;
     }
 
-    protected ArrayList<Class> getPluginClasses(Class pluginType) {
+    public ArrayList<Class> getPluginClasses(Class pluginType) {
         ArrayList<Class> pluginClasses = new ArrayList<Class>();
 
         for(BluePlugin plugin : plugins) {
@@ -67,29 +56,29 @@ public class BluePluginManager {
         return pluginClasses;
     }
     
-    public ArrayList<Class> getLiveSoundObjectClasses() {
-        ArrayList<Class> sObjects = new ArrayList<Class>();
-
-        for (BluePlugin plugin : plugins) {
-            if(plugin.getPluginType() == SoundObject.class &&
-                    Boolean.TRUE.equals(
-                    plugin.getProperty(BluePlugin.PROP_LIVE))) {
-                sObjects.add(plugin.getPluginClass());
-            }
-        }
-
-        return sObjects;
-    }
-
-    public ArrayList<Class> getSoundObjectClasses() {
-        return getPluginClasses(SoundObject.class);
-    }
-
-    public ArrayList<Class> getNoteProcessorClasses() {
-        return getPluginClasses(NoteProcessor.class);
-    }
-
-    public ArrayList<Class> getInstrumentClasses() {
-        return getPluginClasses(Instrument.class);
-    }
+//    public ArrayList<Class> getLiveSoundObjectClasses() {
+//        ArrayList<Class> sObjects = new ArrayList<Class>();
+//
+//        for (BluePlugin plugin : plugins) {
+//            if(plugin.getPluginType() == SoundObject.class &&
+//                    Boolean.TRUE.equals(
+//                    plugin.getProperty(BluePlugin.PROP_LIVE))) {
+//                sObjects.add(plugin.getPluginClass());
+//            }
+//        }
+//
+//        return sObjects;
+//    }
+//
+//    public ArrayList<Class> getSoundObjectClasses() {
+//        return getPluginClasses(SoundObject.class);
+//    }
+//
+//    public ArrayList<Class> getNoteProcessorClasses() {
+//        return getPluginClasses(NoteProcessor.class);
+//    }
+//
+//    public ArrayList<Class> getInstrumentClasses() {
+//        return getPluginClasses(Instrument.class);
+//    }
 }

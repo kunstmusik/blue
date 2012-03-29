@@ -19,7 +19,6 @@
  */
 package blue.ui.core.orchestra;
 
-import blue.BluePluginManager;
 import blue.BlueSystem;
 import blue.InstrumentLibrary;
 import java.awt.BorderLayout;
@@ -66,6 +65,7 @@ import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
+import blue.ui.core.BluePluginManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;

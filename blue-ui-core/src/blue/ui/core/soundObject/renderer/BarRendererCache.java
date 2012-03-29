@@ -20,8 +20,8 @@
 
 package blue.ui.core.soundObject.renderer;
 
-import blue.BluePlugin;
-import blue.BluePluginManager;
+import blue.plugin.BluePlugin;
+import blue.ui.core.BluePluginManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
