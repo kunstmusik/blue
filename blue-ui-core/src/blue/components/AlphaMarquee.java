@@ -33,6 +33,9 @@ public class AlphaMarquee extends JComponent {
     private static final Color alphaWhite = new Color(255, 255, 255, 64);
 
     Point origin;
+    
+    public float startTime;
+    public float endTime;
 
     public void setStart(Point p) {
         origin = p;

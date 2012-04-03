@@ -84,10 +84,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
 
-    private static int NUDGE_HORIZONTAL = 0;
-
-    private static int NUDGE_VERTICAL = 1;
-
     protected ScoreTimeCanvasController controller = new ScoreTimeCanvasController(
             this);
 
@@ -457,42 +453,46 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         actionMap.put("nudgeUp", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(-1, NUDGE_VERTICAL);
+                nudgeVertical(-1);
             }
         });
 
         actionMap.put("nudgeDown", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(1, NUDGE_VERTICAL);
+                nudgeVertical(1);
             }
         });
 
         actionMap.put("nudgeLeft", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(-1, NUDGE_HORIZONTAL);
+                float timeAmount = 1.0f / pObj.getPixelSecond();  
+                nudgeHorizontal(-timeAmount);
             }
         });
 
         actionMap.put("nudgeRight", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(1, NUDGE_HORIZONTAL);
+                float timeAmount = 1.0f / pObj.getPixelSecond();  
+                nudgeHorizontal(timeAmount);
             }
         });
 
         actionMap.put("nudgeLeft10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(-10, NUDGE_HORIZONTAL);
+                float timeAmount = 10.0f / pObj.getPixelSecond();
+                nudgeHorizontal(-timeAmount);
             }
         });
 
         actionMap.put("nudgeRight10", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                nudge(10, NUDGE_HORIZONTAL);
+                float timeAmount = 10.0f / pObj.getPixelSecond();
+                nudgeHorizontal(timeAmount);
             }
         });
 
@@ -538,94 +538,117 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         });
         
     }
+    
+    public void setSelectionDragRegions() {
+        SoundObjectView[] sObjViews = mBuffer.motionBuffer;
+        if(sObjViews == null) {
+            return;
+        }
+        
+        for (int i = 0; i < sObjViews.length; i++) {
+            SoundObjectView sObjView = sObjViews[i];
+            int layerNum = pObj.getLayerNumForY(sObjView.getY());
+            
+            automationPanel.addSelectionDragRegion(sObjView.getStartTime(), 
+                    sObjView.getStartTime() + sObjView.getSubjectiveDuration(), layerNum);
+        }
+    }
+    
 
     // TODO - Respect snap values, Make Undoable
-    private void nudge(int amount, int direction) {
+    private void nudgeHorizontal(float timeValue) {
 
         if (mBuffer.size() == 0) {
             return;
         }
 
         mBuffer.motionBufferObjects();
+        
+        setSelectionDragRegions();
 
-        if (direction == NUDGE_HORIZONTAL) {
-            if (amount < 0) {
-                if (mBuffer.point[0][0] < -amount) {
+        if (timeValue < 0) {
+            if(mBuffer.initialStartTimes[0] == 0) {
+                return;
+            }
+            if (timeValue < -mBuffer.initialStartTimes[0]) {
+                timeValue = -mBuffer.initialStartTimes[0];
+            }
+        }
+
+        for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+
+            float newStart = mBuffer.initialStartTimes[i] + timeValue;
+
+            SoundObject sObj = mBuffer.motionBuffer[i].getSoundObject();
+
+            sObj.setStartTime(newStart);
+        }
+        
+        automationPanel.setMultiLineTranslation(timeValue);
+        automationPanel.commitMultiLineDrag();
+
+        mBuffer.motionBufferObjects();
+
+    }
+    
+    private void nudgeVertical(int amount) {
+        if (amount < 0) { // MOVE UP
+            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+                if (mBuffer.motionBuffer[i].getY() == 0) {
                     return;
                 }
             }
 
             for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                int newX = mBuffer.point[i][0] + amount;
+                SoundObjectView sObjView = mBuffer.motionBuffer[i];
 
-                float newStart = (float) newX / getPolyObject().getPixelSecond();
+                SoundObject sObj = sObjView.getSoundObject();
 
-                SoundObject sObj = mBuffer.motionBuffer[i].getSoundObject();
+                mBuffer.remove(sObjView);
 
-                sObj.setStartTime(newStart);
+                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
+                int newIndex = currentIndex - 1;
+
+                getPolyObject().removeSoundObject(sObj);
+                getPolyObject().addSoundObject(newIndex, sObj);
+
+                sObjView = soundObjectToViewMap.get(sObj);
+                sObjView.select();
+                mBuffer.add(sObjView);
             }
 
-            mBuffer.motionBufferObjects();
+        } else if (amount > 0) { // MOVE DOWN
 
-        } else if (direction == NUDGE_VERTICAL) {
-            if (amount < 0) { // MOVE UP
-                for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                    if (mBuffer.motionBuffer[i].getY() == 0) {
-                        return;
-                    }
+            int maxY = getPolyObject().getYForLayerNum(getPolyObject().getSize() - 1);
+
+            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+                if (mBuffer.motionBuffer[i].getY() == maxY) {
+                    return;
                 }
-
-                for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                    SoundObjectView sObjView = mBuffer.motionBuffer[i];
-
-                    SoundObject sObj = sObjView.getSoundObject();
-
-                    mBuffer.remove(sObjView);
-
-                    int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-                    int newIndex = currentIndex - 1;
-
-                    getPolyObject().removeSoundObject(sObj);
-                    getPolyObject().addSoundObject(newIndex, sObj);
-
-                    sObjView = soundObjectToViewMap.get(sObj);
-                    sObjView.select();
-                    mBuffer.add(sObjView);
-                }
-
-            } else if (amount > 0) { // MOVE DOWN
-
-                int maxY = getPolyObject().getYForLayerNum(getPolyObject().getSize() - 1);
-
-                for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                    if (mBuffer.motionBuffer[i].getY() == maxY) {
-                        return;
-                    }
-                }
-
-                for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                    SoundObjectView sObjView = mBuffer.motionBuffer[i];
-
-                    mBuffer.remove(sObjView);
-
-                    SoundObject sObj = sObjView.getSoundObject();
-
-                    int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-                    int newIndex = currentIndex + 1;
-
-                    getPolyObject().removeSoundObject(sObj);
-                    getPolyObject().addSoundObject(newIndex, sObj);
-
-                    sObjView = soundObjectToViewMap.get(sObj);
-                    sObjView.select();
-                    mBuffer.add(sObjView);
-                }
-
             }
 
-            mBuffer.motionBufferObjects();
+            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+                SoundObjectView sObjView = mBuffer.motionBuffer[i];
+
+                mBuffer.remove(sObjView);
+
+                SoundObject sObj = sObjView.getSoundObject();
+
+                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
+                int newIndex = currentIndex + 1;
+
+                getPolyObject().removeSoundObject(sObj);
+                getPolyObject().addSoundObject(newIndex, sObj);
+
+                sObjView = soundObjectToViewMap.get(sObj);
+                sObjView.select();
+                mBuffer.add(sObjView);
+            }
+
         }
 
+        mBuffer.motionBufferObjects();
+        
     }
 
     public void reset() {
@@ -900,7 +923,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
             sObj = mBuffer.motionBuffer[i].getSoundObject();
 
-            startIndex = getPolyObject().getLayerNumForY(mBuffer.point[i][1]);
+            startIndex = getPolyObject().getLayerNumForY(mBuffer.sObjYValues[i]);
             endIndex = getPolyObject().getLayerNumForY(mBuffer.motionBuffer[i].getY());
 
             if (startIndex != endIndex) {

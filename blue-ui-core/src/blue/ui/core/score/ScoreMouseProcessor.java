@@ -110,15 +110,15 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                     setBufferedSoundObject(sObjView, e);
                     this.justSelected = false;
                     this.initialDuration = sObjView.getSubjectiveDuration();
-                    sCanvas.automationPanel.initiateScoreScale(sObjView.getX(), 
-                            sObjView.getX() + sObjView.getWidth(), 
+                    sCanvas.automationPanel.initiateScoreScale(sObjView.getStartTime(), 
+                            sObjView.getStartTime() + sObjView.getSubjectiveDuration(), 
                             getSoundLayerIndex(sObjView.getY()));
                 } else if (dragMode == RESIZE_LEFT) {
                     setBufferedSoundObject(sObjView, e);
                     this.justSelected = false;
                     this.initialEndTime = sObjView.getStartTime() + sObjView.getSubjectiveDuration();                
-                    sCanvas.automationPanel.initiateScoreScale(sObjView.getX(), 
-                            sObjView.getX() + sObjView.getWidth(), 
+                    sCanvas.automationPanel.initiateScoreScale(sObjView.getStartTime(), 
+                            sObjView.getStartTime() + sObjView.getSubjectiveDuration(),
                             getSoundLayerIndex(sObjView.getY()));
                 } else {
                     if (e.isShiftDown()) {
@@ -248,7 +248,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                     if((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                         duplicateSoundObjectsInPlace();
                     } else {
-                        setSelectionDragRegions();
+                        sCanvas.setSelectionDragRegions();
                     }
                 }
                 moveSoundObjects(e);
@@ -261,11 +261,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                 resizeSoundObject(e);
                 SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[0];
                 sCanvas.automationPanel.setScoreScaleEnd(
-                        sObjView.getX() + sObjView.getWidth());
+                        sObjView.getStartTime() + sObjView.getSubjectiveDuration());
             } else if (dragMode == RESIZE_LEFT && !isPopupOpen && !justSelected) { 
                 resizeSoundObjectLeft(e);
                 SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[0];
-                sCanvas.automationPanel.setScoreScaleStart(sObjView.getX());
+                sCanvas.automationPanel.setScoreScaleStart(sObjView.getStartTime());
             }
         } else if (SwingUtilities.isLeftMouseButton(e) && !justSelected) {
             // updateMarquee(e);
@@ -535,26 +535,8 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     // MOUSE DRAGGING CODE
-
-    private void setSelectionDragRegions() {
-        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
-        if(sObjViews == null) {
-            return;
-        }
-        
-        for (int i = 0; i < sObjViews.length; i++) {
-            SoundObjectView sObjView = sObjViews[i];
-            int startX = sObjView.getX();
-            int endX = startX + sObjView.getWidth();
-            
-            int layerNum = sCanvas.pObj.getLayerNumForY(sObjView.getY());
-            
-            sCanvas.automationPanel.addSelectionDragRegion(startX, endX, layerNum);
-        }
-    }
-    
     private void moveSoundObjects(MouseEvent e) {
-        int xTranslation = e.getX() - sCanvas.start.x;
+        int xTrans = e.getX() - sCanvas.start.x;
 
         int layerStart = sCanvas.pObj.getLayerNumForY(sCanvas.start.y);
         int newLayer = sCanvas.pObj.getLayerNumForY(e.getY());
@@ -571,16 +553,17 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         } else if ((yTranslation + maxLayer) >= sCanvas.pObj.getSize()) {
             yTranslation = sCanvas.pObj.getSize() - maxLayer - 1;
         }
-
-        if (xTranslation < -sCanvas.mBuffer.point[0][0]) {
-            xTranslation = -sCanvas.mBuffer.point[0][0];
-        }
         
-        float timeAdjust = (float)xTranslation / sCanvas.pObj.getPixelSecond();
+        float timeAdjust = (float)xTrans / sCanvas.pObj.getPixelSecond();
+        
+        float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
+
+        if(timeAdjust < -initialStartTime) {
+            timeAdjust = -initialStartTime;
+        }
         
         if (sCanvas.pObj.isSnapEnabled()) {
             
-            float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
             
             float tempStart = initialStartTime + timeAdjust;
             float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
@@ -594,27 +577,20 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
 
         //FIXME - needs to use time instead of x value
-        sCanvas.automationPanel.setMultiLineTranslation(xTranslation);
+        sCanvas.automationPanel.setMultiLineTranslation(timeAdjust);
 
         for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
             
 
             int originalLayer = sCanvas.pObj
-                    .getLayerNumForY(sCanvas.mBuffer.point[i][1]);
+                    .getLayerNumForY(sCanvas.mBuffer.sObjYValues[i]);
 
             int newY = sCanvas.pObj.getYForLayerNum(originalLayer + yTranslation);
 
             SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
             SoundObject sObj = sObjView.getSoundObject();
             
-            float newStart;
-            
-            if(sCanvas.pObj.isSnapEnabled()) {
-                newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;    
-            } else {
-                int newX = sCanvas.mBuffer.point[i][0] + xTranslation;
-                newStart = (float) newX / sCanvas.pObj.getPixelSecond();
-            }
+            float newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;    
             
             sObjView.setLocation(sObjView.getX(), newY);
 

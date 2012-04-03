@@ -32,7 +32,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
 
     public float[] initialStartTimes;
 
-    public int[][] point;
+    public int[] sObjYValues;
 
     public int resizeWidth;
 
@@ -101,7 +101,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
         }
         this.clear();
         motionBuffer = null;
-        point = null;
+        sObjYValues = null;
     }
 
     // caches the soundObject view's original x-locations
@@ -110,7 +110,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
             return;
         }
         motionBuffer = new SoundObjectView[this.size()];
-        point = new int[this.size()][2];
+        sObjYValues = new int[this.size()];
         initialStartTimes = new float[this.size()];
 
         Collections.sort(this);
@@ -125,16 +125,15 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
 
         for (int i = 0; i < size; i++) {
             motionBuffer[i] = (SoundObjectView) this.get(i);
-            point[i][0] = motionBuffer[i].getX();
-            point[i][1] = motionBuffer[i].getY();
+            sObjYValues[i] = motionBuffer[i].getY();
             initialStartTimes[i] = motionBuffer[i].getStartTime();
 
-            if (point[i][1] < minY) {
-                minY = point[i][1];
+            if (sObjYValues[i] < minY) {
+                minY = sObjYValues[i];
             }
 
-            if (point[i][1] > maxY) {
-                maxY = point[i][1];
+            if (sObjYValues[i] > maxY) {
+                maxY = sObjYValues[i];
             }
         }
 
@@ -238,7 +237,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
         float[] endingStartTimes = new float[motionBuffer.length];
 
         for (int i = 0; i < motionBuffer.length; i++) {
-            startIndex[i] = pObj.getLayerNumForY(this.point[i][1]);
+            startIndex[i] = pObj.getLayerNumForY(this.sObjYValues[i]);
             endIndex[i] = pObj.getLayerNumForY(this.motionBuffer[i].getY());
             endingStartTimes[i] = this.motionBuffer[i].getStartTime();
 

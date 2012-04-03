@@ -66,6 +66,8 @@ import blue.ui.utilities.UiUtilities;
 import blue.utility.GenericFileFilter;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
+import org.openide.util.Exceptions;
 
 /**
  * @author steven
@@ -100,19 +102,19 @@ public class ParameterLinePanel extends JComponent implements
 
     AlphaMarquee marquee;
 
-    ArrayList<int[]> selectionList = new ArrayList<int[]>();
+    ArrayList<float[]> selectionList = new ArrayList<float[]>();
 
-    int mouseDownX = -1;
+    float mouseDownInitialTime = -1.0f;
 
-    int mouseTranslateX = 0;
+    float transTime = 0;
     
-    private int selectionStartX = -1;
+    private float selectionStartTime = -1;
     
-    private int selectionEndX = -1;
+    private float selectionEndTime = -1;
     
-    private int newSelectionStartX = -1;
+    private float newSelectionStartTime = -1;
     
-    private int newSelectionEndX = -1;
+    private float newSelectionEndTime = -1;
 
     public ParameterLinePanel(AlphaMarquee marquee) {
         this.marquee = marquee;
@@ -544,16 +546,16 @@ public class ParameterLinePanel extends JComponent implements
         return retVal;
     }
    
-    private boolean isPointInSelectionRegion(int x, int mod) {
-        int min, max;
-        int[] points;
+    private boolean isPointInSelectionRegion(float pointTime, float timeMod) {
+        float min, max;
+        float[] points;
         
         for(int i = 0; i < selectionList.size(); i++) {
             points = selectionList.get(i);
-            min = points[0] + mod;
-            max = points[1] + mod;
+            min = points[0] + timeMod;
+            max = points[1] + timeMod;
                        
-            if (x >= min && x <= max) {
+            if (pointTime >= min && pointTime <= max) {
                 return true;
             }
         }
@@ -563,9 +565,6 @@ public class ParameterLinePanel extends JComponent implements
     private void processLineForSelectionDrag(Line line) {
         ArrayList<LinePoint> points = new ArrayList<LinePoint>();
 
-        int marqueeLeft = marquee.getX();
-        int marqueeRight = marqueeLeft + marquee.getWidth();
-
         for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
 
             LinePoint lp = (LinePoint) iter.next();
@@ -574,12 +573,12 @@ public class ParameterLinePanel extends JComponent implements
                 continue;
             }
 
-            int screenX = floatToScreenX(lp.getX());
+            float pointTime = lp.getX();
 
-            if (isPointInSelectionRegion(screenX, 0)) {
+            if (isPointInSelectionRegion(pointTime, 0)) {
                 points.add(lp);
                 iter.remove();
-            } else if (isPointInSelectionRegion(screenX, mouseTranslateX)) {
+            } else if (isPointInSelectionRegion(pointTime, transTime)) {
                 iter.remove();
             }
         }
@@ -587,11 +586,7 @@ public class ParameterLinePanel extends JComponent implements
         for (Iterator iterator = points.iterator(); iterator.hasNext();) {
             LinePoint lp = (LinePoint) iterator.next();
 
-            int screenX = floatToScreenX(lp.getX());
-
-            lp
-                    .setLocation(screenToFloatX(screenX + mouseTranslateX), lp
-                            .getY());
+            lp.setLocation(lp.getX() + transTime, lp.getY());
             line.addLinePoint(lp);
         }
 
@@ -614,7 +609,7 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     private void processLineForSelectionScale(Line line) {
-        if(selectionStartX < 0) {
+        if(selectionStartTime < 0) {
             return;
         }
         
@@ -628,20 +623,20 @@ public class ParameterLinePanel extends JComponent implements
                 continue;
             }
 
-            int screenX = floatToScreenX(lp.getX());
+            float pointTime = lp.getX();
 
-            if (screenX >= selectionStartX && screenX <= selectionEndX) {
+            if (pointTime >= selectionStartTime && pointTime <= selectionEndTime) {
                 points.add(lp);
                 iter.remove();
-            } else if (screenX >= newSelectionStartX && screenX <= newSelectionEndX) {
+            } else if (pointTime >= newSelectionStartTime && pointTime <= newSelectionEndTime) {
                 iter.remove();
             }
         }
         
-        float oldStart = screenToFloatX(selectionStartX);
-        float newStart = screenToFloatX(newSelectionStartX);
-        float oldRange = (selectionEndX - selectionStartX);
-        float newRange = (float)(newSelectionEndX - newSelectionStartX);
+        float oldStart = selectionStartTime;
+        float newStart = newSelectionStartTime;
+        float oldRange = selectionEndTime - selectionStartTime;
+        float newRange = newSelectionEndTime - newSelectionStartTime;
                 
 
         for (Iterator iterator = points.iterator(); iterator.hasNext();) {
@@ -665,7 +660,7 @@ public class ParameterLinePanel extends JComponent implements
        
         if (selectionList.size() > 0) {
             tempLine = getSelectionSortedLine(tempLine);
-        } else if (newSelectionStartX >= 0) {
+        } else if (newSelectionStartTime >= 0) {
             tempLine = getSelectionScalingSortedLine(tempLine);
         } else {
             drawLine(g, p, false);
@@ -685,13 +680,12 @@ public class ParameterLinePanel extends JComponent implements
         float selectionStart;
         float selectionEnd;
         
-        if(newSelectionStartX >= 0) {
-            selectionStart = newSelectionStartX / pixelSecond;
-            selectionEnd = newSelectionEndX / pixelSecond;
+        if(newSelectionStartTime >= 0) {
+            selectionStart = newSelectionStartTime;
+            selectionEnd = newSelectionEndTime;
         } else {
-            selectionStart = marquee.getX() / pixelSecond;
-            selectionEnd = (marquee.getX() + marquee.getWidth())
-                / pixelSecond;
+            selectionStart = marquee.startTime;
+            selectionEnd = marquee.endTime;
         }
         
        
@@ -1163,19 +1157,21 @@ public class ParameterLinePanel extends JComponent implements
                         && x <= marquee.getX() + marquee.getWidth()) {
 
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        mouseDownX = e.getX();
-                        mouseTranslateX = 0;
+                        float pixelSecond = (float) pObj.getPixelSecond();
+
+                        mouseDownInitialTime = e.getX() / pixelSecond;
+                        transTime = 0.0f;
                         
                         if(selectionList.size() == 0) {
-                            int[] points = new int[] {
-                                marquee.getX(),
-                                marquee.getX() + marquee.getWidth()
+                            float[] points = new float[] {
+                                marquee.getX() / pixelSecond,
+                                (marquee.getX() + marquee.getWidth()) / pixelSecond
                             };
                             selectionList.add(points);
                         } else {
-                            int[] points = selectionList.get(0);
-                            points[0] = marquee.getX();
-                            points[1] = points[0] + marquee.getWidth();
+                            float[] points = selectionList.get(0);
+                            points[0] = marquee.getX() / pixelSecond;
+                            points[1] = (marquee.getX() + marquee.getWidth()) / pixelSecond;
                         }
                     }
                     return;
@@ -1183,8 +1179,8 @@ public class ParameterLinePanel extends JComponent implements
 
             }
 
-            mouseTranslateX = 0;
-            mouseDownX = -1;
+            transTime = 0.0f;
+            mouseDownInitialTime = -1.0f;
             clearSelectionDragRegions();
 
             marquee.setVisible(false);
@@ -1217,15 +1213,20 @@ public class ParameterLinePanel extends JComponent implements
                 if (SwingUtilities.isLeftMouseButton(e)) {
 
                     int start = e.getX();
+                    float pixelSecond = (float)pObj.getPixelSecond();
+                    
+                    float startTime = start / pixelSecond;
 
                     if (pObj.isSnapEnabled() && !e.isControlDown()) {
-                        start = setStartForSnap(start);
+                        startTime = ScoreUtilities.getSnapValueStart(startTime, pObj.getSnapValue());
                     }
 
                     if (e.isShiftDown()) {
-                        Point p = new Point(start, getY());
-                        marquee.setStart(p);
-                        marquee.setVisible(true);
+                         Point p = new Point(start, getY());
+                         marquee.setStart(p);
+                         marquee.startTime = startTime;
+                         marquee.endTime = startTime;
+                         marquee.setVisible(true);
                     } else {
                         selectedPoint = insertGraphPoint(start, e.getY());
                         setBoundaryXValues();
@@ -1241,17 +1242,17 @@ public class ParameterLinePanel extends JComponent implements
 
         }
 
-        private int setStartForSnap(int start) {
-            int snapPixels = (int) (pObj.getSnapValue() * pObj.getPixelSecond());
-            int fraction = start % snapPixels;
-
-            start = start - fraction;
-
-            if (fraction > snapPixels / 2) {
-                start += snapPixels;
-            }
-            return start;
-        }
+//        private int setStartForSnap(int start) {
+//            int snapPixels = (int) (pObj.getSnapValue() * pObj.getPixelSecond());
+//            int fraction = start % snapPixels;
+//
+//            start = start - fraction;
+//
+//            if (fraction > snapPixels / 2) {
+//                start += snapPixels;
+//            }
+//            return start;
+//        }
 
         public void mouseReleased(MouseEvent e) {
             if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
@@ -1270,21 +1271,21 @@ public class ParameterLinePanel extends JComponent implements
             }
 
             clearSelectionDragRegions();
-            mouseTranslateX = 0;
+            transTime = 0.0f;
 
             repaint();
 
         }
 
-        private int getInitialStartX() {
+        private float getInitialStartTime() {
             if(selectionList.size() == 0) {
                 return 0;
             }
             
-            int retVal = Integer.MAX_VALUE;
+            float retVal = Float.MAX_VALUE;
             
             for(int i = 0; i < selectionList.size(); i++) {
-                int[] points = selectionList.get(i);
+                float[] points = selectionList.get(i);
                 if(points[0] < retVal) {
                     retVal = points[0];
                 }
@@ -1306,36 +1307,44 @@ public class ParameterLinePanel extends JComponent implements
             
             if (marquee.isVisible()) {
                 int x = e.getX();
+                float pixelSecond = (float)pObj.getPixelSecond();
+                float mouseDragTime = x / pixelSecond;
 
-                if (mouseDownX > 0) {
+                if (mouseDownInitialTime > 0) {
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        mouseTranslateX = x - mouseDownX;
+                        transTime = mouseDragTime - mouseDownInitialTime;
 
-                        int newX = getInitialStartX() + mouseTranslateX;
-
-                        if (newX < 0) {
-                            mouseTranslateX -= newX;
-                            newX = 0;
-                        }
-
+                        float newTime = getInitialStartTime() + transTime;
+                        
                         if (pObj.isSnapEnabled() && !e.isControlDown()) {
-                            int snapX = setStartForSnap(newX);
-                            mouseTranslateX += snapX - newX;                            
-                            newX = snapX;
+                            newTime = ScoreUtilities.getSnapValueStart(newTime,
+                                    pObj.getSnapValue());
+                            transTime = newTime - getInitialStartTime();
                         }
-
-                        marquee.setLocation(newX, marquee.getY());
+                        
+                        if (newTime < 0) {
+                            transTime -= newTime;
+                            newTime = 0;
+                        } 
+                        
+                        marquee.startTime = newTime;
+                        marquee.endTime = newTime;
+                        marquee.setLocation((int)(newTime * pixelSecond), marquee.getY());
                     }
                 } else {
                     if(x < 0) {
                         x = 0;
                     }
                     
+                    float endTime = x / pixelSecond;
+                    
                     if (pObj.isSnapEnabled() && !e.isControlDown()) {
-                        x = setStartForSnap(x);
+                        endTime = ScoreUtilities.getSnapValueMove(endTime,
+                                    pObj.getSnapValue());
                     }
                     
-                    Point p = new Point(x, getY() + getHeight());
+                    Point p = new Point((int)(endTime * pixelSecond), getY() + getHeight());
+                    marquee.endTime = endTime;
                     marquee.setDragPoint(p);
                 }
             } else if (selectedPoint != null) {
@@ -1358,15 +1367,19 @@ public class ParameterLinePanel extends JComponent implements
                     y = bottomY;
                 }
 
+                float pixelSecond = (float)pObj.getPixelSecond();
+                float dragTime = x / pixelSecond;
+                
                 if (pObj.isSnapEnabled() && !e.isControlDown()) {
-                    x = setStartForSnap(x);
+                    dragTime = ScoreUtilities.getSnapValueMove(dragTime,
+                            pObj.getSnapValue());
                 }
 
                 float min = currentParameter.getMin();
                 float max = currentParameter.getMax();
 
                 if (selectedPoint != null) {
-                    selectedPoint.setLocation(screenToFloatX(x),
+                    selectedPoint.setLocation(dragTime,
                             screenToFloatY(y, min, max, currentParameter
                                     .getResolution()));
                 }
@@ -1403,26 +1416,26 @@ public class ParameterLinePanel extends JComponent implements
     
     /* MULTILINE MODE */
     
-    public void addSelectionDragRegion(int startX, int endX) {
-        selectionList.add(new int[] {startX, endX});
+    public void addSelectionDragRegion(float startTime, float endTime) {
+        selectionList.add(new float[] {startTime, endTime});
     }
     
-    public void setSelectionDragRegion(int startX, int endX) {
+    public void setSelectionDragRegion(float startTime, float endTime) {
         if(selectionList.size() == 0) {
-            selectionList.add(new int[2]);
+            selectionList.add(new float[2]);
         }
         
-        int[] points = selectionList.get(0);
-        points[0] = startX;
-        points[1] = endX;
+        float[] points = selectionList.get(0);
+        points[0] = startTime;
+        points[1] = endTime;
     }
     
     public void clearSelectionDragRegions() {
         selectionList.clear();
     }
     
-    public void setMultiLineMouseTranslation(int transX) {
-        this.mouseTranslateX = transX;
+    public void setMultiLineMouseTranslation(float transTime) {
+        this.transTime = transTime;
         repaint();
     }
     
@@ -1436,30 +1449,30 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
         clearSelectionDragRegions();
-        mouseTranslateX = 0;
+        transTime = 0.0f;
     }    
 
     /* SCORE MODE*/
     
     
-    public void initiateScoreScale(int startX, int endX) {
-        this.selectionStartX = startX;
-        this.newSelectionStartX = startX;
-        this.selectionEndX = endX;
-        this.newSelectionEndX = endX;       
+    public void initiateScoreScale(float startTime, float endTime) {
+        this.selectionStartTime = startTime;
+        this.newSelectionStartTime = startTime;
+        this.selectionEndTime = endTime;
+        this.newSelectionEndTime = endTime;       
     }
         
     /**
      * Used by SCORE mode for scaling points when soundObject is scaled
      * @param newSelectionStartX
      */
-    public void setScoreScaleStart(int newSelectionStartX) {
-        this.newSelectionStartX = newSelectionStartX;
+    public void setScoreScaleStart(float newSelectionStartTime) {
+        this.newSelectionStartTime = newSelectionStartTime;
         repaint();
     }
     
-    public void setScoreScaleEnd(int newSelectionEndX) {
-        this.newSelectionEndX = newSelectionEndX;
+    public void setScoreScaleEnd(float newSelectionEndTime) {
+        this.newSelectionEndTime = newSelectionEndTime;
         repaint();
     }
     
@@ -1470,9 +1483,9 @@ public class ParameterLinePanel extends JComponent implements
                 processLineForSelectionScale(param.getLine());
             }
             
-            selectionStartX = selectionEndX = -1;
-            newSelectionStartX = newSelectionEndX = -1;
-            mouseTranslateX = 0;
+            selectionStartTime = selectionEndTime = -1;
+            newSelectionStartTime = newSelectionEndTime = -1;
+            transTime = 0;
         }
         repaint();
     }    
@@ -1548,8 +1561,7 @@ public class ParameterLinePanel extends JComponent implements
                                                 + f.getAbsolutePath());
 
                             } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
+                                Exceptions.printStackTrace(e);
                             }
 
                         }

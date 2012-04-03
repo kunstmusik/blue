@@ -52,6 +52,10 @@ FIX
 
 * Snap on PianoRoll did not work correctly note resizing
 
+* Recoded mouse handling on ScoreTimeline to consistently use time values 
+  internally, fixes issues when snap enabled
+
+* Nudging SoundObjects with arrow keys did not nudge enclosed automations
 
 >Notes for 2.2.1<
 [released 2012.03.07]

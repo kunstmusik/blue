@@ -39,6 +39,7 @@ import blue.event.SelectionListener;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.utilities.UiUtilities;
+import blue.utility.ScoreUtilities;
 
 class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
@@ -52,13 +53,18 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
     int startLayer = -1;
     int endLayer = -1;
-    int startTime = -1;
-    int endTime = -1;
-    int mouseDownX = -1;
-    int mouseTranslateX = 0;
+    float startTime = -1;
+    float endTime = -1;
+    float mouseDownTime = -1;
+    float mouseTranslateTime = 0;
     
     public MultiLineMouseProcessor(ScoreTimeCanvas sCanvas) {
         this.sCanvas = sCanvas;
+    }
+    
+    private float getPixelSecond() {
+        PolyObject pObj = sCanvas.getPolyObject();
+        return (float) pObj.getPixelSecond();
     }
 
     public void mousePressed(MouseEvent e) {
@@ -77,11 +83,12 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
             if (marquee.isVisible()) {
 
                 int x = e.getX();
+                
 
                 if (x >= marquee.getX()
                         && x <= marquee.getX() + marquee.getWidth()) {    
-                    mouseDownX = e.getX();
-                    mouseTranslateX = 0;
+                    mouseDownTime = x / getPixelSecond();
+                    mouseTranslateTime = 0.0f;
                     
                     int l1, l2;
                     
@@ -94,7 +101,8 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
                     }
                     
                     sCanvas.automationPanel.setMultiLineDragStart(
-                            marquee.getX(), marquee.getX() + marquee.getWidth(),
+                            marquee.getX() / getPixelSecond(), 
+                            marquee.getX() + marquee.getWidth() / getPixelSecond(),
                             l1, l2);
                     
                     sCanvas.start = e.getPoint();
@@ -136,18 +144,18 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 //            }
             // clearMarquee();
             
-            if(mouseDownX < 0) {
+            if(mouseDownTime < 0) {
                 endMarquee();
             }
             
-            if(mouseTranslateX != 0) {
+            if(mouseTranslateTime != 0) {
                 sCanvas.automationPanel.commitMultiLineDrag();
-                startTime = sCanvas.marquee.getX();
-                endTime = startTime + sCanvas.marquee.getWidth();
+                startTime = sCanvas.marquee.getX() / getPixelSecond();
+                endTime = startTime + (sCanvas.marquee.getWidth() / getPixelSecond());
             }
             
-            mouseTranslateX = 0;
-            mouseDownX = -1;
+            mouseTranslateTime = 0;
+            mouseDownTime = -1;
             
             sCanvas.repaint();
         }
@@ -156,77 +164,88 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     public void mouseDragged(MouseEvent e) {
         if(!isPopupOpen && sCanvas.marquee.isVisible()) {
             if (SwingUtilities.isLeftMouseButton(e)) {
-                // updateMarquee(e);
-                
+//FIXME
                 int x = e.getX();
+                float mouseDragTime = x / getPixelSecond();
                 
                 
-                if (mouseDownX > 0) {
+                if (mouseDownTime > 0) {
                                        
-                    int start = startTime;
+                    float start = startTime;
                     
                     if(startTime > endTime) {
                         start = endTime;
                     }
                     
                     AlphaMarquee marquee = sCanvas.marquee;
-                    mouseTranslateX = x - mouseDownX;
+                    mouseTranslateTime = mouseDragTime - mouseDownTime;
 
-                    int newX = start + mouseTranslateX;
+                    float newTime = start + mouseTranslateTime;
 
-                    if (newX < 0) {
-                        mouseTranslateX -= newX;
-                        newX = 0;
+                    if (newTime < 0) {
+                        mouseTranslateTime -= newTime;
+                        newTime = 0;
                     }
 
                     if (sCanvas.pObj.isSnapEnabled() && !e.isControlDown()) {
-                        int snapX = setStartForSnap(newX);
-                        mouseTranslateX += snapX - newX;
-                        newX = snapX;
+                        newTime = ScoreUtilities.getSnapValueMove(
+                                newTime, sCanvas.pObj.getSnapValue());
+                        
+                       mouseTranslateTime = newTime - start;
+                       
                     }
 
                     if (sCanvas.mBuffer.size() != 0 && !isPopupOpen) {
-                        if(mouseTranslateX + sCanvas.mBuffer.point[0][0] < 0) {
+                        if(mouseTranslateTime + sCanvas.mBuffer.initialStartTimes[0] < 0) {
                             return; 
                         }
                         
                         
-                        moveSoundObjects(mouseTranslateX);                    
+                        moveSoundObjectsByTime(mouseTranslateTime);                    
                     }
 
                     
-                    marquee.setLocation(newX, marquee.getY());
-                    sCanvas.automationPanel.setMultiLineTranslation(mouseTranslateX);
+                    float diff = marquee.endTime - marquee.startTime;
+                    marquee.setLocation((int)(newTime * getPixelSecond()), marquee.getY());
+                    marquee.startTime = newTime;
+                    marquee.endTime = newTime + diff;
+                    sCanvas.automationPanel.setMultiLineTranslation(mouseTranslateTime);
                     return;
                 }
                 
                 PolyObject pObj = sCanvas.pObj;
                 
                 int layerNum = pObj.getLayerNumForY(e.getY());
-                endTime = e.getX();
+                endTime = e.getX() / getPixelSecond();
                 
                 if (sCanvas.pObj.isSnapEnabled()) {
-                    endTime = setStartForSnap(endTime);
+                    endTime = ScoreUtilities.getSnapValueMove(endTime,
+                            pObj.getSnapValue());
                 }
                     
                 if(startLayer <= layerNum) {
                     int y = pObj.getYForLayerNum(layerNum);
                     y += pObj.getSoundLayerHeight(layerNum);
                     
-                    sCanvas.marquee.setStart(new Point(startTime, pObj.getYForLayerNum(startLayer)));
-                    sCanvas.marquee.setDragPoint(new Point(endTime, y));
+                    sCanvas.marquee.setStart(new Point((int)(startTime * getPixelSecond()), 
+                            pObj.getYForLayerNum(startLayer)));
+                    sCanvas.marquee.setDragPoint(new Point((int)(endTime * getPixelSecond()), y));
                     
                 } else {
                     int y = pObj.getYForLayerNum(layerNum);
                     
-                    sCanvas.marquee.setStart(new Point(startTime, y));
-                    sCanvas.marquee.setDragPoint(new Point(endTime, 
+                    sCanvas.marquee.setStart(new Point((int)(startTime * getPixelSecond()), y));
+                    sCanvas.marquee.setDragPoint(new Point((int)(endTime * getPixelSecond()), 
                             pObj.getYForLayerNum(startLayer) + pObj.getSoundLayerHeight(startLayer)));
                 }
                 
+                sCanvas.marquee.startTime = startTime;
+                sCanvas.marquee.endTime = endTime;
+                
                 endLayer = layerNum;
                 
-                int x1, x2, l1, l2;
+                float start, end;
+                int l1, l2;
                 
                 if(layerNum > startLayer) {
                     l1 = startLayer;
@@ -237,17 +256,14 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
                 }
                 
                 if(startTime < endTime) {
-                    x1 = startTime;
-                    x2 = endTime;
+                    start = startTime;
+                    end = endTime;
                 } else {
-                    x1 = endTime;
-                    x2 = startTime;
-                    
-//                    startTime = x1;
-//                    endTime = x2;
+                    start = endTime;
+                    end = startTime;
                 }
                 
-                sCanvas.automationPanel.setMultiLineDragStart(x1, x2, l1, l2);
+                sCanvas.automationPanel.setMultiLineDragStart(start, end, l1, l2);
                 
             }            
         }
@@ -268,54 +284,19 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
     public void mouseClicked(MouseEvent e) {
     }
-
-    private int setStartForSnap(int start) {
-        int snapPixels = (int) (sCanvas.pObj.getSnapValue() * sCanvas.pObj.getPixelSecond());
-        int fraction = start % snapPixels;
-
-        start = start - fraction;
-
-        if (fraction > snapPixels / 2) {
-            start += snapPixels;
-        }
-        return start;
-    }
     
-    // MOUSE PRESSED CODE
 
-    private float getTimeForX(int xValue) {
-        PolyObject pObj = sCanvas.getPolyObject();
-
-        return (float) xValue / pObj.getPixelSecond();
-    }
-
-    public float getStartTime(SoundObjectBuffer objBuffer) {
-        float min = Float.MAX_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            float x = objBuffer.getSoundObject(i).getStartTime();
-            if (x < min) {
-                min = x;
-            }
-
-        }
-
-        return min;
-    }
 
     // MOUSE DRAGGING CODE
 
-    private void moveSoundObjects(int xTranslation) {
+    private void moveSoundObjectsByTime(float transTime) {
         
-        int newX;
+        float newStart;
 
         for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-            newX = sCanvas.mBuffer.point[i][0] + xTranslation;
+            newStart = sCanvas.mBuffer.initialStartTimes[i] + transTime;
           
-            float newStart = (float) newX / sCanvas.pObj.getPixelSecond();
-
             SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
-//            sObjView.setLocation(sObjView.getX(), sObjView.getY());
 
             SoundObject sObj = sObjView.getSoundObject();
 
@@ -349,22 +330,22 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
         int layerNum = pObj.getLayerNumForY(point.y);
         
         startLayer = layerNum;
-        startTime = point.x;
+        startTime = point.x / getPixelSecond();
         int y = pObj.getYForLayerNum(layerNum);
         
         if (pObj.isSnapEnabled()) {
-            startTime = setStartForSnap(startTime);
+            startTime = ScoreUtilities.getSnapValueStart(startTime, pObj.getSnapValue());
         }
-                
-        sCanvas.marquee.setStart(new Point(startTime, y));
+                // FIXME
+        sCanvas.marquee.setStart(new Point(point.x, y));
+        sCanvas.marquee.startTime = startTime;
+        sCanvas.marquee.endTime = startTime;
         sCanvas.marquee.setVisible(true);
         
         sCanvas.automationPanel.setMultiLineDragStart(startTime, startTime, startLayer, startLayer);
     }
 
     public void endMarquee() {
-//        sCanvas.marquee.setVisible(false);
-
         Component[] comps = sCanvas.getSoundObjectPanel().getComponents();
 
         fireSelectionEvent(new SelectionEvent(null,
@@ -384,8 +365,6 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
         }
 
-//        sCanvas.marquee.setSize(1, 1);
-//        sCanvas.marquee.setLocation(-1, -1);
     }
 
     // UTILITY METHODS
