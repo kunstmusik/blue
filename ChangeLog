@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.2.2<
-[released 2012.03.xx]
+[released 2012.04.03]
 
 NEW
 
@@ -56,6 +56,7 @@ FIX
   internally, fixes issues when snap enabled
 
 * Nudging SoundObjects with arrow keys did not nudge enclosed automations
+
 
 >Notes for 2.2.1<
 [released 2012.03.07]
