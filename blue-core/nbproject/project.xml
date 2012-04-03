@@ -92,7 +92,6 @@
                 <package>blue.automation</package>
                 <package>blue.blueLive</package>
                 <package>blue.components.lines</package>
-                <package>blue.csladspa</package>
                 <package>blue.csoundDownload</package>
                 <package>blue.event</package>
                 <package>blue.ftable</package>
@@ -106,16 +105,13 @@
                 <package>blue.orchestra.editor</package>
                 <package>blue.orchestra.editor.flowGraph</package>
                 <package>blue.orchestra.flowGraph</package>
-                <package>blue.render</package>
                 <package>blue.score</package>
+                <package>blue.score.layers</package>
                 <package>blue.score.tempo</package>
                 <package>blue.score.undo</package>
                 <package>blue.scripting</package>
                 <package>blue.search</package>
-                <package>blue.settings</package>
                 <package>blue.soundObject</package>
-                <package>blue.soundObject.ceciliaModule</package>
-                <package>blue.soundObject.ceciliaModule.cybil</package>
                 <package>blue.soundObject.jmask</package>
                 <package>blue.soundObject.jmask.probability</package>
                 <package>blue.soundObject.notation</package>
@@ -124,9 +120,8 @@
                 <package>blue.soundObject.tracker</package>
                 <package>blue.udo</package>
                 <package>blue.undo</package>
+                <package>blue.upgrades</package>
                 <package>blue.utility</package>
-                <package>org.syntax.jedit</package>
-                <package>org.syntax.jedit.tokenmarker</package>
             </public-packages>
         </data>
     </configuration>
