@@ -231,7 +231,7 @@ public class CSDUtility {
 
         genScore.setStartTime(section.sectionStartTime);
 
-        SoundLayer sLayer = data.getPolyObject().newSoundLayer();
+        SoundLayer sLayer = (SoundLayer)data.getPolyObject().newLayerAt(-1);
         sLayer.addSoundObject(genScore);
 
     }
@@ -291,7 +291,7 @@ public class CSDUtility {
                 continue;
             }
 
-            sLayer = data.getPolyObject().newSoundLayer();
+            sLayer = (SoundLayer)data.getPolyObject().newLayerAt(-1);
 
             String score = buffer.toString();
             NoteList notes;

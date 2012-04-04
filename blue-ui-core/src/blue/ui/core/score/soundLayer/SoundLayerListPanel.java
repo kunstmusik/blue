@@ -94,10 +94,8 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
         } else {
             end++;
         }
-        SoundLayer temp = new SoundLayer();
-        temp.setHeightIndex(pObj.getDefaultHeightIndex());
-
-        pObj.addSoundLayer(end, temp);
+        
+        pObj.newLayerAt(end);
     }
 
     public void removeLayer() {
@@ -337,8 +335,7 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
                     int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
 
                     for (int i = 0; i < pObj.getSize(); i++) {
-                        SoundLayer temp = (SoundLayer) pObj.getElementAt(i);
-
+                        SoundLayer temp = (SoundLayer) pObj.getLayerAt(i);
                         temp.setHeightIndex(heightIndex);
                     }
                 }

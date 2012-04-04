@@ -161,7 +161,7 @@ public final class PolyObjectBar extends JComponent implements ActionListener {
         }
 
         if (pObj.getSize() < 1) {
-            pObj.newSoundLayer();
+            pObj.newLayerAt(-1);
         }
 
         PolyObjectButton polyObjectButton = new PolyObjectButton(pObj);

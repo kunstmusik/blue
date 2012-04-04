@@ -202,7 +202,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
         int range = (keyMax - keyMin) + 1;
 
         for (int i = 0; i < range; i++) {
-            temp.newSoundLayer();
+            temp.newLayerAt(-1);
         }
 
         for (Iterator iter = sObjMap.entrySet().iterator(); iter.hasNext();) {
@@ -212,7 +212,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
             ArrayList sObjects = (ArrayList) entry.getValue();
 
             int layerNum = key.intValue() - keyMin;
-            SoundLayer sLayer = (SoundLayer) temp.getElementAt(layerNum);
+            SoundLayer sLayer = (SoundLayer) temp.getLayerAt(layerNum);
 
             for (Iterator iterator = sObjects.iterator(); iterator.hasNext();) {
                 SoundObject sObj = (SoundObject) iterator.next();

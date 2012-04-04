@@ -130,10 +130,8 @@ public class MidiImportUtilities {
 
             genSco.setName("Track " + i);
 
-            SoundLayer sLayer = new SoundLayer();
+            SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
             sLayer.addSoundObject(genSco);
-
-            pObj.addSoundLayer(sLayer);
         }
 
         return pObj;

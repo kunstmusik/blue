@@ -85,7 +85,7 @@ public class AuditionManager {
         BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
         PolyObject tempPObj = new PolyObject(true);
-        SoundLayer sLayer = tempPObj.newSoundLayer();
+        SoundLayer sLayer = (SoundLayer)tempPObj.newLayerAt(-1);
 
         if (soundObjects.length < 1) {
             return;

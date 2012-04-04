@@ -296,7 +296,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                 return;
             }
 
-            ((SoundLayer) pObj.getElementAt(index)).addSoundObject(temp);
+            ((SoundLayer) pObj.getLayerAt(index)).addSoundObject(temp);
 
             AddSoundObjectEdit edit = new AddSoundObjectEdit(pObj, temp, index);
 

@@ -39,16 +39,16 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
 import skt.swing.SwingUtil;
 import blue.SoundLayer;
 import blue.noteProcessor.NoteProcessorChainMap;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
 
 public class LayersPanel extends JComponent implements PropertyChangeListener,
-        ListDataListener {
+        LayerGroupListener {
 
     private SoundLayerLayout layout = new SoundLayerLayout();
 
@@ -141,7 +141,7 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
     public void setPolyObject(PolyObject pObj) {
         if (this.pObj != null) {
             this.pObj.removePropertyChangeListener(this);
-            this.pObj.removeListDataListener(this);
+            this.pObj.removeLayerGroupListener(this);
         }
 
         layout.setPolyObject(pObj);
@@ -150,7 +150,7 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
 
         if (pObj != null) {
             this.pObj.addPropertyChangeListener(this);
-            this.pObj.addListDataListener(this);
+            this.pObj.addLayerGroupListener(this);
         }
 
         this.populate();
@@ -170,7 +170,7 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
         }
 
         for (int i = 0; i < pObj.getSize(); i++) {
-            SoundLayer sLayer = (SoundLayer) pObj.getElementAt(i);
+            SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
 
             SoundLayerPanel panel = new SoundLayerPanel();
             panel.setNoteProcessorChainMap(npcMap);
@@ -226,11 +226,26 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
         this.npcMap = npcMap;
     }
 
-    /* List Data Listener Methods for listening to PolyObject layer changes */
+    /* LAYER GROUP LISTENER */
 
-    public void intervalAdded(ListDataEvent e) {
-        int index = e.getIndex0();
-        SoundLayer sLayer = (SoundLayer) pObj.getElementAt(index);
+    @Override
+    public void layerGroupChanged(LayerGroupDataEvent event) {
+        switch(event.getType()) {
+            case LayerGroupDataEvent.DATA_ADDED:
+                layersAdded(event);
+                break;
+            case LayerGroupDataEvent.DATA_REMOVED:
+                layersRemoved(event);
+                break;
+            case LayerGroupDataEvent.DATA_CHANGED:
+                contentsChanged(event);
+                break;
+        }
+    }
+    
+     public void layersAdded(LayerGroupDataEvent e) {
+        int index = e.getStartIndex();
+        SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
 
         SoundLayerPanel panel = new SoundLayerPanel();
         panel.setNoteProcessorChainMap(npcMap);
@@ -241,9 +256,9 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
         checkSize();
     }
 
-    public void intervalRemoved(ListDataEvent e) {
-        int start = e.getIndex0();
-        int end = e.getIndex1();
+    public void layersRemoved(LayerGroupDataEvent e) {
+        int start = e.getStartIndex();
+        int end = e.getEndIndex();
 
         for (int i = end; i >= start; i--) {
             ((SoundLayerPanel)getComponent(i)).cleanup();
@@ -255,9 +270,9 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
         selection.setAnchor(-1);
     }
 
-    public void contentsChanged(ListDataEvent e) {
-        int start = e.getIndex0();
-        int end = e.getIndex1();
+    public void contentsChanged(LayerGroupDataEvent e) {
+        int start = e.getStartIndex();
+        int end = e.getEndIndex();
 
         // This is a hack to determine what direction the layers were
         // pushed

@@ -22,6 +22,10 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -33,9 +37,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-import javax.swing.ListModel;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -45,22 +46,18 @@ import javax.swing.event.ListDataListener;
  * @created November 11, 2001
  * @version 1.0
  */
-public class PolyObject extends AbstractSoundObject implements Serializable,
-        Cloneable, ListModel, GenericViewable {
+public class PolyObject extends AbstractSoundObject implements LayerGroup,
+        Serializable, Cloneable, GenericViewable {
 
-    private transient Vector listeners = null;
+    private transient Vector<PropertyChangeListener> listeners = null;
 
-    private transient Vector listListeners = null;
-
-    private transient Vector layerListeners = null;
+    private transient Vector<LayerGroupListener> layerGroupListeners = null;
 
     public static final int DISPLAY_TIME = 0;
 
     public static final int DISPLAY_NUMBER = 1;
 
-//    private static BarRenderer renderer = new GenericRenderer();
-
-    private ArrayList soundLayers = new ArrayList();
+    protected ArrayList<SoundLayer> soundLayers = new ArrayList<SoundLayer>();
 
     private boolean isRoot;
 
@@ -100,101 +97,7 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
-    public SoundLayer newSoundLayer() {
-        SoundLayer sLayer = new SoundLayer();
-        this.addSoundLayer(sLayer);
-
-        return sLayer;
-    }
-
-    public void addSoundLayer(SoundLayer sLayer) {
-        soundLayers.add(sLayer);
-
-        int index = soundLayers.size() - 1;
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_ADDED, index, index);
-
-        fireAddDataEvent(lde);
-
-        fireSoundLayerAdded(sLayer);
-    }
-
-    public void addSoundLayer(int index, SoundLayer sLayer) {
-        soundLayers.add(index, sLayer);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_ADDED, index, index);
-
-        fireAddDataEvent(lde);
-        fireSoundLayerAdded(sLayer);
-    }
-
-    public void removeLayer(SoundLayer sLayer) {
-        int index = soundLayers.indexOf(sLayer);
-        soundLayers.remove(index);
-
-        sLayer.clearListeners();
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_REMOVED, index, index);
-
-        fireRemoveDataEvent(lde);
-        fireSoundLayerRemoved(sLayer);
-    }
-
-    public void removeLayer(int index) {
-        SoundLayer sLayer = (SoundLayer) soundLayers.get(index);
-
-        sLayer.clearListeners();
-
-        soundLayers.remove(index);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_REMOVED, index, index);
-
-        fireRemoveDataEvent(lde);
-
-        fireSoundLayerRemoved(sLayer);
-    }
-
-    public void removeLayers(int startIndex, int endIndex) {
-        for (int i = endIndex; i >= startIndex; i--) {
-            SoundLayer sLayer = (SoundLayer) soundLayers.get(i);
-            sLayer.clearListeners();
-
-            soundLayers.remove(i);
-
-            fireSoundLayerRemoved(sLayer);
-        }
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_REMOVED, startIndex, endIndex);
-
-        fireRemoveDataEvent(lde);
-
-    }
-
-    public void pushUpLayers(int startIndex, int endIndex) {
-        Object a = soundLayers.remove(startIndex - 1);
-        soundLayers.add(endIndex, a);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, startIndex - 1, endIndex);
-
-        fireContentsChangedEvent(lde);
-    }
-
-    public void pushDownLayers(int startIndex, int endIndex) {
-        Object a = soundLayers.remove(endIndex + 1);
-        soundLayers.add(startIndex, a);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, -startIndex, -(endIndex + 1));
-
-        fireContentsChangedEvent(lde);
-    }
-
+   
     /**
      * Returns all soundObjects for this polyObject. Does not enter into
      * polyObjects to get their soundObjects
@@ -662,15 +565,11 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
 
         for (Iterator iter = this.soundLayers.iterator(); iter.hasNext();) {
             SoundLayer sLayer = (SoundLayer) iter.next();
-            pObj.addSoundLayer((SoundLayer) sLayer.clone());
+            pObj.soundLayers.add((SoundLayer) sLayer.clone());
         }
 
         return pObj;
     }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public int getTimeBehavior() {
         return this.timeBehavior;
@@ -798,13 +697,13 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
             } else if (nodeName.equals("timeUnit")) {
                 pObj.setTimeUnit(Integer.parseInt(e.getTextString()));
             } else if (nodeName.equals("soundLayer")) {
-                pObj.addSoundLayer(SoundLayer.loadFromXML(e, sObjLibrary));
+                pObj.soundLayers.add(SoundLayer.loadFromXML(e, sObjLibrary));
             }
         }
 
         if (heightIndex >= 0) {
             for (int i = 0; i < pObj.getSize(); i++) {
-                SoundLayer layer = (SoundLayer) pObj.getElementAt(i);
+                SoundLayer layer = (SoundLayer) pObj.getLayerAt(i);
                 layer.setHeightIndex(heightIndex);
             }
 
@@ -858,16 +757,14 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter.next();
-
+        for (PropertyChangeListener listener : listeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<PropertyChangeListener>();
         }
 
         listeners.add(pcl);
@@ -923,10 +820,6 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
         return runningY;
     }
 
-    public ArrayList getSoundLayers() {
-        return soundLayers;
-    }
-
     public int getSoundLayerHeight(int layerNum) {
         SoundLayer layer = (SoundLayer) soundLayers.get(layerNum);
         return layer.getSoundLayerHeight();
@@ -943,104 +836,113 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
         return runningHeight;
     }
 
-    /* LIST MODEL */
-    public Object getElementAt(int index) {
+    /* LAYER GROUP INTERFACE */
+    
+    @Override
+    public Layer getLayerAt(int index) {
         return soundLayers.get(index);
     }
 
+    @Override
     public int getSize() {
         return soundLayers.size();
     }
+    
+    @Override
+    public Layer newLayerAt(int index) {
+        
+        SoundLayer sLayer = new SoundLayer();
+        sLayer.setHeightIndex(getDefaultHeightIndex());
+        
+        if(index < 0 || index >= soundLayers.size()) {
+            soundLayers.add(sLayer);
+        } else {
+            soundLayers.add(index, sLayer);
+        }
+        
+        ArrayList<Layer> layers = new ArrayList<Layer>();
+        layers.add(sLayer);
 
-    public void addListDataListener(ListDataListener l) {
-        if (listListeners == null) {
-            listListeners = new Vector();
+        int insertIndex = soundLayers.indexOf(sLayer);
+        LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
+                LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
+
+        fireLayerGroupDataEvent(lde);
+        
+        return sLayer;
+    }
+    
+    @Override
+    public void removeLayers(int startIndex, int endIndex) {
+        
+        ArrayList<Layer> layers = new ArrayList<Layer>();
+        
+        for (int i = endIndex; i >= startIndex; i--) {
+            SoundLayer sLayer = (SoundLayer) soundLayers.get(i);
+            sLayer.clearListeners();
+
+            soundLayers.remove(i);
+
+            layers.add(sLayer);
         }
 
-        listListeners.add(l);
+        LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
+                LayerGroupDataEvent.DATA_REMOVED, startIndex, endIndex, layers);
+
+        fireLayerGroupDataEvent(lde);
+
+    }
+    
+    @Override
+    public void pushUpLayers(int startIndex, int endIndex) {
+        SoundLayer a = soundLayers.remove(startIndex - 1);
+        soundLayers.add(endIndex, a);
+
+        LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
+                LayerGroupDataEvent.DATA_CHANGED, startIndex - 1, endIndex);
+
+        fireLayerGroupDataEvent(lde);
     }
 
-    public void removeListDataListener(ListDataListener l) {
-        if (listListeners != null) {
-            listListeners.remove(l);
+    @Override
+    public void pushDownLayers(int startIndex, int endIndex) {
+        SoundLayer a = soundLayers.remove(endIndex + 1);
+        soundLayers.add(startIndex, a);
+
+        LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
+                LayerGroupDataEvent.DATA_CHANGED, -startIndex, -(endIndex + 1));
+
+        fireLayerGroupDataEvent(lde);
+    }
+
+    @Override
+    public void addLayerGroupListener(LayerGroupListener l) {
+        if (layerGroupListeners == null) {
+            layerGroupListeners = new Vector<LayerGroupListener>();
+        }
+
+        layerGroupListeners.add(l);
+    }
+
+    @Override
+    public void removeLayerGroupListener(LayerGroupListener l) {
+        if (layerGroupListeners != null) {
+            layerGroupListeners.remove(l);
         }
     }
 
-    private void fireAddDataEvent(ListDataEvent lde) {
-        if (listListeners == null) {
+    private void fireLayerGroupDataEvent(LayerGroupDataEvent lde) {
+        if (layerGroupListeners == null) {
             return;
         }
 
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
-            listener.intervalAdded(lde);
+        for(LayerGroupListener listener : layerGroupListeners) {
+            listener.layerGroupChanged(lde);
         }
     }
 
-    private void fireRemoveDataEvent(ListDataEvent lde) {
-        if (listListeners == null) {
-            return;
-        }
-
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
-            listener.intervalRemoved(lde);
-        }
-    }
-
-    private void fireContentsChangedEvent(ListDataEvent lde) {
-        if (listListeners == null) {
-            return;
-        }
-
-        Iterator iter = new Vector(listListeners).iterator();
-
-        while (iter.hasNext()) {
-            ListDataListener listener = (ListDataListener) iter.next();
-            listener.contentsChanged(lde);
-        }
-    }
-
-    /* Support for PolyObjectListeners, used by automation */
-    public void addPolyObjectListener(PolyObjectListener listener) {
-        if (layerListeners == null) {
-            layerListeners = new Vector();
-        }
-
-        layerListeners.add(listener);
-    }
-
-    public void removePolyObjectListener(PolyObjectListener listener) {
-        if (layerListeners != null) {
-            layerListeners.remove(listener);
-        }
-    }
-
-    private void fireSoundLayerAdded(SoundLayer soundLayer) {
-        if (layerListeners != null) {
-            Iterator iter = new Vector(layerListeners).iterator();
-
-            while (iter.hasNext()) {
-                PolyObjectListener listener = (PolyObjectListener) iter.next();
-                listener.soundLayerAdded(soundLayer);
-            }
-        }
-    }
-
-    private void fireSoundLayerRemoved(SoundLayer soundLayer) {
-        if (layerListeners != null) {
-            Iterator iter = new Vector(layerListeners).iterator();
-
-            while (iter.hasNext()) {
-                PolyObjectListener listener = (PolyObjectListener) iter.next();
-                listener.soundLayerRemoved(soundLayer);
-            }
-        }
-    }
+    
+    /****/
 
     public int getDefaultHeightIndex() {
         return defaultHeightIndex;
@@ -1128,4 +1030,5 @@ public class PolyObject extends AbstractSoundObject implements Serializable,
             }
         }
     }
+
 }

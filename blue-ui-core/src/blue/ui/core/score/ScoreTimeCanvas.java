@@ -48,8 +48,6 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
 import blue.BlueData;
 import blue.BlueSystem;
@@ -60,6 +58,8 @@ import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
@@ -79,7 +79,7 @@ import javax.swing.undo.UndoManager;
  * @version 1.0
  */
 public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
-        PropertyChangeListener, ListDataListener, SoundLayerListener, RenderTimeManagerListener {
+        PropertyChangeListener, LayerGroupListener, SoundLayerListener, RenderTimeManagerListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -342,7 +342,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                             return;
                         }
 
-                        ((SoundLayer) getPolyObject().getElementAt(index)).addSoundObject(temp);
+                        ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(temp);
 
                         AddSoundObjectEdit edit = new AddSoundObjectEdit(getPolyObject(), temp,
                                 index);
@@ -418,7 +418,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                                 return;
                             }
 
-                            ((SoundLayer) getPolyObject().getElementAt(index)).addSoundObject(temp);
+                            ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(temp);
 
                             AddSoundObjectEdit edit = new AddSoundObjectEdit(
                                     getPolyObject(), temp, index);
@@ -724,12 +724,12 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         if (this.getPolyObject() != null) {
             this.getPolyObject().removePropertyChangeListener(this);
-            this.getPolyObject().removeListDataListener(this);
+            this.getPolyObject().removeLayerGroupListener(this);
 
             SoundLayer tempLayer;
 
             for (int i = 0; i < pObj.getSize(); i++) {
-                tempLayer = (SoundLayer) (pObj.getElementAt(i));
+                tempLayer = (SoundLayer) (pObj.getLayerAt(i));
                 tempLayer.removePropertyChangeListener(heightListener);
                 tempLayer.removeSoundLayerListener(this);
             }
@@ -739,7 +739,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         if (this.getPolyObject() != null) {
             pObj.addPropertyChangeListener(this);
-            pObj.addListDataListener(this);
+            pObj.addLayerGroupListener(this);
         }
 
         this.mBuffer.setPolyObject(pObj);
@@ -758,7 +758,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         if (size != 0) {
             for (int i = 0; i < size; i++) {
-                tempLayer = (SoundLayer) (pObj.getElementAt(i));
+                tempLayer = (SoundLayer) (pObj.getLayerAt(i));
                 tempLayer.addPropertyChangeListener(heightListener);
                 tempLayer.addSoundLayerListener(this);
 
@@ -954,7 +954,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         g.setColor(Color.darkGray);
 
         for (int i = 0; i < getPolyObject().getSize(); i++) {
-            SoundLayer layer = (SoundLayer) getPolyObject().getElementAt(i);
+            SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(i);
             y += layer.getSoundLayerHeight();
             
             
@@ -1175,22 +1175,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         multiLineMouse.addSelectionListener(listener);
     }
 
-    /* LIST DATA LISTENER */
-    public void intervalAdded(ListDataEvent e) {
-        SoundLayer layer = (SoundLayer) getPolyObject().getElementAt(e.getIndex0());
-        layer.addPropertyChangeListener(heightListener);
-        layer.addSoundLayerListener(this);
-        reset();
-    }
-
-    public void intervalRemoved(ListDataEvent e) {
-        reset();
-    }
-
-    public void contentsChanged(ListDataEvent e) {
-        reset();
-    }
-
     /* SOUND LAYER LISTENER */
     public void soundObjectAdded(SoundLayer source, SoundObject sObj) {
         addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
@@ -1207,7 +1191,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
             return;
         }
 
-        SoundLayer layer = (SoundLayer) getPolyObject().getElementAt(index);
+        SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(index);
 
         int hIndex = layer.getHeightIndex();
 
@@ -1233,4 +1217,18 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         this.timePointer = timePointer;
         updateRenderTimePointer();;
     }
+    
+    
+    /* LAYER GROUP LISTENER */
+    @Override
+    public void layerGroupChanged(LayerGroupDataEvent event) {
+        if(event.getType() == LayerGroupDataEvent.DATA_ADDED) {
+            SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(event.getStartIndex());
+            layer.addPropertyChangeListener(heightListener);
+            layer.addSoundLayerListener(this);
+        }
+        
+        reset();
+    }
+    
 }
