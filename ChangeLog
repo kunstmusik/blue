@@ -19,6 +19,8 @@ NEW
 
 * Modular Timeline: 
 
+* Added "Search Csound Manual" option in Help menu to allow searching online
+  Csound Manual using search terms (i.e. "guard point"); uses Google search
 
 >Notes for 2.2.2<
 [released 2012.04.03]
