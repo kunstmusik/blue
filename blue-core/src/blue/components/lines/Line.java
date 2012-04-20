@@ -71,7 +71,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     
     private boolean endPointsLinked = false;
 
-    ArrayList points = new ArrayList();
+    ArrayList<LinePoint> points = new ArrayList<LinePoint>();
 
     transient Vector<TableModelListener> listeners = null;
 
@@ -192,8 +192,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
         retVal.setAttribute("rightBound", Boolean.toString(rightBound));
         retVal.setAttribute("endPointsLinked", Boolean.toString(endPointsLinked));
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
+        for (LinePoint point : points) {
             retVal.addElement(point.saveAsXML());
         }
 
@@ -258,9 +257,8 @@ public class Line implements TableModel, Serializable, ChangeListener {
         float oldMax = this.max;
         this.max = max;
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
+            
             float newVal;
 
             if (truncate) {
@@ -291,8 +289,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
         float oldMin = this.min;
         this.min = min;
 
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
+        for (LinePoint point : points) {
 
             float newVal;
 
@@ -315,9 +312,8 @@ public class Line implements TableModel, Serializable, ChangeListener {
             return;
         }
         
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint point = (LinePoint) iter.next();
-
+        for (LinePoint point : points) {
+            
             float newVal;
 
             if (truncate) {
@@ -361,7 +357,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     // METHODS FOR LIST OPERATIONS
 
     public LinePoint getLinePoint(int index) {
-        return (LinePoint) points.get(index);
+        return points.get(index);
     }
 
     public void addLinePoint(LinePoint linePoint) {
@@ -382,7 +378,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
 
     public void insertLinePoint(LinePoint lp) {
         for (int i = 0; i < points.size(); i++) {
-            LinePoint temp = (LinePoint) points.get(i);
+            LinePoint temp = points.get(i);
 
             if (temp.getX() > lp.getX()) {
                 addLinePoint(i, lp);
@@ -393,7 +389,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     }
 
     public void removeLinePoint(int index) {
-        LinePoint linePoint = (LinePoint) points.remove(index);
+        LinePoint linePoint = points.remove(index);
         linePoint.removeChangeListener(this);
 
         fireTableRowsDeleted(index, index);
@@ -443,7 +439,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        LinePoint p = (LinePoint) points.get(rowIndex);
+        LinePoint p = points.get(rowIndex);
 
         if (columnIndex == 0) {
             return new Float(p.getX());
