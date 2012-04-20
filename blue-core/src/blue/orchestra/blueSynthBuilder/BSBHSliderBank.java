@@ -69,7 +69,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         }
 
         if (unm != null) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 Object[] vals = new Object[2];
                 vals[0] = objectName;
 
@@ -97,7 +97,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             Object[] vals2 = new Object[2];
             vals2[0] = objectName;
 
-            if (objectName == null || objectName.equals("")) {
+            if (objectName == null || objectName.length() == 0) {
                 for (int i = 0; i < sliders.size(); i++) {
                     vals[1] = new Integer(i);
 
@@ -485,7 +485,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         boolean first = true;
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < sliders.size(); i++) {
             if (first) {
@@ -531,7 +531,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     public String[] getReplacementKeys() {
         String objName = getObjectName().trim();
 
-        if (objName.equals("")) {
+        if (objName.length() == 0) {
             return null;
         }
 
@@ -594,7 +594,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         if(!automationAllowed) {
             
             if (parameters != null) {
-                if (objectName != null && !objectName.equals("")) {
+                if (objectName != null && objectName.length() != 0) {
                     Object[] vals = new Object[2];
                     vals[0] = objectName;
 
@@ -687,7 +687,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         float time = ParameterTimeManagerFactory.getInstance().getTime();
 
         String paramName = param.getName();
-        String strIndex = paramName.substring(paramName.lastIndexOf("_") + 1);
+        String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
         int sliderIndex = Integer.parseInt(strIndex);
 
         float val = param.getLine().getValue(time);
@@ -707,11 +707,11 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && !objectName.equals("")) {
+            } else if (objectName != null && objectName.length() != 0) {
                 Object[] vals = new Object[2];
                 vals[0] = objectName;
 
-                if (objectName != null && !objectName.equals("")) {
+                if (objectName != null && objectName.length() != 0) {
                     for (int i = 0; i < sliders.size(); i++) {
                         vals[1] = new Integer(i);
 

@@ -30,7 +30,7 @@ public class ScoreUtilitiesTest extends TestCase {
      * Test method for 'blue.utility.ScoreUtilities.getNotes(String)'
      */
     public void testGetNotes() {
-        StringBuffer testScore = new StringBuffer();
+        StringBuilder testScore = new StringBuilder();
 
         testScore.append("/*\n" + "idur    =       p3\n"
                 + "iamp    =       p4\n" + "ifreq   =       p5\n" + "*/\n\n");

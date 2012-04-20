@@ -110,7 +110,7 @@ public class UserDefinedOpcode implements Serializable {
     }
 
     public String generateCode() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("\topcode ").append(opcodeName);
         buffer.append(",").append(outTypes);

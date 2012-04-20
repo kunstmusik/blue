@@ -47,12 +47,12 @@ public class FTableSet extends ArrayList {
     }
 
     public String generateTables() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         FTable temp;
 
         for (int i = 0; i < this.size(); i++) {
             temp = (FTable) this.get(i);
-            buffer.append(temp.generateTable() + "\n");
+            buffer.append(temp.generateTable()).append("\n");
         }
 
         /*

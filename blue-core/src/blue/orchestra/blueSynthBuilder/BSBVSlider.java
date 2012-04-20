@@ -59,7 +59,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         }
 
         if (unm != null) {
-            if (objectName != null && !objectName.equals("")
+            if (objectName != null && objectName.length() != 0
                     && !unm.isUnique(objectName)) {
                 return;
             }
@@ -70,7 +70,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         boolean doInitialize = false;
 
         if (parameters != null && automationAllowed) {
-            if (objectName == null || objectName.equals("")) {
+            if (objectName == null || objectName.length() == 0) {
                 parameters.removeParameter(oldName);
             } else {
                 Parameter param = parameters.getParameter(oldName);
@@ -344,7 +344,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         }
         
         if(!automationAllowed) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(objectName);
                 if(param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
@@ -414,7 +414,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && !objectName.equals("")) {
+            } else if (objectName != null && objectName.length() != 0) {
                 parameters.removeParameter(objectName);
             }
         }

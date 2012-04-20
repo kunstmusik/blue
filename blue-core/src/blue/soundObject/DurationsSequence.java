@@ -72,7 +72,7 @@ public class DurationsSequence extends AbstractSoundObject implements
      */
 
     public NoteList generateNotes(float renderStart, float renderEnd) {
-        StringBuffer tempScore = new StringBuffer();
+        StringBuilder tempScore = new StringBuilder();
         StringTokenizer temp = new StringTokenizer(score, "\n");
         String buffer;
 

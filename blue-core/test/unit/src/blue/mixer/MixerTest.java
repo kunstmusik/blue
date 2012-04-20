@@ -54,12 +54,12 @@ public class MixerTest extends TestCase {
         boolean isEqual = mixer.equals(clone);
 
         if (!isEqual) {
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             buffer.append("Problem with Mixer\n");
             buffer.append("Original Object\n");
-            buffer.append(ToStringBuilder.reflectionToString(mixer) + "\n");
+            buffer.append(ToStringBuilder.reflectionToString(mixer)).append("\n");
             buffer.append("Cloned Object\n");
-            buffer.append(ToStringBuilder.reflectionToString(clone) + "\n");
+            buffer.append(ToStringBuilder.reflectionToString(clone)).append("\n");
 
             System.out.println(buffer.toString());
 

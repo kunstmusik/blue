@@ -146,7 +146,7 @@ public class BlueSystem {
     /** ************************************************************** */
 
     public static String getShortClassName(String fullClassName) {
-        int i = fullClassName.lastIndexOf(".");
+        int i = fullClassName.lastIndexOf('.');
         return fullClassName.substring(i + 1);
     }
 

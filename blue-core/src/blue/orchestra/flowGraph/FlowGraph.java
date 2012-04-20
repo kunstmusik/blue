@@ -21,7 +21,7 @@ public class FlowGraph implements Serializable {
     }
 
     public String generateInstrument() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         Collections.sort(units, new GraphUnitComparator());
 

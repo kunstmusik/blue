@@ -63,7 +63,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
         String objName = bsbObj.getObjectName();
 
         // guarantee unique names for objects
-        if (objName != null && !objName.equals("")) {
+        if (objName != null && objName.length() != 0) {
             if (!nameManager.isUniquelyNamed(bsbObj)) {
                 nameManager.setUniqueName(bsbObj);
             }

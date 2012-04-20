@@ -100,7 +100,7 @@ public class ObjectUtilities {
 
     public static String getShortClassName(Object obj) {
         String className = obj.getClass().getName();
-        String shortName = className.substring(className.lastIndexOf(".") + 1);
+        String shortName = className.substring(className.lastIndexOf('.') + 1);
 
         return shortName;
     }

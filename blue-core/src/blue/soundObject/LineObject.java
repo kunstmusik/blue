@@ -36,7 +36,7 @@ public class LineObject extends AbstractLineObject implements Serializable {
     }
 
     protected String generateLineInstrument(Line line) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("kphase line p4, p3, p5\n");
         buffer.append("gk").append(line.getVarName());

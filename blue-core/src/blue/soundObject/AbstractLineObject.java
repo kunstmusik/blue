@@ -67,7 +67,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
         newDur = newDur - renderStart;
 
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < instrLineArray.length; i += 2) {
             Integer instrNum = instrLineArray[i];
@@ -103,7 +103,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
         // float range = line.getMax() - line.getMin();
         // float min = line.getMin();
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         int genSize = getGenSize();
 
@@ -148,7 +148,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     public void generateFTables(CompileData compileData, HashMap ftableNumMap) {
         
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         // TODO - need to grab from tables in static var
 

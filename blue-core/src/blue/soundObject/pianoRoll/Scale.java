@@ -131,11 +131,11 @@ public class Scale implements Serializable {
 
         String line = removeComments(lineInput);
 
-        if (line.indexOf("/") > -1) {
+        if (line.indexOf('/') > -1) {
 
             String[] vals = line.split("/");
             multiplier = Float.parseFloat(vals[0]) / Float.parseFloat(vals[1]);
-        } else if (line.indexOf(".") > -1) {
+        } else if (line.indexOf('.') > -1) {
             float cents = Float.parseFloat(line);
             multiplier = (float) Math.pow(2, cents / 1200);
         } else { // assume ratio
@@ -146,12 +146,12 @@ public class Scale implements Serializable {
     }
 
     private static String removeComments(String line) {
-        if (line.indexOf(" ") > -1) {
-            return line.substring(0, line.indexOf(" "));
+        if (line.indexOf(' ') > -1) {
+            return line.substring(0, line.indexOf(' '));
         }
 
-        if (line.indexOf("\t") > -1) {
-            return line.substring(0, line.indexOf("\t"));
+        if (line.indexOf('\t') > -1) {
+            return line.substring(0, line.indexOf('\t'));
         }
 
         return line;

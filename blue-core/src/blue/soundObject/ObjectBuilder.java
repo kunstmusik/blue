@@ -102,7 +102,7 @@ public class ObjectBuilder extends AbstractSoundObject {
                         ".txt", BlueSystem.getCurrentProjectDirectory(),
                         codeToRun);
 
-                StringBuffer buffer = new StringBuffer();
+                StringBuilder buffer = new StringBuilder();
 
                 currentWorkingDirectory = temp.getParentFile();
 

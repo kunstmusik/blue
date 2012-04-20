@@ -55,7 +55,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         String oldName = this.getObjectName();
 
         if (unm != null) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 if (!unm.isUnique(objectName + "X")
                         || !unm.isUnique(objectName + "Y")) {
                     return;
@@ -66,7 +66,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         boolean doInitialize = false;
 
         if (parameters != null && automationAllowed) {
-            if (objectName == null || objectName.equals("")) {
+            if (objectName == null || objectName.length() == 0) {
                 parameters.removeParameter(oldName + "X");
                 parameters.removeParameter(oldName + "Y");
             } else {
@@ -443,7 +443,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
         
         if(!automationAllowed) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(this.objectName + "X");
 
                 if(param != null && param.isAutomationEnabled()) {
@@ -552,7 +552,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && !objectName.equals("")) {
+            } else if (objectName != null && objectName.length() != 0) {
                 parameters.removeParameter(objectName + "X");
                 parameters.removeParameter(objectName + "Y");
             }

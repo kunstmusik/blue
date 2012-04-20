@@ -59,7 +59,7 @@ class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
             while ((str = reader.readLine()) != null) {
                 if (str.trim().startsWith("0dbfs") && str.contains("=")) {
                     str = TextUtilities.stripSingleLineComments(str);
-                    str = str.substring(str.indexOf("=") + 1).trim();
+                    str = str.substring(str.indexOf('=') + 1).trim();
                     projectProperties.useZeroDbFS = true;
                     projectProperties.zeroDbFS = str;
                     projectProperties.diskUseZeroDbFS = true;

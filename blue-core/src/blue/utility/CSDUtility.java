@@ -86,10 +86,8 @@ public class CSDUtility {
     }
 
     protected static void parseCsScore(BlueData data, String scoreText, int importMode) {
-        // String CsScore = getScore(CSD);
-
-        StringBuffer tables = new StringBuffer();
-        StringBuffer iStatements = new StringBuffer();
+        StringBuilder tables = new StringBuilder();
+        StringBuilder iStatements = new StringBuilder();
 
         String[] lines = scoreText.split("\n");
         String line;
@@ -332,7 +330,7 @@ public class CSDUtility {
 
         String line = "";
 
-        StringBuffer globalOrch = new StringBuffer();
+        StringBuilder globalOrch = new StringBuilder();
 
         String sr = null;
         String kr = null;
@@ -396,14 +394,14 @@ public class CSDUtility {
                         state = 2;
                     } else {
                         if (trimLine.startsWith("kr")) {
-                            kr = line.substring(line.indexOf("=") + 1).trim();
+                            kr = line.substring(line.indexOf('=') + 1).trim();
                         } else if (trimLine.startsWith("sr")) {
-                            sr = line.substring(line.indexOf("=") + 1).trim();
+                            sr = line.substring(line.indexOf('=') + 1).trim();
                         } else if (trimLine.startsWith("nchnls")) {
                             data.getProjectProperties().channels = line
-                                    .substring(line.indexOf("=") + 1).trim();
+                                    .substring(line.indexOf('=') + 1).trim();
                         } else if (trimLine.startsWith("ksmps")) {
-                            ksmps = line.substring(line.indexOf("=") + 1)
+                            ksmps = line.substring(line.indexOf('=') + 1)
                                     .trim();
                         } else {
                             globalOrch.append(line).append("\n");
@@ -416,7 +414,7 @@ public class CSDUtility {
                         if (instr != null && instrIds != null) {
                             instr.setText(iBody.toString());
 
-                            if (instrIds.indexOf(",") > -1) {
+                            if (instrIds.indexOf(',') > -1) {
                                 String ids[] = instrIds.split(",");
 
                                 for (int i = 0; i < ids.length; i++) {
@@ -488,7 +486,7 @@ public class CSDUtility {
         try {
             BufferedReader in = new BufferedReader(new FileReader(test));
             String line = "";
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             while ((line = in.readLine()) != null) {
                 buffer.append(line).append("\n");
             }

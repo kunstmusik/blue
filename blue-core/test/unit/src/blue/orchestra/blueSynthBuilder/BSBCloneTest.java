@@ -89,14 +89,13 @@ public class BSBCloneTest extends TestCase {
             boolean isEqual = EqualsBuilder.reflectionEquals(bsbObj, obj);
 
             if (!isEqual) {
-                StringBuffer buffer = new StringBuffer();
-                buffer.append("Problem with class: " + class1.getName() + "\n");
+                StringBuilder buffer = new StringBuilder();
+                buffer.append("Problem with class: ").append(class1.getName()).append("\n");
                 buffer.append("Original Object\n");
-                buffer
-                        .append(ToStringBuilder.reflectionToString(bsbObj)
-                                + "\n");
+                buffer.append(ToStringBuilder.reflectionToString(bsbObj))
+                        .append("\n");
                 buffer.append("Cloned Object\n");
-                buffer.append(ToStringBuilder.reflectionToString(obj) + "\n");
+                buffer.append(ToStringBuilder.reflectionToString(obj)).append("\n");
 
                 System.out.println(buffer.toString());
 
@@ -174,15 +173,13 @@ public class BSBCloneTest extends TestCase {
             boolean isEqual = EqualsBuilder.reflectionEquals(bsbObj, bsbObj2);
 
             if (!isEqual) {
-                StringBuffer buffer = new StringBuffer();
-                buffer.append("Problem with class: " + class1.getName() + "\n");
+                StringBuilder buffer = new StringBuilder();
+                buffer.append("Problem with class: ").append(class1.getName()).append("\n");
                 buffer.append("Original Object\n");
-                buffer
-                        .append(ToStringBuilder.reflectionToString(bsbObj)
-                                + "\n");
+                buffer.append(ToStringBuilder.reflectionToString(bsbObj))
+                        .append("\n");
                 buffer.append("Cloned Object\n");
-                buffer.append(ToStringBuilder.reflectionToString(bsbObj2)
-                        + "\n");
+                buffer.append(ToStringBuilder.reflectionToString(bsbObj2)).append("\n");
 
                 System.out.println(buffer.toString());
 

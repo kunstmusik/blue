@@ -65,7 +65,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
 
         newDur = newDur - renderStart;
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
         buffer.append("\t").append(startTime + renderStart);
@@ -103,7 +103,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     private String generateInstrumentText() {
-        StringBuffer iText = new StringBuffer();
+        StringBuilder iText = new StringBuilder();
         String channelVariables = getChannelVariables();
 
         if (channelVariables == null) {

@@ -81,9 +81,8 @@ public class SerializationCodeWriter extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton1ActionPerformed
         String text = text1.getText();
         String[] lines = text.split("\n");
-
-        StringBuffer saveCode = new StringBuffer();
-        StringBuffer loadCode = new StringBuffer();
+        StringBuilder saveCode = new StringBuilder();
+        StringBuilder loadCode = new StringBuilder();
 
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
@@ -92,8 +91,8 @@ public class SerializationCodeWriter extends javax.swing.JFrame {
                 continue;
             }
 
-            if (line.indexOf("=") > 0) {
-                line = line.substring(0, line.indexOf("="));
+            if (line.indexOf('=') > 0) {
+                line = line.substring(0, line.indexOf('='));
             }
 
             System.out.println(line);

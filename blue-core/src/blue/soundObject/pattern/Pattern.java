@@ -84,7 +84,7 @@ public class Pattern implements Serializable {
         retVal.addElement("muted").setText(Boolean.toString(muted));
         retVal.addElement("solo").setText(Boolean.toString(solo));
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < values.length; i++) {
             if (values[i]) {

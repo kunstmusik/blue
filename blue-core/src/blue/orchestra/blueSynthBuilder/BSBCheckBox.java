@@ -171,7 +171,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         }
 
         if (!automationAllowed) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(objectName);
                 if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
@@ -216,7 +216,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && !objectName.equals("")) {
+            } else if (objectName != null && objectName.length() != 0) {
                 parameters.removeParameter(objectName);
             }
         }

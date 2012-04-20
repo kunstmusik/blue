@@ -66,7 +66,7 @@ public class UniqueNameManager implements Serializable {
     public void setUniqueName(BSBObject bsbObj) {
         String currentName = bsbObj.getObjectName();
 
-        if (currentName == null || currentName.equals("")) {
+        if (currentName == null || currentName.length() == 0) {
             return;
         }
 
@@ -120,7 +120,7 @@ public class UniqueNameManager implements Serializable {
         for (int i = 0; i < names.size(); i++) {
             String temp = names.get(i);
 
-            if (temp != null && !temp.equals("") && temp.equals(name)) {
+            if (temp != null && temp.length() != 0 && temp.equals(name)) {
                 return false;
             }
         }

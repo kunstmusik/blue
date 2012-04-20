@@ -44,7 +44,7 @@ public class PatternObjectTest extends TestCase {
         boolean isEqual = EqualsBuilder.reflectionEquals(p, clone);
 
         if (!isEqual) {
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             buffer.append("Problem with Pattern\n");
             buffer.append("Original Object\n");
             buffer.append(ToStringBuilder.reflectionToString(p)).append("\n");

@@ -119,8 +119,7 @@ public class blueSHARC {
             int counter = 1;
             float ampNorm = 0;
 
-            buffer.append("ifreq 	= 		cpspch("
-                    + this.getPitch(fileName.getName()) + ")\n");
+            buffer.append("ifreq 	= 		cpspch(").append(this.getPitch(fileName.getName())).append(")\n");
             buffer.append("iamp	=		p4\n");
             buffer.append("iSpace	=	        p5		;range -1(L) to 1(R)\n\n");
             buffer.append("kenv	linseg 0, p3 * 0.5, 1, p3 * 0.5, 0\n");
@@ -147,20 +146,17 @@ public class blueSHARC {
                      * String temp2 = String.valueOf(degrees); index =
                      * temp2.indexOf('.'); temp2 = temp2.substring(0, index);
                      */
-                    buffer.append("iamp" + counter + "	=		ampdb(p4 - " + amp
-                            + ")\n");
-                    buffer.append("a" + counter + "\toscili  	kenv * iamp"
-                            + counter + ", ifreq *" + counter + " , 1, "
-                            + degrees + "\n");
+                    buffer.append("iamp").append(counter).append("	=		ampdb(p4 - ").append(amp).append(")\n");
+                    buffer.append("a").append(counter).append("\toscili  	kenv * iamp").append(counter).append(", ifreq *").append(counter).append(" , 1, ").append(degrees).append("\n");
                     ampNorm += amp;
                 }
                 counter++;
             }
 
-            StringBuffer aout = new StringBuffer("aout sum a1");
+            StringBuilder aout = new StringBuilder("aout sum a1");
 
             for (int i = 1; i < (counter - 1); i++) {
-                aout.append(", a" + (i + 1));
+                aout.append(", a").append(i + 1);
             }
 
             /*
@@ -168,7 +164,7 @@ public class blueSHARC {
              * aout.append("\naout = aout "); } aout.append("+ a" + (counter2
              * +1) + " "); counter2++; }
              */
-            buffer.append("\n" + aout.toString() + "\n");
+            buffer.append("\n").append(aout.toString()).append("\n");
             // buffer.append("aout = kenv * (aout / " + ampNorm + ")\n\n");
             buffer.append("aLeft 	=	aout * krtl\n");
             buffer.append("aRight	=	aout * krtr\n\n");

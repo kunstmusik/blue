@@ -355,7 +355,7 @@ public class XMLSerializer {
                         objectToReadElementCount);
             } else {
                 Object objectToRead = null;
-                if (objectToReadClassName.indexOf("$") == -1) {
+                if (objectToReadClassName.indexOf('$') == -1) {
                     objectToRead = objectToReadClass.newInstance();
                     references.put(objectToReadHashCode, objectToRead);
                 } else {
@@ -432,7 +432,7 @@ public class XMLSerializer {
      */
     protected Object readString(BufferedReader bufferedReader)
             throws IOException {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuffer = new StringBuilder();
         Object objectToRead = null;
         for (;;) {
             String line = bufferedReader.readLine();
@@ -1004,7 +1004,7 @@ public class XMLSerializer {
      * Returns the class name represented in a start tag.
      */
     protected String getName(String startTag) {
-        int endIndex = startTag.indexOf(" ", 1);
+        int endIndex = startTag.indexOf(' ', 1);
         return startTag.substring(1, endIndex);
     }
 
@@ -1017,7 +1017,7 @@ public class XMLSerializer {
             return null;
         }
         beginIndex = beginIndex + 6;
-        int endIndex = startTag.indexOf(" ", beginIndex);
+        int endIndex = startTag.indexOf(' ', beginIndex);
         return startTag.substring(beginIndex, endIndex);
     }
 
@@ -1032,7 +1032,7 @@ public class XMLSerializer {
         }
 
         beginIndex = beginIndex + 4;
-        int endIndex = startTag.indexOf(" ", beginIndex);
+        int endIndex = startTag.indexOf(' ', beginIndex);
 
         if (endIndex == -1) {
             return null;
@@ -1052,7 +1052,7 @@ public class XMLSerializer {
         }
 
         beginIndex = beginIndex + 3;
-        int endIndex = startTag.indexOf(" ", beginIndex);
+        int endIndex = startTag.indexOf(' ', beginIndex);
 
         if (endIndex == -1) {
             return 0;

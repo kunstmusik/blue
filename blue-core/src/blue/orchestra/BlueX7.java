@@ -315,7 +315,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         buffer.insert(0, credits);
 
         String instrText = buffer.toString();
-        instrText = instrText.substring(instrText.indexOf("\n", instrText
+        instrText = instrText.substring(instrText.indexOf('\n', instrText
                 .indexOf("instr")) + 1);
         instrText = instrText.substring(0, instrText.indexOf("endin") - 1);
 

@@ -106,7 +106,7 @@ public class TrackerNote implements Serializable {
     public boolean isActive() {
         for (Iterator iter = fields.iterator(); iter.hasNext();) {
             String field = (String) iter.next();
-            if (!field.equals("")) {
+            if (field.length() != 0) {
                 return true;
             }
         }

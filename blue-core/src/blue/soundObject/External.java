@@ -88,7 +88,7 @@ public class External extends AbstractSoundObject implements Serializable,
                     ".txt", BlueSystem.getCurrentProjectDirectory(), this
                             .getText());
 
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
 
             currentWorkingDirectory = temp.getParentFile();
 

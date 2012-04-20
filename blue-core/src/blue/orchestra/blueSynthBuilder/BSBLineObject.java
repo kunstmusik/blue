@@ -181,7 +181,7 @@ public class BSBLineObject extends BSBObject {
     }
 
     public String getPresetValue() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("version=2");
 
@@ -190,7 +190,7 @@ public class BSBLineObject extends BSBObject {
 
             Line line = (Line) iter.next();
 
-            StringBuffer temp = new StringBuffer();
+            StringBuilder temp = new StringBuilder();
             temp.append(line.getVarName());
 
             for (int i = 0; i < line.size(); i++) {

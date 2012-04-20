@@ -120,7 +120,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
 
         newDur = newDur - renderStart;
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("i").append(instrumentNumber);
         buffer.append("\t").append(startTime + renderStart);
@@ -174,7 +174,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
     }
 
     private String generateInstrumentText() {
-        StringBuffer iText = new StringBuffer();
+        StringBuilder iText = new StringBuilder();
         String channelVariables = getChannelVariables();
 
         if (channelVariables == null) {

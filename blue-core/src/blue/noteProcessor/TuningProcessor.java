@@ -89,7 +89,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         int oct;
         float pch;
 
-        int index = val.indexOf(".");
+        int index = val.indexOf('.');
 
         if (index == -1) {
             oct = Integer.parseInt(val);

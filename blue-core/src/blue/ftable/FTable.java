@@ -43,15 +43,15 @@ public class FTable implements Comparable {
         String temp = FTableText;
         FTable tempTable = new FTable();
 
-        if (temp.indexOf("f") == -1) {
+        if (temp.indexOf('f') == -1) {
             return null;
         }
 
-        temp = temp.substring(temp.indexOf("f") + 1);
+        temp = temp.substring(temp.indexOf('f') + 1);
 
         /* add code to parse a table name after comment */
 
-        int commentStart = FTableText.indexOf(";");
+        int commentStart = FTableText.indexOf(';');
 
         if (commentStart != -1) {
             temp = FTableText.substring(0, commentStart);
@@ -135,12 +135,12 @@ public class FTable implements Comparable {
     }
 
     public String generateTable() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("f" + tableNumber + " ");
-        buffer.append(actionTime + " ");
-        buffer.append(tableSize + " ");
-        buffer.append(genRoutine + " ");
-        buffer.append(args + " ");
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("f").append(tableNumber).append(" ");
+        buffer.append(actionTime).append(" ");
+        buffer.append(tableSize).append(" ");
+        buffer.append(genRoutine).append(" ");
+        buffer.append(args).append(" ");
 
         return buffer.toString();
 

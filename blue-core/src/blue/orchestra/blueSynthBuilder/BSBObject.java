@@ -100,7 +100,7 @@ public abstract class BSBObject implements Serializable, Cloneable {
         }
 
         if (unm != null) {
-            if (objectName != null && !objectName.equals("")
+            if (objectName != null && objectName.length() != 0
                     && !unm.isUnique(objectName)) {
                 return;
             }

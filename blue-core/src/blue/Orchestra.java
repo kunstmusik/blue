@@ -115,7 +115,7 @@ public final class Orchestra implements Cloneable, Serializable {
     }
 
     public String generateOrchestra() {
-        StringBuffer orchText = new StringBuffer();
+        StringBuilder orchText = new StringBuilder();
         Set temp = orch.keySet();
         Iterator iter = temp.iterator();
 

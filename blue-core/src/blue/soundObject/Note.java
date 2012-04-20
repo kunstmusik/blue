@@ -78,7 +78,7 @@ public class Note implements Serializable, Comparable {
         try {
             Note n = new Note();
             final String cleanNoteString = input
-                    .substring(input.indexOf("i") + 1);
+                    .substring(input.indexOf('i') + 1);
             n.noteInit(cleanNoteString, previousNote);
             return n;
         } catch (Exception e) {

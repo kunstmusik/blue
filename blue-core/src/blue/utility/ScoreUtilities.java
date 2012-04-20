@@ -559,10 +559,9 @@ public class ScoreUtilities {
     }
 
     public static String testNotesList(NoteList nl) {
-        StringBuffer returnText = new StringBuffer();
+        StringBuilder returnText = new StringBuilder();
         for (int i = 0; i < nl.size(); i++) {
-            returnText.append("N" + i + ": s>" + nl.getNote(i).getStartTime()
-                    + " d>" + nl.getNote(i).getSubjectiveDuration() + "\n");
+            returnText.append("N").append(i).append(": s>").append(nl.getNote(i).getStartTime()).append(" d>").append(nl.getNote(i).getSubjectiveDuration()).append("\n");
         }
         return returnText.toString();
     }
@@ -571,7 +570,7 @@ public class ScoreUtilities {
         int octave;
         float pitch;
 
-        int index = pch.indexOf(".");
+        int index = pch.indexOf('.');
 
         if (index == -1) {
             octave = Integer.parseInt(pch);

@@ -106,7 +106,7 @@ public class Tables implements java.io.Serializable, Cloneable {
             temp = "";
 
             if (line.startsWith("f")) {
-                index = line.indexOf("f") + 1;
+                index = line.indexOf('f') + 1;
                 tempLine = line.substring(index).trim();
                 index = 0;
                 while (index < tempLine.length()

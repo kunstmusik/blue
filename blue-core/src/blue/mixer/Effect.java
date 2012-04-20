@@ -296,7 +296,7 @@ public class Effect implements Serializable, Automatable {
 //    }
 
     private String getXinText() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < numIns; i++) {
             if (i > 0) {
@@ -311,7 +311,7 @@ public class Effect implements Serializable, Automatable {
     }
 
     private String getXoutText() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         buffer.append("xout\t");
 
@@ -326,7 +326,7 @@ public class Effect implements Serializable, Automatable {
     }
 
     private String getSigTypes(int num) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < num; i++) {
             buffer.append("a");

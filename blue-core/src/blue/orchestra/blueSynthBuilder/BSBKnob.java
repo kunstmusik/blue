@@ -57,7 +57,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         }
 
         if (unm != null) {
-            if (objectName != null && !objectName.equals("")
+            if (objectName != null && objectName.length() != 0
                     && !unm.isUnique(objectName)) {
                 return;
             }
@@ -68,7 +68,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         boolean doInitialize = false;
 
         if (parameters != null && automationAllowed) {
-            if (objectName == null || objectName.equals("")) {
+            if (objectName == null || objectName.length() == 0) {
                 parameters.removeParameter(oldName);
             } else {
                 Parameter param = parameters.getParameter(oldName);
@@ -322,7 +322,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         float fval;
 
         // version1 uses relative values and has no ver string
-        if (val.indexOf(":") < 0) {
+        if (val.indexOf(':') < 0) {
             fval = Float.parseFloat(val);
             fval = (fval * (maximum - minimum)) + minimum;
         } else {
@@ -339,7 +339,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         }
         
         if(!automationAllowed) {
-            if (objectName != null && !objectName.equals("")) {
+            if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(objectName);
                 if(param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
@@ -409,7 +409,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && !objectName.equals("")) {
+            } else if (objectName != null && objectName.length() != 0) {
                 parameters.removeParameter(objectName);
             }
         }
