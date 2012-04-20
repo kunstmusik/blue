@@ -20,6 +20,7 @@
 package blue.upgrades;
 
 import blue.BlueData;
+import electric.xml.Element;
 
 /**
  * Class used to upgrade projects. VersionString given is for what version this
@@ -34,8 +35,17 @@ public abstract class ProjectUpgrader {
         this.version = ProjectVersion.parseVersion(versionString);
     }
     
+    
     /**
-     * Code that upgrades project
+     * Code that upgrades project by modifying XML data before BlueData is loaded.
+     * 
+     * @param data
+     * @return 
+     */
+    public abstract boolean preUpgrade(Element data);
+    
+    /**
+     * Code that upgrades project after BlueData is loaded
      * 
      * @return success for upgrade
      */

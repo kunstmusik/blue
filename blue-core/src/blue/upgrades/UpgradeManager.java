@@ -22,6 +22,8 @@ package blue.upgrades;
 import blue.BlueData;
 import blue.ProjectProperties;
 import blue.utility.TextUtilities;
+import electric.xml.Attribute;
+import electric.xml.Element;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -50,61 +52,39 @@ public class UpgradeManager {
     }
 
     private UpgradeManager() {
-        upgraders.add(new ProjectUpgrader("2.1.10") {
-
-            /**
-             * Added in 2.1.10 when 0dbfs added as a full property in UI
-             */
-            @Override
-            public boolean upgrade(BlueData data) {
-
-                String globalOrc = data.getGlobalOrcSco().getGlobalOrc();
-
-                if (!globalOrc.contains("0dbfs")) {
-                    return true;
-                }
-
-                StringBuilder buffer = new StringBuilder();
-
-                BufferedReader reader = new BufferedReader(new StringReader(globalOrc));
-                String str;
-                ProjectProperties projectProperties = data.getProjectProperties();
-                
-                try {
-                    while ((str = reader.readLine()) != null) {
-
-                        if (str.trim().startsWith("0dbfs") && str.contains("=")) {
-                            str = TextUtilities.stripSingleLineComments(str);
-                            str = str.substring(str.indexOf("=") + 1).trim();
-                            projectProperties.useZeroDbFS = true;
-                            projectProperties.zeroDbFS = str;
-                            projectProperties.diskUseZeroDbFS = true;
-                            projectProperties.diskZeroDbFS = str;
-                        } else {
-                            buffer.append(str).append("\n");
-                        }
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                data.getGlobalOrcSco().setGlobalOrc(buffer.toString());
-                return true;
-            }
-            
-        });
-
+        upgraders.add(new ProjectUpgrader_2_1_10());
+        upgraders.add(new ProjectUpgrader_2_3_0());
     }
 
+    public void performPreUpgrades(Element element) {
+        
+        Attribute versionAttribute = element.getAttribute("version");
+        String versionString = "0.0.0";
+        if (versionAttribute != null) {
+            versionString = versionAttribute.getValue();
+        }
+        
+        ProjectVersion version = ProjectVersion.parseVersion(versionString);
+        
+        for (ProjectUpgrader upgrader : upgraders) {
+            if(version.lessThan(upgrader.getVersion())) {
+                if(upgrader.preUpgrade(element)) {
+                    logger.info(String.format("Performed Pre-Upgrade for Version '%s'", upgrader.getVersion()));
+                }
+            }
+        }
+    }
+    
     public void performUpgrades(BlueData data) {
         
         ProjectVersion version = ProjectVersion.parseVersion(data.getVersion());
         
         for (ProjectUpgrader upgrader : upgraders) {
             if(version.lessThan(upgrader.getVersion())) {
-                logger.info(String.format("Performing Upgrader for Version '%s'", upgrader.getVersion()));
-                upgrader.upgrade(data);
+                
+                if(upgrader.upgrade(data)) {
+                    logger.info(String.format("Performed Upgrade for Version '%s'", upgrader.getVersion()));
+                }
             }
         }
     }
