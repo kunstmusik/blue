@@ -20,14 +20,11 @@
 
 package blue.soundObject;
 
+import blue.*;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.ceciliaModule.CeciliaModuleCompilationUnit;
 import blue.soundObject.ceciliaModule.CeciliaObject;
@@ -60,8 +57,6 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
 
     private HashMap stateData;
 
-    private transient CeciliaModuleCompilationUnit compileUnit;
-
     public CeciliaModule() {
         setName("CeciliaModule");
 
@@ -71,54 +66,9 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
         genSize = "8192";
     }
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        prepareForCompilation();
-        compileUnit.generateGlobals(globalOrcSco);
-    }
-
-    public void generateFTables(Tables tables) {
-        compileUnit.generateFTables(this, tables);
-    }
-
-    public void generateInstruments(Arrangement arrangement) {
-        compileUnit.generateInstruments(arrangement);
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
-        // TODO Needs to generate score from score area of cecilia module
-
-        NoteList nl;
-        try {
-            nl = compileUnit.generateNotes(this);
-        } catch (NoteParseException e) {
-            throw new SoundObjectException(this, e);
-        }
-        cleanupAfterCompilation();
-
-        return nl;
-    }
-
-    private void prepareForCompilation() {
-        compileUnit = new CeciliaModuleCompilationUnit(this);
-    }
-
-    private void cleanupAfterCompilation() {
-        compileUnit = null;
-    }
-
-    // STANDARD SOUNDOBJECT METHODS
-
-//    public SoundObjectEditor getEditor() {
-//        return new CeciliaModuleEditor();
-//    }
-
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
@@ -262,4 +212,23 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
         return retVal;
     }
 
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        CeciliaModuleCompilationUnit compileUnit = new CeciliaModuleCompilationUnit(this);
+        //FIXME - reimplement this when working on CecilaModule again
+//        compileUnit.generateGlobals(globalOrcSco);
+//        compileUnit.generateFTables(this, tables);
+//        compileUnit.generateInstruments(arrangement);
+        
+//        NoteList nl;
+//        try {
+//            nl = compileUnit.generateNotes(this);
+//        } catch (NoteParseException e) {
+//            throw new SoundObjectException(this, e);
+//        }
+
+//        return nl;
+        return null;
+    }
+    
 }

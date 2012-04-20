@@ -1,5 +1,6 @@
 package blue.soundObject.editor;
 
+import blue.*;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,10 +11,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import blue.Arrangement;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.Tables;
 import blue.gui.BlueEditorPane;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
@@ -21,6 +18,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import org.openide.util.Exceptions;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -93,16 +91,13 @@ public class InstanceEditor extends SoundObjectEditor {
         try {
             SoundObject clone = (SoundObject) instance.getSoundObject().clone();
 
-            clone.generateGlobals(new GlobalOrcSco());
-            clone.generateFTables(new Tables());
-            clone.generateInstruments(new Arrangement());
-
-            generatedNoteText = clone.generateNotes(0.0f, -1.0f).toString();
-        } catch (SoundObjectException e) {
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            generatedNoteText = clone.generateForCSD(CompileData.createEmptyCompileData(), 
+                    0.0f, -1.0f).toString();
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
             generatedNoteText = "Could not generate notes"; // TODO - TRANSLATE
         }
+        
         scoreEditPane.setText(BlueSystem
                 .getString("instanceObject.scoreGenMessage")
                 + "\n\n" + generatedNoteText);
@@ -119,14 +114,11 @@ public class InstanceEditor extends SoundObjectEditor {
 
             SoundObject clone = (SoundObject) instance.getSoundObject().clone();
 
-            clone.generateGlobals(new GlobalOrcSco());
-            clone.generateFTables(new Tables());
-            clone.generateInstruments(new Arrangement());
-
-            notes = clone.generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            notes = clone.generateForCSD(CompileData.createEmptyCompileData(), 
+                    0.0f, -1.0f);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
+            notes = null;
         }
 
         if (notes != null) {

@@ -59,17 +59,9 @@ public class External extends AbstractSoundObject implements Serializable,
         this.npc = noteProcessorChain;
     }
 
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
-
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
-
-//    public SoundObjectEditor getEditor() {
-//        return new ExternalEditor();
-//    }
 
     public String getText() {
         return text;
@@ -77,12 +69,6 @@ public class External extends AbstractSoundObject implements Serializable,
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
     }
 
     public final NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
@@ -192,13 +178,6 @@ public class External extends AbstractSoundObject implements Serializable,
 
         return errorMessage;
 
-    }
-
-    /*
-     * public void generateInstruments(Orchestra orch) { }
-     */
-
-    public void generateInstruments(Arrangement arrangement) {
     }
 
     public String getCommandLine() {
@@ -315,6 +294,19 @@ public class External extends AbstractSoundObject implements Serializable,
 
     public void setSyntaxType(String syntaxType) {
         this.syntaxType = syntaxType;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        NoteList retVal = null;
+        
+        try {
+            retVal = generateNotes(startTime, endTime);
+        } catch(SoundObjectException soe) {
+            throw new RuntimeException(soe);
+        }
+        
+        return retVal;
     }
 
 }

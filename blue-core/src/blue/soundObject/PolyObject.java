@@ -28,6 +28,7 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
+import com.sun.xml.internal.ws.addressing.EndpointReferenceUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
@@ -146,12 +147,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
 
     // public accessor methods
+    //FIXME
     public float getObjectiveDuration() {
         float totalDuration;
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
-                    generateObjectiveScore(false, -1.0f, -1.0f));
-        } catch (SoundLayerException e) {
+                    generateForCSD(
+                    null, -1.0f, -1.0f));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return totalDuration;
@@ -321,178 +324,98 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
 
     }
 
-    private final NoteList generateObjectiveScore(boolean muteCheck,
-            float startTime, float endTime) throws SoundLayerException {
-        NoteList notes = new NoteList();
+//    private final NoteList generateObjectiveScore(boolean muteCheck,
+//            float startTime, float endTime) throws SoundLayerException {
+//        NoteList notes = new NoteList();
+//
+//        SoundLayer tempSLayer;
+//        int size = soundLayers.size();
+//
+//        // check if solo is selected, if so, return only that layer's notes if
+//        // not muted
+//
+//        boolean soloFound = false;
+//
+//        for (int i = 0; i < size; i++) {
+//            tempSLayer = ((SoundLayer) soundLayers.get(i));
+//            if (tempSLayer.isSolo() && !tempSLayer.isMuted()) {
+//                soloFound = true;
+//
+//                try {
+//                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
+//                } catch (SoundLayerException e) {
+//                    e.setLayerNumber(i + 1);
+//                    throw e;
+//                }
+//
+//            }
+//        }
+//
+//        if (soloFound) {
+//            return notes;
+//        }
+//
+//        // check if layers are muted or not and to return only notes from
+//        // non-muted layers
+//        for (int i = 0; i < size; i++) {
+//
+//            tempSLayer = ((SoundLayer) soundLayers.get(i));
+//
+//            try {
+//                if (!muteCheck) {
+//                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
+//                } else if (!tempSLayer.isMuted()) {
+//                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
+//                }
+//            } catch (SoundLayerException e) {
+//                e.setLayerNumber(i + 1);
+//                throw e;
+//            }
+//
+//        }
+//
+//        return notes;
+//    }
 
-        SoundLayer tempSLayer;
-        int size = soundLayers.size();
-
-        // check if solo is selected, if so, return only that layer's notes if
-        // not muted
-
+    /* CSD GENERATION CODE */
+    
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        
         boolean soloFound = false;
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (tempSLayer.isSolo() && !tempSLayer.isMuted()) {
-                soloFound = true;
-
-                try {
-                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
-                } catch (SoundLayerException e) {
-                    e.setLayerNumber(i + 1);
-                    throw e;
-                }
-
-            }
-        }
-
-        if (soloFound) {
-            return notes;
-        }
-
-        // check if layers are muted or not and to return only notes from
-        // non-muted layers
-        for (int i = 0; i < size; i++) {
-
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-
-            try {
-                if (!muteCheck) {
-                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
-                } else if (!tempSLayer.isMuted()) {
-                    notes.merge(tempSLayer.generateNotes(startTime, endTime));
-                }
-            } catch (SoundLayerException e) {
-                e.setLayerNumber(i + 1);
-                throw e;
-            }
-
-        }
-
-        return notes;
-    }
-
-    /* SOUND OBJECT METHODS */
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        generateGlobals(globalOrcSco, 0.0f, -1.0f);
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco, float startTime,
-            float endTime) {
-        int size = soundLayers.size();
-        SoundLayer tempSLayer;
-
-        boolean soloFound = false;
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (tempSLayer.isSolo()) {
-                if (!tempSLayer.isMuted()) {
+        NoteList noteList = new NoteList();
+        
+        for(SoundLayer soundLayer : soundLayers) {
+            if (soundLayer.isSolo()) {
+                if (!soundLayer.isMuted()) {
                     soloFound = true;
-                    tempSLayer.generateGlobals(globalOrcSco, startTime, endTime);
+                    noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
                 }
             }
         }
 
-        if (soloFound) {
-            return;
-        }
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (!tempSLayer.isMuted()) {
-                tempSLayer.generateGlobals(globalOrcSco, startTime, endTime);
-            }
-        }
-    }
-
-    public void generateFTables(Tables tables) {
-        generateFTables(tables, 0.0f, -1.0f);
-    }
-
-    public void generateFTables(Tables tables, float startTime, float endTime) {
-        int size = soundLayers.size();
-        SoundLayer tempSLayer;
-
-        boolean soloFound = false;
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (tempSLayer.isSolo()) {
-                if (!tempSLayer.isMuted()) {
-                    soloFound = true;
-                    tempSLayer.generateFTables(tables, startTime, endTime);
+        if (!soloFound) {
+            for(SoundLayer soundLayer : soundLayers) {
+                if (!soundLayer.isMuted()) {
+                    noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
                 }
             }
         }
+    
+        noteList = processNotes(compileData, noteList, startTime, endTime);
 
-        if (soloFound) {
-            return;
-        }
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (!tempSLayer.isMuted()) {
-                tempSLayer.generateFTables(tables, startTime, endTime);
-            }
-        }
-
+        return noteList;
+        
     }
-
-    public final void generateInstruments(Arrangement arrangement) {
-        generateInstruments(arrangement, 0.0f, -1.0f);
-    }
-
-    public final void generateInstruments(Arrangement arrangement,
-            float startTime, float endTime) {
-        int size = soundLayers.size();
-        SoundLayer tempSLayer;
-
-        boolean soloFound = false;
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (tempSLayer.isSolo()) {
-                if (!tempSLayer.isMuted()) {
-                    soloFound = true;
-                    tempSLayer.generateInstruments(arrangement, startTime,
-                            endTime);
-                }
-            }
-        }
-
-        if (soloFound) {
-            return;
-        }
-
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
-            if (!tempSLayer.isMuted()) {
-                tempSLayer.generateInstruments(arrangement, startTime, endTime);
-            }
-        }
-    }
-
-    public final NoteList generateNotes(float start, float endTime)
-            throws SoundObjectException {
-        // float multiplier = getMultiplier();
-
+   
+    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) {
+        
         NoteList retVal = null;
-
-        NoteList nl;
-
-        try {
-            nl = this.generateObjectiveScore(true, start, endTime);
-        } catch (SoundLayerException e) {
-            throw new SoundObjectException(this, e);
-        }
-
+        
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
-            throw new SoundObjectException(this, e);
+            throw new RuntimeException(new SoundObjectException(this, e));
         }
 
         int timeBehavior = isRoot ? SoundObject.TIME_BEHAVIOR_NONE : this.
@@ -651,7 +574,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      * 
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
-    public static SoundObject loadFromXML(Element data,
+    public static PolyObject loadFromXML(Element data,
             SoundObjectLibrary sObjLibrary) throws Exception {
         PolyObject pObj = new PolyObject();
 
@@ -1004,7 +927,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         return true;
     }
 
-    public void processOnLoad() throws SoundObjectException {
+    public void onLoadComplete() {
         ArrayList sObjects;
         SoundObject sObj;
 
@@ -1015,15 +938,15 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
             for (int j = 0; j < sObjects.size(); j++) {
                 sObj = (SoundObject) sObjects.get(j);
                 if (sObj instanceof PolyObject) {
-                    ((PolyObject) sObj).processOnLoad();
+                    ((PolyObject) sObj).onLoadComplete();
                 } else if (sObj instanceof OnLoadProcessable) {
                     OnLoadProcessable olp = (OnLoadProcessable) sObj;
                     if (olp.isOnLoadProcessable()) {
                         try {
                             olp.processOnLoad();
                         } catch (SoundObjectException soe) {
-                            throw new SoundObjectException(this,
-                                    "Error during on load processing:", soe);
+                            throw new RuntimeException(new SoundObjectException(this,
+                                    "Error during on load processing:", soe));
                         }
                     }
                 }

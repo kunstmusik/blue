@@ -30,10 +30,11 @@ public final class AddMarkerAction implements ActionListener {
 
         RenderTimeManager timeManager = RenderTimeManager.getInstance();
 
-        if (ScoreTopComponent.getDefault().getFocusedPolyObject() == data.getPolyObject()) {
-            float markerTime = MainToolBar.getInstance().isRendering() ? timeManager.getRenderTime() + timeManager.getRenderStartTime() : data.getRenderStartTime();
-            data.getMarkersList().addMarker(markerTime);
-        }
+        //FIXME
+//        if (ScoreTopComponent.getDefault().getFocusedPolyObject() == data.getPolyObject()) {
+//            float markerTime = MainToolBar.getInstance().isRendering() ? timeManager.getRenderTime() + timeManager.getRenderStartTime() : data.getRenderStartTime();
+//            data.getMarkersList().addMarker(markerTime);
+//        }
 
     }
 }

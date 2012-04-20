@@ -40,6 +40,7 @@ import blue.soundObject.Sound;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.undo.NoStyleChangeUndoManager;
+import org.openide.util.Exceptions;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -247,10 +248,9 @@ public class GenericEditor extends SoundObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.sObj).generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            notes = ((SoundObject) this.sObj).generateForCSD(null, 0.0f, -1.0f);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
         }
 
         if (notes != null) {

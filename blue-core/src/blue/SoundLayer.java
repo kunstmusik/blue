@@ -72,7 +72,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     };
 
-    private ArrayList soundObjects = new ArrayList();
+    private ArrayList<SoundObject> soundObjects = new ArrayList<SoundObject>();
 
     private ParameterIdList automationParameters = new ParameterIdList();
 
@@ -137,139 +137,8 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         return soundObjects;
     }
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco, float startTime,
-            float endTime) {
-
-        Collections.sort(soundObjects, sObjComparator);
-
-        int size = soundObjects.size();
-
-        for (int i = 0; i < size; i++) {
-
-            SoundObject sObj = (SoundObject) soundObjects.get(i);
-
-            float sObjStart = sObj.getStartTime();
-            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
-
-            if (sObjEnd > startTime) {
-                if (endTime <= startTime) {
-                    sObj.generateGlobals(globalOrcSco);
-                } else if (sObjStart < endTime) {
-                    sObj.generateGlobals(globalOrcSco);
-                }
-            }
-
-        }
-    }
-
-    public void generateFTables(Tables tables, float startTime, float endTime) {
-        int size = soundObjects.size();
-        for (int i = 0; i < size; i++) {
-
-            SoundObject sObj = (SoundObject) soundObjects.get(i);
-
-            float sObjStart = sObj.getStartTime();
-            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
-
-            if (sObjEnd > startTime) {
-                if (endTime <= startTime) {
-                    sObj.generateFTables(tables);
-                } else if (sObjStart < endTime) {
-                    sObj.generateFTables(tables);
-                }
-            }
-
-        }
-    }
-
-    public void generateInstruments(Arrangement arrangement, float startTime,
-            float endTime) {
-        int size = soundObjects.size();
-
-        for (int i = 0; i < size; i++) {
-
-            SoundObject sObj = (SoundObject) soundObjects.get(i);
-
-            float sObjStart = sObj.getStartTime();
-            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
-
-            if (sObjEnd > startTime) {
-                if (endTime <= startTime) {
-                    sObj.generateInstruments(arrangement);
-                } else if (sObjStart < endTime) {
-                    sObj.generateInstruments(arrangement);
-                }
-            }
-
-        }
-    }
-
     public boolean contains(SoundObject sObj) {
         return soundObjects.contains(sObj);
-    }
-
-    /**
-     * Generates notes for the SoundLayer, skipping over soundObjects which do
-     * not contribute notes between the startTime and endTime arguments.
-     * 
-     * StartTime and endTime is adjusted by the PolyObject before passing into
-     * SoundLayer if possible, if not possible, will adjust to render everything
-     * and filter on top layer.
-     */
-    public NoteList generateNotes(float startTime, float endTime)
-            throws SoundLayerException {
-        NoteList notes = new NoteList();
-
-        int size = soundObjects.size();
-
-        for (int i = 0; i < size; i++) {
-            try {
-                SoundObject sObj = (SoundObject) soundObjects.get(i);
-
-                float sObjStart = sObj.getStartTime();
-                float sObjDur = sObj.getSubjectiveDuration();
-                float sObjEnd = sObjStart + sObjDur;
-
-                if (sObjEnd > startTime) {
-                    if (endTime <= startTime) {
-
-                        float adjustedStart = startTime - sObjStart;
-                        if (adjustedStart < 0.0f) {
-                            adjustedStart = 0.0f;
-                        }
-
-                        notes.merge((sObj).generateNotes(adjustedStart, -1.0f));
-                    } else if (sObjStart < endTime) {
-
-                        float adjustedStart = startTime - sObjStart;
-                        float adjustedEnd = endTime - sObjStart;
-
-                        if (adjustedStart < 0.0f) {
-                            adjustedStart = 0.0f;
-                        }
-
-                        if (adjustedEnd >= sObjDur) {
-                            adjustedEnd = -1.0f;
-                        }
-
-                        notes.merge((sObj).generateNotes(adjustedStart,
-                                adjustedEnd));
-                    }
-                }
-            } catch (SoundObjectException e) {
-                throw new SoundLayerException(this, "Error in SoundLayer: "
-                        + this.getName(), e);
-            }
-        }
-
-        try {
-            ScoreUtilities.applyNoteProcessorChain(notes, this.npc);
-        } catch (NoteProcessorException e) {
-            throw new SoundLayerException(this, "Error in SoundLayer: "
-                    + this.getName(), e);
-        }
-
-        return notes;
     }
 
     /**
@@ -481,5 +350,70 @@ public final class SoundLayer implements java.io.Serializable, Layer {
             layerListeners.clear();
             layerListeners = null;
         }
+    }
+
+    /**
+     * Generates notes for the SoundLayer, skipping over soundObjects which do
+     * not contribute notes between the startTime and endTime arguments.
+     * 
+     * StartTime and endTime is adjusted by the PolyObject before passing into
+     * SoundLayer if possible, if not possible, will adjust to render everything
+     * and filter on top layer.
+     */
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        
+        NoteList notes = new NoteList();
+        
+        Collections.sort(soundObjects, sObjComparator);
+
+
+        for (SoundObject sObj : soundObjects) {
+            try {
+            
+                float sObjStart = sObj.getStartTime();
+                float sObjDur = sObj.getSubjectiveDuration();
+                float sObjEnd = sObjStart + sObjDur;
+
+                if (sObjEnd > startTime) {
+                    if (endTime <= startTime) {
+
+                        float adjustedStart = startTime - sObjStart;
+                        if (adjustedStart < 0.0f) {
+                            adjustedStart = 0.0f;
+                        }
+
+                        notes.merge((sObj).generateForCSD(compileData, adjustedStart, -1.0f));
+                    } else if (sObjStart < endTime) {
+
+                        float adjustedStart = startTime - sObjStart;
+                        float adjustedEnd = endTime - sObjStart;
+
+                        if (adjustedStart < 0.0f) {
+                            adjustedStart = 0.0f;
+                        }
+
+                        if (adjustedEnd >= sObjDur) {
+                            adjustedEnd = -1.0f;
+                        }
+
+                        notes.merge((sObj).generateForCSD(compileData, adjustedStart,
+                                adjustedEnd));
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(new SoundLayerException(this, "Error in SoundLayer: "
+                        + this.getName(), e));
+            }
+        }
+
+        try {
+            ScoreUtilities.applyNoteProcessorChain(notes, this.npc);
+        } catch (NoteProcessorException e) {
+            throw new RuntimeException(new SoundLayerException(this, "Error in SoundLayer: "
+                    + this.getName(), e));
+        }
+        
+
+        return notes;
     }
 }

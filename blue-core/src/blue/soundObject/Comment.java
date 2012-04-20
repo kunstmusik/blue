@@ -1,9 +1,6 @@
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.io.Serializable;
@@ -45,32 +42,6 @@ public class Comment extends AbstractSoundObject implements Serializable,
 
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
-    }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
-//
-//    public SoundObjectEditor getEditor() {
-//        return new GenericEditor();
-//    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) {
-        return null;
-    }
-
-    /*
-     * public void generateInstruments(Orchestra parm1) { return; }
-     */
-
-    public void generateInstruments(Arrangement arrangement) {
-        return;
     }
 
     public int getTimeBehavior() {
@@ -115,5 +86,10 @@ public class Comment extends AbstractSoundObject implements Serializable,
         retVal.addElement("commentText").setText(this.getText());
 
         return retVal;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        return null;
     }
 }

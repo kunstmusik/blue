@@ -35,7 +35,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import blue.BlueSystem;
-import blue.gui.ExceptionDialog;
+import blue.CompileData;
 import blue.gui.InfoDialog;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
@@ -44,9 +44,9 @@ import blue.soundObject.NoteList;
 import blue.soundObject.ObjectBuilder;
 import blue.soundObject.ObjectBuilderRegistry;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
 import blue.utility.GUI;
+import org.openide.util.Exceptions;
 
 public class ObjectBuilderEditor extends SoundObjectEditor {
 
@@ -128,11 +128,11 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
         NoteList notes = null;
 
         try {
-            this.objectBuilder.generateGlobals(null);
-            notes = this.objectBuilder.generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            notes = this.objectBuilder.generateForCSD(CompileData.createEmptyCompileData(), 
+                    0.0f, -1.0f);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
+            notes = null;
         }
 
         if (notes != null) {

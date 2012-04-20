@@ -1,9 +1,6 @@
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
 import electric.xml.Element;
@@ -134,6 +131,11 @@ public class NotationObject extends AbstractSoundObject implements
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }

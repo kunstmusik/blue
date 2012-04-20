@@ -23,8 +23,11 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
+import blue.orchestra.Instrument;
 import electric.xml.Element;
 import java.io.Serializable;
+import org.openide.util.Exceptions;
+
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -38,12 +41,7 @@ import java.io.Serializable;
 public class Sound extends AbstractSoundObject implements Serializable,
         Cloneable, GenericEditable {
 
-//    private static BarRenderer renderer = new LetterRenderer("S");
-
     String instrument;
-
-    // Used during CSD generation time
-    int instrumentNumber = 0;
 
     public Sound() {
         setName("Sound");
@@ -69,19 +67,7 @@ public class Sound extends AbstractSoundObject implements Serializable,
         this.instrument = text;
     }
 
-    public int getInstrumentNumber() {
-        return instrumentNumber;
-    }
-
-    public void setInstrumentNumber(int num) {
-        this.instrumentNumber = num;
-    }
-
-//    public SoundObjectEditor getEditor() {
-//        return new GenericEditor();
-//    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(int instrumentNumber, float renderStart, float renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         String noteText = "i" + instrumentNumber + "\t" + startTime + "\t"
@@ -102,24 +88,13 @@ public class Sound extends AbstractSoundObject implements Serializable,
         return n;
     }
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateInstruments(Arrangement arrangement) {
+    protected Instrument generateInstrument() {
         GenericInstrument temp = new GenericInstrument();
         temp.setName(this.name);
         temp.setText(this.instrument);
         temp.setEnabled(true);
-        int iNum = arrangement.addInstrument(temp);
-        this.setInstrumentNumber(iNum);
+        return temp;
     }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
@@ -162,5 +137,17 @@ public class Sound extends AbstractSoundObject implements Serializable,
         retVal.addElement("instrumentText").setText(this.getText());
 
         return retVal;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        Instrument instr = generateInstrument();
+        int instrNum = compileData.addInstrument(instr);
+        
+        try {
+            return generateNotes(instrNum, startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

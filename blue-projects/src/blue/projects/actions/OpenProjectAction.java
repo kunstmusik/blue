@@ -8,6 +8,8 @@ import blue.projects.*;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.projects.recentProjects.RecentProjectsList;
+import blue.score.Score;
+import blue.score.layers.LayerGroup;
 import blue.settings.GeneralSettings;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
@@ -197,11 +199,23 @@ public final class OpenProjectAction implements ActionListener {
     }
 
     private static void checkDependencies(BlueData tempData) {
-        PolyObject pObj = tempData.getPolyObject();
-
+        Score score = tempData.getScore();
+        
         ArrayList filesList = new ArrayList();
 
-        checkAudioFiles(pObj, filesList);
+        for(int i = 0; i < score.getLayerGroupCount(); i++) {
+            LayerGroup layerGroup = score.getLayerGroup(i);
+            
+            if(!(layerGroup instanceof PolyObject)) {
+                continue;
+            }
+            
+            PolyObject pObj = (PolyObject)layerGroup;
+            
+            checkAudioFiles(pObj, filesList);
+        }
+        
+        
 
         if (filesList.size() > 0) {
             if (dependencyDialog == null) {
@@ -231,8 +245,18 @@ public final class OpenProjectAction implements ActionListener {
                 }
 
                 System.out.println(map);
+                
+                for(int i = 0; i < score.getLayerGroupCount(); i++) {
+                    LayerGroup layerGroup = score.getLayerGroup(i);
 
-                reconcileAudioFiles(pObj, map);
+                    if(!(layerGroup instanceof PolyObject)) {
+                        continue;
+                    }
+
+                    PolyObject pObj = (PolyObject)layerGroup;
+
+                    reconcileAudioFiles(pObj, map);
+                }
             }
         }
 

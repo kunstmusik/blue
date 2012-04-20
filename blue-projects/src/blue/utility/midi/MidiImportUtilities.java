@@ -275,19 +275,19 @@ public class MidiImportUtilities {
         return 440.0 * Math.exp(Math.log(2.0) * ((midi - 69) / 12.0));
     }
 
-    public static void main(String args[]) {
-        try {
-            PolyObject pObj = MidiImportUtilities.convertMidiFile(null, new File(
-                    "/home/steven/Desktop/DukasVillanelle.mid"));
-            System.out.println(pObj.generateNotes(0.0f, -1.0f));
-        } catch (NoteParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (SoundObjectException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+//    public static void main(String args[]) {
+//        try {
+//            PolyObject pObj = MidiImportUtilities.convertMidiFile(null, new File(
+//                    "/home/steven/Desktop/DukasVillanelle.mid"));
+//            System.out.println(pObj.generateNotes(0.0f, -1.0f));
+//        } catch (NoteParseException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        } catch (SoundObjectException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//    }
 
     private static class MNote {
         public int velocity = -1;

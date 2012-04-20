@@ -659,33 +659,6 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return buffer.toString();
     }
 
-    /**
-     * Gets compilation variable; should only be called by plugins when
-     * compiling a CSD is happening. Plugins can check variables that are set,
-     * useful for caching ID's, instruments, etc.
-     */
-    public Object getCompilationVariable(Object key) {
-        if (compilationVariables == null) {
-            compilationVariables = new HashMap();
-            return null;
-        }
-
-        return compilationVariables.get(key);
-    }
-
-    /**
-     * Sets compilation variable; should only be called by plugins when
-     * compiling a CSD is happening. Plugins can set variables, useful for
-     * caching ID's, instruments, etc.
-     */
-    public void setCompilationVariable(Object key, Object value) {
-        if (compilationVariables == null) {
-            compilationVariables = new HashMap();
-        }
-
-        compilationVariables.put(key, value);
-    }
-
     // NEW SAVING AND LOADING METHODS
     public static Arrangement loadFromXML(Element data) throws Exception {
         Arrangement arr = new Arrangement();

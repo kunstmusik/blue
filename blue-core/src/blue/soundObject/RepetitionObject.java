@@ -1,9 +1,6 @@
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
@@ -172,6 +169,15 @@ public class RepetitionObject extends AbstractSoundObject implements
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 }

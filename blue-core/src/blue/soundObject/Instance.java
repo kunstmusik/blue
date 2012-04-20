@@ -1,15 +1,13 @@
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import org.openide.util.Exceptions;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -48,36 +46,9 @@ public class Instance extends AbstractSoundObject implements Serializable {
         this.name = "Instance: ";
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new InstanceEditor();
-//    }
 
-    private void prepareCompilation() {
-        this.sObj = (SoundObject) sObj.clone();
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        prepareCompilation();
-
-        sObj.generateGlobals(globalOrcSco);
-    }
-
-    public void generateFTables(Tables tables) {
-        sObj.generateFTables(tables);
-    }
-
-    public void generateInstruments(Arrangement arr) {
-        sObj.generateInstruments(arr);
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
-        NoteList nl;
-
-        try {
-            nl = sObj.generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            throw new SoundObjectException(this, e);
-        }
+    public void processNotes(NoteList nl) throws SoundObjectException {
+        
         ScoreUtilities.normalizeNoteList(nl);
 
         try {
@@ -90,7 +61,6 @@ public class Instance extends AbstractSoundObject implements Serializable {
                 .getSubjectiveDuration(), this.getRepeatPoint());
         ScoreUtilities.setScoreStart(nl, startTime);
 
-        return nl;
     }
 
     public float getObjectiveDuration() {
@@ -209,5 +179,18 @@ public class Instance extends AbstractSoundObject implements Serializable {
      */
     public void setSoundObject(SoundObject obj) {
         sObj = obj;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
+        
+        try {
+            processNotes(nl);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
+        
+        return nl;
     }
 }

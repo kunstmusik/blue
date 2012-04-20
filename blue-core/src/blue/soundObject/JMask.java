@@ -19,10 +19,7 @@
  */
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.jmask.Field;
@@ -34,8 +31,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class JMask extends AbstractSoundObject {
-
-//    private static BarRenderer renderer = new LetterRenderer("J");
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -49,15 +44,6 @@ public class JMask extends AbstractSoundObject {
         setName("JMask");
 
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateInstruments(Arrangement arr) {
     }
 
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
@@ -78,9 +64,6 @@ public class JMask extends AbstractSoundObject {
         return nl;
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new JMaskEditor();
-//    }
 
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -171,5 +154,18 @@ public class JMask extends AbstractSoundObject {
 
     public Object clone() {
         return ObjectUtilities.clone(this);
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        NoteList nl = null;
+        
+        try {
+            nl = generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
+        
+        return nl;
     }
 }

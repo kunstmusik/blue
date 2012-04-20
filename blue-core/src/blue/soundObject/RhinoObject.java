@@ -37,7 +37,6 @@ import java.io.Serializable;
 
 public class RhinoObject extends AbstractSoundObject implements Serializable,
         Cloneable, GenericEditable {
-//    private static BarRenderer renderer = new LetterRenderer("R");
 
     private String javaScriptCode;
 
@@ -76,10 +75,6 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         this.npc = chain;
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new GenericEditor();
-//    }
-
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
         // System.out.println("[RhinoObject] attempting to generate score for
         // object " + this.name + " at time " + this.startTime);
@@ -110,19 +105,6 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateInstruments(Arrangement arrangement) {
-    }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     /*
      * (non-Javadoc)
@@ -182,5 +164,14 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         retVal.addElement("javaScriptCode").setText(this.getText());
 
         return retVal;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

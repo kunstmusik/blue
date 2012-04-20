@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
+import blue.orchestra.Instrument;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
@@ -30,17 +31,11 @@ import java.io.Serializable;
 import javax.swing.JOptionPane;
 
 /**
- * @author Administrator
+ * @author Steven Yi
  *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class AudioFile extends AbstractSoundObject implements Serializable,
         Cloneable {
-
-//    private static BarRenderer renderer = new AudioFileRenderer();
-
-    private int instrumentNumber;
 
     private String soundFileName;
 
@@ -51,7 +46,6 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     private int windowSize = 8;
 
     public AudioFile() {
-        instrumentNumber = 0;
         this.setName("Audio File");
 
         soundFileName = "";
@@ -59,17 +53,9 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
 
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new AudioFileEditor();
-//    }
-
     // TODO - EXCEPTION - Look at Code to determine if Exception is Needed
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(int instrumentNumber, float renderStart, float renderEnd)  {
         NoteList n = new NoteList();
-
-        if (instrumentNumber == 0) {
-            return n;
-        }
 
         float newDur = subjectiveDuration;
 
@@ -91,7 +77,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         try {
             tempNote = Note.createNote(buffer.toString());
         } catch (NoteParseException e) {
-            throw new SoundObjectException(this, e);
+            throw new RuntimeException(new SoundObjectException(this, e));
         }
         if (tempNote != null) {
             n.addNote(tempNote);
@@ -100,34 +86,20 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return n;
     }
 
-    /*
-     * public void generateInstruments(Orchestra orch) { String instrumentText =
-     * generateInstrumentText(); if (instrumentText == null) {
-     * JOptionPane.showMessageDialog( null, "Could not generate instrument for
-     * soundfile" + " " + getSoundFileName()); return; }
-     *
-     * GenericInstrument temp = new GenericInstrument();
-     * temp.setName(this.name); temp.setText(instrumentText);
-     * temp.setEnabled(true); int iNum = orch.addInstrument(temp);
-     * this.setInstrumentNumber(iNum); }
-     */
-
-    public void generateInstruments(Arrangement arrangement) {
+    public Instrument generateInstrument() {
         
         String instrumentText = generateInstrumentText();
+        
         if (instrumentText == null) {
-            JOptionPane.showMessageDialog(null, BlueSystem
-                    .getString("audioFile.couldNotGenerate")
-                    + " " + getSoundFileName());
-            return;
+            return null;
         }
 
         GenericInstrument temp = new GenericInstrument();
         temp.setName(this.name);
         temp.setText(instrumentText);
         temp.setEnabled(true);
-        int iNum = arrangement.addInstrument(temp);
-        this.setInstrumentNumber(iNum);
+        //int iNum = arrangement.addInstrument(temp);
+        return temp;
     }
 
     private String generateInstrumentText() {
@@ -200,10 +172,6 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return subjectiveDuration;
     }
 
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
-
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
@@ -225,8 +193,6 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
     }
 
-    public static void main(String[] args) {
-    }
 
     // METHODS SPECIFIC FOR THIS SOUNDOBJECT
 
@@ -244,14 +210,6 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
 
     public void setSoundFileName(String string) {
         soundFileName = string;
-    }
-
-    public int getInstrumentNumber() {
-        return instrumentNumber;
-    }
-
-    public void setInstrumentNumber(int i) {
-        instrumentNumber = i;
     }
 
     /*
@@ -293,15 +251,17 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return retVal;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see blue.soundObject.SoundObject#generateFTables(blue.Tables)
-     */
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        Instrument instr = this.generateInstrument();
+        if(instr == null) {
+             throw new RuntimeException(new SoundObjectException(this, BlueSystem
+                    .getString("audioFile.couldNotGenerate")
+                    + " " + getSoundFileName()));
+        }
+        int instrNum = compileData.addInstrument(instr);
+        NoteList nl = this.generateNotes(instrNum, startTime, endTime);
+        return nl;
     }
 
 }

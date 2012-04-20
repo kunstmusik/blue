@@ -101,7 +101,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
     JMenuItem convertPolyMenuOpt = new JMenuItem();
 
-    JMenuItem convertGenericMenuOpt = new JMenuItem();
+//    JMenuItem convertGenericMenuOpt = new JMenuItem();
 
     JMenuItem convertObjectBuilderMenuOpt = new JMenuItem();
 
@@ -138,8 +138,8 @@ public class SoundObjectPopup extends JPopupMenu {
         BlueSystem.setMenuText(sObjLibMenuOpt, "soundObjectPopup.sObjLib");
         BlueSystem.setMenuText(convertPolyMenuOpt,
                 "soundObjectPopup.convertPoly");
-        BlueSystem.setMenuText(convertGenericMenuOpt,
-                "soundObjectPopup.convertGeneric");
+//        BlueSystem.setMenuText(convertGenericMenuOpt,
+//                "soundObjectPopup.convertGeneric");
         BlueSystem.setMenuText(convertObjectBuilderMenuOpt,
                 "soundObjectPopup.convertObjectBuilder");
         BlueSystem.setMenuText(replaceOpt, "soundObjectPopup.replace");
@@ -185,12 +185,12 @@ public class SoundObjectPopup extends JPopupMenu {
                 convertToPolyObject();
             }
         });
-        convertGenericMenuOpt.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                convertToGenericScore();
-            }
-        });
+//        convertGenericMenuOpt.addActionListener(new ActionListener() {
+//
+//            public void actionPerformed(ActionEvent e) {
+//                convertToGenericScore();
+//            }
+//        });
         convertObjectBuilderMenuOpt.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
@@ -343,7 +343,7 @@ public class SoundObjectPopup extends JPopupMenu {
         this.addSeparator();
 
         this.add(convertPolyMenuOpt);
-        this.add(convertGenericMenuOpt);
+//        this.add(convertGenericMenuOpt);
         this.add(convertObjectBuilderMenuOpt);
         this.add(replaceOpt);
         this.add(followTheLeaderMenuOpt);
@@ -570,56 +570,57 @@ public class SoundObjectPopup extends JPopupMenu {
         sCanvas.removeSoundObjects();
     }
 
-    private void convertToGenericScore() {
-        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-
-        SoundObject temp = sCanvas.mBuffer.getBufferedSoundObject();
-
-        if (temp == null) {
-            return;
-        }
-
-        int retVal = JOptionPane.showConfirmDialog(null,
-                "This operation can not be undone.\nAre you sure?");
-
-        if (retVal != JOptionPane.OK_OPTION) {
-            return;
-        }
-
-        GenericScore tempGen = null;
-
-            try {
-                BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
-                Arrangement arr = project.getData().getArrangement();
-
-                temp.generateInstruments(arr);
-
-                // TODO - NEED TO GRAB FTABLES FROM TEMP INSTRUMENT!
-                tempGen = GenericScore.transformSoundObject(temp);
-            } catch (SoundObjectException e) {
-                String message = "Could not convert to GenericScore due to errors in the "
-                        + "Source SoundObject. Please correct the errors before proceeding.";
-
-                SoundObjectException soe = new SoundObjectException(temp,
-                        message, e);
-
-                ExceptionDialog.showExceptionDialog(SwingUtilities
-                        .getRoot(this), soe);
-                return;
-
-            }
-
-        removeSObj();
-
-        float startTime = (float) sObjView.getX() / sCanvas.getPolyObject().getPixelSecond();
-        tempGen.setStartTime(startTime);
-
-        sCanvas.getPolyObject().addSoundObject(index, tempGen);
-
-        sCanvas.sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
-
-    }
+    // FIXME
+//    private void convertToGenericScore() {
+//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
+//
+//        SoundObject temp = sCanvas.mBuffer.getBufferedSoundObject();
+//
+//        if (temp == null) {
+//            return;
+//        }
+//
+//        int retVal = JOptionPane.showConfirmDialog(null,
+//                "This operation can not be undone.\nAre you sure?");
+//
+//        if (retVal != JOptionPane.OK_OPTION) {
+//            return;
+//        }
+//
+//        GenericScore tempGen = null;
+//
+//            try {
+//                BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
+//                Arrangement arr = project.getData().getArrangement();
+//
+//                temp.generateInstruments(arr);
+//
+//                // TODO - NEED TO GRAB FTABLES FROM TEMP INSTRUMENT!
+//                tempGen = GenericScore.transformSoundObject(temp);
+//            } catch (SoundObjectException e) {
+//                String message = "Could not convert to GenericScore due to errors in the "
+//                        + "Source SoundObject. Please correct the errors before proceeding.";
+//
+//                SoundObjectException soe = new SoundObjectException(temp,
+//                        message, e);
+//
+//                ExceptionDialog.showExceptionDialog(SwingUtilities
+//                        .getRoot(this), soe);
+//                return;
+//
+//            }
+//
+//        removeSObj();
+//
+//        float startTime = (float) sObjView.getX() / sCanvas.getPolyObject().getPixelSecond();
+//        tempGen.setStartTime(startTime);
+//
+//        sCanvas.getPolyObject().addSoundObject(index, tempGen);
+//
+//        sCanvas.sMouse.fireSelectionEvent(new SelectionEvent(null,
+//                SelectionEvent.SELECTION_CLEAR));
+//
+//    }
 
     private void convertToPolyObject() {
         int retVal = JOptionPane.showConfirmDialog(null,
@@ -887,7 +888,8 @@ public class SoundObjectPopup extends JPopupMenu {
 
         sLayer.addSoundObject(tempSObj);
 
-        tempData.setPolyObject(tempPObj);
+        tempData.getScore().clearLayerGroups();
+        tempData.getScore().addLayerGroup(tempPObj);
 
         String tempCSD;
         CsdRenderResult result;

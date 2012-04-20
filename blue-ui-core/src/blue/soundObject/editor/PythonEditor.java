@@ -21,6 +21,7 @@
 package blue.soundObject.editor;
 
 import blue.BlueSystem;
+import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.NoteList;
@@ -41,6 +42,7 @@ import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
+import org.openide.util.Exceptions;
 import org.syntax.jedit.tokenmarker.PythonTokenMarker;
 
 /**
@@ -174,9 +176,11 @@ public class PythonEditor extends SoundObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.pObj).generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+            notes = ((SoundObject) this.pObj).generateForCSD(CompileData.createEmptyCompileData(),
+                    0.0f, -1.0f);
+        } catch (Exception e) {
+//            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+            Exceptions.printStackTrace(e);
         }
 
         if (notes != null) {

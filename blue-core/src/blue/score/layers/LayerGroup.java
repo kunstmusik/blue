@@ -19,14 +19,27 @@
  */
 package blue.score.layers;
 
+import blue.CompileData;
 import blue.SoundObjectLibrary;
+import blue.soundObject.NoteList;
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public interface LayerGroup {
+public interface LayerGroup extends Serializable {
+    
+    /** 
+     * Called when compiling a CSD.  LayerGroups should use CompileData to add
+     * things besides score values, and should return score data as NoteLists.
+     * They can use the compileMap to store temporary data during the 
+     * compilation phase.
+     * 
+     * @param compileData 
+     */
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime);
     
     /**
      * Returns an XML Representation of this object.
@@ -79,6 +92,13 @@ public interface LayerGroup {
      * @return 
      */
     public Layer getLayerAt(int index);
+    
+    /* LIFECYCLE EVENT CODE */
+    
+    /** Called when a project has been loaded and allows layer to initialize
+     * any values.
+     */
+    public void onLoadComplete();
 
     /* LISTENER CODE */
     

@@ -35,6 +35,7 @@ import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.openide.util.Exceptions;
 import org.python.core.PyException;
 
 public class ObjectBuilder extends AbstractSoundObject {
@@ -64,8 +65,6 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     float repeatPoint = -1.0f;
 
-    private transient BSBCompilationUnit bsbCompilationUnit;
-
     public ObjectBuilder() {
         setName("ObjectBuilder");
 
@@ -81,25 +80,11 @@ public class ObjectBuilder extends AbstractSoundObject {
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new ObjectBuilderEditor();
-//    }
 
     // GENERATION METHODS
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        doPreCompilation();
-    }
 
-    public void generateFTables(Tables tables) {
-        // TODO Auto-generated method stub
-    }
-
-    public void generateInstruments(Arrangement arr) {
-        // TODO Auto-generated method stub
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, float renderStart, float renderEnd) throws SoundObjectException {
         String codeToRun = bsbCompilationUnit.replaceBSBValues(code);
 
         String tempScore = null;
@@ -196,7 +181,6 @@ public class ObjectBuilder extends AbstractSoundObject {
                 .getSubjectiveDuration(), this.getRepeatPoint());
         ScoreUtilities.setScoreStart(nl, startTime);
 
-        doPostCompilation();
         return nl;
     }
 
@@ -231,15 +215,6 @@ public class ObjectBuilder extends AbstractSoundObject {
             return blue.utility.TextUtilities.replace(temp, "$infile",
                     inFileName);
         }
-    }
-
-    private void doPreCompilation() {
-        bsbCompilationUnit = new BSBCompilationUnit();
-        graphicInterface.setupForCompilation(bsbCompilationUnit);
-    }
-
-    private void doPostCompilation() {
-        bsbCompilationUnit = null;
     }
 
     // END GENERATION METHODS
@@ -402,5 +377,16 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     public void setEditEnabled(boolean editEnabled) {
         this.editEnabled = editEnabled;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
+        graphicInterface.setupForCompilation(bsbCompilationUnit);
+        try {
+            return generateNotes(bsbCompilationUnit, startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

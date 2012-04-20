@@ -20,10 +20,8 @@
 
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
+import blue.CompileData;
 import blue.SoundObjectLibrary;
-import blue.Tables;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.awt.Color;
@@ -76,7 +74,7 @@ public interface SoundObject {
      * @param globalOrcSco
      */
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco);
+//    public void generateGlobals(GlobalOrcSco globalOrcSco);
 
     /**
      * Called during compile-time, this method is passed a blue.Tables object so
@@ -85,7 +83,7 @@ public interface SoundObject {
      * 
      * @param tables
      */
-    public void generateFTables(Tables tables);
+//    public void generateFTables(Tables tables);
 
     /**
      * Called during compile-time, this method is passed a blue.Orchestra object
@@ -94,7 +92,7 @@ public interface SoundObject {
      * 
      * Called after generateFTables() but before generateNotes().
      */
-    public void generateInstruments(Arrangement arr);
+//    public void generateInstruments(Arrangement arr);
 
     /**
      * Called during compile-time, returns the generated notes from the
@@ -117,9 +115,11 @@ public interface SoundObject {
      *            render. If the render end is after this soundObjects end time,
      *            render end will be passed in as negative value.
      */
-    public NoteList generateNotes(float renderStart, float renderEnd)
-            throws SoundObjectException;
+//    public NoteList generateNotes(float renderStart, float renderEnd)
+//            throws SoundObjectException;
 
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime);
+    
     /**
      * Sets the name of the SoundObject.
      */

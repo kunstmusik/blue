@@ -121,7 +121,7 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getTempo();
+            Tempo tempo = data.getScore().getTempo();
             TempoMapper tempoMapper = null;
             
             if(tempo.isEnabled()) {
@@ -134,7 +134,8 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
 
             RenderTimeManager timeManager = RenderTimeManager.getInstance();
             timeManager.setTempoMapper(tempoMapper);
-            timeManager.setRootPolyObject(data.getPolyObject());
+            // FIXME
+//            timeManager.setRootPolyObject(data.getPolyObject());
 
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();

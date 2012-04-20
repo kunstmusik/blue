@@ -110,7 +110,8 @@ public class AuditionManager {
             sLayer.addSoundObject((SoundObject) sObj.clone());
         }
 
-        tempData.setPolyObject(tempPObj);
+        tempData.getScore().clearLayerGroups();
+        tempData.getScore().addLayerGroup(tempPObj);
 
         Mixer m = tempData.getMixer();
 
@@ -141,7 +142,7 @@ public class AuditionManager {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getTempo();
+            Tempo tempo = data.getScore().getTempo();
             TempoMapper tempoMapper = null;
             
             if(tempo.isEnabled()) {
@@ -152,7 +153,8 @@ public class AuditionManager {
 
             RenderTimeManager timeManager = RenderTimeManager.getInstance();
             timeManager.setTempoMapper(tempoMapper);
-            timeManager.setRootPolyObject(data.getPolyObject());
+            //FIXME
+            //timeManager.setRootPolyObject(data.getPolyObject());
 
             File projectDir = BlueSystem.getCurrentProjectDirectory();
 

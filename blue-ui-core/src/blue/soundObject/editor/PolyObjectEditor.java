@@ -20,6 +20,7 @@
 
 package blue.soundObject.editor;
 
+import blue.*;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -39,11 +40,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
-import blue.Arrangement;
-import blue.BlueData;
-import blue.BlueSystem;
-import blue.GlobalOrcSco;
-import blue.Tables;
 import blue.gui.BlueEditorPane;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
@@ -52,6 +48,8 @@ import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.udo.OpcodeList;
+import org.openide.util.Exceptions;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -211,11 +209,12 @@ public class PolyObjectEditor extends SoundObjectEditor {
         String scoreText = "";
 
         try {
-            scoreText = sObj.generateNotes(0.0f, -1.0f).toString();
-        } catch (SoundObjectException e) {
-            // TODO Auto-generated catch block
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            scoreText = sObj.generateForCSD(CompileData.createEmptyCompileData(), 
+                    0.0f, -1.0f).toString();
+        } catch (Exception e) {
+//            ExceptionDialog
+//                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            Exceptions.printStackTrace(e);
         }
 
         sObjScoreDisplay.setText(scoreText);
@@ -244,26 +243,23 @@ public class PolyObjectEditor extends SoundObjectEditor {
         Tables tables = (Tables) data.getTableSet().clone();
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
         PolyObject tempPObj = (PolyObject) this.pObj.clone();
+        OpcodeList opcodeList = (OpcodeList) data.getOpcodeList().clone();
 
         GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco()
                 .clone();
 
         // adding all compile-time instruments from soundObjects to arrangement
-        tempPObj.generateGlobals(globalOrcSco);
         arrangement.generateFTables(tables);
-        tempPObj.generateFTables(tables);
-
-        // adding all compile-time instruments from soundObjects
-        tempPObj.generateInstruments(arrangement);
+        
+        CompileData compileData = new CompileData(arrangement, tables);
 
         // grabbing all notes from soundObjects
         NoteList generatedNotes = null;
 
         try {
-            generatedNotes = tempPObj.generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog
-                    .showExceptionDialog(SwingUtilities.getRoot(this), e);
+            generatedNotes = tempPObj.generateForCSD(compileData, 0.0f, -1.0f);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
             return;
         }
 

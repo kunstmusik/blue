@@ -6,7 +6,7 @@
 
 package blue.soundObject;
 
-import blue.Arrangement;
+import blue.CompileData;
 import blue.GlobalOrcSco;
 import blue.SoundObjectLibrary;
 import blue.Tables;
@@ -21,6 +21,7 @@ import electric.xml.Element;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
+import org.openide.util.Exceptions;
 
 /**
  * Base class for line objects. Most of this functionality was extracted from
@@ -32,12 +33,6 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
         Serializable {
 
     private static String LINE_OBJECT_CACHE = "abstractLineObject.lineObjectCache";
-
-//    private static BarRenderer renderer = new LetterRenderer("L");
-
-    protected transient HashMap ftableNumMap = null;
-
-    protected transient Integer[] instrLineArray;
 
     protected LineList lines = new LineList();
 
@@ -58,11 +53,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     /* RENDER TO CSD FUNCTIONS */
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        initializeCompileState();
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd)
+    public NoteList generateNotes(Integer[] instrLineArray, float renderStart, float renderEnd)
             throws SoundObjectException {
 
         NoteList notes = new NoteList();
@@ -78,7 +69,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
         StringBuffer buffer = new StringBuffer();
 
-        for (int i = 0; i < this.instrLineArray.length; i += 2) {
+        for (int i = 0; i < instrLineArray.length; i += 2) {
             Integer instrNum = instrLineArray[i];
             Integer lineNum = instrLineArray[i + 1];
 
@@ -105,22 +96,9 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
         ScoreUtilities.setScoreStart(notes, startTime);
 
-        clearCompileState();
-
         return notes;
     }
-
-    protected void initializeCompileState() {
-        instrLineArray = new Integer[lines.size() * 2];
-        ftableNumMap = new HashMap();
-    }
-
-    protected void clearCompileState() {
-        instrLineArray = null;
-        ftableNumMap.clear();
-        ftableNumMap = null;
-    }
-
+    
     protected String createTable(Line line) {
         // float range = line.getMax() - line.getMin();
         // float min = line.getMin();
@@ -168,17 +146,17 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     abstract protected String generateLineInstrument(Line line);
 
-    public void generateFTables(Tables tables) {
-
+    public void generateFTables(CompileData compileData, HashMap ftableNumMap) {
+        
         StringBuffer buffer = new StringBuffer();
 
         // TODO - need to grab from tables in static var
 
-        Object obj = tables.getCompilationVariable(LINE_OBJECT_CACHE);
+        Object obj = compileData.getCompilationVariable(LINE_OBJECT_CACHE);
 
         if (obj == null) {
             HashMap map = new HashMap();
-            tables.setCompilationVariable(LINE_OBJECT_CACHE, map);
+            compileData.setCompilationVariable(LINE_OBJECT_CACHE, map);
             obj = map;
         }
 
@@ -194,7 +172,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
             if (stringTables.containsKey(table)) {
                 tableNum = ((Integer) stringTables.get(table)).intValue();
             } else {
-                tableNum = tables.getOpenFTableNumber();
+                tableNum = compileData.getOpenFTableNumber();
                 stringTables.put(table, new Integer(tableNum));
                 buffer.append("f").append(tableNum);
                 buffer.append(table).append("\n");
@@ -204,10 +182,10 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
         }
 
-        tables.setTables(tables.getTables() + "\n" + buffer.toString());
+        compileData.appendTables(buffer.toString());
     }
 
-    public void generateInstruments(Arrangement arr) {
+    public void generateInstruments(CompileData compileData, Integer[] instrLineArray, HashMap ftableNumMap) {
         int i = 0;
 
         for (Iterator iter = lines.iterator(); iter.hasNext();) {
@@ -223,7 +201,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
             String lineId = line.getUniqueID();
             String key = "AbstractLineObject." + lineName;
-            Object val = arr.getCompilationVariable(key);
+            Object val = compileData.getCompilationVariable(key);
             int instrNum = -1;
             Integer lineNum = (Integer) ftableNumMap.get(lineId);
 
@@ -232,8 +210,8 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
                 String instrText = generateLineInstrument(line);
                 GenericInstrument instr = new GenericInstrument();
                 instr.setText(instrText);
-                instrNum = arr.addInstrument(instr);
-                arr.setCompilationVariable(key, new Integer(instrNum));
+                instrNum = compileData.addInstrument(instr);
+                compileData.setCompilationVariable(key, new Integer(instrNum));
             } else {
                 instrNum = ((Integer) val).intValue();
             }
@@ -248,14 +226,6 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
-
-//    public SoundObjectEditor getEditor() {
-//        return new LineEditor();
-//    }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
@@ -290,4 +260,21 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
         return retVal;
     }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        
+        Integer[] instrLineArray = new Integer[lines.size() * 2];
+        HashMap ftableNumMap = new HashMap();
+        
+        generateFTables(compileData, ftableNumMap);
+        generateInstruments(compileData, instrLineArray, ftableNumMap);
+        
+        try {
+            return generateNotes(instrLineArray, startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
 }

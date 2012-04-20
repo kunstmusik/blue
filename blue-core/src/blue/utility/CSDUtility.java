@@ -14,10 +14,7 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.orchestra.GenericInstrument;
-import blue.soundObject.GenericScore;
-import blue.soundObject.Note;
-import blue.soundObject.NoteList;
-import blue.soundObject.NoteParseException;
+import blue.soundObject.*;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
@@ -231,7 +228,9 @@ public class CSDUtility {
 
         genScore.setStartTime(section.sectionStartTime);
 
-        SoundLayer sLayer = (SoundLayer)data.getPolyObject().newLayerAt(-1);
+        PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+        
+        SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
         sLayer.addSoundObject(genScore);
 
     }
@@ -291,7 +290,8 @@ public class CSDUtility {
                 continue;
             }
 
-            sLayer = (SoundLayer)data.getPolyObject().newLayerAt(-1);
+            PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+            sLayer = (SoundLayer)pObj.newLayerAt(-1);
 
             String score = buffer.toString();
             NoteList notes;

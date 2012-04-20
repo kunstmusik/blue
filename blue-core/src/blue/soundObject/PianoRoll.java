@@ -1,9 +1,6 @@
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.pianoRoll.PianoNote;
@@ -87,18 +84,10 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         this.npc = chain;
     }
 
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
-
     // TODO - Implement using notes
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
-
-//    public SoundObjectEditor getEditor() {
-//        return new PianoRollEditor();
-//    }
 
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
         NoteList nl = new NoteList();
@@ -191,18 +180,6 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         ScoreUtilities.setScoreStart(nl, startTime);
 
         return nl;
-    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-        // PASS
-    }
-
-    public void generateFTables(Tables tables) {
-        // PASS
-    }
-
-    public void generateInstruments(Arrangement arrangment) {
-        // PASS
     }
 
     public int getTimeBehavior() {
@@ -515,5 +492,14 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
 
     public void setTransposition(int transposition) {
         this.transposition = transposition;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

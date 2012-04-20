@@ -20,10 +20,7 @@
 
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.io.Serializable;
@@ -74,18 +71,7 @@ public class DurationsSequence extends AbstractSoundObject implements
      *  } return tempScore.toString(); // }
      */
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see blue.soundObject.SoundObject#generateFTables(blue.Tables)
-     */
-    public void generateFTables(Tables tables) {
-    }
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(float renderStart, float renderEnd) {
         StringBuffer tempScore = new StringBuffer();
         StringTokenizer temp = new StringTokenizer(score, "\n");
         String buffer;
@@ -116,7 +102,7 @@ public class DurationsSequence extends AbstractSoundObject implements
                     try {
                         notes.addNote(Note.createNote(noteText));
                     } catch (NoteParseException e) {
-                        throw new SoundObjectException(this, e);
+                        throw new RuntimeException(new SoundObjectException(this, e));
                     }
 
                     tempStart += tempDur;
@@ -197,17 +183,17 @@ public class DurationsSequence extends AbstractSoundObject implements
 //        return renderer;
 //    }
 
-    public static void main(String args[]) {
-        DurationsSequence a = new DurationsSequence();
-        a.setText("i1 3 5 6\ni1 3 4 5");
-        a.setSubjectiveDuration(4.0f);
-        try {
-            System.out.println(a.generateNotes(0.0f, -1.0f));
-        } catch (SoundObjectException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+//    public static void main(String args[]) {
+//        DurationsSequence a = new DurationsSequence();
+//        a.setText("i1 3 5 6\ni1 3 4 5");
+//        a.setSubjectiveDuration(4.0f);
+//        try {
+//            System.out.println(a.generateNotes(0.0f, -1.0f));
+//        } catch (SoundObjectException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//    }
 
     public int getTimeBehavior() {
         return -1;
@@ -243,5 +229,10 @@ public class DurationsSequence extends AbstractSoundObject implements
      */
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         return null;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        return generateNotes(startTime, endTime);
     }
 }

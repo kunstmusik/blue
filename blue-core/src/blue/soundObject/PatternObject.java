@@ -20,10 +20,7 @@
 
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.pattern.Pattern;
@@ -117,15 +114,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
 
     /* COMPILATION METHODS */
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateInstruments(Arrangement arr) {
-    }
-
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
         NoteList tempNoteList = new NoteList();
 
@@ -139,48 +127,14 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         for (int i = 0; i < this.size(); i++) {
             Pattern p = this.getPattern(i);
 
-            if (p.isSolo()) {
+            if (p.isSolo() && !p.isMuted()) {
 
                 soloFound = true;
-
-                if (!p.isMuted()) {
-
-                    boolean[] tempPatternArray = p.values;
-
-                    for (int j = 0; j < tempPatternArray.length; j++) {
-
-                        if (tempPatternArray[j]) {
-                            NoteList tempPattern;
-
-                            try {
-                                tempPattern = ScoreUtilities.getNotes(p
-                                        .getPatternScore());
-                            } catch (NoteParseException e) {
-                                throw new SoundObjectException(this, e);
-                            }
-
-                            float start = (j * timeIncrement);
-
-                            ScoreUtilities.setScoreStart(tempPattern, start);
-
-                            tempNoteList.merge(tempPattern);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (soloFound) {
-            return tempNoteList;
-        }
-
-        for (int i = 0; i < this.size(); i++) {
-            Pattern p = this.getPattern(i);
-
-            if (!p.isMuted()) {
+                
                 boolean[] tempPatternArray = p.values;
 
                 for (int j = 0; j < tempPatternArray.length; j++) {
+
                     if (tempPatternArray[j]) {
                         NoteList tempPattern;
 
@@ -202,6 +156,37 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
 
         }
 
+        if (!soloFound) {
+           
+            for (int i = 0; i < this.size(); i++) {
+                Pattern p = this.getPattern(i);
+
+                if (!p.isMuted()) {
+                    boolean[] tempPatternArray = p.values;
+
+                    for (int j = 0; j < tempPatternArray.length; j++) {
+                        if (tempPatternArray[j]) {
+                            NoteList tempPattern;
+
+                            try {
+                                tempPattern = ScoreUtilities.getNotes(p
+                                        .getPatternScore());
+                            } catch (NoteParseException e) {
+                                throw new SoundObjectException(this, e);
+                            }
+
+                            float start = (j * timeIncrement);
+
+                            ScoreUtilities.setScoreStart(tempPattern, start);
+
+                            tempNoteList.merge(tempPattern);
+                        }
+                    }
+                }
+
+            }
+        }
+
         try {
             ScoreUtilities.applyNoteProcessorChain(tempNoteList, this.npc);
         } catch (NoteProcessorException e) {
@@ -219,10 +204,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -469,6 +450,15 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
             return;
         }
         pListeners.remove(pcl);
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 }

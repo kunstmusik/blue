@@ -60,6 +60,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 //import org.openide.util.ImageUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.util.Exceptions;
 import skt.swing.SwingUtil;
 
 /**
@@ -89,6 +90,8 @@ public final class BlueLiveTopComponent extends TopComponent {
     int mouseColumn = -1;
     int mouseRow = -1;
     PerformanceThread performanceThread = null;
+    
+    CompileData compileData = CompileData.createEmptyCompileData();
 
     public BlueLiveTopComponent() {
         initComponents();
@@ -387,6 +390,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     private void reinitialize() {
         this.data = null;
+        this.compileData = CompileData.createEmptyCompileData();
 
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         BlueData currentData = null;
@@ -440,13 +444,9 @@ public final class BlueLiveTopComponent extends TopComponent {
                 sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
             }
 
-            sObj.generateGlobals(new GlobalOrcSco());
-            sObj.generateFTables(new Tables());
-            sObj.generateInstruments(new Arrangement());
-            nl = sObj.generateNotes(0.0f, -1.0f);
-        } catch (SoundObjectException e) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                    e);
+            nl = sObj.generateForCSD(compileData, 0.0f, -1.0f);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
         }
 
         if (nl == null) {
@@ -925,14 +925,11 @@ public final class BlueLiveTopComponent extends TopComponent {
                         sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
                     }
 
-                    sObj.generateGlobals(new GlobalOrcSco());
-                    sObj.generateFTables(new Tables());
-                    sObj.generateInstruments(new Arrangement());
-                    nl.addAll(sObj.generateNotes(0.0f, -1.0f));
+                    
+                    nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));
                 }
-            } catch (SoundObjectException e) {
-                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                        e);
+            } catch (Exception e) {
+                Exceptions.printStackTrace(e);
             }
 
             int tempo = (Integer) tempoSpinner.getValue();

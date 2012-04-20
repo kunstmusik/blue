@@ -167,18 +167,20 @@ public final class ScoreTopComponent extends TopComponent {
 
             data.addPropertyChangeListener(pcl);
 
-            Tempo tempo = data.getTempo();
+            Tempo tempo = data.getScore().getTempo();
             tempoControlPanel.setTempo(tempo);
             tempoEditor.setTempo(tempo);
 
-            polyObjectBar.addPolyObject(data.getPolyObject());
+            // FIXME
+            PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+            polyObjectBar.addPolyObject(pObj);
 
             sLayerEditPanel.setNoteProcessorChainMap(data.getNoteProcessorChainMap());
 
             timeBar.setData(data);
 
             float val = data.getRenderStartTime();
-            int pixelSecond = data.getPolyObject().getPixelSecond();
+            int pixelSecond = pObj.getPixelSecond();
 
             int newX = (int) (val * pixelSecond);
             sTimeCanvas.updateRenderStartPointerX(newX, false);
@@ -365,12 +367,14 @@ public final class ScoreTopComponent extends TopComponent {
 
                 if (evt.getSource() == data && (isRenderStartTime || isRenderLoopTime)) {
 
-                    if (data.getPolyObject() == null) {
+                    if (data.getScore() == null) {
                         return;
                     }
 
                     float val = ((Float) evt.getNewValue()).floatValue();
-                    int newX = (int) (val * data.getPolyObject().getPixelSecond());
+                                
+                    PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+                    int newX = (int) (val * pObj.getPixelSecond());
 
                     if (isRenderStartTime) {
                         sTimeCanvas.updateRenderStartPointerX(newX, true);

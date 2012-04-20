@@ -79,18 +79,6 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         this.npc = chain;
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new PythonEditor();
-//    }
-
-    /*
-     * public String generateScore() { String tempScore =
-     * pProxy.processPythonCode(pythonCode, subjectiveDuration); Note[] notes =
-     * ScoreUtilities.getNotes(tempScore.toString()); float totalDur =
-     * ScoreUtilities.getTotalDuration(notes); ScoreUtilities.scaleScore(notes,
-     * (subjectiveDuration/totalDur)); ScoreUtilities.setScoreStart(notes,
-     * startTime); return ScoreUtilities.notesToString(notes); }
-     */
     public final NoteList generateNotes(float renderStart, float renderEnd) throws
             SoundObjectException {
         /*
@@ -127,19 +115,6 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         ScoreUtilities.setScoreStart(nl, startTime);
         return nl;
     }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateInstruments(Arrangement arrangement) {
-    }
-
-//    public BarRenderer getRenderer() {
-//        return renderer;
-//    }
 
     public int getTimeBehavior() {
         return this.timeBehavior;
@@ -213,6 +188,15 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
     public void processOnLoad() throws SoundObjectException {
         if (onLoadProcessable) {
             this.generateNotes(0.0f, -1.0f);
+        }
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

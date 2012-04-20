@@ -7,6 +7,7 @@ package blue.ui.core.render;
  * @author steven yi
  * @version 1.0
  */
+import blue.CompileData;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import java.text.MessageFormat;
@@ -82,7 +83,7 @@ public class CSDRender {
 
         String[] instrIds = arrangement.getInstrumentIds();
 
-        PolyObject tempPObj = (PolyObject) data.getPolyObject().clone();
+        //PolyObject tempPObj = (PolyObject) data.getPolyObject().clone();
 
         boolean hasInstruments = arrangement.size() > 0;
 
@@ -93,18 +94,10 @@ public class CSDRender {
 
         // add all UDO's from instruments and effects
         arrangement.generateUserDefinedOpcodes(udos);
-
-        // adding all compile-time tables from orch and soundObjects
-        tempPObj.generateGlobals(globalOrcSco);
         appendFtgenTableNumbers(globalOrcSco.getGlobalOrc(), tables);
-
         arrangement.generateFTables(tables);
-        tempPObj.generateFTables(tables);
-
-        String ftables = tables.getTables();
-
-        // adding all compile-time instruments from soundObjects
-        tempPObj.generateInstruments(arrangement);
+        
+        // SKIPPING ANYTHING RELATED TO SCORE
 
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
         globalSco += arrangement.generateGlobalSco() + "\n";
@@ -155,6 +148,8 @@ public class CSDRender {
         arrangement.addInstrument("blueAllNotesOff",
                 createAllNotesOffInstrument(instrIds));
 
+        String ftables = tables.getTables();
+        
         StrBuilder score = new StrBuilder();
         score.append("<CsoundSynthesizer>\n\n");
 
@@ -215,8 +210,6 @@ public class CSDRender {
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
-        PolyObject tempPObj = (PolyObject) data.getPolyObject().clone();
-
         Mixer mixer = null;
         boolean mixerEnabled = data.getMixer().isEnabled();
 
@@ -244,21 +237,17 @@ public class CSDRender {
         arrangement.generateUserDefinedOpcodes(udos);
 
         // adding all compile-time instruments from soundObjects to arrangement
-        tempPObj.generateGlobals(globalOrcSco);
         appendFtgenTableNumbers(globalOrcSco.getGlobalOrc(), tables);
 
         // generating ftables
         arrangement.generateFTables(tables);
-        tempPObj.generateFTables(tables);
-
+        
+        CompileData compileData = new CompileData(arrangement, tables);
+        NoteList generatedNotes = data.getScore().generateForCSD(compileData, 
+                startTime, endTime);
+        
         String ftables = tables.getTables();
-
-        // adding all compile-time instruments from soundObjects
-        tempPObj.generateInstruments(arrangement);
-
-        // grabbing all notes from soundObjects
-        NoteList generatedNotes = tempPObj.generateNotes(startTime, endTime);
-
+        
         // Handle Render End Instrument and Note
         if (endTime > 0.0f && endTime > startTime) {
             Instrument instr = createRenderEndInstrument();
@@ -274,7 +263,7 @@ public class CSDRender {
             }
         }
 
-        Tempo tempo = data.getTempo();
+        Tempo tempo = data.getScore().getTempo();
         TempoMapper tempoMapper = null;
         if (tempo.isEnabled()) {
             globalOrcSco.appendGlobalSco(
@@ -285,8 +274,10 @@ public class CSDRender {
         float totalDur = blue.utility.ScoreUtilities.getTotalDuration(
                 generatedNotes);
 
-        float processingStart = blue.utility.ScoreUtilities.getProcessingStartTime(
-                tempPObj);
+//        float processingStart = blue.utility.ScoreUtilities.getProcessingStartTime(
+//                tempPObj);
+        // FIXME - figure out what to do about PROCESSING_START
+        float processingStart = renderStartTime;
 
         System.out.println("<TOTAL_DUR> = " + totalDur);
         System.out.println("<RENDER_START> = " + renderStartTime);

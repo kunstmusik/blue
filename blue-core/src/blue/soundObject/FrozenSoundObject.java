@@ -27,6 +27,7 @@ import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
 import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 
 /**
  * @author steven
@@ -104,12 +105,6 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         this.frozenWaveFileName = frozenWaveFileName;
     }
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
@@ -153,28 +148,27 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         return n;
     }
 
-    public void generateInstruments(Arrangement arrangement) {
+    public void generateInstruments(CompileData compileData) {
 
-        Object obj = arrangement.getCompilationVariable(FSO_HAS_BEEN_COMPILED);
+        Object obj = compileData.getCompilationVariable(FSO_HAS_BEEN_COMPILED);
 
         if (obj == null || obj != Boolean.TRUE) {
 
-            arrangement.setCompilationVariable(FSO_HAS_BEEN_COMPILED,
+            compileData.setCompilationVariable(FSO_HAS_BEEN_COMPILED,
                     Boolean.TRUE);
 
             String instrumentText = generateInstrumentText();
             if (instrumentText == null) {
-                JOptionPane.showMessageDialog(null, BlueSystem
+                throw new RuntimeException(new SoundObjectException(this,  BlueSystem
                         .getString("audioFile.couldNotGenerate")
-                        + " " + getName());
-                return;
+                        + " " + getName()));
             }
 
             GenericInstrument temp = new GenericInstrument();
             temp.setName(FSO_INSTR_NAME);
             temp.setText(instrumentText);
             temp.setEnabled(true);
-            int iNum = arrangement.addInstrument(temp);
+            int iNum = compileData.addInstrument(temp);
             instrumentNumber = iNum;
         }
     }
@@ -268,6 +262,18 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         retVal.addElement(this.getFrozenSoundObject().saveAsXML(sObjLibrary));
 
         return retVal;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        generateInstruments(compileData);
+        NoteList nl = null;
+        try {
+            nl = generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
+        return nl;
     }
 
 }

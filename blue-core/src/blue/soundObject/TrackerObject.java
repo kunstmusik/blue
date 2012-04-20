@@ -20,10 +20,7 @@
 
 package blue.soundObject;
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.soundObject.tracker.TrackList;
@@ -37,6 +34,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.openide.util.Exceptions;
 
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 
@@ -54,19 +52,6 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
 
     public TrackerObject() {
         this.setName("Tracker");
-    }
-
-//    public SoundObjectEditor getEditor() {
-//        return new TrackerEditor();
-//    }
-
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
-    public void generateInstruments(Arrangement arr) {
     }
 
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
@@ -94,10 +79,6 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
     public float getObjectiveDuration() {
         return duration;
     }
-
-//    public BarRenderer getRenderer() {
-//        return new LetterRenderer("T");
-//    }
 
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -157,14 +138,6 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
 
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
-    }
-
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
     }
 
     public float getDuration() {
@@ -228,6 +201,15 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
             return;
         }
         listeners.remove(pcl);
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        try {
+            return generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 }

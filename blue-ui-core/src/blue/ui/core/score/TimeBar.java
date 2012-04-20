@@ -308,7 +308,9 @@ public final class TimeBar extends JPanel implements
         data.addPropertyChangeListener(this);
         data.getMarkersList().addTableModelListener(this);
 
-        setPolyObject(data.getPolyObject());
+        // FIXME - should be using Score object
+        //setPolyObject(data.getPolyObject());
+        setPolyObject((PolyObject)data.getScore().getLayerGroup(0));
 
     }
 
@@ -389,7 +391,7 @@ public final class TimeBar extends JPanel implements
         if (evt.getSource() == this.data && (prop.equals("renderStartTime") || prop.
                 equals("renderLoopTime"))) {
             repaint();
-        } else if (evt.getSource() == this.data.getPolyObject()) {
+        } else if (evt.getSource() == this.data.getScore().getLayerGroup(0)) {
             if (prop.equals("timeDisplay") || prop.equals("timeUnit") || prop.
                     equals("pixelSecond")) {
                 // updateBuffer();

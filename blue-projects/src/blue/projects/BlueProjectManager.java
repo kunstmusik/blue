@@ -23,11 +23,11 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.ProjectProperties;
 import blue.projects.recentProjects.RecentProjectsList;
+import blue.score.Score;
 import blue.settings.DiskRenderSettings;
 import blue.settings.GeneralSettings;
 import blue.settings.ProjectDefaultsSettings;
 import blue.settings.RealtimeRenderSettings;
-import blue.soundObject.SoundObjectException;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;
@@ -158,8 +158,9 @@ public class BlueProjectManager {
                 BlueSystem.setCurrentProjectDirectory(null);
             }
             try {
-                project.getData().getPolyObject().processOnLoad();
-            } catch (SoundObjectException ex) {
+                Score score = project.getData().getScore();
+                score.processOnLoad();
+            } catch (Exception ex) {
                 Exceptions.printStackTrace(ex);
             }
         }

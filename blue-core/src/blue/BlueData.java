@@ -21,13 +21,13 @@
 package blue;
 
 import Silence.XMLSerializer;
-import blue.blueLive.LiveObject;
 import blue.ftable.FTableSet;
 import blue.midi.MidiInputProcessor;
 import blue.mixer.Mixer;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentList;
+import blue.score.Score;
 import blue.score.tempo.Tempo;
 import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
@@ -35,7 +35,6 @@ import blue.soundObject.RepetitionObject;
 import blue.soundObject.SoundObject;
 import blue.udo.OpcodeList;
 import blue.upgrades.UpgradeManager;
-import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Attribute;
@@ -86,7 +85,7 @@ public class BlueData implements Serializable {
 
     private LiveData liveData;
 
-    private PolyObject pObj;
+    private Score score;
 
     private ScratchPadData scratchData;
 
@@ -100,8 +99,6 @@ public class BlueData implements Serializable {
 
     private boolean loopRendering;
     
-    private Tempo tempo;
-
     // all of this left here for compatibility's sake;
     // no longer being used (moved to ProjectProperties class)
     private String title;
@@ -153,11 +150,10 @@ public class BlueData implements Serializable {
         markersList = new MarkersList();
         loopRendering = false;
 
-        pObj = new PolyObject(true);
+        score = new Score();
+        score.addLayerGroup(new PolyObject());
 
         liveData = new LiveData();
-
-        tempo = new Tempo();
 
         midiInputProcessor = new MidiInputProcessor();
     }
@@ -176,12 +172,8 @@ public class BlueData implements Serializable {
         this.version = version;
     }
 
-    public PolyObject getPolyObject() {
-        return pObj;
-    }
-
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
+    public Score getScore() {
+        return score;
     }
 
     public Orchestra getOrchestra() {
@@ -293,7 +285,7 @@ public class BlueData implements Serializable {
 
         // for 0.91.5, converting all repetitionObjects to genericScore
 
-        convertRepetitionObjects(this.pObj);
+//        convertRepetitionObjects(this.pObj);
 
         convertOrchestra();
         
@@ -436,6 +428,9 @@ public class BlueData implements Serializable {
     }
 
     public static BlueData loadFromXML(Element data) throws Exception {
+        
+        UpgradeManager.getInstance().performPreUpgrades(data);
+
         BlueData blueData = new BlueData();
 
         Elements nodes = data.getElements();
@@ -489,9 +484,8 @@ public class BlueData implements Serializable {
             } else if (nodeName.equals("liveData")) {
                 blueData.liveData = LiveData
                         .loadFromXML(node, blueData.sObjLib);
-            } else if (nodeName.equals("soundObject")) {
-                blueData.pObj = (PolyObject) ObjectUtilities.loadFromXML(data
-                        .getElement("soundObject"), blueData.sObjLib);
+            } else if (nodeName.equals("score")) {
+                blueData.score = Score.loadFromXML(node, blueData.sObjLib);
             } else if (nodeName.equals("scratchPadData")) {
                 blueData.scratchData = ScratchPadData.loadFromXML(node);
             } else if (nodeName.equals("noteProcessorChainMap")) {
@@ -508,8 +502,6 @@ public class BlueData implements Serializable {
             } else if (nodeName.equals("loopRendering")) {
                 blueData.setLoopRendering(node.getTextString()
                         .equalsIgnoreCase("true"));
-            } else if (nodeName.equals("tempo")) {
-                blueData.tempo = Tempo.loadFromXML(node);
             } else if (nodeName.equals("midiInputProcessor")) {
                 blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
                         node);
@@ -557,7 +549,7 @@ public class BlueData implements Serializable {
         retVal.addElement(opcodeList.saveAsXML());
 
         retVal.addElement(liveData.saveAsXML(sObjLib));
-        retVal.addElement(pObj.saveAsXML(sObjLib));
+        retVal.addElement(score.saveAsXML(sObjLib));
         retVal.addElement(scratchData.saveAsXML());
         retVal.addElement(noteProcessorChainMap.saveAsXML());
 
@@ -569,7 +561,6 @@ public class BlueData implements Serializable {
         retVal.addElement("loopRendering").setText(
                 Boolean.toString(loopRendering));
 
-        retVal.addElement(tempo.saveAsXML());
         retVal.addElement(midiInputProcessor.saveAsXML());
         
         return retVal;
@@ -705,14 +696,6 @@ public class BlueData implements Serializable {
 
     public void setMixer(Mixer mixer) {
         this.mixer = mixer;
-    }
-    
-    public Tempo getTempo() {
-        return tempo;
-    }
-    
-    public void setTempo(Tempo tempo) {
-        this.tempo = tempo;
     }
 
     public MidiInputProcessor getMidiInputProcessor() {

@@ -28,10 +28,7 @@ package blue.soundObject;
  * @version 1.0
  */
 
-import blue.Arrangement;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
+import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
@@ -40,8 +37,6 @@ import java.io.Serializable;
 
 public class GenericScore extends AbstractSoundObject implements Serializable,
         Cloneable, GenericEditable, GenericViewable {
-
-//    private static BarRenderer renderer = new GenericRenderer();
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
@@ -89,12 +84,6 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         return npc;
     }
 
-    public void generateGlobals(GlobalOrcSco globalOrcSco) {
-    }
-
-    public void generateFTables(Tables tables) {
-    }
-
     public final NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
         NoteList nl;
         try {
@@ -116,12 +105,6 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         return nl;
     }
 
-    public void generateInstruments(Arrangement arrangement) {
-    }
-
-//    public SoundObjectEditor getEditor() {
-//        return new GenericEditor();
-//    }
 
     public static GenericScore transformSoundObject(SoundObject sObj)
             throws SoundObjectException {
@@ -131,7 +114,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         buffer.setName("GEN: " + sObj.getName());
 
         sObj.setStartTime(0.0f);
-        buffer.setText(sObj.generateNotes(0.0f, -1.0f).toString());
+        buffer.setText(sObj.generateForCSD(null, 0.0f, -1.0f).toString());
         return buffer;
     }
 
@@ -198,6 +181,17 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         retVal.addElement("score").setText(this.getText());
 
         return retVal;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        NoteList nl = null;
+        try {
+            nl = generateNotes(startTime, endTime);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
+        return nl;
     }
 
 } 
