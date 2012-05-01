@@ -135,7 +135,6 @@ public class APIDiskRenderer {
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
-        csound.delete();
 
         RenderTimeManager.getInstance().endRender();
 
