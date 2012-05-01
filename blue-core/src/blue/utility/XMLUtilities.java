@@ -36,18 +36,8 @@ public class XMLUtilities {
         return Integer.parseInt(data.getTextString());
     }
 
-    // TODO - Consider removing as it promotes not looping through elements
-    public static float readFloat(Element data, String nodeName) {
-        return Float.parseFloat(data.getTextString(nodeName));
-    }
-
     public static float readFloat(Element data) {
         return Float.parseFloat(data.getTextString());
-    }
-
-    // TODO - Consider removing as it promotes not looping through elements
-    public static boolean readBoolean(Element data, String nodeName) {
-        return Boolean.valueOf(data.getTextString(nodeName)).booleanValue();
     }
 
     public static boolean readBoolean(Element data) {

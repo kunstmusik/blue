@@ -102,8 +102,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
     public final SoundObjectBuffer buffer;
 
-    // TODO - Make private and eventually remove need to store reference
-//    ScoreGUI sGUI;
     AlphaMarquee marquee = new AlphaMarquee();
 
     TimePointer renderStartPointer = new TimePointer(Color.GREEN);
@@ -199,10 +197,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                 sObjPanel.setSize(size);
             }
         });
-
-        // this.setAutoscrolls(false);
-//        this.setOpaque(true);
-//        this.setDoubleBuffered(true);
 
         new ScoreTimelineDropTargetListener(this);
 
@@ -498,6 +492,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         actionMap.put("raisePixelSecond", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
+                //FIXME
 //                sGUI.timePixel.raisePixelSecond();
             }
         });
@@ -505,6 +500,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         actionMap.put("lowerPixelSecond", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
+                //FIXME
 //                sGUI.timePixel.lowerPixelSecond();
             }
         });
@@ -649,8 +645,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     }
 
     public void reset() {
-        //setPolyObject(this.pObj, this.timeState);
-
         SwingUtilities.invokeLater(new Runnable() {
 
             public void run() {
@@ -843,11 +837,8 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         this.setSize(d);
         this.setPreferredSize(d);
 
-//        sGUI.timeBar.setTimeView(time);
     }
 
-    //
-    /** ******************* */
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
         SoundObjectView temp = new SoundObjectView(sObj, timeState);
         sObjPanel.add(temp);
@@ -939,9 +930,6 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-//        Rectangle b = g.getClipBounds();
-//        System.out.println("Bounds " + b.x + " : " + b.y + " : " + b.width + " : " + b.height);
-
         int width = this.getWidth();
 
         g.setColor(Color.black);

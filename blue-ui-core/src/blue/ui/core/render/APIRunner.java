@@ -175,7 +175,6 @@ public class APIRunner implements CSDRunner, PlayModeListener {
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
-            csound.delete();
             csound = null;
             blueCallbackWrapper = null;
             return;

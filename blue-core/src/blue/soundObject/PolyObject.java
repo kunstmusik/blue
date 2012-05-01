@@ -347,15 +347,9 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         return retVal;
     }
 
-    //
-//    public SoundObjectEditor getEditor() {
-//        return new PolyObjectEditor();
-//    }
-
     public Object clone() {
         PolyObject pObj = new PolyObject();
 
-        //FIXME - add clone of TimeState
         pObj.setRoot(this.isRoot());
         pObj.setName(this.getName());
         pObj.setStartTime(this.getStartTime());
@@ -379,13 +373,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
 
     public void setTimeBehavior(int timeBehavior) {
-
-//        PropertyChangeEvent pce = new PropertyChangeEvent(this, "timeBehavior",
-//                new Integer(this.timeBehavior), new Integer(timeBehavior));
-
         this.timeBehavior = timeBehavior;
-
-//        firePropertyChangeEvent(pce);
     }
 
     public float getRepeatPoint() {
