@@ -22,6 +22,12 @@ NEW
 * Added "Search Csound Manual" option in Help menu to allow searching online
   Csound Manual using search terms (i.e. "guard point"); uses Google search
 
+FIX
+
+* Auditioning SoundObjects would cause a crash of program due to unnecessary 
+  deleting of Csound Object
+
+
 >Notes for 2.2.2<
 [released 2012.04.03]
 
