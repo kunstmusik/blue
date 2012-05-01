@@ -65,7 +65,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
                     scrollPane, e, sTimeCanvas);
 
             final int xLoc = e.getX();
-            final float timeVal = transPoint.getX() / (float) sTimeCanvas.pObj.getPixelSecond();
+            final float timeVal = transPoint.getX() / (float) timePixel.getTimeState().getPixelSecond();
 
             if (value > 0) {
                 timePixel.raisePixelSecond();
@@ -76,7 +76,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
-                    int newVal = (int) (timeVal * sTimeCanvas.pObj.getPixelSecond());
+                    int newVal = (int) (timeVal * timePixel.getTimeState().getPixelSecond());
 
                     newVal -= xLoc;
 

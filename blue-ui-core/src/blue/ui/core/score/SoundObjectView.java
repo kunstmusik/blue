@@ -26,6 +26,7 @@ import java.awt.Graphics;
 import javax.swing.JComponent;
 
 import blue.SoundLayer;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
@@ -54,13 +55,13 @@ public final class SoundObjectView extends JComponent implements Comparable,
 
     boolean selected = false;
 
-    private PolyObject pObj;
+    private TimeState timeState;
 
     BarRenderer renderer = null;
 
-    public SoundObjectView(SoundObject sObj, PolyObject pObj) {
+    public SoundObjectView(SoundObject sObj, TimeState timeState) {
         this.sObj = sObj;
-        this.pObj = pObj;
+        this.timeState = timeState;
 
 
         renderer = BarRendererCache.getInstance().getBarRenderer(this.sObj.getClass());
@@ -79,13 +80,13 @@ public final class SoundObjectView extends JComponent implements Comparable,
             this.sObj.removeSoundObjectListener(this);
 
             renderer.cleanup(this);
-            this.pObj = null;
+            this.timeState = null;
             this.sObj = null;
         }
     }
     
     private void init() {
-        this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * pObj
+        this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
                 .getPixelSecond()), SoundLayer.SOUND_LAYER_HEIGHT);
         this.setLayout(new BorderLayout());
         this.setDoubleBuffered(true);
@@ -96,9 +97,9 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     public void updateView(int newY, int newHeight) {
-        this.setLocation((int) (this.getStartTime() * pObj.getPixelSecond()),
+        this.setLocation((int) (this.getStartTime() * timeState.getPixelSecond()),
                 newY);
-        this.setSize((int) (this.getSubjectiveDuration() * pObj
+        this.setSize((int) (this.getSubjectiveDuration() * timeState
                 .getPixelSecond()), newHeight);
     }
 
@@ -138,8 +139,8 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     public void paintComponent(Graphics graphics) {
-        if(renderer != null && pObj != null) {
-            renderer.render(graphics, this, pObj.getPixelSecond());
+        if(renderer != null && timeState != null) {
+            renderer.render(graphics, this, timeState.getPixelSecond());
         }
     }
 

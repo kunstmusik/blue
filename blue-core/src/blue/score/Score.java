@@ -38,6 +38,7 @@ import java.util.ArrayList;
 public class Score implements Serializable {
 
     Tempo tempo = null;
+    TimeState timeState = null;
     ArrayList<LayerGroup> layerGroups = new ArrayList<LayerGroup>();
 
     public Score() {
@@ -47,8 +48,8 @@ public class Score implements Serializable {
     private Score(boolean populate) {
         if(populate) {
             PolyObject pObj = new PolyObject(true);
-            pObj.setName("root");
             layerGroups.add(pObj);
+            timeState = new TimeState();
         }
         tempo = new Tempo();
     }
@@ -81,9 +82,20 @@ public class Score implements Serializable {
         this.tempo = tempo;
     }
 
+    public TimeState getTimeState() {
+        return timeState;
+    }
+
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
+    
+    
+
     public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
         Element retVal = new Element("score");
         retVal.addElement(tempo.saveAsXML());
+        retVal.addElement(timeState.saveAsXML());
 
         for (LayerGroup layerGroup : layerGroups) {
             retVal.addElement(layerGroup.saveAsXML(sObjLibrary));
@@ -104,6 +116,8 @@ public class Score implements Serializable {
 
             if ("tempo".equals(node.getName())) {
                 score.tempo = Tempo.loadFromXML(node);
+            } else if("timeState".equals(node.getName())) {
+                score.timeState = TimeState.loadFromXML(node);
             } else {
 
                 LayerGroup layerGroup = manager.loadFromXML(node, sObjLibrary);
@@ -119,7 +133,6 @@ public class Score implements Serializable {
         
         if(score.layerGroups.size() == 0) {
             PolyObject pObj = new PolyObject(true);
-            pObj.setName("root");
             score.layerGroups.add(pObj);
         }
 

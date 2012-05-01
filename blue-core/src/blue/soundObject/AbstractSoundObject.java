@@ -3,7 +3,6 @@ package blue.soundObject;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -23,7 +22,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
 
     Color backgroundColor = Color.DARK_GRAY;
 
-    transient Vector listeners = null;
+    transient Vector<SoundObjectListener> soundObjectListeners = null;
 
     public AbstractSoundObject() {
     }
@@ -72,26 +71,25 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     public void addSoundObjectListener(SoundObjectListener listener) {
-        if (listeners == null) {
-            listeners = new Vector();
+        if (soundObjectListeners == null) {
+            soundObjectListeners = new Vector<SoundObjectListener>();
         }
-        listeners.add(listener);
+        soundObjectListeners.add(listener);
     }
 
     public void removeSoundObjectListener(SoundObjectListener listener) {
-        if (listeners == null) {
+        if (soundObjectListeners == null) {
             return;
         }
-        listeners.remove(listener);
+        soundObjectListeners.remove(listener);
     }
 
     public void fireSoundObjectEvent(SoundObjectEvent sObjEvent) {
-        if (listeners == null) {
+        if (soundObjectListeners == null) {
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            SoundObjectListener listener = (SoundObjectListener) iter.next();
+        for (SoundObjectListener listener : soundObjectListeners) {
             listener.soundObjectChanged(sObjEvent);
         }
     }

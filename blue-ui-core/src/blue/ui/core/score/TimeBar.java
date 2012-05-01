@@ -45,6 +45,7 @@ import javax.swing.event.TableModelListener;
 import blue.BlueData;
 import blue.Marker;
 import blue.MarkersList;
+import blue.score.TimeState;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.RenderTimeManager;
 import blue.soundObject.PolyObject;
@@ -73,15 +74,16 @@ public final class TimeBar extends JPanel implements
     // Image image;
     private BlueData data;
 
-    private PolyObject pObj;
+    private TimeState timeState;
 
     private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
 
-    // PlayMarker playMarker = new PlayMarker();
     private float renderStart = 0.0f;
 
     private float timePointer = 0.0f;
-
+    
+    private boolean rootTimeline = true;
+    
     public TimeBar() {
         this.setDoubleBuffered(true);
         this.setLayout(null);
@@ -93,7 +95,7 @@ public final class TimeBar extends JPanel implements
             int start;
 
             public void mousePressed(MouseEvent e) {
-                if (pObj == null || !pObj.isRoot()) {
+                if (!rootTimeline) {
                     return;
                 }
 
@@ -104,16 +106,16 @@ public final class TimeBar extends JPanel implements
                 }
 
                 
-                float time = (float) start / pObj.getPixelSecond();
+                float time = (float) start / timeState.getPixelSecond();
                 
-                if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / pObj.getSnapValue()) * pObj.getSnapValue();
+                if (timeState.isSnapEnabled() && !e.isShiftDown()) {
+                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
                 }
 
               
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    if (e.isShiftDown() && pObj.isRoot()) {
+                    if (e.isShiftDown() && rootTimeline) {
                         data.getMarkersList().addMarker(time);
 
                     } else {
@@ -136,7 +138,7 @@ public final class TimeBar extends JPanel implements
         this.addMouseMotionListener(new MouseMotionAdapter() {
 
             public void mouseDragged(MouseEvent e) {
-                if (pObj == null || !pObj.isRoot()) {
+                if (!rootTimeline) {
                     return;
                 }
 
@@ -146,10 +148,10 @@ public final class TimeBar extends JPanel implements
                     start = 0;
                 }
                 
-                float time = (float) start / pObj.getPixelSecond();
+                float time = (float) start / timeState.getPixelSecond();
 
-                if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                    time = Math.round(time / pObj.getSnapValue()) * pObj.getSnapValue();
+                if (timeState.isSnapEnabled() && !e.isShiftDown()) {
+                    time = Math.round(time / timeState.getSnapValue()) * timeState.getSnapValue();
                 }
 
                 if (SwingUtilities.isLeftMouseButton(e)) {
@@ -175,31 +177,31 @@ public final class TimeBar extends JPanel implements
         g2d.fillRect(0,0, getWidth(), getHeight());
         g2d.setPaint(p);
 
-        if (pObj == null || this.getHeight() == 0 || this.getWidth() == 0) {
+        if (timeState == null || this.getHeight() == 0 || this.getWidth() == 0) {
             return;
         }
 
         drawLinesAndNumbers(g);
 
-        if (pObj.isRoot()) {
+        if (rootTimeline) {
             g.setColor(Color.GREEN);
-            int x = (int) (data.getRenderStartTime() * pObj.getPixelSecond());
+            int x = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
             g.drawLine(x, 0, x, this.getHeight());
 
             float renderLoopTime = data.getRenderEndTime();
 
             if (renderLoopTime >= 0.0f) {
                 g.setColor(Color.YELLOW);
-                x = (int) (data.getRenderEndTime() * pObj.getPixelSecond());
+                x = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
                 g.drawLine(x, 0, x, this.getHeight());
             }
 
-            if (pObj == RenderTimeManager.getInstance().getRootPolyObject()) {
+            if (RenderTimeManager.getInstance().isCurrentProjectRendering()) {
                 float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
                 if (timePointer > latency && renderStart >= 0.0f) {
                     g.setColor(Color.ORANGE);
-                    x = (int) ((timePointer + renderStart - latency) * pObj.
+                    x = (int) ((timePointer + renderStart - latency) * timeState.
                             getPixelSecond());
                     g.drawLine(x, 0, x, this.getHeight());
                 }
@@ -212,7 +214,7 @@ public final class TimeBar extends JPanel implements
 
         int h = 19;
 
-        int timeDisplay = pObj.getTimeDisplay();
+        int timeDisplay = timeState.getTimeDisplay();
 
         int textWidth;
 
@@ -224,8 +226,8 @@ public final class TimeBar extends JPanel implements
             textWidth = fontMetrics.stringWidth("000");
         }
 
-        int pixelTime = pObj.getPixelSecond();
-        int timeUnit = pObj.getTimeUnit();
+        int pixelTime = timeState.getPixelSecond();
+        int timeUnit = timeState.getTimeUnit();
 
         LookAndFeel lnf = UIManager.getLookAndFeel();
 
@@ -310,16 +312,26 @@ public final class TimeBar extends JPanel implements
 
         // FIXME - should be using Score object
         //setPolyObject(data.getPolyObject());
-        setPolyObject((PolyObject)data.getScore().getLayerGroup(0));
+        setTimeState(data.getScore().getTimeState());
 
     }
 
+    public boolean isRootTimeline() {
+        return rootTimeline;
+    }
+
+    public void setRootTimeline(boolean rootTimeline) {
+        this.rootTimeline = rootTimeline;
+    }
+    
+    
+
     /**
-     * @param pObj
+     * @param timeState
      */
-    public void setPolyObject(PolyObject pObj) {
-        if (this.pObj != null) {
-            this.pObj.removePropertyChangeListener(this);
+    protected void setTimeState(TimeState timeState) {
+        if (this.timeState != null) {
+            this.timeState.removePropertyChangeListener(this);
         }
 
         Component[] components = getComponents();
@@ -333,14 +345,14 @@ public final class TimeBar extends JPanel implements
         }
 
 
-        this.pObj = pObj;
+        this.timeState = timeState;
 
-        if (pObj.isRoot()) {
+        if (rootTimeline) {
             initializeMarkers();
         }
 
         
-        this.pObj.addPropertyChangeListener(this);
+        this.timeState.addPropertyChangeListener(this);
 
         // updateBuffer();
         repaint();
@@ -357,7 +369,7 @@ public final class TimeBar extends JPanel implements
             Marker m = markers.getMarker(i);
             PlayMarker pm = new PlayMarker(m);
 
-            int x = (int) (m.getTime() * pObj.getPixelSecond());
+            int x = (int) (m.getTime() * timeState.getPixelSecond());
 
             pm.setLocation(x, 0);
 
@@ -396,7 +408,7 @@ public final class TimeBar extends JPanel implements
                     equals("pixelSecond")) {
                 // updateBuffer();
 
-                if (pObj.isRoot()) {
+                if (rootTimeline) {
                     Component[] components = getComponents();
                     this.removeAll();
 
@@ -519,7 +531,7 @@ public final class TimeBar extends JPanel implements
 
                         PlayMarker.this.setVisible(true);
 
-                        float newTime = (float) newX / pObj.getPixelSecond();
+                        float newTime = (float) newX / timeState.getPixelSecond();
 
                         playMarker.setLocation(newX, 0);
                         playMarker.marker.setTime(newTime);
@@ -555,7 +567,7 @@ public final class TimeBar extends JPanel implements
             if (evt.getSource() == marker) {
                 if (evt.getPropertyName().equals("time")) {
                     float time = ((Float) evt.getNewValue()).floatValue();
-                    int x = (int) (pObj.getPixelSecond() * time);
+                    int x = (int) (timeState.getPixelSecond() * time);
 
                     this.setLocation(x, 0);
                 }

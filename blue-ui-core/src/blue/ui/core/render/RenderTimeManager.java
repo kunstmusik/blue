@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import blue.noteProcessor.TempoMapper;
+import blue.projects.BlueProject;
+import blue.projects.BlueProjectManager;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import java.util.ArrayList;
@@ -49,6 +51,8 @@ public class RenderTimeManager {
     private TempoMapper tempoMapper;
     private PolyObject polyObject;
     TimingSource ts = null;
+    
+    BlueProject currentRenderingProject = null;
 
     private RenderTimeManager() {
     }
@@ -100,6 +104,8 @@ public class RenderTimeManager {
             }
         });
         ts.init();
+        
+        currentRenderingProject = BlueProjectManager.getInstance().getCurrentProject();
     }
 
     public void updateTimePointer(float timePointer) {
@@ -127,6 +133,8 @@ public class RenderTimeManager {
             ts = null;
         }
         timeAdjustCounter = 0;
+        
+        currentRenderingProject = null;
     }
 
     private void setRenderStart(float renderStart) {
@@ -141,8 +149,6 @@ public class RenderTimeManager {
         float oldTime = this.timePointer;
 
         float newVal = timePointer;
-
-
 
         this.timePointer = newVal;
 
@@ -175,19 +181,16 @@ public class RenderTimeManager {
         return this.tempoMapper;
     }
 
-    public void setRootPolyObject(PolyObject polyObject) {
-        this.polyObject = polyObject;
-    }
-
-    public PolyObject getRootPolyObject() {
-        return this.polyObject;
-    }
-
     public void addRenderTimeManagerListener(RenderTimeManagerListener listener) {
         renderListeners.add(listener);
     }
 
     public void removeRenderTimeManagerListener(RenderTimeManagerListener listener) {
         renderListeners.remove(listener);
+    }
+    
+    public boolean isCurrentProjectRendering() {
+        return currentRenderingProject == 
+                BlueProjectManager.getInstance().getCurrentProject();
     }
 }

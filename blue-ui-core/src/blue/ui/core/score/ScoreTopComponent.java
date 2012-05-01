@@ -29,6 +29,7 @@ import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.TimeState;
 import blue.score.tempo.Tempo;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
@@ -48,8 +49,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.logging.Logger;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -173,6 +172,7 @@ public final class ScoreTopComponent extends TopComponent {
 
             // FIXME
             PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+            TimeState timeState = data.getScore().getTimeState();
             polyObjectBar.addPolyObject(pObj);
 
             sLayerEditPanel.setNoteProcessorChainMap(data.getNoteProcessorChainMap());
@@ -180,7 +180,7 @@ public final class ScoreTopComponent extends TopComponent {
             timeBar.setData(data);
 
             float val = data.getRenderStartTime();
-            int pixelSecond = pObj.getPixelSecond();
+            int pixelSecond = timeState.getPixelSecond();
 
             int newX = (int) (val * pixelSecond);
             sTimeCanvas.updateRenderStartPointerX(newX, false);
@@ -373,8 +373,10 @@ public final class ScoreTopComponent extends TopComponent {
 
                     float val = ((Float) evt.getNewValue()).floatValue();
                                 
+                    //FIXME
                     PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
-                    int newX = (int) (val * pObj.getPixelSecond());
+                    TimeState timeState = data.getScore().getTimeState();
+                    int newX = (int) (val * timeState.getPixelSecond());
 
                     if (isRenderStartTime) {
                         sTimeCanvas.updateRenderStartPointerX(newX, true);
@@ -393,19 +395,22 @@ public final class ScoreTopComponent extends TopComponent {
 
     public void setPolyObject(PolyObject pObj) {
         tempoControlPanel.setPolyObject(pObj);
-        tempoEditor.setPolyObject(pObj);
+        
+        TimeState timeState = data.getScore().getTimeState();
+        
+        tempoEditor.setTimeState(timeState);
 
-        timePixel.setPolyObject(pObj);
+        timePixel.setTimeState(timeState);
 
         scrollPane.repaint();
 
         focusedPolyObject = pObj;
 
-        sTimeCanvas.setPObj(pObj);
+        sTimeCanvas.setPolyObject(pObj, timeState);
         sLayerEditPanel.setPolyObject(pObj);
 
-        timeBar.setPolyObject(pObj);
-        timeProperties.setPolyObject(pObj);
+        timeBar.setTimeState(timeState);
+        timeProperties.setTimeState(timeState);
     }
 
     public PolyObject getFocusedPolyObject() {

@@ -22,7 +22,6 @@
  */
 package blue.ui.core.score;
 
-import blue.Arrangement;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
@@ -30,8 +29,8 @@ import blue.actions.BlueAction;
 import blue.event.SelectionEvent;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
-import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.TimeState;
 import blue.ui.core.render.APIDiskRenderer;
 import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.CsdRenderResult;
@@ -130,6 +129,8 @@ public class SoundObjectPopup extends JPopupMenu {
     SoundObjectView sObjView;
 
     ScoreTimeCanvas sCanvas;
+    
+    TimeState timeState = null;
 
     public SoundObjectPopup(final ScoreTimeCanvas sCanvas) {
         this.sCanvas = sCanvas;
@@ -327,6 +328,44 @@ public class SoundObjectPopup extends JPopupMenu {
             }
         };
 
+        Action shiftAction = new AbstractAction(BlueSystem.getString("scoreGUI.action.shift")) {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (sCanvas.mBuffer.size() <= 0) {
+                    return;
+                }
+
+                String value = JOptionPane.showInputDialog(null, BlueSystem
+                        .getString("scoreGUI.action.shift.message"));
+
+                sCanvas.mBuffer.motionBufferObjects();
+                SoundObjectView[] views = sCanvas.mBuffer.motionBuffer;
+
+                try {
+                    float val = Float.parseFloat(value);
+
+                    for (int i = 0; i < views.length; i++) {
+                        if ((views[i].getStartTime() + val) < 0) {
+                            JOptionPane.showMessageDialog(null, BlueSystem
+                                    .getString("scoreGUI.action.shift.error"));
+                            return;
+                        }
+                    }
+
+                    for (int i = 0; i < views.length; i++) {
+                        SoundObject sObj = views[i].getSoundObject();
+
+                        views[i].setStartTime(sObj.getStartTime() + val);
+                    }
+
+                } catch (NumberFormatException nfe) {
+                    System.err.println(nfe.getMessage());
+                }
+            }
+            
+        };
+     
         JMenu align = new JMenu();
         BlueSystem.setMenuText(align, "soundObjectPopup.align");
 
@@ -354,7 +393,7 @@ public class SoundObjectPopup extends JPopupMenu {
         align.add(alignRightMenuOpt);
 
         this.add(reverseAction);
-        this.add(sCanvas.actions.shiftAction);
+        this.add(shiftAction);
 
         this.add(setTimeMenuOpt);
 
@@ -373,6 +412,10 @@ public class SoundObjectPopup extends JPopupMenu {
 
     }
 
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
+    
     protected boolean containsInstance(PolyObject pObj) {
         ArrayList soundObjects = pObj.getSoundObjects(true);
 
@@ -388,13 +431,6 @@ public class SoundObjectPopup extends JPopupMenu {
             }
         }
         return false;
-    }
-
-    protected void flipSoundObjectProperties() {
-        if (sCanvas != null) {
-//                JDialog dialog = sCanvas.sGUI.getSoundObjectPropertyDialog();
-//                dialog.setVisible(!dialog.isVisible());
-            }
     }
 
     /**
@@ -636,7 +672,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
         removeSObj();
 
-        float startTime = (float) sObjView.getX() / sCanvas.getPolyObject().getPixelSecond();
+        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
         temp.setStartTime(startTime);
 
         sCanvas.getPolyObject().addSoundObject(index, temp);
@@ -721,7 +757,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
         sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
 
-        float startTime = (float) sObjView.getX() / sCanvas.getPolyObject().getPixelSecond();
+        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
         newSoundObject.setStartTime(startTime);
 
         sCanvas.getPolyObject().addSoundObject(index, newSoundObject);

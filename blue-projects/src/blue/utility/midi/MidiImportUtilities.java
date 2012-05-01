@@ -73,7 +73,7 @@ public class MidiImportUtilities {
             return null;
         }
 
-        PolyObject pObj = new PolyObject();
+        PolyObject pObj = new PolyObject(true);
 
         Track[] tracks = sequence.getTracks();
 

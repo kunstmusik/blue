@@ -28,24 +28,24 @@ package blue.ui.core.score;
  * @version 1.0
  */
 
+import blue.score.TimeState;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import blue.soundObject.PolyObject;
 
 public final class TimePixelManager implements ActionListener {
 
-    private PolyObject pObj;
+    private TimeState timeState;
 
     public TimePixelManager() {
     }
 
     public void lowerPixelSecond() {
-        if (pObj == null) {
+        if (timeState == null) {
             return;
         }
 
-        int pixelSecond = pObj.getPixelSecond();
+        int pixelSecond = timeState.getPixelSecond();
 
         if (pixelSecond <= 2) {
             return;
@@ -53,16 +53,16 @@ public final class TimePixelManager implements ActionListener {
 
         pixelSecond -= 2;
 
-        pObj.setPixelSecond(pixelSecond);
+        timeState.setPixelSecond(pixelSecond);
     }
 
     public void raisePixelSecond() {
-        if (pObj == null) {
+        if (timeState == null) {
             return;
         }
 
-        int pixelSecond = pObj.getPixelSecond() + 2;
-        pObj.setPixelSecond(pixelSecond);
+        int pixelSecond = timeState.getPixelSecond() + 2;
+        timeState.setPixelSecond(pixelSecond);
     }
 
     public void actionPerformed(ActionEvent ae) {
@@ -78,8 +78,12 @@ public final class TimePixelManager implements ActionListener {
     /**
      * @param obj
      */
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
+    
+    public TimeState getTimeState() {
+        return this.timeState;
     }
 
 }

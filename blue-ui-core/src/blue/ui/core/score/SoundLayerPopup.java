@@ -24,6 +24,7 @@ package blue.ui.core.score;
 
 import blue.BlueSystem;
 import blue.actions.BlueAction;
+import blue.score.TimeState;
 import blue.score.undo.AddSoundObjectEdit;
 import blue.settings.GeneralSettings;
 import blue.soundObject.PolyObject;
@@ -72,6 +73,8 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
     private int sLayerIndex;
 
     private ScoreTimeCanvas sCanvas;
+    
+    TimeState timeState = null;
 
     public SoundLayerPopup() {
 
@@ -163,13 +166,13 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
                             int start = xValue;
 
-                            if (sCanvas.getPolyObject().isSnapEnabled()) {
-                                int snapPixels = (int) (sCanvas.getPolyObject().getSnapValue() * sCanvas.getPolyObject().getPixelSecond());
+                            if (timeState.isSnapEnabled()) {
+                                int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
 
                                 start = start - (start % snapPixels);
                             }
 
-                            float startTime = (float) start / sCanvas.getPolyObject().getPixelSecond();
+                            float startTime = (float) start / timeState.getPixelSecond();
                             tempInstr.setStartTime(startTime);
 
                             sCanvas.getPolyObject().addSoundObject(sLayerIndex, tempInstr);
@@ -203,13 +206,13 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
                 int start = xValue;
 
-                if (sCanvas.getPolyObject().isSnapEnabled()) {
-                    int snapPixels = (int) (sCanvas.getPolyObject().getSnapValue() * sCanvas.getPolyObject().getPixelSecond());
+                if (timeState.isSnapEnabled()) {
+                    int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
 
                     start = start - (start % snapPixels);
                 }
 
-                float startTime = (float) start / sCanvas.getPolyObject().getPixelSecond();
+                float startTime = (float) start / timeState.getPixelSecond();
                 PolyObject temp = new PolyObject();
                 temp.setStartTime(startTime);
 
@@ -232,6 +235,10 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
         });
     }
 
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
+    
     public void actionPerformed(ActionEvent ae) {
 
         // TODO - refactor out to addSoundObject
@@ -245,13 +252,13 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
             int start = xValue;
 
-            if (sCanvas.getPolyObject().isSnapEnabled()) {
-                int snapPixels = (int) (sCanvas.getPolyObject().getSnapValue() * sCanvas.getPolyObject().getPixelSecond());
+            if (timeState.isSnapEnabled()) {
+                int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
 
                 start = start - (start % snapPixels);
             }
 
-            float startTime = (float) start / sCanvas.getPolyObject().getPixelSecond();
+            float startTime = (float) start / timeState.getPixelSecond();
             sObj.setStartTime(startTime);
 
             sCanvas.getPolyObject().addSoundObject(sLayerIndex, sObj);

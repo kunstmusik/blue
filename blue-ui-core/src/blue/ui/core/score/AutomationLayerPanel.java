@@ -25,11 +25,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JComponent;
-import javax.swing.event.ListDataEvent;
 
 import blue.SoundLayer;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
+import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.ui.core.score.soundLayer.SoundLayerLayout;
@@ -40,6 +40,8 @@ public class AutomationLayerPanel extends JComponent implements
     SoundLayerLayout layout = new SoundLayerLayout();
 
     private PolyObject pObj = null;
+    
+    private TimeState timeState = null;
 
     private AlphaMarquee marquee;
     
@@ -50,9 +52,9 @@ public class AutomationLayerPanel extends JComponent implements
         this.marquee = marquee;
     }
 
-    public void setPolyObject(PolyObject pObj) {
+    public void setPolyObject(PolyObject pObj, TimeState timeState) {
         if (this.pObj != null && this.pObj.isRoot()) {
-            this.pObj.removePropertyChangeListener(this);
+            this.timeState.removePropertyChangeListener(this);
             this.pObj.removeLayerGroupListener(this);
         }
 
@@ -66,9 +68,10 @@ public class AutomationLayerPanel extends JComponent implements
         layout.setPolyObject(pObj);
 
         this.pObj = pObj;
+        this.timeState = timeState;
 
         if (pObj != null && pObj.isRoot()) {
-            this.pObj.addPropertyChangeListener(this);
+            this.timeState.addPropertyChangeListener(this);
             this.pObj.addLayerGroupListener(this);
         }
 
@@ -84,7 +87,7 @@ public class AutomationLayerPanel extends JComponent implements
             SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
-            paramPanel.setPolyObject(pObj);
+            paramPanel.setTimeState(timeState);
             paramPanel.setParameterIdList(sLayer.getAutomationParameters());
 
             this.add(paramPanel);
@@ -209,7 +212,7 @@ public class AutomationLayerPanel extends JComponent implements
         SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
-        paramPanel.setPolyObject(this.pObj);
+        paramPanel.setTimeState(timeState);
         paramPanel.setParameterIdList(sLayer.getAutomationParameters());
 
         // this.add(paramPanel);

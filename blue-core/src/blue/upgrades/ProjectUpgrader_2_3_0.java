@@ -20,14 +20,19 @@
 package blue.upgrades;
 
 import blue.BlueData;
+import blue.score.Score;
 import blue.soundObject.PolyObject;
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 
 /**
  * Changes:
  * <ul><li>Root PolyObject moved as sub-object of Score</li>
- * <li>Tempo object moved to sub-object of Score</li></ul>
+ * <li>Tempo object moved to sub-object of Score</li>
+ * <li>Time values in PolyObject encapsulated into TimeState object</li>
+ * <li>Grab Root polyObject's timestate to use as Score's timestate, 
+ * then set to null</li>
+ * </ul>
+ * 
  * 
  * @author stevenyi
  */
@@ -63,6 +68,22 @@ public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
 
     @Override
     public boolean upgrade(BlueData data) {
+        
+        Score score = data.getScore();
+        
+        if(!(score.getLayerGroup(0) instanceof PolyObject)) {
+            return false;
+        }
+        
+        PolyObject pObj = (PolyObject)score.getLayerGroup(0);
+        
+        if(pObj.getTimeState() != null) {
+            score.setTimeState(pObj.getTimeState());
+            pObj.setTimeState(null);
+            
+            return true;
+        }
+        
         return false;
     }
     

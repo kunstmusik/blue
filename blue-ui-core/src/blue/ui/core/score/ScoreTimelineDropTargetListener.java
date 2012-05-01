@@ -34,6 +34,7 @@ import java.net.URLDecoder;
 import java.util.List;
 
 import blue.BlueSystem;
+import blue.score.TimeState;
 import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
 import blue.utility.SoundFileUtilities;
@@ -46,11 +47,19 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
     DropTarget target;
 
     private ScoreTimeCanvas sTimeCanvas;
+    
+    TimeState timeState;
 
     public ScoreTimelineDropTargetListener(ScoreTimeCanvas sTimeCanvas) {
         this.sTimeCanvas = sTimeCanvas;
         target = new DropTarget(sTimeCanvas, this);
     }
+
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
+    
+    
 
     /*
      * (non-Javadoc)
@@ -138,7 +147,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
                 PolyObject pObj = sTimeCanvas.getPolyObject();
 
-                float startTime = (float) p.x / pObj.getPixelSecond();
+                float startTime = (float) p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(s);
 
                 af.setStartTime(startTime);
@@ -192,7 +201,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
 
                 PolyObject pObj = sTimeCanvas.getPolyObject();
 
-                float startTime = (float) p.x / pObj.getPixelSecond();
+                float startTime = (float) p.x / timeState.getPixelSecond();
                 float dur = SoundFileUtilities.getDurationInSeconds(str);
 
                 af.setStartTime(startTime);

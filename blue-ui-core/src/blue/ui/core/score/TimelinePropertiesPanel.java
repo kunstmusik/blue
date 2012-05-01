@@ -35,6 +35,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import blue.BlueSystem;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 
 class TimelinePropertiesPanel extends JComponent {
@@ -54,15 +55,15 @@ class TimelinePropertiesPanel extends JComponent {
 
     boolean isUpdating = false;
 
-    PolyObject pObj;
+    TimeState timeState;
 
     public TimelinePropertiesPanel() {
 
         snapEnabledBox.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                if (pObj != null) {
-                    pObj.setSnapEnabled(snapEnabledBox.isSelected());
+                if (timeState != null) {
+                    timeState.setSnapEnabled(snapEnabledBox.isSelected());
                 }
             }
         });
@@ -70,7 +71,7 @@ class TimelinePropertiesPanel extends JComponent {
         snapValue.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                if (pObj == null || isUpdating) {
+                if (timeState == null || isUpdating) {
                     return;
                 }
                 isUpdating = true;
@@ -80,9 +81,9 @@ class TimelinePropertiesPanel extends JComponent {
                     if (val < 0) {
                         return;
                     }
-                    pObj.setSnapValue(val);
+                    timeState.setSnapValue(val);
                 } catch (NumberFormatException nfe) {
-                    snapValue.setText(Float.toString(pObj.getSnapValue()));
+                    snapValue.setText(Float.toString(timeState.getSnapValue()));
                 }
 
                 isUpdating = false;
@@ -95,9 +96,9 @@ class TimelinePropertiesPanel extends JComponent {
             public void actionPerformed(ActionEvent e) {
                 if (!isUpdating) {
                     if (e.getSource() == timeDisplayTime) {
-                        pObj.setTimeDisplay(PolyObject.DISPLAY_TIME);
+                        timeState.setTimeDisplay(PolyObject.DISPLAY_TIME);
                     } else if (e.getSource() == timeDisplayNumber) {
-                        pObj.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
+                        timeState.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
 
                     }
                 }
@@ -119,14 +120,14 @@ class TimelinePropertiesPanel extends JComponent {
                     int val = Integer.parseInt(timeUnit.getText());
 
                     if (val < 1) {
-                        timeUnit.setText(Integer.toString(pObj.getTimeUnit()));
+                        timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
                         return;
                     }
 
-                    pObj.setTimeUnit(val);
+                    timeState.setTimeUnit(val);
 
                 } catch (NumberFormatException nfe) {
-                    timeUnit.setText(Integer.toString(pObj.getTimeUnit()));
+                    timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
                 }
 
             }
@@ -161,16 +162,16 @@ class TimelinePropertiesPanel extends JComponent {
 
     }
 
-    public void setPolyObject(PolyObject pObj) {
+    public void setTimeState(TimeState timeState) {
         isUpdating = true;
 
-        this.pObj = pObj;
+        this.timeState = timeState;
 
-        snapEnabledBox.setSelected(pObj.isSnapEnabled());
-        snapValue.setText(Float.toString(pObj.getSnapValue()));
-        timeUnit.setText(Integer.toString(pObj.getTimeUnit()));
+        snapEnabledBox.setSelected(timeState.isSnapEnabled());
+        snapValue.setText(Float.toString(timeState.getSnapValue()));
+        timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
 
-        if (pObj.getTimeDisplay() == PolyObject.DISPLAY_TIME) {
+        if (timeState.getTimeDisplay() == PolyObject.DISPLAY_TIME) {
             timeDisplayTime.setSelected(true);
         } else {
             timeDisplayNumber.setSelected(true);

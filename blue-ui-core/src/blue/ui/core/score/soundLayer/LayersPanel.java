@@ -28,8 +28,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -47,8 +45,7 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
 
-public class LayersPanel extends JComponent implements PropertyChangeListener,
-        LayerGroupListener {
+public class LayersPanel extends JComponent implements LayerGroupListener {
 
     private SoundLayerLayout layout = new SoundLayerLayout();
 
@@ -140,7 +137,6 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
 
     public void setPolyObject(PolyObject pObj) {
         if (this.pObj != null) {
-            this.pObj.removePropertyChangeListener(this);
             this.pObj.removeLayerGroupListener(this);
         }
 
@@ -149,7 +145,6 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
         this.pObj = pObj;
 
         if (pObj != null) {
-            this.pObj.addPropertyChangeListener(this);
             this.pObj.addLayerGroupListener(this);
         }
 
@@ -211,15 +206,6 @@ public class LayersPanel extends JComponent implements PropertyChangeListener,
 
     public SelectionModel getSelectionModel() {
         return selection;
-    }
-
-    /* PROPERTY LISTENER */
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.pObj) {
-            if (evt.getPropertyName().equals("heightIndex")) {
-                revalidate();
-            }
-        }
     }
 
     public void setNoteProcessorChainMap(NoteProcessorChainMap npcMap) {

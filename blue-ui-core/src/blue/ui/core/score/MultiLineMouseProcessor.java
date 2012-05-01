@@ -36,6 +36,7 @@ import javax.swing.SwingUtilities;
 import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.utilities.UiUtilities;
@@ -58,13 +59,18 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     float mouseDownTime = -1;
     float mouseTranslateTime = 0;
     
+    TimeState timeState = null;
+    
     public MultiLineMouseProcessor(ScoreTimeCanvas sCanvas) {
         this.sCanvas = sCanvas;
     }
+
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
     
     private float getPixelSecond() {
-        PolyObject pObj = sCanvas.getPolyObject();
-        return (float) pObj.getPixelSecond();
+        return (float)timeState.getPixelSecond();
     }
 
     public void mousePressed(MouseEvent e) {
@@ -187,9 +193,9 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
                         newTime = 0;
                     }
 
-                    if (sCanvas.pObj.isSnapEnabled() && !e.isControlDown()) {
+                    if (timeState.isSnapEnabled() && !e.isControlDown()) {
                         newTime = ScoreUtilities.getSnapValueMove(
-                                newTime, sCanvas.pObj.getSnapValue());
+                                newTime, timeState.getSnapValue());
                         
                        mouseTranslateTime = newTime - start;
                        
@@ -218,9 +224,9 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
                 int layerNum = pObj.getLayerNumForY(e.getY());
                 endTime = e.getX() / getPixelSecond();
                 
-                if (sCanvas.pObj.isSnapEnabled()) {
+                if (timeState.isSnapEnabled()) {
                     endTime = ScoreUtilities.getSnapValueMove(endTime,
-                            pObj.getSnapValue());
+                            timeState.getSnapValue());
                 }
                     
                 if(startLayer <= layerNum) {
@@ -333,8 +339,8 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
         startTime = point.x / getPixelSecond();
         int y = pObj.getYForLayerNum(layerNum);
         
-        if (pObj.isSnapEnabled()) {
-            startTime = ScoreUtilities.getSnapValueStart(startTime, pObj.getSnapValue());
+        if (timeState.isSnapEnabled()) {
+            startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
         }
                 // FIXME
         sCanvas.marquee.setStart(new Point(point.x, y));

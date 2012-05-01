@@ -58,6 +58,7 @@ import blue.components.AlphaMarquee;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
@@ -94,7 +95,7 @@ public class ParameterLinePanel extends JComponent implements
 
     Parameter currentParameter = null;
 
-    private PolyObject pObj;
+    private TimeState timeState;
 
     LineCanvasMouseListener mouseListener = new LineCanvasMouseListener(this);
 
@@ -183,8 +184,8 @@ public class ParameterLinePanel extends JComponent implements
         // };
     }
 
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
     }
 
     public void setParameterIdList(ParameterIdList paramIdList) {
@@ -675,7 +676,7 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
 
-        float pixelSecond = (float) pObj.getPixelSecond();
+        float pixelSecond = (float) timeState.getPixelSecond();
 
         float selectionStart;
         float selectionEnd;
@@ -847,10 +848,10 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     private int floatToScreenX(float val) {
-        if (pObj == null) {
+        if (timeState == null) {
             return -1;
         }
-        return Math.round(val * pObj.getPixelSecond());
+        return Math.round(val * timeState.getPixelSecond());
     }
 
     private int floatToScreenY(float yVal, float min, float max) {
@@ -889,11 +890,11 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     private float screenToFloatX(int val) {
-        if (pObj == null) {
+        if (timeState == null) {
             return -1;
         }
 
-        return (float) val / pObj.getPixelSecond();
+        return (float) val / timeState.getPixelSecond();
     }
 
     private float screenToFloatY(int val, float min, float max, float resolution) {
@@ -1157,7 +1158,7 @@ public class ParameterLinePanel extends JComponent implements
                         && x <= marquee.getX() + marquee.getWidth()) {
 
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        float pixelSecond = (float) pObj.getPixelSecond();
+                        float pixelSecond = (float) timeState.getPixelSecond();
 
                         mouseDownInitialTime = e.getX() / pixelSecond;
                         transTime = 0.0f;
@@ -1213,12 +1214,12 @@ public class ParameterLinePanel extends JComponent implements
                 if (SwingUtilities.isLeftMouseButton(e)) {
 
                     int start = e.getX();
-                    float pixelSecond = (float)pObj.getPixelSecond();
+                    float pixelSecond = (float)timeState.getPixelSecond();
                     
                     float startTime = start / pixelSecond;
 
-                    if (pObj.isSnapEnabled() && !e.isControlDown()) {
-                        startTime = ScoreUtilities.getSnapValueStart(startTime, pObj.getSnapValue());
+                    if (timeState.isSnapEnabled() && !e.isControlDown()) {
+                        startTime = ScoreUtilities.getSnapValueStart(startTime, timeState.getSnapValue());
                     }
 
                     if (e.isShiftDown()) {
@@ -1307,7 +1308,7 @@ public class ParameterLinePanel extends JComponent implements
             
             if (marquee.isVisible()) {
                 int x = e.getX();
-                float pixelSecond = (float)pObj.getPixelSecond();
+                float pixelSecond = (float)timeState.getPixelSecond();
                 float mouseDragTime = x / pixelSecond;
 
                 if (mouseDownInitialTime > 0) {
@@ -1316,9 +1317,9 @@ public class ParameterLinePanel extends JComponent implements
 
                         float newTime = getInitialStartTime() + transTime;
                         
-                        if (pObj.isSnapEnabled() && !e.isControlDown()) {
+                        if (timeState.isSnapEnabled() && !e.isControlDown()) {
                             newTime = ScoreUtilities.getSnapValueStart(newTime,
-                                    pObj.getSnapValue());
+                                    timeState.getSnapValue());
                             transTime = newTime - getInitialStartTime();
                         }
                         
@@ -1338,9 +1339,9 @@ public class ParameterLinePanel extends JComponent implements
                     
                     float endTime = x / pixelSecond;
                     
-                    if (pObj.isSnapEnabled() && !e.isControlDown()) {
+                    if (timeState.isSnapEnabled() && !e.isControlDown()) {
                         endTime = ScoreUtilities.getSnapValueMove(endTime,
-                                    pObj.getSnapValue());
+                                    timeState.getSnapValue());
                     }
                     
                     Point p = new Point((int)(endTime * pixelSecond), getY() + getHeight());
@@ -1367,12 +1368,12 @@ public class ParameterLinePanel extends JComponent implements
                     y = bottomY;
                 }
 
-                float pixelSecond = (float)pObj.getPixelSecond();
+                float pixelSecond = (float)timeState.getPixelSecond();
                 float dragTime = x / pixelSecond;
                 
-                if (pObj.isSnapEnabled() && !e.isControlDown()) {
+                if (timeState.isSnapEnabled() && !e.isControlDown()) {
                     dragTime = ScoreUtilities.getSnapValueMove(dragTime,
-                            pObj.getSnapValue());
+                            timeState.getSnapValue());
                 }
 
                 float min = currentParameter.getMin();

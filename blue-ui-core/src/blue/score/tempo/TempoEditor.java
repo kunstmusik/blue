@@ -7,6 +7,7 @@ package blue.score.tempo;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
@@ -45,7 +46,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     
     TableModelListener lineListener;
     Tempo tempo = null;
-    private PolyObject pObj;
+    private TimeState timeState;
     
     LinePoint selectedPoint = null;
 
@@ -79,9 +80,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         this.setTempoVisible(tempo.isVisible());
     }
     
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
-        setVisible(this.pObj.isRoot());
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
     }
 
     public void setTempoVisible(boolean tempoVisible) {
@@ -246,10 +246,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     }
 
     private int floatToScreenX(float val) {
-        if (pObj == null) {
+        if (timeState == null) {
             return -1;
         }
-        return Math.round(val * pObj.getPixelSecond());
+        return Math.round(val * timeState.getPixelSecond());
     }
 
     private int floatToScreenY(float yVal, float min, float max) {
@@ -288,11 +288,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     }
 
     private float screenToFloatX(int val) {
-        if (pObj == null) {
+        if (timeState == null) {
             return -1;
         }
 
-        return (float) val / pObj.getPixelSecond();
+        return (float) val / timeState.getPixelSecond();
     }
 
     private float screenToFloatY(int val, float min, float max, float resolution) {
@@ -466,8 +466,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                     int start = e.getX();
 
-                    if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                        int snapPixels = (int) (pObj.getSnapValue() * pObj.getPixelSecond());
+                    if (timeState.isSnapEnabled() && !e.isShiftDown()) {
+                        int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
                         int fraction = start % snapPixels;
 
                         start = start - fraction;
@@ -523,8 +523,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                     y = bottomY;
                 }
 
-                if (pObj.isSnapEnabled() && !e.isShiftDown()) {
-                    int snapPixels = (int) (pObj.getSnapValue() * pObj.getPixelSecond());
+                if (timeState.isSnapEnabled() && !e.isShiftDown()) {
+                    int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
                     int fraction = x % snapPixels;
 
                     x = x - fraction;
