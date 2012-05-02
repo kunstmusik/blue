@@ -40,7 +40,6 @@ import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.AuditionManager;
-import blue.ui.core.score.SoundObjectBuffer;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 

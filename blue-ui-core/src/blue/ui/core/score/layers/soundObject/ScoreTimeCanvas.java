@@ -70,7 +70,6 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.render.RenderTimeManagerListener;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.SoundObjectBuffer;
 import blue.ui.core.score.TimePointer;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;

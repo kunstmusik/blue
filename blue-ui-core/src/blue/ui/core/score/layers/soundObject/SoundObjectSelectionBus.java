@@ -18,7 +18,7 @@
   *  Boston, MA  02111-1307 USA
  */
 
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;

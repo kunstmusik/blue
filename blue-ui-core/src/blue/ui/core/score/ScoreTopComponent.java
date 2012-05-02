@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score;
 
+import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.ui.core.score.layers.soundObject.ScoreMouseWheelListener;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;

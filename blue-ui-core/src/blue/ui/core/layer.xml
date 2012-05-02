@@ -188,19 +188,19 @@
             </file>
             <file name="blue-ui-core-score-SoundObjectEditorAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectEditorTopComponent.findInstance"/>
+                <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectEditorAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
             <file name="blue-ui-core-score-SoundObjectLibraryAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectLibraryTopComponent.findInstance"/>
+                <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectLibraryAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
             <file name="blue-ui-core-score-SoundObjectPropertiesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.SoundObjectPropertiesTopComponent.findInstance"/>
+                <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectPropertiesTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectPropertiesAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
