@@ -16,10 +16,16 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public final class SoundObjectLibrary extends ArrayList {
+
+public final class SoundObjectLibrary extends ArrayList<SoundObject> {
 
     private boolean initializing = false;
+    
+    private transient ArrayList<ChangeListener> listeners = 
+            new ArrayList<ChangeListener>();
 
     public SoundObjectLibrary() {
 
@@ -28,24 +34,45 @@ public final class SoundObjectLibrary extends ArrayList {
     public void addSoundObject(SoundObject sObj) {
         sObj.setStartTime(0.0f);
         this.add(sObj);
+        fireChangeEvent();
     }
 
     public SoundObject getSoundObject(int index) {
-        return (SoundObject) (this.get(index));
+        return this.get(index);
     }
 
     public boolean removeSoundObject(SoundObject sObj) {
         int size = this.size();
 
         for (int i = 0; i < size; i++) {
-            if (this.getSoundObject(i) == sObj) {
+            if (this.get(i) == sObj) {
                 this.remove(i);
+                fireChangeEvent();
                 return true;
             }
         }
         return false;
     }
+    
+    /* LISTENER CODE */
+    
+    public void addChangeListener(ChangeListener cl) {
+        listeners.add(cl);
+    }
+    
+    public void removeChangeListener(ChangeListener cl) {
+        listeners.remove(cl);
+    }
+    
+    public void fireChangeEvent() {
+        ChangeEvent ce = new ChangeEvent(this);
+        for(ChangeListener cl : listeners) {
+            cl.stateChanged(ce);
+        }
+    }
 
+    /* SERIALIZATION CODE */
+            
     public static SoundObjectLibrary loadFromXML(Element data) throws Exception {
         SoundObjectLibrary sObjLib = new SoundObjectLibrary();
         sObjLib.setInitializing(true);
@@ -55,7 +82,7 @@ public final class SoundObjectLibrary extends ArrayList {
         while (sObjects.hasMoreElements()) {
             SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
                     sObjects.next(), sObjLib);
-            sObjLib.addSoundObject(sObj);
+            sObjLib.add(sObj);
         }
 
         sObjLib.setInitializing(false);
