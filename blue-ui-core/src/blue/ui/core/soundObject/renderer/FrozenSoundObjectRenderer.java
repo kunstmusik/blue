@@ -7,7 +7,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 import blue.SoundLayer;
-import blue.ui.core.score.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.soundObject.FrozenSoundObject;
 
 /**

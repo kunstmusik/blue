@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import javax.swing.JComponent;
 
-class TimePointer extends JComponent {
+public class TimePointer extends JComponent {
 
     private final Color color;
 

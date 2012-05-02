@@ -17,7 +17,7 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -68,6 +68,10 @@ import blue.ui.core.score.undo.RemoveSoundObjectEdit;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.RenderTimeManagerListener;
+import blue.ui.core.score.ModeListener;
+import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.SoundObjectBuffer;
+import blue.ui.core.score.TimePointer;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import javax.swing.undo.UndoManager;
@@ -805,7 +809,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     /**
      * checkSize is called when dragging an object
      */
-    protected void checkSize() {
+    public void checkSize() {
         if (getPolyObject() == null || timeState == null) {
             return;
         }

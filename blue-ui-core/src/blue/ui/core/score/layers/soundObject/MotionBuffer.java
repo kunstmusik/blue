@@ -1,4 +1,4 @@
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 /**
  * Title: blue Description: an object composition environment for csound

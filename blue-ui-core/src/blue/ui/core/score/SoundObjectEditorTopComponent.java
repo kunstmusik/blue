@@ -46,7 +46,7 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
-final class SoundObjectEditorTopComponent extends TopComponent implements SelectionListener {
+final public class SoundObjectEditorTopComponent extends TopComponent implements SelectionListener {
 
     private static SoundObjectEditorTopComponent instance;
     /** path to the icon used by the component and its open action */

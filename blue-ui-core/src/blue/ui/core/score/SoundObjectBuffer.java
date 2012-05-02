@@ -28,6 +28,8 @@ package blue.ui.core.score;
  * @version 1.0
  */
 
+import blue.ui.core.score.layers.soundObject.MotionBuffer;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import java.util.ArrayList;
 
 import blue.SoundLayer;

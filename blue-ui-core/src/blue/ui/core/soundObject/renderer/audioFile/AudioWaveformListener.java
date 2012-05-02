@@ -1,6 +1,6 @@
 package blue.ui.core.soundObject.renderer.audioFile;
 
-import blue.ui.core.score.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 
 public class AudioWaveformListener {
     private final String filename;

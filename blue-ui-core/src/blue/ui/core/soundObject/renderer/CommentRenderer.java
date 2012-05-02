@@ -9,7 +9,7 @@ import java.awt.RenderingHints;
 
 import blue.SoundLayer;
 import blue.soundObject.Comment;
-import blue.ui.core.score.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.BlueGradientFactory;
 
 /**

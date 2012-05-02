@@ -1,4 +1,4 @@
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

@@ -33,6 +33,8 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -41,7 +43,7 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
-final class SoundObjectLibraryTopComponent extends TopComponent {
+final class SoundObjectLibraryTopComponent extends TopComponent implements ChangeListener {
 
     private static SoundObjectLibraryTopComponent instance;
 
@@ -120,6 +122,11 @@ final class SoundObjectLibraryTopComponent extends TopComponent {
     }
 
     public void setSoundObjectLibrary(SoundObjectLibrary sObjLib) {
+        
+        if(this.sObjLib != null) {
+            this.sObjLib.removeChangeListener(this);
+        }
+        
         this.sObjLib = sObjLib;
         sObjLibTable.setModel(new SoundObjectLibraryTableModel(sObjLib));
         sObjLibTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -131,13 +138,11 @@ final class SoundObjectLibraryTopComponent extends TopComponent {
 
         sObjLibTable.getTableHeader().setReorderingAllowed(false);
 
+        if(this.sObjLib != null) {
+            this.sObjLib.addChangeListener(this);
+        }
     }
-
-    public void addSoundObject(SoundObject sObj) {
-        sObjLib.addSoundObject(sObj);
-        this.sObjLibTable.revalidate();
-    }
-
+    
     public boolean containsSoundObject(SoundObject soundObject) {
         if (sObjLib == null) {
             return false;
@@ -317,6 +322,11 @@ final class SoundObjectLibraryTopComponent extends TopComponent {
     @Override
     protected String preferredID() {
         return PREFERRED_ID;
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent ce) {
+        this.sObjLibTable.revalidate();
     }
 
     final static class ResolvableHelper implements Serializable {

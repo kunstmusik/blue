@@ -52,7 +52,7 @@ import javax.swing.border.LineBorder;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.gui.DialogUtil;
-import blue.ui.core.score.ScoreTimeCanvas;
+import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.utility.GUI;
 import electric.xml.Element;
 

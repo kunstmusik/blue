@@ -9,7 +9,7 @@ import java.awt.Rectangle;
 
 import blue.SoundLayer;
 import blue.settings.GeneralSettings;
-import blue.ui.core.score.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
 import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformCache;

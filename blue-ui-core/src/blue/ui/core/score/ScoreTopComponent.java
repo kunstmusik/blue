@@ -19,6 +19,9 @@
  */
 package blue.ui.core.score;
 
+import blue.ui.core.score.layers.soundObject.ScoreMouseWheelListener;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.BlueData;
 import blue.automation.AutomationManager;
 import blue.components.IconFactory;
@@ -33,6 +36,7 @@ import blue.score.TimeState;
 import blue.score.tempo.Tempo;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.soundObject.MotionBuffer;
 import blue.ui.core.score.soundLayer.SoundLayerListPanel;
 import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
@@ -142,7 +146,7 @@ public final class ScoreTopComponent extends TopComponent {
     }
 
     public SoundObject[] getSoundObjectsAsArray() {
-           return sTimeCanvas.mBuffer.getSoundObjectsAsArray();
+           return MotionBuffer.getInstance().getSoundObjectsAsArray();
     }
 
 

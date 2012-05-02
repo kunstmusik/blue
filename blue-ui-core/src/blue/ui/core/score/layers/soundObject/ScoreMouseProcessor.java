@@ -2,7 +2,7 @@
  * Created on May 8, 2003
  *
  */
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueData;
 import blue.BlueSystem;
@@ -33,6 +33,9 @@ import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.AuditionManager;
+import blue.ui.core.score.SoundObjectBuffer;
+import blue.ui.core.score.SoundObjectEditorTopComponent;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
@@ -441,7 +444,6 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                     SoundObject clone = (SoundObject) instance.getSoundObject().clone();
                     instance.setSoundObject(clone);
                     sObjLib.addSoundObject(clone);
-                    SoundObjectLibraryTopComponent.findInstance().reinitialize();
                 }
          
             }
@@ -498,7 +500,6 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
                     SoundObject clone = (SoundObject) instance.getSoundObject().clone();
                     instance.setSoundObject(clone);
                     sObjLib.addSoundObject(clone);
-                    SoundObjectLibraryTopComponent.findInstance().reinitialize();
                 }
             }
 

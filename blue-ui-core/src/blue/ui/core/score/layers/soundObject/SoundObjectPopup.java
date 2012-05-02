@@ -20,7 +20,7 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueData;
 import blue.BlueSystem;
@@ -49,6 +49,7 @@ import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.ProcessConsole;
+import blue.ui.core.score.AuditionManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.APIUtilities;
@@ -593,10 +594,13 @@ public class SoundObjectPopup extends JPopupMenu {
     private void addToSObjLib() {
         SoundObject sObj = (SoundObject) sObjView.getSoundObject().clone();
 
-        SoundObjectLibraryTopComponent sObjLibTop =
-                SoundObjectLibraryTopComponent.findInstance();
-        sObjLibTop.addSoundObject(sObj);
-
+        if(sObj instanceof Instance) {
+            return;
+        }
+        
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+        data.getSoundObjectLibrary().addSoundObject(sObj);
+       
         Instance i = new Instance(sObj);
 
         replaceSoundObject(sObjView.getSoundObject(), i, true, false);

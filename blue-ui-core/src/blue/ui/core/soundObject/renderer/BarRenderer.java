@@ -11,7 +11,7 @@ package blue.ui.core.soundObject.renderer;
 
 import java.awt.Graphics;
 
-import blue.ui.core.score.SoundObjectView;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 
 public interface BarRenderer {
     public void render(Graphics graphics, SoundObjectView sObjView,

@@ -18,7 +18,7 @@
  * USA
  */
 
-package blue.ui.core.score;
+package blue.ui.core.score.layers.soundObject;
 
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
