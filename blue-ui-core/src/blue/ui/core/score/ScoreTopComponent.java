@@ -64,7 +64,6 @@ import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
 /**
  * Top component which displays something.
@@ -200,8 +199,6 @@ public final class ScoreTopComponent extends TopComponent {
 
         scrollPane.revalidate();
 
-//        sObjEditPanel.setEditingLibraryObject(false);
-//        sObjEditPanel.editSoundObject(null);
         focused = null;
     }
 
@@ -413,10 +410,7 @@ public final class ScoreTopComponent extends TopComponent {
         timeProperties.setTimeState(timeState);
     }
 
-    public PolyObject getFocusedPolyObject() {
-        return focusedPolyObject;
-    }
-
+    // FIXME - this needs to be better done, perhaps hidden behind an interface
     public int getHorizontalScrollValue() {
         return scrollPane.getHorizontalScrollBar().getValue();
     }
