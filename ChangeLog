@@ -27,6 +27,9 @@ FIX
 * Auditioning SoundObjects would cause a crash of program due to unnecessary 
   deleting of Csound Object
 
+* Command-line compiling option for compiling .blue to CSD files was always 
+  reporting exit code 1 and error, even when compile was done correctly
+
 
 >Notes for 2.2.2<
 [released 2012.04.03]

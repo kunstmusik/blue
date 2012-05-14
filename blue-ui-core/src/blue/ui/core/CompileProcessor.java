@@ -36,6 +36,7 @@ import java.util.Set;
 import org.netbeans.api.sendopts.CommandException;
 import org.netbeans.spi.sendopts.Env;
 import org.netbeans.spi.sendopts.Option;
+import org.netbeans.spi.sendopts.OptionGroups;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.lookup.ServiceProvider;
 
@@ -52,8 +53,12 @@ public class CompileProcessor extends OptionProcessor {
     @Override
     protected Set<Option> getOptions() {
         Set<Option> options = new HashSet<Option>();
-        options.add(c);
-        options.add(o);
+        
+        c.shortDescription(o, "Bundle.properties", "option.compile.description");
+        o.shortDescription(o, "Bundle.properties", "option.output.description");
+        
+        options.add(OptionGroups.allOf(c,o));
+        
         return options;
     }
 
@@ -114,6 +119,10 @@ public class CompileProcessor extends OptionProcessor {
         } catch (Exception e) {
             if (out != null) {
                 out.close();
+            }
+            
+            if(e instanceof CommandException) {
+                throw (CommandException)e;
             }
             throw new CommandException(1, BlueSystem.getString("message.errorLabel") + " "
                     + BlueSystem.getString("blue.csdCompileError") + e.getMessage());
