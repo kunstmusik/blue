@@ -64,7 +64,7 @@ public class CeciliaModuleCompilationUnit {
 
     HashMap ftableNumMap = new HashMap();
 
-    HashMap ceciliaVariables = new HashMap();
+    HashMap<String, String> ceciliaVariables = new HashMap<String, String>();
 
     ArrayList magicInstrument_instr = new ArrayList();
 
