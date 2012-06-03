@@ -1,0 +1,37 @@
+<project name="blue-android" basedir="." default="build">
+
+    <target name="src-copy">
+        <delete dir="src"/>
+        <mkdir dir="src"/>
+        <copy todir="src">
+            <fileset dir="../blue-core/src"/>
+            <fileset dir="../blue-utilities/src"/>
+            <fileset dir="../blue-plugin/src"/>
+        </copy>
+    </target>
+    
+    <target name="lib-copy">
+        <delete dir="lib"/>
+        <mkdir dir="lib"/>
+        <copy todir="lib">
+            <fileset file="../commons-lang3/release/modules/ext/commons-lang3-3.1.jar"/>
+            <fileset file="../csnd/release/modules/ext/csnd.jar"/>
+            <fileset file="../EXML/release/modules/ext/EXML.jar"/>
+            <fileset file="../jython/release/modules/ext/jython.jar"/>
+        </copy>
+    </target>
+
+    <target name="build" depends="src-copy,lib-copy">
+        <delete dir="build"/>
+        <mkdir dir="build"/>
+        <javac classpath="lib/commons-lang3-3.1.jar:libs/csnd.jar:lib/EXML.jar:lib/jython.jar" srcdir="src" destdir="build"/>
+    </target>
+    
+    <target name="clean">
+        <delete dir="build"/>
+        <delete dir="lib"/>
+        <delete dir="src"/>
+    </target>
+
+</project>
+
