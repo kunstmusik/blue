@@ -64,7 +64,7 @@ public class CSDRender {
         boolean usingAPI = APIUtilities.isCsoundAPIAvailable()
                 && GeneralSettings.getInstance().isUsingCsoundAPI();
 
-        float totalDur = 3600f;
+        float totalDur = 36000f;
 
         // making copies to use for adding compileTime tables and instruments
         Tables tables = (Tables) data.getTableSet().clone();
@@ -1074,7 +1074,7 @@ public class CSDRender {
         instr.setText(apiParamInstr.toString());
         int instrId = arrangement.addInstrumentAtEnd(instr);
 
-        float dur = 3600f;
+        float dur = 36000f;
 
         paramScore.append("i").append(instrId);
         paramScore.append(" 0 ").append(dur);
