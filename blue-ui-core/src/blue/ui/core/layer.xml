@@ -8,6 +8,20 @@
                 <attr name="position" intvalue="10"/>
             </file>
         </folder>
+        <folder name="score">
+            <folder name="layers">
+                <folder name="panelProviders">
+                    <file name="blue-ui-core-score-layers-soundObject-PolyObjectPanelProvider.instance">
+                        <attr name="position" intvalue="100"/>
+                    </file>
+                </folder>
+                <folder name="headerPanelProviders">
+                    <file name="blue-ui-core-score-layers-soundObject-PolyObjectHeaderPanelProvider.instance">
+                        <attr name="position" intvalue="100"/>
+                    </file>
+                </folder>
+            </folder>
+        </folder>
     </folder>
 
     <attr name="Menu\Project\position" intvalue="350"/>

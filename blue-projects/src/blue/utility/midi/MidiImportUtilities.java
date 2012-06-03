@@ -37,7 +37,6 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObjectException;
 import blue.utilities.MidiUtilities;
 import java.awt.Frame;
 

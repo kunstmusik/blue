@@ -691,11 +691,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     private void checkScroll(MouseEvent e) {
 
         Point temp = SwingUtilities.convertPoint(sCanvas, e.getPoint(), sCanvas
-                .getParent());
+                .getParent().getParent());
 
         scrollRect.setLocation(temp);
 
-        ((JViewport) sCanvas.getParent()).scrollRectToVisible(scrollRect);
+        ((JViewport) sCanvas.getParent().getParent()).scrollRectToVisible(scrollRect);
 
     }
 

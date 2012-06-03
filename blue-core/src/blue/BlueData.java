@@ -151,7 +151,7 @@ public class BlueData implements Serializable {
         loopRendering = false;
 
         score = new Score();
-        score.addLayerGroup(new PolyObject());
+//        score.addLayerGroup(new PolyObject());
 
         liveData = new LiveData();
 

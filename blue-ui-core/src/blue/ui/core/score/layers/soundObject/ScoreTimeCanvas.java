@@ -73,6 +73,7 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.TimePointer;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
+import java.awt.event.*;
 import javax.swing.undo.UndoManager;
 
 /**
@@ -82,8 +83,8 @@ import javax.swing.undo.UndoManager;
  * @author steven yi
  * @version 1.0
  */
-public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
-        PropertyChangeListener, LayerGroupListener, SoundLayerListener, RenderTimeManagerListener {
+public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
+        implements PropertyChangeListener, LayerGroupListener, SoundLayerListener, RenderTimeManagerListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -132,12 +133,17 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     JPanel sObjPanel = new JPanel();
 
     private final PropertyChangeListener heightListener;
+    private final BlueData data;
 
-    public ScoreTimeCanvas() {
+    public ScoreTimeCanvas(BlueData blueData) {
+        
+        //setAutoscrolls(true);
+        
         qtDialog = new QuickTimeDialog(this);
         sObjPopup = new SoundObjectPopup(this);
 
         this.buffer = SoundObjectBuffer.getInstance();
+        this.data = blueData;
 
         heightListener = new PropertyChangeListener() {
 
@@ -156,13 +162,17 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
 
         ModeManager.getInstance().addModeListener(new ModeListener() {
 
+            int lastMode = -1;
+            
             public void modeChanged(int mode) {
                 marquee.setVisible(false);
 
                 sMouse.fireSelectionEvent(new SelectionEvent(null,
                         SelectionEvent.SELECTION_CLEAR));
 
-                if (mode == ModeManager.MODE_SCORE) {
+                if (mode == lastMode) {
+                    //skip
+                } else if (mode == ModeManager.MODE_SCORE) {
                     addMouseListener(sMouse);
                     addMouseMotionListener(sMouse);
                     removeMouseListener(multiLineMouse);
@@ -178,6 +188,8 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
                     removeMouseListener(multiLineMouse);
                     removeMouseMotionListener(multiLineMouse);
                 }
+                
+                lastMode = mode;
             }
         });
 
@@ -210,6 +222,64 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
+        
+//        this.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+//
+//            @Override
+//            public void ancestorResized(HierarchyEvent e) {
+//                 checkSize();
+//            }
+//        });
+        
+        this.addSelectionListener(new SelectionListener() {
+
+            public void selectionPerformed(SelectionEvent e) {
+                SoundObjectView sObjView = (SoundObjectView) e.getSelectedItem();
+
+                Object item;
+                if (sObjView == null) {
+                    item = null;
+                } else {
+                    item = sObjView.getSoundObject();
+                }
+
+                SelectionEvent selectionEvent = new SelectionEvent(item, e.getSelectionType());
+                SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
+            }
+        });
+        
+        this.data.addPropertyChangeListener(new PropertyChangeListener() {
+
+            public void propertyChange(PropertyChangeEvent evt) {
+                boolean isRenderStartTime = evt.getPropertyName().equals(
+                        "renderStartTime");
+                boolean isRenderLoopTime = evt.getPropertyName().equals(
+                        "renderLoopTime");
+
+                if (evt.getSource() == data && (isRenderStartTime || isRenderLoopTime)) {
+
+                    if (data.getScore() == null) {
+                        return;
+                    }
+
+                    float val = ((Float) evt.getNewValue()).floatValue();
+                                
+                    //FIXME
+                    PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+                    TimeState timeState = data.getScore().getTimeState();
+                    int newX = (int) (val * timeState.getPixelSecond());
+
+                    if (isRenderStartTime) {
+                        updateRenderStartPointerX(newX, true);
+                    } else if (isRenderLoopTime) {
+                        updateRenderLoopPointerX(newX);
+                    }
+                }
+
+            }
+        });
+
+        this.addMouseWheelListener(new ScoreMouseWheelListener(data.getScore().getTimeState()));
     }
 
     public JPanel getSoundObjectPanel() {
@@ -800,15 +870,22 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
             this.remove(renderTimePointer);
         }
 
-        this.checkSize();
+        this.checkSize(true);
         this.revalidate();
         this.repaint();
     }
 
+    
+    
     /**
      * checkSize is called when dragging an object
      */
+    
     public void checkSize() {
+        checkSize(false);
+    }
+    
+    public void checkSize(boolean setSize) {
         if (getPolyObject() == null || timeState == null) {
             return;
         }
@@ -817,29 +894,42 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         int height = getPolyObject().getTotalHeight();
 
         int width = tempTime * timeState.getPixelSecond() * 60;
-
-        if (getParent() != null) {
-
-            if (width < getParent().getWidth()) {
-                width = getParent().getWidth();
-            }
-
-            time = tempTime;
-
-            if (height < getParent().getHeight()) {
-                height = getParent().getHeight();
-            }
-
-        }
+//
+//        if (getParent() != null) {
+//
+////            if (width < getParent().getWidth()) {
+////                width = getParent().getWidth();
+////            }
+//
+//            time = tempTime;
+//
+////            if (height < getParent().getHeight()) {
+////                height = getParent().getHeight();
+////            }
+//
+//        }
+        
+        height += 17; // account for ^/V/+/-/ buttons
 
         if (width == this.getWidth() && height == this.getHeight()) {
+//        if (width == this.getWidth()) {
             return;
         }
 
         Dimension d = new Dimension(width, height);
-        this.setSize(d);
-        this.setPreferredSize(d);
+        
+        if(setSize) {
+            this.setSize(d);
+        }
 
+        this.setPreferredSize(d);
+        
+      
+
+//        this.setPreferredSize(d);
+//        this.setMaximumSize(d);
+        
+        //revalidate();
     }
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
@@ -935,7 +1025,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         
         int width = this.getWidth();
 
-        g.setColor(Color.black);
+        g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, this.getHeight());
 
         if(getPolyObject() == null || timeState == null) {
@@ -943,7 +1033,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         }
 
         int y = 0;
-        g.setColor(Color.darkGray);
+        g.setColor(Color.DARK_GRAY);
 
         for (int i = 0; i < getPolyObject().getSize(); i++) {
             SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(i);
@@ -1017,7 +1107,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
     // code for scrollable interface
     /** ************************************************************** */
     int maxUnitIncrement = 200;
-
+    
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
@@ -1090,7 +1180,7 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         renderStartPointer.setLocation(x, 0);
 
         if (fireUpdate) {
-            JViewport viewPort = (JViewport) this.getParent();
+            JViewport viewPort = (JViewport) this.getParent().getParent();
 
             Rectangle rect;
 
@@ -1225,4 +1315,10 @@ public final class ScoreTimeCanvas extends JLayeredPane implements Scrollable,
         reset();
     }
     
+    /* Cleanup code on Remove */
+    
+    @Override
+    public void removeNotify() {
+        this.data.removePropertyChangeListener(this);
+    }
 }

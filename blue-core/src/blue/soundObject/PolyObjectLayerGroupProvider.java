@@ -38,7 +38,9 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
 
     @Override
     public LayerGroup createLayerGroup() {
-        return new PolyObject();
+        PolyObject pObj = new PolyObject(true);
+        pObj.newLayerAt(0);
+        return pObj;
     }
 
     @Override

@@ -56,6 +56,23 @@ public class TimeState implements Serializable, Cloneable {
 
         firePropertyChangeEvent(pce);
     }
+    
+    public void lowerPixelSecond() {
+        int temp = getPixelSecond();
+
+        if (temp <= 2) {
+            return;
+        }
+
+        temp -= 2;
+
+        setPixelSecond(temp);
+    }
+
+    public void raisePixelSecond() {
+        int temp = getPixelSecond() + 2;
+        setPixelSecond(temp);
+    }
 
     public boolean isSnapEnabled() {
         return this.snapEnabled;

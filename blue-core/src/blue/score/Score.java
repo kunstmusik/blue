@@ -40,6 +40,8 @@ public class Score implements Serializable {
     Tempo tempo = null;
     TimeState timeState = null;
     ArrayList<LayerGroup> layerGroups = new ArrayList<LayerGroup>();
+    
+    private transient ArrayList<ScoreListener> scoreListeners = null;
 
     public Score() {
         this(true);
@@ -56,14 +58,39 @@ public class Score implements Serializable {
 
     public void addLayerGroup(LayerGroup layerGroup) {
         layerGroups.add(layerGroup);
+        int index = layerGroups.size() - 1;
+        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED, 
+                index, index);
+        fireScoreDataEvent(sde);
+    }
+    
+    public void addLayerGroup(int index, LayerGroup layerGroup) {
+        layerGroups.add(index, layerGroup);
+        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED, 
+                index, index);
+        fireScoreDataEvent(sde);
     }
 
-    public void removeLayerGroup(LayerGroup layerGroup) {
-        layerGroups.remove(layerGroup);
+    public void removeLayerGroups(int startIndex, int endIndex) {
+        for(int i = 0; i < (endIndex - startIndex); i++) {
+            layerGroups.remove(startIndex);
+        }
+        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_REMOVED, 
+                startIndex, endIndex);
+        fireScoreDataEvent(sde);
     }
     
     public void clearLayerGroups() {
+        if(layerGroups.size() == 0) {
+            return;
+        }
+        
+        int endIndex = layerGroups.size() - 1;
         layerGroups.clear();
+        
+        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_REMOVED, 
+                0, endIndex);
+        fireScoreDataEvent(sde);
     }
 
     public LayerGroup getLayerGroup(int index) {
@@ -155,4 +182,29 @@ public class Score implements Serializable {
         
         return noteList;
     }
+    
+    /* Listener Code */
+    
+    public void addScoreListener(ScoreListener listener) {
+        if(scoreListeners == null) {
+            scoreListeners = new ArrayList<ScoreListener>();
+        }
+        
+        scoreListeners.add(listener);
+    }
+    
+    public void removeScoreListener(ScoreListener listener) {
+        if(scoreListeners != null) {
+            scoreListeners.remove(listener);
+        }
+    }
+    
+    public void fireScoreDataEvent(ScoreDataEvent sde) {
+        if(scoreListeners != null) {
+            for(ScoreListener listener : scoreListeners) {
+                listener.layerGroupsChanged(sde);
+            }
+        }
+    }
+    
 }

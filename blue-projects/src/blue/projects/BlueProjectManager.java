@@ -24,10 +24,12 @@ import blue.BlueSystem;
 import blue.ProjectProperties;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
+import blue.score.layers.LayerGroup;
 import blue.settings.DiskRenderSettings;
 import blue.settings.GeneralSettings;
 import blue.settings.ProjectDefaultsSettings;
 import blue.settings.RealtimeRenderSettings;
+import blue.soundObject.PolyObject;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;
@@ -93,6 +95,17 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
+        for(int i = 0; i <  blueData.getScore().getLayerGroupCount(); i++) {
+            LayerGroup layerGroup = blueData.getScore().getLayerGroup(i);
+            if(layerGroup instanceof PolyObject) {
+                PolyObject pObj = (PolyObject)layerGroup;
+                
+                if(pObj.getSize() == 0) {
+                    pObj.newLayerAt(-1);
+                }
+            }
+        }
+        
         blueData.getMixer().setEnabled(
                 ProjectDefaultsSettings.getInstance().mixerEnabled);
 

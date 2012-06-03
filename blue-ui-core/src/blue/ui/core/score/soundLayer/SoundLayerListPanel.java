@@ -21,19 +21,13 @@
 package blue.ui.core.score.soundLayer;
 
 import java.awt.BorderLayout;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JViewport;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
@@ -42,21 +36,17 @@ import blue.SoundLayer;
 import blue.components.IconFactory;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.soundObject.PolyObject;
+import javax.swing.*;
 
 /**
  * 
  * @author steven
  */
-public class SoundLayerListPanel extends javax.swing.JPanel implements
-        AdjustmentListener {
-
-    static Point posSync = new Point();
+public class SoundLayerListPanel extends javax.swing.JPanel {
 
     private PolyObject pObj;
 
     LayersPanel layers = new LayersPanel();
-
-    JViewport lView = new JViewport();
 
     LayerHeightPopup heightPopup = null;
 
@@ -64,14 +54,7 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
     public SoundLayerListPanel() {
         initComponents();
 
-        this.add(lView, BorderLayout.CENTER);
-
-        lView.setView(layers);
-        lView.addComponentListener(new ComponentAdapter() {
-            public void componentResized(ComponentEvent e) {
-                layers.setSize(lView.getWidth(), layers.getHeight());
-            }
-        });
+        this.add(layers, BorderLayout.CENTER);
     }
 
     public void setPolyObject(PolyObject pObj) {
@@ -164,11 +147,11 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
     }
 
     /* ADJUSTMENT LISTENER */
-    public void adjustmentValueChanged(AdjustmentEvent ae) {
-        int pos = ae.getValue();
-        posSync.setLocation(0, pos);
-        lView.setViewPosition(posSync);
-    }
+//    public void adjustmentValueChanged(AdjustmentEvent ae) {
+//        int pos = ae.getValue();
+//        posSync.setLocation(0, pos);
+//        lView.setViewPosition(posSync);
+//    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -179,56 +162,14 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        topPanel = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        layerHeightButton = new javax.swing.JButton();
         bottomPanel = new javax.swing.JPanel();
         buttonUp = new javax.swing.JButton();
         buttonDown = new javax.swing.JButton();
         buttonAdd = new javax.swing.JButton();
         buttonRemove = new javax.swing.JButton();
+        layerHeightButton = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
-
-        topPanel.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        topPanel.setMaximumSize(new java.awt.Dimension(32767, 20));
-        topPanel.setPreferredSize(new java.awt.Dimension(100, 20));
-
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Sound Layers");
-
-        layerHeightButton.setIcon(IconFactory.getDownArrowIcon());
-        layerHeightButton.setFocusPainted(false);
-        layerHeightButton.setFocusable(false);
-        layerHeightButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        layerHeightButton.setMaximumSize(new java.awt.Dimension(17, 16));
-        layerHeightButton.setPreferredSize(new java.awt.Dimension(17, 16));
-        layerHeightButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                layerHeightButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout topPanelLayout = new javax.swing.GroupLayout(topPanel);
-        topPanel.setLayout(topPanelLayout);
-        topPanelLayout.setHorizontalGroup(
-            topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, topPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(layerHeightButton, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        topPanelLayout.setVerticalGroup(
-            topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(topPanelLayout.createSequentialGroup()
-                .addGroup(topPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(layerHeightButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        add(topPanel, java.awt.BorderLayout.NORTH);
 
         bottomPanel.setMaximumSize(new java.awt.Dimension(32767, 17));
         bottomPanel.setPreferredSize(new java.awt.Dimension(100, 17));
@@ -279,6 +220,19 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
         });
         bottomPanel.add(buttonRemove);
 
+        layerHeightButton.setIcon(IconFactory.getDownArrowIcon());
+        layerHeightButton.setFocusPainted(false);
+        layerHeightButton.setFocusable(false);
+        layerHeightButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        layerHeightButton.setMaximumSize(new java.awt.Dimension(17, 16));
+        layerHeightButton.setPreferredSize(new java.awt.Dimension(17, 16));
+        layerHeightButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layerHeightButtonActionPerformed(evt);
+            }
+        });
+        bottomPanel.add(layerHeightButton);
+
         add(bottomPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
@@ -287,9 +241,16 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
             heightPopup = new LayerHeightPopup();
         }
 
-        heightPopup.show(this, layerHeightButton.getX(), layerHeightButton
-                .getY()
-                + layerHeightButton.getHeight());
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                 heightPopup.show(layerHeightButton, layerHeightButton.getWidth(), 
+                         layerHeightButton.getHeight());
+            }
+            
+        });
+       
     }// GEN-LAST:event_layerHeightButtonActionPerformed
 
     private void buttonRemoveActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonRemoveActionPerformed
@@ -314,9 +275,7 @@ public class SoundLayerListPanel extends javax.swing.JPanel implements
     private javax.swing.JButton buttonDown;
     private javax.swing.JButton buttonRemove;
     private javax.swing.JButton buttonUp;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton layerHeightButton;
-    private javax.swing.JPanel topPanel;
     // End of variables declaration//GEN-END:variables
 
     private class LayerHeightPopup extends JPopupMenu {

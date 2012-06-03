@@ -20,12 +20,9 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueSystem;
-import blue.ui.core.score.TimePixelManager;
-import java.awt.event.MouseEvent;
+import blue.score.TimeState;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -34,101 +31,56 @@ import javax.swing.SwingUtilities;
  */
 public class ScoreMouseWheelListener implements MouseWheelListener {
 
-    JScrollPane scrollPane;
-
     MouseWheelListener[] listeners;
+    private final TimeState timeState;
 
-    private final TimePixelManager timePixel;
-
-    public ScoreMouseWheelListener(JScrollPane scrollPane,
-            TimePixelManager timePixel) {
-        this.scrollPane = scrollPane;
-        this.timePixel = timePixel;
-
-        listeners = scrollPane.getMouseWheelListeners();
-
-        for (int i = 0; i < listeners.length; i++) {
-            scrollPane.removeMouseWheelListener(listeners[i]);
-        }
-
-        scrollPane.addMouseWheelListener(this);
+    public ScoreMouseWheelListener(TimeState timeState) {
+        this.timeState = timeState;        
     }
 
     public void mouseWheelMoved(MouseWheelEvent e) {
-        final ScoreTimeCanvas sTimeCanvas = (ScoreTimeCanvas) scrollPane.getViewport().getView();
+        final ScoreTimeCanvas sTimeCanvas = (ScoreTimeCanvas) e.getSource();
 
         int shortcutKey = BlueSystem.getMenuShortcutKey();
         
         if (e.isAltDown()) {
             int value = e.getWheelRotation();
 
-            MouseEvent transPoint = SwingUtilities.convertMouseEvent(
-                    scrollPane, e, sTimeCanvas);
-
             final int xLoc = e.getX();
-            final float timeVal = transPoint.getX() / (float) timePixel.getTimeState().getPixelSecond();
+            final float timeVal = xLoc / (float) timeState.getPixelSecond();
 
             if (value > 0) {
-                timePixel.raisePixelSecond();
+                timeState.raisePixelSecond();
             } else {
-                timePixel.lowerPixelSecond();
+                timeState.lowerPixelSecond();
             }
 
             SwingUtilities.invokeLater(new Runnable() {
 
                 public void run() {
-                    int newVal = (int) (timeVal * timePixel.getTimeState().getPixelSecond());
+                    int newVal = (int) (timeVal * timeState.getPixelSecond());
 
                     newVal -= xLoc;
 
                     if (newVal > 0) {
-                        scrollPane.getHorizontalScrollBar().setValue(newVal);
+                        //FIXME
+//                        scrollPane.getHorizontalScrollBar().setValue(newVal);
                     }
 
                 }
             });
+            e.consume();
         } else if ((e.getModifiers() & shortcutKey) == shortcutKey) {
-            MouseEvent transPoint = SwingUtilities.convertMouseEvent(
-                    scrollPane, e, sTimeCanvas);
 
             int value = e.getWheelRotation();
 
             value = (value > 0) ? 1 : -1;
             
-//            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
-//
-//            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
-
-            sTimeCanvas.modifyLayerHeight(value, transPoint.getY());
-        } else if (e.isShiftDown()) {
-            MouseEvent transPoint = SwingUtilities.convertMouseEvent(
-                    scrollPane, e, sTimeCanvas);
-
-            int value = e.getWheelRotation();
-
-            value = (value > 0) ? 1 : -1;
+            sTimeCanvas.modifyLayerHeight(value, e.getY());
             
-            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
-
-            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
-
-//            sTimeCanvas.modifyLayerHeight(value, transPoint.getY());
+            e.consume();
         } else {
-//            for (int i = 0; i < listeners.length; i++) {
-//                listeners[i].mouseWheelMoved(e);
-//            }
-            
-             MouseEvent transPoint = SwingUtilities.convertMouseEvent(
-                    scrollPane, e, sTimeCanvas);
-
-            int value = e.getWheelRotation();
-
-            value = (value > 0) ? 1 : -1;
-            
-            JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
-
-            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
-
+             e.getComponent().getParent().dispatchEvent(e);
         }
     }
 }
