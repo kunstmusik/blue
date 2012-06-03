@@ -351,7 +351,95 @@ public class DriverUtils {
                 return null;
             }
         } else if (driverLow.equals("jack")) {
+ String jackCSD = TextUtilities
+                    .getTextFromSystemResource(DriverUtils.class, "tempJack.csd");
 
+            StringBuffer buffer = new StringBuffer();
+
+            buffer.append(csoundCommand);
+            buffer.append(" -+msg_color=false -+rtaudio=jack");
+            buffer.append(" -i adc:xxx ");
+
+            String retVal = null;
+
+            // INITIAL RUN TO FIND OUT TRUE SRATE
+
+            String tempText = jackCSD.replaceAll("\\$SR", "1000");
+
+            File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
+                    null, tempText);
+
+            String command = buffer.toString() + tempFile.getAbsolutePath();
+
+            ProcessRunner pc = new ProcessRunner();
+
+            try {
+                pc.execWaitAndCollect(command, null);
+                retVal = pc.getCollectedOutput();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            String sr = null;
+
+            if (retVal != null
+                    && retVal.indexOf("does not match JACK sample rate") >= 0) {
+                String[] lines = retVal.split("\n");
+
+                for (int i = 0; i < lines.length; i++) {
+                    String line = lines[i];
+
+                    if (line.indexOf("does not match JACK sample rate") >= 0) {
+                        sr = line.substring(line.lastIndexOf(" ") + 1);
+                        break;
+                    }
+                }
+            } else {
+                // MIGHT WANT TO GIVE MESSAGE SAYING COULD NOT CONNECT TO JACK
+                return null;
+            }
+
+            if (sr == null) {
+                return null;
+            }
+
+            tempText = jackCSD.replaceAll("\\$SR", sr);
+
+            tempFile = FileUtilities.createTempTextFile("temp", ".csd", null,
+                    tempText);
+
+            command = buffer.toString() + tempFile.getAbsolutePath();
+
+            try {
+                pc.execWaitAndCollect(command, null);
+                retVal = pc.getCollectedOutput();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            if (retVal == null) {
+                return null;
+            }
+
+            // Find Devices
+            StringTokenizer st = new StringTokenizer(retVal, "\n");
+
+            while (st.hasMoreTokens()) {
+                String line = st.nextToken().trim();
+
+                if (line.endsWith("channel)") || line.endsWith("channels)")) {
+                    String deviceName = line.substring(1, line
+                            .lastIndexOf("\""));
+                    String description = deviceName + " "
+                            + line.substring(line.indexOf("("));
+
+                    JackCardInfo cardInfo = new JackCardInfo();
+                    cardInfo.deviceName = deviceName;
+                    cardInfo.description = description;
+
+                    vals.add(cardInfo);
+                }
+            }
         } else {
 
             String val = TextUtilities
