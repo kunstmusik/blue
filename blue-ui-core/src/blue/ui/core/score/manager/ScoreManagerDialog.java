@@ -147,9 +147,19 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         jPanel1.setLayout(new java.awt.GridLayout(1, 0));
 
         lGroupPushUpButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.lGroupPushUpButton.text")); // NOI18N
+        lGroupPushUpButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lGroupPushUpButtonActionPerformed(evt);
+            }
+        });
         jPanel1.add(lGroupPushUpButton);
 
         lGroupPushDownButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.lGroupPushDownButton.text")); // NOI18N
+        lGroupPushDownButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                lGroupPushDownButtonActionPerformed(evt);
+            }
+        });
         jPanel1.add(lGroupPushDownButton);
 
         lGroupAddButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.lGroupAddButton.text")); // NOI18N
@@ -206,9 +216,11 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
     private void layerGroupsListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_layerGroupsListValueChanged
         if(!evt.getValueIsAdjusting()) {
-            if(evt.getFirstIndex() == evt.getLastIndex()) {
+            int[] indices = layerGroupsList.getSelectedIndices();
+            
+            if(indices.length == 1) {
                 layersList.setModel(new LayersListModel(score.getLayerGroup(
-                        evt.getFirstIndex())));
+                        indices[0])));
             } else {
                 layersList.setModel(emptyList);
             }
@@ -238,6 +250,14 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         Point p = SwingUtilities.convertPoint(lGroupAddButton, 0, 0, this);
         menu.show(this, p.x, p.y - menu.getHeight());
     }//GEN-LAST:event_lGroupAddButtonActionPerformed
+
+    private void lGroupPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushUpButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_lGroupPushUpButtonActionPerformed
+
+    private void lGroupPushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushDownButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_lGroupPushDownButtonActionPerformed
 
     private LayerGroupListModel getLayerGroupListModel() {
         return (LayerGroupListModel)layerGroupsList.getModel();
