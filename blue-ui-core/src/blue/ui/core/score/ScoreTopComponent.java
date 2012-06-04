@@ -312,7 +312,9 @@ public final class ScoreTopComponent extends TopComponent
             layerHeaderPanel.remove(startIndex);
         }
         layerPanel.revalidate();
+        layerPanel.repaint();
         layerHeaderPanel.revalidate();
+        layerHeaderPanel.repaint();
     }
 
     public void clearAll() {
