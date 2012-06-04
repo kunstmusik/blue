@@ -305,6 +305,15 @@ public final class ScoreTopComponent extends TopComponent
             comp.addPropertyChangeListener("preferredSize", layerPanelWidthListener);
         }
     }
+    
+    private void removePanelsForLayerGroups(int startIndex, int endIndex) {
+        for(int i = 0; i <= endIndex - startIndex; i++) {
+            layerPanel.remove(startIndex);
+            layerHeaderPanel.remove(startIndex);
+        }
+        layerPanel.revalidate();
+        layerHeaderPanel.revalidate();
+    }
 
     public void clearAll() {
         polyObjectBar.reset();
@@ -614,6 +623,8 @@ public final class ScoreTopComponent extends TopComponent
             for(int i = sde.getStartIndex(); i <= sde.getEndIndex(); i++) {
                 addPanelsForLayerGroup(i, score.getLayerGroup(i), score);
             }
+        } else if (sde.getType() == ScoreDataEvent.DATA_REMOVED) {
+            removePanelsForLayerGroups(sde.getStartIndex(), sde.getEndIndex());
         }
     }
 

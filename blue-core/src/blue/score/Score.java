@@ -72,7 +72,7 @@ public class Score implements Serializable {
     }
 
     public void removeLayerGroups(int startIndex, int endIndex) {
-        for(int i = 0; i < (endIndex - startIndex); i++) {
+        for(int i = 0; i <= (endIndex - startIndex); i++) {
             layerGroups.remove(startIndex);
         }
         ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_REMOVED, 

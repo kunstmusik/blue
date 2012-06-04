@@ -55,4 +55,9 @@ public class LayerGroupListModel extends AbstractListModel  {
         fireIntervalAdded(this, index, index);
     }
 
+    void removeLayerGroups(int minSelectionIndex, int maxSelectionIndex) {
+        score.removeLayerGroups(minSelectionIndex, maxSelectionIndex);
+        fireIntervalRemoved(this, minSelectionIndex, maxSelectionIndex);
+    }
+
 }

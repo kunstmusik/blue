@@ -26,10 +26,10 @@ import blue.score.layers.LayerGroupProviderManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.DefaultListModel;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  *
@@ -216,7 +216,21 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_layerGroupsListValueChanged
 
     private void lGroupMinusButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupMinusButtonActionPerformed
-        // TODO add your handling code here:
+        if(layerGroupsList.getSelectedIndex() == -1) {
+            return;
+        }
+        
+        NotifyDescriptor descriptor = new DialogDescriptor.Confirmation("Deleting Layer Groups can not be undone. Please Confirm.", "Confirm Delete", NotifyDescriptor.OK_CANCEL_OPTION);
+        
+        if(DialogDisplayer.getDefault().notify(descriptor) == NotifyDescriptor.OK_OPTION) {
+            LayerGroupListModel model = getLayerGroupListModel();
+            ListSelectionModel selection = layerGroupsList.getSelectionModel();
+            int startIndex = selection.getMinSelectionIndex();
+            int endIndex = selection.getMaxSelectionIndex();
+            selection.clearSelection();
+            model.removeLayerGroups(startIndex, endIndex);
+            
+        }
     }//GEN-LAST:event_lGroupMinusButtonActionPerformed
 
     private void lGroupAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupAddButtonActionPerformed
