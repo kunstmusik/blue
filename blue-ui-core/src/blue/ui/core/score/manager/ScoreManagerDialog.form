@@ -194,6 +194,9 @@
               <ResourceString bundle="blue/ui/core/score/manager/Bundle.properties" key="ScoreManagerDialog.layersPushUpButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="layersPushUpButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="layersPushDownButton">
           <Properties>
@@ -201,6 +204,9 @@
               <ResourceString bundle="blue/ui/core/score/manager/Bundle.properties" key="ScoreManagerDialog.layersPushDownButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="layersPushDownButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="layersAddButton">
           <Properties>
@@ -208,6 +214,9 @@
               <ResourceString bundle="blue/ui/core/score/manager/Bundle.properties" key="ScoreManagerDialog.layersAddButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="layersAddButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="layersMinusButton">
           <Properties>
@@ -215,6 +224,9 @@
               <ResourceString bundle="blue/ui/core/score/manager/Bundle.properties" key="ScoreManagerDialog.layersMinusButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="layersMinusButtonActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

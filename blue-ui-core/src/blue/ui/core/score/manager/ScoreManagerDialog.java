@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.manager;
 
+import blue.BlueSystem;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
@@ -191,15 +192,35 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         jPanel2.setLayout(new java.awt.GridLayout(1, 0));
 
         layersPushUpButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersPushUpButton.text")); // NOI18N
+        layersPushUpButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layersPushUpButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(layersPushUpButton);
 
         layersPushDownButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersPushDownButton.text")); // NOI18N
+        layersPushDownButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layersPushDownButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(layersPushDownButton);
 
         layersAddButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersAddButton.text")); // NOI18N
+        layersAddButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layersAddButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(layersAddButton);
 
         layersMinusButton.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersMinusButton.text")); // NOI18N
+        layersMinusButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                layersMinusButtonActionPerformed(evt);
+            }
+        });
         jPanel2.add(layersMinusButton);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -286,8 +307,109 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         selection.setSelectionInterval(start + 1, end + 1);
     }//GEN-LAST:event_lGroupPushDownButtonActionPerformed
 
+    private void layersPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersPushUpButtonActionPerformed
+        LayersListModel model = getLayersListModel();
+        
+        if(model == null) {
+            return;
+        }
+        
+        ListSelectionModel selection = layersList.getSelectionModel();
+
+        int start = selection.getMinSelectionIndex();
+        int end = selection.getMaxSelectionIndex();
+
+        if (end < 0 || start == 0) {
+            return;
+        }
+
+        model.pushUpLayers(start, end);
+        
+        selection.setSelectionInterval(start - 1, end - 1);
+    }//GEN-LAST:event_layersPushUpButtonActionPerformed
+
+    private void layersPushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersPushDownButtonActionPerformed
+        LayersListModel model = getLayersListModel();
+        
+        if(model == null) {
+            return;
+        }
+        
+        ListSelectionModel selection = layersList.getSelectionModel();
+
+        int start = selection.getMinSelectionIndex();
+        int end = selection.getMaxSelectionIndex();
+
+        if (end < 0 || end >= model.getSize() - 1) {
+            return;
+        }
+
+        model.pushDownLayers(start, end);
+        
+        selection.setSelectionInterval(start + 1, end + 1);
+    }//GEN-LAST:event_layersPushDownButtonActionPerformed
+
+    private void layersAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersAddButtonActionPerformed
+        LayersListModel model = getLayersListModel();
+        
+        if(model == null) {
+            return;
+        }
+        
+        ListSelectionModel selection = layersList.getSelectionModel();
+
+        int end = selection.getMaxSelectionIndex();
+
+        if (end < 0) {
+            end = model.getSize();
+        } else {
+            end++;
+        }
+        
+        model.newLayerAt(end);
+        
+        selection.setSelectionInterval(end, end);
+    }//GEN-LAST:event_layersAddButtonActionPerformed
+
+    private void layersMinusButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersMinusButtonActionPerformed
+        LayersListModel model = getLayersListModel();
+        
+        if(model == null) {
+            return;
+        }
+        
+        ListSelectionModel selection = layersList.getSelectionModel();
+
+        int start = selection.getMinSelectionIndex();
+        int end = selection.getMaxSelectionIndex();
+
+        if (end < 0 || model.getSize() < 2) {
+            return;
+        }
+
+        int len = (end - start) + 1;
+
+        String message = BlueSystem
+                .getString("soundLayerEditPanel.delete.message1")
+                + " "
+                + len
+                + " "
+                + BlueSystem.getString("soundLayerEditPanel.delete.message2");
+        if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
+            model.removeLayers(start, end);
+            selection.clearSelection();
+        }
+    }//GEN-LAST:event_layersMinusButtonActionPerformed
+
     private LayerGroupListModel getLayerGroupListModel() {
         return (LayerGroupListModel)layerGroupsList.getModel();
+    }
+    
+    private LayersListModel getLayersListModel() {
+        if(layersList.getModel() == emptyList) {
+            return null;
+        }
+        return (LayersListModel)layersList.getModel();
     }
     
     private JPopupMenu getAddLayerGroupMenu() {
@@ -307,10 +429,15 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                     int index = (layerGroupsList.getSelectionModel().getMaxSelectionIndex());
 
                     if(index < 0 || index > model.getSize()) {
-                        model.addLayerGroup(model.getSize(), layerGroup);
+                        index = model.getSize();
+                        model.addLayerGroup(index, layerGroup);
                     } else {
                         model.addLayerGroup(index, layerGroup);
                     }
+                    
+                    ListSelectionModel selection = layerGroupsList.getSelectionModel();
+                    selection.setSelectionInterval(index, index);
+
                 }
             };
             

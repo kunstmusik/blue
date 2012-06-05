@@ -44,5 +44,25 @@ public class LayersListModel extends AbstractListModel {
     public Object getElementAt(int arg0) {
         return layerGroup.getLayerAt(arg0);
     }
+
+    public void removeLayers(int start, int end) {
+        layerGroup.removeLayers(start, end);
+        fireIntervalRemoved(this, start, end);
+    }
+
+    public void newLayerAt(int index) {
+        layerGroup.newLayerAt(index);
+        fireIntervalAdded(this, index, index);
+    }
+
+    public void pushUpLayers(int start, int end) {
+        layerGroup.pushUpLayers(start, end);
+        fireContentsChanged(this, start - 1, end);
+    }
+
+    void pushDownLayers(int start, int end) {
+        layerGroup.pushDownLayers(start, end);
+        fireContentsChanged(this, start, end + 1);
+    }
     
 }
