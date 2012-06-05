@@ -252,11 +252,38 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lGroupAddButtonActionPerformed
 
     private void lGroupPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushUpButtonActionPerformed
-        // TODO add your handling code here:
+        
+        ListSelectionModel selection = layerGroupsList.getSelectionModel();
+
+        int start = selection.getMinSelectionIndex();
+        int end = selection.getMaxSelectionIndex();
+
+        if (start <= 0) {
+            return;
+        }
+
+        LayerGroupListModel model = getLayerGroupListModel();
+        
+        model.pushUpLayerGroups(start, end);
+        
+        selection.setSelectionInterval(start - 1, end - 1);
     }//GEN-LAST:event_lGroupPushUpButtonActionPerformed
 
     private void lGroupPushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushDownButtonActionPerformed
-        // TODO add your handling code here:
+        ListSelectionModel selection = layerGroupsList.getSelectionModel();
+
+        int start = selection.getMinSelectionIndex();
+        int end = selection.getMaxSelectionIndex();
+
+        if (start < 0 || end >= score.getLayerGroupCount() - 1) {
+            return;
+        }
+        
+        LayerGroupListModel model = getLayerGroupListModel();
+        
+        model.pushDownLayerGroups(start, end);
+        
+        selection.setSelectionInterval(start + 1, end + 1);
     }//GEN-LAST:event_lGroupPushDownButtonActionPerformed
 
     private LayerGroupListModel getLayerGroupListModel() {

@@ -60,4 +60,14 @@ public class LayerGroupListModel extends AbstractListModel  {
         fireIntervalRemoved(this, minSelectionIndex, maxSelectionIndex);
     }
 
+    void pushUpLayerGroups(int start, int end) {
+        score.pushUpLayerGroups(start, end);
+        fireContentsChanged(this, start - 1, end);
+    }
+
+    void pushDownLayerGroups(int start, int end) {
+        score.pushDownLayerGroups(start, end);
+        fireContentsChanged(this, start, end + 1);
+    }
+
 }

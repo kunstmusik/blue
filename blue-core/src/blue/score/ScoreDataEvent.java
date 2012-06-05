@@ -20,7 +20,7 @@
 package blue.score;
 
 import blue.score.layers.LayerGroup;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -34,14 +34,14 @@ public class ScoreDataEvent {
     private int endIndex;
     private int type;
     private Score source;
-    private ArrayList<LayerGroup> layerGroups;
+    private List<LayerGroup> layerGroups;
 
     public ScoreDataEvent(Score source, int type, int startIndex, int endIndex) {
         this(source, type, startIndex, endIndex, null);
     }
     
      public ScoreDataEvent(Score source, int type, int startIndex,
-            int endIndex, ArrayList<LayerGroup> layers) {
+            int endIndex, List<LayerGroup> layers) {
         this.source = source;
         this.type = type;
         this.startIndex = Math.min(startIndex, endIndex);
@@ -65,7 +65,7 @@ public class ScoreDataEvent {
         return type;
     }
 
-    public ArrayList<LayerGroup> getLayerGroups() {
+    public List<LayerGroup> getLayerGroups() {
         return layerGroups;
     }
 }

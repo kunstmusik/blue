@@ -41,13 +41,13 @@ import blue.ui.core.score.layers.soundObject.MotionBuffer;
 import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
-import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -269,6 +269,8 @@ public final class ScoreTopComponent extends TopComponent
         final JComponent comp2 = LayerGroupHeaderPanelProviderManager.getInstance().getLayerGroupHeaderPanel(layerGroup, score.getTimeState(), data);
         
         if(comp != null && comp2 != null) {
+            
+            comp.putClientProperty("layerGroup", layerGroup);
             
             if(index < 0 || index > layerPanel.getComponentCount() - 1) {
                 layerPanel.add(comp);
@@ -627,6 +629,43 @@ public final class ScoreTopComponent extends TopComponent
             }
         } else if (sde.getType() == ScoreDataEvent.DATA_REMOVED) {
             removePanelsForLayerGroups(sde.getStartIndex(), sde.getEndIndex());
+        } else if (sde.getType() == ScoreDataEvent.DATA_CHANGED) {
+            List<LayerGroup> layerGroups = sde.getLayerGroups();
+            JComponent c = (JComponent)layerPanel.getComponent(sde.getStartIndex());
+            LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");
+            
+            if(layerGroups.get(1) == lGroup) {
+                // handle push down
+                Component comp = layerPanel.getComponent(sde.getEndIndex());
+                layerPanel.remove(comp);
+                layerPanel.add(comp, sde.getStartIndex());
+                
+                Component comp2 = layerHeaderPanel.getComponent(sde.getEndIndex());
+                layerHeaderPanel.remove(comp2);
+                layerHeaderPanel.add(comp2, sde.getStartIndex());
+                
+                layerPanel.revalidate();
+                layerHeaderPanel.revalidate();
+                
+                layerPanel.repaint();
+                layerHeaderPanel.repaint();
+            } else {
+                 // handle push up
+                Component comp = layerPanel.getComponent(sde.getStartIndex());
+                layerPanel.remove(comp);
+                layerPanel.add(comp, sde.getEndIndex());
+                
+                Component comp2 = layerHeaderPanel.getComponent(sde.getStartIndex());
+                layerHeaderPanel.remove(comp2);
+                layerHeaderPanel.add(comp2, sde.getEndIndex());
+                
+                layerPanel.revalidate();
+                layerHeaderPanel.revalidate();
+                
+                layerPanel.repaint();
+                layerHeaderPanel.repaint();
+            }
+            
         }
     }
 

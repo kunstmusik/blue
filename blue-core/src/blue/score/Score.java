@@ -206,5 +206,27 @@ public class Score implements Serializable {
             }
         }
     }
+
+    public void pushUpLayerGroups(int start, int end) {
+        LayerGroup a = layerGroups.remove(start - 1);
+        layerGroups.add(end, a);
+
+        ScoreDataEvent sde = new ScoreDataEvent(this,
+                ScoreDataEvent.DATA_CHANGED, start - 1, end,
+                layerGroups.subList(start - 1, end + 1));
+
+        fireScoreDataEvent(sde);
+    }
+
+    public void pushDownLayerGroups(int start, int end) {
+        LayerGroup a = layerGroups.remove(end + 1);
+        layerGroups.add(start, a);
+
+        ScoreDataEvent sde = new ScoreDataEvent(this,
+                ScoreDataEvent.DATA_CHANGED, start, end + 1, 
+                layerGroups.subList(start, end + 2));
+
+        fireScoreDataEvent(sde);
+    }
     
 }
