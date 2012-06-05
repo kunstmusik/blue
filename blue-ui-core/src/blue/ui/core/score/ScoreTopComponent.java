@@ -364,12 +364,6 @@ public final class ScoreTopComponent extends TopComponent
 
         tempoControlPanel.setBorder(BorderFactory.createRaisedBevelBorder());
 
-//        JPanel layerTitlePanel = new JPanel();
-//        
-//        layerTitlePanel.setSize(new Dimension(100, 20));
-//        layerTitlePanel.setPreferredSize(new Dimension(100, 20));
-//        layerTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener(new ActionListener() {
 
