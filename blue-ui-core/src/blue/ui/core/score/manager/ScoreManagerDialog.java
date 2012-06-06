@@ -269,7 +269,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private void lGroupAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupAddButtonActionPerformed
         JPopupMenu menu = getAddLayerGroupMenu();
         Point p = SwingUtilities.convertPoint(lGroupAddButton, 0, 0, this);
-        menu.show(this, p.x, p.y - menu.getHeight());
+        menu.show(this, p.x, p.y - menu.getPreferredSize().height);
     }//GEN-LAST:event_lGroupAddButtonActionPerformed
 
     private void lGroupPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushUpButtonActionPerformed
