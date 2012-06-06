@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score;
 
+import blue.ui.utilities.LinearLayout;
 import blue.BlueData;
 import blue.automation.AutomationManager;
 import blue.components.IconFactory;
