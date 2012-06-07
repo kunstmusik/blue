@@ -248,6 +248,7 @@
             </test-dependencies>
             <public-packages>
                 <package>blue.soundObject.editor</package>
+                <package>blue.ui.core.score.layers</package>
                 <package>blue.ui.core.soundObject.renderer</package>
             </public-packages>
         </data>

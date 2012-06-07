@@ -44,7 +44,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
-import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -73,7 +72,6 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.TimePointer;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
-import java.awt.event.*;
 import javax.swing.undo.UndoManager;
 
 /**

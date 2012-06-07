@@ -200,10 +200,10 @@
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <file name="blue-ui-core-score-SoundObjectEditorAction.instance">
+            <file name="blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectEditorAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.score.layers.soundObject.Bundle#CTL_SoundObjectEditorAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
             <file name="blue-ui-core-score-SoundObjectLibraryAction.instance">
@@ -372,7 +372,7 @@
         <folder name="Window">
             <file name="Output_hidden"/>
             <file name="SoundObjectEditorAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
 
@@ -508,7 +508,7 @@
         </file>
 
         <file name="DS-E.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectEditorAction.instance"/>
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance"/>
         </file>
 
 

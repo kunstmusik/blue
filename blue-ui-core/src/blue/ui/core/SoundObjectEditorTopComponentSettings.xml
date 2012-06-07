@@ -25,6 +25,6 @@ USA
 <settings version="1.0">
     <module name="blue.ui.core" spec="1.0"/>
     <instanceof class="org.openide.windows.TopComponent"/>
-    <instanceof class="blue.ui.core.score.SoundObjectEditorTopComponent"/>
-    <instance class="blue.ui.core.score.SoundObjectEditorTopComponent" method="getDefault"/>
+    <instanceof class="blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent"/>
+    <instance class="blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent" method="getDefault"/>
 </settings>

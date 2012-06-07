@@ -29,6 +29,8 @@ import blue.midi.MidiInputManager;
 import blue.osc.OSCManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.layers.LayerGroupProvider;
+import blue.score.layers.LayerGroupProviderManager;
 import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
@@ -39,6 +41,11 @@ import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Lookup;
+import org.openide.util.Lookup.Result;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
+import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.syntax.jedit.SyntaxStyle;
 import org.syntax.jedit.TextAreaDefaults;
@@ -55,6 +62,9 @@ public class Installer extends ModuleInstall {
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    
+    Result<LayerGroupProvider> result = null;
+    private LookupListener lookupListener;
 
     @Override
     public void restored() {
@@ -151,6 +161,29 @@ public class Installer extends ModuleInstall {
         oscManager.start();
         
         TextColorsSettings.getInstance().addChangeListener(textColorChangeListener);
+        
+        Lookup lkp = Lookups.forPath("blue/score/layers");
+        result = lkp.lookupResult(LayerGroupProvider.class);
+        result.addLookupListener(lookupListener);
+        
+        LayerGroupProviderManager.getInstance().updateProviders(result.allInstances());
+        
+        lookupListener = new LookupListener() {
+
+            @Override
+            public void resultChanged(LookupEvent ev) {
+                LayerGroupProviderManager.getInstance().updateProviders(result.allInstances());
+            }
+        };
+        
+        //        for(LayerGroupPanelProvider provider : lkp.lookupAll(
+        //                LayerGroupPanelProvider.class)) {
+        //            JComponent comp = provider.getLayerGroupPanel(layerGroup, timeState, data);
+        //
+        //            if(comp != null) {
+        //                return comp;
+        //            }
+        //        }
     }
 
     @Override
@@ -198,6 +231,8 @@ public class Installer extends ModuleInstall {
         MainToolBar.getInstance().stopRendering();
         BlueLiveToolBar.getInstance().stopRendering();
 
+        result.removeLookupListener(lookupListener);
+        
         super.close();
     }
 

@@ -23,6 +23,7 @@ import blue.SoundObjectLibrary;
 import blue.soundObject.PolyObjectLayerGroupProvider;
 import electric.xml.Element;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  *
@@ -41,6 +42,12 @@ public class LayerGroupProviderManager extends ArrayList<LayerGroupProvider> {
             instance = new LayerGroupProviderManager();
         }
         return instance;
+    }
+    
+    public void updateProviders(Collection<? extends LayerGroupProvider> providers) {
+        this.clear();
+        this.add(new PolyObjectLayerGroupProvider());
+        this.addAll(providers);
     }
 
     public LayerGroup loadFromXML(Element node, SoundObjectLibrary sObjLibrary) {

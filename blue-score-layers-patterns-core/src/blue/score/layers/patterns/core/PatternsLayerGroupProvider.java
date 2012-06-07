@@ -17,41 +17,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.soundObject;
+package blue.score.layers.patterns.core;
 
 import blue.SoundObjectLibrary;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
-import electric.xml.Element;
 
 /**
  *
  * @author stevenyi
  */
-public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
+public class PatternsLayerGroupProvider implements LayerGroupProvider {
 
     @Override
     public String getLayerGroupName() {
-        return "SoundObject";
+        return "Patterns";
     }
 
     @Override
     public LayerGroup createLayerGroup() {
-        PolyObject pObj = new PolyObject(true);
-        pObj.newLayerAt(0);
-        return pObj;
+        PatternsLayerGroup layerGroup =new PatternsLayerGroup();
+        layerGroup.newLayerAt(0);
+        return layerGroup;
     }
 
     @Override
-    public LayerGroup loadFromXML(Element element, SoundObjectLibrary sObjLibrary) {
-        if ("soundObject".equals(element.getName())) {
-            String type = element.getAttributeValue("type");
-            if(type != null && type.equals("blue.soundObject.PolyObject")) {
-                try {
-                    return PolyObject.loadFromXML(element, sObjLibrary);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
+    public LayerGroup loadFromXML(electric.xml.Element element, SoundObjectLibrary sObjLibrary) {
+        if ("patternsLayerGroup".equals(element.getName())) {
+            try {
+                return PatternsLayerGroup.loadFromXML(element);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
             }
         }
         return null;

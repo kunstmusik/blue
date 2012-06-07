@@ -172,7 +172,7 @@ public final class ScoreTopComponent extends TopComponent
             for(int i = 0; i < layerPanel.getComponentCount(); i++) {
                 Component c = layerPanel.getComponent(i);
                 Dimension d = c.getPreferredSize();
-                width = (width > d.width) ? width : d.width;
+                width = (width > d.width) ? width : d.width;                
                 height += d.height;
             }
 
@@ -227,6 +227,8 @@ public final class ScoreTopComponent extends TopComponent
                 LayerGroup layerGroup = score.getLayerGroup(i);
                 addPanelsForLayerGroup(-1, layerGroup, score);
             }
+            
+            checkSize();
             
             layerPanel.revalidate();
             layerHeaderPanel.revalidate();
@@ -622,6 +624,8 @@ public final class ScoreTopComponent extends TopComponent
             for(int i = sde.getStartIndex(); i <= sde.getEndIndex(); i++) {
                 addPanelsForLayerGroup(i, score.getLayerGroup(i), score);
             }
+            layerPanel.revalidate();
+            layerHeaderPanel.revalidate();
         } else if (sde.getType() == ScoreDataEvent.DATA_REMOVED) {
             removePanelsForLayerGroups(sde.getStartIndex(), sde.getEndIndex());
         } else if (sde.getType() == ScoreDataEvent.DATA_CHANGED) {

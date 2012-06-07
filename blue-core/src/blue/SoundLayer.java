@@ -34,7 +34,6 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.score.layers.Layer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
