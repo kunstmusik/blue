@@ -21,7 +21,11 @@ package blue.score.layers.patterns.core;
 
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
+import blue.utility.ObjectUtilities;
 import electric.xml.Element;
+import electric.xml.Elements;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -31,7 +35,9 @@ import electric.xml.Element;
 class PatternLayer implements Layer {
     
     private SoundObject soundObject = null;
-
+    
+    private PatternData patternData = new PatternData();
+    
     public SoundObject getSoundObject() {
         return soundObject;
     }
@@ -39,16 +45,49 @@ class PatternLayer implements Layer {
     public void setSoundObject(SoundObject soundObject) {
         this.soundObject = soundObject;
     }
+
+    public PatternData getPatternData() {
+        return patternData;
+    }
     
     public Element saveAsXML() {
-        return null;
+        Element retVal = new Element("patternLayer");
+        
+        if(soundObject != null) {
+            retVal.addElement(soundObject.saveAsXML(null));
+        }
+        retVal.addElement(patternData.saveAsXML());
+        
+        return retVal;
     }
     
     public static PatternLayer loadFromXML(Element data) {
         PatternLayer layer = new PatternLayer();
         
+        Elements nodes = data.getElements();
+
+        int heightIndex = -1;
+        
+        boolean oldTimeStateValuesFound = false;
+
+        while (nodes.hasMoreElements()) {
+            Element node = nodes.next();
+            String nodeName = node.getName();
+
+            if ("soundObject".equals(nodeName)) {
+                try {
+                    layer.setSoundObject((SoundObject)ObjectUtilities.loadFromXML(
+                            node));
+                } catch (Exception ex) {
+                    Logger.getLogger(PatternLayer.class.getName()).log(Level.SEVERE,
+                            null, ex);
+                }
+            } else if (nodeName.equals("patternData")) {
+                layer.patternData = PatternData.loadFromXML(node);
+            }
+        }
+        
         return layer;
-                
     }
 
     void clearListeners() {

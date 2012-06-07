@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.score.layers.Layer;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -7,7 +8,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-import blue.SoundLayer;
 import blue.soundObject.Comment;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.BlueGradientFactory;
@@ -94,7 +94,7 @@ public class CommentRenderer implements BarRenderer {
                     "\\\\[n]");
 
             for (int i = 0; i < parts.length; i++) {
-                int y = 15 + (i * SoundLayer.SOUND_LAYER_HEIGHT);
+                int y = 15 + (i * Layer.LAYER_HEIGHT);
                 g.drawString(parts[i], 5, y);
             }
 

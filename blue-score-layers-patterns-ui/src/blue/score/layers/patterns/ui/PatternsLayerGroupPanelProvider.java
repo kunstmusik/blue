@@ -35,7 +35,7 @@ public class PatternsLayerGroupPanelProvider implements LayerGroupPanelProvider 
     @Override
     public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
         if(layerGroup instanceof PatternsLayerGroup) {
-            return new PatternsLayerPanel((PatternsLayerGroup)layerGroup);
+            return new PatternsLayerPanel((PatternsLayerGroup)layerGroup, timeState);
         } 
         return null;
     }

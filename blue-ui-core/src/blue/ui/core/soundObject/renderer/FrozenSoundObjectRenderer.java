@@ -1,14 +1,9 @@
 package blue.ui.core.soundObject.renderer;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-
-import blue.SoundLayer;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.score.layers.Layer;
 import blue.soundObject.FrozenSoundObject;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import java.awt.*;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -102,7 +97,7 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
                     "\\\\[n]");
 
             for (int i = 0; i < parts.length; i++) {
-                int y = 15 + (i * SoundLayer.SOUND_LAYER_HEIGHT);
+                int y = 15 + (i * Layer.LAYER_HEIGHT);
                 g.drawString(parts[i], 5, y);
             }
         }

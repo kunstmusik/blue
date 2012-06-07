@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.score.layers.Layer;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -7,8 +8,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-import blue.SoundLayer;
-import blue.settings.GeneralSettings;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
@@ -107,7 +106,7 @@ public class AudioFileRenderer implements BarRenderer {
                     "\\\\[n]");
 
             for (int i = 0; i < parts.length; i++) {
-                int y = 15 + (i * SoundLayer.SOUND_LAYER_HEIGHT);
+                int y = 15 + (i * Layer.LAYER_HEIGHT);
                 g.drawString(parts[i], labelOffset, y);
             }
         }

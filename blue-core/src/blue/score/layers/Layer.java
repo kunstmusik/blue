@@ -24,5 +24,5 @@ package blue.score.layers;
  * @author stevenyi
  */
 public interface Layer {
-    
+    public static final int LAYER_HEIGHT = 22;
 }

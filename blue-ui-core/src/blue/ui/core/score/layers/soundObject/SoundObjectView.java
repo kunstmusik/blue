@@ -25,9 +25,8 @@ import java.awt.Graphics;
 
 import javax.swing.JComponent;
 
-import blue.SoundLayer;
 import blue.score.TimeState;
-import blue.soundObject.PolyObject;
+import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
@@ -87,7 +86,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
     
     private void init() {
         this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
-                .getPixelSecond()), SoundLayer.SOUND_LAYER_HEIGHT);
+                .getPixelSecond()), Layer.LAYER_HEIGHT);
         this.setLayout(new BorderLayout());
         this.setDoubleBuffered(true);
     }

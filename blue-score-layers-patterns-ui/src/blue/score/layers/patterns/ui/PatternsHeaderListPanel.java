@@ -34,7 +34,7 @@ public class PatternsHeaderListPanel extends JPanel {
     public PatternsHeaderListPanel(PatternsLayerGroup patternsLayerGroup) {
         this.layerGroup = patternsLayerGroup;
         this.setPreferredSize(new Dimension(30, 22));
-        this.setSize(new Dimension(30, 22));
+        //this.setSize(new Dimension(30, 22));
         //this.setMinimumSize(new Dimension(0, 22));
         this.setBackground(Color.RED);
     }

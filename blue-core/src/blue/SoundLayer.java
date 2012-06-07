@@ -48,8 +48,6 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     private transient Vector<SoundLayerListener> layerListeners = null;
 
-    public static final int SOUND_LAYER_HEIGHT = 22;
-
     private static Comparator sObjComparator = new Comparator() {
 
         public int compare(Object arg0, Object arg1) {
@@ -260,7 +258,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
     }
 
     public int getSoundLayerHeight() {
-        return (heightIndex + 1) * SOUND_LAYER_HEIGHT;
+        return (heightIndex + 1) * LAYER_HEIGHT;
     }
 
     /* Property Change Event Code */

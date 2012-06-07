@@ -30,6 +30,7 @@ import blue.soundObject.OnLoadProcessable;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
+import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -41,6 +42,17 @@ public class PatternsLayerGroup implements LayerGroup {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
+    
+    private int patternBeatsLength = 4;
+
+    public int getPatternBeatsLength() {
+        return patternBeatsLength;
+    }
+
+    public void setPatternBeatsLength(int patternBeatsLength) {
+        this.patternBeatsLength = patternBeatsLength;
+    }
+    
 
     @Override
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
@@ -49,6 +61,16 @@ public class PatternsLayerGroup implements LayerGroup {
     
     public static PatternsLayerGroup loadFromXML(Element data) {
         PatternsLayerGroup layerGroup = new PatternsLayerGroup();
+            
+        Elements nodes = data.getElements();
+        while(nodes.hasMoreElements()) {
+            Element node = nodes.next();
+            String nodeName = node.getName();
+
+            if ("patternLayer".equals(nodeName)) {
+                layerGroup.patternLayers.add(PatternLayer.loadFromXML(node));
+            }
+        }
         
         return layerGroup;
     }
