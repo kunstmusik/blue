@@ -695,7 +695,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
         scrollRect.setLocation(temp);
 
-        ((JViewport) sCanvas.getParent().getParent()).scrollRectToVisible(scrollRect);
+        ((JViewport) sCanvas.getParent().getParent().getParent()).scrollRectToVisible(scrollRect);
 
     }
 

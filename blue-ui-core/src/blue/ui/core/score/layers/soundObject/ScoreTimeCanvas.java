@@ -82,7 +82,7 @@ import javax.swing.undo.UndoManager;
  * @version 1.0
  */
 public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
-        implements PropertyChangeListener, LayerGroupListener, SoundLayerListener, RenderTimeManagerListener {
+        implements PropertyChangeListener, LayerGroupListener, SoundLayerListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -105,16 +105,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public final SoundObjectBuffer buffer;
 
     AlphaMarquee marquee = new AlphaMarquee();
-
-    TimePointer renderStartPointer = new TimePointer(Color.GREEN);
-
-    TimePointer renderLoopPointer = new TimePointer(Color.YELLOW);
-
-    TimePointer renderTimePointer = new TimePointer(Color.ORANGE);
-
-    float renderStart = -1.0f;
-
-    float timePointer = -1.0f;
 
     MotionBuffer mBuffer = MotionBuffer.getInstance();
 
@@ -216,19 +206,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         ToolTipManager.sharedInstance().registerComponent(this);
 
         this.setFocusable(true);
-
-        RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
-        renderTimeManager.addPropertyChangeListener(this);
-        renderTimeManager.addRenderTimeManagerListener(this);
-        
-//        this.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
-//
-//            @Override
-//            public void ancestorResized(HierarchyEvent e) {
-//                 checkSize();
-//            }
-//        });
-        
+   
         this.addSelectionListener(new SelectionListener() {
 
             public void selectionPerformed(SelectionEvent e) {
@@ -246,37 +224,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
         });
         
-        this.data.addPropertyChangeListener(new PropertyChangeListener() {
-
-            public void propertyChange(PropertyChangeEvent evt) {
-                boolean isRenderStartTime = evt.getPropertyName().equals(
-                        "renderStartTime");
-                boolean isRenderLoopTime = evt.getPropertyName().equals(
-                        "renderLoopTime");
-
-                if (evt.getSource() == data && (isRenderStartTime || isRenderLoopTime)) {
-
-                    if (data.getScore() == null) {
-                        return;
-                    }
-
-                    float val = ((Float) evt.getNewValue()).floatValue();
-                                
-                    //FIXME
-                    PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
-                    TimeState timeState = data.getScore().getTimeState();
-                    int newX = (int) (val * timeState.getPixelSecond());
-
-                    if (isRenderStartTime) {
-                        updateRenderStartPointerX(newX, true);
-                    } else if (isRenderLoopTime) {
-                        updateRenderLoopPointerX(newX);
-                    }
-                }
-
-            }
-        });
-
+        
         this.addMouseWheelListener(new ScoreMouseWheelListener(data.getScore().getTimeState()));
     }
 
@@ -750,8 +698,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
                         int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
 
-                        updateRenderStartPointerX(startTime, false);
-                        updateRenderLoopPointerX(endTime);
                     }
                 }
 
@@ -839,35 +785,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     "ScoreTimeCanvas: setPObj found size == 0");
         }
 
-        if (pObj.isRoot()) {
-            
-            BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
-            BlueData data = null;
-            
-            if(project != null) {
-                data = project.getData();
-            }
-
-            if (data != null) {
-
-                int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
-                int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
-
-                this.add(renderStartPointer, DRAG_LAYER);
-                this.add(renderLoopPointer, DRAG_LAYER);
-                this.add(renderTimePointer, DRAG_LAYER);
-
-                updateRenderStartPointerX(startTime, false);
-                updateRenderLoopPointerX(endTime);
-                updateRenderTimePointer();
-
-            }
-        } else {
-            this.remove(renderStartPointer);
-            this.remove(renderLoopPointer);
-            this.remove(renderTimePointer);
-        }
-
+       
         this.checkSize(true);
         this.revalidate();
         this.repaint();
@@ -1059,16 +977,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
             
         }
-
-        if (getPolyObject().isRoot()) {
-            int newHeight = getPolyObject().getTotalHeight();
-
-            if (renderStartPointer.getHeight() != newHeight) {
-                renderStartPointer.setSize(1, newHeight);
-                renderLoopPointer.setSize(1, newHeight);
-                renderTimePointer.setSize(1, newHeight);
-            }
-        }
     }
 
     public void paintPreview(Graphics g) {
@@ -1169,55 +1077,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         return this.pObj;
     }
 
-    // TODO - Reevaulate to see if this can't be done with a
-    // PropertyChangeListener on BlueData
-    public void updateRenderStartPointerX(int x, boolean fireUpdate) {
-
-        boolean left = x < renderStartPointer.getX();
-
-        renderStartPointer.setLocation(x, 0);
-
-        if (fireUpdate) {
-            JViewport viewPort = (JViewport) this.getParent().getParent();
-
-            Rectangle rect;
-
-            if (left) {
-                rect = new Rectangle(x - 20,
-                        viewPort.getViewPosition().y,
-                        1,
-                        1);
-            } else {
-                rect = new Rectangle(x + 20,
-                        viewPort.getViewPosition().y,
-                        1,
-                        1);
-            }
-
-            scrollRectToVisible(rect);
-        }
-    }
-
-    // TODO - Reevaulate to see if this can't be done with a
-    // PropertyChangeListener on BlueData
-    public void updateRenderLoopPointerX(int newX) {
-        renderLoopPointer.setLocation(newX, 0);
-    }
-
-    private void updateRenderTimePointer() {
-        if (!pObj.isRoot()) {
-            return;
-        }
-
-        float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
-
-        if (renderStart < 0.0f || timePointer < latency) {
-            renderTimePointer.setLocation(-1, 0);
-        } else {
-            int x = (int) ((renderStart + timePointer - latency) * timeState.getPixelSecond());
-            renderTimePointer.setLocation(x, 0);
-        }
-    }
+    
 
     /* EVENT LISTENING METHODS */
     public void propertyChange(PropertyChangeEvent evt) {
@@ -1229,21 +1089,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             } else if (prop.equals("snapEnabled") || prop.equals("snapValue")) {
                 repaint();
             }
-        } else if (evt.getSource() == RenderTimeManager.getInstance()) {
-            if (this.pObj.isRoot()) {
-                if (prop.equals(RenderTimeManager.RENDER_START)) {
-                    this.renderStart = ((Float) evt.getNewValue()).floatValue();
-                    this.timePointer = -1.0f;
-                    updateRenderTimePointer();
-                } /* else if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-                    this.timePointer = ((Float) evt.getNewValue()).floatValue();
-                    updateRenderTimePointer();
-                } */
-            } else {
-                this.timePointer = -1.0f;
-                updateRenderTimePointer();
-            }
-        }
+        } 
 
     }
 
@@ -1286,21 +1132,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         layer.setHeightIndex(hIndex + value);
     }
 
-    @Override
-    public void renderInitiated() {
-    }
-
-    @Override
-    public void renderEnded() {
-    }
-
-    @Override
-    public void renderTimeUpdated(float timePointer) {
-        this.timePointer = timePointer;
-        updateRenderTimePointer();;
-    }
-    
-    
     /* LAYER GROUP LISTENER */
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
