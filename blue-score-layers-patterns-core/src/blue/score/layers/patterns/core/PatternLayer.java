@@ -36,7 +36,10 @@ public class PatternLayer implements Layer {
     
     private SoundObject soundObject = null;
     
-    String name = "";
+    private String name = "";
+    
+    private boolean muted = false;
+    private boolean solo = false;
     
     private PatternData patternData = new PatternData();
     
@@ -55,6 +58,23 @@ public class PatternLayer implements Layer {
     public void setName(String name) {
         this.name = name;
     }
+
+    public boolean isMuted() {
+        return muted;
+    }
+
+    public void setMuted(boolean muted) {
+        this.muted = muted;
+    }
+
+    public boolean isSolo() {
+        return solo;
+    }
+
+    public void setSolo(boolean solo) {
+        this.solo = solo;
+    }
+    
     
 
     public PatternData getPatternData() {
@@ -68,13 +88,21 @@ public class PatternLayer implements Layer {
             retVal.addElement(soundObject.saveAsXML(null));
         }
         retVal.addElement(patternData.saveAsXML());
-        retVal.addElement("name", getName());
+        retVal.setAttribute("name", getName());
+        retVal.setAttribute("muted", Boolean.toString(isMuted()));
+        retVal.setAttribute("solo", Boolean.toString(isSolo()));
         
         return retVal;
     }
     
     public static PatternLayer loadFromXML(Element data) {
         PatternLayer layer = new PatternLayer();
+        
+        layer.setName(data.getAttributeValue("name"));
+        layer.setMuted(Boolean.valueOf(data.getAttributeValue("muted"))
+                .booleanValue());
+        layer.setSolo(Boolean.valueOf(data.getAttributeValue("solo"))
+                .booleanValue());
         
         Elements nodes = data.getElements();
 
@@ -94,8 +122,6 @@ public class PatternLayer implements Layer {
                     Logger.getLogger(PatternLayer.class.getName()).log(Level.SEVERE,
                             null, ex);
                 }
-            } else if ("name".equals(nodeName)) {
-                layer.setName(node.getTextString());
             } else if (nodeName.equals("patternData")) {
                 layer.patternData = PatternData.loadFromXML(node);
             }

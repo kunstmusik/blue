@@ -22,6 +22,7 @@ package blue.score.layers.patterns.ui;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 
@@ -42,7 +43,12 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         this.setSize(d);
         this.setPreferredSize(d);
         
-        this.nameLabel.setText(patternLayer.getName());
+        nameLabel.setText(patternLayer.getName());
+        muteToggleButton.setSelected(patternLayer.isMuted());
+        soloToggleButton.setSelected(patternLayer.isSolo());
+        
+        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
     }
 
     /**
@@ -175,11 +181,11 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_nameTextKeyPressed
 
     private void muteToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_muteToggleButtonActionPerformed
-        // TODO add your handling code here:
+        patternLayer.setMuted(muteToggleButton.isSelected());
     }//GEN-LAST:event_muteToggleButtonActionPerformed
 
     private void soloToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_soloToggleButtonActionPerformed
-        // TODO add your handling code here:
+        patternLayer.setSolo(soloToggleButton.isSelected());
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
     private void setSoundObjectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSoundObjectButtonActionPerformed
