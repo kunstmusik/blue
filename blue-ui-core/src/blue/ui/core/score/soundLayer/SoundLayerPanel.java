@@ -141,7 +141,8 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
     }
 
-    public void cleanup() {
+    @Override
+    public void removeNotify() {
         if (this.paramIdList != null) {
             paramIdList.removeListSelectionListener(this);
         }
@@ -149,6 +150,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         if (this.sLayer != null) {
             this.sLayer.removePropertyChangeListener(this);
         }
+        super.removeNotify();
     }
 
     /**

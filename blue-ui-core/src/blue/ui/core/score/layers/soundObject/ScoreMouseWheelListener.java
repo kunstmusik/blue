@@ -43,34 +43,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
         int shortcutKey = BlueSystem.getMenuShortcutKey();
         
-        if (e.isAltDown()) {
-            int value = e.getWheelRotation();
-
-            final int xLoc = e.getX();
-            final float timeVal = xLoc / (float) timeState.getPixelSecond();
-
-            if (value > 0) {
-                timeState.raisePixelSecond();
-            } else {
-                timeState.lowerPixelSecond();
-            }
-
-            SwingUtilities.invokeLater(new Runnable() {
-
-                public void run() {
-                    int newVal = (int) (timeVal * timeState.getPixelSecond());
-
-                    newVal -= xLoc;
-
-                    if (newVal > 0) {
-                        //FIXME
-//                        scrollPane.getHorizontalScrollBar().setValue(newVal);
-                    }
-
-                }
-            });
-            e.consume();
-        } else if ((e.getModifiers() & shortcutKey) == shortcutKey) {
+        if ((e.getModifiers() & shortcutKey) == shortcutKey) {
 
             int value = e.getWheelRotation();
 

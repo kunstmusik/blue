@@ -20,10 +20,12 @@
 package blue.ui.core.score;
 
 import blue.BlueSystem;
+import blue.score.TimeState;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -32,9 +34,9 @@ import javax.swing.JScrollPane;
 public class ScoreMouseWheelListener implements MouseWheelListener {
 
     JScrollPane scrollPane;
-
     MouseWheelListener[] listeners;
-
+    TimeState timeState = null;
+    
     public ScoreMouseWheelListener(JScrollPane scrollPane) {
         this.scrollPane = scrollPane;
 
@@ -46,31 +48,68 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
         scrollPane.addMouseWheelListener(this);
     }
+    
+    public void setTimeState(TimeState timeState) {
+        this.timeState = timeState;
+    }
 
     public void mouseWheelMoved(MouseWheelEvent e) {
-       
+
         int shortcutKey = BlueSystem.getMenuShortcutKey();
-        
-         if (e.isShiftDown()) {
-           
-             int value = e.getWheelRotation();
 
-            value = (value > 0) ? 1 : -1;
+        if (e.isAltDown()) {
             
-            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+            if(timeState == null) {
+                return;
+            }
+            int value = e.getWheelRotation();
 
-            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
-            
+            final int xLoc = e.getX();
+            final float timeVal = xLoc / (float) timeState.getPixelSecond();
+
+            if (value > 0) {
+                timeState.raisePixelSecond();
+            } else {
+                timeState.lowerPixelSecond();
+            }
+
+            SwingUtilities.invokeLater(new Runnable() {
+
+                public void run() {
+                    int newVal = (int) (timeVal * timeState.getPixelSecond());
+
+                    newVal -= xLoc;
+
+                    if (newVal > 0) {
+                        //FIXME
+                        scrollPane.getHorizontalScrollBar().setValue(newVal);
+                    }
+
+                }
+            });
             e.consume();
-         } else {
-            
+        } else if (e.isShiftDown()) {
+
             int value = e.getWheelRotation();
 
             value = (value > 0) ? 1 : -1;
-            
+
+            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+
+            scrollBar.setValue(
+                    scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+
+            e.consume();
+        } else {
+
+            int value = e.getWheelRotation();
+
+            value = (value > 0) ? 1 : -1;
+
             JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
 
-            scrollBar.setValue(scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+            scrollBar.setValue(
+                    scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
 
             e.consume();
         }

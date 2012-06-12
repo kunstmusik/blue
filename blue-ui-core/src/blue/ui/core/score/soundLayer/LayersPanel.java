@@ -154,10 +154,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     private void populate() {
         this.checkSize();
 
-        for(Component c : getComponents()) {
-            ((SoundLayerPanel)c).cleanup();
-        }
-
         this.removeAll();
 
         if (pObj == null) {
@@ -247,7 +243,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         int end = e.getEndIndex();
 
         for (int i = end; i >= start; i--) {
-            ((SoundLayerPanel)getComponent(i)).cleanup();
             remove(i);
         }
 

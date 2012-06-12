@@ -28,6 +28,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
@@ -52,6 +54,19 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         final Dimension d = checkSize();
         this.setSize(d);
         this.setBackground(Color.BLACK);
+        
+        this.addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent mwe) {
+                mwe.getComponent().getParent().dispatchEvent(mwe);
+            }
+        });
+        
+        PatternsLayerPanelMouseListener listener = 
+                new PatternsLayerPanelMouseListener(this);
+        this.addMouseListener(listener);
+        this.addMouseMotionListener(listener);
     }
 
     @Override

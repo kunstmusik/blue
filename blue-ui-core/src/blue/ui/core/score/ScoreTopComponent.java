@@ -119,6 +119,8 @@ public final class ScoreTopComponent extends TopComponent
     
     volatile boolean checkingSize = false;
     
+    ScoreMouseWheelListener mouseWheelListener;
+    
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
 
         @Override
@@ -186,7 +188,7 @@ public final class ScoreTopComponent extends TopComponent
             checkingSize = true;
 
             int height = 0;
-            int width = 0;
+            int width = scrollPane.getViewport().getWidth();
 
             for(int i = 0; i < layerPanel.getComponentCount(); i++) {
                 Component c = layerPanel.getComponent(i);
@@ -264,7 +266,7 @@ public final class ScoreTopComponent extends TopComponent
             tempoEditor.setTimeState(timeState);
             timeBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
-
+            mouseWheelListener.setTimeState(timeState);
 //            float val = data.getRenderStartTime();
 //            int pixelSecond = timeState.getPixelSecond();
 //
@@ -580,7 +582,7 @@ public final class ScoreTopComponent extends TopComponent
             e.printStackTrace();
         }
         
-        new ScoreMouseWheelListener(scrollPane);
+        this.mouseWheelListener = new ScoreMouseWheelListener(scrollPane);
 
         ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
     }

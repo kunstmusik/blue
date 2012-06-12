@@ -32,9 +32,11 @@ import java.util.logging.Logger;
  * @author stevenyi
  * 
  */
-class PatternLayer implements Layer {
+public class PatternLayer implements Layer {
     
     private SoundObject soundObject = null;
+    
+    String name = "";
     
     private PatternData patternData = new PatternData();
     
@@ -45,6 +47,15 @@ class PatternLayer implements Layer {
     public void setSoundObject(SoundObject soundObject) {
         this.soundObject = soundObject;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
 
     public PatternData getPatternData() {
         return patternData;
@@ -57,6 +68,7 @@ class PatternLayer implements Layer {
             retVal.addElement(soundObject.saveAsXML(null));
         }
         retVal.addElement(patternData.saveAsXML());
+        retVal.addElement("name", getName());
         
         return retVal;
     }
@@ -82,6 +94,8 @@ class PatternLayer implements Layer {
                     Logger.getLogger(PatternLayer.class.getName()).log(Level.SEVERE,
                             null, ex);
                 }
+            } else if ("name".equals(nodeName)) {
+                layer.setName(node.getTextString());
             } else if (nodeName.equals("patternData")) {
                 layer.patternData = PatternData.loadFromXML(node);
             }
