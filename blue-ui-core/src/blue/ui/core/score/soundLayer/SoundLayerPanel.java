@@ -129,18 +129,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         nameText.requestFocusInWindow();
     }
 
-    private void setMuteColor() {
-        if (sLayer == null) {
-            return;
-        }
-    }
-
-    private void setSoloColor() {
-        if (sLayer == null) {
-            return;
-        }
-    }
-
     @Override
     public void removeNotify() {
         if (this.paramIdList != null) {
@@ -496,8 +484,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
 
         sLayer.setSolo(soloToggleButton.isSelected());
-
-        setSoloColor();
     }// GEN-LAST:event_soloToggleButtonActionPerformed
 
     private void muteToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_muteToggleButtonActionPerformed
@@ -506,7 +492,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
 
         sLayer.setMuted(muteToggleButton.isSelected());
-        setMuteColor();
     }// GEN-LAST:event_muteToggleButtonActionPerformed
 
     private void updateParameterPanel() {
