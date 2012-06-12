@@ -41,7 +41,7 @@ import blue.SoundLayer;
 import blue.automation.AutomationManager;
 import blue.automation.Parameter;
 import blue.automation.ParameterIdList;
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.ui.core.score.NoteProcessorDialog;

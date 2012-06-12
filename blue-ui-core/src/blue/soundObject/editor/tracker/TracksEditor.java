@@ -73,7 +73,7 @@ import javax.swing.table.TableColumnModel;
 
 import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.soundObject.TrackerObject;
 import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;

@@ -33,7 +33,7 @@ import javax.swing.event.PopupMenuListener;
 
 import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.soundObject.PolyObject;
 import javax.swing.*;

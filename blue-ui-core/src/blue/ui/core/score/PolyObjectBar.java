@@ -36,7 +36,7 @@ import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.soundObject.PolyObject;
 import blue.ui.utilities.UiUtilities;
 import java.util.Vector;

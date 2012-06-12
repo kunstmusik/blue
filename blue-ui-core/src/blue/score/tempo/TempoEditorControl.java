@@ -5,7 +5,7 @@
  */
 package blue.score.tempo;
 
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.score.tempo.Tempo;
 import blue.soundObject.PolyObject;
 import java.awt.Dimension;

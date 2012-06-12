@@ -32,7 +32,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.soundObject.PatternObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pattern.PatternCanvas;

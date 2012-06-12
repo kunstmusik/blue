@@ -38,7 +38,7 @@ import javax.swing.border.EmptyBorder;
 
 import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.JMask;

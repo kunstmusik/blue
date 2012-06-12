@@ -18,7 +18,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 
 import blue.BlueSystem;
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.soundObject.PianoRoll;

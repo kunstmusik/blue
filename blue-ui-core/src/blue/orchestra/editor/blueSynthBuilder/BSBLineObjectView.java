@@ -35,7 +35,7 @@ import javax.swing.border.LineBorder;
 
 import org.wonderly.awt.Packer;
 
-import blue.components.IconFactory;
+import blue.ui.components.IconFactory;
 import blue.components.LineCanvas;
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
