@@ -30,8 +30,18 @@ import java.awt.LayoutManager;
  */
 public class LinearLayout implements LayoutManager {
 
+    int spacer = 0;
+    
     /** Creates a new instance of SoundLayerLayout */
     public LinearLayout() {
+    }
+    
+    public LinearLayout(int spacer) {
+        this.spacer = spacer;
+    }
+    
+    public void setSpacer(int spacer) {
+        this.spacer = spacer;
     }
 
     public void addLayoutComponent(String name, Component comp) {
@@ -60,6 +70,9 @@ public class LinearLayout implements LayoutManager {
         int h = 0; 
         
         for(Component c : parent.getComponents()) {
+            if(h != 0) {
+                h += spacer;
+            }
             h += c.getHeight();
         }
 
@@ -89,7 +102,7 @@ public class LinearLayout implements LayoutManager {
             temp.setLocation(0, runningY);
             temp.setSize(w, h);
 
-            runningY += h;
+            runningY += h + spacer;
         }
     }
 

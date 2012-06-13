@@ -32,6 +32,7 @@ import blue.score.Score;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
 import blue.settings.PlaybackSettings;
@@ -68,6 +69,8 @@ public final class ScoreTopComponent extends TopComponent
         implements ScoreListener, RenderTimeManagerListener, PropertyChangeListener {
 
     private static ScoreTopComponent instance;
+    
+    private static final int SPACER = 36;
 
     /** path to the icon used by the component and its open action */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
@@ -187,7 +190,7 @@ public final class ScoreTopComponent extends TopComponent
         if(!checkingSize) {
             checkingSize = true;
 
-            int height = 0;
+            int height = ((layerPanel.getComponentCount() - 1) * SPACER);
             int width = scrollPane.getViewport().getWidth();
 
             for(int i = 0; i < layerPanel.getComponentCount(); i++) {
@@ -512,8 +515,8 @@ public final class ScoreTopComponent extends TopComponent
 
         layerPanel.setBackground(Color.BLACK);
         layerPanel.setOpaque(true);
-        layerPanel.setLayout(new LinearLayout());
-        layerHeaderPanel.setLayout(new LinearLayout());
+        layerPanel.setLayout(new LinearLayout(SPACER));
+        layerHeaderPanel.setLayout(new LinearLayout(SPACER));
         
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
         
