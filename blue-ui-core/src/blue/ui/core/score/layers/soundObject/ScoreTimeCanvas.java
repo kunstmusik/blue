@@ -122,6 +122,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private final PropertyChangeListener heightListener;
     private final BlueData data;
+    
+    ModeListener modeListener;
 
     public ScoreTimeCanvas(BlueData blueData) {
         
@@ -148,7 +150,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         multiLineMouse = new MultiLineMouseProcessor(this);
 
-        ModeManager.getInstance().addModeListener(new ModeListener() {
+        modeListener = new ModeListener() {
 
             int lastMode = -1;
             
@@ -179,7 +181,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                 
                 lastMode = mode;
             }
-        });
+        };
+        
+        ModeManager.getInstance().addModeListener(modeListener);
 
         sMouse.addSelectionListener(mBuffer);
         multiLineMouse.addSelectionListener(mBuffer);
@@ -950,6 +954,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         int y = 0;
         g.setColor(Color.DARK_GRAY);
+        g.drawLine(0, 0, width, 0);
 
         for (int i = 0; i < getPolyObject().getSize(); i++) {
             SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(i);
@@ -1149,5 +1154,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     @Override
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
+        ModeManager.getInstance().removeModeListener(modeListener);
     }
 }
