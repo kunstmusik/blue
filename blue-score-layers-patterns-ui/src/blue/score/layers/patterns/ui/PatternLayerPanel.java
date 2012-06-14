@@ -19,12 +19,18 @@
  */
 package blue.score.layers.patterns.ui;
 
+import blue.event.SelectionEvent;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
+import blue.ui.components.IconFactory;
+import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
+import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  *
@@ -36,8 +42,8 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     /**
      * Creates new form PatternLayerPanel
      */
-    public PatternLayerPanel(PatternLayer patternLayer) {
-        this.patternLayer = patternLayer;
+    public PatternLayerPanel(PatternLayer layer) {
+        this.patternLayer = layer;
         initComponents();
         Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
         this.setSize(d);
@@ -49,6 +55,28 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         
         muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(e.isShiftDown()) {
+                    SelectionEvent se = new SelectionEvent(patternLayer.getSoundObject(), SelectionEvent.SELECTION_SINGLE);
+                    SoundObjectSelectionBus.getInstance().selectionPerformed(se);
+
+                    SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
+
+                    if (!editor.isOpened()) {
+                        editor.open();
+                    } 
+
+                    editor.requestActive();
+
+                    e.consume();
+                }
+            }
+            
+            
+        });
     }
 
     /**
@@ -65,8 +93,7 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         nameText = new javax.swing.JTextField();
         muteToggleButton = new javax.swing.JToggleButton();
         soloToggleButton = new javax.swing.JToggleButton();
-        setSoundObjectButton = new javax.swing.JButton();
-        editSoundObjectButton = new javax.swing.JButton();
+        otherMenuButton = new javax.swing.JButton();
 
         setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
@@ -133,30 +160,21 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         });
         add(soloToggleButton);
 
-        setSoundObjectButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
-        setSoundObjectButton.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.setSoundObjectButton.text")); // NOI18N
-        setSoundObjectButton.setFocusPainted(false);
-        setSoundObjectButton.setFocusable(false);
-        setSoundObjectButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
-        setSoundObjectButton.addActionListener(new java.awt.event.ActionListener() {
+        otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
+        otherMenuButton.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.otherMenuButton.text")); // NOI18N
+        otherMenuButton.setToolTipText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.otherMenuButton.toolTipText")); // NOI18N
+        otherMenuButton.setFocusPainted(false);
+        otherMenuButton.setFocusable(false);
+        otherMenuButton.setMargin(new java.awt.Insets(5, 0, 4, 0));
+        otherMenuButton.setPreferredSize(new java.awt.Dimension(16, 17));
+        otherMenuButton.setSize(new java.awt.Dimension(19, 19));
+        otherMenuButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                setSoundObjectButtonActionPerformed(evt);
+                otherMenuButtonActionPerformed(evt);
             }
         });
-        add(setSoundObjectButton);
-
-        editSoundObjectButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
-        editSoundObjectButton.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.editSoundObjectButton.text")); // NOI18N
-        editSoundObjectButton.setToolTipText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.editSoundObjectButton.toolTipText")); // NOI18N
-        editSoundObjectButton.setFocusPainted(false);
-        editSoundObjectButton.setFocusable(false);
-        editSoundObjectButton.setMargin(new java.awt.Insets(0, 3, 0, 3));
-        editSoundObjectButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                editSoundObjectButtonActionPerformed(evt);
-            }
-        });
-        add(editSoundObjectButton);
+        add(otherMenuButton);
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
@@ -188,17 +206,16 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         patternLayer.setSolo(soloToggleButton.isSelected());
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
-    private void setSoundObjectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSoundObjectButtonActionPerformed
+    private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_setSoundObjectButtonActionPerformed
-
-    private void editSoundObjectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSoundObjectButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_editSoundObjectButtonActionPerformed
+    }//GEN-LAST:event_otherMenuButtonActionPerformed
 
     private void nameLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_nameLabelMousePressed
         if(evt.getClickCount() == 2) {
             editName();
+            evt.consume();
+        } else {
+            this.processMouseEvent(evt);
         }
     }//GEN-LAST:event_nameLabelMousePressed
 
@@ -213,12 +230,11 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton editSoundObjectButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JToggleButton muteToggleButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
-    private javax.swing.JButton setSoundObjectButton;
+    private javax.swing.JButton otherMenuButton;
     private javax.swing.JToggleButton soloToggleButton;
     // End of variables declaration//GEN-END:variables
 }
