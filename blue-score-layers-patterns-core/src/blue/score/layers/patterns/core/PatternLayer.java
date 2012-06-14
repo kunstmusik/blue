@@ -20,6 +20,7 @@
 package blue.score.layers.patterns.core;
 
 import blue.score.layers.Layer;
+import blue.soundObject.GenericScore;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
  */
 public class PatternLayer implements Layer {
     
-    private SoundObject soundObject = null;
+    private SoundObject soundObject = new GenericScore();
     
     private String name = "";
     
