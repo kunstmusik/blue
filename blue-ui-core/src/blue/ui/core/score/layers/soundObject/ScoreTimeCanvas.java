@@ -828,9 +828,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 ////            }
 //
 //        }
-        
-        height += 17; // account for ^/V/+/-/ buttons
-
+       
         if (width == this.getWidth() && height == this.getHeight()) {
 //        if (width == this.getWidth()) {
             return;
@@ -963,6 +961,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             
             g.drawLine(0, y, width, y);
         }
+        
+        g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
 
         if (timeState.isSnapEnabled()) {
             int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());

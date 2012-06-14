@@ -26,17 +26,13 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import blue.BlueSystem;
 import blue.SoundLayer;
-import blue.ui.components.IconFactory;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.soundObject.PolyObject;
-import javax.swing.*;
 
 /**
  * 
@@ -63,96 +59,9 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
         layers.setPolyObject(pObj);
     }
 
-    public void addLayer() {
-        if (pObj == null) {
-            return;
-        }
-
-        SelectionModel selection = layers.getSelectionModel();
-
-        int end = selection.getEndIndex();
-
-        if (end < 0) {
-            end = pObj.getSize();
-        } else {
-            end++;
-        }
-        
-        pObj.newLayerAt(end);
-    }
-
-    public void removeLayer() {
-        if (pObj == null) {
-            return;
-        }
-
-        SelectionModel selection = layers.getSelectionModel();
-
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
-
-        if (end < 0 || pObj.getSize() < 2) {
-            return;
-        }
-
-        int len = (end - start) + 1;
-
-        String message = BlueSystem
-                .getString("soundLayerEditPanel.delete.message1")
-                + " "
-                + len
-                + " "
-                + BlueSystem.getString("soundLayerEditPanel.delete.message2");
-        if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
-            pObj.removeLayers(start, end);
-        }
-    }
-
-    public void pushUpLayer() {
-        if (pObj == null) {
-            return;
-        }
-
-        SelectionModel selection = layers.getSelectionModel();
-
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
-
-        if (end < 0 || start == 0) {
-            return;
-        }
-
-        pObj.pushUpLayers(start, end);
-    }
-
-    public void pushDownLayer() {
-        if (pObj == null) {
-            return;
-        }
-
-        SelectionModel selection = layers.getSelectionModel();
-
-        int start = selection.getStartIndex();
-        int end = selection.getEndIndex();
-
-        if (end < 0 || end >= pObj.getSize() - 1) {
-            return;
-        }
-
-        pObj.pushDownLayers(start, end);
-    }
-
     public void setNoteProcessorChainMap(NoteProcessorChainMap npcMap) {
         layers.setNoteProcessorChainMap(npcMap);
     }
-
-    /* ADJUSTMENT LISTENER */
-//    public void adjustmentValueChanged(AdjustmentEvent ae) {
-//        int pos = ae.getValue();
-//        posSync.setLocation(0, pos);
-//        lView.setViewPosition(posSync);
-//    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -162,120 +71,10 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        bottomPanel = new javax.swing.JPanel();
-        buttonUp = new javax.swing.JButton();
-        buttonDown = new javax.swing.JButton();
-        buttonAdd = new javax.swing.JButton();
-        buttonRemove = new javax.swing.JButton();
-        layerHeightButton = new javax.swing.JButton();
-
         setLayout(new java.awt.BorderLayout());
-
-        bottomPanel.setMaximumSize(new java.awt.Dimension(32767, 17));
-        bottomPanel.setPreferredSize(new java.awt.Dimension(100, 17));
-        bottomPanel.setLayout(new java.awt.GridLayout(1, 0));
-
-        buttonUp.setText("^");
-        buttonUp.setFocusPainted(false);
-        buttonUp.setFocusable(false);
-        buttonUp.setMargin(new java.awt.Insets(0, 1, 0, 1));
-        buttonUp.setMinimumSize(new java.awt.Dimension(15, 15));
-        buttonUp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonUpActionPerformed(evt);
-            }
-        });
-        bottomPanel.add(buttonUp);
-
-        buttonDown.setText("V");
-        buttonDown.setFocusPainted(false);
-        buttonDown.setFocusable(false);
-        buttonDown.setMargin(new java.awt.Insets(0, 1, 1, 1));
-        buttonDown.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonDownActionPerformed(evt);
-            }
-        });
-        bottomPanel.add(buttonDown);
-
-        buttonAdd.setText("+");
-        buttonAdd.setFocusPainted(false);
-        buttonAdd.setFocusable(false);
-        buttonAdd.setMargin(new java.awt.Insets(0, 1, 1, 1));
-        buttonAdd.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonAddActionPerformed(evt);
-            }
-        });
-        bottomPanel.add(buttonAdd);
-
-        buttonRemove.setText("-");
-        buttonRemove.setFocusPainted(false);
-        buttonRemove.setFocusable(false);
-        buttonRemove.setMargin(new java.awt.Insets(0, 1, 1, 1));
-        buttonRemove.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonRemoveActionPerformed(evt);
-            }
-        });
-        bottomPanel.add(buttonRemove);
-
-        layerHeightButton.setIcon(IconFactory.getDownArrowIcon());
-        layerHeightButton.setFocusPainted(false);
-        layerHeightButton.setFocusable(false);
-        layerHeightButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        layerHeightButton.setMaximumSize(new java.awt.Dimension(17, 16));
-        layerHeightButton.setPreferredSize(new java.awt.Dimension(17, 16));
-        layerHeightButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                layerHeightButtonActionPerformed(evt);
-            }
-        });
-        bottomPanel.add(layerHeightButton);
-
-        add(bottomPanel, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void layerHeightButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_layerHeightButtonActionPerformed
-        if (heightPopup == null) {
-            heightPopup = new LayerHeightPopup();
-        }
-
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                 heightPopup.show(layerHeightButton, layerHeightButton.getWidth(), 
-                         layerHeightButton.getHeight());
-            }
-            
-        });
-       
-    }// GEN-LAST:event_layerHeightButtonActionPerformed
-
-    private void buttonRemoveActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonRemoveActionPerformed
-        removeLayer();
-    }// GEN-LAST:event_buttonRemoveActionPerformed
-
-    private void buttonAddActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonAddActionPerformed
-        addLayer();
-    }// GEN-LAST:event_buttonAddActionPerformed
-
-    private void buttonDownActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonDownActionPerformed
-        pushDownLayer();
-    }// GEN-LAST:event_buttonDownActionPerformed
-
-    private void buttonUpActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonUpActionPerformed
-        pushUpLayer();
-    }// GEN-LAST:event_buttonUpActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel bottomPanel;
-    private javax.swing.JButton buttonAdd;
-    private javax.swing.JButton buttonDown;
-    private javax.swing.JButton buttonRemove;
-    private javax.swing.JButton buttonUp;
-    private javax.swing.JButton layerHeightButton;
     // End of variables declaration//GEN-END:variables
 
     private class LayerHeightPopup extends JPopupMenu {
