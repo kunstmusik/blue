@@ -118,7 +118,7 @@ public class PatternLayer implements Layer {
             if ("soundObject".equals(nodeName)) {
                 try {
                     layer.setSoundObject((SoundObject)ObjectUtilities.loadFromXML(
-                            node));
+                            node, null));
                 } catch (Exception ex) {
                     Logger.getLogger(PatternLayer.class.getName()).log(Level.SEVERE,
                             null, ex);
