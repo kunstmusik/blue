@@ -40,7 +40,7 @@ public class PatternData {
     }
     
     public void setPattern(int index, boolean selected) {
-        if(index < 0) {
+        if(index < 0 || isPatternSet(index) == selected) {
             return;
         }
         if(index >= patterns.length) {

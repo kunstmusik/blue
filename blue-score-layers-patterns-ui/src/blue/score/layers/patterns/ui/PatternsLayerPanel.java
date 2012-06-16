@@ -23,6 +23,8 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
+import blue.score.layers.patterns.core.PatternData;
+import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -41,6 +43,7 @@ import javax.swing.JPanel;
 public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         PropertyChangeListener {
 
+    private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private PatternsLayerGroup layerGroup;
     private final TimeState timeState;
 
@@ -54,7 +57,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         final Dimension d = checkSize();
         this.setSize(d);
         this.setBackground(Color.BLACK);
-        
+
         this.addMouseWheelListener(new MouseWheelListener() {
 
             @Override
@@ -62,9 +65,9 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
                 mwe.getComponent().getParent().dispatchEvent(mwe);
             }
         });
-        
-        PatternsLayerPanelMouseListener listener = 
-                new PatternsLayerPanelMouseListener(this);
+
+        PatternsLayerPanelMouseListener listener =
+                new PatternsLayerPanelMouseListener(this, layerGroup, timeState);
         this.addMouseListener(listener);
         this.addMouseMotionListener(listener);
     }
@@ -81,8 +84,11 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
     }
 
     private Dimension checkSize() {
-        final Dimension d = new Dimension(30,
-                layerGroup.getSize() * Layer.LAYER_HEIGHT);
+        int w = (layerGroup.getMaxPattern() + 16) * 
+                layerGroup.getPatternBeatsLength() * 
+                timeState.getPixelSecond();
+        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        final Dimension d = new Dimension(w, h);
         this.setPreferredSize(d);
         return d;
     }
@@ -99,54 +105,70 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
     @Override
     public void paintComponent(Graphics g) {
         Rectangle bounds = g.getClipBounds();
-        
-        if(bounds == null) {
+
+        if (bounds == null) {
             bounds = getBounds();
         }
-        
+
         g.setColor(Color.BLACK);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        
-        g.setColor(Color.DARK_GRAY);
 
         int width = getWidth();
         int height = getHeight();
         int bottom = (height - 1);
-        int maxX = (int)bounds.getMaxX();
-        int maxY = (int)bounds.getMaxY();
+        int maxX = (int) bounds.getMaxX();
+        int maxY = (int) bounds.getMaxY();
         int x = 0;
         int pixelSecond = timeState.getPixelSecond();
-        
-        int patternBeatsLength = layerGroup.getPatternBeatsLength();
 
-        //Draw lines
-        for (int i = 0; i < layerGroup.getSize(); i++) {
+        int patternBeatsLength = layerGroup.getPatternBeatsLength();
+        int patternWidth = patternBeatsLength * pixelSecond;
+        int startLayerIndex = (bounds.y / Layer.LAYER_HEIGHT);
+        int startPatternIndex = (int) (bounds.x / (float) (patternBeatsLength * pixelSecond));
+
+        //Draw lines and pattern states
+
+        g.setColor(Color.DARK_GRAY);
+
+        for (int i = startLayerIndex; i < layerGroup.getSize(); i++) {
+            System.out.println("Rendering Layer: " + i);
             int y = i * Layer.LAYER_HEIGHT;
-            if (y < bounds.y) {
-                continue;
-            } else if (y > maxY) {
+
+            if (y > maxY) {
                 break;
             }
+
+            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternData data = layer.getPatternData();
+
+            g.setColor(PATTERN_COLOR);
+
+            x = (startPatternIndex * patternBeatsLength) * pixelSecond;
+            for (int j = startPatternIndex; x < maxX; j++) {
+                x = (j * patternBeatsLength) * pixelSecond;
+                if (data.isPatternSet(j)) {
+                    //System.out.println("pattern set: " + j);
+                    g.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);
+                }
+            }
+
+            g.setColor(Color.DARK_GRAY);
             g.drawLine(bounds.x, y, maxX, y);
 
         }
+
+        g.setColor(Color.DARK_GRAY);
+
         if (bottom < maxY) {
             g.drawLine(bounds.x, bottom, maxX, bottom);
         }
-        
 
-        for (int i = 0; x < width; i++) {
+        x = (startPatternIndex * patternBeatsLength) * pixelSecond;
+
+        for (int i = startPatternIndex; x < maxX; i++) {
             x = (i * patternBeatsLength) * pixelSecond;
-
-            if (x < bounds.x) {
-                continue;
-            } else if (x > maxX) {
-                break;
-            }
-
             g.drawLine(x, bounds.y, x, maxY);
         }
-
 
     }
 }

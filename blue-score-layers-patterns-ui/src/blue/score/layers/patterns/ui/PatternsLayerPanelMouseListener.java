@@ -19,37 +19,80 @@
  */
 package blue.score.layers.patterns.ui;
 
+import blue.score.TimeState;
+import blue.score.layers.Layer;
+import blue.score.layers.patterns.core.PatternData;
+import blue.score.layers.patterns.core.PatternLayer;
+import blue.score.layers.patterns.core.PatternsLayerGroup;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 
 /**
  *
  * @author stevenyi
  */
 public class PatternsLayerPanelMouseListener extends MouseAdapter {
-    private final PatternsLayerPanel panel;
-    int layerIndex = -1;
-    
 
-    public PatternsLayerPanelMouseListener(PatternsLayerPanel panel) {
+    private final PatternsLayerPanel panel;
+
+    private final PatternsLayerGroup layerGroup;
+    private PatternData selectedData = null;
+    private boolean setSquareOn = false;
+    private final TimeState timeState;
+
+    public PatternsLayerPanelMouseListener(PatternsLayerPanel panel, 
+            PatternsLayerGroup layerGroup, 
+            TimeState timeState) {
         this.panel = panel;
+        this.layerGroup = layerGroup;
+        this.timeState = timeState;
     }
-    
+
     @Override
     public void mousePressed(MouseEvent e) {
         panel.requestFocus();
+        int x = e.getX();
+        int y = e.getY();
 
+        if (y < 0 || y >= panel.getHeight()) {
+            selectedData = null;
+            return;
+        }
+        
+        int layerIndex = y / Layer.LAYER_HEIGHT;
+        PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(layerIndex);
+        
+        int patternIndex = (int)(x / (float)(layerGroup.getPatternBeatsLength() * timeState.getPixelSecond()));
+        
+        selectedData = layer.getPatternData();
+        setSquareOn = !(layer.getPatternData().isPatternSet(patternIndex));
+        selectedData.setPattern(patternIndex, setSquareOn);
+        panel.repaint();
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        
-    }
-    
-    @Override
-    public void mouseDragged(MouseEvent e){
+        selectedData = null;
     }
 
-    
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if(selectedData == null) {
+            return;
+        }
+        
+        int x = e.getX();
+        
+        if (x < 0) {
+            x = 0; 
+        } else if (x > panel.getWidth()) {
+            x = panel.getWidth();
+        }
+        
+        int patternIndex = (int)(x / (float)(layerGroup.getPatternBeatsLength() * timeState.getPixelSecond()));
+        if(selectedData.isPatternSet(patternIndex) != setSquareOn) {
+            selectedData.setPattern(patternIndex, setSquareOn);
+            panel.repaint();
+        }
+    }
 }

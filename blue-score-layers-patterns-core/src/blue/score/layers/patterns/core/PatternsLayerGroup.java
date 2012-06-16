@@ -204,4 +204,14 @@ public class PatternsLayerGroup implements LayerGroup {
             listener.layerGroupChanged(lde);
         }
     }
+
+    public int getMaxPattern() {
+        int max = 0;
+        for(PatternLayer layer : patternLayers) {
+            if(layer.getPatternData().getMaxSelected() > max) {
+                max = layer.getPatternData().getMaxSelected();
+            }
+        }
+        return max;
+    }
 }
