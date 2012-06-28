@@ -110,12 +110,12 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 0);
         getContentPane().add(jScrollPane1, gridBagConstraints);
 
         layersList.setModel(new javax.swing.AbstractListModel() {
@@ -127,12 +127,12 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
         getContentPane().add(jScrollPane2, gridBagConstraints);
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jLabel2.text")); // NOI18N
@@ -181,10 +181,10 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 0);
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
         getContentPane().add(jPanel1, gridBagConstraints);
 
         jPanel2.setMinimumSize(new java.awt.Dimension(30, 20));
@@ -225,11 +225,11 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.ipadx = -5;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
         getContentPane().add(jPanel2, gridBagConstraints);
 
         pack();
@@ -269,7 +269,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private void lGroupAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupAddButtonActionPerformed
         JPopupMenu menu = getAddLayerGroupMenu();
         Point p = SwingUtilities.convertPoint(lGroupAddButton, 0, 0, this);
-        menu.show(this, p.x, p.y - menu.getPreferredSize().height);
+        menu.show(this, p.x, p.y + lGroupAddButton.getHeight());
     }//GEN-LAST:event_lGroupAddButtonActionPerformed
 
     private void lGroupPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushUpButtonActionPerformed
