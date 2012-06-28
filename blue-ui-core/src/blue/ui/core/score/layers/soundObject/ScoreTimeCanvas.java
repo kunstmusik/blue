@@ -124,6 +124,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private final BlueData data;
     
     ModeListener modeListener;
+    int lastMode = -1;
+
 
     public ScoreTimeCanvas(BlueData blueData) {
         
@@ -152,35 +154,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         modeListener = new ModeListener() {
 
-            int lastMode = -1;
-            
             public void modeChanged(int mode) {
-                marquee.setVisible(false);
-
-                sMouse.fireSelectionEvent(new SelectionEvent(null,
-                        SelectionEvent.SELECTION_CLEAR));
-
-                if (mode == lastMode) {
-                    //skip
-                } else if (mode == ModeManager.MODE_SCORE) {
-                    addMouseListener(sMouse);
-                    addMouseMotionListener(sMouse);
-                    removeMouseListener(multiLineMouse);
-                    removeMouseMotionListener(multiLineMouse);
-                } else if (mode == ModeManager.MODE_MULTI_LINE) {
-                    removeMouseListener(sMouse);
-                    removeMouseMotionListener(sMouse);
-                    addMouseListener(multiLineMouse);
-                    addMouseMotionListener(multiLineMouse);
-                } else {
-                    removeMouseListener(sMouse);
-                    removeMouseMotionListener(sMouse);
-                    removeMouseListener(multiLineMouse);
-                    removeMouseMotionListener(multiLineMouse);
-                }
-                
-                lastMode = mode;
+                handleModeChange(mode);
             }
+            
         };
         
         ModeManager.getInstance().addModeListener(modeListener);
@@ -230,6 +207,36 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         
         
         this.addMouseWheelListener(new ScoreMouseWheelListener(data.getScore().getTimeState()));
+        
+        handleModeChange(ModeManager.getInstance().getMode());
+    }
+    
+    private void handleModeChange(int mode) {
+        marquee.setVisible(false);
+
+        sMouse.fireSelectionEvent(new SelectionEvent(null,
+                SelectionEvent.SELECTION_CLEAR));
+
+        if (mode == lastMode) {
+            //skip
+        } else if (mode == ModeManager.MODE_SCORE) {
+            addMouseListener(sMouse);
+            addMouseMotionListener(sMouse);
+            removeMouseListener(multiLineMouse);
+            removeMouseMotionListener(multiLineMouse);
+        } else if (mode == ModeManager.MODE_MULTI_LINE) {
+            removeMouseListener(sMouse);
+            removeMouseMotionListener(sMouse);
+            addMouseListener(multiLineMouse);
+            addMouseMotionListener(multiLineMouse);
+        } else {
+            removeMouseListener(sMouse);
+            removeMouseMotionListener(sMouse);
+            removeMouseListener(multiLineMouse);
+            removeMouseMotionListener(multiLineMouse);
+        }
+
+        lastMode = mode;
     }
 
     public JPanel getSoundObjectPanel() {
