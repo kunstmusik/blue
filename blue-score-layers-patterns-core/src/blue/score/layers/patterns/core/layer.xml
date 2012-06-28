@@ -3,6 +3,13 @@
 <filesystem>
     
     <folder name="blue">
+        
+<!--        <folder name="pluginProviders">
+            <file name="blue-score-layers-patterns-core-PatternsPluginProvider.instance">
+                <attr name="position" intvalue="30"/>
+            </file>
+        </folder>-->
+        
         <folder name="score">
             <folder name="layers">
                 <file name="blue-score-layers-patterns-core-PatternsLayerGroupProvider.instance">
@@ -10,6 +17,6 @@
                 </file>
             </folder>
         </folder>
-    </folder>
+    </folder>    
     
 </filesystem>

@@ -19,18 +19,24 @@
  */
 package blue.score.layers.patterns.ui;
 
+import blue.BlueSystem;
 import blue.event.SelectionEvent;
+import blue.plugin.BluePlugin;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
+import blue.score.layers.patterns.core.PatternsPluginProvider;
+import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
 import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.util.ArrayList;
+import javax.swing.JMenuItem;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -60,25 +66,64 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             @Override
             public void mousePressed(MouseEvent e) {
                 if(e.isShiftDown()) {
-                    SelectionEvent se = new SelectionEvent(patternLayer.getSoundObject(), SelectionEvent.SELECTION_SINGLE);
-                    SoundObjectSelectionBus.getInstance().selectionPerformed(se);
-
-                    SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
-
-                    if (!editor.isOpened()) {
-                        editor.open();
-                    } 
-
-                    editor.requestActive();
-
+                    editSoundObject();
                     e.consume();
                 }
             }
             
             
         });
+        
+        ActionListener al = new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JMenuItem temp = (JMenuItem)e.getSource();
+                Class c = (Class) temp.getClientProperty("sObjClass");
+                
+                try {
+                    SoundObject sObj = (SoundObject)c.newInstance();
+                    patternLayer.setSoundObject(sObj);
+                    editSoundObject();
+                } catch (InstantiationException ex) {
+                    Exceptions.printStackTrace(ex);
+                } catch (IllegalAccessException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                
+                
+            }
+            
+        };
+        
+        ArrayList<BluePlugin> plugins = new PatternsPluginProvider().getPlugins(
+                SoundObject.class);
+        for (BluePlugin bluePlugin : plugins) {
+            Class sObjClass = bluePlugin.getPluginClass();
+            String className = sObjClass.getName();
+
+            JMenuItem temp = new JMenuItem();
+            temp.setText(BlueSystem.getShortClassName(className));
+            temp.putClientProperty("sObjClass", sObjClass);
+            temp.addActionListener(al);
+            changeSObjMenu.add(temp);
+        
+        }
     }
 
+    protected void editSoundObject() {
+        SelectionEvent se = new SelectionEvent(patternLayer.getSoundObject(), SelectionEvent.SELECTION_SINGLE);
+        SoundObjectSelectionBus.getInstance().selectionPerformed(se);
+
+        SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
+
+        if (!editor.isOpened()) {
+            editor.open();
+        } 
+
+        editor.requestActive();     
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -88,12 +133,26 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPopupMenu1 = new javax.swing.JPopupMenu();
+        editSObjMenuItem = new javax.swing.JMenuItem();
+        changeSObjMenu = new javax.swing.JMenu();
         jPanel1 = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
         nameText = new javax.swing.JTextField();
         muteToggleButton = new javax.swing.JToggleButton();
         soloToggleButton = new javax.swing.JToggleButton();
         otherMenuButton = new javax.swing.JButton();
+
+        editSObjMenuItem.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.editSObjMenuItem.text")); // NOI18N
+        editSObjMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editSObjMenuItemActionPerformed(evt);
+            }
+        });
+        jPopupMenu1.add(editSObjMenuItem);
+
+        changeSObjMenu.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.changeSObjMenu.text")); // NOI18N
+        jPopupMenu1.add(changeSObjMenu);
 
         setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
@@ -207,7 +266,16 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
     private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
-        // TODO add your handling code here:
+        
+        Class current = patternLayer.getSoundObject().getClass();
+        
+        for(Component c : changeSObjMenu.getMenuComponents()) {
+            JMenuItem menuItem = (JMenuItem)c;
+            Class clazz = (Class) menuItem.getClientProperty("sObjClass");
+            menuItem.setEnabled(!current.equals(clazz));
+        }
+        
+        jPopupMenu1.show(otherMenuButton, 0, otherMenuButton.getHeight());
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
     private void nameLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_nameLabelMousePressed
@@ -218,6 +286,10 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             this.processMouseEvent(evt);
         }
     }//GEN-LAST:event_nameLabelMousePressed
+
+    private void editSObjMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSObjMenuItemActionPerformed
+        editSoundObject();
+    }//GEN-LAST:event_editSObjMenuItemActionPerformed
 
     public void editName() {
         if (patternLayer == null) {
@@ -230,7 +302,10 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu changeSObjMenu;
+    private javax.swing.JMenuItem editSObjMenuItem;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JToggleButton muteToggleButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
