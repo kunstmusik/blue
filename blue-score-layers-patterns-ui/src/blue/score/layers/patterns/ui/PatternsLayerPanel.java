@@ -131,7 +131,6 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         g.setColor(Color.DARK_GRAY);
 
         for (int i = startLayerIndex; i < layerGroup.getSize(); i++) {
-            System.out.println("Rendering Layer: " + i);
             int y = i * Layer.LAYER_HEIGHT;
 
             if (y > maxY) {
