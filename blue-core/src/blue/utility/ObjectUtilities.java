@@ -21,10 +21,10 @@
 package blue.utility;
 
 import blue.BlueSystem;
-import blue.SoundObjectLibrary;
 import electric.xml.Element;
 import java.io.*;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class ObjectUtilities {
 
@@ -85,15 +85,15 @@ public class ObjectUtilities {
     }
 
     public static Object loadFromXML(Element elem,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         String npClass = elem.getAttributeValue("type");
         Class classToLoad = BlueSystem.getClassLoader().loadClass(npClass);
 
         Object retVal = null;
 
         Method m = classToLoad.getMethod("loadFromXML", new Class[] {
-                Element.class, SoundObjectLibrary.class });
-        retVal = m.invoke(null, new Object[] { elem, sObjLibrary });
+                Element.class, Map.class });
+        retVal = m.invoke(null, new Object[] { elem, objRefMap });
 
         return retVal;
     }

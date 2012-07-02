@@ -4,9 +4,9 @@
  */
 package blue.blueLive;
 
-import blue.SoundObjectLibrary;
 import blue.soundObject.GenericScore;
 import electric.xml.Element;
+import java.util.Map;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -40,11 +40,12 @@ public class LiveObjectBinsTest {
      */
     @Test
     public void testLoadFromXML() throws Exception {
-        SoundObjectLibrary sObjLibrary = null;
+        Map<Object, String> objRefMap = null;
+        Map<String, Object> objRefMap2 = null;
         LiveObjectBins expResult = new LiveObjectBins();
-        Element node = expResult.saveAsXML(sObjLibrary);
-        LiveObjectBins result = LiveObjectBins.loadFromXML(node, sObjLibrary);
-        assertEquals(node.toString(), result.saveAsXML(sObjLibrary).toString());
+        Element node = expResult.saveAsXML(objRefMap);
+        LiveObjectBins result = LiveObjectBins.loadFromXML(node, objRefMap2);
+        assertEquals(node.toString(), result.saveAsXML(objRefMap).toString());
     }
 
     /**

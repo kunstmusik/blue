@@ -21,10 +21,10 @@
 package blue.soundObject;
 
 import blue.CompileData;
-import blue.SoundObjectLibrary;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.awt.Color;
+import java.util.Map;
 
 /**
  * Plugin interface for SoundObjects.
@@ -213,9 +213,9 @@ public interface SoundObject {
     /**
      * Returns and XML Element representation of this SoundObject
      * 
-     * @param sObjLibrary
+     * @param objRefMap
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary);
+    public Element saveAsXML(Map<Object, String> objRefMap);
 
     /**
      * @param chain

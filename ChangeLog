@@ -32,6 +32,13 @@ FIX
 * Command-line compiling option for compiling .blue to CSD files was always 
   reporting exit code 1 and error, even when compile was done correctly
 
+INTERNAL
+
+* replaced passing of SoundObjectLibrary when saving/loading, now uses 
+  Map<String, Object> on load and Map<Object,String> on save, where object is
+  a SoundObject and String is a uniqueId; make saving/loading generic and 
+  removes dependency on SoundObjectLibrary
+
 
 >Notes for 2.2.2<
 [released 2012.04.03]

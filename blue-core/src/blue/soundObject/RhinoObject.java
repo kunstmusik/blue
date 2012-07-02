@@ -26,6 +26,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -143,7 +144,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         RhinoObject sObj = new RhinoObject();
 
         SoundObjectUtilities.initBasicFromXML(data, sObj);
@@ -158,7 +159,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("javaScriptCode").setText(this.getText());

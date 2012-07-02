@@ -20,10 +20,10 @@
 package blue.score.layers;
 
 import blue.CompileData;
-import blue.SoundObjectLibrary;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
@@ -47,7 +47,7 @@ public interface LayerGroup extends Serializable {
      * @param sObjLibrary
      * @return 
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary);
+    public Element saveAsXML(Map<Object, String> objRefMap);
 
     /**
      * Adds a new Layer at specified index.

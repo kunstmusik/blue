@@ -6,11 +6,11 @@
 
 package blue.soundObject;
 
-import blue.SoundObjectLibrary;
 import blue.components.lines.Line;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * An implementation of AbstractLineObject specifically for lines whose output
@@ -42,7 +42,7 @@ public class ZakLineObject extends AbstractLineObject implements Serializable {
      * Load object's state from XML
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
 
         ZakLineObject lObj = new ZakLineObject();
         SoundObjectUtilities.initBasicFromXML(data, lObj);

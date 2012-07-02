@@ -11,6 +11,7 @@ import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * <p>
@@ -249,7 +250,7 @@ public class External extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         External external = new External();
 
         SoundObjectUtilities.initBasicFromXML(data, external);
@@ -278,7 +279,7 @@ public class External extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("text").setText(this.getText());

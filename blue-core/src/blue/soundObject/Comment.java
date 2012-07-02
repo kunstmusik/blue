@@ -4,6 +4,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -64,7 +65,7 @@ public class Comment extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         Comment comment = new Comment();
 
         SoundObjectUtilities.initBasicFromXML(data, comment);
@@ -80,7 +81,7 @@ public class Comment extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("commentText").setText(this.getText());

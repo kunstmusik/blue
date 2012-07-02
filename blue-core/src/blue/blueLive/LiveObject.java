@@ -20,7 +20,6 @@
 
 package blue.blueLive;
 
-import blue.SoundObjectLibrary;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
@@ -28,6 +27,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.rmi.dgc.VMID;
+import java.util.Map;
 
 /**
  * 
@@ -91,7 +91,7 @@ public class LiveObject implements Serializable {
         return uniqueId;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("liveObject");
         
         retVal.setAttribute("uniqueId", uniqueId);
@@ -99,13 +99,13 @@ public class LiveObject implements Serializable {
         retVal.addElement(XMLUtilities.writeInt("keyTrigger", keyTrigger));
         retVal.addElement(XMLUtilities.writeInt("midiTrigger", midiTrigger));
         retVal.addElement(XMLUtilities.writeBoolean("enabled", enabled));
-        retVal.addElement(this.sObj.saveAsXML(sObjLibrary));
+        retVal.addElement(this.sObj.saveAsXML(objRefMap));
 
         return retVal;
     }
 
     public static LiveObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         LiveObject liveObj = new LiveObject();
         
         String val = data.getAttributeValue("uniqueId");
@@ -125,7 +125,7 @@ public class LiveObject implements Serializable {
                 liveObj.setMidiTrigger(XMLUtilities.readInt(node));
             } else if (name.equals("soundObject")) {
                 liveObj.setSObj((SoundObject) ObjectUtilities.loadFromXML(node,
-                        sObjLibrary));
+                        objRefMap));
             } else if (name.equals("enabled")) {
                 liveObj.setEnabled(XMLUtilities.readBoolean(node));
             }

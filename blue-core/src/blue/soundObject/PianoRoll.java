@@ -14,6 +14,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author steven yi
@@ -204,7 +205,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
 
         PianoRoll p = new PianoRoll();
         SoundObjectUtilities.initBasicFromXML(data, p);
@@ -247,7 +248,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         return p;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("noteTemplate").setText(getNoteTemplate());

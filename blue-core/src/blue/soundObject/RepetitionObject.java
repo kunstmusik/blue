@@ -6,6 +6,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * DEPRECATED - GENERICSCORE WITH TIME BEHAVIOR OF REPEAT SHOULD BE USED
@@ -156,7 +157,7 @@ public class RepetitionObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
-    public SoundObject loadFromXML(Element data, SoundObjectLibrary sObjLibrary) {
+    public SoundObject loadFromXML(Element data, Map<String, Object> objRefMap) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -166,7 +167,7 @@ public class RepetitionObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         // TODO Auto-generated method stub
         return null;
     }

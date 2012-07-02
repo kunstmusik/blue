@@ -27,6 +27,7 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -86,7 +87,7 @@ public class JMask extends AbstractSoundObject {
     }
 
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         JMask jmask = new JMask();
 
         SoundObjectUtilities.initBasicFromXML(data, jmask);
@@ -111,7 +112,7 @@ public class JMask extends AbstractSoundObject {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement(field.saveAsXML());

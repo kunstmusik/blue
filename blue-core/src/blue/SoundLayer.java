@@ -147,7 +147,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
     }
 
     public static SoundLayer loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         SoundLayer sLayer = new SoundLayer();
 
         sLayer.setName(data.getAttributeValue("name"));
@@ -172,7 +172,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
         while (sObjects.hasMoreElements()) {
             Object obj = ObjectUtilities.loadFromXML(sObjects.next(),
-                    sObjLibrary);
+                    objRefMap);
             sLayer.addSoundObject((SoundObject) obj);
         }
 
@@ -186,7 +186,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         return sLayer;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("soundLayer");
         retVal.setAttribute("name", this.getName());
         retVal.setAttribute("muted", Boolean.toString(this.isMuted()));
@@ -198,7 +198,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
         for (Iterator iter = soundObjects.iterator(); iter.hasNext();) {
             SoundObject sObj = (SoundObject) iter.next();
-            retVal.addElement(sObj.saveAsXML(sObjLibrary));
+            retVal.addElement(sObj.saveAsXML(objRefMap));
         }
 
         for (Iterator iter = automationParameters.iterator(); iter.hasNext();) {

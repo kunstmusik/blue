@@ -20,7 +20,6 @@
 package blue.score.layers.patterns.core;
 
 import blue.CompileData;
-import blue.SoundObjectLibrary;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
@@ -32,6 +31,7 @@ import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -76,7 +76,7 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element root = new Element("patternsLayerGroup");
         for(PatternLayer layer : patternLayers) {
             root.addElement(layer.saveAsXML());

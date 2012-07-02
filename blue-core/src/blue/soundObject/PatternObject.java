@@ -32,6 +32,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -237,7 +238,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     /* SERIALIZATION */
 
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
 
         PatternObject pattern = new PatternObject();
         SoundObjectUtilities.initBasicFromXML(data, pattern);
@@ -267,7 +268,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         return pattern;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("beats").setText(Integer.toString(beats));

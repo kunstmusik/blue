@@ -20,7 +20,6 @@
 package blue.score;
 
 import blue.CompileData;
-import blue.SoundObjectLibrary;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.score.tempo.Tempo;
@@ -30,6 +29,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  *
@@ -119,19 +119,19 @@ public class Score implements Serializable {
     
     
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("score");
         retVal.addElement(tempo.saveAsXML());
         retVal.addElement(timeState.saveAsXML());
 
         for (LayerGroup layerGroup : layerGroups) {
-            retVal.addElement(layerGroup.saveAsXML(sObjLibrary));
+            retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
 
         return retVal;
     }
 
-    public static Score loadFromXML(Element data, SoundObjectLibrary sObjLibrary) {
+    public static Score loadFromXML(Element data, Map<String, Object> objRefMap) {
         Score score = new Score(false);
 
         Elements nodes = data.getElements();
@@ -147,7 +147,7 @@ public class Score implements Serializable {
                 score.timeState = TimeState.loadFromXML(node);
             } else {
 
-                LayerGroup layerGroup = manager.loadFromXML(node, sObjLibrary);
+                LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
 
                 if (layerGroup == null) {
                     throw new RuntimeException(

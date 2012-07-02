@@ -26,7 +26,7 @@ import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import electric.xml.Element;
 import java.io.Serializable;
-import org.openide.util.Exceptions;
+import java.util.Map;
 
 
 /**
@@ -116,7 +116,7 @@ public class Sound extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         Sound sObj = new Sound();
 
         SoundObjectUtilities.initBasicFromXML(data, sObj);
@@ -131,7 +131,7 @@ public class Sound extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("instrumentText").setText(this.getText());

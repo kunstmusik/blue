@@ -26,8 +26,7 @@ import blue.orchestra.GenericInstrument;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
-import javax.swing.JOptionPane;
-import org.openide.util.Exceptions;
+import java.util.Map;
 
 /**
  * @author steven
@@ -231,7 +230,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         FrozenSoundObject fso = new FrozenSoundObject();
 
         SoundObjectUtilities.initBasicFromXML(data, fso);
@@ -241,7 +240,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         fso.setFrozenWaveFileName(data.getElement("frozenWaveFileName")
                 .getTextString());
         fso.setFrozenSoundObject((SoundObject) ObjectUtilities.loadFromXML(data
-                .getElement("soundObject"), sObjLibrary));
+                .getElement("soundObject"), objRefMap));
 
         return fso;
 
@@ -252,14 +251,14 @@ public class FrozenSoundObject extends AbstractSoundObject implements
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("numChannels").setText(
                 Integer.toString(this.getNumChannels()));
         retVal.addElement("frozenWaveFileName").setText(
                 this.getFrozenWaveFileName());
-        retVal.addElement(this.getFrozenSoundObject().saveAsXML(sObjLibrary));
+        retVal.addElement(this.getFrozenSoundObject().saveAsXML(objRefMap));
 
         return retVal;
     }

@@ -19,12 +19,12 @@
  */
 package blue.blueLive;
 
-import blue.SoundObjectLibrary;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  *
@@ -44,7 +44,7 @@ public class LiveObjectBins implements Serializable {
         this.liveObjectBins = liveObjectBins;
     }
 
-    public static LiveObjectBins loadFromXML(Element data, SoundObjectLibrary sObjLibrary) throws Exception {
+    public static LiveObjectBins loadFromXML(Element data, Map<String, Object> objRefMap) throws Exception {
 
         LiveObjectBins retVal;
 
@@ -76,7 +76,7 @@ public class LiveObjectBins implements Serializable {
                     name = lObjNode.getName();
 
                     if (name.equals("liveObject")) {
-                        retVal.liveObjectBins[column][row] = LiveObject.loadFromXML(lObjNode, sObjLibrary);
+                        retVal.liveObjectBins[column][row] = LiveObject.loadFromXML(lObjNode, objRefMap);
                     }
                     row++;
                 }
@@ -87,7 +87,7 @@ public class LiveObjectBins implements Serializable {
         return retVal;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("liveObjectBins");
 
         retVal.setAttribute("columns", Integer.toString(liveObjectBins.length));
@@ -103,7 +103,7 @@ public class LiveObjectBins implements Serializable {
                 if (lObj == null) {
                     bin.addElement("null");
                 } else {
-                    bin.addElement(lObj.saveAsXML(sObjLibrary));
+                    bin.addElement(lObj.saveAsXML(objRefMap));
                 }
             }
         }

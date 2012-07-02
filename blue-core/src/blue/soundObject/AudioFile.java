@@ -28,6 +28,7 @@ import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Map;
 import javax.swing.JOptionPane;
 
 /**
@@ -218,7 +219,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         AudioFile aFile = new AudioFile();
 
         SoundObjectUtilities.initBasicFromXML(data, aFile);
@@ -242,7 +243,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("soundFileName").setText(this.getSoundFileName());

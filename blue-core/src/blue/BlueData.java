@@ -28,7 +28,6 @@ import blue.noteProcessor.NoteProcessorChainMap;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentList;
 import blue.score.Score;
-import blue.score.tempo.Tempo;
 import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
 import blue.soundObject.RepetitionObject;
@@ -432,6 +431,8 @@ public class BlueData implements Serializable {
         UpgradeManager.getInstance().performPreUpgrades(data);
 
         BlueData blueData = new BlueData();
+        
+        Map<String, Object> objRefMap = new HashMap<String,Object>();
 
         Elements nodes = data.getElements();
 
@@ -461,7 +462,7 @@ public class BlueData implements Serializable {
             } else if (nodeName.equals("tables")) {
                 blueData.tableSet = Tables.loadFromXML(node);
             } else if (nodeName.equals("soundObjectLibrary")) {
-                blueData.sObjLib = SoundObjectLibrary.loadFromXML(node);
+                blueData.sObjLib = SoundObjectLibrary.loadFromXML(node, objRefMap);
             } else if (nodeName.equals("globalOrcSco")) {
                 blueData.globalOrcSco = GlobalOrcSco.loadFromXML(node);
             } else if (nodeName.equals("udo")) {
@@ -483,9 +484,9 @@ public class BlueData implements Serializable {
 
             } else if (nodeName.equals("liveData")) {
                 blueData.liveData = LiveData
-                        .loadFromXML(node, blueData.sObjLib);
+                        .loadFromXML(node, objRefMap);
             } else if (nodeName.equals("score")) {
-                blueData.score = Score.loadFromXML(node, blueData.sObjLib);
+                blueData.score = Score.loadFromXML(node, objRefMap);
             } else if (nodeName.equals("scratchPadData")) {
                 blueData.scratchData = ScratchPadData.loadFromXML(node);
             } else if (nodeName.equals("noteProcessorChainMap")) {
@@ -534,6 +535,8 @@ public class BlueData implements Serializable {
         // update version
         this.version = BlueConstants.getVersion();
         
+        Map<Object, String> objRefMap = new HashMap<Object, String>();
+        
         Element retVal = new Element("blueData");
         retVal.setAttribute("version", BlueConstants.getVersion());
 
@@ -542,14 +545,14 @@ public class BlueData implements Serializable {
         retVal.addElement(arrangement.saveAsXML());
         retVal.addElement(mixer.saveAsXML());
         retVal.addElement(tableSet.saveAsXML());
-        retVal.addElement(sObjLib.saveAsXML());
+        retVal.addElement(sObjLib.saveAsXML(objRefMap));
         retVal.addElement(globalOrcSco.saveAsXML());
         // retVal.addElement("udo").setText(getUserDefinedOpcodes());
 
         retVal.addElement(opcodeList.saveAsXML());
 
-        retVal.addElement(liveData.saveAsXML(sObjLib));
-        retVal.addElement(score.saveAsXML(sObjLib));
+        retVal.addElement(liveData.saveAsXML(objRefMap));
+        retVal.addElement(score.saveAsXML(objRefMap));
         retVal.addElement(scratchData.saveAsXML());
         retVal.addElement(noteProcessorChainMap.saveAsXML());
 

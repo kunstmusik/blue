@@ -34,6 +34,7 @@ import blue.soundObject.ceciliaModule.ModuleDefinition;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.util.Map;
 
 /**
  * @author steven
@@ -156,7 +157,7 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
 
         CeciliaModule ceciliaModule = new CeciliaModule();
 
@@ -189,7 +190,7 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("orchestraVersion").setText(

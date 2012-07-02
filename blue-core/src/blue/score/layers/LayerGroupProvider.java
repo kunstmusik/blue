@@ -19,8 +19,8 @@
  */
 package blue.score.layers;
 
-import blue.SoundObjectLibrary;
 import electric.xml.Element;
+import java.util.Map;
 
 /**
  * Factory class that creates new LayerGroups as well as loads them from XML.
@@ -50,5 +50,5 @@ public interface LayerGroupProvider {
      * 
      * @return 
      */
-    LayerGroup loadFromXML(Element element, SoundObjectLibrary sObjLibrary);
+    LayerGroup loadFromXML(Element element, Map<String, Object> objRefMap);
 }

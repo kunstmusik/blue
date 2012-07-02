@@ -19,10 +19,10 @@
  */
 package blue.soundObject;
 
-import blue.SoundObjectLibrary;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import electric.xml.Element;
+import java.util.Map;
 
 /**
  *
@@ -43,12 +43,12 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
     }
 
     @Override
-    public LayerGroup loadFromXML(Element element, SoundObjectLibrary sObjLibrary) {
+    public LayerGroup loadFromXML(Element element, Map<String, Object> objRefMap) {
         if ("soundObject".equals(element.getName())) {
             String type = element.getAttributeValue("type");
             if(type != null && type.equals("blue.soundObject.PolyObject")) {
                 try {
-                    return PolyObject.loadFromXML(element, sObjLibrary);
+                    return PolyObject.loadFromXML(element, objRefMap);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

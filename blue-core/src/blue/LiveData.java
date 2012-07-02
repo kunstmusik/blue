@@ -21,7 +21,6 @@ package blue;
 
 import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
-import blue.blueLive.LiveObjectSet;
 import blue.blueLive.LiveObjectSetList;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
@@ -30,6 +29,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class LiveData implements Serializable {
 
@@ -74,7 +74,7 @@ public class LiveData implements Serializable {
     }
 
     public static LiveData loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         LiveData liveData = new LiveData();
 
         Elements nodes = data.getElements();
@@ -99,16 +99,16 @@ public class LiveData implements Serializable {
                 doCommandLineUpgrade = false;
             } else if (name.equals("soundObject")) {
                 SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
-                        node, sObjLibrary);
+                        node, objRefMap);
                 LiveObject lObj = new LiveObject();
                 lObj.setSObj(sObj);
                 oldFormat.add(lObj);
             } else if (name.equals("liveObject")) {
                 oldFormat.add(LiveObject.loadFromXML(node,
-                        sObjLibrary));
+                        objRefMap));
             } else if (name.equals("liveObjectBins")) {
                 liveData.liveObjectBins = LiveObjectBins.loadFromXML(node,
-                        sObjLibrary);
+                        objRefMap);
             } else if (name.equals("repeat")) {
                 liveData.repeat = XMLUtilities.readInt(node);
             } else if (name.equals("tempo")) {
@@ -145,7 +145,7 @@ public class LiveData implements Serializable {
     /**
      * @return
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("liveData");
 
         retVal.addElement("commandLine").setText(commandLine);
@@ -154,7 +154,7 @@ public class LiveData implements Serializable {
         retVal.addElement(XMLUtilities.writeBoolean("commandLineOverride",
                 commandLineOverride));
 
-        retVal.addElement(liveObjectBins.saveAsXML(sObjLibrary));
+        retVal.addElement(liveObjectBins.saveAsXML(objRefMap));
         retVal.addElement(liveObjectSets.saveAsXML());
 
         retVal.addElement(XMLUtilities.writeInt("repeat", repeat));

@@ -5,6 +5,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.notation.NotationStaff;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * <p>
@@ -118,7 +119,7 @@ public class NotationObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
-    public SoundObject loadFromXML(Element data, SoundObjectLibrary sObjLibrary) {
+    public SoundObject loadFromXML(Element data, Map<String, Object> objRefMap) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -128,7 +129,7 @@ public class NotationObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         // TODO Auto-generated method stub
         return null;
     }

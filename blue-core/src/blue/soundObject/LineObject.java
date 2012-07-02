@@ -20,12 +20,12 @@
 
 package blue.soundObject;
 
-import blue.SoundObjectLibrary;
 import blue.automation.LineColors;
 import blue.components.lines.Line;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author Steven Yi
@@ -48,7 +48,7 @@ public class LineObject extends AbstractLineObject implements Serializable {
     /* SERIALIZATION */
 
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
 
         LineObject lObj = new LineObject();
         SoundObjectUtilities.initBasicFromXML(data, lObj);

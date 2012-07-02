@@ -35,6 +35,7 @@ import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -419,7 +420,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static PolyObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         PolyObject pObj = new PolyObject();
 
         SoundObjectUtilities.initBasicFromXML(data, pObj);
@@ -454,7 +455,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
                 int index = Integer.parseInt(node.getTextString());
                 pObj.setDefaultHeightIndex(index);
             } else if (nodeName.equals("soundLayer")) {
-                pObj.soundLayers.add(SoundLayer.loadFromXML(node, sObjLibrary));
+                pObj.soundLayers.add(SoundLayer.loadFromXML(node, objRefMap));
             } else if (nodeName.equals("timeState")) {
                 pObj.timeState = TimeState.loadFromXML(node);
             } else if (!oldTimeStateValuesFound && isTimeStateValueFound(nodeName)) {
@@ -497,7 +498,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("isRoot").setText(Boolean.toString(this.isRoot()));
@@ -511,7 +512,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         
         for (Iterator iter = soundLayers.iterator(); iter.hasNext();) {
             SoundLayer sLayer = (SoundLayer) iter.next();
-            retVal.addElement(sLayer.saveAsXML(sObjLibrary));
+            retVal.addElement(sLayer.saveAsXML(objRefMap));
         }
 
         return retVal;

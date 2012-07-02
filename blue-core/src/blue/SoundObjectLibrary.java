@@ -8,14 +8,14 @@ package blue;
  * @version 1.0
  */
 
-import blue.soundObject.Instance;
-import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.rmi.dgc.VMID;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -73,68 +73,46 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
 
     /* SERIALIZATION CODE */
             
-    public static SoundObjectLibrary loadFromXML(Element data) throws Exception {
+    public static SoundObjectLibrary loadFromXML(Element data, Map<String, Object> objRefMap) throws Exception {
         SoundObjectLibrary sObjLib = new SoundObjectLibrary();
         sObjLib.setInitializing(true);
 
         Elements sObjects = data.getElements("soundObject");
 
+        int index = 0;
+        
         while (sObjects.hasMoreElements()) {
+            Element node = sObjects.next();
             SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
-                    sObjects.next(), sObjLib);
+                    node, objRefMap);
             sObjLib.add(sObj);
+            
+            if(node.getAttribute("objRefId") != null) {
+                objRefMap.put(node.getAttributeValue("objRefId"), sObj);
+            } else {
+                objRefMap.put(Integer.toString(index++), sObj);
+            }
         }
 
         sObjLib.setInitializing(false);
 
-        sObjLib.resolveLibraryInstances();
-
         return sObjLib;
     }
 
-    private void resolveLibraryInstances() {
-        for (int i = 0; i < this.size(); i++) {
-            SoundObject sObj = getSoundObject(i);
-
-            if (sObj instanceof Instance) {
-                ((Instance) sObj).resolve(this);
-            } else if (sObj instanceof PolyObject) {
-                resolveLibraryInstances((PolyObject) sObj);
-            }
-        }
-    }
-
-    private void resolveLibraryInstances(PolyObject pObj) {
-        ArrayList sObjects = pObj.getSoundObjects(true);
-
-        for (int i = 0; i < sObjects.size(); i++) {
-            Object sObj = sObjects.get(i);
-
-            if (sObj instanceof Instance) {
-                ((Instance) sObj).resolve(this);
-            } else if (sObj instanceof PolyObject) {
-                resolveLibraryInstances((PolyObject) sObj);
-            }
-        }
-    }
-
-    public Element saveAsXML() {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("soundObjectLibrary");
 
         for (Iterator iter = this.iterator(); iter.hasNext();) {
             SoundObject sObj = (SoundObject) iter.next();
-            retVal.addElement(sObj.saveAsXML(this));
+            String objRefId = Integer.toString(new VMID().hashCode());
+            objRefMap.put(sObj, objRefId);
+            
+            Element elem = sObj.saveAsXML(objRefMap);
+            elem.setAttribute("objRefId", objRefId);
+            retVal.addElement(elem);
         }
 
         return retVal;
-    }
-
-    public int getSoundObjectLibraryID(SoundObject sObj) {
-        return this.indexOf(sObj);
-    }
-
-    public SoundObject getSoundObjectByID(int id) {
-        return this.getSoundObject(id);
     }
 
     public boolean isInitializing() {

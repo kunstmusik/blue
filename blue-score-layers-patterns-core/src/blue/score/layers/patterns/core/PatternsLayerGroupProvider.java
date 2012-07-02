@@ -19,9 +19,9 @@
  */
 package blue.score.layers.patterns.core;
 
-import blue.SoundObjectLibrary;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
+import java.util.Map;
 
 /**
  *
@@ -42,7 +42,7 @@ public class PatternsLayerGroupProvider implements LayerGroupProvider {
     }
 
     @Override
-    public LayerGroup loadFromXML(electric.xml.Element element, SoundObjectLibrary sObjLibrary) {
+    public LayerGroup loadFromXML(electric.xml.Element element, Map<String, Object> objRefMap) {
         if ("patternsLayerGroup".equals(element.getName())) {
             try {
                 return PatternsLayerGroup.loadFromXML(element);

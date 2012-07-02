@@ -34,8 +34,8 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.openide.util.Exceptions;
 import org.python.core.PyException;
 
 public class ObjectBuilder extends AbstractSoundObject {
@@ -262,7 +262,7 @@ public class ObjectBuilder extends AbstractSoundObject {
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         ObjectBuilder bsb = new ObjectBuilder();
 
         SoundObjectUtilities.initBasicFromXML(data, bsb);
@@ -303,7 +303,7 @@ public class ObjectBuilder extends AbstractSoundObject {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.setAttribute("editEnabled", Boolean.toString(editEnabled));

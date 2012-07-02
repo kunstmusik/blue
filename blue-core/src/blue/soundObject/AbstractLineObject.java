@@ -7,9 +7,6 @@
 package blue.soundObject;
 
 import blue.CompileData;
-import blue.GlobalOrcSco;
-import blue.SoundObjectLibrary;
-import blue.Tables;
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
@@ -21,7 +18,7 @@ import electric.xml.Element;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
-import org.openide.util.Exceptions;
+import java.util.Map;
 
 /**
  * Base class for line objects. Most of this functionality was extracted from
@@ -250,7 +247,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     /* SERIALIZATION */
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         for (Iterator iter = lines.iterator(); iter.hasNext();) {

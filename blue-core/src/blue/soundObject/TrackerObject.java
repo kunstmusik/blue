@@ -32,9 +32,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.openide.util.Exceptions;
 
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 
@@ -100,7 +100,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         this.repeatPoint = repeatPoint;
     }
 
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement(XMLUtilities.writeFloat("duration", getDuration()));
@@ -115,7 +115,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         TrackerObject retVal = new TrackerObject();
 
         SoundObjectUtilities.initBasicFromXML(data, retVal);

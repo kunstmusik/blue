@@ -34,6 +34,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 
 public class GenericScore extends AbstractSoundObject implements Serializable,
         Cloneable, GenericEditable, GenericViewable {
@@ -153,7 +154,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         GenericScore genScore = new GenericScore();
 
         SoundObjectUtilities.initBasicFromXML(data, genScore);
@@ -175,7 +176,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("score").setText(this.getText());

@@ -7,6 +7,7 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 import org.openide.util.Exceptions;
 
 /**
@@ -123,31 +124,24 @@ public class Instance extends AbstractSoundObject implements Serializable {
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         Instance instance = new Instance();
 
         SoundObjectUtilities.initBasicFromXML(data, instance);
 
-        int id = Integer.parseInt(data.getElement("soundObjectReference")
-                .getAttributeValue("soundObjectLibraryID"));
+        String id = data.getElement("soundObjectReference")
+                .getAttributeValue("soundObjectLibraryID");
 
-        if (sObjLibrary.isInitializing()) {
-            instance.soundObjectLibraryId = id;
+        
+        Object sObj = objRefMap.get(id);
+        if(sObj != null) {
+            instance.setSoundObject((SoundObject)sObj);
         } else {
-            instance.setSoundObject(sObjLibrary.getSoundObjectByID(id));
+            throw new Exception("Could not find SoundObject pointed to from Instance with ID: " + id);
         }
 
         return instance;
 
-    }
-
-    public void resolve(SoundObjectLibrary sObjLibrary) {
-        if (soundObjectLibraryId < 0) {
-            System.err.println("Error: Could not resolve Instance SoundObject");
-        } else {
-            setSoundObject(sObjLibrary.getSoundObjectByID(soundObjectLibraryId));
-            soundObjectLibraryId = -1;
-        }
     }
 
     /*
@@ -155,13 +149,13 @@ public class Instance extends AbstractSoundObject implements Serializable {
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("soundObjectReference").setAttribute(
                 "soundObjectLibraryID",
-                Integer.toString(sObjLibrary.getSoundObjectLibraryID(this
-                        .getSoundObject())));
+                objRefMap.get(this
+                        .getSoundObject()));
 
         return retVal;
     }

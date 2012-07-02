@@ -19,11 +19,11 @@
  */
 package blue.score.layers;
 
-import blue.SoundObjectLibrary;
 import blue.soundObject.PolyObjectLayerGroupProvider;
 import electric.xml.Element;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  *
@@ -50,11 +50,11 @@ public class LayerGroupProviderManager extends ArrayList<LayerGroupProvider> {
         this.addAll(providers);
     }
 
-    public LayerGroup loadFromXML(Element node, SoundObjectLibrary sObjLibrary) {
+    public LayerGroup loadFromXML(Element node, Map<String, Object> objRefMap) {
         LayerGroup layerGroup = null;
         
         for(LayerGroupProvider provider : this) {
-            layerGroup = provider.loadFromXML(node, sObjLibrary);
+            layerGroup = provider.loadFromXML(node, objRefMap);
             
             if(layerGroup != null) {
                 break;

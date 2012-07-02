@@ -26,6 +26,7 @@ import blue.scripting.PythonProxy;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.Map;
 import org.python.core.PyException;
 
 /**
@@ -143,7 +144,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
      * @see blue.soundObject.SoundObject#loadFromXML(electric.xml.Element)
      */
     public static SoundObject loadFromXML(Element data,
-            SoundObjectLibrary sObjLibrary) throws Exception {
+            Map<String, Object> objRefMap) throws Exception {
         PythonObject pObj = new PythonObject();
 
         SoundObjectUtilities.initBasicFromXML(data, pObj);
@@ -167,7 +168,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
-    public Element saveAsXML(SoundObjectLibrary sObjLibrary) {
+    public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("pythonCode").setText(this.getText());
