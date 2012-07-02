@@ -206,13 +206,13 @@
                 <attr name="displayName" bundlevalue="blue.ui.core.score.layers.soundObject.Bundle#CTL_SoundObjectEditorAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="blue-ui-core-score-SoundObjectLibraryAction.instance">
+            <file name="blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectLibraryAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="blue-ui-core-score-SoundObjectPropertiesAction.instance">
+            <file name="blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectPropertiesTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectPropertiesAction"/>
@@ -377,11 +377,11 @@
             </file>
 
             <file name="SoundObjectPropertiesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectPropertiesAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
                 <attr name="position" intvalue="200"/>
             </file>
             <file name="SoundObjectLibraryAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectLibraryAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance"/>
                 <attr name="position" intvalue="300"/>
             </file>
             <file name="ScratchPadAction.shadow">
@@ -513,10 +513,10 @@
 
 
         <file name="F3.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectPropertiesAction.instance"/>
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
         </file>
         <file name="F4.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-SoundObjectLibraryAction.instance"/>
+            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance"/>
         </file>
         <file name="F5.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>

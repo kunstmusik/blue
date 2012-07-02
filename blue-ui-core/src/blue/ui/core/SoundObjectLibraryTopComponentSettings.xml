@@ -22,6 +22,6 @@
 <settings version="1.0">
     <module name="blue.ui.core" spec="1.0"/>
     <instanceof class="org.openide.windows.TopComponent"/>
-    <instanceof class="blue.ui.core.score.SoundObjectLibraryTopComponent"/>
-    <instance class="blue.ui.core.score.SoundObjectLibraryTopComponent" method="getDefault"/>
+    <instanceof class="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent"/>
+    <instance class="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent" method="getDefault"/>
 </settings>
