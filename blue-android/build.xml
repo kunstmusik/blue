@@ -1,5 +1,13 @@
 <project name="blue-android" basedir="." default="build">
 
+    <path id="project.classpath">
+        <pathelement path="${classpath}" />
+        <pathelement location="lib/EXML.jar" />
+        <pathelement location="lib/commons-lang3-3.1.jar" />
+        <pathelement location="lib/csnd.jar" />
+        <pathelement location="lib/jython.jar" />
+    </path>
+
     <target name="src-copy">
         <delete dir="src"/>
         <mkdir dir="src"/>
@@ -24,7 +32,9 @@
     <target name="build" depends="src-copy,lib-copy">
         <delete dir="build"/>
         <mkdir dir="build"/>
-        <javac classpath="lib/commons-lang3-3.1.jar:libs/csnd.jar:lib/EXML.jar:lib/jython.jar" srcdir="src" destdir="build"/>
+        <javac srcdir="src" destdir="build">
+            <classpath refid="project.classpath"/>
+        </javac>
     </target>
     
     <target name="clean">
