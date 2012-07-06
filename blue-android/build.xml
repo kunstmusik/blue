@@ -36,6 +36,12 @@
             <classpath refid="project.classpath"/>
         </javac>
     </target>
+
+    <target name="jar" depends="build">
+        <delete file="lib/blue.jar"/>
+        <jar basedir="build" compress="true" jarfile="lib/blue.jar" />
+    </target>
+
     
     <target name="clean">
         <delete dir="build"/>
