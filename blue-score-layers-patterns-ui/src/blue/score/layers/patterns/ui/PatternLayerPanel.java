@@ -75,7 +75,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
             @Override
             public void mousePressed(MouseEvent e) {
-                if(e.isShiftDown()) {
+                if(e.getClickCount() == 1) {
+                    requestFocus();
                     editSoundObject();
                     e.consume();
                 }
