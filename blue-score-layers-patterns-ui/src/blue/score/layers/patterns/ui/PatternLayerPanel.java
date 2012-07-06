@@ -137,7 +137,10 @@ public class PatternLayerPanel extends javax.swing.JPanel {
 
         jPopupMenu1 = new javax.swing.JPopupMenu();
         editSObjMenuItem = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
         setSObjFromBufferMenuItem = new javax.swing.JMenuItem();
+        copySObjToBufferMenuItem = new javax.swing.JMenuItem();
+        jSeparator2 = new javax.swing.JPopupMenu.Separator();
         changeSObjMenu = new javax.swing.JMenu();
         jPanel1 = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
@@ -153,6 +156,7 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             }
         });
         jPopupMenu1.add(editSObjMenuItem);
+        jPopupMenu1.add(jSeparator1);
 
         setSObjFromBufferMenuItem.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.setSObjFromBufferMenuItem.text")); // NOI18N
         setSObjFromBufferMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -161,6 +165,15 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             }
         });
         jPopupMenu1.add(setSObjFromBufferMenuItem);
+
+        copySObjToBufferMenuItem.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.copySObjToBufferMenuItem.text")); // NOI18N
+        copySObjToBufferMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copySObjToBufferMenuItemActionPerformed(evt);
+            }
+        });
+        jPopupMenu1.add(copySObjToBufferMenuItem);
+        jPopupMenu1.add(jSeparator2);
 
         changeSObjMenu.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.changeSObjMenu.text")); // NOI18N
         jPopupMenu1.add(changeSObjMenu);
@@ -319,6 +332,12 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_setSObjFromBufferMenuItemActionPerformed
 
+    private void copySObjToBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySObjToBufferMenuItemActionPerformed
+        SoundObject copy = (SoundObject) ObjectUtilities.clone(
+                            patternLayer.getSoundObject());
+        SoundObjectBuffer.getInstance().setBufferedObject(copy, 0, 0);
+    }//GEN-LAST:event_copySObjToBufferMenuItemActionPerformed
+
     public void editName() {
         if (patternLayer == null) {
             return;
@@ -331,9 +350,12 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu changeSObjMenu;
+    private javax.swing.JMenuItem copySObjToBufferMenuItem;
     private javax.swing.JMenuItem editSObjMenuItem;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPopupMenu jPopupMenu1;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JToggleButton muteToggleButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
