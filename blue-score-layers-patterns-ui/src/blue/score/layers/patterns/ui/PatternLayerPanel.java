@@ -27,8 +27,10 @@ import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsPluginProvider;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
+import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
 import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
 import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
+import blue.utility.ObjectUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -135,6 +137,7 @@ public class PatternLayerPanel extends javax.swing.JPanel {
 
         jPopupMenu1 = new javax.swing.JPopupMenu();
         editSObjMenuItem = new javax.swing.JMenuItem();
+        setSObjFromBufferMenuItem = new javax.swing.JMenuItem();
         changeSObjMenu = new javax.swing.JMenu();
         jPanel1 = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
@@ -150,6 +153,14 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             }
         });
         jPopupMenu1.add(editSObjMenuItem);
+
+        setSObjFromBufferMenuItem.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.setSObjFromBufferMenuItem.text")); // NOI18N
+        setSObjFromBufferMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                setSObjFromBufferMenuItemActionPerformed(evt);
+            }
+        });
+        jPopupMenu1.add(setSObjFromBufferMenuItem);
 
         changeSObjMenu.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.changeSObjMenu.text")); // NOI18N
         jPopupMenu1.add(changeSObjMenu);
@@ -275,6 +286,9 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             menuItem.setEnabled(!current.equals(clazz));
         }
         
+        final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
+        setSObjFromBufferMenuItem.setEnabled(sObjBuffer.size() == 1);
+        
         jPopupMenu1.show(otherMenuButton, 0, otherMenuButton.getHeight());
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
@@ -290,6 +304,20 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     private void editSObjMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSObjMenuItemActionPerformed
         editSoundObject();
     }//GEN-LAST:event_editSObjMenuItemActionPerformed
+
+    private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
+        final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
+        if(sObjBuffer.size() == 1) {
+            SoundObject sObj = sObjBuffer.getBufferedSoundObject();
+            SoundObject copy = (SoundObject) ObjectUtilities.clone(
+                        sObj);
+            copy.setStartTime(0.0f);
+            copy.setSubjectiveDuration(4);
+            copy.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+            patternLayer.setSoundObject(copy);
+            editSoundObject();
+        }
+    }//GEN-LAST:event_setSObjFromBufferMenuItemActionPerformed
 
     public void editName() {
         if (patternLayer == null) {
@@ -310,6 +338,7 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
     private javax.swing.JButton otherMenuButton;
+    private javax.swing.JMenuItem setSObjFromBufferMenuItem;
     private javax.swing.JToggleButton soloToggleButton;
     // End of variables declaration//GEN-END:variables
 }
