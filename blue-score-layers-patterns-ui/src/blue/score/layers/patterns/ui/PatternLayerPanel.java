@@ -21,6 +21,7 @@ package blue.score.layers.patterns.ui;
 
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
 import blue.plugin.BluePlugin;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
@@ -37,16 +38,23 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.*;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 import org.openide.util.Exceptions;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternLayerPanel extends javax.swing.JPanel {
+public class PatternLayerPanel extends javax.swing.JPanel 
+        implements SelectionListener {
     private final PatternLayer patternLayer;
 
+    private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
+    private static final Border selectionBorder = BorderFactory.createBevelBorder(
+            BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
     /**
      * Creates new form PatternLayerPanel
      */
@@ -111,6 +119,10 @@ public class PatternLayerPanel extends javax.swing.JPanel {
             changeSObjMenu.add(temp);
         
         }
+        
+        setBorder(border);
+        
+        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
     }
 
     protected void editSoundObject() {
@@ -178,7 +190,6 @@ public class PatternLayerPanel extends javax.swing.JPanel {
         changeSObjMenu.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.changeSObjMenu.text")); // NOI18N
         jPopupMenu1.add(changeSObjMenu);
 
-        setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 3));
@@ -363,4 +374,18 @@ public class PatternLayerPanel extends javax.swing.JPanel {
     private javax.swing.JMenuItem setSObjFromBufferMenuItem;
     private javax.swing.JToggleButton soloToggleButton;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void removeNotify() {
+        SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
+    }
+    
+    @Override
+    public void selectionPerformed(SelectionEvent e) {
+        if(e.getSelectedItem() == patternLayer.getSoundObject()) {
+            this.setBorder(selectionBorder);
+        } else {
+            this.setBorder(border);
+        }
+    }
 }
