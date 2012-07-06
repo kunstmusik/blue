@@ -24,10 +24,8 @@ import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
-import blue.soundObject.NoteList;
-import blue.soundObject.OnLoadProcessable;
-import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
+import blue.soundObject.*;
+import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
@@ -56,7 +54,72 @@ public class PatternsLayerGroup implements LayerGroup {
 
     @Override
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        boolean soloFound = false;
+        NoteList noteList = new NoteList();
+        
+        for(PatternLayer patternLayer : patternLayers) {
+            if (patternLayer.isSolo()) {
+                if (!patternLayer.isMuted()) {
+                    soloFound = true;
+                    noteList.merge(patternLayer.generateForCSD(compileData, startTime, endTime, 
+                            patternBeatsLength));
+                }
+            }
+        }
+
+        if (!soloFound) {
+            for(PatternLayer patternLayer : patternLayers) {
+                if (!patternLayer.isMuted()) {
+                    noteList.merge(patternLayer.generateForCSD(compileData, startTime, endTime, 
+                            patternBeatsLength));
+                }
+            }
+        }
+    
+        noteList = processNotes(compileData, noteList, startTime, endTime);
+        
+        return noteList;
+    }
+    
+    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) {
+
+        NoteList retVal = null;
+        
+        if (start == 0.0f) {
+            retVal = nl;
+        } else {
+            ScoreUtilities.setScoreStart(nl, -start);
+
+            NoteList buffer = new NoteList();
+            Note tempNote;
+
+            for (int i = 0; i < nl.size(); i++) {
+                tempNote = nl.getNote(i);
+
+                if (tempNote.getStartTime() >= 0) {
+                    buffer.addNote(tempNote);
+                }
+            }
+            retVal = buffer;
+        }
+
+        if (endTime > start) {
+            // float dur = endTime - start;
+
+            NoteList buffer = new NoteList();
+            Note tempNote;
+
+            for (int i = 0; i < retVal.size(); i++) {
+                tempNote = retVal.getNote(i);
+
+                if (tempNote.getStartTime() <= endTime) {
+                    buffer.addNote(tempNote);
+                }
+            }
+            retVal = buffer;
+        }
+
+        return retVal;
     }
     
     public static PatternsLayerGroup loadFromXML(Element data) {

@@ -19,31 +19,33 @@
  */
 package blue.score.layers.patterns.core;
 
+import blue.CompileData;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericScore;
+import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
+import com.sun.org.apache.xpath.internal.operations.NotEquals;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import quicktime.std.clocks.TimeBase;
 
 /**
  *
  * @author stevenyi
- * 
+ *
  */
 public class PatternLayer implements Layer {
-    
+
     private SoundObject soundObject = new GenericScore();
-    
     private String name = "";
-    
     private boolean muted = false;
     private boolean solo = false;
-    
     private PatternData patternData = new PatternData();
-    
+
     public SoundObject getSoundObject() {
         return soundObject;
     }
@@ -75,40 +77,38 @@ public class PatternLayer implements Layer {
     public void setSolo(boolean solo) {
         this.solo = solo;
     }
-    
-    
 
     public PatternData getPatternData() {
         return patternData;
     }
-    
+
     public Element saveAsXML() {
         Element retVal = new Element("patternLayer");
-        
-        if(soundObject != null) {
+
+        if (soundObject != null) {
             retVal.addElement(soundObject.saveAsXML(null));
         }
         retVal.addElement(patternData.saveAsXML());
         retVal.setAttribute("name", getName());
         retVal.setAttribute("muted", Boolean.toString(isMuted()));
         retVal.setAttribute("solo", Boolean.toString(isSolo()));
-        
+
         return retVal;
     }
-    
+
     public static PatternLayer loadFromXML(Element data) {
         PatternLayer layer = new PatternLayer();
-        
+
         layer.setName(data.getAttributeValue("name"));
-        layer.setMuted(Boolean.valueOf(data.getAttributeValue("muted"))
-                .booleanValue());
-        layer.setSolo(Boolean.valueOf(data.getAttributeValue("solo"))
-                .booleanValue());
-        
+        layer.setMuted(
+                Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
+        layer.setSolo(
+                Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+
         Elements nodes = data.getElements();
 
         int heightIndex = -1;
-        
+
         boolean oldTimeStateValuesFound = false;
 
         while (nodes.hasMoreElements()) {
@@ -117,22 +117,47 @@ public class PatternLayer implements Layer {
 
             if ("soundObject".equals(nodeName)) {
                 try {
-                    layer.setSoundObject((SoundObject)ObjectUtilities.loadFromXML(
+                    layer.setSoundObject((SoundObject) ObjectUtilities.loadFromXML(
                             node, null));
                 } catch (Exception ex) {
-                    Logger.getLogger(PatternLayer.class.getName()).log(Level.SEVERE,
+                    Logger.getLogger(PatternLayer.class.getName()).log(
+                            Level.SEVERE,
                             null, ex);
                 }
             } else if (nodeName.equals("patternData")) {
                 layer.patternData = PatternData.loadFromXML(node);
             }
         }
-        
+
         return layer;
     }
 
     void clearListeners() {
         //
     }
-    
+
+    NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) {
+        NoteList notes = new NoteList();
+
+        this.soundObject.setStartTime(0);
+        this.soundObject.setSubjectiveDuration(patternBeatsLength);
+        this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        NoteList tempNotes = this.soundObject.generateForCSD(compileData, -1, -1);
+        
+        
+        int currentIndex = (int)(startTime / patternBeatsLength);
+        while(currentIndex < this.patternData.getSize()) {
+            
+            if(this.patternData.isPatternSet(currentIndex)) {
+                float time = currentIndex * patternBeatsLength;
+                final NoteList copy = (NoteList)tempNotes.clone();
+                ScoreUtilities.setScoreStart(copy, time);
+                notes.addAll(copy);
+            }
+            
+            currentIndex++;   
+        }
+       
+        return notes;
+    }
 }
