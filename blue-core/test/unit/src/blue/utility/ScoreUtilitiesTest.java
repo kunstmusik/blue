@@ -22,7 +22,6 @@ package blue.utility;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import junit.framework.TestCase;
-import org.openide.util.Exceptions;
 
 public class ScoreUtilitiesTest extends TestCase {
 
@@ -62,7 +61,7 @@ public class ScoreUtilitiesTest extends TestCase {
         try {
             nl = ScoreUtilities.getNotes(testScore);
         } catch (NoteParseException ex) {
-            Exceptions.printStackTrace(ex);
+            ex.printStackTrace();
         }
 
         assertNotNull(nl);
@@ -86,7 +85,7 @@ public class ScoreUtilitiesTest extends TestCase {
         try {
             nl = ScoreUtilities.getNotes(testScore);
         } catch (NoteParseException ex) {
-            Exceptions.printStackTrace(ex);
+            ex.printStackTrace();
         }
 
         assertNotNull(nl);

@@ -1,12 +1,11 @@
 package blue.scripting;
 
 import blue.BlueSystem;
+import blue.ExceptionHandler;
 import blue.soundObject.NoteList;
 import blue.utility.FileUtilities;
 import java.io.File;
 import java.io.IOException;
-import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.python.core.*;
 import org.python.util.PythonInterpreter;
 
@@ -33,15 +32,21 @@ public class PythonProxy {
     private static PythonInterpreter interp;
     private static PythonInterpreter expressionInterpreter;
 
-    static {
-        PySystemState state = new PySystemState();
-        for (String pathEntry : getPythonLibPath().split(File.pathSeparator)) {
-            state.path.append(Py.newString(pathEntry));
-        }
-        Py.setSystemState(state);
-    }
+    private static PySystemState state = new PySystemState();
+    private static File libDir = null;
 
+    public static void setLibDir(File newLibDir) {
+        libDir = newLibDir;
+    }
+    
     public static final void reinitialize() {
+        if(Py.getSystemState() != state) {
+            for (String pathEntry : getPythonLibPath().split(File.pathSeparator)) {
+                state.path.append(Py.newString(pathEntry));
+            }
+            Py.setSystemState(state);
+        }
+        
         interp = new PythonInterpreter();
         expressionInterpreter = new PythonInterpreter();
         expressionInterpreter.exec("from __future__ import division\n");
@@ -156,15 +161,14 @@ public class PythonProxy {
         String sep = File.separator;
 //        String programPythonPath = home + sep + "lib" + sep + "pythonLib";
 
-        File pythonLib = InstalledFileLocator.getDefault().
-                locate("pythonLib", "jython", false);
+        File pythonLib = libDir;
 
         String programPythonPath = null;
 
         try {
             programPythonPath = pythonLib.getCanonicalPath();
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            ExceptionHandler.printStackTrace(ex);
         }
 
         String userPythonPath = BlueSystem.getUserConfigurationDirectory()

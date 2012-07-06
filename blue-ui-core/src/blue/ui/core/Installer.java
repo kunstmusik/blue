@@ -31,6 +31,7 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
+import blue.scripting.PythonProxy;
 import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
@@ -40,6 +41,7 @@ import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
 import org.openide.util.Lookup.Result;
@@ -127,6 +129,9 @@ public class Installer extends ModuleInstall {
                 setWindowTitle();
             }
         });
+        
+        PythonProxy.setLibDir(InstalledFileLocator.getDefault().
+                locate("pythonLib", "jython", false));
 
 //        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 //

@@ -8,7 +8,6 @@ import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Map;
-import org.openide.util.Exceptions;
 
 /**
  * Title: blue Description: an object composition environment for csound

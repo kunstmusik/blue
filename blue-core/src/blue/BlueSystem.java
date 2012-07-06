@@ -24,7 +24,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import org.openide.util.Exceptions;
 
 public class BlueSystem {
 
@@ -238,9 +237,9 @@ public class BlueSystem {
                 Document doc = new Document(BlueSystem.class.getResourceAsStream("codeRepository.xml"));
                 doc.write(repository);
             } catch (ParseException ex) {
-                Exceptions.printStackTrace(ex);
+                ExceptionHandler.printStackTrace(ex);
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+                ExceptionHandler.printStackTrace(ex);
             }
         }
 
