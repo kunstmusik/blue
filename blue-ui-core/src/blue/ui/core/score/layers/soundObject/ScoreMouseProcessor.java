@@ -521,8 +521,6 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     private float getTimeForX(int xValue) {
-        PolyObject pObj = sCanvas.getPolyObject();
-
         return (float) xValue / timeState.getPixelSecond();
     }
 
@@ -691,7 +689,7 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     private void checkScroll(MouseEvent e) {
 
         Point temp = SwingUtilities.convertPoint(sCanvas, e.getPoint(), sCanvas
-                .getParent().getParent());
+                .getParent().getParent().getParent());
 
         scrollRect.setLocation(temp);
 
