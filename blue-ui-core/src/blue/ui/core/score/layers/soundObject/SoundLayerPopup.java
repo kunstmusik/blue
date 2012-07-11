@@ -34,6 +34,7 @@ import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;
 import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import java.awt.event.ActionEvent;
@@ -223,14 +224,26 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
         pasteSoundObjects.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                sCanvas.sMouse.pasteSoundObjects(sLayerIndex, xValue);
+                float start = (float) xValue / timeState.getPixelSecond();
+
+                if (timeState.isSnapEnabled()) {
+                    start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
+                }
+                
+                sCanvas.sMouse.pasteSoundObjects(sLayerIndex, start);
             }
         });
 
         pasteAsPolyObject.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                sCanvas.sMouse.pasteSoundObject(sLayerIndex, xValue);
+                float start = (float) xValue / timeState.getPixelSecond();
+
+                if (timeState.isSnapEnabled()) {
+                    start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
+                }
+                
+                sCanvas.sMouse.pasteSoundObject(sLayerIndex, start);
             }
         });
     }

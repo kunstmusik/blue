@@ -32,6 +32,10 @@ FIX
 * Command-line compiling option for compiling .blue to CSD files was always 
   reporting exit code 1 and error, even when compile was done correctly
 
+* Using "Paste" and "Paste as PolyObject" were incorrectly pasting soundObjects
+  using the x-coordinate as the time value, i.e. instead of pasting at time 4 
+  it might paste at time 80 if it was 20 pixels per second
+
 INTERNAL
 
 * replaced passing of SoundObjectLibrary when saving/loading, now uses 
