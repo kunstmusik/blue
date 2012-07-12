@@ -83,7 +83,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         checkSize();
     }
 
-    private Dimension checkSize() {
+    protected Dimension checkSize() {
         int w = (layerGroup.getMaxPattern() + 16) * 
                 layerGroup.getPatternBeatsLength() * 
                 timeState.getPixelSecond();

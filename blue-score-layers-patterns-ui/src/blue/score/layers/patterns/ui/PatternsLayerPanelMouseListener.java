@@ -37,8 +37,13 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
 
     private final PatternsLayerGroup layerGroup;
     private PatternData selectedData = null;
+    private PatternData clone = null;
     private boolean setSquareOn = false;
     private final TimeState timeState;
+    
+    int startIndex = -1;
+    int lastIndex = -1;
+    PatternLayer currentPatternLayer = null;
 
     public PatternsLayerPanelMouseListener(PatternsLayerPanel panel, 
             PatternsLayerGroup layerGroup, 
@@ -64,15 +69,24 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
         
         int patternIndex = (int)(x / (float)(layerGroup.getPatternBeatsLength() * timeState.getPixelSecond()));
         
+        startIndex = patternIndex;
+        lastIndex = patternIndex;
+        
         selectedData = layer.getPatternData();
+        clone = selectedData.clone();
+        
         setSquareOn = !(layer.getPatternData().isPatternSet(patternIndex));
         selectedData.setPattern(patternIndex, setSquareOn);
+        panel.checkSize();
         panel.repaint();
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
         selectedData = null;
+        clone = null;
+        startIndex = -1;
+        lastIndex = -1;
     }
 
     @Override
@@ -90,9 +104,29 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
         }
         
         int patternIndex = (int)(x / (float)(layerGroup.getPatternBeatsLength() * timeState.getPixelSecond()));
-        if(selectedData.isPatternSet(patternIndex) != setSquareOn) {
-            selectedData.setPattern(patternIndex, setSquareOn);
-            panel.repaint();
+        
+        if(patternIndex == lastIndex) {
+            return;
         }
+        
+        if (patternIndex > startIndex) {
+            for (int i = lastIndex + 1; i <= patternIndex; i++) {
+                if (selectedData.isPatternSet(i) != setSquareOn) {
+                    selectedData.setPattern(i, setSquareOn);
+                }
+            }
+        } else {
+            for (int i = lastIndex - 1; i >= patternIndex; i--) {
+                if (selectedData.isPatternSet(i) != setSquareOn) {
+                    selectedData.setPattern(i, setSquareOn);
+                }
+            }
+        }
+        
+        
+        panel.checkSize();
+        panel.repaint();
+        
+        lastIndex = patternIndex;
     }
 }
