@@ -20,6 +20,7 @@
 package blue.score.layers.patterns.core;
 
 import electric.xml.Element;
+import java.util.Arrays;
 
 /**
  *
@@ -128,5 +129,9 @@ public class PatternData {
         return patternData;
     }
     
-    
+    public PatternData clone() {
+        PatternData patternData = new PatternData();
+        patternData.patterns = Arrays.copyOf(this.patterns, this.patterns.length);
+        return patternData;
+    }
 }
