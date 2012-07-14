@@ -22,6 +22,7 @@ package blue.ui.core.score;
 import blue.ui.utilities.LinearLayout;
 import blue.BlueData;
 import blue.automation.AutomationManager;
+import blue.components.AlphaMarquee;
 import blue.ui.components.IconFactory;
 import blue.components.JScrollNavigator;
 import blue.gui.MyScrollPaneLayout;
@@ -32,7 +33,6 @@ import blue.score.Score;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
 import blue.score.TimeState;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
 import blue.settings.PlaybackSettings;
@@ -122,7 +122,10 @@ public final class ScoreTopComponent extends TopComponent
     
     volatile boolean checkingSize = false;
     
+    AlphaMarquee marquee = new AlphaMarquee();
+
     ScoreMouseWheelListener mouseWheelListener;
+    ScoreMouseListener listener = new ScoreMouseListener(this);
     
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
 
@@ -180,6 +183,8 @@ public final class ScoreTopComponent extends TopComponent
         
         reinitialize();
         
+        scorePanel.addMouseListener(listener);
+        scorePanel.addMouseMotionListener(listener);
     }
 
     public SoundObject[] getSoundObjectsAsArray() {
@@ -328,6 +333,8 @@ public final class ScoreTopComponent extends TopComponent
                 scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
                 scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
                 scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
+                scorePanel.add(marquee, new Integer(500));
+                marquee.setVisible(false);
 
                 updateRenderStartPointerX(startTime, false);
                 updateRenderLoopPointerX(endTime);
@@ -365,6 +372,9 @@ public final class ScoreTopComponent extends TopComponent
                 layerHeaderPanel.add(comp2, index);
             }
            
+            comp.addMouseListener(listener);
+            comp.addMouseMotionListener(listener);
+            
             final Dimension d = new Dimension(comp2.getWidth(), comp.getHeight());
             comp2.setSize(d);
             
@@ -394,6 +404,8 @@ public final class ScoreTopComponent extends TopComponent
     
     private void removePanelsForLayerGroups(int startIndex, int endIndex) {
         for(int i = 0; i <= endIndex - startIndex; i++) {
+            layerPanel.removeMouseListener(listener);
+            layerPanel.removeMouseMotionListener(listener);
             layerPanel.remove(startIndex);
             layerHeaderPanel.remove(startIndex);
         }

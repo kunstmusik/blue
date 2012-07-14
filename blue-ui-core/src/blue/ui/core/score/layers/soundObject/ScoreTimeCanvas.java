@@ -42,7 +42,6 @@ import javax.swing.InputMap;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -55,23 +54,20 @@ import blue.SoundLayerListener;
 import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
-import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
-import blue.settings.PlaybackSettings;
-import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.ui.core.score.undo.RemoveSoundObjectEdit;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.render.RenderTimeManagerListener;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.TimePointer;
+import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
+import javax.swing.*;
 import javax.swing.undo.UndoManager;
 
 /**
@@ -82,7 +78,8 @@ import javax.swing.undo.UndoManager;
  * @version 1.0
  */
 public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
-        implements PropertyChangeListener, LayerGroupListener, SoundLayerListener {
+        implements PropertyChangeListener, LayerGroupListener, SoundLayerListener,
+        LayerGroupPanel {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -1162,5 +1159,22 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
         ModeManager.getInstance().removeModeListener(modeListener);
+    }
+
+    @Override
+    public void marqueeSelectionPerformed(AlphaMarquee marquee) {
+        Component[] comps = sObjPanel.getComponents();
+        for (int i = 0; i < comps.length; i++) {
+            if (!(comps[i] instanceof SoundObjectView)) {
+                continue;
+            }
+
+            if (marquee.intersects((JComponent) comps[i])) {
+                SelectionEvent selectionEvent = new SelectionEvent(comps[i],
+                        SelectionEvent.SELECTION_ADD);
+                sMouse.fireSelectionEvent(selectionEvent);
+            }
+
+        }
     }
 }

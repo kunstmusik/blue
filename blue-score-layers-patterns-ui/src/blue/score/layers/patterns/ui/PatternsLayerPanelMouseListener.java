@@ -55,6 +55,8 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
+        e.consume();
+        
         panel.requestFocus();
         int x = e.getX();
         int y = e.getY();
@@ -87,10 +89,13 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
         clone = null;
         startIndex = -1;
         lastIndex = -1;
+        e.consume();
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        e.consume();
+        
         if(selectedData == null) {
             return;
         }

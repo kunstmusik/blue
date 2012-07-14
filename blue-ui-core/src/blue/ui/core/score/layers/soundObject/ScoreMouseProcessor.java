@@ -98,8 +98,8 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
     public void mousePressed(MouseEvent e) {
         dragStart = true;
-
-        AuditionManager.getInstance().stop();
+        
+        boolean shouldConsume = true;
 
         sCanvas.requestFocus();
 
@@ -200,12 +200,19 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 
             } else {
                 clearBuffer(e);
-                startMarquee(e.getPoint());
+                shouldConsume = false;
+                //startMarquee(e.getPoint());
             }
+        }
+        
+        if(shouldConsume) {
+            e.consume();
         }
     }
 
     public void mouseReleased(MouseEvent e) {
+        boolean shouldConsume = true;
+        
         if (SwingUtilities.isLeftMouseButton(e)) {
             if (sCanvas.mBuffer.motionBuffer != null) {
                 if (dragMode == MOVE && !this.justSelected) {
@@ -241,15 +248,26 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
 //                            .getSubjectiveDuration()));
                     sCanvas.automationPanel.endScoreScale();
                 }
-            } else if (sCanvas.marquee.isVisible()) {
-                endMarquee();
+            } else {
+                shouldConsume = false;
             }
+//            else if (sCanvas.marquee.isVisible()) {
+//                endMarquee();
+//                e.consume();
+//            }
             // clearMarquee();
             sCanvas.repaint();
+            
+            if(shouldConsume) {
+                e.consume();
+            }
         }
     }
 
     public void mouseDragged(MouseEvent e) {
+        
+        boolean shouldConsume = true;
+        
         if (sCanvas.mBuffer.size() != 0 && !isPopupOpen && !justSelected) {
             if (dragMode == MOVE) {
                 if (dragStart && SwingUtilities.isLeftMouseButton(e)) {
@@ -277,12 +295,17 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
             }
         } else if (SwingUtilities.isLeftMouseButton(e) && !justSelected) {
             // updateMarquee(e);
-            sCanvas.marquee.setDragPoint(e.getPoint());
+            //sCanvas.marquee.setDragPoint(e.getPoint());
+            shouldConsume = false;
         }
         checkScroll(e);
         sCanvas.checkSize();
 
         dragStart = false;
+        
+        if(shouldConsume) {
+            e.consume();
+        }
     }
 
     private void duplicateSoundObjectsInPlace() {

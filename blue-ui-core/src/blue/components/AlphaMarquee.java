@@ -24,8 +24,10 @@ import blue.settings.GeneralSettings;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 
 public class AlphaMarquee extends JComponent {
@@ -59,10 +61,12 @@ public class AlphaMarquee extends JComponent {
         int marqueeTop = this.getY();
         int marqueeBottom = marqueeTop + this.getHeight();
 
-        int left = c.getX();
-        int right = left + c.getWidth();
-        int top = c.getY();
-        int bottom = top + c.getHeight();
+        Rectangle r = SwingUtilities.convertRectangle(c.getParent(), c.getBounds(), this.getParent());
+                
+        int left = r.x;
+        int right = left + r.width;
+        int top = r.y;
+        int bottom = top + r.height;
 
         if (left < marqueeRight && right > marqueeLeft && top < marqueeBottom
                 && bottom > marqueeTop) {
