@@ -175,8 +175,17 @@ public class Score implements Serializable {
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
         NoteList noteList = new NoteList();
         
+        boolean soloFound = false;
+        
         for(LayerGroup layerGroup : layerGroups) {
-            NoteList nl = layerGroup.generateForCSD(compileData, startTime, endTime);
+            soloFound = layerGroup.hasSoloLayers();
+            if(soloFound) {
+                break;
+            }
+        }
+        
+        for(LayerGroup layerGroup : layerGroups) {
+            NoteList nl = layerGroup.generateForCSD(compileData, startTime, endTime, soloFound);
             noteList.merge(nl);
         }
         

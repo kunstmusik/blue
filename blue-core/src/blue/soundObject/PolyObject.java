@@ -81,7 +81,6 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         this.isRoot = isRoot;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
-
    
     /**
      * Returns all soundObjects for this polyObject. Does not enter into
@@ -137,7 +136,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         try {
             totalDuration = ScoreUtilities.getTotalDuration(this.
                     generateForCSD(
-                    null, -1.0f, -1.0f));
+                    null, -1.0f, -1.0f, false));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -265,28 +264,41 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     /* CSD GENERATION CODE */
     
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        
-        boolean soloFound = false;
-        NoteList noteList = new NoteList();
-        
-        for(SoundLayer soundLayer : soundLayers) {
-            if (soundLayer.isSolo()) {
-                if (!soundLayer.isMuted()) {
-                    soloFound = true;
-                    noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
-                }
+    public boolean hasSoloLayers() {
+        for(SoundLayer layer : soundLayers) {
+            if(layer.isSolo()) {
+                return true;
             }
         }
-
-        if (!soloFound) {
+        return false;
+    }
+    
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+        return generateForCSD(compileData, startTime, endTime, true);
+    }
+    
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) {
+        
+        NoteList noteList = new NoteList();
+        
+        if(processWithSolo) {
+            for(SoundLayer soundLayer : soundLayers) {
+                if (soundLayer.isSolo()) {
+                    if (!soundLayer.isMuted()) {
+                        noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                    }
+                }
+            }
+        } else {
             for(SoundLayer soundLayer : soundLayers) {
                 if (!soundLayer.isMuted()) {
                     noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
                 }
             }
         }
-    
+
         noteList = processNotes(compileData, noteList, startTime, endTime);
 
         return noteList;

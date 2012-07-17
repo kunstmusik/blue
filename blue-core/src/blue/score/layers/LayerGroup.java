@@ -31,6 +31,15 @@ import java.util.Map;
  */
 public interface LayerGroup extends Serializable {
     
+    /**
+     * Returns if solo layers are found in this group.  Score will use this to
+     * determine if soloing should be considered when rendering the complete 
+     * score.
+     * 
+     * @return 
+     */
+    public boolean hasSoloLayers();
+    
     /** 
      * Called when compiling a CSD.  LayerGroups should use CompileData to add
      * things besides score values, and should return score data as NoteLists.
@@ -39,7 +48,7 @@ public interface LayerGroup extends Serializable {
      * 
      * @param compileData 
      */
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime);
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo);
     
     /**
      * Returns an XML Representation of this object.

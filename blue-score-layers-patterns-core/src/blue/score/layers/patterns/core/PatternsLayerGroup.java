@@ -40,7 +40,6 @@ public class PatternsLayerGroup implements LayerGroup {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
-    
     private int patternBeatsLength = 4;
 
     public int getPatternBeatsLength() {
@@ -50,41 +49,51 @@ public class PatternsLayerGroup implements LayerGroup {
     public void setPatternBeatsLength(int patternBeatsLength) {
         this.patternBeatsLength = patternBeatsLength;
     }
-    
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        boolean soloFound = false;
+    public boolean hasSoloLayers() {
+        for (PatternLayer layer : patternLayers) {
+            if (layer.isSolo()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) {
+
         NoteList noteList = new NoteList();
-        
-        for(PatternLayer patternLayer : patternLayers) {
-            if (patternLayer.isSolo()) {
+
+        if (processWithSolo) {
+            for (PatternLayer patternLayer : patternLayers) {
+                if (patternLayer.isSolo()) {
+                    if (!patternLayer.isMuted()) {
+                        noteList.merge(patternLayer.generateForCSD(compileData,
+                                startTime, endTime,
+                                patternBeatsLength));
+                    }
+                }
+            }
+        } else {
+            for (PatternLayer patternLayer : patternLayers) {
                 if (!patternLayer.isMuted()) {
-                    soloFound = true;
-                    noteList.merge(patternLayer.generateForCSD(compileData, startTime, endTime, 
+                    noteList.merge(patternLayer.generateForCSD(compileData,
+                            startTime, endTime,
                             patternBeatsLength));
                 }
             }
         }
 
-        if (!soloFound) {
-            for(PatternLayer patternLayer : patternLayers) {
-                if (!patternLayer.isMuted()) {
-                    noteList.merge(patternLayer.generateForCSD(compileData, startTime, endTime, 
-                            patternBeatsLength));
-                }
-            }
-        }
-    
         noteList = processNotes(compileData, noteList, startTime, endTime);
-        
+
         return noteList;
     }
-    
+
     private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) {
 
         NoteList retVal = null;
-        
+
         if (start == 0.0f) {
             retVal = nl;
         } else {
@@ -121,12 +130,12 @@ public class PatternsLayerGroup implements LayerGroup {
 
         return retVal;
     }
-    
+
     public static PatternsLayerGroup loadFromXML(Element data) {
         PatternsLayerGroup layerGroup = new PatternsLayerGroup();
-            
+
         Elements nodes = data.getElements();
-        while(nodes.hasMoreElements()) {
+        while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
 
@@ -134,14 +143,14 @@ public class PatternsLayerGroup implements LayerGroup {
                 layerGroup.patternLayers.add(PatternLayer.loadFromXML(node));
             }
         }
-        
+
         return layerGroup;
     }
 
     @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element root = new Element("patternsLayerGroup");
-        for(PatternLayer layer : patternLayers) {
+        for (PatternLayer layer : patternLayers) {
             root.addElement(layer.saveAsXML());
         }
         return root;
@@ -149,15 +158,15 @@ public class PatternsLayerGroup implements LayerGroup {
 
     @Override
     public Layer newLayerAt(int index) {
-        
+
         PatternLayer patternLayer = new PatternLayer();
-        
-        if(index < 0 || index >= patternLayers.size()) {
+
+        if (index < 0 || index >= patternLayers.size()) {
             patternLayers.add(patternLayer);
         } else {
             patternLayers.add(index, patternLayer);
         }
-        
+
         ArrayList<Layer> layers = new ArrayList<Layer>();
         layers.add(patternLayer);
 
@@ -166,15 +175,15 @@ public class PatternsLayerGroup implements LayerGroup {
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 
         fireLayerGroupDataEvent(lde);
-        
+
         return patternLayer;
     }
-    
+
     @Override
     public void removeLayers(int startIndex, int endIndex) {
-        
+
         ArrayList<Layer> layers = new ArrayList<Layer>();
-        
+
         for (int i = endIndex; i >= startIndex; i--) {
             PatternLayer patternLayer = patternLayers.get(i);
             patternLayer.clearListeners();
@@ -190,7 +199,7 @@ public class PatternsLayerGroup implements LayerGroup {
         fireLayerGroupDataEvent(lde);
 
     }
-    
+
     @Override
     public void pushUpLayers(int startIndex, int endIndex) {
         PatternLayer a = patternLayers.remove(startIndex - 1);
@@ -270,8 +279,8 @@ public class PatternsLayerGroup implements LayerGroup {
 
     public int getMaxPattern() {
         int max = 0;
-        for(PatternLayer layer : patternLayers) {
-            if(layer.getPatternData().getMaxSelected() > max) {
+        for (PatternLayer layer : patternLayers) {
+            if (layer.getPatternData().getMaxSelected() > max) {
                 max = layer.getPatternData().getMaxSelected();
             }
         }
