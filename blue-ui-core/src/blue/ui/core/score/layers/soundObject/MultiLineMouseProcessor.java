@@ -24,8 +24,6 @@ import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -40,10 +38,12 @@ import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.AuditionManager;
+import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.event.MouseAdapter;
 
-class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
+class MultiLineMouseProcessor extends MouseAdapter {
 
     private transient Vector listeners = new Vector();
 
@@ -75,6 +75,12 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mousePressed(MouseEvent e) {
+        
+        if(!isMultiLineMode()) {
+            return;
+        }
+        
+        e.consume();
         AuditionManager.getInstance().stop();
 
         Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
@@ -125,6 +131,12 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mouseReleased(MouseEvent e) {
+        
+        if(!isMultiLineMode()) {
+            return;
+        }
+        
+        e.consume();
         if (SwingUtilities.isLeftMouseButton(e)) {
 //            if (sCanvas.mBuffer.motionBuffer != null) {
 //                if (dragMode == MOVE && !this.justSelected) {
@@ -169,6 +181,12 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mouseDragged(MouseEvent e) {
+        
+        if(!isMultiLineMode()) {
+            return;
+        }
+        
+        e.consume();
         if(!isPopupOpen && sCanvas.marquee.isVisible()) {
             if (SwingUtilities.isLeftMouseButton(e)) {
 //FIXME
@@ -280,19 +298,9 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
 
     }
 
-    public void mouseMoved(MouseEvent e) {
+    private boolean isMultiLineMode() {
+        return ModeManager.getInstance().getMode() == ModeManager.MODE_MULTI_LINE;
     }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseClicked(MouseEvent e) {
-    }
-    
-
 
     // MOUSE DRAGGING CODE
 
@@ -319,11 +327,11 @@ class MultiLineMouseProcessor implements MouseListener, MouseMotionListener {
     private void checkScroll(MouseEvent e) {
 
         Point temp = SwingUtilities.convertPoint(sCanvas, e.getPoint(), sCanvas
-                .getParent());
+                .getParent().getParent().getParent());
 
         scrollRect.setLocation(temp);
 
-        ((JViewport) sCanvas.getParent()).scrollRectToVisible(scrollRect);
+        ((JViewport) sCanvas.getParent().getParent().getParent()).scrollRectToVisible(scrollRect);
 
     }
 

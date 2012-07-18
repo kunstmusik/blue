@@ -79,7 +79,7 @@ import javax.swing.undo.UndoManager;
  */
 public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         implements PropertyChangeListener, LayerGroupListener, SoundLayerListener,
-        LayerGroupPanel {
+        LayerGroupPanel, ModeListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -120,10 +120,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private final PropertyChangeListener heightListener;
     private final BlueData data;
     
-    ModeListener modeListener;
-    int lastMode = -1;
-
-
     public ScoreTimeCanvas(BlueData blueData) {
         
         //setAutoscrolls(true);
@@ -146,19 +142,15 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         time = 3;
 
         sMouse = new ScoreMouseProcessor(this);
-
         multiLineMouse = new MultiLineMouseProcessor(this);
-
-        modeListener = new ModeListener() {
-
-            public void modeChanged(int mode) {
-                handleModeChange(mode);
-            }
-            
-        };
         
-        ModeManager.getInstance().addModeListener(modeListener);
-
+        addMouseListener(sMouse);
+        addMouseMotionListener(sMouse);
+        addMouseListener(multiLineMouse);
+        addMouseMotionListener(multiLineMouse);
+        
+        ModeManager.getInstance().addModeListener(this);
+        
         sMouse.addSelectionListener(mBuffer);
         multiLineMouse.addSelectionListener(mBuffer);
 
@@ -205,35 +197,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         
         this.addMouseWheelListener(new ScoreMouseWheelListener(data.getScore().getTimeState()));
         
-        handleModeChange(ModeManager.getInstance().getMode());
-    }
-    
-    private void handleModeChange(int mode) {
-        marquee.setVisible(false);
-
-        sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
-
-        if (mode == lastMode) {
-            //skip
-        } else if (mode == ModeManager.MODE_SCORE) {
-            addMouseListener(sMouse);
-            addMouseMotionListener(sMouse);
-            removeMouseListener(multiLineMouse);
-            removeMouseMotionListener(multiLineMouse);
-        } else if (mode == ModeManager.MODE_MULTI_LINE) {
-            removeMouseListener(sMouse);
-            removeMouseMotionListener(sMouse);
-            addMouseListener(multiLineMouse);
-            addMouseMotionListener(multiLineMouse);
-        } else {
-            removeMouseListener(sMouse);
-            removeMouseMotionListener(sMouse);
-            removeMouseListener(multiLineMouse);
-            removeMouseMotionListener(multiLineMouse);
-        }
-
-        lastMode = mode;
     }
 
     public JPanel getSoundObjectPanel() {
@@ -988,32 +951,32 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         }
     }
 
-    public void paintPreview(Graphics g) {
-        synchronized (getTreeLock()) {
-
-            Component[] components = getSoundObjectPanel().getComponents();
-
-            g.setColor(Color.WHITE);
-
-            Rectangle bounds = g.getClipBounds();
-
-            for (int i = 0; i < components.length; i++) {
-                SoundObjectView component = (SoundObjectView) components[i];
-                Rectangle r = component.getBounds();
-
-                g.translate(r.x, r.y);
-                g.setClip(0, 0, r.width, r.height);
-
-                component.getRenderer().render(g, component,
-                        timeState.getPixelSecond());
-
-                g.translate(-r.x, -r.y);
-
-            }
-
-            g.setClip(bounds);
-        }
-    }
+//    public void paintPreview(Graphics g) {
+//        synchronized (getTreeLock()) {
+//
+//            Component[] components = getSoundObjectPanel().getComponents();
+//
+//            g.setColor(Color.WHITE);
+//
+//            Rectangle bounds = g.getClipBounds();
+//
+//            for (int i = 0; i < components.length; i++) {
+//                SoundObjectView component = (SoundObjectView) components[i];
+//                Rectangle r = component.getBounds();
+//
+//                g.translate(r.x, r.y);
+//                g.setClip(0, 0, r.width, r.height);
+//
+//                component.getRenderer().render(g, component,
+//                        timeState.getPixelSecond());
+//
+//                g.translate(-r.x, -r.y);
+//
+//            }
+//
+//            g.setClip(bounds);
+//        }
+//    }
 
     public void update() {
         repaint();
@@ -1153,12 +1116,17 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         reset();
     }
     
+    @Override
+    public void modeChanged(int mode) {
+        marquee.setVisible(false);
+    }
+    
     /* Cleanup code on Remove */
     
     @Override
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
-        ModeManager.getInstance().removeModeListener(modeListener);
+        ModeManager.getInstance().removeModeListener(this);
     }
 
     @Override

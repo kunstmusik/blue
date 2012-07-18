@@ -11,8 +11,6 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -33,11 +31,12 @@ import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.event.MouseAdapter;
 
 /**
  * ScoreMouseProcessor handles mouse actions for ScoreTimeCanvas
@@ -47,7 +46,7 @@ import blue.utility.ScoreUtilities;
  * 
  */
 
-class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
+class ScoreMouseProcessor extends MouseAdapter {
 
     private static final int EDGE = 5;
 
@@ -97,6 +96,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mousePressed(MouseEvent e) {
+        
+        if(!isScoreMode()) {
+            return;
+        }
+        
         dragStart = true;
         
         boolean shouldConsume = true;
@@ -211,6 +215,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mouseReleased(MouseEvent e) {
+        
+        if(!isScoreMode()) {
+            return;
+        }
+        
         boolean shouldConsume = true;
         
         if (SwingUtilities.isLeftMouseButton(e)) {
@@ -265,6 +274,10 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mouseDragged(MouseEvent e) {
+        
+        if(!isScoreMode()) {
+            return;
+        }
         
         boolean shouldConsume = true;
         
@@ -343,6 +356,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
     }
 
     public void mouseMoved(MouseEvent e) {
+        
+        if(!isScoreMode()) {
+            return;
+        }
+        
         Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
                 e.getPoint());
         if (comp instanceof SoundObjectView) {
@@ -362,15 +380,11 @@ class ScoreMouseProcessor implements MouseListener, MouseMotionListener {
         }
     }
 
-    public void mouseExited(MouseEvent e) {
+    private boolean isScoreMode() {
+        return ModeManager.getInstance().getMode() == ModeManager.MODE_SCORE;
     }
-
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    public void mouseClicked(MouseEvent e) {
-    }
-
+    
+    
     // MOUSE PRESSED CODE
 
     private void clearBuffer(MouseEvent e) {
