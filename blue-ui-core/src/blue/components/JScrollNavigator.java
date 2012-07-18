@@ -330,7 +330,7 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
 
             super.paintComponent(g);
 
-            ScoreTimeCanvas view = (ScoreTimeCanvas) jScrollPane.getViewport()
+            JComponent view = (JComponent) jScrollPane.getViewport()
                     .getView();
 
             Graphics2D g2d = (Graphics2D) g.create();
@@ -346,7 +346,7 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
 
             g2d.scale(xscale, yscale);
 
-            view.paintPreview(g2d);
+            view.paint(g2d);
 
             g2d.dispose();
 
