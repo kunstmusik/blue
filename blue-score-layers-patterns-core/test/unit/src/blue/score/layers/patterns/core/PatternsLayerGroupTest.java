@@ -57,7 +57,7 @@ public class PatternsLayerGroupTest {
         
         
         NoteList result = instance.generateForCSD(compileData, startTime,
-                endTime);
+                endTime, false);
         assertEquals(4, result.size());
         assertEquals("1.0", result.getNote(1).getPField(2));
         assertEquals("5.0", result.getNote(3).getPField(2));
