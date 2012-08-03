@@ -24,50 +24,58 @@ import blue.score.layers.LayerGroup;
 import java.util.ArrayList;
 import javax.swing.AbstractListModel;
 import javax.swing.event.ListDataListener;
+import javax.swing.table.AbstractTableModel;
 
 /**
  *
  * @author stevenyi
  */
-public class LayerGroupListModel extends AbstractListModel  {
+public class LayerGroupTableModel extends AbstractTableModel  {
 
     private Score score;
     
     private final ArrayList<ListDataListener> listeners = 
             new ArrayList<ListDataListener>();
 
-    public LayerGroupListModel(Score score) {
+    public LayerGroupTableModel(Score score) {
         this.score = score;
     }
     
     @Override
-    public int getSize() {
+    public int getRowCount() {
         return this.score.getLayerGroupCount();
     }
 
     @Override
-    public Object getElementAt(int arg0) {
-        return score.getLayerGroup(arg0);
+    public int getColumnCount() {
+        return 1;
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        return score.getLayerGroup(rowIndex);
     }
     
     public void addLayerGroup(int index, LayerGroup layerGroup) {
         score.addLayerGroup(index, layerGroup);
-        fireIntervalAdded(this, index, index);
-    }
+        fireTableRowsInserted(index, index);
+     }
 
     void removeLayerGroups(int minSelectionIndex, int maxSelectionIndex) {
         score.removeLayerGroups(minSelectionIndex, maxSelectionIndex);
-        fireIntervalRemoved(this, minSelectionIndex, maxSelectionIndex);
+        fireTableRowsDeleted(minSelectionIndex, maxSelectionIndex);
     }
 
     void pushUpLayerGroups(int start, int end) {
         score.pushUpLayerGroups(start, end);
-        fireContentsChanged(this, start - 1, end);
+        fireTableRowsUpdated(start - 1, end);
     }
 
     void pushDownLayerGroups(int start, int end) {
         score.pushDownLayerGroups(start, end);
-        fireContentsChanged(this, start, end + 1);
+        fireTableRowsUpdated(start, end + 1);
     }
+
+    
 
 }

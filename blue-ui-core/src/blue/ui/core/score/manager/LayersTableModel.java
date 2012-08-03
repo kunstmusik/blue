@@ -20,49 +20,53 @@
 package blue.ui.core.score.manager;
 
 import blue.score.layers.LayerGroup;
-import javax.swing.AbstractListModel;
-import javax.swing.event.ListDataListener;
+import javax.swing.table.AbstractTableModel;
 
 /**
  *
  * @author stevenyi
  */
-public class LayersListModel extends AbstractListModel {
+public class LayersTableModel extends AbstractTableModel {
 
     private final LayerGroup layerGroup;
 
-    public LayersListModel(LayerGroup layerGroup) {
+    public LayersTableModel(LayerGroup layerGroup) {
         this.layerGroup = layerGroup;
     }
     
     @Override
-    public int getSize() {
+    public int getRowCount() {
         return layerGroup.getSize();
     }
 
     @Override
-    public Object getElementAt(int arg0) {
-        return layerGroup.getLayerAt(arg0);
+    public int getColumnCount() {
+        return 1;
     }
 
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        return layerGroup.getLayerAt(rowIndex);
+    }
+    
     public void removeLayers(int start, int end) {
         layerGroup.removeLayers(start, end);
-        fireIntervalRemoved(this, start, end);
+        fireTableRowsDeleted(start, end);
     }
 
     public void newLayerAt(int index) {
         layerGroup.newLayerAt(index);
-        fireIntervalAdded(this, index, index);
+        fireTableRowsInserted(index, index);
     }
 
     public void pushUpLayers(int start, int end) {
         layerGroup.pushUpLayers(start, end);
-        fireContentsChanged(this, start - 1, end);
+        fireTableRowsUpdated(start - 1, end);
     }
 
     void pushDownLayers(int start, int end) {
         layerGroup.pushDownLayers(start, end);
-        fireContentsChanged(this, start, end + 1);
+        fireTableRowsUpdated(start, end + 1);
     }
     
 }

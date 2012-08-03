@@ -24,10 +24,12 @@ import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -37,7 +39,7 @@ import org.openide.NotifyDescriptor;
  * @author stevenyi
  */
 public class ScoreManagerDialog extends javax.swing.JDialog {
-    private final DefaultListModel emptyList = new DefaultListModel();
+    private final DefaultTableModel emptyList = new DefaultTableModel();
 
     private Score score;
     
@@ -53,8 +55,8 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     
     public void setScore(Score score) {
         this.score = score;
-        layerGroupsList.setModel(new LayerGroupListModel(score));
-        layersList.setModel(emptyList);
+        layerGroupsTable.setModel(new LayerGroupTableModel(score));
+        layersTable.setModel(emptyList);
     }
 
     /**
@@ -68,10 +70,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         java.awt.GridBagConstraints gridBagConstraints;
 
         jLabel1 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        layerGroupsList = new javax.swing.JList();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        layersList = new javax.swing.JList();
         jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         lGroupPushUpButton = new javax.swing.JButton();
@@ -83,6 +81,18 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         layersPushDownButton = new javax.swing.JButton();
         layersAddButton = new javax.swing.JButton();
         layersMinusButton = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        layerGroupsTable = new JTable() {
+            public boolean getScrollableTracksViewportHeight() {
+                return getPreferredSize().height < getParent().getHeight();
+            }
+        };
+        jScrollPane4 = new javax.swing.JScrollPane();
+        layersTable = new JTable() {
+            public boolean getScrollableTracksViewportHeight() {
+                return getPreferredSize().height < getParent().getHeight();
+            }
+        };
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.title")); // NOI18N
@@ -95,45 +105,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
         getContentPane().add(jLabel1, gridBagConstraints);
-
-        layerGroupsList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        layerGroupsList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                layerGroupsListValueChanged(evt);
-            }
-        });
-        jScrollPane1.setViewportView(layerGroupsList);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 0);
-        getContentPane().add(jScrollPane1, gridBagConstraints);
-
-        layersList.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane2.setViewportView(layersList);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
-        getContentPane().add(jScrollPane2, gridBagConstraints);
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jLabel2.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -232,32 +203,70 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
         getContentPane().add(jPanel2, gridBagConstraints);
 
+        layerGroupsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        layerGroupsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        layerGroupsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                layerGroupsTableMouseClicked(evt);
+            }
+        });
+        jScrollPane3.setViewportView(layerGroupsTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 0);
+        getContentPane().add(jScrollPane3, gridBagConstraints);
+
+        layersTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        layersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jScrollPane4.setViewportView(layersTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
+        getContentPane().add(jScrollPane4, gridBagConstraints);
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void layerGroupsListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_layerGroupsListValueChanged
-        if(!evt.getValueIsAdjusting()) {
-            int[] indices = layerGroupsList.getSelectedIndices();
-            
-            if(indices.length == 1) {
-                layersList.setModel(new LayersListModel(score.getLayerGroup(
-                        indices[0])));
-            } else {
-                layersList.setModel(emptyList);
-            }
-        }
-    }//GEN-LAST:event_layerGroupsListValueChanged
-
     private void lGroupMinusButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupMinusButtonActionPerformed
-        if(layerGroupsList.getSelectedIndex() == -1) {
+        if(layerGroupsTable.getSelectedRow() == -1) {
             return;
         }
         
         NotifyDescriptor descriptor = new DialogDescriptor.Confirmation("Deleting Layer Groups can not be undone. Please Confirm.", "Confirm Delete", NotifyDescriptor.OK_CANCEL_OPTION);
         
         if(DialogDisplayer.getDefault().notify(descriptor) == NotifyDescriptor.OK_OPTION) {
-            LayerGroupListModel model = getLayerGroupListModel();
-            ListSelectionModel selection = layerGroupsList.getSelectionModel();
+            LayerGroupTableModel model = getLayerGroupListModel();
+            ListSelectionModel selection = layerGroupsTable.getSelectionModel();
             int startIndex = selection.getMinSelectionIndex();
             int endIndex = selection.getMaxSelectionIndex();
             selection.clearSelection();
@@ -274,7 +283,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
     private void lGroupPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushUpButtonActionPerformed
         
-        ListSelectionModel selection = layerGroupsList.getSelectionModel();
+        ListSelectionModel selection = layerGroupsTable.getSelectionModel();
 
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
@@ -283,7 +292,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             return;
         }
 
-        LayerGroupListModel model = getLayerGroupListModel();
+        LayerGroupTableModel model = getLayerGroupListModel();
         
         model.pushUpLayerGroups(start, end);
         
@@ -291,7 +300,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lGroupPushUpButtonActionPerformed
 
     private void lGroupPushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lGroupPushDownButtonActionPerformed
-        ListSelectionModel selection = layerGroupsList.getSelectionModel();
+        ListSelectionModel selection = layerGroupsTable.getSelectionModel();
 
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
@@ -300,7 +309,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             return;
         }
         
-        LayerGroupListModel model = getLayerGroupListModel();
+        LayerGroupTableModel model = getLayerGroupListModel();
         
         model.pushDownLayerGroups(start, end);
         
@@ -308,13 +317,13 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lGroupPushDownButtonActionPerformed
 
     private void layersPushUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersPushUpButtonActionPerformed
-        LayersListModel model = getLayersListModel();
+        LayersTableModel model = getLayersListModel();
         
         if(model == null) {
             return;
         }
         
-        ListSelectionModel selection = layersList.getSelectionModel();
+        ListSelectionModel selection = layersTable.getSelectionModel();
 
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
@@ -329,18 +338,18 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_layersPushUpButtonActionPerformed
 
     private void layersPushDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersPushDownButtonActionPerformed
-        LayersListModel model = getLayersListModel();
+        LayersTableModel model = getLayersListModel();
         
         if(model == null) {
             return;
         }
         
-        ListSelectionModel selection = layersList.getSelectionModel();
+        ListSelectionModel selection = layersTable.getSelectionModel();
 
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
 
-        if (end < 0 || end >= model.getSize() - 1) {
+        if (end < 0 || end >= model.getRowCount() - 1) {
             return;
         }
 
@@ -350,18 +359,18 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_layersPushDownButtonActionPerformed
 
     private void layersAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersAddButtonActionPerformed
-        LayersListModel model = getLayersListModel();
+        LayersTableModel model = getLayersListModel();
         
         if(model == null) {
             return;
         }
         
-        ListSelectionModel selection = layersList.getSelectionModel();
+        ListSelectionModel selection = layersTable.getSelectionModel();
 
         int end = selection.getMaxSelectionIndex();
 
         if (end < 0) {
-            end = model.getSize();
+            end = model.getRowCount();
         } else {
             end++;
         }
@@ -372,18 +381,18 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_layersAddButtonActionPerformed
 
     private void layersMinusButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_layersMinusButtonActionPerformed
-        LayersListModel model = getLayersListModel();
+        LayersTableModel model = getLayersListModel();
         
         if(model == null) {
             return;
         }
         
-        ListSelectionModel selection = layersList.getSelectionModel();
+        ListSelectionModel selection = layersTable.getSelectionModel();
 
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
 
-        if (end < 0 || model.getSize() < 2) {
+        if (end < 0 || model.getRowCount() < 2) {
             return;
         }
 
@@ -401,15 +410,33 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_layersMinusButtonActionPerformed
 
-    private LayerGroupListModel getLayerGroupListModel() {
-        return (LayerGroupListModel)layerGroupsList.getModel();
+    private void layerGroupsTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_layerGroupsTableMouseClicked
+        if (layerGroupsTable.isEditing()) {
+            return;
+        }
+
+        int rowIndex = layerGroupsTable.getSelectedRow();
+
+        if (rowIndex < 0) {
+            layersTable.setModel(emptyList);
+        } else {
+            layersTable.setModel(new LayersTableModel(score.getLayerGroup(rowIndex)));
+        }
+        
+//        if (UiUtilities.isRightMouseButton(e)) {
+//            convertPopup.show(arrangementTable, e.getX(), e.getY());
+//        }
+    }//GEN-LAST:event_layerGroupsTableMouseClicked
+
+    private LayerGroupTableModel getLayerGroupListModel() {
+        return (LayerGroupTableModel)layerGroupsTable.getModel();
     }
     
-    private LayersListModel getLayersListModel() {
-        if(layersList.getModel() == emptyList) {
+    private LayersTableModel getLayersListModel() {
+        if(layersTable.getModel() == emptyList) {
             return null;
         }
-        return (LayersListModel)layersList.getModel();
+        return (LayersTableModel)layersTable.getModel();
     }
     
     private JPopupMenu getAddLayerGroupMenu() {
@@ -424,18 +451,18 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                     LayerGroupProvider provider = (LayerGroupProvider) 
                             menuItem.getClientProperty("provider");
                     LayerGroup layerGroup = provider.createLayerGroup();
-                    LayerGroupListModel model = getLayerGroupListModel();
+                    LayerGroupTableModel model = getLayerGroupListModel();
         
-                    int index = (layerGroupsList.getSelectionModel().getMaxSelectionIndex());
+                    int index = (layerGroupsTable.getSelectionModel().getMaxSelectionIndex());
 
-                    if(index < 0 || index > model.getSize()) {
-                        index = model.getSize();
+                    if(index < 0 || index > model.getRowCount()) {
+                        index = model.getRowCount();
                         model.addLayerGroup(index, layerGroup);
                     } else {
                         model.addLayerGroup(index, layerGroup);
                     }
                     
-                    ListSelectionModel selection = layerGroupsList.getSelectionModel();
+                    ListSelectionModel selection = layerGroupsTable.getSelectionModel();
                     selection.setSelectionInterval(index, index);
 
                 }
@@ -516,17 +543,17 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JButton lGroupAddButton;
     private javax.swing.JButton lGroupMinusButton;
     private javax.swing.JButton lGroupPushDownButton;
     private javax.swing.JButton lGroupPushUpButton;
-    private javax.swing.JList layerGroupsList;
+    private javax.swing.JTable layerGroupsTable;
     private javax.swing.JButton layersAddButton;
-    private javax.swing.JList layersList;
     private javax.swing.JButton layersMinusButton;
     private javax.swing.JButton layersPushDownButton;
     private javax.swing.JButton layersPushUpButton;
+    private javax.swing.JTable layersTable;
     // End of variables declaration//GEN-END:variables
 }
