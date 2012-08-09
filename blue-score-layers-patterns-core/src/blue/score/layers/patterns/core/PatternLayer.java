@@ -26,12 +26,10 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
-import com.sun.org.apache.xpath.internal.operations.NotEquals;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import quicktime.std.clocks.TimeBase;
 
 /**
  *
