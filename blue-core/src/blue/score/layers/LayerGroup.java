@@ -31,6 +31,10 @@ import java.util.Map;
  */
 public interface LayerGroup extends Serializable {
     
+    public String getName();
+    
+    public void setName(String name);
+    
     /**
      * Returns if solo layers are found in this group.  Score will use this to
      * determine if soloing should be considered when rendering the complete 

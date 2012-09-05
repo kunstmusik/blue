@@ -26,6 +26,7 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.*;
 import blue.utility.ScoreUtilities;
+import com.sun.org.apache.bcel.internal.generic.GETFIELD;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
@@ -41,6 +42,16 @@ public class PatternsLayerGroup implements LayerGroup {
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
     private int patternBeatsLength = 4;
+    private String name = "Patterns Layer Group";
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
 
     public int getPatternBeatsLength() {
         return patternBeatsLength;
@@ -134,6 +145,10 @@ public class PatternsLayerGroup implements LayerGroup {
     public static PatternsLayerGroup loadFromXML(Element data) {
         PatternsLayerGroup layerGroup = new PatternsLayerGroup();
 
+        if(data.getAttribute("name") != null) {
+            layerGroup.setName(data.getAttributeValue("name"));
+        }
+        
         Elements nodes = data.getElements();
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -150,6 +165,7 @@ public class PatternsLayerGroup implements LayerGroup {
     @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element root = new Element("patternsLayerGroup");
+        root.setAttribute("name", name);
         for (PatternLayer layer : patternLayers) {
             root.addElement(layer.saveAsXML());
         }

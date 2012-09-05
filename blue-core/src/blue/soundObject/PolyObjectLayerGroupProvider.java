@@ -39,6 +39,7 @@ public class PolyObjectLayerGroupProvider implements LayerGroupProvider {
     public LayerGroup createLayerGroup() {
         PolyObject pObj = new PolyObject(true);
         pObj.newLayerAt(0);
+        pObj.setName("SoundObject Layer Group");
         return pObj;
     }
 

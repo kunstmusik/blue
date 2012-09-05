@@ -82,7 +82,7 @@ public final class ImportMidiAction implements ActionListener {
                         "message.error"), JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            pObj.setName("root");
+            pObj.setName("SoundObject Layer Group");
             pObj.setRoot(true);
             tempData.getScore().addLayerGroup(pObj);
         } catch (NoteParseException e) {

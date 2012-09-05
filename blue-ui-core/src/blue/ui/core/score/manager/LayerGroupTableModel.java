@@ -22,7 +22,6 @@ package blue.ui.core.score.manager;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import java.util.ArrayList;
-import javax.swing.AbstractListModel;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
 
@@ -52,8 +51,20 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     }
 
     @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return true;
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        if(columnIndex == 0) {
+            score.getLayerGroup(rowIndex).setName((String)aValue);
+        }
+    }
+    
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        return score.getLayerGroup(rowIndex);
+        return score.getLayerGroup(rowIndex).getName();
     }
     
     public void addLayerGroup(int index, LayerGroup layerGroup) {

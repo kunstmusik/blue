@@ -77,7 +77,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
 
     public PolyObject(boolean isRoot) {
-        setName("root");
+        setName("SoundObject Layer Group");
         this.isRoot = isRoot;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
