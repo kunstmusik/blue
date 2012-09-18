@@ -53,6 +53,7 @@ public class PythonProxy {
         }
         
         interp = new InteractiveInterpreter();
+        interp.exec("import site");
         expressionInterpreter = new PythonInterpreter();
         expressionInterpreter.exec("from __future__ import division\n");
 
