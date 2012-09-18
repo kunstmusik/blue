@@ -27,6 +27,10 @@ NEW
 
 * Added Steven Yi's "The Living Ocean" to the examples/pieces/stevenYi folder
 
+UPDATED
+
+* Updated to Jython 2.5.3
+
 FIX
 
 * Auditioning SoundObjects would cause a crash of program due to unnecessary 
