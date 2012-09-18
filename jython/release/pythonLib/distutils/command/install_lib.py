@@ -1,6 +1,6 @@
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: install_lib.py 37946 2004-12-02 20:14:16Z lemburg $"
+__revision__ = "$Id$"
 
 import sys, os, string
 from types import IntType

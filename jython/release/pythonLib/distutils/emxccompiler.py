@@ -19,7 +19,7 @@ handles the EMX port of the GNU C compiler to OS/2.
 #
 # * EMX gcc 2.81/EMX 0.9d fix03
 
-__revision__ = "$Id: emxccompiler.py 34786 2003-12-02 12:17:59Z aimacintyre $"
+__revision__ = "$Id$"
 
 import os,sys,copy
 from distutils.ccompiler import gen_preprocess_options, gen_lib_options

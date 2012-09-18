@@ -8,7 +8,7 @@ really defined in distutils.dist and distutils.cmd.
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: core.py 38672 2005-03-20 22:19:47Z fdrake $"
+__revision__ = "$Id$"
 
 import sys, os
 from types import *

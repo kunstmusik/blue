@@ -10,7 +10,7 @@ for the Microsoft Visual Studio.
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: msvccompiler.py 54645 2007-04-01 18:29:47Z neal.norwitz $"
+__revision__ = "$Id$"
 
 import sys, os, string
 from distutils.errors import \

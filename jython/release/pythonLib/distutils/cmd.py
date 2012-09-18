@@ -6,7 +6,7 @@ in the distutils.command package.
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: cmd.py 37828 2004-11-10 22:23:15Z loewis $"
+__revision__ = "$Id$"
 
 import sys, os, string, re
 from types import *

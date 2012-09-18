@@ -5,7 +5,7 @@ files to the Python include directory."""
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: install_headers.py 37828 2004-11-10 22:23:15Z loewis $"
+__revision__ = "$Id$"
 
 import os
 from distutils.core import Command

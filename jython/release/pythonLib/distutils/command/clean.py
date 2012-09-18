@@ -6,7 +6,7 @@ Implements the Distutils 'clean' command."""
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: clean.py 38532 2005-03-03 08:12:27Z loewis $"
+__revision__ = "$Id$"
 
 import os
 from distutils.core import Command

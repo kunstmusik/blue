@@ -24,7 +24,7 @@ Misc variables:
 
 """
 
-__version__ = "$Revision: 38432 $"       # Code version
+__version__ = "$Revision$"       # Code version
 
 from types import *
 from copy_reg import dispatch_table

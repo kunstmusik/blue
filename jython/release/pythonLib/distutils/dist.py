@@ -6,7 +6,7 @@ being built/installed/distributed.
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: dist.py 38697 2005-03-23 18:54:36Z loewis $"
+__revision__ = "$Id$"
 
 import sys, os, string, re
 from types import *

@@ -1,4 +1,4 @@
-# $Id: sha.py 39316 2005-08-21 18:45:59Z greg $
+# $Id$
 #
 #  Copyright (C) 2005   Gregory P. Smith (greg@electricrain.com)
 #  Licensed to PSF under a Contributor Agreement.

@@ -1,5 +1,5 @@
 """
-This is an updated socket module for use on JVMs > 1.5; it is derived from the old jython socket module.
+This is an updated socket module for use on JVMs >= 1.5; it is derived from the old jython socket module.
 It is documented, along with known issues and workarounds, on the jython wiki.
 http://wiki.python.org/jython/NewSocketModule
 """
@@ -98,6 +98,8 @@ def would_block_error(exc=None):
 
 ALL = None
 
+_ssl_message = ": Differences between the SSL socket behaviour of cpython vs. jython are explained on the wiki:  http://wiki.python.org/jython/NewSocketModule#SSL_Support"
+
 _exception_map = {
 
 # (<javaexception>, <circumstance>) : callable that raises the python equivalent exception, or None to stub out as unmapped
@@ -107,7 +109,7 @@ _exception_map = {
 
 (java.net.BindException, ALL)            : lambda x: error(errno.EADDRINUSE, 'Address already in use'),
 (java.net.ConnectException, ALL)         : lambda x: error(errno.ECONNREFUSED, 'Connection refused'),
-(java.net.NoRouteToHostException, ALL)   : None,
+(java.net.NoRouteToHostException, ALL)   : lambda x: error(errno.EHOSTUNREACH, 'No route to host'),
 (java.net.PortUnreachableException, ALL) : None,
 (java.net.ProtocolException, ALL)        : None,
 (java.net.SocketException, ALL)          : java_net_socketexception_handler,
@@ -134,11 +136,11 @@ _exception_map = {
 # These error codes are currently wrong: getting them correct is going to require
 # some investigation. Cpython 2.6 introduced extensive SSL support.
 
-(javax.net.ssl.SSLException, ALL)                        : lambda x: sslerror(-1, 'SSL exception'),
-(javax.net.ssl.SSLHandshakeException, ALL)               : lambda x: sslerror(-1, 'SSL handshake exception'),
-(javax.net.ssl.SSLKeyException, ALL)                     : lambda x: sslerror(-1, 'SSL key exception'),
-(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda x: sslerror(-1, 'SSL peer unverified exception'),
-(javax.net.ssl.SSLProtocolException, ALL)                : lambda x: sslerror(-1, 'SSL protocol exception'),
+(javax.net.ssl.SSLException, ALL)                        : lambda x: sslerror(-1, 'SSL exception'+_ssl_message),
+(javax.net.ssl.SSLHandshakeException, ALL)               : lambda x: sslerror(-1, 'SSL handshake exception'+_ssl_message),
+(javax.net.ssl.SSLKeyException, ALL)                     : lambda x: sslerror(-1, 'SSL key exception'+_ssl_message),
+(javax.net.ssl.SSLPeerUnverifiedException, ALL)          : lambda x: sslerror(-1, 'SSL peer unverified exception'+_ssl_message),
+(javax.net.ssl.SSLProtocolException, ALL)                : lambda x: sslerror(-1, 'SSL protocol exception'+_ssl_message),
 
 }
 
@@ -174,11 +176,31 @@ SHUT_WR   = 1
 SHUT_RDWR = 2
 
 AF_UNSPEC = 0
-AF_INET = 2
-AF_INET6 = 23
+AF_INET   = 2
+AF_INET6  = 23
 
-AI_PASSIVE=1
-AI_CANONNAME=2
+AI_PASSIVE     = 1
+AI_CANONNAME   = 2
+AI_NUMERICHOST = 4
+AI_V4MAPPED    = 8
+AI_ALL         = 16
+AI_ADDRCONFIG  = 32
+AI_NUMERICSERV = 1024
+
+EAI_NONAME     = -2
+EAI_SERVICE    = -8
+EAI_ADDRFAMILY = -9
+
+NI_NUMERICHOST              = 1
+NI_NUMERICSERV              = 2
+NI_NOFQDN                   = 4
+NI_NAMEREQD                 = 8
+NI_DGRAM                    = 16
+NI_MAXSERV                  = 32
+NI_IDN                      = 64
+NI_IDN_ALLOW_UNASSIGNED     = 128
+NI_IDN_USE_STD3_ASCII_RULES = 256
+NI_MAXHOST                  = 1025
 
 # For some reason, probably historical, SOCK_DGRAM and SOCK_STREAM are opposite values of what they are on cpython.
 # I.E. The following is the way they are on cpython
@@ -209,6 +231,8 @@ TCP_NODELAY    = 256
 
 INADDR_ANY = "0.0.0.0"
 INADDR_BROADCAST = "255.255.255.255"
+
+IN6ADDR_ANY_INIT = "::"
 
 # Options with negative constants are not supported
 # They are being added here so that code that refers to them
@@ -243,19 +267,36 @@ def _constant_to_name(const_value):
     sock_module = sys.modules['socket']
     try:
         for name in dir(sock_module):
-            if getattr(sock_module, name) is const_value:
+            if getattr(sock_module, name) is const_value and \
+                (name.startswith('SO_') or name.startswith('SOL_') or \
+                name.startswith('TCP_') or name.startswith('IPPROTO_')):
                 return name
         return "Unknown"
     finally:
         sock_module = None
 
+import _google_ipaddr_r234
+
+def _is_ip_address(addr, version=None):
+    try:
+        _google_ipaddr_r234.IPAddress(addr, version)
+        return True
+    except ValueError:
+        return False
+
+def is_ipv4_address(addr):
+    return _is_ip_address(addr, 4)
+
+def is_ipv6_address(addr):
+    return _is_ip_address(addr, 6)
+
+def is_ip_address(addr):
+    return _is_ip_address(addr)
+
 class _nio_impl:
 
     timeout = None
     mode = MODE_BLOCKING
-
-    def getpeername(self):
-        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
 
     def config(self, mode, timeout):
         self.mode = mode
@@ -370,6 +411,12 @@ class _client_socket_impl(_nio_impl):
         if how in (SHUT_WR, SHUT_RDWR):
             self.jsocket.shutdownOutput()
 
+    def getsockname(self):
+        return (self.jsocket.getLocalAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
+
 class _server_socket_impl(_nio_impl):
 
     options = {
@@ -403,6 +450,13 @@ class _server_socket_impl(_nio_impl):
         # java/jython. But we can't call that here because that would then
         # later cause the user explicit close() call to fail
         pass
+
+    def getsockname(self):
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        # Not a meaningful operation for server sockets.
+        raise error(errno.ENOTCONN, "Socket is not connected")
 
 class _datagram_socket_impl(_nio_impl):
 
@@ -513,6 +567,15 @@ class _datagram_socket_impl(_nio_impl):
         else:
             return self._do_receive_nio(0, num_bytes, flags)
 
+    def getsockname(self):
+        return (self.jsocket.getLocalAddress().getHostAddress(), self.jsocket.getLocalPort())
+
+    def getpeername(self):
+        peer_address = self.jsocket.getInetAddress()
+        if peer_address is None:
+            raise error(errno.ENOTCONN, "Socket is not connected")
+        return (peer_address.getHostAddress(), self.jsocket.getPort() )
+
 has_ipv6 = True # IPV6 FTW!
 
 # Name and address functions
@@ -565,33 +628,50 @@ def getservbyname(service_name, protocol_name=None):
         from jnr.netdb import Service
     except ImportError:
         return None
-    return Service.getServiceByName(service_name, protocol_name).getPort()
+    service = Service.getServiceByName(service_name, protocol_name)
+    if service is None:
+        raise error('service/proto not found')
+    return service.getPort()
 
 def getservbyport(port, protocol_name=None):
     try:
         from jnr.netdb import Service
     except ImportError:
         return None
-    return Service.getServiceByPort(port, protocol_name).getName()
+    service = Service.getServiceByPort(port, protocol_name)
+    if service is None:
+        raise error('port/proto not found')
+    return service.getName()
 
 def getprotobyname(protocol_name=None):
     try:
         from jnr.netdb import Protocol
     except ImportError:
         return None
-    return Protocol.getProtocolByName(protocol_name).getProto()
+    proto = Protocol.getProtocolByName(protocol_name)
+    if proto is None:
+        raise error('protocol not found')
+    return proto.getProto()
 
-def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
+def _realsocket(family = AF_INET, sock_type = SOCK_STREAM, protocol=0):
     assert family in (AF_INET, AF_INET6), "Only AF_INET and AF_INET6 sockets are currently supported on jython"
-    assert type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
-    if type == SOCK_STREAM:
+    assert sock_type in (SOCK_DGRAM, SOCK_STREAM), "Only SOCK_STREAM and SOCK_DGRAM sockets are currently supported on jython"
+    if sock_type == SOCK_STREAM:
         if protocol != 0:
             assert protocol == IPPROTO_TCP, "Only IPPROTO_TCP supported on SOCK_STREAM sockets"
-        return _tcpsocket()
+        else:
+            protocol = IPPROTO_TCP
+        result = _tcpsocket()
     else:
         if protocol != 0:
             assert protocol == IPPROTO_UDP, "Only IPPROTO_UDP supported on SOCK_DGRAM sockets"
-        return _udpsocket()
+        else:
+            protocol = IPPROTO_UDP
+        result = _udpsocket()
+    setattr(result, "family", family)
+    setattr(result, "type",   sock_type)
+    setattr(result, "proto",  protocol)
+    return result
 
 #
 # Attempt to provide IDNA (RFC 3490) support.
@@ -600,24 +680,38 @@ def _realsocket(family = AF_INET, type = SOCK_STREAM, protocol=0):
 #
 
 idna_libraries = [
-    ('java.net.IDN', 'toASCII', java.lang.IllegalArgumentException)
+    ('java.net.IDN', 'toASCII', 'toUnicode', 
+        'ALLOW_UNASSIGNED', 'USE_STD3_ASCII_RULES', 
+        java.lang.IllegalArgumentException)
 ]
-
-for idna_lib, idna_fn_name, exc in idna_libraries:
+  
+for idna_lib, efn, dfn, au, usar, exc in idna_libraries:
     try:
-        m = __import__(idna_lib, globals(), locals(), [idna_fn_name])
-        idna_fn = getattr(m, idna_fn_name)
+        m = __import__(idna_lib, globals(), locals(), [efn, dfn, au, usar])
+        encode_fn = getattr(m, efn)
         def _encode_idna(name):
             try:
-                return idna_fn(name)
+                return encode_fn(name)
             except exc:
                 raise UnicodeEncodeError(name)
+        decode_fn = getattr(m, dfn)
+        def _decode_idna(name, flags=0):
+            try:
+                jflags = 0
+                if flags & NI_IDN_ALLOW_UNASSIGNED:
+                    jflags |= au
+                if flags & NI_IDN_USE_STD3_ASCII_RULES:
+                    jflags |= usar
+                return decode_fn(name, jflags)
+            except Exception, x:
+                raise UnicodeDecodeError(name)
         supports('idna', True)
         break
     except (AttributeError, ImportError), e:
         pass
 else:
     _encode_idna = lambda x: x.encode("ascii")
+    _decode_idna = lambda x, y=0: x.decode("ascii")
 
 #
 # Define data structures to support IPV4 and IPV6.
@@ -675,39 +769,39 @@ class _ipv6_address_t(_ip_address_t):
 
     __repr__ = __str__
 
-def _get_jsockaddr(address_object, for_udp=False):
-    if address_object is None:
-        return java.net.InetSocketAddress(0) # Let the system pick an ephemeral port
+def _get_jsockaddr(address_object, family, sock_type, proto, flags):
+    # Is this an object that was returned from getaddrinfo? If so, it already contains an InetAddress
     if isinstance(address_object, _ip_address_t):
         return java.net.InetSocketAddress(address_object.jaddress, address_object[1]) 
+    # The user passed an address tuple, not an object returned from getaddrinfo
+    # So we must call getaddrinfo, after some translations and checking
+    if address_object is None:
+        address_object = ("", 0)
     error_message = "Address must be a 2-tuple (ipv4: (host, port)) or a 4-tuple (ipv6: (host, port, flow, scope))"
     if not isinstance(address_object, tuple) or \
-            len(address_object) not in [2,4] or \
+            ((family == AF_INET and len(address_object) != 2) or (family == AF_INET6 and len(address_object) not in [2,4] )) or \
             not isinstance(address_object[0], basestring) or \
             not isinstance(address_object[1], (int, long)):
         raise TypeError(error_message)
     if len(address_object) == 4 and not isinstance(address_object[3], (int, long)):
         raise TypeError(error_message)
     hostname, port = address_object[0].strip(), address_object[1]
-    if for_udp:
-        if hostname == "":
-            hostname = INADDR_ANY
-        elif hostname == "<broadcast>":
-            hostname = INADDR_BROADCAST
-    else:
-        if hostname == "":
-            hostname = None
-    if hostname is None:
-        return java.net.InetSocketAddress(port)
+    if family == AF_INET and sock_type == SOCK_DGRAM and hostname == "<broadcast>":
+        hostname = INADDR_BROADCAST
+    if hostname == "":
+        if flags & AI_PASSIVE:
+            hostname = {AF_INET: INADDR_ANY, AF_INET6: IN6ADDR_ANY_INIT}[family]
+        else:
+            hostname = "localhost"
     if isinstance(hostname, unicode):
         hostname = _encode_idna(hostname)
-    if len(address_object) == 4:
-        # There is no way to get a Inet6Address: Inet6Address.getByName() simply calls
-        # InetAddress.getByName,() which also returns Inet4Address objects
-        # If users want to use IPv6 address, scoped or not, 
-        # they should use getaddrinfo(family=AF_INET6)
-        pass
-    return java.net.InetSocketAddress(java.net.InetAddress.getByName(hostname), port)
+    addresses = getaddrinfo(hostname, port, family, sock_type, proto, flags)
+    if len(addresses) == 0:
+        raise gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed')
+    return java.net.InetSocketAddress(addresses[0][4].jaddress, port)
+
+# Workaround for this (predominantly windows) issue
+# http://wiki.python.org/jython/NewSocketModule#IPV6_address_support
 
 _ipv4_addresses_only = False
 
@@ -715,23 +809,56 @@ def _use_ipv4_addresses_only(value):
     global _ipv4_addresses_only
     _ipv4_addresses_only = value
 
-def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
+def _getaddrinfo_get_host(host, family, flags):
+    if host is None:
+        return host
+    if not isinstance(host, basestring):
+        raise TypeError("getaddrinfo() argument 1 must be string or None")
+    if flags & AI_NUMERICHOST:
+        if not is_ip_address(host):
+            raise gaierror(EAI_NONAME, "Name or service not known")
+        if family == AF_INET and not is_ipv4_address(host):
+            raise gaierror(EAI_ADDRFAMILY, "Address family for hostname not supported")
+        if family == AF_INET6 and not is_ipv6_address(host):
+            raise gaierror(EAI_ADDRFAMILY, "Address family for hostname not supported")
+    if isinstance(host, unicode):
+        host = _encode_idna(host)
+    return host
+
+def _getaddrinfo_get_port(port, flags):
+    if isinstance(port, basestring):
+        try:
+            int_port = int(port)
+        except ValueError:
+            if flags & AI_NUMERICSERV:
+                raise gaierror(EAI_NONAME, "Name or service not known")
+            # Lookup the service by name
+            try:
+                int_port = getservbyname(port)
+            except error:
+                raise gaierror(EAI_SERVICE, "Servname not supported for ai_socktype")
+    elif port is None:
+        int_port = 0
+    elif not isinstance(port, (int, long)):
+        raise error("Int or String expected")
+    else:
+        int_port = int(port)
+    return int_port % 65536
+
+def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=0):
     try:
+        if _ipv4_addresses_only:
+            family = AF_INET
         if not family in [AF_INET, AF_INET6, AF_UNSPEC]:
             raise gaierror(errno.EIO, 'ai_family not supported')
+        host = _getaddrinfo_get_host(host, family, flags)
+        port = _getaddrinfo_get_port(port, flags)
         filter_fns = []
-        if _ipv4_addresses_only:
-            filter_fns.append( lambda x: isinstance(x, java.net.Inet4Address) )
-        else:
-            filter_fns.append({
-                AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
-                AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
-                AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
-            }[family])
-        if host == "":
-            host = java.net.InetAddress.getLocalHost().getHostName()
-        if isinstance(host, unicode):
-            host = _encode_idna(host)
+        filter_fns.append({
+            AF_INET:   lambda x: isinstance(x, java.net.Inet4Address),
+            AF_INET6:  lambda x: isinstance(x, java.net.Inet6Address),
+            AF_UNSPEC: lambda x: isinstance(x, java.net.InetAddress),
+        }[family])
         passive_mode = flags is not None and flags & AI_PASSIVE
         canonname_mode = flags is not None and flags & AI_CANONNAME
         results = []
@@ -753,8 +880,39 @@ def getaddrinfo(host, port, family=AF_INET, socktype=None, proto=0, flags=None):
     except java.lang.Exception, jlx:
         raise _map_exception(jlx)
 
+def _getnameinfo_get_host(address, flags):
+    if not isinstance(address, basestring):
+        raise TypeError("getnameinfo() address 1 must be string, not None")
+    if isinstance(address, unicode):
+        address = _encode_idna(address)
+    jia = java.net.InetAddress.getByName(address)
+    result = jia.getCanonicalHostName()
+    if flags & NI_NAMEREQD:
+        if is_ip_address(result):
+            raise gaierror(EAI_NONAME, "Name or service not known")
+    elif flags & NI_NUMERICHOST:
+        result = jia.getHostAddress()
+    # Ignoring NI_NOFQDN for now
+    if flags & NI_IDN:
+        result = _decode_idna(result, flags)
+    return result
+
+def _getnameinfo_get_port(port, flags):
+    if not isinstance(port, (int, long)):
+        raise TypeError("getnameinfo() port number must be an integer")
+    if flags & NI_NUMERICSERV:
+        return port
+    proto = None
+    if flags & NI_DGRAM:
+        proto = "udp"
+    return getservbyport(port, proto)
+
 def getnameinfo(sock_addr, flags):
-    raise NotImplementedError("getnameinfo not yet supported on jython.")
+    if not isinstance(sock_addr, tuple) or len(sock_addr) < 2:
+        raise TypeError("getnameinfo() argument 1 must be a tuple")
+    host = _getnameinfo_get_host(sock_addr[0], flags)
+    port = _getnameinfo_get_port(sock_addr[1], flags)
+    return (host, port)
 
 def getdefaulttimeout():
     return _defaulttimeout
@@ -786,6 +944,14 @@ def ntohl(x): return x
 
 def inet_pton(family, ip_string):
     try:
+        if family == AF_INET:
+            if not is_ipv4_address(ip_string):
+                raise error("illegal IP address string passed to inet_pton")
+        elif family == AF_INET6:
+            if not is_ipv6_address(ip_string):
+                raise error("illegal IP address string passed to inet_pton")
+        else:
+            raise error(errno.EAFNOSUPPORT, "Address family not supported by protocol")
         ia = java.net.InetAddress.getByName(ip_string)
         bytes = []
         for byte in ia.getAddress():
@@ -800,6 +966,14 @@ def inet_pton(family, ip_string):
 def inet_ntop(family, packed_ip):
     try:
         jByteArray = jarray.array(packed_ip, 'b')
+        if family == AF_INET:
+            if len(jByteArray) != 4:
+                raise ValueError("invalid length of packed IP address string")
+        elif family == AF_INET6:
+            if len(jByteArray) != 16:
+                raise ValueError("invalid length of packed IP address string")
+        else:
+            raise ValueError("unknown address family %s" % family)
         ia = java.net.InetAddress.getByAddress(jByteArray)
         return ia.getHostAddress()
     except java.lang.Exception, jlx:
@@ -884,6 +1058,27 @@ class _nonblocking_api_mixin:
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
+    def getsockname(self):
+        try:
+            if self.sock_impl is None:
+                # If the user has already bound an address, return that
+                if self.local_addr:
+                    return self.local_addr
+                # The user has not bound, connected or listened
+                # This is what cpython raises in this scenario
+                raise error(errno.EINVAL, "Invalid argument")
+            return self.sock_impl.getsockname()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def getpeername(self):
+        try:
+            if self.sock_impl is None:
+                raise error(errno.ENOTCONN, "Socket is not connected")
+            return self.sock_impl.getpeername()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl:
@@ -920,7 +1115,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         assert not self.sock_impl
         assert not self.local_addr
         # Do the address format check
-        _get_jsockaddr(addr)
+        _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
         self.local_addr = addr
 
     def listen(self, backlog):
@@ -928,7 +1123,8 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             assert not self.sock_impl
             self.server = 1
-            self.sock_impl = _server_socket_impl(_get_jsockaddr(self.local_addr), backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+            self.sock_impl = _server_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
+                                  backlog, self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -955,9 +1151,10 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             self.sock_impl = _client_socket_impl()
             if self.local_addr: # Has the socket been bound to a local address?
-                self.sock_impl.bind(_get_jsockaddr(self.local_addr), self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+                self.sock_impl.bind(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, 0), 
+                                     self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config() # Configure timeouts, etc, now that the socket exists
-            self.sock_impl.connect(_get_jsockaddr(addr))
+            self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -1018,31 +1215,6 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     sendall = send
 
-    def getsockname(self):
-        try:
-            if not self.sock_impl:
-                host, port = self.local_addr or ("", 0)
-                host = java.net.InetAddress.getByName(host).getHostAddress()
-            else:
-                if self.server:
-                    host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-                else:
-                    host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
-                port = self.sock_impl.jsocket.getLocalPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getpeername(self):
-        try:
-            assert self.sock_impl
-            assert not self.server
-            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
     def close(self):
         try:
             if self.istream:
@@ -1059,14 +1231,20 @@ class _udpsocket(_nonblocking_api_mixin):
 
     sock_impl = None
     connected = False
+    local_addr = None
 
     def __init__(self):
         _nonblocking_api_mixin.__init__(self)
 
     def bind(self, addr):
-        try:
+        try:            
             assert not self.sock_impl
-            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(addr, True), self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
+            assert not self.local_addr
+            # Do the address format check
+            _get_jsockaddr(addr, self.family, self.type, self.proto, 0)
+            self.local_addr = addr
+            self.sock_impl = _datagram_socket_impl(_get_jsockaddr(self.local_addr, self.family, self.type, self.proto, AI_PASSIVE), 
+                                                    self.pending_options[ (SOL_SOCKET, SO_REUSEADDR) ])
             self._config()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1077,7 +1255,7 @@ class _udpsocket(_nonblocking_api_mixin):
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
-                self.sock_impl.connect(_get_jsockaddr(addr))
+            self.sock_impl.connect(_get_jsockaddr(addr, self.family, self.type, self.proto, 0))
             self.connected = True
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1100,7 +1278,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 self.sock_impl = _datagram_socket_impl()
                 self._config()
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
-            result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, True), flags)
+            result = self.sock_impl.sendto(byte_array, _get_jsockaddr(addr, self.family, self.type, self.proto, 0), flags)
             return result
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -1135,24 +1313,6 @@ class _udpsocket(_nonblocking_api_mixin):
         if not self.sock_impl: raise error(errno.ENOTCONN, "Socket is not connected")
         try:
             return self.sock_impl.recv(num_bytes, flags)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getsockname(self):
-        try:
-            assert self.sock_impl
-            host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getLocalPort()
-            return (host, port)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
-
-    def getpeername(self):
-        try:
-            assert self.sock
-            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getPort()
-            return (host, port)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -1506,6 +1666,36 @@ class _fileobject(object):
             raise StopIteration
         return line
 
+_GLOBAL_DEFAULT_TIMEOUT = object()
+
+def create_connection(address, timeout=_GLOBAL_DEFAULT_TIMEOUT):
+    """Connect to *address* and return the socket object.
+
+    Convenience function.  Connect to *address* (a 2-tuple ``(host,
+    port)``) and return the socket object.  Passing the optional
+    *timeout* parameter will set the timeout on the socket instance
+    before attempting to connect.  If no *timeout* is supplied, the
+    global default timeout setting returned by :func:`getdefaulttimeout`
+    is used.
+    """
+
+    msg = "getaddrinfo returns an empty list"
+    host, port = address
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        sock = None
+        try:
+            sock = socket(af, socktype, proto)
+            if timeout is not _GLOBAL_DEFAULT_TIMEOUT:
+                sock.settimeout(timeout)
+            sock.connect(sa)
+            return sock
+
+        except error, msg:
+            if sock is not None:
+                sock.close()
+
+    raise error, msg
 
 # Define the SSL support
 

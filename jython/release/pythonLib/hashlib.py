@@ -1,4 +1,4 @@
-# $Id: hashlib.py 66095 2008-08-31 16:36:21Z gregory.p.smith $
+# $Id$
 #
 #  Copyright (C) 2005   Gregory P. Smith (greg@electricrain.com)
 #  Licensed to PSF under a Contributor Agreement.

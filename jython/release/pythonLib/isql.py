@@ -1,13 +1,14 @@
-# $Id: isql.py 6639 2009-08-10 17:06:51Z fwierzbicki $
-
 import dbexts, cmd, sys, os
+
+if sys.platform.startswith("java"):
+    import java.lang.String
 
 """
 Isql works in conjunction with dbexts to provide an interactive environment
 for database work.
 """
 
-__version__ = "$Revision: 6639 $"[11:-2]
+__version__ = "7290"
 
 class IsqlExit(Exception): pass
 
@@ -26,9 +27,8 @@ class Prompt:
         if len(self.isql.sqlbuffer) > 0:
             prompt = "... "
         return prompt
-    if os.name == 'java':
+    if sys.platform.startswith("java"):
         def __tojava__(self, cls):
-            import java.lang.String
             if cls == java.lang.String:
                 return self.__str__()
             return False

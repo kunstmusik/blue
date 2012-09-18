@@ -6,7 +6,7 @@ and building lists of files.
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: filelist.py 37828 2004-11-10 22:23:15Z loewis $"
+__revision__ = "$Id$"
 
 import os, string, re
 import fnmatch

@@ -6,7 +6,7 @@ module."""
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: build_clib.py 37828 2004-11-10 22:23:15Z loewis $"
+__revision__ = "$Id$"
 
 
 # XXX this module has *lots* of code ripped-off quite transparently from

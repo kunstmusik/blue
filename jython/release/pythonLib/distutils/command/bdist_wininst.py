@@ -5,7 +5,7 @@ exe-program."""
 
 # This module should be kept compatible with Python 2.1.
 
-__revision__ = "$Id: bdist_wininst.py 38697 2005-03-23 18:54:36Z loewis $"
+__revision__ = "$Id$"
 
 import sys, os, string
 from distutils.core import Command
