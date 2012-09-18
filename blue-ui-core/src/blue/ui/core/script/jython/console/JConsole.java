@@ -19,6 +19,14 @@ import org.python.util.InteractiveInterpreter;
 
 import blue.ui.core.script.jython.console.streams.ConsoleInputStream;
 import blue.ui.core.script.jython.console.streams.ConsoleOutputStream;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 /**
  * Code used from http://www.javaprogrammingforums.com/java-swing-tutorials/4907-java-tip-jul-29-2010-swing-console-component.html
@@ -67,6 +75,8 @@ public class JConsole extends JTextArea implements KeyListener
 	private ConsoleFilter		filter;
 	private Thread				pythonThread;
 
+    JPopupMenu menu = new JPopupMenu();
+    
 	/**
 	 * 
 	 */
@@ -110,6 +120,30 @@ public class JConsole extends JTextArea implements KeyListener
                 engine.setOut(out);
                 engine.setErr(err);
             }
+        });
+        
+        Action clearAction = new AbstractAction("Clear" ) {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setText(">>>");
+            }
+            
+        };
+        clearAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
+                KeyEvent.VK_L, BlueSystem.getMenuShortcutKey()));
+        
+        menu.add(clearAction);
+        
+        this.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(SwingUtilities.isRightMouseButton(e)) {
+                    menu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+            
         });
 	}
 
@@ -232,9 +266,13 @@ public class JConsole extends JTextArea implements KeyListener
 	@Override
 	public void keyPressed(KeyEvent e)
 	{
-		if ((e.getKeyCode() & BlueSystem.getMenuShortcutKey()) == BlueSystem.getMenuShortcutKey())
+		if ((e.getModifiers() & BlueSystem.getMenuShortcutKey()) == BlueSystem.getMenuShortcutKey())
 		{
-			if (e.getKeyCode() == KeyEvent.VK_A && !e.isShiftDown() && !e.isAltDown())
+            if(e.getKeyCode() == KeyEvent.VK_L  && !e.isShiftDown() && !e.isAltDown()) {
+                this.setText(">>>");
+                e.consume();
+            } 
+            else if (e.getKeyCode() == KeyEvent.VK_A && !e.isShiftDown() && !e.isAltDown())
 			{
 				// handle select all
 				// if selection start is in the editable region, try to select
