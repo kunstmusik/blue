@@ -22,6 +22,9 @@ NEW
 * Added "Search Csound Manual" option in Help menu to allow searching online
   Csound Manual using search terms (i.e. "guard point"); uses Google search
 
+* New Python Console window, allows console-interaction with current python code
+  for inspection and experimentation
+
 * Added Steven Yi's "The Living Ocean" to the examples/pieces/stevenYi folder
 
 FIX

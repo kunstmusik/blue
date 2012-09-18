@@ -6,7 +6,9 @@ import blue.soundObject.NoteList;
 import blue.utility.FileUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import org.python.core.*;
+import org.python.util.InteractiveInterpreter;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -29,11 +31,14 @@ import org.python.util.PythonInterpreter;
 
 public class PythonProxy {
 
-    private static PythonInterpreter interp;
+    private static InteractiveInterpreter interp;
     private static PythonInterpreter expressionInterpreter;
 
     private static PySystemState state = new PySystemState();
     private static File libDir = null;
+    
+    private static ArrayList<PythonProxyListener> listeners = 
+            new ArrayList<PythonProxyListener>();
 
     public static void setLibDir(File newLibDir) {
         libDir = newLibDir;
@@ -47,12 +52,24 @@ public class PythonProxy {
             Py.setSystemState(state);
         }
         
-        interp = new PythonInterpreter();
+        interp = new InteractiveInterpreter();
         expressionInterpreter = new PythonInterpreter();
         expressionInterpreter.exec("from __future__ import division\n");
 
         System.out.println(BlueSystem
                 .getString("scripting.python.reinitialized"));
+        
+        for(PythonProxyListener listener : listeners) {
+            listener.pythonProxyReinitializePerformed();
+        }
+    }
+    
+    public static final void addPythonProxyListener(PythonProxyListener listener) {
+        listeners.add(listener);
+    }
+    
+    public static final void removePythonProxyListener(PythonProxyListener listener) {
+        listeners.remove(listener);
     }
 
     public static final String processPythonScore(String pythonCode,
@@ -188,5 +205,12 @@ public class PythonProxy {
         System.out.println(BlueSystem.getString("scripting.python.libdir")
                 + " " + pythonPath);
         return (pythonPath);
+    }
+    
+    public static InteractiveInterpreter getInterpreter() {
+        if (interp == null) {
+            reinitialize();
+        }
+        return interp;
     }
 }
