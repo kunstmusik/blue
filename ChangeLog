@@ -43,6 +43,9 @@ FIX
   using the x-coordinate as the time value, i.e. instead of pasting at time 4 
   it might paste at time 80 if it was 20 pixels per second
 
+* CommandlineRunner - modified how commandline runner stops Csound to prevent
+  hanging csound processes on Linux
+
 INTERNAL
 
 * replaced passing of SoundObjectLibrary when saving/loading, now uses 

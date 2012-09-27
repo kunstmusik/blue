@@ -235,11 +235,11 @@ public final class ProcessConsole implements java.io.Serializable {
 //            io = null;
 //        }
 
-        io.getOut().append(BlueSystem.getString("processConsole.start") + "("
+        io.getOut().append("[CommandlineRunner] - ").append(BlueSystem.getString("processConsole.start") + "("
                 + commandLine + ").").append("\n");
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
-        this.commandLine = commandLine;
+        this.commandLine = commandLine += "-L stdin";
 
         if (System.getProperty("os.name").indexOf("Windows") >= 0) {
             process = Runtime.getRuntime().exec(commandLine, null,
@@ -270,7 +270,7 @@ public final class ProcessConsole implements java.io.Serializable {
         destroy(false);
 
         
-        io.getOut().append(BlueSystem.getString("processConsole.start") + "("
+        io.getOut().append("[CommandlineRunner] - ").append(BlueSystem.getString("processConsole.start") + "("
                 + commandLine + ").").append("\n");
 
         this.commandLine = commandLine;
@@ -310,28 +310,41 @@ public final class ProcessConsole implements java.io.Serializable {
     public void destroy(boolean notifyListeners, boolean killProcess) {
 
         if (killProcess) {
-            try {
-                if (stderrThread != null) {
-                    stderrThread.killThread = true;
-                    // stderrThread.stop ();
+            
+            if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+            
+                try {
+                    if (stderrThread != null) {
+                        stderrThread.killThread = true;
+                        // stderrThread.stop ();
+                    }
+                } catch (Exception x) {
                 }
-            } catch (Exception x) {
-            }
 
-            try {
-                if (stdoutThread != null) {
-                    stdoutThread.killThread = true;
-                    // stdoutThread.stop ();
+                try {
+                    if (stdoutThread != null) {
+                        stdoutThread.killThread = true;
+                        // stdoutThread.stop ();
+                    }
+                } catch (Exception x) {
                 }
-            } catch (Exception x) {
-            }
 
-            try {
-                if (process != null && killProcess) {
-                    process.destroy();
+                try {
+                    if (process != null) {
+                        process.destroy();
+                    }
+                } catch (Exception x) {
+                    x.printStackTrace();
                 }
-            } catch (Exception x) {
-                x.printStackTrace();
+            } else {
+                try {
+                    if (process != null) {
+                        passToStdin("e");
+                        process.waitFor();
+                    }
+                } catch (Exception x) {
+                    x.printStackTrace();
+                }
             }
         } else if (process != null) {
             try {
