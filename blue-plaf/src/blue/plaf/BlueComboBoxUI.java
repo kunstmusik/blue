@@ -9,7 +9,6 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.plaf.metal.MetalComboBoxUI;
-import sun.swing.DefaultLookup;
 
 /**
  *
