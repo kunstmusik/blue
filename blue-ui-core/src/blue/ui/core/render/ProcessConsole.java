@@ -239,12 +239,15 @@ public final class ProcessConsole implements java.io.Serializable {
                 + commandLine + ").").append("\n");
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
-        this.commandLine = commandLine += "-L stdin";
-
+        this.commandLine = commandLine;
+        
         if (System.getProperty("os.name").indexOf("Windows") >= 0) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {
+            
+            this.commandLine += " -L stdin";
+ 
             String[] cmdArray = splitCommandString(this.commandLine);
 
             process = Runtime.getRuntime().exec(cmdArray, null,
