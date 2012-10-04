@@ -41,13 +41,41 @@ public class LayersTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 1;
+        return 2;
     }
 
     @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        return layerGroup.getLayerAt(rowIndex);
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return (columnIndex == 1);
     }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        if(columnIndex == 1) {
+            layerGroup.getLayerAt(rowIndex).setName((String)aValue);
+        }
+    }
+    
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        if(columnIndex == 0) {
+            return rowIndex;
+        }
+        return layerGroup.getLayerAt(rowIndex).getName();
+    }
+    
+    @Override
+    public String getColumnName(int column) {
+        switch(column) {
+            case 0:
+                return "#";
+            case 1:
+                return "Name";
+        }
+        return "";
+    }
+    
+    /****/
     
     public void removeLayers(int start, int end) {
         layerGroup.removeLayers(start, end);

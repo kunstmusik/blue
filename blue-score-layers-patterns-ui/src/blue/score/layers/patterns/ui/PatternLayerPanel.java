@@ -37,6 +37,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
@@ -49,7 +51,8 @@ import org.openide.util.Exceptions;
  * @author stevenyi
  */
 public class PatternLayerPanel extends javax.swing.JPanel 
-        implements SelectionListener {
+        implements SelectionListener, PropertyChangeListener {
+    
     private final PatternLayer patternLayer;
 
     private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
@@ -124,6 +127,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
         setBorder(border);
         
         SoundObjectSelectionBus.getInstance().addSelectionListener(this);
+        
+        this.patternLayer.addPropertyChangeListener(this);
     }
 
     protected void editSoundObject() {
@@ -387,6 +392,18 @@ public class PatternLayerPanel extends javax.swing.JPanel
             this.setBorder(selectionBorder);
         } else {
             this.setBorder(border);
+        }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if(evt.getSource() == this.patternLayer) {
+            String propName = evt.getPropertyName();
+
+            if (propName.equals("name")) {
+                nameText.setText(patternLayer.getName());
+                nameLabel.setText(patternLayer.getName());
+            }
         }
     }
 }

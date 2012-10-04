@@ -66,6 +66,15 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     public Object getValueAt(int rowIndex, int columnIndex) {
         return score.getLayerGroup(rowIndex).getName();
     }
+
+    @Override
+    public String getColumnName(int column) {
+        return "Name";
+    }
+    
+    
+    
+    /****/
     
     public void addLayerGroup(int index, LayerGroup layerGroup) {
         score.addLayerGroup(index, layerGroup);

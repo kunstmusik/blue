@@ -133,10 +133,12 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void removeNotify() {
         if (this.paramIdList != null) {
             paramIdList.removeListSelectionListener(this);
+            this.paramIdList = null;
         }
 
         if (this.sLayer != null) {
             this.sLayer.removePropertyChangeListener(this);
+            this.sLayer = null;
         }
         super.removeNotify();
     }
@@ -572,6 +574,9 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
             if (propName.equals("heightIndex")) {
                 revalidate();
+            } else if (propName.equals("name")) {
+                nameText.setText(sLayer.getName());
+                nameLabel.setText(sLayer.getName());
             }
         }
     }

@@ -25,4 +25,8 @@ package blue.score.layers;
  */
 public interface Layer {
     public static final int LAYER_HEIGHT = 22;
+    
+    public String getName();
+    
+    public void setName(String name);
 }

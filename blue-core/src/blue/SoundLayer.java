@@ -109,7 +109,13 @@ public final class SoundLayer implements java.io.Serializable, Layer {
     }
 
     public void setName(String name) {
+        String oldName = this.name;
         this.name = name;
+        
+        if(!this.name.equals(oldName)) {
+            firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
+                    oldName, name));
+        }
     }
 
     public String getName() {

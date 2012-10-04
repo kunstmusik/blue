@@ -28,6 +28,10 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Iterator;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +47,8 @@ public class PatternLayer implements Layer {
     private boolean muted = false;
     private boolean solo = false;
     private PatternData patternData = new PatternData();
+    
+    private transient Vector<PropertyChangeListener> propListeners = null;
 
     public SoundObject getSoundObject() {
         return soundObject;
@@ -52,12 +58,20 @@ public class PatternLayer implements Layer {
         this.soundObject = soundObject;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
+        String oldName = this.name;
         this.name = name;
+        
+        if(!this.name.equals(oldName)) {
+            firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
+                    oldName, name));
+        }
     }
 
     public boolean isMuted() {
@@ -157,5 +171,41 @@ public class PatternLayer implements Layer {
         }
        
         return notes;
+    }
+    
+     /* Property Change Event Code */
+
+    private void firePropertyChangeEvent(PropertyChangeEvent pce) {
+        if (propListeners == null) {
+            return;
+        }
+
+        Iterator iter = new Vector(propListeners).iterator();
+
+        while (iter.hasNext()) {
+            PropertyChangeListener listener = (PropertyChangeListener) iter
+                    .next();
+
+            listener.propertyChange(pce);
+        }
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            propListeners = new Vector<PropertyChangeListener>();
+        }
+
+        if (propListeners.contains(pcl)) {
+            return;
+        }
+
+        propListeners.add(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            return;
+        }
+        propListeners.remove(pcl);
     }
 }

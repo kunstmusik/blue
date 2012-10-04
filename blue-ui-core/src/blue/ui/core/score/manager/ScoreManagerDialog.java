@@ -24,12 +24,12 @@ import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
-import blue.ui.utilities.UiUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -51,6 +51,12 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     public ScoreManagerDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        TableColumn col = layersTable.getTableHeader().getColumnModel().getColumn(0);
+
+        col.setMaxWidth(50);
+        col.setMinWidth(50);
+        col.setPreferredWidth(50);
     }
     
     public void setScore(Score score) {
@@ -69,8 +75,8 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         lGroupPushUpButton = new javax.swing.JButton();
         lGroupPushDownButton = new javax.swing.JButton();
@@ -93,6 +99,9 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                 return getPreferredSize().height < getParent().getHeight();
             }
         };
+        jPanel3 = new javax.swing.JPanel();
+        jToggleButton1 = new javax.swing.JToggleButton();
+        jToggleButton2 = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.title")); // NOI18N
@@ -105,14 +114,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
         getContentPane().add(jLabel1, gridBagConstraints);
-
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jLabel2.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
-        getContentPane().add(jLabel2, gridBagConstraints);
 
         jPanel1.setMinimumSize(new java.awt.Dimension(30, 20));
         jPanel1.setPreferredSize(new java.awt.Dimension(160, 20));
@@ -253,6 +254,26 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
         getContentPane().add(jScrollPane4, gridBagConstraints);
+
+        jPanel3.setLayout(new java.awt.GridLayout(1, 0));
+
+        buttonGroup1.add(jToggleButton1);
+        jToggleButton1.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jToggleButton1.text")); // NOI18N
+        jToggleButton1.setFocusable(false);
+        jToggleButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jToggleButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jPanel3.add(jToggleButton1);
+
+        buttonGroup1.add(jToggleButton2);
+        jToggleButton2.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jToggleButton2.text")); // NOI18N
+        jToggleButton2.setFocusable(false);
+        jToggleButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jToggleButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jPanel3.add(jToggleButton2);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        getContentPane().add(jPanel3, gridBagConstraints);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -421,7 +442,15 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             layersTable.setModel(emptyList);
         } else {
             layersTable.setModel(new LayersTableModel(score.getLayerGroup(rowIndex)));
+            
+            TableColumn col = layersTable.getTableHeader().getColumnModel().getColumn(0);
+
+            col.setMaxWidth(50);
+            col.setMinWidth(50);
+            col.setPreferredWidth(50);
         }
+        
+        
         
 //        if (UiUtilities.isRightMouseButton(e)) {
 //            convertPopup.show(arrangementTable, e.getX(), e.getY());
@@ -539,12 +568,15 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JToggleButton jToggleButton1;
+    private javax.swing.JToggleButton jToggleButton2;
     private javax.swing.JButton lGroupAddButton;
     private javax.swing.JButton lGroupMinusButton;
     private javax.swing.JButton lGroupPushDownButton;
