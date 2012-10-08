@@ -26,11 +26,12 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author steven
  */
-public class PianoNote implements Serializable, Cloneable {
+public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote> {
     int octave = 8;
 
     int scaleDegree = 0;
@@ -186,5 +187,43 @@ public class PianoNote implements Serializable, Cloneable {
         note.noteTemplate = this.noteTemplate;
 
         return note;
+    }
+
+    public int compareTo(PianoNote note2) {
+        int val = this.octave - note2.octave;
+        
+        if(val != 0) {
+            return val;
+        }
+        
+        val = this.scaleDegree - note2.scaleDegree;
+        
+        if(val != 0) {
+            return val;
+        }
+        
+        float val2 = this.start - note2.start;
+        
+        if(val2 != 0) {
+            if(val2 > 0) {
+                return 1;
+            }
+            return -1;
+        }
+        
+        val2 = this.duration - note2.duration;
+        
+        if(val2 != 0) {
+            if(val2 > 0) {
+                return 1;
+            }
+            return -1;
+        }
+        
+        return 0;
+    }
+    
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

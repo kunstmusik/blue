@@ -77,6 +77,6 @@ public class BlueUICorePluginProvider extends DefaultBluePluginProvider {
         factory.appendPlugin(RhinoObjectRenderer.class, RhinoObject.class);
         factory.appendPlugin(SoundRenderer.class, Sound.class);
         factory.appendPlugin(TrackerRenderer.class, TrackerObject.class);
-    
+        factory.appendPlugin(PianoRollRenderer.class, PianoRoll.class);
     }
 }
