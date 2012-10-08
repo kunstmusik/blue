@@ -127,6 +127,8 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseWheelListener mouseWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this);
     
+    TimeState currentTimeState = null;
+    
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
 
         @Override
@@ -229,6 +231,10 @@ public final class ScoreTopComponent extends TopComponent
         if (project != null) {
             currentData = project.getData();
         }
+        
+        if(this.currentTimeState != null) {
+            this.currentTimeState.removePropertyChangeListener(this);
+        }
 
         if(this.data != null) {
             data.getScore().removeScoreListener(this);
@@ -275,6 +281,9 @@ public final class ScoreTopComponent extends TopComponent
             timeBar.setTimeState(timeState);
             timeProperties.setTimeState(timeState);
             mouseWheelListener.setTimeState(timeState);
+            
+            this.currentTimeState = timeState;
+            timeState.addPropertyChangeListener(this);
 //            float val = data.getRenderStartTime();
 //            int pixelSecond = timeState.getPixelSecond();
 //
@@ -855,6 +864,19 @@ public final class ScoreTopComponent extends TopComponent
 //                this.timePointer = -1.0f;
 //                updateRenderTimePointer();
 //            }
+        } else if(evt.getSource() == currentTimeState) {
+            if(evt.getPropertyName().equals("pixelSecond")) {
+                float val = data.getRenderStartTime();
+
+                int newX = (int) (val * currentTimeState.getPixelSecond());
+                updateRenderStartPointerX(newX, true);
+                
+                val = data.getRenderEndTime();
+                newX = (int) (val * currentTimeState.getPixelSecond());
+                
+                updateRenderLoopPointerX(newX);
+                     
+            }
         }
     }
 

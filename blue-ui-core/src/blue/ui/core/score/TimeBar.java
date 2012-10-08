@@ -403,7 +403,7 @@ public final class TimeBar extends JPanel implements
         if (evt.getSource() == this.data && (prop.equals("renderStartTime") || prop.
                 equals("renderLoopTime"))) {
             repaint();
-        } else if (evt.getSource() == this.data.getScore().getLayerGroup(0)) {
+        } else if (evt.getSource() == this.timeState) {
             if (prop.equals("timeDisplay") || prop.equals("timeUnit") || prop.
                     equals("pixelSecond")) {
                 // updateBuffer();
