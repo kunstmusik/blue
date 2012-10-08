@@ -30,4 +30,13 @@ import javax.swing.JComponent;
  */
 public interface LayerGroupPanelProvider {
     public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data);
+    /**
+     * Returns a JComponent for editing the properties of this LayerGroup. This
+     * can return a cached JComponent as only one properties panel will be 
+     * displayed at any one time.
+     * 
+     * @param layerGroup
+     * @return 
+     */
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup);
 }

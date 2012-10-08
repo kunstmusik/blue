@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
 import blue.ui.core.score.layers.LayerGroupPanelProvider;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 /**
  *
@@ -33,11 +34,18 @@ import javax.swing.JComponent;
 public class PatternsLayerGroupPanelProvider implements LayerGroupPanelProvider {
 
     @Override
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
-        if(layerGroup instanceof PatternsLayerGroup) {
-            return new PatternsLayerPanel((PatternsLayerGroup)layerGroup, timeState);
-        } 
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+            TimeState timeState, BlueData data) {
+        
+        if (layerGroup instanceof PatternsLayerGroup) {
+            return new PatternsLayerPanel((PatternsLayerGroup) layerGroup,
+                    timeState);
+        }
         return null;
     }
-    
+
+    @Override
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        return new JPanel();
+    }
 }

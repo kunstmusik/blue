@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.layers.LayerGroupPanelProvider;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 /**
  *
@@ -33,13 +34,19 @@ import javax.swing.JComponent;
 public class PolyObjectPanelProvider implements LayerGroupPanelProvider {
 
     @Override
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
-        if(layerGroup instanceof PolyObject) {
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+            TimeState timeState, BlueData data) {
+        
+        if (layerGroup instanceof PolyObject) {
             ScoreTimeCanvas sTimeCanvas = new ScoreTimeCanvas(data);
-            sTimeCanvas.setPolyObject((PolyObject)layerGroup, timeState);
+            sTimeCanvas.setPolyObject((PolyObject) layerGroup, timeState);
             return sTimeCanvas;
         }
         return null;
     }
-    
+
+    @Override
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        return new JPanel();
+    }
 }
