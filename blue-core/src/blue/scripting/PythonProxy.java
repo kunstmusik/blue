@@ -197,7 +197,10 @@ public class PythonProxy {
         String pythonPath;
 
         if (programPythonPath != null) {
-            pythonPath = programPythonPath + File.pathSeparator + userPythonPath;
+            String path1 = programPythonPath + File.separator + "standard";
+            String path2 = programPythonPath + File.separator + "blue";
+            pythonPath = path1 + File.pathSeparator + 
+                    path2 + File.pathSeparator + userPythonPath;
         } else {
             pythonPath = userPythonPath;
         }
