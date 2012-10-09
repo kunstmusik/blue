@@ -58,4 +58,20 @@ public class LayerGroupPanelProviderManager extends ArrayList<LayerGroupPanelPro
         return null;
     }
     
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        
+        Lookup lkp = Lookups.forPath("blue/score/layers/panelProviders");
+        
+        for(LayerGroupPanelProvider provider : lkp.lookupAll(
+                LayerGroupPanelProvider.class)) {
+            JComponent comp = provider.getLayerGroupPropertiesPanel(layerGroup);
+            
+            if(comp != null) {
+                return comp;
+            }
+        }
+        
+        return null;
+    }
+    
 }

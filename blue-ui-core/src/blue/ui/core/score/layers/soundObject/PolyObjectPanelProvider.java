@@ -33,6 +33,8 @@ import javax.swing.JPanel;
  */
 public class PolyObjectPanelProvider implements LayerGroupPanelProvider {
 
+    PolyObjectPropertiesPanel propsPanel = null;
+    
     @Override
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
             TimeState timeState, BlueData data) {
@@ -47,6 +49,10 @@ public class PolyObjectPanelProvider implements LayerGroupPanelProvider {
 
     @Override
     public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
-        return new JPanel();
+        if(propsPanel == null) {
+             propsPanel = new PolyObjectPropertiesPanel();
+        }
+        propsPanel.setPolyObject((PolyObject)layerGroup);
+        return propsPanel;
     }
 }

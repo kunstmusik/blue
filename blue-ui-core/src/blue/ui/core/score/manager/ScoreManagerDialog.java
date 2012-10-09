@@ -24,6 +24,7 @@ import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
+import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -73,7 +74,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
@@ -90,7 +90,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                 return getPreferredSize().height < getParent().getHeight();
             }
         };
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        tabs = new javax.swing.JTabbedPane();
         layersPanel = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -104,6 +104,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         layersPushDownButton = new javax.swing.JButton();
         layersAddButton = new javax.swing.JButton();
         layersMinusButton = new javax.swing.JButton();
+        propertiesScrollPane = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.title")); // NOI18N
@@ -251,9 +252,10 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         layersPanel.add(jPanel4, "card4");
 
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersPanel.TabConstraints.tabTitle"), layersPanel); // NOI18N
+        tabs.addTab(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersPanel.TabConstraints.tabTitle"), layersPanel); // NOI18N
+        tabs.addTab(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.propertiesScrollPane.TabConstraints.tabTitle"), propertiesScrollPane); // NOI18N
 
-        jSplitPane1.setRightComponent(jTabbedPane1);
+        jSplitPane1.setRightComponent(tabs);
 
         getContentPane().add(jSplitPane1, java.awt.BorderLayout.CENTER);
 
@@ -422,14 +424,30 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         if (rowIndex < 0) {
             layersTable.setModel(emptyList);
+            
+            propertiesScrollPane.setViewportView(null);
+            
         } else {
-            layersTable.setModel(new LayersTableModel(score.getLayerGroup(rowIndex)));
+            final LayerGroup layerGroup = score.getLayerGroup(rowIndex);
+            
+            layersTable.setModel(new LayersTableModel(layerGroup));
             
             TableColumn col = layersTable.getTableHeader().getColumnModel().getColumn(0);
 
             col.setMaxWidth(50);
             col.setMinWidth(50);
             col.setPreferredWidth(50);
+            
+            propertiesScrollPane.setViewportView(null);
+            
+            LayerGroupPanelProviderManager manager = 
+                    LayerGroupPanelProviderManager.getInstance();
+            
+            JComponent comp = manager.getLayerGroupPropertiesPanel(layerGroup);
+            
+            if(comp != null) {
+                propertiesScrollPane.setViewportView(comp);
+            }
         }
         
         
@@ -559,7 +577,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JButton lGroupAddButton;
     private javax.swing.JButton lGroupMinusButton;
     private javax.swing.JButton lGroupPushDownButton;
@@ -571,5 +588,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private javax.swing.JButton layersPushDownButton;
     private javax.swing.JButton layersPushUpButton;
     private javax.swing.JTable layersTable;
+    private javax.swing.JScrollPane propertiesScrollPane;
+    private javax.swing.JTabbedPane tabs;
     // End of variables declaration//GEN-END:variables
 }

@@ -46,6 +46,6 @@ public class PatternsLayerGroupPanelProvider implements LayerGroupPanelProvider 
 
     @Override
     public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
-        return new JPanel();
+        return null;
     }
 }
