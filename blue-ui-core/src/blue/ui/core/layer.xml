@@ -659,6 +659,7 @@
                 <file name="AudioFilePlayerTopComponent.wstcref" url="AudioFilePlayerTopComponentWstcref.xml"/>
             </folder>
         </folder>
+        <file name="WindowManager.wswmgr" url="WindowManager.wswmgr"/>
     </folder>
 
     <folder name="WarmUp">
