@@ -36,6 +36,7 @@ import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import java.awt.Color;
+import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
@@ -127,6 +128,7 @@ public class Installer extends ModuleInstall {
 
             public void run() {
                 setWindowTitle();
+                WindowManager.getDefault().getMainWindow().setExtendedState(Frame.MAXIMIZED_BOTH);
             }
         });
         
@@ -189,6 +191,8 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
+        
+        
     }
 
     @Override
