@@ -31,8 +31,6 @@ UPDATED
 
 * Updated to Jython 2.5.3
 
-* application window starts maximized
-
 FIX
 
 * Auditioning SoundObjects would cause a crash of program due to unnecessary 

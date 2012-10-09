@@ -128,7 +128,6 @@ public class Installer extends ModuleInstall {
 
             public void run() {
                 setWindowTitle();
-                WindowManager.getDefault().getMainWindow().setExtendedState(Frame.MAXIMIZED_BOTH);
             }
         });
         
