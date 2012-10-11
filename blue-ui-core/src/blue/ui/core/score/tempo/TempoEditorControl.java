@@ -21,7 +21,6 @@ public class TempoEditorControl extends javax.swing.JPanel {
     
     boolean closed = true;
     private Tempo tempo;
-    private PolyObject pObj;
 
     /** Creates new form TempoEditorControl */
     public TempoEditorControl() {
@@ -33,11 +32,6 @@ public class TempoEditorControl extends javax.swing.JPanel {
         this.useTempoCheckBox.setSelected(tempo.isEnabled());
         setTempoVisible(tempo.isVisible());
         this.tempo = tempo;
-    }
-    
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
-        setVisible(this.pObj.isRoot());
     }
     
     public void setTempoVisible(boolean tempoVisible) {

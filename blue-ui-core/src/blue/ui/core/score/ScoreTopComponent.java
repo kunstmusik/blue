@@ -66,7 +66,8 @@ import org.openide.windows.WindowManager;
  * Top component which displays something.
  */
 public final class ScoreTopComponent extends TopComponent 
-        implements ScoreListener, RenderTimeManagerListener, PropertyChangeListener {
+        implements ScoreListener, RenderTimeManagerListener, 
+        PropertyChangeListener, ScoreBarListener {
 
     private static ScoreTopComponent instance;
     
@@ -82,7 +83,7 @@ public final class ScoreTopComponent extends TopComponent
 
     BlueData data;
 
-    PolyObjectBar polyObjectBar = PolyObjectBar.getInstance();
+    ScoreObjectBar scoreObjectBar = ScoreObjectBar.getInstance();
 
     TimeBar timeBar = new TimeBar();
 
@@ -152,7 +153,8 @@ public final class ScoreTopComponent extends TopComponent
 
         init();
 
-//        polyObjectBar.addChangeListener(new PolyObjectChangeListener() {
+        scoreObjectBar.setScoreBarListener(this);
+//        scoreObjectBar.addChangeListener(new PolyObjectChangeListener() {
 //
 //            public void polyObjectChanged(PolyObjectChangeEvent evt) {
 //                setPolyObject(evt.getPolyObject());
@@ -237,6 +239,7 @@ public final class ScoreTopComponent extends TopComponent
         }
 
         if(this.data != null) {
+            this.data.removePropertyChangeListener(this);
             data.getScore().removeScoreListener(this);
         }
         
@@ -250,110 +253,39 @@ public final class ScoreTopComponent extends TopComponent
             tempoControlPanel.setTempo(tempo);
             tempoEditor.setTempo(tempo);
 
-            // FIXME
+            timeBar.setData(data);
+
+            this.data.addPropertyChangeListener(this);
             
-            layerPanel.removeAll();
-            layerHeaderPanel.removeAll();
-                        
+            
             Score score = data.getScore();
             score.addScoreListener(this);
+            scoreObjectBar.setScore(score);
             
-            for(int i = 0; i < score.getLayerGroupCount(); i++) {
-                LayerGroup layerGroup = score.getLayerGroup(i);
-                addPanelsForLayerGroup(-1, layerGroup, score);
-            }
-            
-            checkSize();
-            
-            layerPanel.revalidate();
-            layerHeaderPanel.revalidate();
-//            PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
-//            TimeState timeState = data.getScore().getTimeState();
-           // polyObjectBar.addPolyObject(pObj);
-
-//            sLayerEditPanel.setNoteProcessorChainMap(data.getNoteProcessorChainMap());
-            
-            timeBar.setData(data);
-            
-            
-            TimeState timeState = data.getScore().getTimeState();
-            tempoEditor.setTimeState(timeState);
-            timeBar.setTimeState(timeState);
-            timeProperties.setTimeState(timeState);
-            mouseWheelListener.setTimeState(timeState);
-            
-            this.currentTimeState = timeState;
-            timeState.addPropertyChangeListener(this);
-//            float val = data.getRenderStartTime();
-//            int pixelSecond = timeState.getPixelSecond();
+//            scorePanel.remove(renderStartPointer);
+//                scorePanel.remove(renderLoopPointer);
+//                scorePanel.remove(renderTimePointer);
+//            
+//            //FIXME - check if editing top-level score object or sub layergroup
+////         if (pObj.isRoot()) {
+//                int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
+//                int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
 //
-//            int newX = (int) (val * pixelSecond);
-//            sTimeCanvas.updateRenderStartPointerX(newX, false);
+//                scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
+//                scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
+//                scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
+//                scorePanel.add(marquee, new Integer(500));
+//                marquee.setVisible(false);
 //
-//            newX = (int) (data.getRenderEndTime() * pixelSecond);
-//            sTimeCanvas.updateRenderLoopPointerX(newX);
-            
-
-            scrollPane.repaint();
-            
-            ModeManager.getInstance().setMode(ModeManager.getInstance().getMode());
-
-            this.data.addPropertyChangeListener(new PropertyChangeListener() {
-
-                public void propertyChange(PropertyChangeEvent evt) {
-                    boolean isRenderStartTime = evt.getPropertyName().equals(
-                            "renderStartTime");
-                    boolean isRenderLoopTime = evt.getPropertyName().equals(
-                            "renderLoopTime");
-
-                    if (evt.getSource() == data && (isRenderStartTime || isRenderLoopTime)) {
-
-                        if (data.getScore() == null) {
-                            return;
-                        }
-
-                        float val = ((Float) evt.getNewValue()).floatValue();
-
-                        //FIXME
-                        TimeState timeState = data.getScore().getTimeState();
-                        int newX = (int) (val * timeState.getPixelSecond());
-
-                        if (isRenderStartTime) {
-                            updateRenderStartPointerX(newX, true);
-                        } else if (isRenderLoopTime) {
-                            updateRenderLoopPointerX(newX);
-                        }
-                        
-                    }
-                }
-            
-        });
-            
-            
-            scorePanel.remove(renderStartPointer);
-                scorePanel.remove(renderLoopPointer);
-                scorePanel.remove(renderTimePointer);
-            
-            //FIXME - check if editing top-level score object or sub layergroup
-//         if (pObj.isRoot()) {
-                int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
-                int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
-
-                scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
-                scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
-                scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
-                scorePanel.add(marquee, new Integer(500));
-                marquee.setVisible(false);
-
-                updateRenderStartPointerX(startTime, false);
-                updateRenderLoopPointerX(endTime);
-                updateRenderTimePointer();
-
-//        } else {
-//            this.remove(renderStartPointer);
-//            this.remove(renderLoopPointer);
-//            this.remove(renderTimePointer);
-//        }
+//                updateRenderStartPointerX(startTime, false);
+//                updateRenderLoopPointerX(endTime);
+//                updateRenderTimePointer();
+//
+////        } else {
+////            this.remove(renderStartPointer);
+////            this.remove(renderLoopPointer);
+////            this.remove(renderTimePointer);
+////        }
 
 
             
@@ -364,10 +296,10 @@ public final class ScoreTopComponent extends TopComponent
         layerHeaderPanel.repaint();
     }
 
-    private void addPanelsForLayerGroup(int index, LayerGroup layerGroup, Score score) {
+    private void addPanelsForLayerGroup(int index, LayerGroup layerGroup, TimeState timeState) {
         final JComponent comp = LayerGroupPanelProviderManager.getInstance().getLayerGroupPanel(
-                layerGroup, score.getTimeState(), data);
-        final JComponent comp2 = LayerGroupHeaderPanelProviderManager.getInstance().getLayerGroupHeaderPanel(layerGroup, score.getTimeState(), data);
+                layerGroup, timeState, data);
+        final JComponent comp2 = LayerGroupHeaderPanelProviderManager.getInstance().getLayerGroupHeaderPanel(layerGroup, timeState, data);
         
         if(comp != null && comp2 != null) {
             
@@ -425,7 +357,7 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     public void clearAll() {
-        polyObjectBar.reset();
+//        scoreObjectBar.reset();
 
         scrollPane.revalidate();
     }
@@ -449,9 +381,9 @@ public final class ScoreTopComponent extends TopComponent
                  String command = e.getActionCommand();
 
                 if (command.equals("minusHorizontal")) {
-                    data.getScore().getTimeState().lowerPixelSecond();
+                    currentTimeState.lowerPixelSecond();
                 } else if (command.equals("plusHorizontal")) {
-                    data.getScore().getTimeState().raisePixelSecond();
+                    currentTimeState.raisePixelSecond();
                 }
             }
             
@@ -556,7 +488,7 @@ public final class ScoreTopComponent extends TopComponent
 
         topPanel.setLayout(new BorderLayout());
         topPanel.add(new ModeSelectionPanel(), BorderLayout.WEST);
-        topPanel.add(polyObjectBar, BorderLayout.CENTER);
+        topPanel.add(scoreObjectBar, BorderLayout.CENTER);
 
         this.add(timeProperties, BorderLayout.EAST);
 
@@ -610,22 +542,8 @@ public final class ScoreTopComponent extends TopComponent
         ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
     }
 
-    public void setPolyObject(PolyObject pObj) {
-        tempoControlPanel.setPolyObject(pObj);
-        
-//        TimeState timeState = data.getScore().getTimeState();
-//        
-//        tempoEditor.setTimeState(timeState);
-
-//        scrollPane.repaint();
-
-//        focusedPolyObject = pObj;
-
-       // sTimeCanvas.setPolyObject(pObj, timeState);
-//        sLayerEditPanel.setPolyObject(pObj);
-
-//        timeBar.setTimeState(timeState);
-//        timeProperties.setTimeState(timeState);
+    public void editLayerGroup(LayerGroup layerGroup) {
+        scoreObjectBar.addLayerGroup(layerGroup);
     }
 
     // FIXME - this needs to be better done, perhaps hidden behind an interface
@@ -735,7 +653,7 @@ public final class ScoreTopComponent extends TopComponent
         if(sde.getType() == ScoreDataEvent.DATA_ADDED) {
             Score score = data.getScore();
             for(int i = sde.getStartIndex(); i <= sde.getEndIndex(); i++) {
-                addPanelsForLayerGroup(i, score.getLayerGroup(i), score);
+                addPanelsForLayerGroup(i, score.getLayerGroup(i), score.getTimeState());
             }
             layerHeaderPanel.revalidate();
             checkSize();
@@ -821,7 +739,11 @@ public final class ScoreTopComponent extends TopComponent
 //        if (!pObj.isRoot()) {
 //            return;
 //        }
-
+        
+        if(!ScoreObjectBar.getInstance().isEditingScore()) {
+            return;
+        }
+        
         float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
         if (renderStart < 0.0f || timePointer < latency) {
@@ -877,6 +799,154 @@ public final class ScoreTopComponent extends TopComponent
                 updateRenderLoopPointerX(newX);
                      
             }
+        } else if (evt.getSource() == data) {
+            boolean isRenderStartTime = evt.getPropertyName().equals(
+                    "renderStartTime");
+            boolean isRenderLoopTime = evt.getPropertyName().equals(
+                    "renderLoopTime");
+
+            if (isRenderStartTime || isRenderLoopTime) {
+
+                if (data.getScore() == null) {
+                    return;
+                }
+
+                float val = ((Float) evt.getNewValue()).floatValue();
+
+                //FIXME
+                TimeState timeState = data.getScore().getTimeState();
+                int newX = (int) (val * timeState.getPixelSecond());
+
+                if (isRenderStartTime) {
+                    updateRenderStartPointerX(newX, true);
+                } else if (isRenderLoopTime) {
+                    updateRenderLoopPointerX(newX);
+                }
+
+            }
+        }
+    }
+
+    /* SCORE BAR LISTENER METHODS */
+    
+    @Override
+    public void scoreBarScoreSelected(Score score, int scrollX, int scrollY) {
+        
+        if(this.currentTimeState != null) {
+            this.currentTimeState.removePropertyChangeListener(this);
+        }
+        
+        this.clearAll();
+
+        if (score != null) {
+            
+            layerPanel.removeAll();
+            layerHeaderPanel.removeAll();
+                                    
+            for(int i = 0; i < score.getLayerGroupCount(); i++) {
+                LayerGroup layerGroup = score.getLayerGroup(i);
+                addPanelsForLayerGroup(-1, layerGroup, score.getTimeState());
+            }
+                        
+            checkSize();
+            
+            layerPanel.revalidate();
+            layerHeaderPanel.revalidate();
+                                    
+            TimeState timeState = score.getTimeState();
+            tempoEditor.setTimeState(timeState);
+            tempoEditor.setVisible(true);
+            tempoControlPanel.setVisible(true);
+            timeBar.setRootTimeline(true);
+            timeBar.setTimeState(timeState);
+            timeProperties.setTimeState(timeState);
+            mouseWheelListener.setTimeState(timeState);
+            
+            this.currentTimeState = timeState;
+            timeState.addPropertyChangeListener(this);
+
+            scrollPane.repaint();
+            
+            ModeManager.getInstance().setMode(ModeManager.getInstance().getMode());
+
+            scorePanel.remove(renderStartPointer);
+            scorePanel.remove(renderLoopPointer);
+            scorePanel.remove(renderTimePointer);
+            
+            int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
+            int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
+
+            scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
+            scorePanel.add(renderLoopPointer, JLayeredPane.DRAG_LAYER);
+            scorePanel.add(renderTimePointer, JLayeredPane.DRAG_LAYER);
+            scorePanel.add(marquee, new Integer(500));
+            marquee.setVisible(false);
+
+            updateRenderStartPointerX(startTime, false);
+            updateRenderLoopPointerX(endTime);
+            updateRenderTimePointer();
+            
+            setHorizontalScrollValue(scrollX);
+            setVerticalScrollValue(scrollY);
+        }
+    }
+
+    @Override
+    public void scoreBarLayerGroupSelected(LayerGroup layerGroup, int scrollX, int scrollY) {
+        //FIXME - this should not be hardcoded to PolyObject
+        
+        if(!(layerGroup instanceof PolyObject)) {
+            return;
+        }
+        
+        PolyObject pObj = (PolyObject)layerGroup;
+        
+        tempoEditor.setVisible(false);
+        tempoControlPanel.setVisible(false);
+
+        if(this.currentTimeState != null) {
+            this.currentTimeState.removePropertyChangeListener(this);
+        }
+        
+        this.clearAll();
+
+        if (layerGroup != null) {
+            
+            layerPanel.removeAll();
+            layerHeaderPanel.removeAll();
+                                    
+
+            addPanelsForLayerGroup(-1, layerGroup, pObj.getTimeState());
+                        
+            checkSize();
+            
+            layerPanel.revalidate();
+            layerHeaderPanel.revalidate();
+                                    
+            TimeState timeState = pObj.getTimeState();
+            tempoEditor.setTimeState(timeState);
+            tempoEditor.setVisible(true);
+            tempoControlPanel.setVisible(true);
+            timeBar.setRootTimeline(false);
+            timeBar.setTimeState(timeState);
+            timeProperties.setTimeState(timeState);
+            mouseWheelListener.setTimeState(timeState);
+            
+            this.currentTimeState = timeState;
+            timeState.addPropertyChangeListener(this);
+
+            scrollPane.repaint();
+            
+            ModeManager.getInstance().setMode(ModeManager.getInstance().getMode());
+
+            scorePanel.remove(renderStartPointer);
+            scorePanel.remove(renderLoopPointer);
+            scorePanel.remove(renderTimePointer);
+        
+            layerHeaderPanel.repaint();
+            
+            setHorizontalScrollValue(scrollX);
+            setVerticalScrollValue(scrollY);
         }
     }
 

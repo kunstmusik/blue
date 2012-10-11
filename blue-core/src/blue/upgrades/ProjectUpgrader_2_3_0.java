@@ -21,6 +21,7 @@ package blue.upgrades;
 
 import blue.BlueData;
 import blue.score.Score;
+import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import electric.xml.Element;
 
@@ -55,6 +56,10 @@ public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
         
         if(element != null) {
             Element elem = data.removeElement("soundObject");
+            
+            TimeState timeState = TimeState.loadFromXML(elem);
+            score.addElement(timeState.saveAsXML());
+            
             score.addElement((Element)elem.clone());
         }
         
@@ -69,21 +74,22 @@ public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
     @Override
     public boolean upgrade(BlueData data) {
         
-        Score score = data.getScore();
-        
-        if(!(score.getLayerGroup(0) instanceof PolyObject)) {
-            return false;
-        }
-        
-        PolyObject pObj = (PolyObject)score.getLayerGroup(0);
-        
-        if(pObj.getTimeState() != null) {
-            score.setTimeState(pObj.getTimeState());
-            pObj.setTimeState(null);
-            
-            return true;
-        }
-        
+//        Score score = data.getScore();
+//        
+//        if(!(score.getLayerGroup(0) instanceof PolyObject)) {
+//            return false;
+//        }
+//        
+//        PolyObject pObj = (PolyObject)score.getLayerGroup(0);
+//        
+//        if(pObj.getTimeState() != null) {
+//            score.setTimeState(pObj.getTimeState());
+//            pObj.setTimeState(new TimeState());
+//            
+//            return true;
+//        }
+//        
+//        return false;
         return false;
     }
     

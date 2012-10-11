@@ -67,7 +67,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
 
     private int defaultHeightIndex = 0;
     
-    private TimeState timeState = null;
+    private TimeState timeState = new TimeState();
 
     public PolyObject() {
         setName("polyObject");
@@ -275,7 +275,15 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     
     @Override
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        return generateForCSD(compileData, startTime, endTime, true);
+         
+        boolean soloFound = false;
+        for(SoundLayer soundLayer : soundLayers) {
+            if (soundLayer.isSolo()) {
+              soloFound = true; break;
+            }
+        }
+        
+        return generateForCSD(compileData, startTime, endTime, soloFound);
     }
     
     @Override
@@ -441,8 +449,6 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
 
         int heightIndex = -1;
         
-        boolean oldTimeStateValuesFound = false;
-
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
@@ -470,9 +476,6 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
                 pObj.soundLayers.add(SoundLayer.loadFromXML(node, objRefMap));
             } else if (nodeName.equals("timeState")) {
                 pObj.timeState = TimeState.loadFromXML(node);
-            } else if (!oldTimeStateValuesFound && isTimeStateValueFound(nodeName)) {
-                oldTimeStateValuesFound = true;
-                pObj.timeState = TimeState.loadFromXML(data);
             }
         }
 

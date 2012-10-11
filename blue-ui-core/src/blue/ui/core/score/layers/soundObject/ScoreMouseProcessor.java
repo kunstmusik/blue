@@ -32,6 +32,8 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreObjectBar;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
@@ -434,8 +436,9 @@ class ScoreMouseProcessor extends MouseAdapter {
     private void editPolyObject(PolyObject pObj) {
         fireSelectionEvent(new SelectionEvent(null,
                 SelectionEvent.SELECTION_CLEAR));
-        //FIXME
-        //PolyObjectBar.getInstance().addPolyObject(pObj);
+        
+        ScoreTopComponent.findInstance().editLayerGroup(pObj);
+//        ScoreObjectBar.getInstance().addLayerGroup(pObj);
 
         this.justSelected = true;
     }

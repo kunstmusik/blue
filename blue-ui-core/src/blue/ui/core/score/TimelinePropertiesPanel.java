@@ -171,7 +171,7 @@ class TimelinePropertiesPanel extends JComponent {
         snapValue.setText(Float.toString(timeState.getSnapValue()));
         timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
 
-        if (timeState.getTimeDisplay() == PolyObject.DISPLAY_TIME) {
+        if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {
             timeDisplayTime.setSelected(true);
         } else {
             timeDisplayNumber.setSelected(true);

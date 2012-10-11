@@ -575,6 +575,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
     
     private void nudgeVertical(int amount) {
+        if (mBuffer.size() == 0) {
+            return;
+        }
+        
+        mBuffer.motionBufferObjects();
+
+        
         if (amount < 0) { // MOVE UP
             for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
                 if (mBuffer.motionBuffer[i].getY() == 0) {
