@@ -74,6 +74,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         buttonGroup1 = new javax.swing.ButtonGroup();
         jSplitPane1 = new javax.swing.JSplitPane();
@@ -92,7 +93,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         };
         tabs = new javax.swing.JTabbedPane();
         layersPanel = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         layersTable = new JTable() {
             public boolean getScrollableTracksViewportHeight() {
@@ -111,7 +111,16 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
 
         jSplitPane1.setDividerLocation(200);
 
+        jPanel5.setLayout(new java.awt.GridBagLayout());
+
         jLabel1.setText(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.jLabel1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 0);
+        jPanel5.add(jLabel1, gridBagConstraints);
 
         jPanel1.setMinimumSize(new java.awt.Dimension(30, 20));
         jPanel1.setPreferredSize(new java.awt.Dimension(160, 20));
@@ -149,6 +158,14 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         });
         jPanel1.add(lGroupMinusButton);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
+        jPanel5.add(jPanel1, gridBagConstraints);
+
         layerGroupsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -168,33 +185,19 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         });
         jScrollPane3.setViewportView(layerGroupsTable);
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 198, Short.MAX_VALUE)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
+        jPanel5.add(jScrollPane3, gridBagConstraints);
 
         jSplitPane1.setLeftComponent(jPanel5);
 
-        layersPanel.setLayout(new java.awt.CardLayout());
-
-        jPanel4.setLayout(new java.awt.BorderLayout());
+        layersPanel.setLayout(new java.awt.GridBagLayout());
 
         layersTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -210,7 +213,14 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         layersTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         jScrollPane4.setViewportView(layersTable);
 
-        jPanel4.add(jScrollPane4, java.awt.BorderLayout.CENTER);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 6, 6);
+        layersPanel.add(jScrollPane4, gridBagConstraints);
 
         jPanel2.setMinimumSize(new java.awt.Dimension(30, 20));
         jPanel2.setPreferredSize(new java.awt.Dimension(160, 20));
@@ -248,9 +258,12 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         });
         jPanel2.add(layersMinusButton);
 
-        jPanel4.add(jPanel2, java.awt.BorderLayout.PAGE_START);
-
-        layersPanel.add(jPanel4, "card4");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 0, 6);
+        layersPanel.add(jPanel2, gridBagConstraints);
 
         tabs.addTab(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.layersPanel.TabConstraints.tabTitle"), layersPanel); // NOI18N
         tabs.addTab(org.openide.util.NbBundle.getMessage(ScoreManagerDialog.class, "ScoreManagerDialog.propertiesScrollPane.TabConstraints.tabTitle"), propertiesScrollPane); // NOI18N
@@ -572,7 +585,6 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
