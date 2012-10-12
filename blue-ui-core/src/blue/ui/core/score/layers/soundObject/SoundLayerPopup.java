@@ -216,6 +216,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
                 float startTime = (float) start / timeState.getPixelSecond();
                 PolyObject temp = new PolyObject();
                 temp.setStartTime(startTime);
+                temp.newLayerAt(0);
 
                 sCanvas.getPolyObject().addSoundObject(sLayerIndex, temp);
             }
@@ -262,7 +263,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
             Class c = sObjNameClassMap.get(sObjName);
 
             SoundObject sObj = (SoundObject) c.newInstance();
-
+            
             int start = xValue;
 
             if (timeState.isSnapEnabled()) {
