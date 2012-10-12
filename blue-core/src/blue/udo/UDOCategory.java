@@ -36,9 +36,9 @@ public class UDOCategory implements Serializable {
 
     private String categoryName = "New UDO Category";
 
-    private ArrayList subCategories = new ArrayList();
+    private ArrayList<UDOCategory> subCategories = new ArrayList<UDOCategory>();
 
-    private ArrayList udos = new ArrayList();
+    private ArrayList<UserDefinedOpcode> udos = new ArrayList<UserDefinedOpcode>();
 
     private boolean isRoot = false;
 
@@ -117,8 +117,21 @@ public class UDOCategory implements Serializable {
     /**
      * @return Returns the instruments.
      */
-    public ArrayList getUserDefinedOpcodes() {
+    public ArrayList<UserDefinedOpcode> getUserDefinedOpcodes() {
         return udos;
+    }
+    
+    /** @return all UDO's in this and all sub-categories */
+    public ArrayList<UserDefinedOpcode> getAllUserDefinedOpcodes() {
+        ArrayList<UserDefinedOpcode> retVal = new ArrayList<UserDefinedOpcode>();
+        
+        for(UDOCategory cat : subCategories) {
+            retVal.addAll(cat.getAllUserDefinedOpcodes());
+        }
+        
+        retVal.addAll(udos);
+        
+        return retVal;
     }
 
     /**
@@ -132,7 +145,7 @@ public class UDOCategory implements Serializable {
     /**
      * @return Returns the subCategories.
      */
-    public ArrayList getSubCategories() {
+    public ArrayList<UDOCategory> getSubCategories() {
         return subCategories;
     }
 

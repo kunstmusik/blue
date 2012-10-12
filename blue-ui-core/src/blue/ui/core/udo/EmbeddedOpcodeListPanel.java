@@ -54,11 +54,18 @@ public class EmbeddedOpcodeListPanel extends JComponent {
                             return;
                         }
 
-                        UserDefinedOpcode udo = opcodeListEditPanel
-                                .getSelectedUDO();
+                        UserDefinedOpcode[] udos = opcodeListEditPanel
+                                .getSelectedUDOs();
 
-                        opcodeEditor.editUserDefinedOpcode(udo);
-                        opcodeEditor.setBorder(null);
+                        
+                        if(udos != null && udos.length == 1) {
+                            opcodeEditor.editUserDefinedOpcode(udos[0]);
+                            opcodeEditor.setBorder(null);
+                        } else {
+                            opcodeEditor.editUserDefinedOpcode(null);
+                            opcodeEditor.setBorder(null);
+                        }
+                        
 
                     }
                 });

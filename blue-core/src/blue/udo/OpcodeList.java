@@ -42,6 +42,13 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     private transient Vector<TableModelListener> listeners;
 
+    public void addOpcodes(UserDefinedOpcode[] udos) {
+        for(UserDefinedOpcode udo : udos) {
+            this.add(udo);
+        }
+        fireTableDataChanged();
+    }
+    
     public void addOpcode(UserDefinedOpcode udo) {
         this.add(udo);
         fireTableDataChanged();
@@ -66,6 +73,13 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     public void removeOpcode(int index) {
         this.remove(index);
+        fireTableDataChanged();
+    }
+    
+    public void removeOpcodes(int[] indexes) {
+        for(int i = indexes.length - 1; i >= 0; i--) {
+            this.remove(indexes[i]);
+        }
         fireTableDataChanged();
     }
 

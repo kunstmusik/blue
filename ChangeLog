@@ -40,6 +40,17 @@ UPDATED
 
 * Updated to Jython 2.5.3
 
+* Modified UserDefinedOpcode List tables:
+  
+  * allow selection of multiple UDO's for copying and pasting
+
+  * can now copy UDO Categories from the UDO Library manager and paste into list
+  tables; all UDO's from that category and subcategory will be pasted into the 
+  target table (useful for keeping a group of UDO's together to paste into new
+  instruments)
+
+* can no drag and drop UDO Category from the UDO Library to a UDO Table
+
 FIX
 
 * Auditioning SoundObjects would cause a crash of program due to unnecessary 
@@ -54,6 +65,9 @@ FIX
 
 * CommandlineRunner - modified how commandline runner stops Csound to prevent
   hanging csound processes on Linux
+
+* UDO - When dragging from the library to a UDO list table, was allowing move
+  option, when it should only allow copying
 
 INTERNAL
 

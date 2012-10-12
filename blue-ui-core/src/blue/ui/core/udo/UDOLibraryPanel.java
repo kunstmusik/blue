@@ -435,6 +435,10 @@ class UDOTreePopup extends JPopupMenu {
 
         if (bufferedObj instanceof UserDefinedOpcode) {
             addUDO((UserDefinedOpcode) bufferedObj);
+        } else if(bufferedObj instanceof UserDefinedOpcode[]) {
+            for(UserDefinedOpcode udo : (UserDefinedOpcode[])bufferedObj) {
+                addUDO(udo);
+            }
         } else {
             addUDOCategory((UDOCategory) ObjectUtilities.clone(bufferedObj));
         }

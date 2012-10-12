@@ -76,13 +76,16 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
                     return;
                 }
 
-                UserDefinedOpcode udo = opcodeListEditPanel1.getSelectedUDO();
+                UserDefinedOpcode[] udos = opcodeListEditPanel1.getSelectedUDOs();
 
-                uDOEditor1.editUserDefinedOpcode(udo);
-                uDOEditor1.setBorder(null);
-
+                if(udos != null && udos.length == 1) {
+                    uDOEditor1.editUserDefinedOpcode(udos[0]);
+                    uDOEditor1.setBorder(null);
+                } else {
+                    uDOEditor1.editUserDefinedOpcode(null);
+                    uDOEditor1.setBorder(null);
+                }
                 uDOLibraryPanel1.deselect();
-
             }
         });
 
