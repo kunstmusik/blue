@@ -27,6 +27,15 @@ NEW
 
 * Added Steven Yi's "The Living Ocean" to the examples/pieces/stevenYi folder
 
+* Python: for Orchestra Library, added possibility to pass in either noteList or
+  function that will generate a noteList(partials work too) to PerformerGroup's
+  perform method.  If a noteList is passed in, that same list will get 
+  distributed to each Performer to perform. If a function or partial is passed
+  in, it will be called to generate a new noteList for each Performer to 
+  perform.  Note: the function or partial should be a no-arg method, so use of
+  partials (from functools) is useful here to fix args before passing in a 
+  function.
+
 UPDATED
 
 * Updated to Jython 2.5.3

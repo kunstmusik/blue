@@ -2,7 +2,8 @@ import random
 import math
 import copy
 import string
-
+import types
+from functools import partial
 from UserList import UserList
 
 from orchestra import Performer
@@ -29,12 +30,17 @@ class PerformerGroup(UserList):
         return returnText + "\n"
 
     def perform(self, noteList, timeCounter = 0):
-        """Each performer in the group perform()'s musicLine"""
+        """Each performer in the group perform()'s noteList; the noteList arg may be a 
+        no-arg function that generates a noteList, if so, then the function will be 
+        called to generate a new noteList for each performer"""
 
         returnScore = ""
 
         for p in self:
-            returnScore += p.perform(noteList)
+            if(type(noteList) == types.FunctionType or type(noteList) == partial):
+                returnScore += p.perform(noteList())
+            else:
+                returnScore += p.perform(noteList)
 
         return returnScore
 
