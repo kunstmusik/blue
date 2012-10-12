@@ -307,7 +307,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             String name = null;
             
             if(this.score != null) {
-                name = "Root";
+                name = "root";
             } else if (this.layerGroup != null) {
                 name = layerGroup.getName();
 
