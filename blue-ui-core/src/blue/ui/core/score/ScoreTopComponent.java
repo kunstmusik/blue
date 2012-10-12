@@ -43,6 +43,7 @@ import blue.ui.core.render.RenderTimeManagerListener;
 import blue.ui.core.score.layers.LayerGroupHeaderPanelProviderManager;
 import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
 import blue.ui.core.score.layers.soundObject.MotionBuffer;
+import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
@@ -406,10 +407,25 @@ public final class ScoreTopComponent extends TopComponent
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ScoreManagerDialog dialog = new ScoreManagerDialog(WindowManager.getDefault().getMainWindow(), true);
-                dialog.setSize(600, 500);
+                LayerGroup lGroup = scoreObjectBar.getCurrentLayerGroup();
+                
+                JDialog dialog;
+                
+                if (lGroup == null) {
+                    ScoreManagerDialog dlg = new ScoreManagerDialog(
+                            WindowManager.getDefault().getMainWindow(), true);
+                    dlg.setScore(data.getScore());
+                    dlg.setSize(600, 500);
+                    dialog = dlg;
+                } else {
+                    LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
+                            WindowManager.getDefault().getMainWindow(), true);
+                    dlg.setLayerGroup(lGroup);
+                    dlg.setSize(300, 500);
+                    dialog = dlg;
+                }
+                
                 GUI.centerOnScreen(dialog);
-                dialog.setScore(data.getScore());
                 dialog.setVisible(true);
             }
         });
@@ -886,6 +902,8 @@ public final class ScoreTopComponent extends TopComponent
             updateRenderLoopPointerX(endTime);
             updateRenderTimePointer();
             
+            layerHeaderPanel.repaint();
+
             setHorizontalScrollValue(scrollX);
             setVerticalScrollValue(scrollY);
         }

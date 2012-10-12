@@ -65,6 +65,10 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         this.listener = listener;
     }
 
+    public LayerGroup getCurrentLayerGroup() {
+        return currentScoreBarState.getCurrentLayerGroupButton().layerGroup;
+    }
+    
     private ScoreObjectBar() {
         this.setLayout(new javax.swing.BoxLayout(this,
                 javax.swing.BoxLayout.X_AXIS));
