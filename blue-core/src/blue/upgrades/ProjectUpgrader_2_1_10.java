@@ -28,7 +28,11 @@ import java.io.IOException;
 import java.io.StringReader;
 
 /**
- *
+ * Changes:
+ * <ul><li>Parse 0dbfs from global orc if found and set nodes for
+ * properties in projectProperties node</li>
+ * </ul>
+ * 
  * @author stevenyi
  */
 class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
@@ -37,33 +41,45 @@ class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
         super("2.1.10");
     }
 
-    @Override
-    public boolean preUpgrade(Element data) {
-        return false;
-    }
-
-    /**
+     /**
      * Added in 2.1.10 when 0dbfs added as a full property in UI
      */
     @Override
-    public boolean upgrade(BlueData data) {
-        String globalOrc = data.getGlobalOrcSco().getGlobalOrc();
-        if (!globalOrc.contains("0dbfs")) {
+    public boolean performUpgrade(Element data) {
+        Element element = data.getElement("globalOrcSco");
+        Element projectPropsNode = data.getElement("projectProperties");
+        
+        if(element == null || projectPropsNode == null) {
             return false;
         }
+        
+        Element globalOrcNode = element.getElement("globalOrc");
+        
+        if(element == null) {
+            return false;
+        }
+        
+        String globalOrc = globalOrcNode.getTextString();
+        
+        
+        if (globalOrc == null || !globalOrc.contains("0dbfs")) {
+            return false;
+        }
+        
         StringBuilder buffer = new StringBuilder();
         BufferedReader reader = new BufferedReader(new StringReader(globalOrc));
         String str;
-        ProjectProperties projectProperties = data.getProjectProperties();
+        
         try {
             while ((str = reader.readLine()) != null) {
                 if (str.trim().startsWith("0dbfs") && str.contains("=")) {
                     str = TextUtilities.stripSingleLineComments(str);
                     str = str.substring(str.indexOf('=') + 1).trim();
-                    projectProperties.useZeroDbFS = true;
-                    projectProperties.zeroDbFS = str;
-                    projectProperties.diskUseZeroDbFS = true;
-                    projectProperties.diskZeroDbFS = str;
+           
+                    projectPropsNode.addElement("useZeroDbFS").setText("true");
+                    projectPropsNode.addElement("zeroDbFS").setText(str);
+                    projectPropsNode.addElement("diskUseZeroDbFS").setText("true");
+                    projectPropsNode.addElement("diskZeroDbFS").setText(str);
                 } else {
                     buffer.append(str).append("\n");
                 }
@@ -71,7 +87,8 @@ class ProjectUpgrader_2_1_10 extends ProjectUpgrader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        data.getGlobalOrcSco().setGlobalOrc(buffer.toString());
+        
+        globalOrcNode.setText(buffer.toString());
         return true;
     }
     

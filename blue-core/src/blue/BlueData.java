@@ -428,7 +428,7 @@ public class BlueData implements Serializable {
 
     public static BlueData loadFromXML(Element data) throws Exception {
         
-        UpgradeManager.getInstance().performPreUpgrades(data);
+        UpgradeManager.getInstance().performUpgrades(data);
 
         BlueData blueData = new BlueData();
         
@@ -524,8 +524,6 @@ public class BlueData implements Serializable {
         } else {
             blueData.mixer.setEnabled(false);
         }
-
-        UpgradeManager.getInstance().performUpgrades(blueData);
         
         return blueData;
     }

@@ -56,7 +56,7 @@ public class UpgradeManager {
         upgraders.add(new ProjectUpgrader_2_3_0());
     }
 
-    public void performPreUpgrades(Element element) {
+    public void performUpgrades(Element element) {
         
         Attribute versionAttribute = element.getAttribute("version");
         String versionString = "0.0.0";
@@ -68,21 +68,7 @@ public class UpgradeManager {
         
         for (ProjectUpgrader upgrader : upgraders) {
             if(version.lessThan(upgrader.getVersion())) {
-                if(upgrader.preUpgrade(element)) {
-                    logger.info(String.format("Performed Pre-Upgrade for Version '%s'", upgrader.getVersion()));
-                }
-            }
-        }
-    }
-    
-    public void performUpgrades(BlueData data) {
-        
-        ProjectVersion version = ProjectVersion.parseVersion(data.getVersion());
-        
-        for (ProjectUpgrader upgrader : upgraders) {
-            if(version.lessThan(upgrader.getVersion())) {
-                
-                if(upgrader.upgrade(data)) {
+                if(upgrader.performUpgrade(element)) {
                     logger.info(String.format("Performed Upgrade for Version '%s'", upgrader.getVersion()));
                 }
             }

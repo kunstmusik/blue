@@ -42,14 +42,8 @@ public abstract class ProjectUpgrader {
      * @param data
      * @return 
      */
-    public abstract boolean preUpgrade(Element data);
+    public abstract boolean performUpgrade(Element data);
     
-    /**
-     * Code that upgrades project after BlueData is loaded
-     * 
-     * @return success for upgrade
-     */
-    public abstract boolean upgrade(BlueData data);
 
     /**
      * @return the version
