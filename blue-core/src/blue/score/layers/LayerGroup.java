@@ -20,6 +20,7 @@
 package blue.score.layers;
 
 import blue.CompileData;
+import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.io.Serializable;
@@ -34,6 +35,13 @@ public interface LayerGroup extends Serializable {
     public String getName();
     
     public void setName(String name);
+    
+    /**
+     * Get NoteProcessorChain for this LayerGroup. 
+     * 
+     * @return 
+     */
+    public NoteProcessorChain getNoteProcessorChain();
     
     /**
      * Returns if solo layers are found in this group.  Score will use this to

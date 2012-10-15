@@ -20,6 +20,8 @@
 package blue.score.layers.patterns.core;
 
 import blue.CompileData;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorException;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
@@ -43,6 +45,7 @@ public class PatternsLayerGroup implements LayerGroup {
     private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
     private int patternBeatsLength = 4;
     private String name = "Patterns Layer Group";
+    private NoteProcessorChain npc = new NoteProcessorChain();
 
     public String getName() {
         return name;
@@ -51,7 +54,14 @@ public class PatternsLayerGroup implements LayerGroup {
     public void setName(String name) {
         this.name = name;
     }
-    
+
+    public NoteProcessorChain getNoteProcessorChain() {
+        return npc;
+    }
+
+    public void setNoteProcessorChain(NoteProcessorChain npc) {
+        this.npc = npc;
+    }
 
     public int getPatternBeatsLength() {
         return patternBeatsLength;
@@ -105,6 +115,13 @@ public class PatternsLayerGroup implements LayerGroup {
 
         NoteList retVal = null;
 
+        try {
+            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+        } catch (NoteProcessorException e) {
+            throw new RuntimeException(
+                    "Error processing NoteProcessors for Patterns LayerGroup");
+        }
+
         if (start == 0.0f) {
             retVal = nl;
         } else {
@@ -142,20 +159,34 @@ public class PatternsLayerGroup implements LayerGroup {
         return retVal;
     }
 
-    public static PatternsLayerGroup loadFromXML(Element data) {
+    public static PatternsLayerGroup loadFromXML(Element data) throws Exception {
         PatternsLayerGroup layerGroup = new PatternsLayerGroup();
 
-        if(data.getAttribute("name") != null) {
+        if (data.getAttribute("name") != null) {
             layerGroup.setName(data.getAttributeValue("name"));
         }
-        
+
         Elements nodes = data.getElements();
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
 
-            if ("patternLayer".equals(nodeName)) {
-                layerGroup.patternLayers.add(PatternLayer.loadFromXML(node));
+            if ("patternLayers".equals(nodeName)) {
+
+                Elements patternNodes = node.getElements();
+
+                while (patternNodes.hasMoreElements()) {
+
+                    Element patternNode = patternNodes.next();
+
+                    if ("patternLayer".equals(patternNode.getName())) {
+                        layerGroup.patternLayers.add(PatternLayer.loadFromXML(
+                                patternNode));
+                    }
+                }
+            } else if ("noteProcessorChain".equals(nodeName)) {
+                layerGroup.setNoteProcessorChain(NoteProcessorChain.loadFromXML(
+                        node));
             }
         }
 
@@ -166,9 +197,15 @@ public class PatternsLayerGroup implements LayerGroup {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element root = new Element("patternsLayerGroup");
         root.setAttribute("name", name);
+
+        Element patternsNode = root.addElement("patternLayers");
+
         for (PatternLayer layer : patternLayers) {
-            root.addElement(layer.saveAsXML());
+            patternsNode.addElement(layer.saveAsXML());
         }
+
+        root.addElement(npc.saveAsXML());
+
         return root;
     }
 

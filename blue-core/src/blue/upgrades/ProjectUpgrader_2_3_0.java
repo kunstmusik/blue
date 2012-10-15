@@ -19,21 +19,17 @@
  */
 package blue.upgrades;
 
-import blue.BlueData;
-import blue.score.Score;
 import blue.score.TimeState;
-import blue.soundObject.PolyObject;
 import electric.xml.Element;
+import electric.xml.Elements;
 
 /**
- * Changes:
- * <ul><li>Root PolyObject moved as sub-object of Score</li>
- * <li>Tempo object moved to sub-object of Score</li>
- * <li>Time values in PolyObject encapsulated into TimeState object</li>
- * <li>Grab Root polyObject's timestate to use as Score's timestate</li>
- * </ul>
- * 
- * 
+ * Changes: <ul><li>Root PolyObject moved as sub-object of Score</li> <li>Tempo
+ * object moved to sub-object of Score</li> <li>Time values in PolyObject
+ * encapsulated into TimeState object</li> <li>Grab Root polyObject's timestate
+ * to use as Score's timestate</li> </ul>
+ *
+ *
  * @author stevenyi
  */
 public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
@@ -44,30 +40,69 @@ public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
 
     @Override
     public boolean performUpgrade(Element data) {
+        boolean retVal = false;
+
+        retVal = upgradeTempo(data);
+
+        retVal |= upgradeBetaPatternLayersGroup(data);
+
+        return retVal;
+    }
+
+    protected boolean upgradeTempo(Element data) {
         Element element = data.getElement("soundObject");
         Element tempoNode = data.getElement("tempo");
-        
-        if(element == null && tempoNode == null) {
+
+        if (element == null && tempoNode == null) {
             return false;
         }
-        
+
         Element score = data.addElement("score");
-        
-        if(element != null) {
+
+        if (element != null) {
             Element elem = data.removeElement("soundObject");
-            
+
             TimeState timeState = TimeState.loadFromXML(elem);
             score.addElement(timeState.saveAsXML());
-            
-            score.addElement((Element)elem.clone());
+
+            score.addElement((Element) elem.clone());
         }
-        
-        if(tempoNode != null) {
+
+        if (tempoNode != null) {
             Element elem = data.removeElement("tempo");
-            score.addElement((Element)elem.clone());
+            score.addElement((Element) elem.clone());
         }
-        
+
         return true;
     }
-    
+
+    protected boolean upgradeBetaPatternLayersGroup(Element data) {
+        Element element = data.getElement("score");
+        boolean retVal = false;
+
+        if (element == null) {
+            return false;
+        }
+
+        Elements nodes = element.getElements();
+
+        while (nodes.hasMoreElements()) {
+            Element node = nodes.next();
+            String nodeName = node.getName();
+
+            if ("patternsLayerGroup".equals(nodeName)) {
+
+                Elements patternLayers = node.removeElements("patternLayer");
+
+                Element patternsNode = node.addElement("patternLayers");
+                
+                while (patternLayers.hasMoreElements()) {
+                    patternsNode.addElement((Element)patternLayers.next().clone());
+                }
+
+            }
+        }
+
+        return retVal;
+    }
 }
