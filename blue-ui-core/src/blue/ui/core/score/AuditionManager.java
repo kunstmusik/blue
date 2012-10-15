@@ -33,6 +33,7 @@ import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.mixer.Mixer;
 import blue.noteProcessor.TempoMapper;
+import blue.score.ScoreGenerationException;
 import blue.ui.core.render.APIDiskRenderer;
 import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.RenderTimeManager;
@@ -40,7 +41,6 @@ import blue.score.tempo.Tempo;
 import blue.settings.GeneralSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.ProcessConsole;
 import blue.utility.APIUtilities;
 import blue.utility.FileUtilities;
@@ -48,6 +48,7 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ProjectPropertiesUtil;
 import blue.utility.TextUtilities;
 import org.openide.awt.StatusDisplayer;
+import org.openide.util.Exceptions;
 
 public class AuditionManager {
 
@@ -128,9 +129,10 @@ public class AuditionManager {
         try {
             result = CSDRender.generateCSD(tempData, minTime, maxTime, true);
             tempCSD = result.getCsdText();
-        } catch (SoundObjectException e) {
-//            ExceptionDialog.showExceptionDialog(null, e);
-            throw new RuntimeException("CSDRender Failed");
+        } catch (ScoreGenerationException e) {
+            Exceptions.printStackTrace(e);
+            return;
+            //throw new RuntimeException("CSDRender Failed");
         }
 
         String command = ProjectPropertiesUtil.getRealtimeCommandLine(

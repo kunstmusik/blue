@@ -29,6 +29,7 @@ import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
+import blue.score.ScoreGenerationException;
 import blue.score.tempo.Tempo;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
@@ -36,7 +37,6 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
-import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObjectException;
 import blue.udo.OpcodeList;
 import blue.utility.APIUtilities;
@@ -168,18 +168,18 @@ public class CSDRender {
     }
 
     public static CsdRenderResult generateCSD(BlueData data) throws
-            SoundObjectException {
+            ScoreGenerationException {
         return generateCSD(data, 0.0f, -1.0f);
     }
 
     public static CsdRenderResult generateCSD(BlueData data, float startTime,
-            float endTime) throws SoundObjectException {
+            float endTime) throws ScoreGenerationException {
         return generateCSD(data, startTime, endTime, true);
     }
 
     public static synchronized CsdRenderResult generateCSD(BlueData data,
             float startTime, float endTime, boolean isRealTime)
-            throws SoundObjectException {
+            throws ScoreGenerationException {
 
         ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
         

@@ -30,6 +30,7 @@ import blue.event.SelectionEvent;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreGenerationException;
 import blue.score.TimeState;
 import blue.ui.core.render.APIDiskRenderer;
 import blue.ui.core.render.CSDRender;
@@ -937,9 +938,9 @@ public class SoundObjectPopup extends JPopupMenu {
         try {
             result = CSDRender.generateCSD(tempData, tempSObj.getStartTime(), renderEndTime, false);
             tempCSD = result.getCsdText();
-        } catch (SoundObjectException e) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
-            throw new RuntimeException("CSDRender Failed");
+        } catch (ScoreGenerationException e) {
+            //ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+            throw new RuntimeException("CSDRender Failed", e);
         }
 
         String tempFileName = getAvailableFreezeFileName(projectDir);

@@ -20,11 +20,15 @@
 package blue.score;
 
 import blue.CompileData;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorException;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObjectException;
+import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
@@ -40,7 +44,8 @@ public class Score implements Serializable {
     Tempo tempo = null;
     TimeState timeState = null;
     ArrayList<LayerGroup> layerGroups = new ArrayList<LayerGroup>();
-    
+    private NoteProcessorChain npc = new NoteProcessorChain();
+
     private transient ArrayList<ScoreListener> scoreListeners = null;
 
     public Score() {
@@ -117,13 +122,20 @@ public class Score implements Serializable {
         this.timeState = timeState;
     }
     
-    
+     public NoteProcessorChain getNoteProcessorChain() {
+        return npc;
+    }
+
+    public void setNoteProcessorChain(NoteProcessorChain npc) {
+        this.npc = npc;
+    }
 
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("score");
         retVal.addElement(tempo.saveAsXML());
         retVal.addElement(timeState.saveAsXML());
-
+        retVal.addElement(npc.saveAsXML());
+        
         for (LayerGroup layerGroup : layerGroups) {
             retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
@@ -131,7 +143,7 @@ public class Score implements Serializable {
         return retVal;
     }
 
-    public static Score loadFromXML(Element data, Map<String, Object> objRefMap) {
+    public static Score loadFromXML(Element data, Map<String, Object> objRefMap) throws Exception {
         Score score = new Score(false);
 
         Elements nodes = data.getElements();
@@ -145,6 +157,8 @@ public class Score implements Serializable {
                 score.tempo = Tempo.loadFromXML(node);
             } else if("timeState".equals(node.getName())) {
                 score.timeState = TimeState.loadFromXML(node);
+            } else if("noteProcessorChain".equals(node.getName())) {
+                score.npc = NoteProcessorChain.loadFromXML(node);
             } else {
 
                 LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
@@ -172,7 +186,7 @@ public class Score implements Serializable {
         }
     }
     
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws ScoreGenerationException {
         NoteList noteList = new NoteList();
         
         boolean soloFound = false;
@@ -187,6 +201,12 @@ public class Score implements Serializable {
         for(LayerGroup layerGroup : layerGroups) {
             NoteList nl = layerGroup.generateForCSD(compileData, startTime, endTime, soloFound);
             noteList.merge(nl);
+        }
+        
+         try {
+            ScoreUtilities.applyNoteProcessorChain(noteList, this.npc);
+        } catch (NoteProcessorException e) {
+            throw new ScoreGenerationException(e);
         }
         
         return noteList;

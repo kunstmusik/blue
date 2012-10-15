@@ -19,13 +19,14 @@
  */
 package blue.soundObject;
 
+import blue.score.ScoreGenerationException;
 import blue.utility.ObjectUtilities;
 import java.text.MessageFormat;
 
 /**
  * @author steven
  */
-public class SoundObjectException extends Exception {
+public class SoundObjectException extends ScoreGenerationException {
 
     /**
      * SoundObject where Exception originated

@@ -19,18 +19,27 @@
  */
 package blue.ui.core.score;
 
+import blue.noteProcessor.NoteProcessorChain;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.soundObject.PolyObject;
 import blue.ui.components.IconFactory;
+import blue.ui.utilities.UiUtilities;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.WeakHashMap;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 /**
@@ -44,7 +53,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
 
     MouseListener popupListener;
 
-    //private final JPopupMenu popup;
+    private final JPopupMenu popup = new ScoreObjectBarPopup();
 
     WeakHashMap<Score, ScoreBarState> scoreBarList = new WeakHashMap<Score,ScoreBarState>();
     
@@ -73,52 +82,17 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         this.setLayout(new javax.swing.BoxLayout(this,
                 javax.swing.BoxLayout.X_AXIS));
 
-//        popup = getPopupMenu();
-//        popupListener = new MouseAdapter() {
-//
-//            public void mousePressed(MouseEvent e) {
-//                if (UiUtilities.isRightMouseButton(e)) {
-//                    popup.show(e.getComponent(), e.getX(), e.getY());
-//                }
-//            }
-//        };
+        popupListener = new MouseAdapter() {
+
+            public void mousePressed(MouseEvent e) {
+                if (UiUtilities.isRightMouseButton(e)) {
+                    popup.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        };
 
 
     }
-
-//    private JPopupMenu getPopupMenu() {
-//        JPopupMenu retVal = new JPopupMenu() {
-//
-//            public void show(Component invoker, int x, int y) {
-//                LayerGroupButton b = (LayerGroupButton) invoker;
-//
-//                selectedPolyObject = b.getPolyObject();
-//
-//                super.show(invoker, x, y);
-//            }
-//        };
-//
-//        Action editProperties = new AbstractAction("Edit NoteProcessors") {
-//
-//            public void actionPerformed(ActionEvent e) {
-//                if (selectedPolyObject != null) {
-//                    // JOptionPane.showMessageDialog(null, "Not yet
-//                    // implemented.");
-//
-//                    NoteProcessorDialog npcDialog = NoteProcessorDialog
-//                            .getInstance();
-//                    npcDialog.setNoteProcessorChain(selectedPolyObject
-//                            .getNoteProcessorChain());
-//                    npcDialog.show(true);
-//                    resetNames();
-//                }
-//            }
-//        };
-//
-//        retVal.add(editProperties);
-//
-//        return retVal;
-//    }
 
     public boolean isEditingScore() {
         return currentScoreBarState.layerGroupButtons.size() == 1;
@@ -140,6 +114,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             
             LayerGroupButton btn = new LayerGroupButton(score);
             btn.addActionListener(this);
+            btn.addMouseListener(popupListener);
             state.layerGroupButtons.add(btn);
         }
         currentScoreBarState = state;
@@ -195,16 +170,8 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             listener.scoreBarLayerGroupSelected(layerGroup, btn.xVal, btn.yVal);
         }
 
-//        PolyObjectChangeEvent poce = new PolyObjectChangeEvent(
-//            focusedPolyObject, 0, 0);
-//
-//        fireChangeEvent(poce);
-
     }
 
-    /*
-     * public PolyObject getFocusedPolyObject() { return focusedPolyObject; }
-     */
     private LayerGroupButton findLayerGroup(LayerGroup layerGroup) {
         for (int i = 0; i < getComponentCount(); i++) {
             LayerGroupButton btn = (LayerGroupButton)getComponent(i);
@@ -214,23 +181,6 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         }
         return null;
     }
-//
-//    private int indexOf(PolyObject pObj) {
-//        for (int i = 0; i < polyObjectBarList.size(); i++) {
-//            LayerGroupButton btn = polyObjectBarList.get(i);
-//            if (btn.polyObject == pObj) {
-//                return i;
-//            }
-//        }
-//        return -1;
-//    }
-
-//    public void reset() {
-//        focusedPolyObject = null;
-//        polyObjectBarList.clear();
-//        this.removeAll();
-//        this.repaint();
-//    }
 
     void scoreBarRefocus(LayerGroupButton layerGroupButton) {
         
@@ -274,7 +224,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
     /**
      * Inner JButton Class to hold extra information
      */
-    static class LayerGroupButton extends JButton {
+    class LayerGroupButton extends JButton {
 
         int xVal = 0;
 
@@ -308,16 +258,30 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             
             if(this.score != null) {
                 name = "root";
+                
+                if(score.getNoteProcessorChain().size() > 0) {
+                    name = "*" + name;
+                }
+                
+                
+                for(int i = 0; i < score.getLayerGroupCount(); i++) {
+                    LayerGroup group = score.getLayerGroup(i);
+                    NoteProcessorChain npc = group.getNoteProcessorChain();
+                    
+                    if(npc.size() > 0) {
+                        name += " [*]";
+                        break;
+                    }
+                }
+                
+                
             } else if (this.layerGroup != null) {
                 name = layerGroup.getName();
 
-                //FIXME - should not use instanceof here
+                NoteProcessorChain npc = layerGroup.getNoteProcessorChain();
                 
-                if(layerGroup instanceof PolyObject) {
-                    PolyObject pObj = (PolyObject) layerGroup;
-                    if (pObj.getNoteProcessorChain().size() > 0) {
-                        name = "*" + name;
-                    }
+                if (npc != null && npc.size() > 0) {
+                    name = "*" + name;
                 }
                 
             }
@@ -358,8 +322,68 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         
         public void removeNotify() {
             super.removeNotify();
-            
+            this.removeMouseListener(popupListener);
         }
+    }
+    
+    class ScoreObjectBarPopup extends JPopupMenu {
+        
+        public void show(Component invoker, int x, int y) {
+            LayerGroupButton b = (LayerGroupButton) invoker;
+            Score score = b.getScore();
+            LayerGroup layerGroup = b.getLayerGroup();
+            
+            this.removeAll();
+            
+            if(score != null) {
+                
+                this.add(createLayerGroupMenuItem(score.getNoteProcessorChain()));
+                
+                this.addSeparator();
+                
+                for(int i = 0; i < score.getLayerGroupCount(); i++) {
+                    LayerGroup group = score.getLayerGroup(i);
+                    NoteProcessorChain npc = group.getNoteProcessorChain();
+                    
+                    String name = "";
+                    if(npc.size() > 0) {
+                        name += "*";
+                    }
+                    name += (i + 1) + ") " + group.getName();
+                    JMenu menu = new JMenu(name);
+                    menu.add(createLayerGroupMenuItem(group.getNoteProcessorChain()));
+                    this.add(menu);
+                }
+                
+            } else if (layerGroup != null) {
+                this.add(createLayerGroupMenuItem(
+                        layerGroup.getNoteProcessorChain()));
+            }
+            
+            
+            super.show(invoker, x, y);
+        }
+        
+
+        private Action createLayerGroupMenuItem(final NoteProcessorChain npc) {
+            Action editProperties = new AbstractAction("Edit NoteProcessors") {
+
+            public void actionPerformed(ActionEvent e) {
+                    if (npc != null) {
+                        // JOptionPane.showMessageDialog(null, "Not yet
+                        // implemented.");
+
+                        NoteProcessorDialog npcDialog = NoteProcessorDialog
+                                .getInstance();
+                        npcDialog.setNoteProcessorChain(npc);
+                        npcDialog.show(true);
+                        resetNames();
+                    }
+                }
+            };
+            return editProperties;
+        }
+    
     }
     
     static class ScoreBarState {
