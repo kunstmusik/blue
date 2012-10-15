@@ -36,6 +36,19 @@ NEW
   partials (from functools) is useful here to fix args before passing in a 
   function.
 
+* Python: PMask, added FuncGen and CombiGen Generators (in pmask/generator.py),
+  useful for mixing in functional-style work with Generators.  From 
+  py doc for the classes:
+
+  * FuncGen: Generator that acceptors one generator and one single-arg function. 
+    Evaluation will call the passed-in generator, then apply the function to the 
+    generator. Useful with lambdas and partials for the passed in function.
+  
+  * CombiGen: Generator that acceptors two generators and one two-arg function. 
+    Evaluation will call valueAt on the two generators, then pass the results to 
+    the two-arg function for further processing. Useful with lambdas and 
+    partials for the passed in function.
+  
 UPDATED
 
 * Updated to Jython 2.5.3

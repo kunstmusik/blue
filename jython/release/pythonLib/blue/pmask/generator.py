@@ -2,6 +2,7 @@
 
 # PMask, a Python implementation of CMask
 # Copyright (C) 2000 by Maurizio Umberto Puxeddu
+# Copyright (C) 2012 by Steven Yi
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,3 +36,28 @@ def evaluateAt(object, evaluationTime):
         return float(object)
     else:
         return object.valueAt(evaluationTime)
+
+class FuncGen(Generator):
+  """Generator that acceptors one generator and one single-arg function. Evaluation will 
+  call the passed-in generator, then apply the function to the generator. Useful with
+  lambdas and partials for the passed in function."""
+  def __init__(self, gen, func):
+    Generator.__init__(self)
+    self.gen = gen
+    self.func = func
+
+  def valueAt(self,t):
+    return self.func(self.gen.valueAt(t))
+
+class CombiGen(Generator):
+  """Generator that acceptors two generators and one two-arg function. Evaluation will 
+  call valueAt on the two generators, then pass the results to the two-arg function for
+  further processing. Useful with lambdas and partials for the passed in function."""
+  def __init__(self, gen1, gen2, func):
+    Generator.__init__(self)
+    self.gen1 = gen1
+    self.gen2 = gen2
+    self.func = func
+
+  def valueAt(self,t):
+    return func(self.gen1.valueAt(t), self.gen2.valueAt(t))
