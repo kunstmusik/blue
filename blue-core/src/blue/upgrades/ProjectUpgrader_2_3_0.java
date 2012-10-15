@@ -94,12 +94,17 @@ public class ProjectUpgrader_2_3_0 extends ProjectUpgrader {
 
                 Elements patternLayers = node.removeElements("patternLayer");
 
+                if(patternLayers.size() > 0) {
+                    retVal = true;
+                }
+                
                 Element patternsNode = node.addElement("patternLayers");
                 
                 while (patternLayers.hasMoreElements()) {
                     patternsNode.addElement((Element)patternLayers.next().clone());
                 }
 
+                
             }
         }
 
