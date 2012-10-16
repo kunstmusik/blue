@@ -53,7 +53,7 @@ import org.openide.util.Exceptions;
 public class PatternLayerPanel extends javax.swing.JPanel 
         implements SelectionListener, PropertyChangeListener {
     
-    private final PatternLayer patternLayer;
+    protected PatternLayer patternLayer;
 
     private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
@@ -62,18 +62,12 @@ public class PatternLayerPanel extends javax.swing.JPanel
      * Creates new form PatternLayerPanel
      */
     public PatternLayerPanel(PatternLayer layer) {
-        this.patternLayer = layer;
         initComponents();
         Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
         this.setSize(d);
         this.setPreferredSize(d);
         
-        nameLabel.setText(patternLayer.getName());
-        muteToggleButton.setSelected(patternLayer.isMuted());
-        soloToggleButton.setSelected(patternLayer.isSolo());
         
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
         addMouseListener(new MouseAdapter() {
 
             @Override
@@ -126,9 +120,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
         
         setBorder(border);
         
-        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
-        
-        this.patternLayer.addPropertyChangeListener(this);
+        setPatternLayer(layer);
     }
 
     protected void editSoundObject() {
@@ -383,7 +375,23 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
     @Override
     public void removeNotify() {
+        super.removeNotify();
         SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
+        this.patternLayer.removePropertyChangeListener(this);
+    }
+    
+    public void setPatternLayer(PatternLayer patternLayer) {
+        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
+        
+        this.patternLayer = patternLayer;
+        
+        nameLabel.setText(patternLayer.getName());
+        muteToggleButton.setSelected(patternLayer.isMuted());
+        soloToggleButton.setSelected(patternLayer.isSolo());
+        
+        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        this.patternLayer.addPropertyChangeListener(this);
     }
     
     @Override

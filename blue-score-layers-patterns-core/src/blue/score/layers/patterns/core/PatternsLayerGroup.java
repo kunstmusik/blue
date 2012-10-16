@@ -270,7 +270,7 @@ public class PatternsLayerGroup implements LayerGroup {
         patternLayers.add(startIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
-                LayerGroupDataEvent.DATA_CHANGED, startIndex, endIndex + 1);
+                LayerGroupDataEvent.DATA_CHANGED, -startIndex, -(endIndex + 1));
 
         fireLayerGroupDataEvent(lde);
     }

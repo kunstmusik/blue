@@ -117,10 +117,11 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             Component c = getComponent(start);
 
             PatternLayerPanel panel = (PatternLayerPanel) c;
-
+            PatternLayer pLayer = panel.patternLayer;
             remove(start);
             add(c, end);
-
+            panel.setPatternLayer(pLayer);
+            
 //            int i1 = selection.getStartIndex() - 1;
 //            int i2 = selection.getEndIndex() - 1;
 //
@@ -132,9 +133,11 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             Component c = getComponent(-start);
 
             PatternLayerPanel panel = (PatternLayerPanel) c;
-
+            PatternLayer pLayer = panel.patternLayer;
             remove(-start);
             add(c, -end);
+            panel.setPatternLayer(pLayer);
+
 
 //            int i1 = selection.getStartIndex() + 1;
 //            int i2 = selection.getEndIndex() + 1;

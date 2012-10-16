@@ -74,6 +74,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void removeNotify() {
+        super.removeNotify();
         layerGroup.removeLayerGroupListener(this);
         timeState.removePropertyChangeListener(this);
     }
