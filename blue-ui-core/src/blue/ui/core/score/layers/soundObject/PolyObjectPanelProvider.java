@@ -49,6 +49,10 @@ public class PolyObjectPanelProvider implements LayerGroupPanelProvider {
 
     @Override
     public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        if (!(layerGroup instanceof PolyObject)) {
+            return null;
+        }
+        
         if(propsPanel == null) {
              propsPanel = new PolyObjectPropertiesPanel();
         }
