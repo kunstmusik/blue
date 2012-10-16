@@ -185,14 +185,12 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        NoteList nl = null;
-        try {
-            nl = generateNotes(startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
+        
+        NoteList nl = generateNotes(startTime, endTime);
         return nl;
+        
     }
 
 } 

@@ -21,6 +21,7 @@ package blue.score.layers;
 
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.score.ScoreGenerationException;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.io.Serializable;
@@ -60,7 +61,7 @@ public interface LayerGroup extends Serializable {
      * 
      * @param compileData 
      */
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo);
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException;
     
     /**
      * Returns an XML Representation of this object.

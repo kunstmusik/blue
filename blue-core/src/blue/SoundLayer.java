@@ -34,6 +34,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.score.layers.Layer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -363,7 +364,8 @@ public final class SoundLayer implements java.io.Serializable, Layer {
      * SoundLayer if possible, if not possible, will adjust to render everything
      * and filter on top layer.
      */
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundLayerException {
         
         NoteList notes = new NoteList();
         
@@ -404,16 +406,16 @@ public final class SoundLayer implements java.io.Serializable, Layer {
                     }
                 }
             } catch (Exception e) {
-                throw new RuntimeException(new SoundLayerException(this, "Error in SoundLayer: "
-                        + this.getName(), e));
+                throw new SoundLayerException(this, "Error in SoundLayer: "
+                        + this.getName(), e);
             }
         }
 
         try {
             ScoreUtilities.applyNoteProcessorChain(notes, this.npc);
         } catch (NoteProcessorException e) {
-            throw new RuntimeException(new SoundLayerException(this, "Error in SoundLayer: "
-                    + this.getName(), e));
+            throw new SoundLayerException(this, "Error in SoundLayer: "
+                    + this.getName(), e);
         }
         
 

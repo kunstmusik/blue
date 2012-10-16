@@ -178,9 +178,8 @@ public class PythonEditor extends SoundObjectEditor {
         try {
             notes = ((SoundObject) this.pObj).generateForCSD(CompileData.createEmptyCompileData(),
                     0.0f, -1.0f);
-        } catch (Exception e) {
-//            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
-            Exceptions.printStackTrace(e);
+        } catch (SoundObjectException e) {
+            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }
 
         if (notes != null) {

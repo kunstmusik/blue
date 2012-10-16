@@ -939,7 +939,7 @@ public class SoundObjectPopup extends JPopupMenu {
             result = CSDRender.generateCSD(tempData, tempSObj.getStartTime(), renderEndTime, false);
             tempCSD = result.getCsdText();
         } catch (ScoreGenerationException e) {
-            //ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
             throw new RuntimeException("CSDRender Failed", e);
         }
 

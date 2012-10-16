@@ -298,16 +298,12 @@ public class External extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        NoteList retVal = null;
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
         
-        try {
-            retVal = generateNotes(startTime, endTime);
-        } catch(SoundObjectException soe) {
-            throw new RuntimeException(soe);
-        }
-        
+        NoteList retVal = generateNotes(startTime, endTime);
         return retVal;
+        
     }
 
 }

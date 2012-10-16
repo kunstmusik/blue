@@ -264,14 +264,12 @@ public class FrozenSoundObject extends AbstractSoundObject implements
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
+        
         generateInstruments(compileData);
-        NoteList nl = null;
-        try {
-            nl = generateNotes(startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+        NoteList nl = generateNotes(startTime, endTime);
+        
         return nl;
     }
 

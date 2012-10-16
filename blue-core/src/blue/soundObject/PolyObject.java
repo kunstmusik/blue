@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreGenerationException;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
@@ -274,7 +275,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
     
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
          
         boolean soloFound = false;
         for(SoundLayer soundLayer : soundLayers) {
@@ -287,7 +289,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
     
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws SoundObjectException {
         
         NoteList noteList = new NoteList();
         
@@ -295,14 +297,22 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
             for(SoundLayer soundLayer : soundLayers) {
                 if (soundLayer.isSolo()) {
                     if (!soundLayer.isMuted()) {
-                        noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                        try {
+                            noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                        } catch (SoundLayerException ex) {
+                            throw new SoundObjectException(this, ex);
+                        }
                     }
                 }
             }
         } else {
             for(SoundLayer soundLayer : soundLayers) {
                 if (!soundLayer.isMuted()) {
-                    noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                    try {
+                        noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                    } catch (SoundLayerException ex) {
+                        throw new SoundObjectException(this, ex);
+                    }
                 }
             }
         }
@@ -313,14 +323,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         
     }
    
-    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) {
+    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) throws SoundObjectException {
         
         NoteList retVal = null;
         
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
-            throw new RuntimeException(new SoundObjectException(this, e));
+            throw new SoundObjectException(this, e);
         }
 
         int timeBehavior = isRoot ? SoundObject.TIME_BEHAVIOR_NONE : this.

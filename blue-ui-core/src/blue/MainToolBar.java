@@ -42,6 +42,7 @@ import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreGenerationException;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.APIRunner;
@@ -373,7 +374,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
             InfoDialog.showInformationDialog(SwingUtilities.getRoot(this), csd,
                     BlueSystem.getString("message.generateScore.csdTest"));
-        } catch (SoundObjectException soe) {
+        } catch (ScoreGenerationException soe) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
                     soe);
             throw new RuntimeException("CSDRender Failed");

@@ -158,15 +158,11 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        NoteList nl = null;
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
         
-        try {
-            nl = generateNotes(startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
-        
+        NoteList nl = generateNotes(startTime, endTime);  
         return nl;
+        
     }
 }

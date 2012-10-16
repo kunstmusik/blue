@@ -55,7 +55,8 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     // TODO - EXCEPTION - Look at Code to determine if Exception is Needed
-    public NoteList generateNotes(int instrumentNumber, float renderStart, float renderEnd)  {
+    public NoteList generateNotes(int instrumentNumber, float renderStart, 
+            float renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         float newDur = subjectiveDuration;
@@ -78,7 +79,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         try {
             tempNote = Note.createNote(buffer.toString());
         } catch (NoteParseException e) {
-            throw new RuntimeException(new SoundObjectException(this, e));
+            throw new SoundObjectException(this, e);
         }
         if (tempNote != null) {
             n.addNote(tempNote);
@@ -253,7 +254,8 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime)  throws SoundObjectException {
         Instrument instr = this.generateInstrument();
         if(instr == null) {
              throw new RuntimeException(new SoundObjectException(this, BlueSystem

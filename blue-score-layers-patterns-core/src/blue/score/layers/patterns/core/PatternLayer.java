@@ -24,6 +24,7 @@ import blue.score.layers.Layer;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -148,7 +149,7 @@ public class PatternLayer implements Layer {
         //
     }
 
-    NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) {
+    NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) throws SoundObjectException {
         NoteList notes = new NoteList();
 
         this.soundObject.setStartTime(0);

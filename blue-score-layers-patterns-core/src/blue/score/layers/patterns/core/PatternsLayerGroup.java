@@ -22,18 +22,20 @@ package blue.score.layers.patterns.core;
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreGenerationException;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.*;
 import blue.utility.ScoreUtilities;
-import com.sun.org.apache.bcel.internal.generic.GETFIELD;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -82,7 +84,7 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -105,22 +107,22 @@ public class PatternsLayerGroup implements LayerGroup {
                 }
             }
         }
-
-        noteList = processNotes(compileData, noteList, startTime, endTime);
+        try {
+            noteList = processNotes(compileData, noteList, startTime, endTime);
+        } catch (NoteProcessorException ex) {
+            throw new ScoreGenerationException(ex);
+        }
 
         return noteList;
     }
 
-    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) {
+    private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) throws NoteProcessorException {
 
         NoteList retVal = null;
 
-        try {
-            ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
-        } catch (NoteProcessorException e) {
-            throw new RuntimeException(
-                    "Error processing NoteProcessors for Patterns LayerGroup");
-        }
+        
+        ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
+        
 
         if (start == 0.0f) {
             retVal = nl;

@@ -380,13 +380,13 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
         BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbCompilationUnit);
-        try {
-            return generateNotes(bsbCompilationUnit, startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+        
+        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);  
+        return nl;
+        
     }
 }

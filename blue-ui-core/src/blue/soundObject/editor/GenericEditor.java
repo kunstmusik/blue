@@ -250,7 +250,7 @@ public class GenericEditor extends SoundObjectEditor {
         try {
             notes = ((SoundObject) this.sObj).generateForCSD(null, 0.0f, -1.0f);
         } catch (Exception e) {
-            Exceptions.printStackTrace(e);
+            ExceptionDialog.showExceptionDialog(this, e);
         }
 
         if (notes != null) {

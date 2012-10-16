@@ -175,14 +175,10 @@ public class Instance extends AbstractSoundObject implements Serializable {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime)
+    throws SoundObjectException {
         NoteList nl = sObj.generateForCSD(compileData, startTime, endTime);
-        
-        try {
-            processNotes(nl);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+        processNotes(nl);
         
         return nl;
     }

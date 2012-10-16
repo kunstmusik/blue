@@ -118,7 +118,8 @@ public interface SoundObject {
 //    public NoteList generateNotes(float renderStart, float renderEnd)
 //            throws SoundObjectException;
 
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime);
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException;
     
     /**
      * Sets the name of the SoundObject.

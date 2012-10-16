@@ -24,9 +24,9 @@ import blue.BlueSystem;
 import blue.MainToolBar;
 import blue.ProjectProperties;
 import blue.gui.ExceptionDialog;
+import blue.score.ScoreGenerationException;
 import blue.settings.DiskRenderSettings;
 import blue.settings.GeneralSettings;
-import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.CsdRenderResult;
 import blue.ui.core.render.ProcessConsole;
@@ -171,7 +171,7 @@ public class RenderToDiskUtility {
                     playAfterRender, command[1]);
             // console.execWaitForDisk(command,
             // BlueSystem.getCurrentProjectDirectory());
-        } catch (SoundObjectException soe) {
+        } catch (ScoreGenerationException soe) {
             ExceptionDialog.showExceptionDialog(WindowManager.getDefault().
                     getMainWindow(),
                     soe);

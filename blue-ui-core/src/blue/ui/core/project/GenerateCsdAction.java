@@ -23,7 +23,7 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.projects.BlueProjectManager;
-import blue.soundObject.SoundObjectException;
+import blue.score.ScoreGenerationException;
 import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.CsdRenderResult;
 import blue.ui.utilities.FileChooserManager;
@@ -68,7 +68,7 @@ public final class GenerateCsdAction implements ActionListener {
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                         "message.generateScore.success") + " " + temp.getName());
 
-            } catch (SoundObjectException soe) {
+            } catch (ScoreGenerationException soe) {
                 ExceptionDialog.showExceptionDialog(mainWindow,
                         soe);
                 throw new RuntimeException("CSDRender Failed");

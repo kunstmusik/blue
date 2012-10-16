@@ -496,11 +496,10 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        try {
-            return generateNotes(startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
+        
+        return generateNotes(startTime, endTime);
+        
     }
 }

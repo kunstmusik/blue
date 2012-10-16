@@ -53,7 +53,7 @@ public class ExceptionDialog {
     }
 
     public static final void showExceptionDialog(Component parent,
-            SoundObjectException e) {
+            Throwable e) {
         if (infoScrollPane == null) {
             initialize();
         }

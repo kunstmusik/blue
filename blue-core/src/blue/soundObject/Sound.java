@@ -140,14 +140,13 @@ public class Sound extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
+        
         Instrument instr = generateInstrument();
         int instrNum = compileData.addInstrument(instr);
         
-        try {
-            return generateNotes(instrNum, startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+        return generateNotes(instrNum, startTime, endTime);
+
     }
 }

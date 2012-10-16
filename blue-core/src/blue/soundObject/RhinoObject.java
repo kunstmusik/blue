@@ -168,11 +168,10 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
-        try {
-            return generateNotes(startTime, endTime);
-        } catch (SoundObjectException ex) {
-            throw new RuntimeException(ex);
-        }
+    public NoteList generateForCSD(CompileData compileData, float startTime, 
+            float endTime) throws SoundObjectException {
+        
+        return generateNotes(startTime, endTime);
+        
     }
 }
