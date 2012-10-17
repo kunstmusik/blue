@@ -48,6 +48,11 @@ NEW
     Evaluation will call valueAt on the two generators, then pass the results to 
     the two-arg function for further processing. Useful with lambdas and 
     partials for the passed in function.
+
+* VirtualKeyboard: added keyboard shortcuts when keyboard is in focus:
+
+    * up/down: increment or decrement octave
+    * shift-up/shift-down: increment or decrement channel
   
 UPDATED
 

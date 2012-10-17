@@ -172,6 +172,45 @@ public class VirtualKeyboardPanel extends JComponent {
 
         this.addKeyListener(new TimedKeyListener() {
 
+            @Override 
+            public void keyPressed(KeyEvent e) {                                
+                int oldVal;
+                switch(e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        if(e.isShiftDown()) {
+                            if(channel < 15) {
+                                oldVal = channel;
+                                channel += 1;
+                                firePropertyChange("channel", oldVal, channel);
+                            }
+                        } else {
+                            if(octave < 7) {
+                                oldVal = octave;
+                                octave += 1;
+                                firePropertyChange("octave", oldVal, octave);
+                            }
+                        }
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        if(e.isShiftDown()) {
+                            if(channel > 0) {
+                                oldVal = channel;
+                                channel -= 1;
+                                firePropertyChange("channel", oldVal, channel);
+                            }
+                        } else {
+                            if(octave > 0) {
+                                oldVal = octave;
+                                octave -= 1;
+                                firePropertyChange("octave", oldVal, octave);
+                            }
+                        }
+                        break;
+                    default:
+                        super.keyPressed(e);
+                }
+            }
+            
             @Override
             public void KeyPressed(KeyEvent e) {
                 handleKey(e.getKeyChar(), true);

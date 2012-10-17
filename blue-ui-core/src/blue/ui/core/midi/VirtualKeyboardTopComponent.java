@@ -20,6 +20,8 @@
 package blue.ui.core.midi;
 
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle;
@@ -69,6 +71,19 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
             }
         });
 
+        virtualKeyboardPanel1.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                final String propertyName = evt.getPropertyName();
+                
+                if("channel".equals(evt.getPropertyName())) {
+                    channelSpinner.setValue((Integer)evt.getNewValue() + 1);
+                } else if("octave".equals(propertyName)) {
+                    octaveSpinner.setValue(evt.getNewValue());
+                }
+            }
+        });
     }
 
     /** This method is called from within the constructor to
