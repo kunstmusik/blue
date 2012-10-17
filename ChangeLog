@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.3.0<
-[released 2012.04.xx]
+[released 2012.10.xx]
 
 NEW
 
@@ -81,6 +81,9 @@ FIX
 
 * UDO - When dragging from the library to a UDO list table, was allowing move
   option, when it should only allow copying
+
+* BSB - When API is not enabled, BSBDropdown should still generate with index
+  value instead of dropdown item's value if automation is set to enabled
 
 INTERNAL
 
