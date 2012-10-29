@@ -40,6 +40,7 @@ import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.InstalledFileLocator;
@@ -219,8 +220,17 @@ public class Installer extends ModuleInstall {
                 title += proj.getDataFile().getName();
             }
         }
+        
+        final String t = title;
+        
+        SwingUtilities.invokeLater(new Runnable() {
 
-        WindowManager.getDefault().getMainWindow().setTitle(title);
+            @Override
+            public void run() {
+                WindowManager.getDefault().getMainWindow().setTitle(t);
+            }
+        });
+        
     }
 
     @Override
