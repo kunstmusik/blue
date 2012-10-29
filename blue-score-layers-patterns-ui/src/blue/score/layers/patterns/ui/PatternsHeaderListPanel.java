@@ -130,12 +130,12 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
 
         } else {
             // have to flip because listDataEvent stores as min and max
-            Component c = getComponent(-start);
+            Component c = getComponent(-end);
 
             PatternLayerPanel panel = (PatternLayerPanel) c;
             PatternLayer pLayer = panel.patternLayer;
-            remove(-start);
-            add(c, -end);
+            remove(-end);
+            add(c, -start);
             panel.setPatternLayer(pLayer);
 
 
