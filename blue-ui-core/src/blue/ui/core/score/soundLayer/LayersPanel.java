@@ -19,6 +19,12 @@
  */
 package blue.ui.core.score.soundLayer;
 
+import blue.BlueSystem;
+import blue.SoundLayer;
+import blue.noteProcessor.NoteProcessorChainMap;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
+import blue.soundObject.PolyObject;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -28,22 +34,17 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import skt.swing.SwingUtil;
-import blue.SoundLayer;
-import blue.noteProcessor.NoteProcessorChainMap;
-import blue.score.layers.LayerGroupDataEvent;
-import blue.score.layers.LayerGroupListener;
-import blue.soundObject.PolyObject;
 
 public class LayersPanel extends JComponent implements LayerGroupListener {
 
@@ -54,18 +55,57 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     private NoteProcessorChainMap npcMap = null;
 
     private SelectionModel selection = new SelectionModel();
+    
+    JPopupMenu menu;
 
     public LayersPanel() {
+        
         this.setLayout(layout);
 
         this.setMinimumSize(new Dimension(0, 0));
+ 
+        final LayerAddAction layerAddAction = new LayerAddAction();
+        final LayerRemoveAction layerRemoveAction = new LayerRemoveAction();
+        final PushUpAction pushUpAction = new PushUpAction();
+        final PushDownAction pushDownAction = new PushDownAction();
 
+        menu = new JPopupMenu("Layer Operations") {
+
+            @Override
+            public void show(Component invoker, int x, int y) {
+                if(pObj == null) {
+                    return;
+                }
+                        
+                layerRemoveAction.setEnabled(pObj.getSize() >= 2);
+                pushUpAction.setEnabled(selection.getStartIndex() >= 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < pObj.getSize() - 1);
+                
+                super.show(invoker, x, y);
+            }
+            
+        };
+        
+        menu.add(layerAddAction);
+        menu.add(layerRemoveAction);
+        menu.add(pushUpAction);
+        menu.add(pushDownAction);
+        
         this.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent me) {
                 LayersPanel.this.requestFocus();
 
                 if (me.isPopupTrigger()) {
-
+                    Component c = getComponentAt(me.getPoint());
+                    int index = getIndexOfComponent(c);
+                    
+                    if(index > selection.getEndIndex() ||
+                            index < selection.getStartIndex()) {
+                        selection.setAnchor(index);
+                        selection.setEnd(index);
+                    }
+                    
+                    menu.show(me.getComponent(), me.getX(), me.getY());
                 } else if (SwingUtilities.isLeftMouseButton(me)) {
 
                     if (me.getClickCount() == 1) {
@@ -373,5 +413,104 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             selection.setEnd(index);
         }
 
+    }
+    
+    class PushUpAction extends AbstractAction {
+
+        public PushUpAction() {
+            super("Push Up Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || start == 0) {
+                return;
+            }
+
+            pObj.pushUpLayers(start, end);
+
+            selection.setAnchor(start - 1);
+            selection.setEnd(end - 1);
+        }
+
+    }
+    
+    class PushDownAction extends AbstractAction {
+
+        public PushDownAction() {
+            super("Push Down Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {     
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || end >= pObj.getSize() - 1) {
+                return;
+            }
+
+            pObj.pushDownLayers(start, end);
+
+            selection.setAnchor(start + 1);
+            selection.setEnd(end + 1);
+        }
+
+    }
+    
+    class LayerAddAction extends AbstractAction {
+
+        public LayerAddAction() {
+            super("Add Layer");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int end = selection.getEndIndex();
+
+            if (end < 0) {
+                return;
+            } 
+            end++;
+            
+            pObj.newLayerAt(end);
+
+        }
+
+    }
+    
+    class LayerRemoveAction extends AbstractAction {
+
+        public LayerRemoveAction() {
+            super("Remove Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || pObj.getSize() < 2) {
+                return;
+            }
+
+            int len = (end - start) + 1;
+
+            String message = BlueSystem
+                    .getString("soundLayerEditPanel.delete.message1")
+                    + " "
+                    + len
+                    + " "
+                    + BlueSystem.getString("soundLayerEditPanel.delete.message2");
+            if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
+                pObj.removeLayers(start, end);
+                selection.setAnchor(-1);
+                selection.setEnd(-1);
+            }
+        }
+        
     }
 }
