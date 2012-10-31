@@ -148,7 +148,7 @@
     </authorgroup>
 
     <copyright>
-        <year>2000-2008</year>
+        <year>2000-2012</year>
         <holder>Steven Yi</holder>
     </copyright>
 
@@ -159,7 +159,7 @@
     <abstract>
         <para>
         <application>blue</application> is a music composition environment for
-        use with Csound.  It is written in Java.  The homepage for blue is available at <ulink url="http://www.csounds.com/stevenyi/blue/">http://www.csounds.com/stevenyi/blue/</ulink>.
+        use with Csound.  It is written in Java.  The homepage for blue is available at <ulink url="http://blue.kunstmusik.com">http://blue.kunstmusik.com</ulink>.
         </para>
     </abstract>
 
