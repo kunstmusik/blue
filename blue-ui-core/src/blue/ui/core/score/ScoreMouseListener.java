@@ -52,7 +52,6 @@ public class ScoreMouseListener extends MouseAdapter {
         
         scoreTC.marquee.setStart(point);
         scoreTC.marquee.setVisible(true);
-        System.out.println("Mouse Pressed : " + e.getSource());
     }
     
     @Override
