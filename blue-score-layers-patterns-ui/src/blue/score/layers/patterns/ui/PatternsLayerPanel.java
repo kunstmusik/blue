@@ -82,6 +82,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
         checkSize();
+        repaint();
     }
 
     protected Dimension checkSize() {
