@@ -8,9 +8,17 @@
     <property file="blue-core/src/blue/blueConstants.properties"/>
 
     <property name="blue.manual.dir" value="build/manual"/>
+    <property name="linux.java.lib.path" 
+              value="-J-Djava.library.path=/usr/lib/jni"/>
 
     <condition property="isWindows">
         <os family="windows" />
+    </condition>
+    
+    <condition property="isNotMac">
+        <not>
+        <os family="mac" />
+        </not>
     </condition>
 
     <condition property="confReplacementString"
@@ -109,6 +117,22 @@
                 <replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>
             </filterchain>
         </copy>
+        <antcall target="addLinuxJavaLibraryPath"/>
+        
+    </target>
+
+    <target name="addLinuxJavaLibraryPath" if="isNotMac">
+        <copy file="${build.launcher.dir}/bin/${app.name}"
+            tofile="build/blue-temp"
+            overwrite="true">
+            <filterchain>
+                <replacestring from="default_options}" 
+                               to="default_options} ${linux.java.lib.path}"/>
+            </filterchain>
+        </copy>
+        <copy file="build/blue-temp" 
+              tofile="${build.launcher.dir}/bin/${app.name}"
+              overwrite="true"/>
     </target>
 
     <!-- Windows-only target that replaces the icon for the launcher exe with our own icon. -->
