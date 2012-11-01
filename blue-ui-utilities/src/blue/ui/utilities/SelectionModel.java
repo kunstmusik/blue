@@ -18,7 +18,7 @@
  * Boston, MA  02111-1307 USA
  */
 
-package blue.ui.core.score.soundLayer;
+package blue.ui.utilities;
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -27,7 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /** Utility class to handle selections and notification of changes */
-class SelectionModel {
+public class SelectionModel {
     int anchor = -1;
 
     int end = -1;

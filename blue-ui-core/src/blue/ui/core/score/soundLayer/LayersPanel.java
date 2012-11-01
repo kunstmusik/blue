@@ -25,6 +25,7 @@ import blue.noteProcessor.NoteProcessorChainMap;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
