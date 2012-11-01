@@ -51,7 +51,7 @@ import org.openide.util.Exceptions;
  * @author stevenyi
  */
 public class PatternLayerPanel extends javax.swing.JPanel 
-        implements SelectionListener, PropertyChangeListener {
+        implements PropertyChangeListener {
     
     protected PatternLayer patternLayer;
 
@@ -67,20 +67,20 @@ public class PatternLayerPanel extends javax.swing.JPanel
         this.setSize(d);
         this.setPreferredSize(d);
         
-        
-        addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if(e.getClickCount() == 1) {
-                    requestFocus();
-                    editSoundObject();
-                    e.consume();
-                }
-            }
-            
-            
-        });
+//        
+//        addMouseListener(new MouseAdapter() {
+//
+//            @Override
+//            public void mousePressed(MouseEvent e) {
+//                if(e.getClickCount() == 1) {
+//                    requestFocus();
+//                    editSoundObject();
+//                    e.consume();
+//                }
+//            }
+//            
+//            
+//        });
         
         ActionListener al = new ActionListener() {
 
@@ -197,11 +197,6 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
         nameLabel.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.nameLabel.text")); // NOI18N
         nameLabel.setMinimumSize(new java.awt.Dimension(0, 15));
-        nameLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                nameLabelMousePressed(evt);
-            }
-        });
         jPanel1.add(nameLabel, "label");
 
         nameText.setText(org.openide.util.NbBundle.getMessage(PatternLayerPanel.class, "PatternLayerPanel.nameText.text")); // NOI18N
@@ -314,15 +309,6 @@ public class PatternLayerPanel extends javax.swing.JPanel
         jPopupMenu1.show(otherMenuButton, 0, otherMenuButton.getHeight());
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
-    private void nameLabelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_nameLabelMousePressed
-        if(evt.getClickCount() == 2) {
-            editName();
-            evt.consume();
-        } else {
-            this.processMouseEvent(evt);
-        }
-    }//GEN-LAST:event_nameLabelMousePressed
-
     private void editSObjMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSObjMenuItemActionPerformed
         editSoundObject();
     }//GEN-LAST:event_editSObjMenuItemActionPerformed
@@ -376,13 +362,10 @@ public class PatternLayerPanel extends javax.swing.JPanel
     @Override
     public void removeNotify() {
         super.removeNotify();
-        SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
         this.patternLayer.removePropertyChangeListener(this);
     }
     
-    public void setPatternLayer(PatternLayer patternLayer) {
-        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
-        
+    public void setPatternLayer(PatternLayer patternLayer) {        
         this.patternLayer = patternLayer;
         
         nameLabel.setText(patternLayer.getName());
@@ -393,14 +376,9 @@ public class PatternLayerPanel extends javax.swing.JPanel
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
         this.patternLayer.addPropertyChangeListener(this);
     }
-    
-    @Override
-    public void selectionPerformed(SelectionEvent e) {
-        if(e.getSelectedItem() == patternLayer.getSoundObject()) {
-            this.setBorder(selectionBorder);
-        } else {
-            this.setBorder(border);
-        }
+        
+    public void setSelected(boolean val) {
+        setBorder(val ? selectionBorder : border);
     }
 
     @Override

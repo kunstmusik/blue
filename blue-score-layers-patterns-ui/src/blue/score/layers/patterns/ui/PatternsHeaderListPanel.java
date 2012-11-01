@@ -19,16 +19,34 @@
  */
 package blue.score.layers.patterns.ui;
 
+import blue.BlueSystem;
+import blue.event.SelectionEvent;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
+import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.ui.utilities.LinearLayout;
+import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import skt.swing.SwingUtil;
 
 /**
  *
@@ -37,6 +55,11 @@ import javax.swing.JPanel;
 public class PatternsHeaderListPanel extends JPanel implements LayerGroupListener {
 
     private final PatternsLayerGroup layerGroup;
+    
+    private SelectionModel selection = new SelectionModel();
+
+    JPopupMenu menu;
+
 
     public PatternsHeaderListPanel(PatternsLayerGroup patternsLayerGroup) {
         this.layerGroup = patternsLayerGroup;
@@ -49,7 +72,123 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             this.add(new PatternLayerPanel(
                         (PatternLayer) patternsLayerGroup.getLayerAt(i)));
         }
+        
+        selection.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                updateSelection();
+            }
+        });
 
+        
+        final LayerAddAction layerAddAction = new LayerAddAction();
+        final LayerRemoveAction layerRemoveAction = new LayerRemoveAction();
+        final PushUpAction pushUpAction = new PushUpAction();
+        final PushDownAction pushDownAction = new PushDownAction();
+        
+        menu = new JPopupMenu("Layer Operations") {
+
+            @Override
+            public void show(Component invoker, int x, int y) {
+                if(layerGroup == null) {
+                    return;
+                }
+                        
+                layerRemoveAction.setEnabled(layerGroup.getSize() >= 2);
+                pushUpAction.setEnabled(selection.getStartIndex() >= 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.getSize() - 1);
+                
+                super.show(invoker, x, y);
+            }
+            
+        };
+        
+        menu.add(layerAddAction);
+        menu.add(layerRemoveAction);
+        menu.add(pushUpAction);
+        menu.add(pushDownAction);        
+        
+        this.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent me) {
+                PatternsHeaderListPanel.this.requestFocus();
+
+                if (me.isPopupTrigger()) {
+                    Component c = getComponentAt(me.getPoint());
+                    int index = getIndexOfComponent(c);
+                    
+                    if(index > selection.getEndIndex() ||
+                            index < selection.getStartIndex()) {
+                        selection.setAnchor(index);
+                        selection.setEnd(index);
+                    }
+                    
+                    menu.show(me.getComponent(), me.getX(), me.getY());
+                } else if (SwingUtilities.isLeftMouseButton(me)) {
+
+                    if (me.getClickCount() == 1) {
+                        Component c = getComponentAt(me.getPoint());
+                        int index = getIndexOfComponent(c);
+
+                        if (index < 0) {
+                            return;
+                        }
+
+                        if (me.isShiftDown()) {
+                            selection.setEnd(index);
+                            SoundObjectSelectionBus.getInstance().selectionPerformed(
+                                    new SelectionEvent(null,
+                                    SelectionEvent.SELECTION_CLEAR));
+                        } else {
+                            selection.setAnchor(index);
+                            ((PatternLayerPanel)c).editSoundObject();
+                            ((PatternLayerPanel)c).setSelected(true);
+                        }
+
+                    } else if (me.getClickCount() == 2) {
+                        Component c = SwingUtilities.getDeepestComponentAt(
+                                PatternsHeaderListPanel.this, me.getX(), me.getY());
+
+                        if (c != null && c instanceof JLabel) {
+                            Component panel = getComponentAt(me.getPoint());
+
+                            ((PatternLayerPanel) panel).editName();
+
+                        }
+
+                    }
+                }
+            }
+        });
+        
+        initActions();
+    }
+    
+    private void initActions() {
+        SwingUtil.installActions(this, new Action[] { new ShiftUpAction(),
+                new UpAction(), new ShiftDownAction(), new DownAction() },
+                WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }
+    
+    private int getIndexOfComponent(Component c) {
+        Component[] comps = getComponents();
+
+        for (int i = 0; i < comps.length; i++) {
+            if (comps[i] == c) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    private void updateSelection() {
+        int start = selection.getStartIndex();
+        int end = selection.getEndIndex();
+
+        Component[] comps = getComponents();
+
+        for (int i = 0; i < comps.length; i++) {
+            PatternLayerPanel panel = (PatternLayerPanel) comps[i];
+            panel.setSelected(i >= start && i <= end);
+        }
     }
     
     public void checkSize() {
@@ -102,7 +241,7 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
 
         checkSize();
 
-        //selection.setAnchor(-1);
+        selection.setAnchor(-1);
     }
 
     public void contentsChanged(LayerGroupDataEvent e) {
@@ -147,5 +286,193 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
         }
 
         revalidate();
+    }
+    
+    /* Keyboard Actions */
+
+    class UpAction extends AbstractAction {
+
+        public UpAction() {
+            super("up");
+            putValue(Action.SHORT_DESCRIPTION, "Up Action");
+            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
+                    KeyEvent.VK_UP, 0));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            int index = selection.getLastIndexSet() - 1;
+            index = index < 0 ? 0 : index;
+
+            if (index != selection.getStartIndex()) {
+                selection.setAnchor(index);
+                ((PatternLayerPanel)getComponent(index)).editSoundObject();
+            }
+
+        }
+
+    }
+
+    class ShiftUpAction extends AbstractAction {
+
+        public ShiftUpAction() {
+            super("shift-up");
+            putValue(Action.SHORT_DESCRIPTION, "Shift-Up Action");
+            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
+                    KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            int index = selection.getLastIndexSet() - 1;
+            index = index < 0 ? 0 : index;
+
+            selection.setEnd(index);
+            
+            SoundObjectSelectionBus.getInstance().selectionPerformed(
+                                    new SelectionEvent(null,
+                                    SelectionEvent.SELECTION_CLEAR));
+        }
+
+    }
+
+    class DownAction extends AbstractAction {
+
+        public DownAction() {
+            super("down");
+            putValue(Action.SHORT_DESCRIPTION, "Down Action");
+            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
+                    KeyEvent.VK_DOWN, 0));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            int index = selection.getLastIndexSet() + 1;
+            int length = getComponents().length;
+            index = index >= length ? length - 1 : index;
+
+            if (index != selection.getEndIndex()) {
+                selection.setAnchor(index);
+                ((PatternLayerPanel)getComponent(index)).editSoundObject();
+            }
+            
+        }
+
+    }
+
+    class ShiftDownAction extends AbstractAction {
+
+        public ShiftDownAction() {
+            super("shift-Down");
+            putValue(Action.SHORT_DESCRIPTION, "Shift-Down Action");
+            putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
+                    KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            int index = selection.getLastIndexSet() + 1;
+            int length = getComponents().length;
+            index = index >= length ? length - 1 : index;
+
+            selection.setEnd(index);
+            
+            SoundObjectSelectionBus.getInstance().selectionPerformed(
+                                    new SelectionEvent(null,
+                                    SelectionEvent.SELECTION_CLEAR));
+        }
+
+    }
+    
+    class PushUpAction extends AbstractAction {
+
+        public PushUpAction() {
+            super("Push Up Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || start == 0) {
+                return;
+            }
+
+            layerGroup.pushUpLayers(start, end);
+
+            selection.setAnchor(start - 1);
+            selection.setEnd(end - 1);
+        }
+
+    }
+    
+    class PushDownAction extends AbstractAction {
+
+        public PushDownAction() {
+            super("Push Down Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {     
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || end >= layerGroup.getSize() - 1) {
+                return;
+            }
+
+            layerGroup.pushDownLayers(start, end);
+
+            selection.setAnchor(start + 1);
+            selection.setEnd(end + 1);
+        }
+
+    }
+    
+    class LayerAddAction extends AbstractAction {
+
+        public LayerAddAction() {
+            super("Add Layer");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int end = selection.getEndIndex();
+
+            if (end < 0) {
+                return;
+            } 
+            end++;
+            
+            layerGroup.newLayerAt(end);
+
+        }
+
+    }
+    
+    class LayerRemoveAction extends AbstractAction {
+
+        public LayerRemoveAction() {
+            super("Remove Layers");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int start = selection.getStartIndex();
+            int end = selection.getEndIndex();
+
+            if (end < 0 || layerGroup.getSize() < 2) {
+                return;
+            }
+
+            int len = (end - start) + 1;
+
+            String message = "Please confirm deleting these "
+                    + len
+                    + " layers.";
+            if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
+                layerGroup.removeLayers(start, end);
+                selection.setAnchor(-1);
+                selection.setEnd(-1);
+            }
+        }
+        
     }
 }
