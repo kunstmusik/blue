@@ -170,7 +170,10 @@ public final class OpenProjectAction implements ActionListener {
 
             BlueProjectManager projectManager = BlueProjectManager.getInstance();
             projectManager.setCurrentProject(project);
-            RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
+            
+            if(!temp.getAbsolutePath().endsWith("~")) {
+                RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
+            }
 //            this.blueDataFileArray.add(bdf);
 
             temp = null;

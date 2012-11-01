@@ -90,6 +90,9 @@ FIX
 * BSB - When API is not enabled, BSBDropdown should still generate with index
   value instead of dropdown item's value if automation is set to enabled
 
+* when opening projects that had temp files, do not add the temp file to the 
+  recent projects list
+
 INTERNAL
 
 * replaced passing of SoundObjectLibrary when saving/loading, now uses 
