@@ -1,7 +1,7 @@
 <section id="userIntro">
 <title>Introduction</title>
          
-<section>
+<simplesect>
 <title>About blue</title>
 
 <para>
@@ -49,30 +49,20 @@
   either a single Csound instrument or may be a GUI instrument.
 </para>
 
-</section>
+</simplesect>
 
-<section id="compositionEnvironments">
+<!-- <section id="compositionEnvironments">
 <title>Composition Environments</title>
 
 <para>
   I have often described blue as a music composition environment and would like
   to explain what that means to me as well as how it compares to other music
   composition environments. 
-  
-<!-- Definitions: Engine,  
-
-Csound is the Audio Host
-
-Project Files -> Reduce down to control signals/audio signals system
-
-MIDI Communicates to Instruments, instruments interpet MIDI
-
-Csound SCO communicates to Instruments, instruments interpret pfields -->
 
   <emphasis>This section of the manual is not yet finished</emphasis>
 
 </para>
 
-</section>
+</section>-->
 
 </section>
