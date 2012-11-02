@@ -46,10 +46,10 @@ import skt.swing.SwingUtil;
 import blue.BlueSystem;
 import blue.actions.RedoAction;
 import blue.actions.UndoAction;
-import blue.event.SimpleDocumentListener;
 import blue.gui.BlueEditorPane;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.ui.utilities.SimpleDocumentListener;
 
 public class EffectCodeEditor extends JComponent {
 

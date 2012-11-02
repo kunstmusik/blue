@@ -24,7 +24,6 @@ import skt.swing.SwingUtil;
 import blue.BlueSystem;
 import blue.actions.RedoAction;
 import blue.actions.UndoAction;
-import blue.event.SimpleDocumentListener;
 import blue.gui.CsoundTokenMarker;
 import blue.gui.InfoDialog;
 import blue.orchestra.GenericInstrument;
@@ -34,6 +33,7 @@ import blue.orchestra.RhinoInstrument;
 import blue.orchestra.editor.GenericEditable;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
 

@@ -25,8 +25,8 @@ import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 
-import blue.event.SimpleDocumentListener;
 import blue.soundObject.jmask.Constant;
+import blue.ui.utilities.SimpleDocumentListener;
 
 /**
  * 

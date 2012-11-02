@@ -26,7 +26,7 @@ import javax.swing.event.DocumentEvent;
 
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.event.SimpleDocumentListener;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 import electric.xml.Element;
 import java.awt.Frame;

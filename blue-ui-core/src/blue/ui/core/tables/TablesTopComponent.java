@@ -6,9 +6,9 @@
 package blue.ui.core.tables;
 
 import blue.Tables;
-import blue.event.SimpleDocumentListener;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;

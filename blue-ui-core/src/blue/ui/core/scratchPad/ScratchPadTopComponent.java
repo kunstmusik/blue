@@ -21,9 +21,9 @@ package blue.ui.core.scratchPad;
 
 import blue.BlueData;
 import blue.ScratchPadData;
-import blue.event.SimpleDocumentListener;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;

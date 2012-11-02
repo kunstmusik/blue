@@ -24,8 +24,8 @@ import java.awt.BorderLayout;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 
-import blue.event.SimpleDocumentListener;
 import blue.orchestra.blueSynthBuilder.BSBTextField;
+import blue.ui.utilities.SimpleDocumentListener;
 
 public class BSBTextFieldView extends BSBObjectView {
 

@@ -20,9 +20,9 @@
 package blue.ui.core.udo;
 
 import blue.BlueSystem;
-import blue.event.SimpleDocumentListener;
 import blue.gui.InfoDialog;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
 import java.awt.event.ActionEvent;

@@ -479,7 +479,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="completeOverride" min="-2" max="-2" attributes="0"/>
-                          <Component id="commandLineText" pref="432" max="32767" attributes="0"/>
+                          <Component id="commandLineText" pref="440" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -495,7 +495,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="completeOverride" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="427" max="32767" attributes="0"/>
+                      <EmptySpace pref="431" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

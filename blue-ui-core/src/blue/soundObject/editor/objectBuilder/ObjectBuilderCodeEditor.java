@@ -57,11 +57,11 @@ import blue.actions.RedoAction;
 import blue.actions.UndoAction;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.event.SimpleDocumentListener;
 import blue.gui.BlueEditorPane;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.soundObject.ObjectBuilder;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.utility.GUI;
 

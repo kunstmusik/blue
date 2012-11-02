@@ -48,11 +48,11 @@ import blue.actions.RedoAction;
 import blue.actions.UndoAction;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.event.SimpleDocumentListener;
 import blue.gui.BlueEditorPane;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
 

@@ -35,9 +35,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 
 import blue.BlueSystem;
-import blue.event.SimpleDocumentListener;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 
 /**

@@ -24,12 +24,12 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
 import blue.BlueSystem;
-import blue.event.SimpleDocumentListener;
 import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
 import blue.soundObject.pianoRoll.Scale;
 import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 
 /**

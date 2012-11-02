@@ -31,7 +31,7 @@ import javax.swing.event.DocumentEvent;
 
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.event.SimpleDocumentListener;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.ObjectUtilities;
 
 import com.l2fprod.common.swing.BaseDialog;

@@ -11,7 +11,7 @@
 package blue.ui.core.project;
 
 import blue.ProjectProperties;
-import blue.event.SimpleDocumentListener;
+import blue.ui.utilities.SimpleDocumentListener;
 import javax.swing.event.DocumentEvent;
 
 /**

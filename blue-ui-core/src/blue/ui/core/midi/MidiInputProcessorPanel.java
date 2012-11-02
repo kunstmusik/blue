@@ -25,10 +25,10 @@
  */
 package blue.ui.core.midi;
 
-import blue.event.SimpleDocumentListener;
 import blue.midi.MidiInputProcessor;
 import blue.midi.MidiKeyMapping;
 import blue.midi.MidiVelocityMapping;
+import blue.ui.utilities.SimpleDocumentListener;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
