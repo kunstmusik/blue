@@ -19,8 +19,8 @@
  */
 package blue.settings;
 
-import blue.event.SimpleDocumentListener;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;

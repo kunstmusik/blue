@@ -19,14 +19,10 @@
  */
 package blue.settings;
 
-import blue.event.SimpleDocumentListener;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
+import blue.ui.utilities.SimpleDocumentListener;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.openide.util.Exceptions;
-import org.openide.util.NbPreferences;
 
 final class PlaybackPanel extends javax.swing.JPanel {
 

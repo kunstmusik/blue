@@ -19,7 +19,7 @@
  */
 package blue.settings;
 
-import blue.event.SimpleDocumentListener;
+import blue.ui.utilities.SimpleDocumentListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
