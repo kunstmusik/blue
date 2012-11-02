@@ -28,9 +28,11 @@ import blue.score.undo.StartTimeEdit;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
 import java.io.Serializable;
 import java.util.logging.Logger;
+import javax.swing.event.DocumentEvent;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -63,6 +65,19 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
         SoundObjectSelectionBus.getInstance().addSelectionListener(this);
 
         selectionPerformed(SoundObjectSelectionBus.getInstance().getLastSelectionEvent());
+        
+        nameText.getDocument().addDocumentListener(new SimpleDocumentListener() {
+
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (nameText.getText() != null && sObj != null) {
+                    isUpdating = true;
+                    updateName();
+                    isUpdating = false;
+                }
+            }
+        });
+        
     }
 
     private void setSoundObject(SoundObject soundObj) {
@@ -340,7 +355,9 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 
         switch (event.getPropertyChanged()) {
             case SoundObjectEvent.NAME:
-                nameText.setText(sObj.getName());
+                if(!isUpdating) {
+                    nameText.setText(sObj.getName());
+                }
                 break;
             case SoundObjectEvent.START_TIME:
                 startTimeText.setText(Float.toString(sObj.getStartTime()));
@@ -745,6 +762,18 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     public void componentClosed() {
         // TODO add custom code on component closing
     }
+
+    @Override
+    protected void componentActivated() {
+        super.componentActivated();
+        
+        if(nameText.isEnabled()) {
+            nameText.requestFocus();
+        }
+ 
+    }
+    
+    
 
     /** replaces this in object stream */
     @Override

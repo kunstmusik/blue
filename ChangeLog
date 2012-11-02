@@ -67,7 +67,15 @@ UPDATED
   target table (useful for keeping a group of UDO's together to paste into new
   instruments)
 
-* can no drag and drop UDO Category from the UDO Library to a UDO Table
+* can now drag and drop UDO Category from the UDO Library to a UDO Table
+
+* SoundObjectProperties Window: 
+  
+  * When editing SoundObject name, now updates as you type
+
+  * When SoundObjectProperties windows becomes focused (selecting the window, 
+  pressing F3, using window menu), name textfield requests focus; makes it 
+  easier to edit SoundObjectName or tab down to other fields
 
 FIX
 
