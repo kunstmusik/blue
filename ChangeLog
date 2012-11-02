@@ -54,6 +54,9 @@ NEW
     * up/down: increment or decrement octave
     * shift-up/shift-down: increment or decrement channel
   
+* Debian/Ubuntu: blue starter script in blue/bin is now pre-setup to use the API 
+  when Csound is installed through apt-get
+
 UPDATED
 
 * Updated to Jython 2.5.3
