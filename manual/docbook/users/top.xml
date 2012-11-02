@@ -1,18 +1,18 @@
 <part id="userManual">
 <title>User's Manual</title>
 <partintro>
-    <para>Information here for Users.</para>
+    <para>This section is for users</para>
 </partintro>
      
 &gettingStarted;
 
 &concepts;
 
-&tasks;
+<!-- &tasks; -->
 
 &reference;
 
-&bestPractices;
+<!-- &bestPractices; -->
 
 &appendixA;
 
