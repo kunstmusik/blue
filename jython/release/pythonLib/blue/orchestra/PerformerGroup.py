@@ -16,6 +16,10 @@ class PerformerGroup(UserList):
     performs, some are group compositional techniques that each performer
     plays a different part in."""
 
+    def __init__(self, groupName="PerformerGroup"):
+        UserList.__init__(self)
+        self.groupName = groupName 
+
     def setTuning(self, tuning):
         """Set tuning for all Performers in the PerformerGroup"""
         for p in self:
