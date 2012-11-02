@@ -36,7 +36,8 @@
             This is the url of the root of your Csound Documentation. blue uses
             this for opening up Csound Documentation as well as when opening up
             help for an opcode. The Csound Documentation Root can be local (i.e.
-            "/home/user/blue/manual/" or "c:/Programs and Files/blue/manual/")
+            "file:///home/user/blue/manual/" or 
+            "file://c:/Programs and Files/blue/manual/")
             or online (i.e. "http://www.csounds.com/manual/html/").
           </para>
 
@@ -299,11 +300,11 @@
         <term>Csound Executable</term>
         <listitem>
           <para>
-            This is the command for what version of csound to execute when
+            This is the command for what version of Csound to execute when
             blue uses utilities that depend on Csound (for example, freezing
             SoundObjects, the SoundFont Viewer utility). The default value of
             "csound" works if you have a version of Csound in your path named
-            "csound". You may use any csound command here that would call csound
+            "csound". You may use any command here that would call Csound
             that would work as if you were running csound from a terminal.
 
             <note>
@@ -354,15 +355,19 @@
         <term>Csound Executable</term>
         <listitem>
           <para>
-            This is a command for what version of csound to execute when
+            This is a command for what version of Csound to execute when
             blue renders the project in realtime. The default value of
             "csound" works if you have a version of Csound in your path named
             "csound". You may use any command here that would call csound
             that would work as if you were running csound from a terminal.</para>
 
             <para>Using the button marked "..." on the right will open up a file
-            dialog so that you can find and select the csound executable to use
+            dialog so that you can find and select the Csound executable to use
             to run Csound.</para>
+            
+            <para>If you are using the API, you still need to have something 
+              set here. You can set it to "csound" in that case.
+            </para>
 
             <note>
               <title>Note</title>
@@ -395,10 +400,11 @@
         </varlistentry>
 
         <varlistentry>
-          <term>nchnls</term>
+          <term>0dbfs</term>
           <listitem>
             <para>
-              Default nchnls to use for realtime settings in new projects.
+              Default value to use for 0dbfs.  Also, the checkbox denotes 
+              whether projects should use 0dbfs by default or not.
             </para>
           </listitem>
         </varlistentry>
@@ -619,7 +625,7 @@
       <varlistentry>
         <term>Software Buffer</term>
         <listitem>
-          <para>Size of software sample buffer to use.  For more information,
+          <para>Size of software sample buffer to use (-b).  For more information,
           see CommandFlags section of Csound manual for settings.
           </para>
 
@@ -633,7 +639,7 @@
       <varlistentry>
         <term>Hardware Buffer</term>
         <listitem>
-          <para>Size of hardware sample buffer to use.  For more information,
+          <para>Size of hardware sample buffer to use (-B).  For more information,
           see CommandFlags section of Csound manual for settings.
           </para>
 
@@ -773,9 +779,45 @@
             </para>
           </listitem>
         </varlistentry>
+        
+        <varlistentry>
+          <term>0dbfs</term>
+          <listitem>
+            <para>
+              Default value to use for 0dbfs.  Also, the checkbox denotes 
+              whether projects should use 0dbfs by default or not.
+            </para>
+          </listitem>
+        </varlistentry>
 
     </variablelist>
 
+    <variablelist>
+      <title>Render and Play Command</title>
+
+      <varlistentry>
+        <term>Enabled</term>
+        <listitem>
+          <para>Enable using custom play command when using "Render and Play". 
+          If not enabled, blue's built-in audio player will be used once the
+          project is finished rendering to disk.</para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term>Command</term>
+        <listitem>
+          <para>Command to call after finished rendering a project. The command
+          line given should use the $outfile property where the name of the 
+          generated audio file should be passed to the program.  For example,
+          to open the rendered audio with VLC on Mac OSX, you can use this 
+          command line:</para>
+          
+          <programlisting>open -a VLC $outfile</programlisting>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
 
     <variablelist>
       <title>File Output Settings</title>
@@ -911,5 +953,75 @@
 
   </simplesect>
 
+  <simplesect>
+    <title>MIDI</title>
+    <!--<screenshot>
+      <screeninfo>Program Options - Disk Render</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_diskRender.png"
+            format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>-->
+    
+    <para>These settings are for blue's MIDI input, used with 
+      <link linkend="blueLive">blueLive</link>. The table shows what devices
+      are currently available, and whether they are enabled for use with 
+      blueLive or not.  You can use the "rescan" button to search for devices
+      if you have just plugged in a device.
+    </para>
+    
+  </simplesect>
+
+  <simplesect>
+    <title>OSC</title>
+    
+    <para>
+      This allows you to set what port blue will listen to for incoming OSC 
+      messages. Defaults to 8000. The following messages are understood by blue:
+    </para>
+    
+    <itemizedlist>
+          
+      <listitem>
+        <para>/score/play</para>
+      </listitem>
+      
+      <listitem>
+        <para>/score/stop</para>
+      </listitem>
+      
+      <listitem>
+        <para>/score/rewind</para>
+      </listitem>
+      
+      <listitem>
+        <para>/score/markerNext</para>
+      </listitem>
+      
+      <listitem>
+        <para>/score/markerPrevious</para>
+      </listitem>
+      
+      <listitem>
+        <para>/blueLive/onOff</para>
+      </listitem>
+      
+      <listitem>
+        <para>/blueLive/recompile</para>
+      </listitem>
+        
+      <listitem>
+        <para>/blueLive/allNotesOff</para>
+      </listitem>
+        
+      <listitem>
+        <para>/blueLive/toggleMidiInput</para>
+      </listitem>
+
+    </itemizedlist>
+    
+  </simplesect>
 
 </section>
