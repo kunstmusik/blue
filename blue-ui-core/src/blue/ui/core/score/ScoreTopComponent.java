@@ -578,6 +578,10 @@ public final class ScoreTopComponent extends TopComponent
     public void setVerticalScrollValue(int value) {
         scrollPane.getVerticalScrollBar().setValue(value);
     }
+    
+    public boolean isEditingRootScore() {
+        return (scoreObjectBar.getCurrentLayerGroup() == null);
+    }
 
     /** This method is called from within the constructor to
      * initialize the form.
