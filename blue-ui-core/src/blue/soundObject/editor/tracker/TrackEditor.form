@@ -22,14 +22,14 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="columnsScroll" alignment="0" pref="390" max="32767" attributes="0"/>
+                  <Component id="columnsScroll" alignment="0" pref="0" max="32767" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="pushUpButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="pushDownButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="78" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                       <Component id="addColumnButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="removeColumnButton" min="-2" max="-2" attributes="0"/>
@@ -42,9 +42,9 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="trackNameTextField" alignment="0" pref="284" max="32767" attributes="0"/>
-                          <Component id="noteTemplateTextField" alignment="0" pref="284" max="32767" attributes="0"/>
-                          <Component id="instrIdTextField" alignment="0" pref="284" max="32767" attributes="0"/>
+                          <Component id="trackNameTextField" alignment="0" min="-2" pref="216" max="-2" attributes="0"/>
+                          <Component id="noteTemplateTextField" alignment="0" min="-2" pref="216" max="-2" attributes="0"/>
+                          <Component id="instrIdTextField" alignment="0" min="-2" pref="216" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="colPropsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -65,12 +65,12 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="numberMaxSpinner" pref="320" max="32767" attributes="0"/>
-                                  <Component id="numberMinSpinner" alignment="0" pref="320" max="32767" attributes="0"/>
+                                  <Component id="numberMaxSpinner" max="32767" attributes="0"/>
+                                  <Component id="numberMinSpinner" alignment="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <Component id="useRangeCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="outputFreqCheckBox" alignment="0" pref="373" max="32767" attributes="0"/>
+                          <Component id="outputFreqCheckBox" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="baseFreqLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -79,11 +79,11 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="scaleNameTextField" pref="220" max="32767" attributes="0"/>
+                                      <Component id="scaleNameTextField" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="scaleChooserButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="baseFreqText" alignment="0" pref="304" max="32767" attributes="0"/>
+                                  <Component id="baseFreqText" alignment="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -180,6 +180,11 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="trackNameTextField">
+      <Properties>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[220, 28]"/>
+        </Property>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
@@ -331,6 +336,11 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="noteTemplateTextField">
+      <Properties>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[220, 28]"/>
+        </Property>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel7">
       <Properties>
@@ -338,6 +348,11 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="instrIdTextField">
+      <Properties>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[220, 28]"/>
+        </Property>
+      </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="pushDownButton">
       <Properties>

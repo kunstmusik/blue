@@ -177,7 +177,7 @@ public class TracksEditor extends JPanel {
         trackEditorScrollPane = new JScrollPane(trackEditor);
         trackEditorScrollPane
                 .setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        trackEditorScrollPane.setPreferredSize(new Dimension(320, 30));
+        trackEditorScrollPane.setPreferredSize(new Dimension(360, 30));
         trackEditorScrollPane.setVisible(false);
 
         this.add(trackEditorScrollPane, BorderLayout.EAST);

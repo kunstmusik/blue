@@ -493,6 +493,8 @@ public class TrackEditor extends javax.swing.JPanel {
 
         jLabel2.setText("Name:");
 
+        trackNameTextField.setMaximumSize(new java.awt.Dimension(220, 28));
+
         jLabel3.setText("Columns");
 
         columnsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -571,7 +573,11 @@ public class TrackEditor extends javax.swing.JPanel {
 
         jLabel8.setText("Note Template:");
 
+        noteTemplateTextField.setMaximumSize(new java.awt.Dimension(220, 28));
+
         jLabel7.setText("Instrument ID:");
+
+        instrIdTextField.setMaximumSize(new java.awt.Dimension(220, 28));
 
         pushDownButton.setText("V");
         pushDownButton.addActionListener(new java.awt.event.ActionListener() {
@@ -630,14 +636,14 @@ public class TrackEditor extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(columnsScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 390, Short.MAX_VALUE)
+                    .addComponent(columnsScroll, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addComponent(jLabel1)
                     .addComponent(jLabel3)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(pushUpButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pushDownButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(addColumnButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(removeColumnButton))
@@ -648,9 +654,9 @@ public class TrackEditor extends javax.swing.JPanel {
                             .addComponent(jLabel7))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(trackNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
-                            .addComponent(noteTemplateTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
-                            .addComponent(instrIdTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)))
+                            .addComponent(trackNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(noteTemplateTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(instrIdTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(colPropsLabel)
                     .addComponent(bluePchRadioButton)
                     .addComponent(pchRadioButton)
@@ -668,13 +674,10 @@ public class TrackEditor extends javax.swing.JPanel {
                                     .addComponent(numMinLabel))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(numberMaxSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
-                                    .addComponent(numberMinSpinner, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)))
-                            .addComponent(useRangeCheckBox)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(outputFreqCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, 373, Short.MAX_VALUE)
+                                    .addComponent(numberMaxSpinner)
+                                    .addComponent(numberMinSpinner, javax.swing.GroupLayout.Alignment.LEADING)))
+                            .addComponent(useRangeCheckBox)
+                            .addComponent(outputFreqCheckBox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(baseFreqLabel)
@@ -682,10 +685,10 @@ public class TrackEditor extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(scaleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
+                                        .addComponent(scaleNameTextField)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(scaleChooserButton))
-                                    .addComponent(baseFreqText, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE))))))
+                                    .addComponent(baseFreqText, javax.swing.GroupLayout.Alignment.LEADING))))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
