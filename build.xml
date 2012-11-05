@@ -181,7 +181,7 @@
             <os family="windows"/>
         </condition>
 
-        <condition property="fopCommand" value="/opt/local/bin/fop">
+        <condition property="fopCommand" value="fop">
             <os family="mac" />
         </condition>
 
