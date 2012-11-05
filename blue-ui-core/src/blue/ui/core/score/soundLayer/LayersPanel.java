@@ -249,6 +249,17 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         this.npcMap = npcMap;
     }
 
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        
+        if(this.pObj != null) {
+            this.pObj.removeLayerGroupListener(this);
+            this.pObj = null;
+        }
+
+    }
+    
     /* LAYER GROUP LISTENER */
 
     @Override

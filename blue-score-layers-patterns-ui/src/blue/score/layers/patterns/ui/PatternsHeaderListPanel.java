@@ -204,6 +204,13 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
         this.setSize(w, h);
     }
 
+    @Override
+    public void removeNotify() {
+        if(this.layerGroup != null) {
+            this.layerGroup.addLayerGroupListener(this);
+        }
+    }
+    
      /* LAYER GROUP LISTENER */
 
     @Override
