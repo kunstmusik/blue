@@ -32,6 +32,8 @@ import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -159,6 +161,12 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             }
         });
         
+        selection.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                updateSelection();
+            }
+        });
+        
         initActions();
     }
     
@@ -268,28 +276,28 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             add(c, end);
             panel.setPatternLayer(pLayer);
             
-//            int i1 = selection.getStartIndex() - 1;
-//            int i2 = selection.getEndIndex() - 1;
-//
-//            selection.setAnchor(i1);
-//            selection.setEnd(i2);
+            int i1 = selection.getStartIndex() - 1;
+            int i2 = selection.getEndIndex() - 1;
+
+            selection.setAnchor(i1);
+            selection.setEnd(i2);
 
         } else {
             // have to flip because listDataEvent stores as min and max
-            Component c = getComponent(-end);
+            Component c = getComponent(-start);
 
             PatternLayerPanel panel = (PatternLayerPanel) c;
             PatternLayer pLayer = panel.patternLayer;
-            remove(-end);
-            add(c, -start);
+            remove(-start);
+            add(c, -end);
             panel.setPatternLayer(pLayer);
 
 
-//            int i1 = selection.getStartIndex() + 1;
-//            int i2 = selection.getEndIndex() + 1;
-//
-//            selection.setAnchor(i1);
-//            selection.setEnd(i2);
+            int i1 = selection.getStartIndex() + 1;
+            int i2 = selection.getEndIndex() + 1;
+
+            selection.setAnchor(i1);
+            selection.setEnd(i2);
         }
 
         revalidate();

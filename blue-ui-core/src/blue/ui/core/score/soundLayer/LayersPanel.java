@@ -328,12 +328,12 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
         } else {
             // have to flip because listDataEvent stores as min and max
-            Component c = getComponent(-end);
+            Component c = getComponent(-start);
 
             SoundLayerPanel panel = (SoundLayerPanel) c;
             SoundLayer sLayer = panel.sLayer;
-            remove(-end);
-            add(c, -start);
+            remove(-start);
+            add(c, -end);
             panel.setSoundLayer(sLayer);
 
             int i1 = selection.getStartIndex() + 1;
