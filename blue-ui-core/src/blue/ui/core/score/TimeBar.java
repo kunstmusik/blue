@@ -247,8 +247,11 @@ public final class TimeBar extends JPanel implements
 
         int divisions = getWidth() / pixelTime;
 
-        int longHeight = (int) (h * .5);
-        int shortHeight = (int) (h * .75);
+//        int longHeight = (int) (h * .5);
+//        int shortHeight = (int) (h * .75);
+        
+        int longHeight = h - 6;
+        int shortHeight = h - 3;
 
         int start = (startX / pixelTime);
         int end = (endX / pixelTime) + 1;
