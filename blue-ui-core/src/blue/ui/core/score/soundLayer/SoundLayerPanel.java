@@ -401,6 +401,10 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     }// GEN-LAST:event_paramColorSelectPropertyChange
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {// GEN-FIRST:event_formComponentResized
+        if(sLayer == null) {
+            return;
+        }
+        
         if (automatable && sLayer.getAutomationParameters().size() > 0) {
             paramSelectPanel.setVisible(getHeight() > 22);
         } else {
