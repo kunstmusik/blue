@@ -965,7 +965,7 @@ public class TracksEditor extends JPanel {
             super("spacebar-action");
             putValue(Action.SHORT_DESCRIPTION, "Spacebar Action");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()));
+                    KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK));
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -1010,7 +1010,7 @@ public class TracksEditor extends JPanel {
             super("note-off-action");
             putValue(Action.SHORT_DESCRIPTION, "Note-Off Action");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()
+                    KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 

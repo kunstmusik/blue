@@ -104,6 +104,9 @@ FIX
 * when opening projects that had temp files, do not add the temp file to the 
   recent projects list
 
+* TrackerObject - made shortcut for ctrl-space and ctrl-shift-space also use 
+  control instead of command key on OSX to avoid issue with spotlight shortcut
+
 INTERNAL
 
 * replaced passing of SoundObjectLibrary when saving/loading, now uses 
