@@ -1,6 +1,17 @@
 <section id="csoundrcEditor">
   <title>.csoundrc Editor</title>
   
+<screenshot>
+<screeninfo>.csoundrc Editor</screeninfo>
+<mediaobject>
+<imageobject><imagedata fileref="images/csoundrc_editor.png" format="PNG" /></imageobject>
+<textobject><phrase>.csoundrc Editor</phrase></textobject>
+<caption>
+<para>.csoundrc Editor</para>
+</caption>
+</mediaobject>
+</screenshot>
+  
   <para>The .csoundrc Editor tool allows for editing the system-wide .csoundrc 
     file. The editor is accessible from the Tools menu and launching it will 
     open up the file pointed to by the environment variable CSOUNDRC or search 
@@ -15,7 +26,6 @@ When the dialog opens, the contents (if a file is found) is shown to edit in a s
     For more information about .csoundrc, please view the Csound Manual entry 
     for 
     <ulink url="http://www.csounds.com/manual/html/CommandUnifileParFile.html">
-      Command Line Parameter File (.csoundrc)
-    </ulink>.
+      Command Line Parameter File (.csoundrc)</ulink>.
   </para>
 </section>
