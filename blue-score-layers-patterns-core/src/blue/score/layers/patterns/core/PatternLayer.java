@@ -154,7 +154,7 @@ public class PatternLayer implements Layer {
 
         this.soundObject.setStartTime(0);
         this.soundObject.setSubjectiveDuration(patternBeatsLength);
-        this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        //this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         NoteList tempNotes = this.soundObject.generateForCSD(compileData, -1, -1);
         
         
