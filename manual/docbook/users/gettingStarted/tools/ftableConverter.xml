@@ -29,7 +29,7 @@
   ftables that will be referenced by global variables instead of hard-coded numbers.</para>
 
   <para>To use, simply put your ftable statement text in the top text area and
-  press the "Convert to FTGEN" button to convert.  For example, if you were to use
+  press the "Convert to FTGEN" button to convert.  For example, if you use
   the following ftable statement text:</para>
 
   <programlisting>
@@ -41,7 +41,7 @@ f6 0 128 -7 -.0 128 0	; init velocity
 f7 0 128 -7 0 128 128	; trajectory
 </programlisting>
 
-  <para>you would get the following output:</para>
+  <para>you will get the following output:</para>
 
   <programlisting>
 gi_ ftgen 0, 0, 128, 7, 0, 128, 0   ; initpos
@@ -54,8 +54,8 @@ gi_ ftgen 0, 0, 128, -7, 0, 128, 128  ; trajectory
 
 
   <para>
-    This work is based on the author's FTable Converter web page utility located
-    <ulink url="http://www.csounds.com/stevenyi/ftable.html">here</ulink>.
+    This work is based on the Steven Yi's FTable Converter web page utility 
+    located <ulink url="http://www.csounds.com/stevenyi/ftable.html">here</ulink>.
   </para>
 
 </section>
