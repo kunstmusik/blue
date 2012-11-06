@@ -18,10 +18,11 @@ the code popup (the popup menu that is accessible by rt-clicking on most of the
 text areas in blue).</para>
 
 <para>The Code Repository features a tree to organize your code. Rt-clicking on
-a folder will give you options shown in the screen shot, to either add another
-code group, remove the current group, or add a code snippet to the group.</para>
+a folder will give you options to add a new code group, remove the current 
+group, or add a code snippet to the group.
+</para>
 
-<para>If you add either a code group or a code snippet it'll be added with a
+<para>If you add either a code group or a code snippet it will be created with a
 default name. To edit the name, double click on the group or snippet and the
 area on the tree will change into a text field to edit the name.</para>
 
@@ -29,8 +30,8 @@ area on the tree will change into a text field to edit the name.</para>
 right a text area will appear. In that text area, edit the text that is
 associated with the code snippet.</para>
 
-<para>When you're done editing your code repository, the next time you rt-click
-on a text area, the code popup will reflect the changes you've made, including
+<para>When you are done editing your code repository, the next time you rt-click
+on a text area, the code popup will reflect the changes you have made, including
 any new code groups and snippets you've added.</para>
 
 </section>
