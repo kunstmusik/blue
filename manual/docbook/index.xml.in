@@ -32,6 +32,8 @@
     <!ENTITY soundFontViewer SYSTEM "users/gettingStarted/tools/soundFontViewer.xml">
     <!ENTITY ftableConverter SYSTEM "users/gettingStarted/tools/ftableConverter.xml">
     <!ENTITY userTools SYSTEM "users/gettingStarted/tools/userTools.xml">
+    <!ENTITY csoundrcEditor SYSTEM "users/gettingStarted/tools/csoundrcEditor.xml">
+    <!ENTITY effectsLibrary SYSTEM "users/gettingStarted/tools/effectsLibrary.xml">
 
     <!ENTITY otherFeatures SYSTEM "users/gettingStarted/otherFeatures.xml">
 

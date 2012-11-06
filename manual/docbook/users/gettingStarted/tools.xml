@@ -1,11 +1,13 @@
 <section id="tools">
 <title>Tools</title>
 
-&codeRepository;
 &blueShare;
+&codeRepository;
+&effectsLibrary;
+&csoundrcEditor;
 &scannedMatrix;
 &soundFontViewer;
 &ftableConverter;
-&userTools;
+<!-- &userTools; -->
 
 </section>
