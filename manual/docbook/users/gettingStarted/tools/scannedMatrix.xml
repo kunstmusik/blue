@@ -14,12 +14,15 @@
 
 <para>The Scanned Synthesis Matrix Editor tools allows for editing and creating matrix files used by the Scanned Synthesis opcodes in Csound.</para>
 
-<para>Using "New" will ask what size matrix to create.</para>
-
-<para>For editing, click anywhere on the matrix.  This will either turn on or turn off that square, setting the connection between the masses to either 1 or 0.</para>
-
-<para>After editing, press "Save" to save out the matrix to a file.</para>
-
-<para>You can also click the "Random" button to create a randomized matrix.</para>
+<itemizedlist>
+  <listitem>Using "New" will ask what size matrix to create.</listitem>
+  <listitem>For editing, click anywhere on the matrix.  This will either turn on 
+    or turn off that square, setting the connection between the masses to either 
+    1 or 0.</listitem>
+  <listitem>After editing, press "Save" to save out the matrix to a file.
+  </listitem>
+  <listitem>You can also click the "Random" button to create a randomized matrix.
+  </listitem>
+</itemizedlist>
 
 </section>

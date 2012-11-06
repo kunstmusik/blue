@@ -23,8 +23,8 @@
   </para>
 
   <para>
-    To use, simply navigate using the file selection panel and double-click on a
-    SoundFont. After a moment or so, the tables on the right side will be
+    To use, navigate using the file selection panel and double-click on a
+    SoundFont. After processing is complete, the tables on the right side will be
     populated with a listing of instruments and presets held within that
     SoundFont.
   </para>
