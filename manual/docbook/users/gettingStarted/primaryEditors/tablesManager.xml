@@ -12,13 +12,9 @@
 </mediaobject>
 </screenshot>
 
-         
-<para>The tables tab is pretty plain right now, only containing a text area for
-tables. Whatever is put in here will be immediately inserted above i-statemtents
-of the &lt;CsScore&gt; area of the generated CSD file.</para>
+<para>The tables manager contains a text area for global tables. Table 
+statements put here will be immediately inserted above i-statements of the 
+&lt;CsScore&gt; area of the generated CSD file.</para>
 
-<para>Future plans are to have a similar interface to the orchestra with f#'s
-and names listed on the left, and visual representations of the ftables on the
-right.</para>
     
 </section>
