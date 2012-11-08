@@ -5,7 +5,8 @@
     <screeninfo>Score Timeline</screeninfo>
     <mediaobject>
       <imageobject>
-        <imagedata fileref="images/scoreTab.png" format="PNG" />
+        <imagedata fileref="images/ScoreTimeline.png" format="PNG" scalefit="1" 
+                   width="100%" />
       </imageobject>
       <textobject>
         <phrase>Score Timeline</phrase>
@@ -15,23 +16,298 @@
       </caption>
     </mediaobject>
   </screenshot>
+  
+  <section>
+    <title>Overview</title>
+    
+    <para>
+      The Score is the tool in blue for working with musical material in time.
+      It is a canvas upon which to create and organize musical ideas. The Score
+      features a modular timeline, where each 
+      <link linkend="layerGroups">Layer Group</link> within the Score is a
+      module.  These modules are a plug-in point that can be extended with other
+      plug-ins.  Each Layer Group in turn may be broken down into layers.
+    </para>
+    
+    <para>
+      The image above shows a Score with three Layer Groups.  The first two are
+      Patterns LayerGroups, while the last is a SoundObject Layer Group. Also 
+      shown is the ScoreManager dialog (accessible from the Manage button on the
+      left part of the Score). 
+    </para>
 
+  </section>
+  
+  <!-- ====================================== -->
+  
+  <section id="layerGroups">
+    <title>Layer Groups</title>
+    
+    <simplesect>
+      <title>Introduction</title>
+      
+      <para>
+        A Score is divided into Layer Groups. Each Layer Group has a 
+        user-interface for the main timeline area, as well as a header interface
+        that shows on the left-hand side.  The header area usually shows 
+        meta-information and controls for each of the Layer Group's layers, such
+        as layer name, muting, soloing, and other features.
+      </para>
+      
+      <para>
+        By using the Score Manager Dialog, you can add as many Layer Groups as
+        you like, as well as many layers to each group as you like. You can also
+        push up and down Layer Groups to reorganize them.  The same 
+        add/remove/push up/push down actions are also available for Layers 
+        within a Layer Group. 
+      </para>
+      
+      <note>
+        <title>Note</title>
+        <para>
+          Add/Remove/Push Up/Push Down for layers is also available while 
+          working in the main score area by right-clicking the Layer panels
+          on the right and selecting the options from the popup menu.
+        </para>
+      </note>
+      
+      <para>Also, all LayerGroups support having 
+        <link linkend="noteProcessors">NoteProcessors</link> used with them.
+        Using a NoteProcessor on a LayerGroup will affect all notes generated
+        within that LayerGroup.  Editing the LayerGroup's NoteProcessors can
+        be done by right clicking on the root Score node in the 
+        <link linkend="scoreBar">Score Bar</link>, described below.
+      </para>
+      
+      <para>  
+        Regarding the design, a Layer Group is primarily responsible for 
+        generating Csound Score notes. However, they are also able to generate
+        tables, instruments, and anything else that is usable in Csound.  It is
+        up to the developer to choose what features the Layer Group will use.
+      </para>
+    </simplesect>
+    
+    <simplesect>
+      <title>SoundObject</title>
+      
+      <para>
+        SoundObject Layer Groups are one of the primary Layer Group types. They
+        support the SoundObject system in blue for scoring them in time on the
+        timeline. They also are the canvas on which 
+        <link linkend="parameterAutomation">automations</link> are drawn.
+      </para>
+      
+      <para>
+        SoundObject Layer Groups are divided into SoundLayers. Each SoundLayer
+        can contain SoundObjects of any type as well as have automations 
+        assigned to the layer.  Unlike MIDI-based studio software, where layers
+        are bound to a single instrument or channel in a mixer, blue's 
+        SoundLayers are free to hold SoundObjects that generate any data for any
+        instrument. This design choice allows freedoms for you to design your
+        project as you wish, though at the expense of being able to implement 
+        some things which may be commonly found in MIDI-based studio software.
+      </para>
+      
+      <para>To use the SoundObject system, first create a SoundObject Layer 
+        Group using the Score Manager Dialog. (By default, new projects in blue
+        start with a single SoundObject Layer Group.) Next, add as many layers
+        as you would like to the LayerGroup.  You can then edit the names of the
+        layers using the ScoreManager Dialog, or back in the main Score area by
+        double-clicking the area on the left of the Layer's panel on the left.
+      </para>
+      
+      <para>
+        On the timeline, rt-clicking on any soundLayer will show menu options 
+        for adding different types of SoundObjects, pasting a SoundObject from the
+        buffer if any SoundObjects in the buffer are available, as well as other
+        commands. (Copying and pasting of SoundObjects can also be done using
+        ctrl-c and ctrl-click on a layer.)
+      </para>
+
+      <para>
+        Once you have SoundObjects on the timeline, you can click on them to
+        select it, or click in an empty area and drag to show a selection 
+        rectangle. You can also add and remove SoundObjects to/from the 
+        selectionn by holding shift when clicking.
+      </para>
+      
+      <para>
+        Once selected, you can move selected SoundObjects by pressing the mouse down
+        on one of the selected SoundObjects, then drag to move them in time as 
+        well as up and down layers.  If you press shift down when you click, 
+        once you drag you will create clones of the original material and move
+        them in time. If you move the mouse to the right-side of a SoundObject,
+        the cursor will change to a resize cursor, and clicking and dragging 
+        will allow you to change the duration of the SoundObject. (Note you can
+        only resize one SoundObject at a time.)
+      </para>
+
+      <para>
+        If you have a single SoundObject selected, you can edit the properties 
+        of the
+        SoundObject by using the SoundObject Property Window. This window can be
+        opened from the menu "Windows -&gt; Sound Object Properties" or by
+        using the shortcut "F3". From this window you can change the name of the
+        SoundObject, its start time and subjective duration, as well as add and
+        remove NoteProcessors (if the SoundObject supports it).
+      </para>
+
+
+      <para>
+        To edit a SoundObject, select a single SoundObject and open the 
+        SoundObject Editor window.  You can also double-click a SoundObject, 
+        which will set the editor for the SoundObject in the Editor window as 
+        well as focus the SoundObject Editor window. (If the Editor window is
+        docked, double-clicking the SoundObject will cause the editor to show
+        the docked window.)
+      </para>
+      
+      <!-- <para>
+        Rt-clicking on a soundObject pops open a menu (shown in the picture above)
+        which will let you add a soundObject to the soundObject library(only the
+        one clicked on), convert soundObjects into a polyObject(any selected
+        soundObjects), convert a soundObject into a genericScore soundObject, or
+        cut/paste/remove. Converting to a polyObject is useful if you're editting
+        on a time line and decide you'd like to group the soundObjects together to
+        handle them as a single soundObject. Converting to a genericScore is
+        useful if you're working with a soundObject that isn't a genericScore and
+        want to start editting it as a genericScore.
+      </para> -->
+    </simplesect>
+    
+    <simplesect>
+      <title>Patterns</title>
+      
+      <para>Patterns Layer Groups are based upon the same SoundObject system
+        as the SoundObject Layer Groups, but presents a different way to working
+        with these objects. At a high-level, each Pattern layer has one 
+        SoundObject assigned to it. The SoundObject is the source score material
+        for a Pattern Layer.  Selecting boxes in the grid that shows for the 
+        Patter Layer determines where that score material will be used to 
+        generate notes. For music projects that rely on patterns and regular
+        metered time, using the Pattern Layer Groups can be more efficient for 
+        creating a piece than using SoundObject Layer Groups. 
+      </para>
+      
+      <para>
+        The grid of time for Pattern Layers is currently hardcoded to repeat 
+        every four beats, or one measure at 4/4 time.  However, a SoundObject
+        is not constrained to generate score for only one measure.  For example,
+        you can create a PianoRoll that has a time behavior of "None", and have
+        it last sixteen beats (four measures). Everywhere that the pattern grid
+        is selected for the Pattern Layer that uses that SoundObject will then
+        create that sixteen beat score and start it at the time of the grid box.
+      </para>
+      
+      <screenshot>
+      <screeninfo>Patterns Layer Menu Options</screeninfo>
+      <mediaobject>
+      <imageobject><imagedata fileref="images/patternLayerMenu.png" format="PNG" /></imageobject>
+      <textobject><phrase>Patterns Layer Menu Options</phrase></textobject>
+      <caption>
+      <para>Patterns Layer Menu Options</para>
+      </caption>
+      </mediaobject>
+      </screenshot>
+      
+      <para>By default, new Pattern Layers will use a GenericScore SoundObject
+      that is set to a duration of four beats, and use a time behavior of
+      "None".  This means that the score will generate "as-is". In the layer's
+      popup menu options, you can replace the SoundObject that is being used for 
+      the layer with one from the SoundObject buffer (i.e. copied from blueLive
+      or from a SoundObject Layer).  Also, you can switch to a different type
+      of SoundObject using the menu. </para>
+      
+      <para>SoundObjects will generate accordingly to the values set in the 
+        SoundObject Properties dialog, with the exception of the start time. 
+        Blue will reassign the start time to 0 when it generates the notes for
+        the layer. On the whole this behavior will not affect most users, but
+        is worth noting.
+      </para>
+      
+      <para>
+        To edit the SoundObject for a Pattern Layer, you can either use the 
+        popup menu option for "Edit SoundObject", or you can also click the 
+        layer panel on the left.  A single click will bring up the SoundObject
+        editor.
+      </para>
+      
+      <para>
+        To edit the layer's patterns, click on a grid box to toggle between 
+        on and off for that box.  You can also press down and drag along to set
+        multiple boxes.  The value that is set for the multiple boxes will 
+        depend on the action of the first box selected.  For example, if the 
+        first box when the initial mouse down is on, the mouse down will turn it
+        off, and dragging will turn off all boxes that the mouse extends 
+        through.
+      </para>
+      
+    </simplesect>
+    
+  </section>
+  
+  <!-- ====================================== -->
+  
+  <section>
+    <title>User-Interface Walkthrough</title>
+    
   <simplesect>
     <title>Play Bar</title>
 
     <para>
-      The play bar at the top has a field for setting what time you want the
-      score to play from, a play/stop button to start and stop playing, and a
-      help button. When the play/stop button is used, blue will generate a .CSD
-      file from the current work file, starting from the play time given in the
-      field, and will use the command line given in the project properties tab
-      to use to play the .CSD file.
+      The play bar at the top has:
     </para>
+
+    <itemizedlist>
+      <listitem>
+        time to start playing from
+      </listitem>
+      <listitem>
+        what time to play to (if the render end time is set)
+      </listitem>
+      <listitem>
+        the current play time
+      </listitem>
+      <listitem>
+        Loop checkbox to have render looping from render start time to render 
+        end time
+      </listitem>
+      <listitem>
+        Forward/Back buttons for jumping between markers
+      </listitem>
+      <listitem>
+        Back button to start from beginning of Score
+      </listitem>
+      <listitem>
+        Play/Stop buttons to start/stop rendering
+      </listitem>
+      <listitem>
+        BlueLive buttons:
+       
+        <itemizedlist>
+          <listitem>
+            blueLive toggle button to turn on/off blueLive
+          </listitem>
+          <listitem>
+            Recompile button that will stop the current blueLive run, 
+            recompile the project, and start blueLive again
+          </listitem>
+          <listitem>
+            All Notes Off Button to turn off any hanging notes in a 
+              blueLive run
+          </listitem>
+          <listitem>
+            MIDI Input toggle button enabled/disables blue MIDI input into
+              blueLive
+          </listitem>
+        </itemizedlist>
+      </listitem>
+    </itemizedlist>
 
   </simplesect>
 
-  <simplesect>
-    <title>PolyObject Bar</title>
+  <simplesect id="scoreBar">  
+    <title>Score Bar</title>
 
     <para>
       the poly object bar (shown above with only one polyObject, "root") shows
@@ -81,50 +357,7 @@
       settings will be maintained between work sessions.
     </para>
 
-    <para>
-      On the time line, rt-clicking on any soundLayer will show menu options for
-      adding different types of soundObjects, or pasting a soundObject from the
-      buffer if any soundObjects in the buffer are available. if you are using
-      the soundObject library and use the "copy instance" button, it copies it
-      to the soundObject buffer for use with pasting into the time line via this
-      menu.
-    </para>
-
-    <para>
-      Once you have soundObjects on the time line, you can click on one to
-      select it and see its editor below the time line, then click on the
-      soundObject and drag the mouse to move the object around in time or to a
-      different layer. Clicking and dragging near the right edge of the
-      soundObject will allow you to change the duration of the soundObject.
-    </para>
-
-    <para>
-      You can also select multiple soundObjects by holding down shift and
-      clicking multiple soundObjects. Holding down shift and dragging one
-      soundObject will move all of the selected soundObjects.
-    </para>
-
-    <para>
-      If you have a soundObject selected, you can edit the properties of the
-      soundObject also by using the soundObject property dialog (which can be
-      opened from the menu "Windows -&gt; Sound Object Property Dialog" or by
-      using the shortcut "F3". From this dialog you can change the name of the
-      soundObject, it's start time and subjective duration, and also add and
-      remove noteProcessors (if the soundObject supports it).
-    </para>
-
-
-    <para>
-      Rt-clicking on a soundObject pops open a menu (shown in the picture above)
-      which will let you add a soundObject to the soundObject library(only the
-      one clicked on), convert soundObjects into a polyObject(any selected
-      soundObjects), convert a soundObject into a genericScore soundObject, or
-      cut/paste/remove. Converting to a polyObject is useful if you're editting
-      on a time line and decide you'd like to group the soundObjects together to
-      handle them as a single soundObject. Converting to a genericScore is
-      useful if you're working with a soundObject that isn't a genericScore and
-      want to start editting it as a genericScore.
-    </para>
+    
 
   </simplesect>
 
@@ -156,7 +389,8 @@
     </para>
     
     <para>If right-clicking the tempo editor when not on a point, the following
-    popup menu will appear:</para>
+      popup menu will appear:
+    </para>
     
     <mediaobject>
       <imageobject>
@@ -242,7 +476,7 @@
   </simplesect>
 
   <simplesect>
-    <title>Shortcuts for the Timeline</title>
+    <title>Shortcuts for the SoundObject LayerGroups</title>
 
     <table>
       <title>Shortcuts for the Timeline</title>
@@ -343,8 +577,10 @@
       </tgroup>
     </table>
 
-
-
   </simplesect>
+  
+</section>
+
+
 
 </section>
