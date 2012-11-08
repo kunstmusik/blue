@@ -51,6 +51,12 @@ public class PatternLayer implements Layer {
     
     private transient Vector<PropertyChangeListener> propListeners = null;
 
+    public PatternLayer(){
+        this.soundObject.setStartTime(0);
+        this.soundObject.setSubjectiveDuration(4.0f);
+        this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+    }
+    
     public SoundObject getSoundObject() {
         return soundObject;
     }
@@ -153,7 +159,7 @@ public class PatternLayer implements Layer {
         NoteList notes = new NoteList();
 
         this.soundObject.setStartTime(0);
-        this.soundObject.setSubjectiveDuration(patternBeatsLength);
+        //this.soundObject.setSubjectiveDuration(patternBeatsLength);
         //this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         NoteList tempNotes = this.soundObject.generateForCSD(compileData, -1, -1);
         
