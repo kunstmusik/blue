@@ -98,6 +98,9 @@ FIX
 * UDO - When dragging from the library to a UDO list table, was allowing move
   option, when it should only allow copying
 
+* when creating new UDO's, name now defaults to "newOpcode" rather than 
+  "New Opcode", as the latter is not a valid UDO name
+
 * BSB - When API is not enabled, BSBDropdown should still generate with index
   value instead of dropdown item's value if automation is set to enabled
 

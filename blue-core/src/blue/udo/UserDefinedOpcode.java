@@ -29,7 +29,7 @@ import java.io.Serializable;
  */
 public class UserDefinedOpcode implements Serializable {
 
-    public String opcodeName = "New Opcode";
+    public String opcodeName = "newOpcode";
 
     public String outTypes = "";
 
