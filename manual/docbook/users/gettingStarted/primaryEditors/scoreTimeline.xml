@@ -456,7 +456,7 @@
   </simplesect>
 
   <simplesect>
-    <title>Snap</title>
+    <title>Score Time Properties</title>
 
     <mediaobject>
       <imageobject>
@@ -465,12 +465,12 @@
     </mediaobject>
 
     <para>
-      Enabling snapping provides a grid by which to line up your soundObjects.
-      Snap is measured in beats. To open up the dialog, press the [...] button
-      at the top right of the score timeline window. From here you can
-      enable/disable snap for the current polyObject you are editing as well as
-      edit what value to snap to. Snap values are local to the polyObject you
-      are editing.
+      In the upper right of the Score window is an arrow button; pressing this
+      reveals the time properties for the Score. The two options here are Snap 
+      and Time Display.  Snap provides a grid by which to line up your 
+      SoundObjects. Snap is measured in beats. Time Display allows setting 
+      how the time bar shows numbers, i.e. every 4 beats, rendered as a number 
+      or as a time value.
     </para>
 
   </simplesect>
