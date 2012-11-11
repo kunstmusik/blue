@@ -34,6 +34,7 @@
     <!ENTITY userTools SYSTEM "users/gettingStarted/tools/userTools.xml">
     <!ENTITY csoundrcEditor SYSTEM "users/gettingStarted/tools/csoundrcEditor.xml">
     <!ENTITY effectsLibrary SYSTEM "users/gettingStarted/tools/effectsLibrary.xml">
+    <!ENTITY pythonConsole SYSTEM "users/gettingStarted/tools/pythonConsole.xml">
 
     <!ENTITY otherFeatures SYSTEM "users/gettingStarted/otherFeatures.xml">
 
