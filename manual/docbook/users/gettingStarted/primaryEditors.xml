@@ -3,10 +3,11 @@
 
 &scoreTimeline;
 &orchManager;
-&tablesManager;
-&globalsManager;
 &udoManager;
 &projectProperties;
 &mixer;
+&blueLive;
+&tablesManager;
+&globalsManager;
 
 </section>

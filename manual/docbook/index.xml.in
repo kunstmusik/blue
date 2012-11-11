@@ -24,6 +24,7 @@
     <!ENTITY udoManager SYSTEM "users/gettingStarted/primaryEditors/udoManager.xml">
     <!ENTITY projectProperties SYSTEM "users/gettingStarted/primaryEditors/projectProperties.xml">
     <!ENTITY mixer SYSTEM "users/gettingStarted/primaryEditors/mixer.xml">
+    <!ENTITY blueLive SYSTEM "users/gettingStarted/primaryEditors/blueLive.xml">
 
     <!ENTITY tools SYSTEM "users/gettingStarted/tools.xml">
     <!ENTITY codeRepository SYSTEM "users/gettingStarted/tools/codeRepository.xml">
@@ -39,7 +40,6 @@
     <!ENTITY otherFeatures SYSTEM "users/gettingStarted/otherFeatures.xml">
 
     <!ENTITY autoBackup SYSTEM "users/gettingStarted/otherFeatures/autoBackup.xml">
-    <!ENTITY blueLive SYSTEM "users/gettingStarted/otherFeatures/blueLive.xml">
     <!ENTITY soundObjectFreezing SYSTEM "users/gettingStarted/otherFeatures/soundObjectFreezing.xml">
     <!ENTITY auditionSoundObjects SYSTEM "users/gettingStarted/otherFeatures/auditionSoundObjects.xml">
     <!ENTITY programScripts SYSTEM "users/gettingStarted/otherFeatures/programScripts.xml">
