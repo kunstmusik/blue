@@ -5,7 +5,8 @@
     <screeninfo>Project Properties</screeninfo>
     <mediaobject>
       <imageobject>
-        <imagedata fileref="images/projectPropertiesTab.png" format="PNG" />
+        <imagedata fileref="images/projectProperties.png" format="PNG" scalefit="1" 
+                   width="100%" /> 
       </imageobject>
     </mediaobject>
   </screenshot>
@@ -42,6 +43,18 @@
         </para>
       </listitem>
     </varlistentry>
+    
+    <varlistentry>
+      <term>0dbfs</term>
+      <listitem>
+        <para>
+          The checkbox sets whether 0dbfs is used at all in the project. If 
+          enabled, the value will be assigned to the value in the textfield. 
+          The default for the value is set ing Program Options, as well as if
+          0dbfs is enabled by default or not.
+        </para>
+      </listitem>
+    </varlistentry>
 
     <varlistentry>
       <term>Devices</term>
@@ -55,13 +68,13 @@
           to the next.
         </para>
 
-          <para>
-            For example, if your project is set to use "Audio Out", one system
-            may use a value of "-+rtaudio=alsa -o dac:hw:0,0" while another
-            system may use a value of "-+rtaudio=winmme -o dac2". The project
-            only needs to be set to use "Audio Out" and when the project goes to
-            render, the settings set for that system's audio out will be used.
-          </para>
+        <para>
+          For example, if your project is set to use "Audio Out", one system
+          may use a value of "-+rtaudio=alsa -o dac:hw:0,0" while another
+          system may use a value of "-+rtaudio=winmme -o dac2". The project
+          only needs to be set to use "Audio Out" and when the project goes to
+          render, the settings set for that system's audio out will be used.
+        </para>
       </listitem>
     </varlistentry>
 
@@ -97,7 +110,7 @@
           "Complete Override" is:
 
           <screen>
-csound -Wdo dac
+            csound -Wdo dac
           </screen>
         </para>
 
@@ -138,6 +151,19 @@ csound -Wdo dac
         <para>
           nchnls to use when rendering to disk.  Value defaults to
           value set in Program Options.
+        </para>
+      </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+      <term>0dbfs</term>
+      <listitem>
+        <para>
+          The checkbox sets whether 0dbfs is used at all in the project when
+          rendering to disk. If 
+          enabled, the value will be assigned to the value in the textfield. 
+          The default for the value is set ing Program Options, as well as if
+          0dbfs is enabled by default or not.
         </para>
       </listitem>
     </varlistentry>
@@ -192,7 +218,7 @@ csound -Wdo dac
           "Complete Override" is:
 
           <screen>
-csound -Wdo mySoundFile.wav
+            csound -Wdo mySoundFile.wav
           </screen>
         </para>
 
@@ -236,35 +262,5 @@ csound -Wdo mySoundFile.wav
     </varlistentry>
 
   </variablelist>
-
-  <simplesect>
-    <title>csLADSPA Settings</title>
-
-	<screenshot>
-	    <screeninfo>csLADSPA Settings</screeninfo>
-	    <mediaobject>
-	      <imageobject>
-	        <imagedata fileref="images/csLADSPA.png" format="PNG" />
-	      </imageobject>
-	    </mediaobject>
-	  </screenshot>
-	  
-    <para>
-       This area allows for adding meta-data to your project for use as a 
-       csLADSPA plugin.  This section contains the Name, Maker, Unique ID, and
-       Copyright fields and includes a table for adding ControlPort definitions.
-       The buttons at the bottom of the table allow for adding, removing, pushing
-       up and pushing down port definitions in the table. If these settings are
-       enabled via the Enabled checkbox, csLADSPA tags will be added to the 
-       generated CSD using the information from this section.   
-    </para>
-
-    <para>
-       If you import a CSD project into blue that contains csLADSPA tags, this
-       area will be correctly populated with the information found.   
-    </para>
-
-  </simplesect>
-
 
 </section>
