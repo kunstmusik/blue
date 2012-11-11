@@ -10,13 +10,10 @@
     </mediaobject>
   </screenshot>
 
-
-
   <para>
     The Mixer system in blue allows for graphically editing levels for
     instruments, applying pre- and post-fader effects, and routing and mixing of
     signals through subchannels.
-
   </para>
 
 
@@ -340,7 +337,7 @@
 
   </section>
 
-   <section>
+  <section>
     <title>Randomization</title>
 
     <para>
@@ -349,7 +346,8 @@
       Effects in the Effects Library or when using Effects from the mixer.
       Please further information, please see the documentation for 
       <link  linkend="bsbWidgetRandomization">BlueSynthBuilder Widget 
-      Randomization</link>.
+        Randomization
+      </link>.
     </para>
 
   </section>
