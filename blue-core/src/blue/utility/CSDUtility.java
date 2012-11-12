@@ -147,6 +147,7 @@ public class CSDUtility {
 
         switch (importMode) {
             case IMPORT_GLOBAL:
+                data.getScore().getLayerGroup(0).newLayerAt(-1);
                 data.getGlobalOrcSco().setGlobalSco(noteText);
                 break;
 
