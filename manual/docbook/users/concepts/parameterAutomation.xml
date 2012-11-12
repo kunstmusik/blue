@@ -5,7 +5,7 @@
     <title>Introduction</title>
 
     <para>
-      blue allows for a few ways to enter in values to automate parameters over
+      Blue allows for a few ways to enter in values to automate parameters over
       time. The parameters that can be automated are those in BlueSynthBuilder
       Instruments, Mixer Effects, Mixer Sends, and Mixer Volumes. The following
       sections will describe how to use Parameter Automation and technical
@@ -49,7 +49,14 @@
       <listitem>
         <para>XYController</para>
       </listitem>
+      
+      <listitem>
+        <para>Dropdown</para>
+      </listitem>
 
+      <listitem>
+        <para>Checkbox</para>
+      </listitem>
     </itemizedlist>
 
 
@@ -60,8 +67,8 @@
     <title>Assigning Parameters</title>
 
     <para>
-      Automations for Parameters are assignable to SoundLayers that exist in the
-      root PolyObject by selecting from the popup menu that appears when
+      Automations for Parameters are assignable to SoundObject LayerGroup Layers 
+      that exist in the root Score by selecting from the popup menu that appears when
       selecting the "A" button on a SoundLayer's panel (on the left of the
       timeline). The menu shows what Parameters are available to use from
       Instruments and the Mixer. Those with normal color text are Parameters
