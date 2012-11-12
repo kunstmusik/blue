@@ -11,6 +11,7 @@
 <xsl:param name="use.id.as.filename" select="1" />
 <xsl:param name="chunker.output.indent" select="'yes'" />
 <xsl:param name="generate.section.toc.level" select="2" />
+<xsl:param name="ignore.image.scaling" select="1" />
 <!-- <xsl:param name="section.autolabel" select="1" /> -->
 <!--<xsl:param name="section.label.includes.component.label" select="1" /> -->
 <!-- <xsl:param name="navig.graphics" select="1" /> -->
