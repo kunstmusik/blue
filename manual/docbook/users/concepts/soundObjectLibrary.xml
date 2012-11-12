@@ -58,14 +58,14 @@
             instances of it here and here and ...".
             
             <note>
-            <title>Note</title>
-            <para>
-              When copying and pasting Instance soundObjects, they are all
-              pointing to the soundObject in the library.
-            </para>
+              <title>Note</title>
+              <para>
+                When copying and pasting Instance soundObjects, they are all
+                pointing to the soundObject in the library.
+              </para>
             </note>
             
-            </para>
+          </para>
         </listitem>
         
         <listitem>
@@ -118,16 +118,16 @@
         
         <listitem>
           <para>You can also then edit the soundObject in the library from 
-          within the SoundObject Library dialog by selecting the soundObject
-          in the list.  The editor for the SoundObject will appear below.  
+            within the SoundObject Library dialog by selecting the soundObject
+            in the list.  The editor for the SoundObject will appear below.  
           
-          <note>
-          <title>Note</title>
-          <para>
-            Editing the SoundObject in the library will affect all instances of
-            that SoundObject.
-          </para>
-          </note>
+            <note>
+              <title>Note</title>
+              <para>
+                Editing the SoundObject in the library will affect all instances of
+                that SoundObject.
+              </para>
+            </note>
           
           </para>
           
