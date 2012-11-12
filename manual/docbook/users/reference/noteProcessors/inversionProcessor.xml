@@ -3,7 +3,7 @@
          
 <para>Parameters: pfield, value</para>
          
-<para>This noteProcessor flips all values in designated pfield about an 
+<para>This NoteProcessor flips all values in designated pfield about an 
 axis (value). The following score:</para>
 
 <programlisting>
@@ -26,6 +26,6 @@ i1	1.5	0.5	80.0
 </programlisting>
 
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
-soundObject with time behavior or scale.)</para> 
+SoundObject with time behavior set to scale.)</para> 
          
 </section>
