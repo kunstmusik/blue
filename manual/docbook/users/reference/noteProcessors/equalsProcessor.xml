@@ -25,12 +25,12 @@ i1	1.5	0.5	7.00
 </programlisting>
 
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
-soundObject with time behavior or scale.)</para> 
+SoundObject with time behavior set to scale.)</para> 
 
 
 <para>
-Tip: One can use this noteProcessor to quickly try reassigning a score to another 
-instrument to test what that would sound like by reassigning p1.
+Tip: One can use this NoteProcessor to quickly try testing a score with another
+insturment.  To do this, use this NoteProcessor to reassign p1.
 </para>
          
 </section>
