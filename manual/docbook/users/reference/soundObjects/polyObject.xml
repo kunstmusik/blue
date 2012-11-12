@@ -1,25 +1,29 @@
 <section id="polyObject">
-<title>PolyObject</title>
+  <title>PolyObject</title>
          
-<para>Accepts NoteProcessors: yes</para>
+  <para>Accepts NoteProcessors: yes</para>
          
-<para>a timeline. polyObjects can be seen as containers for
-  other soundObjects. PolyObjects    can also be embedded within each other.
+  <para>A timeline object that acts as a container for other SoundObjects. 
+    PolyObjects can also be embedded within each other.
+
   </para>
          
-<tip>
-<title>Try This</title>
+  <tip>
+    <title>Try This</title>
 
-<para>on the root timeline, rt-click on a soundLayer and select "Add
-new PolyObject. you should have added a new polyObject to the timeline. now
-either double-click or rt-click on the polyObject and select "edit soundObject".
-you should now be within the polyObjects timeline, and the button which says
-[root] should now have another button next to it that says [polyObject]. now try
-adding a few soundLayers and a few genericScore Objects. now click on [root].
-you have now returned to the root timeline. here you should see the polyObject
-you've edited. now you can scale the object you've created and all of the
-objects held within will scale together as a group. </para>
+    <para>On the root timeline, rt-click on a soundLayer and select "Add new 
+      PolyObject". You should have added a new PolyObject to the timeline. 
+      Now either double-click or rt-click on the PolyObject and select 
+      "Edit SoundObject". You should now be within the PolyObjects timeline, 
+      and the button which says [root] should now have another button next to 
+      it that says [PolyObject]. Now try adding a few soundLayers and a few 
+      GenericScore Objects. Now click on [root]. You have now returned to the 
+      root timeline. Here you should see the PolyObject you've edited. Now you 
+      can scale the object you've created and all of the objects held within 
+      will scale together as a group.
 
-</tip>
+    </para>
+
+  </tip>
     
 </section>
