@@ -1,39 +1,32 @@
 <section id="genericScore">
-<title>GenericScore </title>
+  <title>GenericScore </title>
          
-<para>Accepts NoteProcessors: yes</para>
+  <para>Accepts NoteProcessors: yes</para>
          
-<para>Contains a block of csound score. The objective time
-  within the genericScore starts at time 0, and notes within the genericScore
-  are written relative to that. Moving the genericScore around translates
-  the starting time of the notes within in it, and stretching the block
- scales the subjective time of the score.  </para>
+  <para>Contains a block of Csound score text. The objective time within the GenericScore starts at time 0, and notes within the genericScore are written relative to 0. The start time of the GenericScore object within the timeline will translate the score text's time, and the SoundObject's time behavior will determine how the notes are processed relative to the GenericScore's duration. For example, for the following score:
+  </para>
+  
+  <screen>i1 0 1 2 3 4 5
+i1 1 1 2 3 4 5
+i1 2 1 2 3 4 5
+  </screen>
          
-<tip>
-<title>Try This</title>
+   <para>
+     If this SoundObject is moved to start at time 2.0 with duration 6.0, the generated score will be:
+   </para>
+  
+  <screen>i1 2 2 2 3 4 5
+i1 4 2 2 3 4 5
+i1 6 2 2 3 4 5
+  </screen>
 
-<para>Let's say you have a block of score starting at 0, i.e.:</para>
-         
-<para>i1 0 1 2 3 4 5</para>
-         
-<para>i1 1 1 2 3 4 5</para>
-         
-<para>i1 2 1 2 3 4 5</para>
-         
-<para>Make three copies of on the main timeline. now move
-  them so they start at different times, and then resize them. Now generate
-  a .csd file from selecting the "Generate CSD to screen" option from the
-project menu. Take a look at the generated CSD file and compare it
-to what is in blue.</para>
+  <note>
+    <title>Note</title>
 
-</tip>
+    <para>Score blocks support only a subset of the Csound Score Syntax. Using
+      "+" in p2 and "." in pfields, as well as "&lt;" and "&gt;" is supported.
+    </para>
 
-<simplesect>
-<title>NOTES</title>
-
-<para>Score blocks support only a subset of the Csound Score Syntax. Using
-"+" in p2 and "." in pfields, as well as "&lt;" and "&gt;" is supported.</para>
-
-</simplesect>
+  </note>
 
 </section>
