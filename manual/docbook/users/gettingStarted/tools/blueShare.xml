@@ -1,7 +1,63 @@
 <section id="blueShare">
-<title>BlueShare</title>
+  <title>BlueShare</title>
 
-<para>BlueShare is an online and in-program way to share instruments with other
-blue users.</para>
+  <screenshot>
+    <screeninfo>BlueShare</screeninfo>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="images/blueShare.png" format="PNG" scalefit="1" 
+                   width="100%" contentheight="100%" />
+      </imageobject>
+      <textobject>
+        <phrase>BlueShare</phrase>
+      </textobject>
+      <caption>
+        <para>BlueShare</para>
+      </caption>
+    </mediaobject>
+  </screenshot>
+
+  <para>
+    BlueShare is an online, in-program way to share instruments and effects
+    with other blue users. BlueShare does not require a user account to download
+    items, but does require one for uploading. If you would like to share an 
+    instrument or effect, please sign up for an account at
+    <ulink url="http://blue.kunstmusik.com">http://blue.kunstmusik.com</ulink>
+  </para>
+  
+  <para>
+    To use BlueShare, go to the Tools menu to open it up.  Blue will contact
+    the server to get a list of Instrument and Effects available.  From there,
+    you can browse categories, then select an item in the upper-right table to
+    get more information. Once you find something you are interested to try,
+    select "Import Instrument" or "Import Effect".  The instrument or effect
+    will download to your User Instrument Library or Effects Library in a folder
+    called "Imported Instruments" or "Imported Effects".
+  </para>
+  
+  <para>
+    To use BlueShare, go to the Tools menu to open it up.  Blue will contact
+    the server to get a list of Instrument and Effects available.  From there,
+    you can browse categories, then select an item in the upper-right table to
+    get more information. Once you find something you are interested to try,
+    select "Import Instrument" or "Import Effect".  The instrument or effect
+    will download to your User Instrument Library or Effects Library in a folder
+    called "Imported Instruments" or "Imported Effects".
+  </para>
+  
+  <para>
+    To upload and instrument or effect, switch to the Export tab.  From there 
+    you will see a place to enter your username and password, a listing of 
+    instruments or effects from your libraries, a tree of categories to use
+    for uploading, and a description box (pre-populated with the Comments field
+    of your Instrument or Effect). You can then press the "Submit" button to
+    send it to the server. 
+  </para>
+
+  <para>
+    The manage tab allows you to pull down a list of your contributed 
+    instruments and effects.  You can then remove the item from blueShare using
+    "Remove" button.
+  </para>
 
 </section>
