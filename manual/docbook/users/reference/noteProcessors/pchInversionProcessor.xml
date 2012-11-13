@@ -27,6 +27,6 @@ i1	1.5	0.5	8.0
 </programlisting>
          
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
-soundObject with time behavior or scale.)</para> 
+soundObject with time behavior set to scale.)</para> 
 
 </section>

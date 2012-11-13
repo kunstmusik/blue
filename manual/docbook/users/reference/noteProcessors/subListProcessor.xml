@@ -28,7 +28,7 @@ i1 + . 3
 i1 + . 4
 </programlisting>
 
-<para>If processed with a SubList processor with start 2 and end 3, would result
+<para>when  processed with a SubList processor with start 2 and end 3, would result
 in:</para>
 
 <programlisting>
@@ -37,6 +37,6 @@ i1	1.0	1	3
 </programlisting>
 
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
-soundObject with time behavior or scale.)</para> 
+soundObject with time behavior set to scale.)</para> 
 
 </section>

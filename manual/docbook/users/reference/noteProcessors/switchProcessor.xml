@@ -3,9 +3,9 @@
          
 <para>parameters: pfield1, pfield2</para>
          
-<para>switches pfield1 with pfield2 for all notes in soundObject. useful in
-conjunction with RetrogradeProcessor when reversing notes that have start and
-end values in pfields, i.e.</para>
+<para>A Switch Processor switches pfield1 with pfield2 for all notes in SoundObject. 
+  It is useful in conjunction with RetrogradeProcessor when reversing notes that 
+  have start and end values in pfields, i.e.</para>
 
 <programlisting>
 ;inum start dur   start   end

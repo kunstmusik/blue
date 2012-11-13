@@ -3,12 +3,13 @@
 
 <para>Parameters: pfield, min, max</para>
 
-<para>The RandomAddProcessor takes a pfield to apply the random add to, as well as a
-min and max for the boundaries of the random values.  When applied, it will add a random
-value to each note in the assigned pfield, using a new random value per note. </para>
+<para>The RandomAddProcessor generates a random value between min and max and 
+  adds it to the designated pfield for all notes. A random value is 
+  generated for each note.
+</para>
 
 <para>The RandomAddProcessor expects either a positive or negative float value for
-the min an max, and a postive integer for the pfield. The following score:</para>
+the min and max, and a postive integer for the pfield. The following score:</para>
 
 <programlisting>
 i1 0 2 80
@@ -17,7 +18,7 @@ i1 + . 80
 i1 + . 80
 </programlisting>
 
-<para>If processed with an RandomAddProcessor with min set to 0.0, max set to 
+<para>when processed with an RandomAddProcessor with min set to 0.0, max set to 
 1.0, and pfield set to 4, resulted in the following on one pass:</para>
 
 <programlisting>
@@ -28,11 +29,11 @@ i1	1.5	0.5	80.93934
 </programlisting>
 
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
-soundObject with time behavior or scale.)</para> 
+soundObject with time behavior set to scale.)</para> 
 
-<para>If the score was generated again it would undoubtedly have slightly 
-different values in the generated score's p4 fields as the values are generated
-randomly in the range given between min and max.</para>
+<para>The above is an example of random values, and because it is random, the 
+  results will be different on another processing pass.
+.</para>
 
 <para>Hint: One useful way to use this noteProcessor is as a way to "humanize"
 velocity or pitch values values.</para>

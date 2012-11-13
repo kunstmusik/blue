@@ -16,7 +16,7 @@ i1 5 2 4
 i1 6 2 5
 </programlisting>
 
-<para>Will become:</para>
+<para>will become:</para>
 
 <programlisting>
 i1 0 2 3
@@ -83,6 +83,8 @@ i1	19.0	5.0	5	4
 i1	21.0	5.0	6	4	
 </programlisting>
 
-<para>This is generally only of concern if the notes are overlapping.</para>
+<para>Please be aware of this behavior when using this NoteProcessor with 
+  scores that have overlapping notes.
+</para>
 
 </section>

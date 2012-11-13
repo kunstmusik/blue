@@ -24,7 +24,7 @@ the same way as one would in Java.
 
 <para>The following code shows an example of the Python Processor.  The code 
 first imports the random module, then for every note in the noteList it creates
-a random space variable between the values of -1 and 1, then assigneds that to 
+a random space variable between the values of -1 and 1, then assigns that to 
 pfield 7 of the note.  (This example code is used in the 
 blue/examples/noteProcessors/pythonProcessor.blue and can be run within blue
 to hear the example).  

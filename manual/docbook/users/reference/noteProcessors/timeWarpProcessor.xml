@@ -42,7 +42,7 @@ i1 2 1 3 4 5
 i1 3 1 3 4 5 
 </programlisting>
     
-        <para>if it is in a GenericScore soundObject of duration 20, if you want
+        <para>if it is in a GenericScore SoundObject of duration 20, if you want
         the tempo to decrease in half by the last note, you would enter a value
         for the processor as "0 60 3 30" and not "0 60 20 30"</para>
     
@@ -55,7 +55,7 @@ i1 3 1 3 4 5
     
   <listitem><para>Time Warping, when used with a time behavior of "Scale", be
   aware that estimating the final tempo of the object may be tricky, as the
-  scaling will alter the duration of notes</para></listitem>
+  scaling will alter the duration of notes.</para></listitem>
     
 </itemizedlist> 
 
