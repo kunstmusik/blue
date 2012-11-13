@@ -225,7 +225,9 @@ instruments:</para>
         <row>
             <entry>Dropdown List</entry>
             <entry>objectName</entry>
-            <entry>Value from user-assigned Dropdown List</entry>
+            <entry>Generates index of selected item when item is made 
+              automatable, or uses value from user-assigned Dropdown List
+            </entry>
         </row>
         <row>
             <entry>SubChannel Dropdown List</entry>
@@ -250,7 +252,16 @@ instruments:</para>
         <row>
             <entry>Text Field</entry>
             <entry>objectName</entry>
-            <entry>Value from text field</entry>
+            <entry>Value from text field (compile-time only).</entry>
+        </row>
+        <row>
+            <entry>File Selector</entry>
+            <entry>objectName</entry>
+            <entry>If stringChannelEnabled is selected, outputs a Csound string 
+              variable (S-var) that can be updated at runtime if API is enabled, 
+              if stringChannelEnabled is set to off, outputs as a string 
+              (without quotes) at compilation time
+            </entry>
         </row>
     </tbody>
     </tgroup>
