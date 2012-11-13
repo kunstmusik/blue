@@ -38,30 +38,30 @@ public final class BlueManualAction implements ActionListener {
     }
 
     protected String getPath() {
-        return "http://blue.kunstmusik.com/wiki/index.php/Main_Page";
-//        String val = System.getProperty("netbeans.dirs");
-//        String[] vals = val.split(File.pathSeparator);
-//
-//        for (String path : vals) {
-//
-//            int index = path.indexOf(".app/Contents");
-//
-//            if (index > 0) {
-//                path = path.substring(0, index + 4);
-//                String retVal =  "file://" + path + "/manual/html/index.html";
-//                retVal = retVal.replaceAll(" ", "%20");
-//                return retVal;
-//            }
-//
-//            File f = new File(path + File.separator + "pythonLib");
-//            if (f.isDirectory()) {
-//                path = path.substring(0, path.lastIndexOf(File.separator));
-//                String retVal =  "file://" + path + "/manual/html/index.html";
-//                retVal = retVal.replaceAll(" ", "%20");
-//                return retVal;
-//            }
-//        }
-//
-//        return null;
+//        return "http://blue.kunstmusik.com/wiki/index.php/Main_Page";
+        String val = System.getProperty("netbeans.dirs");
+        String[] vals = val.split(File.pathSeparator);
+
+        for (String path : vals) {
+
+            int index = path.indexOf(".app/Contents");
+
+            if (index > 0) {
+                path = path.substring(0, index + 4);
+                String retVal =  "file://" + path + "/manual/html/index.html";
+                retVal = retVal.replaceAll(" ", "%20");
+                return retVal;
+            }
+
+            File f = new File(path + File.separator + "pythonLib");
+            if (f.isDirectory()) {
+                path = path.substring(0, path.lastIndexOf(File.separator));
+                String retVal =  "file://" + path + "/manual/html/index.html";
+                retVal = retVal.replaceAll(" ", "%20");
+                return retVal;
+            }
+        }
+
+        return null;
     }
 }

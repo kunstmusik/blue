@@ -3,205 +3,201 @@
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="blue" basedir=".">
-    <description>Builds the module suite blue.</description>
-    <import file="nbproject/build-impl.xml"/>
-    <property file="blue-core/src/blue/blueConstants.properties"/>
+  <description>Builds the module suite blue.</description>
+  <import file="nbproject/build-impl.xml"/>
+  <property file="blue-core/src/blue/blueConstants.properties"/>
 
-    <property name="blue.manual.dir" value="build/manual"/>
-    <property name="linux.java.lib.path" 
+  <property name="blue.manual.dir" value="build/manual"/>
+  <property name="linux.java.lib.path" 
               value="-J-Djava.library.path=/usr/lib/jni"/>
 
-    <condition property="isWindows">
-        <os family="windows" />
-    </condition>
+  <condition property="isWindows">
+    <os family="windows" />
+  </condition>
     
-    <condition property="isNotMac">
-        <not>
-        <os family="mac" />
-        </not>
-    </condition>
+  <condition property="isNotMac">
+    <not>
+      <os family="mac" />
+    </not>
+  </condition>
 
-    <condition property="confReplacementString"
-            value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
-            else="-J-Xms256m -J-Xmx768m">
-        <os family="mac"/>
-    </condition>
+  <condition property="confReplacementString"
+               value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
+               else="-J-Xms256m -J-Xmx768m">
+    <os family="mac"/>
+  </condition>
 
 
-<!--    <target name="build-zip" depends="suite.build-zip,blue-manual">-->
-    <target name="build-zip" depends="suite.build-zip">
+  <target name="build-zip" depends="suite.build-zip,blue-manual">
     <!-- <target name="build-zip" depends="suite.build-zip"> -->
-        <echo message="Building blue version ${blueVersion}" />
+    <echo message="Building blue version ${blueVersion}" />
 
-        <copy file="ChangeLog" tofile="build/ChangeLog" overwrite="true">
-            <filterset>
-                <filter token="VERSION" value="${blueVersion}"/>
-                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-            </filterset>
-        </copy>
+    <copy file="ChangeLog" tofile="build/ChangeLog" overwrite="true">
+      <filterset>
+        <filter token="VERSION" value="${blueVersion}"/>
+        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+      </filterset>
+    </copy>
 
-        <copy file="README.TXT" tofile="build/README.TXT" overwrite="true">
-            <filterset>
-                <filter token="VERSION" value="${blueVersion}"/>
-                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-            </filterset>
-        </copy>
+    <copy file="README.TXT" tofile="build/README.TXT" overwrite="true">
+      <filterset>
+        <filter token="VERSION" value="${blueVersion}"/>
+        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+      </filterset>
+    </copy>
 
-        <zip destfile="${dist.dir}/${app.name}.zip" update="true">
-            <zipfileset dir="examples" filemode="755" prefix="${app.name}/examples"
-                excludes="**/.svn"/>
-            <!--<zipfileset dir="${blue.manual.dir}" filemode="755" prefix="${app.name}/manual"/>-->
-            <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
-            <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
-            <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
-        </zip>
-        <delete dir="${dist.dir}/blue"/>
-        <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
-        <move file="${dist.dir}/${app.name}.zip"
-            tofile="${dist.dir}/${app.name}_${blueVersion}.zip"
-            overwrite="true" />
-    </target>
+    <zip destfile="${dist.dir}/${app.name}.zip" update="true">
+      <zipfileset dir="examples" filemode="755" prefix="${app.name}/examples"
+                        excludes="**/.svn"/>
+      <zipfileset dir="${blue.manual.dir}" filemode="755" prefix="${app.name}/manual"/>
+      <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
+      <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
+      <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
+    </zip>
+    <delete dir="${dist.dir}/blue"/>
+    <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
+    <move file="${dist.dir}/${app.name}.zip"
+              tofile="${dist.dir}/${app.name}_${blueVersion}.zip"
+              overwrite="true" />
+  </target>
 
-<!--    <target name="build-mac" depends="suite.build-mac,blue-manual">-->
-    <target name="build-mac" depends="suite.build-mac">
-        <property name="nbdist-contents.dir" value="${dist.dir}/${app.name}.app/Contents"/>
-	<property name="nbdist-resources.dir" value="${nbdist-contents.dir}/Resources"/>
-        <property name="zipName" value="${app.name}_OSX_${blueVersion}.zip"/>
+  <target name="build-mac" depends="suite.build-mac,blue-manual">
+    <property name="nbdist-contents.dir" value="${dist.dir}/${app.name}.app/Contents"/>
+    <property name="nbdist-resources.dir" value="${nbdist-contents.dir}/Resources"/>
+    <property name="zipName" value="${app.name}_OSX_${blueVersion}.zip"/>
 
-	<!-- Replace the icns file. -->
-	<copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="${app.name}.icns" overwrite="true"/>
+    <!-- Replace the icns file. -->
+    <copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="${app.name}.icns" overwrite="true"/>
 
-        <copy file="ChangeLog" tofile="${dist.dir}/${app.name}.app/ChangeLog" overwrite="true">
-            <filterset>
-                <filter token="VERSION" value="${blueVersion}"/>
-                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-            </filterset>
-        </copy>
+    <copy file="ChangeLog" tofile="${dist.dir}/${app.name}.app/ChangeLog" overwrite="true">
+      <filterset>
+        <filter token="VERSION" value="${blueVersion}"/>
+        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+      </filterset>
+    </copy>
 
-        <copy file="README.TXT" tofile="${dist.dir}/README.TXT" overwrite="true">
-            <filterset>
-                <filter token="VERSION" value="${blueVersion}"/>
-                <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
-            </filterset>
-        </copy>
+    <copy file="README.TXT" tofile="${dist.dir}/README.TXT" overwrite="true">
+      <filterset>
+        <filter token="VERSION" value="${blueVersion}"/>
+        <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
+      </filterset>
+    </copy>
 
-        <copy todir="${dist.dir}/${app.name}.app/examples">
-            <fileset dir="examples" excludes="**/.svn"/>
-        </copy>
+    <copy todir="${dist.dir}/${app.name}.app/examples">
+      <fileset dir="examples" excludes="**/.svn"/>
+    </copy>
 
-<!--        <copy todir="${dist.dir}/${app.name}.app/manual">
-            <fileset dir="${blue.manual.dir}" excludes="**/.svn"/>
-        </copy>-->
+    <copy todir="${dist.dir}/${app.name}.app/manual">
+      <fileset dir="${blue.manual.dir}" excludes="**/.svn"/>
+    </copy>
 
-        <delete file="${dist.dir}/${zipName}" failonerror="false"/>
+    <delete file="${dist.dir}/${zipName}" failonerror="false"/>
 
+    <exec executable="zip" dir="${dist.dir}">
+      <arg value="-yJr"/>
+      <arg value="${zipName}"/>
+      <arg value="${app.name}.app"/>
+    </exec>
+  </target>
 
+  <!-- Windows EXE ICON replacement -->
 
-        <exec executable="zip" dir="${dist.dir}">
-            <arg value="-yJr"/>
-            <arg value="${zipName}"/>
-            <arg value="${app.name}.app"/>
-        </exec>
-    </target>
-
-    <!-- Windows EXE ICON replacement -->
-
-    <target name="build-launchers" depends="suite.build-launchers">
-        <!-- Replace the icon for the Windows launcher exe. -->
-        <antcall target="replaceWindowsLauncherIcon"/>
-        <copy file="${harness.dir}/etc/app.conf" 
-            tofile="${build.launcher.dir}/etc/${app.name}.conf"
-            overwrite="true">
-            <filterchain>
-                <replacestring from="$${branding.token}" to="${branding.token}"/>
-                <replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>
-            </filterchain>
-        </copy>
-        <antcall target="addLinuxJavaLibraryPath"/>
+  <target name="build-launchers" depends="suite.build-launchers">
+    <!-- Replace the icon for the Windows launcher exe. -->
+    <antcall target="replaceWindowsLauncherIcon"/>
+    <copy file="${harness.dir}/etc/app.conf" 
+              tofile="${build.launcher.dir}/etc/${app.name}.conf"
+              overwrite="true">
+      <filterchain>
+        <replacestring from="$${branding.token}" to="${branding.token}"/>
+        <replacestring from="-J-Xms24m -J-Xmx64m" to="${confReplacementString}"/>
+      </filterchain>
+    </copy>
+    <antcall target="addLinuxJavaLibraryPath"/>
         
-    </target>
+  </target>
 
-    <target name="addLinuxJavaLibraryPath" if="isNotMac">
-        <copy file="${build.launcher.dir}/bin/${app.name}"
-            tofile="build/blue-temp"
-            overwrite="true">
-            <filterchain>
-                <replacestring from="default_options}" 
+  <target name="addLinuxJavaLibraryPath" if="isNotMac">
+    <copy file="${build.launcher.dir}/bin/${app.name}"
+              tofile="build/blue-temp"
+              overwrite="true">
+      <filterchain>
+        <replacestring from="default_options}" 
                                to="default_options} ${linux.java.lib.path}"/>
-            </filterchain>
-        </copy>
-        <copy file="build/blue-temp" 
+      </filterchain>
+    </copy>
+    <copy file="build/blue-temp" 
               tofile="${build.launcher.dir}/bin/${app.name}"
               overwrite="true"/>
-    </target>
+  </target>
 
-    <!-- Windows-only target that replaces the icon for the launcher exe with our own icon. -->
-    <target name="replaceWindowsLauncherIcon" if="isWindows" description="Replace the icon for the Windows launcher exe">
-            <echo message="Replacing icon of Windows launcher executable."/>
-            <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
-                    <arg line="build/launcher/bin/${app.name}.exe ${app.name}.ico"/>
-            </exec>
-            <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
-                    <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
-            </exec>
-    </target>
+  <!-- Windows-only target that replaces the icon for the launcher exe with our own icon. -->
+  <target name="replaceWindowsLauncherIcon" if="isWindows" description="Replace the icon for the Windows launcher exe">
+    <echo message="Replacing icon of Windows launcher executable."/>
+    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+      <arg line="build/launcher/bin/${app.name}.exe ${app.name}.ico"/>
+    </exec>
+    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+      <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
+    </exec>
+  </target>
 
 
-    <!-- DOCUMENTATION TARGETS -->
+  <!-- DOCUMENTATION TARGETS -->
 
     
-    <target name="blue-manual-init">
-        <delete dir="${blue.manual.dir}" />
-        <mkdir dir="${blue.manual.dir}" />
-        <mkdir dir="${blue.manual.dir}/html" />
-    </target>
+  <target name="blue-manual-init">
+    <delete dir="${blue.manual.dir}" />
+    <mkdir dir="${blue.manual.dir}" />
+    <mkdir dir="${blue.manual.dir}/html" />
+  </target>
 
-    <target name="blue-manual-html" depends="blue-manual-init" description="Create manual from Docbook">
-        <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" overwrite="true"/>
+  <target name="blue-manual-html" depends="blue-manual-init" description="Create manual from Docbook">
+    <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" overwrite="true"/>
 
-        <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
+    <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-        <exec executable="xsltproc" dir="${blue.manual.dir}/html">
-            <arg value="--nonet" />
-            <arg value="${basedir}/manual/stylesheets/customXHTMLchunk.xsl" />
-            <arg value="${basedir}/manual/docbook/index.xml" />
-        </exec>
-        <copy todir="${blue.manual.dir}/html/images">
-            <fileset dir="manual/docbook/images" />
-        </copy>
-    </target>
+    <exec executable="xsltproc" dir="${blue.manual.dir}/html">
+      <arg value="--nonet" />
+      <arg value="${basedir}/manual/stylesheets/customXHTMLchunk.xsl" />
+      <arg value="${basedir}/manual/docbook/index.xml" />
+    </exec>
+    <copy todir="${blue.manual.dir}/html/images">
+      <fileset dir="manual/docbook/images" />
+    </copy>
+  </target>
 
 
-    <target name="blue-manual-pdf" depends="blue-manual-init" description="Create PDF manual from Docbook">
-        <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" />
+  <target name="blue-manual-pdf" depends="blue-manual-init" description="Create PDF manual from Docbook">
+    <copy file="manual/docbook/index.xml.in" tofile="manual/docbook/index.xml" />
 
-        <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
+    <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-        <condition property="fopCommand" value="fop.bat">
-            <os family="windows"/>
-        </condition>
+    <condition property="fopCommand" value="fop.bat">
+      <os family="windows"/>
+    </condition>
 
-        <condition property="fopCommand" value="fop">
-            <os family="mac" />
-        </condition>
+    <condition property="fopCommand" value="fop">
+      <os family="mac" />
+    </condition>
 
-        <condition property="fopCommand" value="fop">
-            <os family="unix" />
-        </condition>
+    <condition property="fopCommand" value="fop">
+      <os family="unix" />
+    </condition>
 
-        <exec executable="${fopCommand}" dir="manual/docbook">
-            <arg value="-xsl" />
-            <arg value="${basedir}/manual/stylesheets/fo/docbook.xsl" />
-            <arg value="-xml" />
-            <arg value="index.xml" />
-            <arg value="-pdf" />
-            <arg value="${basedir}/${blue.manual.dir}/blue_manual.pdf" />
-        </exec>
-    </target>
+    <exec executable="${fopCommand}" dir="manual/docbook">
+      <arg value="-xsl" />
+      <arg value="${basedir}/manual/stylesheets/fo/docbook.xsl" />
+      <arg value="-xml" />
+      <arg value="index.xml" />
+      <arg value="-pdf" />
+      <arg value="${basedir}/${blue.manual.dir}/blue_manual.pdf" />
+    </exec>
+  </target>
 
-    <target name="blue-manual" 
-        depends="blue-manual-html,blue-manual-pdf"
-        description="Build all Documentation">
-    </target>
+  <target name="blue-manual" 
+            depends="blue-manual-html,blue-manual-pdf"
+            description="Build all Documentation">
+  </target>
 
 </project>
