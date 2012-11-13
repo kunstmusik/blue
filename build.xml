@@ -177,7 +177,8 @@
       <os family="windows"/>
     </condition>
 
-    <condition property="fopCommand" value="fop">
+    <condition property="fopCommand" 
+               value="/Users/stevenyi/work/study/fop-1.1/fop">
       <os family="mac" />
     </condition>
 
