@@ -56,6 +56,11 @@ public class SelectionModel {
 
         fireChangeEvent();
     }
+    
+    public void clear() {
+        end = anchor = lastIndexSet = -1;
+        fireChangeEvent();
+    }
 
     public int getStartIndex() {
         if (anchor < 0) {

@@ -103,7 +103,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     if(index > selection.getEndIndex() ||
                             index < selection.getStartIndex()) {
                         selection.setAnchor(index);
-                        selection.setEnd(index);
                     }
                     
                     menu.show(me.getComponent(), me.getX(), me.getY());
@@ -361,9 +360,9 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
 
-            if (index != selection.getStartIndex()) {
+//            if (index != selection.getStartIndex()) {
                 selection.setAnchor(index);
-            }
+            //}
 
         }
 
@@ -401,9 +400,9 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             int length = getComponents().length;
             index = index >= length ? length - 1 : index;
 
-            if (index != selection.getEndIndex()) {
+//            if (index != selection.getEndIndex()) {
                 selection.setAnchor(index);
-            }
+//            }
         }
 
     }
@@ -445,7 +444,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             pObj.pushUpLayers(start, end);
 
             selection.setAnchor(start - 1);
-            selection.setEnd(end - 1);
         }
 
     }
@@ -468,7 +466,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             pObj.pushDownLayers(start, end);
 
             selection.setAnchor(start + 1);
-            selection.setEnd(end + 1);
         }
 
     }
@@ -520,7 +517,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
                 pObj.removeLayers(start, end);
                 selection.setAnchor(-1);
-                selection.setEnd(-1);
             }
         }
         

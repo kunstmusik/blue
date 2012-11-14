@@ -21,11 +21,13 @@ package blue.score.layers.patterns.ui;
 
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
+import blue.soundObject.SoundObject;
 import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.SelectionModel;
@@ -54,7 +56,8 @@ import skt.swing.SwingUtil;
  *
  * @author stevenyi
  */
-public class PatternsHeaderListPanel extends JPanel implements LayerGroupListener {
+public class PatternsHeaderListPanel extends JPanel implements 
+        LayerGroupListener, SelectionListener {
 
     private final PatternsLayerGroup layerGroup;
     
@@ -120,7 +123,6 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
                     if(index > selection.getEndIndex() ||
                             index < selection.getStartIndex()) {
                         selection.setAnchor(index);
-                        selection.setEnd(index);
                     }
                     
                     menu.show(me.getComponent(), me.getX(), me.getY());
@@ -166,7 +168,7 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
                 updateSelection();
             }
         });
-        
+                
         initActions();
     }
     
@@ -213,10 +215,18 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
     }
 
     @Override
+    public void addNotify() {
+        super.addNotify();
+        
+        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
+    }
+    
+    @Override
     public void removeNotify() {
         if(this.layerGroup != null) {
             this.layerGroup.addLayerGroupListener(this);
         }
+        SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
     }
     
      /* LAYER GROUP LISTENER */
@@ -302,6 +312,27 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
 
         revalidate();
     }
+
+    @Override
+    public void selectionPerformed(SelectionEvent e) {
+        SoundObject sObj = (SoundObject) e.getSelectedItem();
+        if(sObj == null) {
+            return;
+        }
+        
+        boolean found = false;
+        for(int i = 0; i < layerGroup.getSize(); i++) {
+            PatternLayer pLayer = (PatternLayer) layerGroup.getLayerAt(i);
+            if(pLayer.getSoundObject() == sObj) {
+                found = true;
+                break;
+            }
+        }
+         
+        if(!found) {
+            selection.clear();
+        }
+    }
     
     /* Keyboard Actions */
 
@@ -318,10 +349,10 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
 
-            if (index != selection.getStartIndex()) {
+//            if (index != selection.getStartIndex()) {
                 selection.setAnchor(index);
                 ((PatternLayerPanel)getComponent(index)).editSoundObject();
-            }
+//            }
 
         }
 
@@ -363,10 +394,10 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             int length = getComponents().length;
             index = index >= length ? length - 1 : index;
 
-            if (index != selection.getEndIndex()) {
+//            if (index != selection.getEndIndex()) {
                 selection.setAnchor(index);
                 ((PatternLayerPanel)getComponent(index)).editSoundObject();
-            }
+//            }
             
         }
 
@@ -413,7 +444,6 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             layerGroup.pushUpLayers(start, end);
 
             selection.setAnchor(start - 1);
-            selection.setEnd(end - 1);
         }
 
     }
@@ -436,7 +466,6 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             layerGroup.pushDownLayers(start, end);
 
             selection.setAnchor(start + 1);
-            selection.setEnd(end + 1);
         }
 
     }
@@ -485,7 +514,6 @@ public class PatternsHeaderListPanel extends JPanel implements LayerGroupListene
             if (JOptionPane.showConfirmDialog(null, message) == JOptionPane.OK_OPTION) {
                 layerGroup.removeLayers(start, end);
                 selection.setAnchor(-1);
-                selection.setEnd(-1);
             }
         }
         
