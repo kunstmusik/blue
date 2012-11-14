@@ -76,7 +76,7 @@
       </filterset>
     </copy>
 
-    <copy file="README.TXT" tofile="${dist.dir}/README.TXT" overwrite="true">
+    <copy file="README.TXT" tofile="${dist.dir}/${app.name}.app/README.TXT" overwrite="true">
       <filterset>
         <filter token="VERSION" value="${blueVersion}"/>
         <filter token="RELEASE_DATE" value="${blueReleaseDate}"/>
