@@ -93,7 +93,8 @@ UPDATED
 
   * closed the online Wiki and migrated back to using Docbook
 
-  * release once again includes HTML and PDF versions of the manual
+  * release once again includes HTML and PDF versions of the manual 
+  (located in blue/manual folder or blue.app/manual)
 
   * Blue Manual link from Help menu points to HTML version of manual
 
