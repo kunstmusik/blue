@@ -134,7 +134,6 @@ public class PatternLayerPanel extends javax.swing.JPanel
         } 
 
         editor.requestActive();     
-        editor.requestFocus();
     }
     
     /**
