@@ -294,6 +294,7 @@ public class TrackList implements Serializable, TableModel {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         int counter = columnIndex;
 
+        
         for (Iterator iter = tracks.iterator(); iter.hasNext();) {
             Track track = (Track) iter.next();
             if (counter >= track.getNumColumns()) {
@@ -302,6 +303,9 @@ public class TrackList implements Serializable, TableModel {
                 if (counter == 0) {
                     return false;
                 } else {
+                    if(track.getTrackerNote(rowIndex).isOff()) {
+                        return false;
+                    }
                     return true;
                 }
             }

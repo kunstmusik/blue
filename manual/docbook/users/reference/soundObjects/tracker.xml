@@ -425,7 +425,7 @@
 						</entry>
 					</row>
 					<row>
-						<entry>backspace</entry>
+						<entry>shift-backspace</entry>
 						<entry>
 							delete selected notes, notes after selected
 							notes are shifted up to fill in place where

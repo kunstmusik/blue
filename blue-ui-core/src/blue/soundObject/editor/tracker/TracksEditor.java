@@ -828,6 +828,8 @@ public class TracksEditor extends JPanel {
         Border normalBorder;
 
         Border errorBorder = BorderFactory.createLineBorder(Color.RED);
+        
+        String originalValue = null;
 
         public TrackColumnEditor() {
             super(new JTextField());
@@ -843,6 +845,8 @@ public class TracksEditor extends JPanel {
             this.column = column;
 
             textField.setBorder(normalBorder);
+            
+            originalValue = (String)table.getValueAt(row, column);
 
             return super.getTableCellEditorComponent(table, value, isSelected,
                     row, column);
@@ -855,6 +859,10 @@ public class TracksEditor extends JPanel {
 
             Column c = trackList.getTrackColumn(column);
 
+            if("off".equals(originalValue.toLowerCase())) {
+                 return super.stopCellEditing();
+            }
+            
             if (!c.isValid(textField.getText())) {
                 textField.setBorder(errorBorder);
                 return false;
@@ -1197,7 +1205,7 @@ public class TracksEditor extends JPanel {
             super("BackSpace");
             putValue(Action.SHORT_DESCRIPTION, "BackSpace");
             putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_BACK_SPACE, 0));
+                    KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK));
         }
 
         public void actionPerformed(ActionEvent e) {

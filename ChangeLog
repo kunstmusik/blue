@@ -114,6 +114,13 @@ FIX
 
   * fixed track editor sizing
 
+  * fixed issue with OFF notes being editable, causing issues with not allowing
+  moving past those notes with arrow keys. OFF notes can now only be cleared
+  with ctrl-shift-space or a new note entered by using keyboard shortcut keys
+
+  * changed backspace shortcut to shift-backspace, due to interfering when 
+  editing values
+
 INTERNAL
 
 * replaced passing of SoundObjectLibrary when saving/loading, now uses 
