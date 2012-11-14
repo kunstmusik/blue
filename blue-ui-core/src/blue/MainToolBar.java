@@ -318,6 +318,10 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     public void renderProject() {
+        if(AuditionManager.getInstance().isRunning()) {
+            AuditionManager.getInstance().stop();
+        }
+        
         if (apiRunner != null && apiRunner.isRunning()) {
             apiRunner.stop();
             return;

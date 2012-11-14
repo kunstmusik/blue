@@ -191,7 +191,6 @@ public class APIDiskRenderer {
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
-            csound.delete();
             return buffer.toString();
         }
 
@@ -204,7 +203,6 @@ public class APIDiskRenderer {
         csound.SetMessageCallback(null);
         csound.SetHostData(null);
         csound.Reset();
-        csound.delete();
 
         keepRunning = false;
 
