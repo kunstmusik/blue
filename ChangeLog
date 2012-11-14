@@ -18,6 +18,15 @@ information.
 NEW
 
 * Modular Timeline: 
+  
+  * Layer Groups are now modular (plug-ins)
+
+  * New LayerGroups: SoundObject (based on previous Score system), Pattern
+
+  * (Please read manual entry for Score, sub-section Layer Groups for more 
+  information)
+
+  * patternsLayerGroupExample.blue added to examples/general
 
 * Added "Search Csound Manual" option in Help menu to allow searching online
   Csound Manual using search terms (i.e. "guard point"); uses Google search
@@ -79,6 +88,14 @@ UPDATED
   * When SoundObjectProperties windows becomes focused (selecting the window, 
   pressing F3, using window menu), name textfield requests focus; makes it 
   easier to edit SoundObjectName or tab down to other fields
+
+* Manual: 
+
+  * closed the online Wiki and migrated back to using Docbook
+
+  * release once again includes HTML and PDF versions of the manual
+
+  * Blue Manual link from Help menu points to HTML version of manual
 
 FIX
 
