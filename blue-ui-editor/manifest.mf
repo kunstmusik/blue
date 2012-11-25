@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.ui.editor
+OpenIDE-Module-Layer: blue/ui/editor/layer.xml
+OpenIDE-Module-Localizing-Bundle: blue/ui/editor/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

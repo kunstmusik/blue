@@ -36,6 +36,8 @@ import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
+import javax.swing.text.EditorKit;
+import org.openide.text.CloneableEditorSupport;
 
 /**
  * 
@@ -62,6 +64,9 @@ public class GenericEditor extends InstrumentEditor {
     public GenericEditor() {
         initComponents();
 
+        EditorKit kit = CloneableEditorSupport.getEditorKit("text/x-csound-orc");
+        jEditorPane1.setEditorKit(kit);;
+        
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
 
         globalOrcEditPane.getDocument().addDocumentListener(
@@ -185,6 +190,8 @@ public class GenericEditor extends InstrumentEditor {
         textEditPane = new blue.gui.BlueEditorPane();
         globalOrcEditPane = new blue.gui.BlueEditorPane();
         globalScoEditPane = new blue.gui.BlueEditorPane();
+        textEditPane2 = new javax.swing.JScrollPane();
+        jEditorPane1 = new javax.swing.JEditorPane();
 
         editorLabel.setText("jLabel1");
 
@@ -198,6 +205,10 @@ public class GenericEditor extends InstrumentEditor {
         tabs.addTab(BlueSystem.getString("instrument.instrumentText"), textEditPane);
         tabs.addTab(BlueSystem.getString("global.orchestra"), globalOrcEditPane);
         tabs.addTab(BlueSystem.getString("global.score"), globalScoEditPane);
+
+        textEditPane2.setViewportView(jEditorPane1);
+
+        tabs.addTab("tab4", textEditPane2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -240,9 +251,11 @@ public class GenericEditor extends InstrumentEditor {
     private javax.swing.JLabel editorLabel;
     private blue.gui.BlueEditorPane globalOrcEditPane;
     private blue.gui.BlueEditorPane globalScoEditPane;
+    private javax.swing.JEditorPane jEditorPane1;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JButton testButton;
     private blue.gui.BlueEditorPane textEditPane;
+    private javax.swing.JScrollPane textEditPane2;
     // End of variables declaration//GEN-END:variables
 
     @Override
