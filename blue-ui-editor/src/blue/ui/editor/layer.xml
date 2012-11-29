@@ -5,10 +5,11 @@
     
     <folder name="FontsColors">
       <folder name="blueDefaults">
-        <folder name="Defaults">
-          <file name="blue-ui-editor-BlueTheme-fontsColorsDefaults.xml" url="CityLights-fontsColorsDefaults.xml">
-                            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
-                        </file>
+        <attr name="position" intvalue="100"/>
+                <folder name="Defaults">
+          <file name="blue-ui-editor-BlueTheme-fontsColorsDefaults.xml" url="BlueTheme-fontsColorsDefaults.xml">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+          </file>
         </folder>
       </folder>
     </folder>

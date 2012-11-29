@@ -4,8 +4,10 @@
  */
 package blue.ui.editor.csound.orc;
 
+import csound.manual.CsoundManualUtilities;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.spi.lexer.Lexer;
 import org.netbeans.spi.lexer.LexerInput;
@@ -19,6 +21,9 @@ import org.netbeans.spi.lexer.TokenFactory;
 public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
 
     private static final Map<String,CsoundOrcTokenId> keywords = new HashMap<String,CsoundOrcTokenId>();
+    
+    private static final Set<String> opcodeNames = CsoundManualUtilities.getOpcodeNames();
+    
     static {
         addKeyword(CsoundOrcTokenId.INSTR_START);
         addKeyword(CsoundOrcTokenId.INSTR_END);
@@ -130,12 +135,21 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
 
                     if (Character.isLetter((char) ch)) { // identifier or keyword
                         while (true) {
-                            if (ch == EOF || !Character.isLetter((char) ch)) {
+                            if (ch == EOF || 
+                                    !(Character.isLetter((char) ch) ||
+                                    Character.isDigit((char) ch)) ) {
                                 input.backup(1); // backup the extra char (or EOF)
                                 // Check for keywords
-                                CsoundOrcTokenId id = keywords.get(input.readText());
+                                CharSequence word = input.readText();
+                                CsoundOrcTokenId id = keywords.get(word);
                                 if (id == null) {
-                                    id = CsoundOrcTokenId.IDENTIFIER;
+                                    
+                                    if(opcodeNames.contains(word)) {
+                                        id = CsoundOrcTokenId.OPCODE;
+                                    } else {
+                                        id = CsoundOrcTokenId.CHAR;
+                                    }
+                                    
                                 }
                                 return token(id);
                             }

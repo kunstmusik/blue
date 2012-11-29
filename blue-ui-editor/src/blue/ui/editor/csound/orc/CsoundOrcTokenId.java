@@ -28,6 +28,8 @@ public enum CsoundOrcTokenId implements TokenId {
     RPAREN(")", "separator"),
     ERROR(null, "error"),
     
+    OPCODE(null, "opcode"),
+    
     INSTR_START("instr", "keyword"),
     INSTR_END("endin", "keyword"),
     OPCODE_START("opcode", "keyword"),

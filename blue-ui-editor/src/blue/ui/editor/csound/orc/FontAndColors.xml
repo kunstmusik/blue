@@ -4,4 +4,5 @@
     <fontcolor name="keyword" default="keyword"/>
     <fontcolor name="whitespace" default="whitespace"/>
     <fontcolor name="character" default="character"/>
+    <fontcolor name="opcode" foreColor="orange"/>
 </fontscolors>
