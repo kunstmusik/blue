@@ -2,12 +2,23 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
   <folder name="Editors">
+    
+    <folder name="FontsColors">
+      <folder name="blueDefaults">
+        <folder name="Defaults">
+          <file name="blue-ui-editor-BlueTheme-fontsColorsDefaults.xml" url="CityLights-fontsColorsDefaults.xml">
+                            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                        </file>
+        </folder>
+      </folder>
+    </folder>
+    
     <folder name="text">
       <folder name="x-csound-orc">
         <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
         <file name="language.instance">
-            <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
-            <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
         </file>
         <file name="EditorKit.instance">
           <attr name="instanceClass" stringvalue="blue.ui.editor.csound.orc.CsoundOrcEditorKit"/>
@@ -34,10 +45,9 @@
   
   <folder name="OptionsDialog">
     <folder name="PreviewExamples">
-        <folder name="text">
-            <file name="x-csound-orc" url="csound/orc/CsoundOrcTemplate.orc"/>
-        </folder>
+      <folder name="text">
+        <file name="x-csound-orc" url="csound/orc/CsoundOrcTemplate.orc"/>
+      </folder>
     </folder>
-</folder>
+  </folder>
 </filesystem>
-
