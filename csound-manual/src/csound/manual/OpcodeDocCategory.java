@@ -20,7 +20,7 @@
 package csound.manual;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.Map;
 
 /**
  *
@@ -52,12 +52,12 @@ public class OpcodeDocCategory {
         }
     }
     
-    public void appendOpcodes(Set<String> opNames) {
+    public void appendOpcodes(Map<String,String> opNames) {
         for(OpcodeDocCategory cat : subGroups) {
             cat.appendOpcodes(opNames);
         }
         for(OpcodeDoc op : opcodes) {
-            opNames.add(op.opcodeName);
+            opNames.put(op.opcodeName, op.signature);
         }
     }
 }

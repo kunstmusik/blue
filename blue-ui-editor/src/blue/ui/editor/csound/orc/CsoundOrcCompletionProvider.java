@@ -4,6 +4,9 @@
  */
 package blue.ui.editor.csound.orc;
 
+import csound.manual.CsoundManualUtilities;
+import java.util.ArrayList;
+import java.util.Collections;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
@@ -24,6 +27,13 @@ import org.openide.util.Exceptions;
 @MimeRegistration(mimeType = "text/x-csound-orc", service = CompletionProvider.class)
 public class CsoundOrcCompletionProvider implements CompletionProvider {
 
+    protected static ArrayList<String> opNames;
+
+    static {
+        opNames = new ArrayList<String>(CsoundManualUtilities.getOpcodeNames());
+        Collections.sort(opNames);
+    }
+
     @Override
     public CompletionTask createTask(int queryType, JTextComponent component) {
         if (queryType != CompletionProvider.COMPLETION_QUERY_TYPE) {
@@ -36,10 +46,13 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
                 int startOffset = caretOffset - 1;
                 try {
                     final StyledDocument bDoc = (StyledDocument) document;
-                    final int lineStartOffset = getRowFirstNonWhite(bDoc, caretOffset);
-                    final char[] line = bDoc.getText(lineStartOffset, caretOffset - lineStartOffset).toCharArray();
+                    final int lineStartOffset = getRowFirstNonWhite(bDoc,
+                            caretOffset);
+                    final char[] line = bDoc.getText(lineStartOffset,
+                            caretOffset - lineStartOffset).toCharArray();
                     final int whiteOffset = indexOfWhite(line);
-                    filter = new String(line, whiteOffset + 1, line.length - whiteOffset - 1);
+                    filter = new String(line, whiteOffset + 1,
+                            line.length - whiteOffset - 1);
                     if (whiteOffset > 0) {
                         startOffset = lineStartOffset + whiteOffset + 1;
                     } else {
@@ -48,14 +61,19 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
                 } catch (BadLocationException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                
-                String[] opcodes = {"oscil", "oscil3", "oscili"};
-                for(int i = 0; i < opcodes.length; i++) {
-                    completionResultSet.addItem(new CsoundOrcCompletionItem(opcodes[i],
-                            opcodes[i]));
+
+                if (filter != null && !filter.equals("")) {
+                    for (String opName : opNames) {
+                        if (opName.startsWith(filter)) {
+                            completionResultSet.addItem(new CsoundOrcCompletionItem(
+                                    opName,
+                                    CsoundManualUtilities.getOpcodeSignature(
+                                    opName)));
+                        }
+                    }
                 }
-                
-                
+
+
                 completionResultSet.finish();
             }
         }, component);
@@ -65,7 +83,7 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
     public int getAutoQueryTypes(JTextComponent component, String typedText) {
         return 0;
     }
-    
+
     static int getRowFirstNonWhite(StyledDocument doc, int offset)
             throws BadLocationException {
         Element lineElement = doc.getParagraphElement(offset);
@@ -78,7 +96,8 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
             } catch (BadLocationException ex) {
                 throw (BadLocationException) new BadLocationException(
                         "calling getText(" + start + ", " + (start + 1)
-                        + ") on doc of length: " + doc.getLength(), start).initCause(ex);
+                        + ") on doc of length: " + doc.getLength(), start).initCause(
+                        ex);
             }
             start++;
         }

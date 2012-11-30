@@ -20,7 +20,9 @@
 package csound.manual;
 
 import csound.manual.impl.OpcodesParser;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,22 +30,25 @@ import java.util.Set;
  * @author stevenyi
  */
 public class CsoundManualUtilities {
-    
-    private static OpcodeDocCategory cat = null;
-    
+
+    private static OpcodeDocCategory cat;
+    private static Map<String,String> opcodesMap = new HashMap<String, String>();
+
+
+    static {
+        cat = OpcodesParser.loadOpcodesXML();
+        cat.appendOpcodes(opcodesMap);
+    }
+
     public static OpcodeDocCategory getOpcodeDocCategory() {
-        if(cat == null) {
-            cat = OpcodesParser.loadOpcodesXML();
-        }
         return cat;
     }
-    
+
     public static Set<String> getOpcodeNames() {
-        OpcodeDocCategory cat = getOpcodeDocCategory();
-        Set<String> opcodes = new HashSet<String>();
-        cat.appendOpcodes(opcodes);
-        return opcodes;
+        return opcodesMap.keySet();
     }
-    
-    
+
+    public static String getOpcodeSignature(String opcodeName) {
+        return opcodesMap.get(opcodeName);
+    }
 }
