@@ -4,6 +4,7 @@
  */
 package blue.ui.editor.csound.orc;
 
+import csound.manual.CsoundManualUtilities;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -81,7 +82,7 @@ public class CsoundOrcCompletionItem implements CompletionItem {
     @Override
     public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
         CompletionUtilities.renderHtml(null, this.opName, null, g, defaultFont,
-                (selected ? Color.red : Color.white), width, height, selected);
+                (selected ? Color.orange : Color.white), width, height, selected);
     }
 
     @Override
