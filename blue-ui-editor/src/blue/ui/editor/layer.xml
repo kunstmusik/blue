@@ -4,11 +4,16 @@
   <folder name="Editors">
     
     <folder name="FontsColors">
-      <folder name="blueDefaults">
-        <attr name="position" intvalue="100"/>
-                <folder name="Defaults">
-          <file name="blue-ui-editor-BlueTheme-fontsColorsDefaults.xml" url="BlueTheme-fontsColorsDefaults.xml">
+      <folder name="blueDefault">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+        <attr name="position" intvalue="0"/>
+        <folder name="Defaults">
+          <file name="org-netbeans-modules-defaults-token-colorings.xml" url="blueTokenColorings.xml">
             <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+          </file>
+          <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="blueHighlightColorings.xml">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+            <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
           </file>
         </folder>
       </folder>
@@ -32,7 +37,7 @@
         </folder>-->
         
         <folder name="FontsColors">
-          <folder name="NetBeans">
+          <folder name="blueDefaults">
             <folder name="Defaults">
               <file name="FontAndColors.xml" url="csound/orc/FontAndColors.xml">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>

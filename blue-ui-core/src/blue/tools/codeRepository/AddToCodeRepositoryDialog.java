@@ -18,7 +18,7 @@
  * Boston, MA  02111-1307 USA
  */
 
-package blue.gui;
+package blue.tools.codeRepository;
 
 import java.awt.BorderLayout;
 import java.awt.Container;

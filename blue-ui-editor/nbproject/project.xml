@@ -132,7 +132,9 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>blue.ui.editor.actions</package>
+            </public-packages>
         </data>
     </configuration>
 </project>

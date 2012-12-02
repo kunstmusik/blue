@@ -157,7 +157,7 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
                         }
                     }
 
-                    return token(CsoundOrcTokenId.ERROR);
+                    return token(CsoundOrcTokenId.CHAR);
             }
 
 

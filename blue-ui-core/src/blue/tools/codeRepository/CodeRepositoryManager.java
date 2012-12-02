@@ -27,6 +27,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 import blue.BlueSystem;
+import blue.ui.core.editor.actions.CodeRepositoryMenu;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -105,6 +106,8 @@ public class CodeRepositoryManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        CodeRepositoryMenu.reinitialize();
+
     }
 
     private static Element getElement(DefaultMutableTreeNode node) {

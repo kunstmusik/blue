@@ -29,7 +29,7 @@ your own identifying information:
 Contributor(s):
 
 The Original Software is NetBeans. The Initial Developer of the Original
-Software is Sun Microsystems, Inc. Portions Copyright 1997-2006 Sun
+Software is Sun Microsystems, Inc. Portions Copyright 1997-2007 Sun
 Microsystems, Inc. All Rights Reserved.
 
 If you wish your version of this file to be governed by only the CDDL
@@ -46,29 +46,8 @@ made subject to such option by the copyright holder.
 <!DOCTYPE fontscolors PUBLIC "-//NetBeans//DTD Editor Fonts and Colors settings 1.1//EN" "http://www.netbeans.org/dtds/EditorFontsColors-1_1.dtd">
 
 <fontscolors>
-    <fontcolor name="default" foreColor="white" bgColor="black"/>
-<!-- was: Constant -->
-    <fontcolor name="char" foreColor="8AA6C1"/>
-    <fontcolor name="comment" foreColor="428BDD">
-        <font style="italic" />
-    </fontcolor>
-    <fontcolor name="error" foreColor="white" bgColor="red"/>
-    <fontcolor name="identifier"/>
-    <fontcolor name="keyword" foreColor="F8BB00"/>
-    <fontcolor name="number" foreColor="EDDD3D"/>
-    <fontcolor name="operator"/>
-    <fontcolor name="string" foreColor="E2CE00"/>
-    <fontcolor name="whitespace"/>
-    
-    <!-- OO languages -->    
-    <fontcolor name="field" default="identifier"/>
-    <fontcolor name="method" default="identifier"/>
-    
-    <!-- Tag based languages -->
-    
-    <fontcolor name="markup-element" default="keyword"/>
-    <fontcolor name="markup-attribute" default="field"/>
-    <fontcolor name="markup-attribute-value" default="string"/>
-    <fontcolor name="entity-reference" default="default"/>
-    
+    <fontcolor name="nbeditor-bracesMatching-match" bgColor="FFF3FF0F"/>
+    <fontcolor name="nbeditor-bracesMatching-mismatch" bgColor="FFD83636"/>
+    <fontcolor name="nbeditor-bracesMatching-match-multichar" bgColor="FFF3FF0F"/>
+    <fontcolor name="nbeditor-bracesMatching-mismatch-multichar" bgColor="FFD83636"/>
 </fontscolors>

@@ -20,9 +20,9 @@
 package blue.ui.nbutilities;
 
 import java.awt.Component;
-import java.awt.Container;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
+import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.editor.Utilities;
@@ -42,6 +42,7 @@ public class BlueNbUtilities {
         
         EditorKit kit = CloneableEditorSupport.getEditorKit(mimeType);
         editor.setEditorKit(kit);
+        editor.setDocument(kit.createDefaultDocument());
         
         BaseDocument doc = Utilities.getDocument(editor);
         

@@ -22,6 +22,7 @@ package blue.ui.nbutilities;
 import java.awt.BorderLayout;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
+import javax.swing.text.Document;
 
 /**
  *
@@ -41,5 +42,17 @@ public class MimeTypeEditorComponent extends JPanel {
     
     public JEditorPane getJEditorPane() {
         return editor;
+    }
+
+    public Document getDocument() {
+        return editor.getDocument();
+    }
+
+    public String getText() {
+        return editor.getText();
+    }
+    
+    public void setText(String text) {
+        editor.setText(text);
     }
 }
