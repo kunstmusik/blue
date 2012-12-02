@@ -37,7 +37,7 @@
         </folder>-->
         
         <folder name="FontsColors">
-          <folder name="blueDefaults">
+          <folder name="blueDefault">
             <folder name="Defaults">
               <file name="FontAndColors.xml" url="csound/orc/FontAndColors.xml">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
