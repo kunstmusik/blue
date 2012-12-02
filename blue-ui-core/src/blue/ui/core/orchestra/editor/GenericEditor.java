@@ -69,6 +69,8 @@ public class GenericEditor extends InstrumentEditor {
         tabs.insertTab("Instrument Text", null, codeEditor, null, 0);
         
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
+        
+        tabs.setSelectedIndex(0);
 
         globalOrcEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
