@@ -49,7 +49,9 @@ public class JMask extends AbstractSoundObject {
 
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
 
-        NoteList nl = field.generateNotes(this.getSubjectiveDuration());
+        Field temp = (Field) ObjectUtilities.clone(field);
+        
+        NoteList nl = temp.generateNotes(this.getSubjectiveDuration());
 
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);

@@ -20,6 +20,8 @@ FIX
 * When rendering with API, automation values were always starting from time 0;
   adjusted current time calculation
   
+* Bug 3591867 - Fixed issue with JMask Segment modifying its points after each
+  render
 
 
 >Notes for 2.3.0<
