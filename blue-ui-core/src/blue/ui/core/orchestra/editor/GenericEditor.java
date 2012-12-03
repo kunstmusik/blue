@@ -126,6 +126,8 @@ public class GenericEditor extends InstrumentEditor {
         SwingUtil.installActions(globalOrcEditPane, undoActions);
         SwingUtil.installActions(globalScoEditPane, undoActions);
 
+        codeEditor.setUndoManager(undo);
+        
         undo.setLimit(1000);
 
     }

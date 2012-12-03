@@ -23,6 +23,8 @@ import java.awt.BorderLayout;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.text.Document;
+import javax.swing.undo.UndoManager;
+import org.netbeans.editor.BaseDocument;
 
 /**
  *
@@ -38,6 +40,10 @@ public class MimeTypeEditorComponent extends JPanel {
     public MimeTypeEditorComponent(String mimeType) {
         this.setLayout(new BorderLayout());
         this.add(BlueNbUtilities.convertEditorForMimeType(editor, mimeType));
+    }
+    
+    public void setUndoManager(UndoManager undo) {
+        editor.getDocument().putProperty(BaseDocument.UNDO_MANAGER_PROP, undo);
     }
     
     public JEditorPane getJEditorPane() {
