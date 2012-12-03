@@ -51,11 +51,11 @@ made subject to such option by the copyright holder.
     <fontcolor name="code-folding-bar" foreColor="ff666666"/>
     <fontcolor name="guarded" bgColor="ffDFDFDF"/>
     <fontcolor name="readonly-files" bgColor="ffDFDFDF"/>
-    <fontcolor name="highlight-caret-row" bgColor="030303"/>
+    <fontcolor name="highlight-caret-row" bgColor="333333"/>
     <fontcolor name="highlight-search" foreColor="ffFFB442" bgColor="black"/>
     <fontcolor name="inc-search" foreColor="ffFFB442" bgColor="black"/> <!-- ffff9900 -->
     <fontcolor name="line-number" foreColor="white" bgColor="black"/>
-    <fontcolor name="selection" bgColor="ff685d9c"/>
+    <fontcolor name="selection" bgColor="ffB0C5E3" foreColor="black"/>
     <fontcolor name="status-bar"/>
     <fontcolor name="status-bar-bold" foreColor="red"/>
     <fontcolor name="caret-color-insert-mode" foreColor="white"/>
