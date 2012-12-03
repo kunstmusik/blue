@@ -5,7 +5,9 @@
 package blue.ui.editor.csound.orc;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 
 /**
@@ -15,15 +17,23 @@ import org.openide.util.Exceptions;
 public class OpcodeDocumentation {
     public static String getOpcodeDocumentation(String opcodeName) {
         StringBuffer buffer = new StringBuffer();
-        String filename = "/Users/stevenyi/work/csound/manual/html/" + opcodeName + ".html";
-
+        
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        
+        String filename = manualDir.getAbsolutePath() + "/" + opcodeName + ".html";
+        File docFile = new File(filename);
+        
+        if(!docFile.exists() || !docFile.isFile() || !docFile.canRead()) {
+            return null;
+        }
+        
         boolean appending = false;
         
         buffer.append("<html>");
         
         try {
-            BufferedReader br = new BufferedReader(new FileReader(
-                    filename));
+            BufferedReader br = new BufferedReader(new FileReader(docFile));
             String line;
             while ((line = br.readLine().trim()) != null) {
                 if(appending) {

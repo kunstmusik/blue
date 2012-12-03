@@ -91,12 +91,13 @@ public class CsoundOrcCompletionItem implements CompletionItem {
             @Override
             protected void query(CompletionResultSet completionResultSet, Document document, int i) {
 
-                completionResultSet.setDocumentation(
-                        new CsoundOrcCompletionDocumentation(
-                            OpcodeDocumentation.getOpcodeDocumentation(opName)));
-
+                String doc = OpcodeDocumentation.getOpcodeDocumentation(opName);
+                if(doc != null) {
+                    completionResultSet.setDocumentation(
+                        new CsoundOrcCompletionDocumentation(doc));
+                }
+                
                 completionResultSet.finish();
-
             }
         });
     }
