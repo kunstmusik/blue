@@ -13,7 +13,7 @@ public class FileChooserManager {
     private HashMap<Object, DialogInfoSet> dialogInfoSets =
             new HashMap<Object, DialogInfoSet>();
 
-    private JFileChooser fileChooser = new JFileChooser();
+    private JFileChooser fileChooser;
 
     private static FileChooserManager instance = null;
 

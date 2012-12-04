@@ -61,7 +61,7 @@ import org.syntax.jedit.tokenmarker.Token;
  */
 public class Installer extends ModuleInstall {
 
-    BackupFileSaver backupFileSaver = new BackupFileSaver();
+    BackupFileSaver backupFileSaver;
     private ChangeListener textColorChangeListener;
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
@@ -100,11 +100,6 @@ public class Installer extends ModuleInstall {
 
         initializeTextDefaults();
 
-        Thread t = new Thread(backupFileSaver);
-        t.setPriority(Thread.MIN_PRIORITY);
-        t.setDaemon(true);
-        t.start();
-
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
         textColorChangeListener = new ChangeListener() {
@@ -131,6 +126,11 @@ public class Installer extends ModuleInstall {
 
             public void run() {
                 setWindowTitle();
+                backupFileSaver = new BackupFileSaver();
+                Thread t = new Thread(backupFileSaver);
+                t.setPriority(Thread.MIN_PRIORITY);
+                t.setDaemon(true);
+                t.start();
             }
         });
         
@@ -163,7 +163,13 @@ public class Installer extends ModuleInstall {
 //            }
 //        });
 
-        MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+            }
+        });
         
         OSCManager oscManager = OSCManager.getInstance();
         OSCActions.installActions(oscManager);
