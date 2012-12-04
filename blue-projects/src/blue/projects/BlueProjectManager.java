@@ -42,6 +42,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.JFileChooser;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
@@ -170,12 +171,23 @@ public class BlueProjectManager {
             } else {
                 BlueSystem.setCurrentProjectDirectory(null);
             }
-            try {
-                Score score = project.getData().getScore();
-                score.processOnLoad();
-            } catch (Exception ex) {
-                Exceptions.printStackTrace(ex);
-            }
+            
+            final Score score = project.getData().getScore();
+            
+            
+            new Thread(new Runnable() {
+
+                public void run() {
+                    try {
+                        score.processOnLoad();
+                    } catch (Exception ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+                
+            }).start();
+            
+            
         }
 
         fireUpdatedCurrentProject();

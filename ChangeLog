@@ -19,9 +19,13 @@ FIX
 
 * When rendering with API, automation values were always starting from time 0;
   adjusted current time calculation
-  
+
 * Bug 3591867 - Fixed issue with JMask Segment modifying its points after each
   render
+
+* Fixed intermittent issue with layer operations on Score; moved execution of 
+  Process on Load SoundObjects to separate thread when loading to prevent 
+  long-running operation on Swing dispatch thread
 
 
 >Notes for 2.3.0<
