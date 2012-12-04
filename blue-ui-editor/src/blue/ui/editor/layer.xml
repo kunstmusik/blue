@@ -20,6 +20,9 @@
     </folder>
     
     <folder name="text">
+      
+      <!-- Csound ORC -->
+      
       <folder name="x-csound-orc">
         <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
         <file name="language.instance">
@@ -45,7 +48,39 @@
             </folder>
           </folder>
         </folder>
+        
       </folder>
+      
+      <!-- BSB -->
+      
+      <folder name="x-blue-synth-builder">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.blueSynthBuilder.BlueSynthBuilderEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.blueSynthBuilder.BlueSynthBuilderEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+        <!--
+        <folder name="TokenListProvider">
+          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
+        </folder>-->
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="csound/orc/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+      </folder>
+      
+      
     </folder>
   </folder>
   

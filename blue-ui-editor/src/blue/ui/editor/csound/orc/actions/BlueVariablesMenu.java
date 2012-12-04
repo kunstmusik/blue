@@ -46,7 +46,9 @@ category = "Edit")
         displayName = "#blueVariablesMenu")
 @ActionReferences({
     @ActionReference(
-        path = "Editors/text/x-csound-orc/Popup", position = 600)
+        path = "Editors/text/x-csound-orc/Popup", position = 600),
+    @ActionReference(
+        path = "Editors/text/x-blue-synth-builder/Popup", position = 600)
 })
 @NbBundle.Messages("blueVariablesMenu=Blue Variables")
 public class BlueVariablesMenu extends BaseAction implements Presenter.Popup {

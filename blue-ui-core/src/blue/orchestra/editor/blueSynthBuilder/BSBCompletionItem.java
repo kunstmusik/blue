@@ -2,45 +2,39 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blue.ui.editor.csound.orc;
+package blue.orchestra.editor.blueSynthBuilder;
 
-import csound.manual.CsoundManualUtilities;
+import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTML;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.spi.editor.completion.CompletionItem;
-import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
-import org.netbeans.spi.editor.completion.support.AsyncCompletionQuery;
-import org.netbeans.spi.editor.completion.support.AsyncCompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;
 
 /**
  *
  * @author stevenyi
  */
-public class CsoundOrcCompletionItem implements CompletionItem {
+public class BSBCompletionItem implements CompletionItem {
 
-    private static String RIGHT_LABEL = "opcode";
-    
-    private final String opName;
-    private final String signature;
+    private final BSBObject bsbObj;
+    private final String replacementKey;
+    private final String objectType;
 
-    public CsoundOrcCompletionItem(String opName, String signature) {
-        this.opName = StringEscapeUtils.escapeHtml4(opName);
-        this.signature = signature;
+    public BSBCompletionItem(BSBObject bsbObj, String replacementKey) {
+        this.bsbObj = bsbObj;
+        this.replacementKey = replacementKey;
+        objectType = bsbObj.getClass().getSimpleName();
     }
 
     @Override
     public void defaultAction(JTextComponent component) {
-        replaceWordBeforeCaret(this.signature, component);
+        replaceWordBeforeCaret(replacementKey, component);
         Completion.get().hideAll();
     }
 
@@ -79,32 +73,32 @@ public class CsoundOrcCompletionItem implements CompletionItem {
 
     @Override
     public int getPreferredWidth(Graphics g, Font defaultFont) {
-        
-        return CompletionUtilities.getPreferredWidth(this.opName, RIGHT_LABEL, g,
+        return CompletionUtilities.getPreferredWidth(this.replacementKey, this.objectType, g,
                 defaultFont);
     }
 
     @Override
     public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
-        CompletionUtilities.renderHtml(null, this.opName, RIGHT_LABEL, g, defaultFont,
+        CompletionUtilities.renderHtml(null, this.replacementKey, this.objectType, g, defaultFont,
                 (selected ? Color.orange : Color.white), width, height, selected);
     }
 
     @Override
     public CompletionTask createDocumentationTask() {
-        return new AsyncCompletionTask(new AsyncCompletionQuery() {
-            @Override
-            protected void query(CompletionResultSet completionResultSet, Document document, int i) {
-
-                String doc = OpcodeDocumentation.getOpcodeDocumentation(opName);
-                if(doc != null) {
-                    completionResultSet.setDocumentation(
-                        new CsoundOrcCompletionDocumentation(doc));
-                }
-                
-                completionResultSet.finish();
-            }
-        });
+        return null;
+//        return new AsyncCompletionTask(new AsyncCompletionQuery() {
+//            @Override
+//            protected void query(CompletionResultSet completionResultSet, Document document, int i) {
+//
+//                String doc = OpcodeDocumentation.getOpcodeDocumentation(opName);
+//                if(doc != null) {
+//                    completionResultSet.setDocumentation(
+//                        new BSBCompletionDocumentation(doc));
+//                }
+//                
+//                completionResultSet.finish();
+//            }
+//        });
     }
 
     @Override
@@ -119,16 +113,16 @@ public class CsoundOrcCompletionItem implements CompletionItem {
 
     @Override
     public int getSortPriority() {
-        return 0;
+        return -5;
     }
 
     @Override
     public CharSequence getSortText() {
-        return opName;
+        return this.replacementKey;
     }
 
     @Override
     public CharSequence getInsertPrefix() {
-        return opName;
+        return this.replacementKey;
     }
 }

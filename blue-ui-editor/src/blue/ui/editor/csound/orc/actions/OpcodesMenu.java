@@ -46,7 +46,9 @@ category = "Edit")
         displayName = "#opcodesMenu")
 @ActionReferences({
     @ActionReference(
-        path = "Editors/text/x-csound-orc/Popup", position = 800, separatorAfter = 900)
+        path = "Editors/text/x-csound-orc/Popup", position = 800, separatorAfter = 900),
+    @ActionReference(
+        path = "Editors/text/x-blue-synth-builder/Popup", position = 800, separatorAfter = 900)
 })
 @NbBundle.Messages("opcodesMenu=Opcodes")
 public class OpcodesMenu extends BaseAction implements Presenter.Popup {

@@ -21,7 +21,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +51,7 @@ import blue.gui.BlueEditorPane;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
@@ -60,12 +60,17 @@ import blue.undo.TabSelectionWrapper;
  * @author steven
  */
 public class BSBCodeEditor extends JComponent {
+    
+    BSBCompletionProvider completionProvider = new BSBCompletionProvider();
 
-    BlueEditorPane codePane = new BlueEditorPane();
+    MimeTypeEditorComponent codePane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane alwaysOnCodePane = new BlueEditorPane();
+    MimeTypeEditorComponent alwaysOnCodePane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane globalOrcEditPane = new BlueEditorPane();
+    MimeTypeEditorComponent globalOrcEditPane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
     BlueEditorPane globalScoEditPane = new BlueEditorPane();
 
@@ -80,9 +85,10 @@ public class BSBCodeEditor extends JComponent {
         editBox.addEditModeListener(new EditModeListener() {
 
             public void setEditing(boolean isEditing) {
-                codePane.setEnabled(isEditing);
-                alwaysOnCodePane.setEnabled(isEditing);
-                globalOrcEditPane.setEnabled(isEditing);
+                codePane.getJEditorPane().setEnabled(isEditing);
+                // FIXME - does enable propagate?
+                alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
+                globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
                 globalScoEditPane.setEnabled(isEditing);
 
                 if (bsb != null) {
@@ -168,18 +174,29 @@ public class BSBCodeEditor extends JComponent {
         Action[] undoActions = new Action[]{new UndoAction(undo),
             new RedoAction(undo)};
 
-        SwingUtil.installActions(codePane, undoActions);
-        SwingUtil.installActions(alwaysOnCodePane, undoActions);
-        SwingUtil.installActions(globalOrcEditPane, undoActions);
+//        SwingUtil.installActions(codePane, undoActions);
+//        SwingUtil.installActions(alwaysOnCodePane, undoActions);
+//        SwingUtil.installActions(globalOrcEditPane, undoActions);
         SwingUtil.installActions(globalScoEditPane, undoActions);
 
+        codePane.setUndoManager(undo);
+        alwaysOnCodePane.setUndoManager(undo);
+        globalOrcEditPane.setUndoManager(undo);
+        
         undo.setLimit(1000);
+        
+        codePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
+        alwaysOnCodePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
+        globalOrcEditPane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
 
         initActions();
 
-        codePane.setEnabled(false);
-        alwaysOnCodePane.setEnabled(false);
-        globalOrcEditPane.setEnabled(false);
+        codePane.getJEditorPane().setEnabled(false);
+        alwaysOnCodePane.getJEditorPane().setEnabled(false);
+        globalOrcEditPane.getJEditorPane().setEnabled(false);
         globalScoEditPane.setEnabled(false);
 
     }
@@ -235,28 +252,29 @@ public class BSBCodeEditor extends JComponent {
      */
     private void initActions() {
 
-        AbstractAction codeCompleteAction = new AbstractAction() {
+//        AbstractAction codeCompleteAction = new AbstractAction() {
+//
+//            public void actionPerformed(ActionEvent e) {
+//                if (codePane.isEditable()) {
+//                    codeComplete((BlueEditorPane) e.getSource());
+//                }
+//            }
+//        };
 
-            public void actionPerformed(ActionEvent e) {
-                if (codePane.isEditable()) {
-                    codeComplete((BlueEditorPane) e.getSource());
-                }
-            }
-        };
-
-        KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
-                KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
-                | InputEvent.SHIFT_DOWN_MASK, false);
+//        KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
+//                KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
+//                | InputEvent.SHIFT_DOWN_MASK, false);
 
 
-        setupCodeCompleteAction(codePane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(alwaysOnCodePane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(globalOrcEditPane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(globalScoEditPane, codeCompleteKeyStroke,
-                codeCompleteAction);
+//        setupCodeCompleteAction(codePane, codeCompleteKeyStroke,
+//                codeCompleteAction);
+//        setupCodeCompleteAction(alwaysOnCodePane, codeCompleteKeyStroke,
+//                codeCompleteAction);
+//        setupCodeCompleteAction(globalOrcEditPane, codeCompleteKeyStroke,
+//                codeCompleteAction);
+        
+//        setupCodeCompleteAction(globalScoEditPane, codeCompleteKeyStroke,
+//                codeCompleteAction);
 
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.
@@ -286,13 +304,13 @@ public class BSBCodeEditor extends JComponent {
         this.bsb = null;
 
         codePane.setText(bsb.getInstrumentText());
-        codePane.setCaretPosition(0);
+        codePane.getJEditorPane().setCaretPosition(0);
 
         alwaysOnCodePane.setText(bsb.getAlwaysOnInstrumentText());
-        alwaysOnCodePane.setCaretPosition(0);
+        alwaysOnCodePane.getJEditorPane().setCaretPosition(0);
 
         globalOrcEditPane.setText(bsb.getGlobalOrc());
-        globalOrcEditPane.setCaretPosition(0);
+        globalOrcEditPane.getJEditorPane().setCaretPosition(0);
 
         globalScoEditPane.setText(bsb.getGlobalSco());
         globalScoEditPane.setCaretPosition(0);
@@ -301,8 +319,10 @@ public class BSBCodeEditor extends JComponent {
             if (editBox.isSelected() != bsb.isEditEnabled()) {
                 editBox.doClick();
             }
+            completionProvider.setBSBGraphicInterface(bsb.getGraphicInterface());
         } else {
             editBox.setSelected(false);
+            completionProvider.setBSBGraphicInterface(null);
         }
 
         this.bsb = bsb;

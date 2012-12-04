@@ -1,19 +1,33 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * blue - object composition environment for csound
+ * Copyright (C) 2012
+ * Steven Yi <stevenyi@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.editor.csound.orc;
+package blue.orchestra.editor.blueSynthBuilder;
 
-import csound.manual.CsoundManualUtilities;
-import java.util.ArrayList;
-import java.util.Collections;
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import java.util.Iterator;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import org.netbeans.api.editor.mimelookup.MimeRegistration;
-import org.netbeans.api.editor.mimelookup.MimeRegistrations;
 import org.netbeans.spi.editor.completion.CompletionProvider;
 import org.netbeans.spi.editor.completion.CompletionResultSet;
 import org.netbeans.spi.editor.completion.CompletionTask;
@@ -25,24 +39,18 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-@MimeRegistrations({
-@MimeRegistration(mimeType = "text/x-csound-orc", 
-        service = CompletionProvider.class, position=100),
-@MimeRegistration(mimeType = "text/x-blue-synth-builder", 
-        service = CompletionProvider.class, position=100)
-})
-public class CsoundOrcCompletionProvider implements CompletionProvider {
+public class BSBCompletionProvider implements CompletionProvider {
 
-    protected static ArrayList<String> opNames;
+    BSBGraphicInterface bsbInterface = null;
 
-    static {
-        opNames = new ArrayList<String>(CsoundManualUtilities.getOpcodeNames());
-        Collections.sort(opNames);
+    public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
+        this.bsbInterface = bsbInterface;
     }
 
     @Override
     public CompletionTask createTask(int queryType, JTextComponent component) {
-        if (queryType != CompletionProvider.COMPLETION_QUERY_TYPE) {
+        if (queryType != CompletionProvider.COMPLETION_QUERY_TYPE
+                || bsbInterface == null) {
             return null;
         }
         return new AsyncCompletionTask(new AsyncCompletionQuery() {
@@ -69,14 +77,33 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
                 }
 
                 if (filter != null && !filter.equals("")) {
-                    for (String opName : opNames) {
-                        if (opName.startsWith(filter)) {
-                            completionResultSet.addItem(new CsoundOrcCompletionItem(
-                                    opName,
-                                    CsoundManualUtilities.getOpcodeSignature(
-                                    opName)));
+
+                    int index = filter.indexOf("<");
+
+                    if (index >= 0) {
+
+                        filter = filter.substring(index + 1);
+                        Iterator<BSBObject> bsbObjects = bsbInterface.iterator();
+                        while (bsbObjects.hasNext()) {
+                            BSBObject bsbObj = bsbObjects.next();
+
+                            String[] keys = bsbObj.getReplacementKeys();
+
+                            if (keys == null) {
+                                continue;
+                            }
+
+                            for (String key : keys) {
+                                if (filter.isEmpty() || key.startsWith(filter)) {
+                                    completionResultSet.addItem(new BSBCompletionItem(
+                                            bsbObj, key));
+                                }
+                            }
                         }
+
                     }
+
+
                 }
 
 
