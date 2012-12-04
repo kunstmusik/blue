@@ -7,6 +7,8 @@ package blue.ui.editor.csound.orc;
 import csound.manual.CsoundManualUtilities;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
@@ -26,10 +28,10 @@ import org.openide.util.Exceptions;
  * @author stevenyi
  */
 @MimeRegistrations({
-@MimeRegistration(mimeType = "text/x-csound-orc", 
-        service = CompletionProvider.class, position=100),
-@MimeRegistration(mimeType = "text/x-blue-synth-builder", 
-        service = CompletionProvider.class, position=100)
+    @MimeRegistration(mimeType = "text/x-csound-orc",
+    service = CompletionProvider.class, position = 100),
+    @MimeRegistration(mimeType = "text/x-blue-synth-builder",
+    service = CompletionProvider.class, position = 100)
 })
 public class CsoundOrcCompletionProvider implements CompletionProvider {
 
@@ -69,14 +71,42 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
                 }
 
                 if (filter != null && !filter.equals("")) {
-                    for (String opName : opNames) {
-                        if (opName.startsWith(filter)) {
-                            completionResultSet.addItem(new CsoundOrcCompletionItem(
-                                    opName,
-                                    CsoundManualUtilities.getOpcodeSignature(
-                                    opName)));
+                    int index = filter.lastIndexOf("(");
+                    if (index >= 0) {
+                        filter = filter.substring(index + 1);
+                    }
+
+                    if (!filter.isEmpty()) {
+                        if (isCsoundVariable(filter)) {
+
+                            String textBeforeWord;
+                            try {
+                                textBeforeWord = document.getText(0,
+                                        startOffset);
+                                ArrayList<String> varMatches = findMatches(
+                                        textBeforeWord,
+                                        filter);
+
+                                for (String var : varMatches) {
+                                    completionResultSet.addItem(new CsoundOrcVariableCompletionItem(
+                                            var));
+                                }
+                            } catch (BadLocationException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
+                        }
+
+                        for (String opName : opNames) {
+                            if (opName.startsWith(filter)) {
+                                completionResultSet.addItem(new CsoundOrcCompletionItem(
+                                        opName,
+                                        CsoundManualUtilities.getOpcodeSignature(
+                                        opName)));
+                            }
                         }
                     }
+
+
                 }
 
 
@@ -90,6 +120,38 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
         return 0;
     }
 
+    private ArrayList<String> findMatches(String source, String toMatch) {
+        Pattern p = Pattern.compile("\\b" + toMatch + "\\w*");
+        Matcher m = p.matcher(source);
+
+        ArrayList<String> matches = new ArrayList<String>();
+
+        while (m.find()) {
+            String match = m.group();
+            if (!matches.contains(match) && !opNames.contains(match)) {
+                matches.add(match);
+            }
+        }
+
+        return matches;
+    }
+
+    private boolean isCsoundVariable(String word) {
+        return (word.startsWith("i") || word.startsWith("k")
+                || word.startsWith("a") || word.startsWith("gi")
+                || word.startsWith("gk") || word.startsWith("ga")
+                || word.startsWith("w") || word.startsWith("f")
+                || word.startsWith("gw") || word.startsWith("gf")
+                || word.startsWith("S") || word.startsWith("gS"));
+    }
+
+    //    if (isCsoundVariable(word)) {
+//                ArrayList varMatches = findMatches(getTextBeforeWord(word),
+//                        word);
+//                options.addAll(varMatches);
+//            }
+//
+//            Collections.<String>sort(options);
     static int getRowFirstNonWhite(StyledDocument doc, int offset)
             throws BadLocationException {
         Element lineElement = doc.getParagraphElement(offset);
