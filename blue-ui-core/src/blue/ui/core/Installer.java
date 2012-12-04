@@ -73,6 +73,8 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
 
+        System.setProperty("jffi.unsafe.disabled", "true");
+        
 //        System.setProperty("netbeans.winsys.no_toolbars", "true");
 //
 //        SwingUtilities.invokeLater(new Runnable() {
