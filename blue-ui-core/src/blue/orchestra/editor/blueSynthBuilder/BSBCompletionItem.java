@@ -11,6 +11,7 @@ import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionTask;
@@ -24,11 +25,13 @@ public class BSBCompletionItem implements CompletionItem {
 
     private final BSBObject bsbObj;
     private final String replacementKey;
+    private final String label;
     private final String objectType;
 
     public BSBCompletionItem(BSBObject bsbObj, String replacementKey) {
         this.bsbObj = bsbObj;
-        this.replacementKey = replacementKey;
+        this.replacementKey = "<" + replacementKey + ">";
+        this.label = StringEscapeUtils.escapeHtml4(replacementKey);
         objectType = bsbObj.getClass().getSimpleName();
     }
 
@@ -46,17 +49,22 @@ public class BSBCompletionItem implements CompletionItem {
 
         String text = jtc.getText();
         int len = text.length();
-
-        while (index1 >= 0 && !Character.isWhitespace(text.charAt(index1))) {
+        
+        char c = text.charAt(index1);
+        
+        while (index1 >= 0 && !(Character.isWhitespace(c) || c == '(')) {
             index1--;
+            c = text.charAt(index1);
         }
-
+        
         index1 += 1;
 
-        while (index2 < len && !Character.isWhitespace(text.charAt(index2))) {
+        c = text.charAt(index2);
+        while (index2 < len && !(Character.isWhitespace(c) || c == ')')) {
             index2++;
+             c = text.charAt(index2);
         }
-
+        
         try {
             jtc.getDocument().remove(index1, index2 - index1);
             jtc.getDocument().insertString(index1, replacementText, null);
@@ -73,13 +81,13 @@ public class BSBCompletionItem implements CompletionItem {
 
     @Override
     public int getPreferredWidth(Graphics g, Font defaultFont) {
-        return CompletionUtilities.getPreferredWidth(this.replacementKey, this.objectType, g,
+        return CompletionUtilities.getPreferredWidth(this.label, this.objectType, g,
                 defaultFont);
     }
 
     @Override
     public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
-        CompletionUtilities.renderHtml(null, this.replacementKey, this.objectType, g, defaultFont,
+        CompletionUtilities.renderHtml(null, this.label, this.objectType, g, defaultFont,
                 (selected ? Color.orange : Color.white), width, height, selected);
     }
 
