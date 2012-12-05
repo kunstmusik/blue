@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
@@ -35,34 +34,38 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 
 import blue.BlueSystem;
+import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import blue.undo.NoStyleChangeUndoManager;
 import blue.utility.GUI;
+import javax.swing.undo.UndoManager;
 
 /**
- * 
+ *
  * @author steven
  */
 public class EffectEditor extends javax.swing.JPanel implements
         PropertyChangeListener {
 
+    //FIXME - check if this class needs to add removeNotify to remove listeners
     BSBInterfaceEditor interfaceEditor = new BSBInterfaceEditor(
             EffectsObjectRegistry.getBSBObjects(), true);
-
-    EffectCodeEditor code = new EffectCodeEditor();
-
+    BSBCompletionProvider completionProvider = new BSBCompletionProvider();
+    MimeTypeEditorComponent code1 = new MimeTypeEditorComponent(
+            "text/x-blue-synth-builder");
     JLabel xInLabel = new JLabel();
-
     JLabel xOutLabel = new JLabel();
-
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
-
     JTextArea commentsText = new JTextArea();
-
     private Effect effect = null;
+    UndoManager undo = new NoStyleChangeUndoManager();
 
-    /** Creates new form EffectEditor */
+    /**
+     * Creates new form EffectEditor
+     */
     public EffectEditor() {
         initComponents();
 
@@ -70,7 +73,7 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         JPanel codePanel = new JPanel(new BorderLayout());
         codePanel.add(xInLabel, BorderLayout.NORTH);
-        codePanel.add(code, BorderLayout.CENTER);
+        codePanel.add(code1, BorderLayout.CENTER);
         codePanel.add(xOutLabel, BorderLayout.SOUTH);
 
         inSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
@@ -103,13 +106,11 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         commentsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
-
                     public void documentChanged(DocumentEvent e) {
                         if (effect != null) {
                             effect.setComments(commentsText.getText());
                         }
                     }
-
                 });
 
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
@@ -117,6 +118,19 @@ public class EffectEditor extends javax.swing.JPanel implements
         tabs.add("Comments", new JScrollPane(commentsText));
 
         setEffect(null);
+
+        code1.getDocument().addUndoableEditListener(undo);
+        code1.setUndoManager(undo);
+        code1.getJEditorPane().putClientProperty("bsb-completion-provider",
+                completionProvider);
+        code1.getDocument().addDocumentListener(
+                new SimpleDocumentListener() {
+                    public void documentChanged(DocumentEvent e) {
+                        if (effect != null) {
+                            effect.setCode(code1.getText());
+                        }
+                    }
+                });
     }
 
     public void setEffect(Effect effect) {
@@ -132,12 +146,13 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         if (effect == null) {
             interfaceEditor.editInterface(null, null);
-            code.editEffect(effect);
+            completionProvider.setBSBGraphicInterface(null);
+            code1.setText(null);
             commentsText.setText("");
             inSpinner.setValue(new Integer(1));
             outSpinner.setValue(new Integer(1));
 
-            // code.setEnabled(false);
+            code1.getJEditorPane().setEnabled(false);
             commentsText.setEnabled(false);
             inSpinner.setEnabled(false);
             outSpinner.setEnabled(false);
@@ -145,13 +160,15 @@ public class EffectEditor extends javax.swing.JPanel implements
             udoPanel.editOpcodeList(null);
         } else {
             interfaceEditor.editInterface(effect.getGraphicInterface(), null);
-            code.editEffect(effect);
+            completionProvider.setBSBGraphicInterface(
+                    effect.getGraphicInterface());
+            code1.getJEditorPane().setText(effect.getCode());
             commentsText.setText(effect.getComments());
 
             inSpinner.setValue(new Integer(effect.getNumIns()));
             outSpinner.setValue(new Integer(effect.getNumOuts()));
 
-            // code.setEnabled(true);
+            code1.getJEditorPane().setEnabled(true);
             commentsText.setEnabled(true);
             inSpinner.setEnabled(true);
             outSpinner.setEnabled(true);
@@ -161,9 +178,13 @@ public class EffectEditor extends javax.swing.JPanel implements
             effect.addPropertyChangeListener(this);
         }
 
+        code1.getJEditorPane().setCaretPosition(0);
+
+        
         this.effect = effect;
 
         updateXLabels();
+        undo.discardAllEdits();
     }
 
     private void updateXLabels() {
@@ -273,7 +294,6 @@ public class EffectEditor extends javax.swing.JPanel implements
             }
         }
     }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSpinner inSpinner;
     private javax.swing.JLabel inputLabel;
@@ -281,5 +301,4 @@ public class EffectEditor extends javax.swing.JPanel implements
     private javax.swing.JLabel outputLabel;
     private javax.swing.JTabbedPane tabs;
     // End of variables declaration//GEN-END:variables
-
 }
