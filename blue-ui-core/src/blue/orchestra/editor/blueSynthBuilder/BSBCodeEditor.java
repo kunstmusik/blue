@@ -201,80 +201,10 @@ public class BSBCodeEditor extends JComponent {
 
     }
 
-    public void codeComplete(BlueEditorPane bPane) {
-        BSBGraphicInterface bsbGr = bsb.getGraphicInterface();
-
-        if (bsbGr.size() == 0) {
-            return;
-        }
-
-        // String[] matches = new String[bsbGr.size()];
-
-        ArrayList matches = new ArrayList();
-
-        for (int i = 0; i < bsbGr.size(); i++) {
-            BSBObject bsbObj = bsbGr.getBSBObject(i);
-            String objName = bsbObj.getObjectName();
-
-            if (objName != null && !objName.equals("")) {
-                matches.addAll(Arrays.asList(bsbObj.getReplacementKeys()));
-            }
-        }
-
-        if (matches.size() == 0) {
-            return;
-        }
-
-        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem.
-                getString("instrument.bsb.codeComplete.message"), BlueSystem.
-                getString("instrument.bsb.codeComplete.title"),
-                JOptionPane.INFORMATION_MESSAGE, null, matches.toArray(),
-                matches.get(0));
-
-        if (selectedValue == null) {
-            return;
-        }
-
-        int position = bPane.getCaretPosition();
-
-        try {
-            bPane.getDocument().insertString(position,
-                    "<" + selectedValue.toString() + ">", null);
-        } catch (BadLocationException e) {
-            // should never occur
-            e.printStackTrace();
-        }
-
-    }
-
     /**
      * 
      */
     private void initActions() {
-
-//        AbstractAction codeCompleteAction = new AbstractAction() {
-//
-//            public void actionPerformed(ActionEvent e) {
-//                if (codePane.isEditable()) {
-//                    codeComplete((BlueEditorPane) e.getSource());
-//                }
-//            }
-//        };
-
-//        KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
-//                KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
-//                | InputEvent.SHIFT_DOWN_MASK, false);
-
-
-//        setupCodeCompleteAction(codePane, codeCompleteKeyStroke,
-//                codeCompleteAction);
-//        setupCodeCompleteAction(alwaysOnCodePane, codeCompleteKeyStroke,
-//                codeCompleteAction);
-//        setupCodeCompleteAction(globalOrcEditPane, codeCompleteKeyStroke,
-//                codeCompleteAction);
-        
-//        setupCodeCompleteAction(globalScoEditPane, codeCompleteKeyStroke,
-//                codeCompleteAction);
 
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.
