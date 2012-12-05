@@ -52,6 +52,40 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
             int ch = input.read();
 
             switch (ch) {
+                case '\"':
+                    while (true) {
+                        switch (input.read()) {
+                            case '\\':
+                                input.read();
+                                break;
+                            case '\"':
+                                return token(CsoundOrcTokenId.STRING);
+                            case '\n':
+                            case EOF:
+                                return token(CsoundOrcTokenId.ERROR);
+                        }
+                    }
+                    
+                case '{':
+                    if(input.read() == '{') {
+                        while (true) {
+                            switch (input.read()) {
+                                case '}':
+                                    if(input.read() == '}') {
+                                        return token(CsoundOrcTokenId.STRING);
+                                    } else {
+                                        input.backup(1);
+                                    }
+                                    break;
+                                case EOF:
+                                    return token(CsoundOrcTokenId.ERROR);
+                            }
+                        }
+                    } else {
+                        input.backup(1);
+                        return token(CsoundOrcTokenId.ERROR);
+                    }
+                
                 case '+':
                 case '-':
                 case '*':

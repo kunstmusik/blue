@@ -14,6 +14,7 @@ import org.netbeans.api.lexer.TokenId;
 public enum CsoundOrcTokenId implements TokenId {
 
     CHAR(null, "character"),
+    STRING(null, "string"),
     IDENTIFIER(null, "identifier"),
     COMMENT(null, "comment"),
     KEYWORD(null, "keyword"),
