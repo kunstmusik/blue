@@ -137,7 +137,8 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
                         while (true) {
                             if (ch == EOF || 
                                     !(Character.isLetter((char) ch) ||
-                                    Character.isDigit((char) ch)) ) {
+                                    Character.isDigit((char) ch) ||
+                                    ch == '_') ) {
                                 input.backup(1); // backup the extra char (or EOF)
                                 // Check for keywords
                                 CharSequence word = input.readText();
