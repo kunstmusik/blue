@@ -22,6 +22,7 @@ package blue.ui.core.udo;
 import blue.BlueSystem;
 import blue.gui.InfoDialog;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.NoStyleChangeUndoManager;
 import blue.undo.TabSelectionWrapper;
@@ -49,6 +50,8 @@ public class UDOEditor extends javax.swing.JPanel {
 
     UndoManager undo = new NoStyleChangeUndoManager();
     
+    MimeTypeEditorComponent codeBody = new MimeTypeEditorComponent("text/x-csound-orc");
+    
     /**
      * Creates new form UDOEditor
      */
@@ -62,7 +65,9 @@ public class UDOEditor extends javax.swing.JPanel {
             }
 
         };
-
+         
+        jTabbedPane1.insertTab("Code", null, codeBody, null, 0);
+        jTabbedPane1.setSelectedIndex(0);
         outTypes.getDocument().addDocumentListener(dl);
         inTypes.getDocument().addDocumentListener(dl);
 
@@ -133,9 +138,10 @@ public class UDOEditor extends javax.swing.JPanel {
 
         setUndoActions(outTypes, undoAction, redoAction);
         setUndoActions(inTypes, undoAction, redoAction);
-        setUndoActions(codeBody, undoAction, redoAction);
         setUndoActions(comments, undoAction, redoAction);
 
+        codeBody.setUndoManager(undo);
+        
         undo.setLimit(1000);
     }
 
@@ -203,7 +209,7 @@ public class UDOEditor extends javax.swing.JPanel {
 
             outTypes.setEnabled(false);
             inTypes.setEnabled(false);
-            codeBody.setEnabled(false);
+            codeBody.getJEditorPane().setEnabled(false);
             comments.setEnabled(false);
         } else {
             outTypes.setText(udo.outTypes);
@@ -213,10 +219,10 @@ public class UDOEditor extends javax.swing.JPanel {
 
             outTypes.setEnabled(true);
             inTypes.setEnabled(true);
-            codeBody.setEnabled(true);
+            codeBody.getJEditorPane().setEnabled(true);
             comments.setEnabled(true);
         }
-
+        codeBody.getJEditorPane().setCaretPosition(0);
     }
     
     /**
@@ -229,7 +235,6 @@ public class UDOEditor extends javax.swing.JPanel {
     private void initComponents() {
 
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        codeBody = new blue.gui.BlueEditorPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         comments = new javax.swing.JTextArea();
         outTypesLabel = new javax.swing.JLabel();
@@ -237,8 +242,6 @@ public class UDOEditor extends javax.swing.JPanel {
         inTypesLabel = new javax.swing.JLabel();
         inTypes = new javax.swing.JTextField();
         testOpcodeButton = new javax.swing.JButton();
-
-        jTabbedPane1.addTab(org.openide.util.NbBundle.getMessage(UDOEditor.class, "UDOEditor.codeBody.TabConstraints.tabTitle"), codeBody); // NOI18N
 
         comments.setColumns(20);
         comments.setRows(5);
@@ -289,7 +292,6 @@ public class UDOEditor extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.gui.BlueEditorPane codeBody;
     private javax.swing.JTextArea comments;
     private javax.swing.JTextField inTypes;
     private javax.swing.JLabel inTypesLabel;
