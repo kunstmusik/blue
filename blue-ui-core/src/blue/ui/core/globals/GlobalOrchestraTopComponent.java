@@ -9,7 +9,6 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -17,6 +16,7 @@ import java.io.Serializable;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -35,7 +35,7 @@ final class GlobalOrchestraTopComponent extends TopComponent {
 
     private GlobalOrcSco globalOrcSco = null;
     
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     MimeTypeEditorComponent editor;
 
@@ -47,6 +47,9 @@ final class GlobalOrchestraTopComponent extends TopComponent {
 
         editor = new MimeTypeEditorComponent("text/x-csound-orc");
         this.add(editor, BorderLayout.CENTER);
+        
+        editor.getDocument().addUndoableEditListener(undo);
+
         
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
@@ -86,7 +89,6 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         }
         
         editor.getJEditorPane().setCaretPosition(0);
-        editor.getDocument().addUndoableEditListener(undo);
 
         undo.discardAllEdits();
     }

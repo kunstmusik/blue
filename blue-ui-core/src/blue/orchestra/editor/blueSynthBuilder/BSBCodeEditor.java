@@ -22,39 +22,26 @@ package blue.orchestra.editor.blueSynthBuilder;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
-import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.actions.RedoAction;
-import blue.actions.UndoAction;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.gui.BlueEditorPane;
 import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
-import blue.undo.TabSelectionWrapper;
+import blue.undo.TabWatchingUndoableEditGenerator;
+import org.openide.awt.UndoRedo;
 
 /**
  * @author steven
@@ -72,13 +59,14 @@ public class BSBCodeEditor extends JComponent {
     MimeTypeEditorComponent globalOrcEditPane = 
             new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane globalScoEditPane = new BlueEditorPane();
-
+    MimeTypeEditorComponent globalScoEditPane = 
+            new MimeTypeEditorComponent("text/plain");
+    
     BlueSynthBuilder bsb = new BlueSynthBuilder();
 
     EditEnabledCheckBox editBox = new EditEnabledCheckBox();
 
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     public BSBCodeEditor() {
 
@@ -86,10 +74,9 @@ public class BSBCodeEditor extends JComponent {
 
             public void setEditing(boolean isEditing) {
                 codePane.getJEditorPane().setEnabled(isEditing);
-                // FIXME - does enable propagate?
                 alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
                 globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
-                globalScoEditPane.setEnabled(isEditing);
+                globalScoEditPane.getJEditorPane().setEnabled(isEditing);
 
                 if (bsb != null) {
                     bsb.setEditEnabled(isEditing);
@@ -151,37 +138,17 @@ public class BSBCodeEditor extends JComponent {
         this.add(topBar, BorderLayout.NORTH);
         this.add(tabs, BorderLayout.CENTER);
 
-        UndoableEditListener ul = new UndoableEditListener() {
+        new TabWatchingUndoableEditGenerator(tabs, undo);
 
-            public void undoableEditHappened(UndoableEditEvent e) {
-                UndoableEdit event = e.getEdit();
-
-                if (event.getPresentationName().equals("style change")) {
-                    undo.addEdit(event);
-                } else {
-                    TabSelectionWrapper wrapper = new TabSelectionWrapper(
-                            event, tabs);
-                    undo.addEdit(wrapper);
-                }
-            }
-        };
-
-        codePane.getDocument().addUndoableEditListener(ul);
-        alwaysOnCodePane.getDocument().addUndoableEditListener(ul);
-        globalOrcEditPane.getDocument().addUndoableEditListener(ul);
-        globalScoEditPane.getDocument().addUndoableEditListener(ul);
-
-        Action[] undoActions = new Action[]{new UndoAction(undo),
-            new RedoAction(undo)};
-
-//        SwingUtil.installActions(codePane, undoActions);
-//        SwingUtil.installActions(alwaysOnCodePane, undoActions);
-//        SwingUtil.installActions(globalOrcEditPane, undoActions);
-        SwingUtil.installActions(globalScoEditPane, undoActions);
+        codePane.getDocument().addUndoableEditListener(undo);
+        alwaysOnCodePane.getDocument().addUndoableEditListener(undo);
+        globalOrcEditPane.getDocument().addUndoableEditListener(undo);
+        globalScoEditPane.getDocument().addUndoableEditListener(undo);
 
         codePane.setUndoManager(undo);
         alwaysOnCodePane.setUndoManager(undo);
         globalOrcEditPane.setUndoManager(undo);
+        globalScoEditPane.setUndoManager(undo);
         
         undo.setLimit(1000);
         
@@ -197,7 +164,7 @@ public class BSBCodeEditor extends JComponent {
         codePane.getJEditorPane().setEnabled(false);
         alwaysOnCodePane.getJEditorPane().setEnabled(false);
         globalOrcEditPane.getJEditorPane().setEnabled(false);
-        globalScoEditPane.setEnabled(false);
+        globalScoEditPane.getJEditorPane().setEnabled(false);
 
     }
 
@@ -243,7 +210,7 @@ public class BSBCodeEditor extends JComponent {
         globalOrcEditPane.getJEditorPane().setCaretPosition(0);
 
         globalScoEditPane.setText(bsb.getGlobalSco());
-        globalScoEditPane.setCaretPosition(0);
+        globalScoEditPane.getJEditorPane().setCaretPosition(0);
 
         if (bsb != null) {
             if (editBox.isSelected() != bsb.isEditEnabled()) {

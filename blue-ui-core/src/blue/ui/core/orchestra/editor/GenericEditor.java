@@ -3,7 +3,6 @@
  *
  * Created on November 16, 2006, 2:41 PM
  */
-
 package blue.ui.core.orchestra.editor;
 
 import java.util.HashMap;
@@ -11,14 +10,10 @@ import java.util.HashMap;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
 import org.syntax.jedit.tokenmarker.JavaScriptTokenMarker;
 import org.syntax.jedit.tokenmarker.PythonTokenMarker;
-import org.syntax.jedit.tokenmarker.TokenMarker;
 
 import skt.swing.SwingUtil;
 import blue.BlueSystem;
@@ -35,19 +30,25 @@ import blue.orchestra.editor.InstrumentEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
-import blue.undo.TabSelectionWrapper;
+import blue.undo.TabWatchingUndoableEditGenerator;
+import org.openide.awt.UndoRedo;
 
 /**
- * 
+ *
  * @author steven
  */
 public class GenericEditor extends InstrumentEditor {
 
     private static HashMap tokenMarkerTypes = new HashMap();
     
-    protected MimeTypeEditorComponent codeEditor = 
+    protected MimeTypeEditorComponent codeEditor =
             new MimeTypeEditorComponent("text/x-csound-orc");
+    
+    protected MimeTypeEditorComponent globalOrcEditor =
+            new MimeTypeEditorComponent("text/x-csound-orc");
+    
+    protected MimeTypeEditorComponent globalScoEditor =
+            new MimeTypeEditorComponent("text/plain");
 
     static {
         tokenMarkerTypes.put(GenericInstrument.class, new CsoundTokenMarker());
@@ -55,37 +56,38 @@ public class GenericEditor extends InstrumentEditor {
         tokenMarkerTypes
                 .put(RhinoInstrument.class, new JavaScriptTokenMarker());
     }
-
     GenericEditable instr;
-
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
+    UndoManager undo = new UndoRedo.Manager();
 
-    UndoManager undo = new NoStyleChangeUndoManager();
-
-    /** Creates new form GenericEditor2 */
+    /**
+     * Creates new form GenericEditor2
+     */
     public GenericEditor() {
         initComponents();
-        
-        tabs.insertTab("Instrument Text", null, codeEditor, null, 0);
-        
+
+        tabs.add("Instrument Text", codeEditor);
+
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
-        
+        tabs.add("Global Orc", globalOrcEditor);
+        tabs.add("Global Sco", globalScoEditor);
+
         tabs.setSelectedIndex(0);
 
-        globalOrcEditPane.getDocument().addDocumentListener(
+        globalOrcEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
                     public void documentChanged(DocumentEvent e) {
                         if (instr != null) {
-                            instr.setGlobalOrc(globalOrcEditPane.getText());
+                            instr.setGlobalOrc(globalOrcEditor.getText());
                         }
                     }
                 });
 
-        globalScoEditPane.getDocument().addDocumentListener(
+        globalScoEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
                     public void documentChanged(DocumentEvent e) {
                         if (instr != null) {
-                            instr.setGlobalSco(globalScoEditPane.getText());
+                            instr.setGlobalSco(globalScoEditor.getText());
                         }
                     }
                 });
@@ -99,35 +101,16 @@ public class GenericEditor extends InstrumentEditor {
                     }
                 });
 
-        UndoableEditListener ul = new UndoableEditListener() {
+        new TabWatchingUndoableEditGenerator(tabs, undo);
 
-            public void undoableEditHappened(UndoableEditEvent e) {
-                UndoableEdit event = e.getEdit();
-
-                if (event.getPresentationName().equals("style change")) {
-                    undo.addEdit(event);
-                } else {
-                    TabSelectionWrapper wrapper = new TabSelectionWrapper(
-                            event, tabs);
-                    undo.addEdit(wrapper);
-                }
-            }
-
-        };
-
-        codeEditor.getDocument().addUndoableEditListener(ul);
-        globalOrcEditPane.getDocument().addUndoableEditListener(ul);
-        globalScoEditPane.getDocument().addUndoableEditListener(ul);
-
-        Action[] undoActions = new Action[] { new UndoAction(undo),
-                new RedoAction(undo) };
-
-        //SwingUtil.installActions(textEditPane, undoActions);
-        SwingUtil.installActions(globalOrcEditPane, undoActions);
-        SwingUtil.installActions(globalScoEditPane, undoActions);
+        codeEditor.getDocument().addUndoableEditListener(undo);
+        globalOrcEditor.getDocument().addUndoableEditListener(undo);
+        globalScoEditor.getDocument().addUndoableEditListener(undo);
 
         codeEditor.setUndoManager(undo);
-        
+        globalOrcEditor.setUndoManager(undo);
+        globalScoEditor.setUndoManager(undo);
+
         undo.setLimit(1000);
 
     }
@@ -147,7 +130,8 @@ public class GenericEditor extends InstrumentEditor {
             editorLabel.setText(BlueSystem
                     .getString("instrument.noEditorAvailable"));
             codeEditor
-                    .setText("[ERROR] GenericEditor::editInstrument - not instance of GenericEditable");
+                    .setText(
+                    "[ERROR] GenericEditor::editInstrument - not instance of GenericEditable");
             codeEditor.getJEditorPane().setEnabled(false);
             return;
         }
@@ -167,13 +151,13 @@ public class GenericEditor extends InstrumentEditor {
         codeEditor.getJEditorPane().setEnabled(true);
         codeEditor.getJEditorPane().setCaretPosition(0);
 
-        globalOrcEditPane.setText(this.instr.getGlobalOrc());
-        globalOrcEditPane.setEnabled(true);
-        globalOrcEditPane.setCaretPosition(0);
+        globalOrcEditor.setText(this.instr.getGlobalOrc());
+        globalOrcEditor.getJEditorPane().setEnabled(true);
+        globalOrcEditor.getJEditorPane().setCaretPosition(0);
 
-        globalScoEditPane.setText(this.instr.getGlobalSco());
-        globalScoEditPane.setEnabled(true);
-        globalScoEditPane.setCaretPosition(0);
+        globalScoEditor.setText(this.instr.getGlobalSco());
+        globalScoEditor.getJEditorPane().setEnabled(true);
+        globalScoEditor.getJEditorPane().setCaretPosition(0);
 
         udoPanel.editOpcodeList(this.instr.getOpcodeList());
 
@@ -192,8 +176,6 @@ public class GenericEditor extends InstrumentEditor {
         editorLabel = new javax.swing.JLabel();
         testButton = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
-        globalOrcEditPane = new blue.gui.BlueEditorPane();
-        globalScoEditPane = new blue.gui.BlueEditorPane();
 
         editorLabel.setText("jLabel1");
 
@@ -203,9 +185,6 @@ public class GenericEditor extends InstrumentEditor {
                 testButtonActionPerformed(evt);
             }
         });
-
-        tabs.addTab(BlueSystem.getString("global.orchestra"), globalOrcEditPane);
-        tabs.addTab(BlueSystem.getString("global.score"), globalScoEditPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -241,13 +220,10 @@ public class GenericEditor extends InstrumentEditor {
         String instrumentText = ((Instrument) this.instr).generateInstrument();
         InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                 instrumentText, BlueSystem
-                        .getString("instrument.generatedInstrument"));
+                .getString("instrument.generatedInstrument"));
     }// GEN-LAST:event_testButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel editorLabel;
-    private blue.gui.BlueEditorPane globalOrcEditPane;
-    private blue.gui.BlueEditorPane globalScoEditPane;
     private javax.swing.JTabbedPane tabs;
     private javax.swing.JButton testButton;
     // End of variables declaration//GEN-END:variables
@@ -256,5 +232,4 @@ public class GenericEditor extends InstrumentEditor {
     public Class getInstrumentClass() {
         return GenericEditable.class;
     }
-
 }

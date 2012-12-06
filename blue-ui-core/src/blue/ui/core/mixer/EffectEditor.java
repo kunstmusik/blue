@@ -39,9 +39,10 @@ import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
+import blue.undo.TabWatchingUndoableEditGenerator;
 import blue.utility.GUI;
 import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 /**
  *
@@ -56,12 +57,14 @@ public class EffectEditor extends javax.swing.JPanel implements
     BSBCompletionProvider completionProvider = new BSBCompletionProvider();
     MimeTypeEditorComponent code1 = new MimeTypeEditorComponent(
             "text/x-blue-synth-builder");
+    MimeTypeEditorComponent commentsText = new MimeTypeEditorComponent(
+            "text/plain");
     JLabel xInLabel = new JLabel();
     JLabel xOutLabel = new JLabel();
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
-    JTextArea commentsText = new JTextArea();
+        
     private Effect effect = null;
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     /**
      * Creates new form EffectEditor
@@ -100,10 +103,6 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         tabs.add("Code", codePanel);
 
-        commentsText.setWrapStyleWord(true);
-        commentsText.setLineWrap(true);
-        commentsText.setTabSize(4);
-
         commentsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
                     public void documentChanged(DocumentEvent e) {
@@ -115,8 +114,12 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
 
-        tabs.add("Comments", new JScrollPane(commentsText));
+        tabs.add("Comments", commentsText);
+        commentsText.getDocument().addUndoableEditListener(undo);
+        commentsText.setUndoManager(undo);
 
+        new TabWatchingUndoableEditGenerator(tabs, undo);
+        
         setEffect(null);
 
         code1.getDocument().addUndoableEditListener(undo);
@@ -153,7 +156,7 @@ public class EffectEditor extends javax.swing.JPanel implements
             outSpinner.setValue(new Integer(1));
 
             code1.getJEditorPane().setEnabled(false);
-            commentsText.setEnabled(false);
+            commentsText.getJEditorPane().setEnabled(false);
             inSpinner.setEnabled(false);
             outSpinner.setEnabled(false);
 
@@ -169,7 +172,7 @@ public class EffectEditor extends javax.swing.JPanel implements
             outSpinner.setValue(new Integer(effect.getNumOuts()));
 
             code1.getJEditorPane().setEnabled(true);
-            commentsText.setEnabled(true);
+            commentsText.getJEditorPane().setEnabled(true);
             inSpinner.setEnabled(true);
             outSpinner.setEnabled(true);
 
@@ -179,6 +182,7 @@ public class EffectEditor extends javax.swing.JPanel implements
         }
 
         code1.getJEditorPane().setCaretPosition(0);
+        commentsText.getJEditorPane().setCaretPosition(0);
 
         
         this.effect = effect;
