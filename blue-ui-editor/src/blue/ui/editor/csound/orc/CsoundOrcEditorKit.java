@@ -23,8 +23,6 @@ public class CsoundOrcEditorKit extends NbEditorKit {
         return doc;
         
     }
-
-    
     
     @Override
     public String getContentType() {
@@ -32,9 +30,6 @@ public class CsoundOrcEditorKit extends NbEditorKit {
     }
     
     public class CsoundOrcEditorDocument extends NbEditorDocument {
-        public CsoundOrcEditorDocument(Class kitClass) {
-            super(kitClass);
-        }
 
         public CsoundOrcEditorDocument(String mimeType) {
             super(mimeType);

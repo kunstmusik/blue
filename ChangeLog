@@ -15,6 +15,29 @@ information.
 >Notes for 2.3.1<
 [released 2012.12.xx]
 
+NEW/UPDATED
+
+* Replaced existing code editor with one based on Netbeans Editor Library
+
+  * Editor provides much nicer code completion and opcode documentation shows
+  in the application (Csound Manual now included with blue)
+
+  * Fonts and Colors for code editor are configurable
+
+  * Csound Orc Code
+     
+    * Code Completion now all is done through ctrl-space (cmd-space on Mac); 
+    this includes opcode completion, variable name matches, and BSB Widget names
+
+    * Code Editors that have been replaced: GenericScore, BlueSynthBuilder, 
+    Effects Editor, User-Defined Opcode Editor
+
+  * Csound Score Code
+
+  * Python Code
+
+
+
 FIX
 
 * When rendering with API, automation values were always starting from time 0;

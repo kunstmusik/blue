@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fontscolors PUBLIC "-//NetBeans//DTD Editor Fonts and Colors settings 1.1//EN" "http://www.netbeans.org/dtds/EditorFontsColors-1_1.dtd">
+
+<fontscolors>
+    <!-- See http://ui.netbeans.org/docs/ui/editor_fonts_colors/Editor_fonts_and_colors.htm#ruby -->
+    <!-- A couple of things are not accurate yet; globals are not bold, and method calls are
+         black and bold instead of green (which would be identical to fields) -->
+    
+    <fontcolor name="CLASS_VAR" foreColor="ff098618">
+        <font style="bold+italic"/>
+    </fontcolor>
+
+    <fontcolor name="INT_LITERAL" default="number"/>
+    <fontcolor name="FLOAT_LITERAL" default="number"/>
+    <fontcolor name="ANY_OPERATOR" default="operator"/>
+    <fontcolor name="INSTANCE_VAR" default="field"/>
+    <fontcolor name="GLOBAL_VAR" foreColor="black">
+        <font style="italic"/>
+    </fontcolor>
+    <fontcolor name="STRING_LITERAL" default="string"/>
+    <fontcolor name="DOUBLE_LITERAL" default="number"/>
+    <fontcolor name="LONG_LITERAL" default="number"/>
+    <fontcolor name="REGEXP_LITERAL" foreColor="9933CC"/>
+    <fontcolor name="DECORATOR" foreColor="9933CC"/>
+    <fontcolor name="ERROR" default="error"/>
+    <fontcolor name="LINE_COMMENT" default="comment"/>
+    <fontcolor name="CONSTANT" foreColor="black">
+        <font style="italic"/>
+    </fontcolor>
+    <fontcolor name="TYPE_SYMBOL" foreColor="2E92C7"/>
+    <fontcolor name="IDENTIFIER" default="identifier"/>
+    <fontcolor name="WHITESPACE" default="whitespace"/>
+    <fontcolor name="ANY_KEYWORD" default="keyword"/>
+    <fontcolor name="TODO" foreColor="ff99006b">
+        <font style="bold"/>
+    </fontcolor>
+    <fontcolor name="QUOTED_STRING_LITERAL" default="string"/>
+
+    <!--"semantic" highlighting:-->
+    <fontcolor name="mod-unused" waveUnderlined="999999"/>
+    <fontcolor name="mod-field" default="field"/>
+    <fontcolor name="mod-local-variable" />
+    <fontcolor name="mod-parameter" foreColor="A06001"/> 
+
+    <fontcolor name="mod-method">
+        <font style="bold" />
+    </fontcolor>
+    <fontcolor name="mod-constructor" >
+        <font style="bold" />
+    </fontcolor>
+    <fontcolor name="mod-class" />
+    <fontcolor name="mod-deprecated" strikeThrough="404040" />
+    <fontcolor name="mark-occurrences" bgColor="ECEBA3"/>
+
+    <!-- Code Coverage -->
+    <fontcolor name="covered" bgColor="ccffcc"/>
+    <fontcolor name="uncovered" bgColor="ffcccc"/>
+    <fontcolor name="inferred" bgColor="e0ffe0"/>
+
+</fontscolors>
