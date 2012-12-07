@@ -60,10 +60,9 @@
           <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
         </file>-->
         <file name="EditorKit.instance">
-          <attr name="instanceClass" stringvalue="org.netbeans.modules.editor.plain.PlainKit"/>
-          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="instanceClass" stringvalue="blue.ui.editor.csound.sco.CsoundScoEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.csound.orc.CsoundScoEditorKit"/>
           <attr name="beaninfo" boolvalue="false"/>
-                    
         </file>
         <!--
         <folder name="TokenListProvider">
@@ -109,6 +108,20 @@
             </folder>
           </folder>
         </folder>
+      </folder>
+      
+      <!-- OBJECT BUILDER -->
+      
+      <folder name="x-object-builder">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+                    
+        </file>
+        
       </folder>
       
       <!-- PYTHON -->
