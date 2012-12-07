@@ -60,7 +60,7 @@ public class BSBCodeEditor extends JComponent {
             new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
     MimeTypeEditorComponent globalScoEditPane = 
-            new MimeTypeEditorComponent("text/plain");
+            new MimeTypeEditorComponent("text/x-csound-sco");
     
     BlueSynthBuilder bsb = new BlueSynthBuilder();
 

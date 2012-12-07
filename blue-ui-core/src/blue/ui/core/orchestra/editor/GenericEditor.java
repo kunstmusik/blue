@@ -48,7 +48,7 @@ public class GenericEditor extends InstrumentEditor {
             new MimeTypeEditorComponent("text/x-csound-orc");
     
     protected MimeTypeEditorComponent globalScoEditor =
-            new MimeTypeEditorComponent("text/plain");
+            new MimeTypeEditorComponent("text/x-csound-sco");
 
     static {
         tokenMarkerTypes.put(GenericInstrument.class, new CsoundTokenMarker());

@@ -51,6 +51,37 @@
         
       </folder>
       
+      <!-- CSOUND SCO -->
+      
+       <folder name="x-csound-sco">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+<!--        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>-->
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+                    
+        </file>
+        <!--
+        <folder name="TokenListProvider">
+          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
+        </folder>-->
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="csound/sco/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+        
+      </folder>
+      
       <!-- BSB -->
       
       <folder name="x-blue-synth-builder">
@@ -129,6 +160,9 @@
     <folder name="PreviewExamples">
       <folder name="text">
         <file name="x-csound-orc" url="csound/orc/CsoundOrcTemplate.orc"/>
+      </folder>
+      <folder name="text">
+        <file name="x-csound-sco" url="csound/sco/CsoundScoTemplate.sco"/>
       </folder>
     </folder>
   </folder>
