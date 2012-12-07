@@ -25,7 +25,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -38,7 +37,7 @@ import blue.utility.GUI;
 
 public class LabelledPanel extends JComponent {
 
-    ArrayList listeners = new ArrayList();
+    ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
     JComponent dockItem = null;
 
@@ -101,8 +100,7 @@ public class LabelledPanel extends JComponent {
     public void fireActionPerformed() {
         ActionEvent ae = new ActionEvent(this, ActionEvent.ACTION_PERFORMED,
                 "clicked");
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ActionListener listener = (ActionListener) iter.next();
+        for (ActionListener listener : listeners) {
             listener.actionPerformed(ae);
         }
     }
