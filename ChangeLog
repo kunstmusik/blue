@@ -36,9 +36,13 @@ NEW/UPDATED
 
   * Python Code
 
+    * Code Editors that have been replaced: PythonObject, Python Instrument
 
 
 FIX
+
+* Render time pointer was being rendered when switching projects for the 
+  projects that were not the currently rendering project
 
 * When rendering with API, automation values were always starting from time 0;
   adjusted current time calculation
