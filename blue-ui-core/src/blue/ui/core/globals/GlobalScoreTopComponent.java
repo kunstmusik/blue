@@ -7,12 +7,16 @@ package blue.ui.core.globals;
 import blue.GlobalOrcSco;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -30,9 +34,14 @@ final class GlobalScoreTopComponent extends TopComponent {
     private static final String PREFERRED_ID = "GlobalScoreTopComponent";
 
     private GlobalOrcSco globalOrcSco = null;
+    
+    MimeTypeEditorComponent scoreText = new MimeTypeEditorComponent("text/x-csound-sco");
+    
+    UndoManager undo = new UndoRedo.Manager();
 
     private GlobalScoreTopComponent() {
         initComponents();
+        
         setName(NbBundle.getMessage(GlobalScoreTopComponent.class, "CTL_GlobalScoreTopComponent"));
         setToolTipText(NbBundle.getMessage(GlobalScoreTopComponent.class, "HINT_GlobalScoreTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
@@ -49,28 +58,35 @@ final class GlobalScoreTopComponent extends TopComponent {
 
         reinitialize();
 
-        blueEditorPane1.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        scoreText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
             public void documentChanged(DocumentEvent e) {
                 if (globalOrcSco != null) {
-                    globalOrcSco.setGlobalSco(blueEditorPane1.getText());
+                    globalOrcSco.setGlobalSco(scoreText.getText());
                 }
             }
         });
+        
+        scoreText.setUndoManager(undo);
+        scoreText.getDocument().addUndoableEditListener(undo);
+        
+        this.add(scoreText, BorderLayout.CENTER);
     }
 
     private void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
+        
         if (project == null) {
-            blueEditorPane1.setText("");
-            blueEditorPane1.setEditable(false);
+            scoreText.setText("");
+            scoreText.getJEditorPane().setEditable(false);
         } else {
             GlobalOrcSco localGlobals = project.getData().getGlobalOrcSco();
-            blueEditorPane1.setText(localGlobals.getGlobalSco());
-            blueEditorPane1.setEditable(true);
+            scoreText.setText(localGlobals.getGlobalSco());
+            scoreText.getJEditorPane().setEditable(true);
             globalOrcSco = localGlobals;
         }
+        undo.discardAllEdits();
     }
 
     /** This method is called from within the constructor to
@@ -81,21 +97,9 @@ final class GlobalScoreTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        blueEditorPane1 = new blue.gui.BlueEditorPane();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.gui.BlueEditorPane blueEditorPane1;
     // End of variables declaration//GEN-END:variables
 
     /**

@@ -16,7 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -25,12 +24,15 @@ import javax.swing.tree.TreePath;
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.gui.BlueEditorPane;
 import blue.gui.OpcodePopup;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import electric.xml.Element;
 import electric.xml.ParseException;
 import java.awt.Frame;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 /**
  * <p>
@@ -46,7 +48,7 @@ import java.awt.Frame;
  * Company: steven yi music
  * </p>
  * 
- * @author unascribed
+ * @author steven yi
  * @version 1.0
  */
 
@@ -67,8 +69,10 @@ public class CodeRepositoryDialog extends JDialog implements
 
     ElementHolder selected;
 
-    BlueEditorPane codeText = new BlueEditorPane();
+    MimeTypeEditorComponent code1Text = new MimeTypeEditorComponent("text/plain");
 
+    UndoManager undo = new UndoRedo.Manager();
+    
     JPanel editPanel = new JPanel();
 
     JPanel textPanel = new JPanel();
@@ -132,7 +136,7 @@ public class CodeRepositoryDialog extends JDialog implements
 
         textPanel.setLayout(new BorderLayout());
 
-        textPanel.add(codeText, BorderLayout.CENTER);
+        textPanel.add(code1Text, BorderLayout.CENTER);
 
         editPanel.setLayout(cards);
         editPanel.add(new JPanel(), "disabled");
@@ -140,26 +144,18 @@ public class CodeRepositoryDialog extends JDialog implements
 
         cards.show(editPanel, "disabled");
 
-        codeText.getDocument().addDocumentListener(new DocumentListener() {
+        code1Text.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
-                updateText();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                updateText();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                updateText();
-            }
-
-            public void updateText() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
                 if (selected != null && !selected.isGroup) {
-                    selected.text = codeText.getText();
+                    selected.text = code1Text.getText();
                 }
             }
         });
+        
+        code1Text.setUndoManager(undo);
+        code1Text.getDocument().addUndoableEditListener(undo);
 
         new CodeRepositoryDragSource(codeTree, DnDConstants.ACTION_MOVE);
         new CodeRepositoryDropTarget(codeTree);
@@ -180,26 +176,6 @@ public class CodeRepositoryDialog extends JDialog implements
             treeModel.setAsksAllowsChildren(true);
 
             codeTree.setEditable(true);
-
-            /*
-             * codeTree.getModel().addTreeModelListener(new TreeModelListener() {
-             * public void treeNodesChanged(TreeModelEvent e) {
-             * DefaultMutableTreeNode node; node = (DefaultMutableTreeNode)
-             * (e.getTreePath().getLastPathComponent()); try { int index =
-             * e.getChildIndices()[0]; DefaultMutableTreeNode newNode =
-             * (DefaultMutableTreeNode) (node.getChildAt(index));
-             * //ElementHolder elem = (ElementHolder)node.getUserObject(); }
-             * catch (NullPointerException exc) {}
-             * 
-             * System.out.println("The user has finished editing the node.");
-             * System.out.println("New value: " + node.getUserObject()); }
-             * public void treeNodesInserted(TreeModelEvent e) { } public void
-             * treeNodesRemoved(TreeModelEvent e) { } public void
-             * treeNodesStructureChanged(TreeModelEvent e) { } public void
-             * treeStructureChanged(TreeModelEvent e) { }
-             * 
-             * });
-             */
 
             codeTree.addMouseListener(new MouseAdapter() {
 
@@ -229,9 +205,9 @@ public class CodeRepositoryDialog extends JDialog implements
                         } else {
                             cards.show(editPanel, "enabled");
                             selected = tempElem;
-                            codeText.setText(tempElem.text);
+                            code1Text.setText(tempElem.text);
                         }
-
+                        undo.discardAllEdits();;
                     }
                 }
             });
@@ -243,26 +219,13 @@ public class CodeRepositoryDialog extends JDialog implements
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
     }
 
     private void showPopup(CodeRepositoryTreeNode node, ElementHolder elem,
             int x, int y) {
         popup.show(this, node, elem, x, y);
     }
-
-//    // UNIT TEST
-//    public static void main(String[] args) {
-//        CodeRepositoryDialog codeRepositoryDialog1 = new CodeRepositoryDialog();
-//        codeRepositoryDialog1.addWindowListener(new WindowAdapter() {
-//
-//            public void windowClosing(WindowEvent e) {
-//                System.exit(0);
-//            }
-//        });
-//        codeRepositoryDialog1.show();
-//        codeRepositoryDialog1
-//                .setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-//    }
 
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
@@ -283,34 +246,3 @@ public class CodeRepositoryDialog extends JDialog implements
         return retVal;
     }
 }
-
-/*
- * class CodeRepositoryTreeModel extends DefaultTreeModel { public
- * CodeRepositoryTreeModel(TreeNode root) { super(root); //this. } }
- */
-
-/*
- * class CodeRepositoryTreeCellRenderer extends DefaultTreeCellRenderer { public
- * Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel,
- * boolean expanded, boolean leaf, int row, boolean hasFocus) {
- * 
- * CodeRepositoryTreeNode node = (CodeRepositoryTreeNode)value; ElementHolder
- * elem = (ElementHolder)node.getUserObject();
- * 
- * String stringValue = tree.convertValueToText(value, sel, expanded, leaf, row,
- * hasFocus);
- * 
- * this.hasFocus = hasFocus; setText(stringValue); if(sel)
- * setForeground(getTextSelectionColor()); else
- * setForeground(getTextNonSelectionColor()); // There needs to be a way to
- * specify disabled icons. if (!tree.isEnabled()) { setEnabled(false); if
- * (!elem.isGroup) { setDisabledIcon(getLeafIcon()); } else if (expanded) {
- * setDisabledIcon(getOpenIcon()); } else { setDisabledIcon(getClosedIcon()); } }
- * else { setEnabled(true); if (!elem.isGroup) { setIcon(getLeafIcon()); } else
- * if (expanded) { setIcon(getOpenIcon()); } else { setIcon(getClosedIcon()); } }
- * setComponentOrientation(tree.getComponentOrientation());
- * 
- * selected = sel;
- * 
- * return this; } }
- */
