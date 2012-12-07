@@ -38,10 +38,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import blue.BlueSystem;
-import blue.gui.BlueEditorPane;
 import blue.gui.LabelledItemPanel;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
@@ -86,10 +84,6 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     JLabel channelVariables = new JLabel();
 
-    // JPanel ftablePanel = new JPanel();
-    // JTextField fTableText = new JTextField();
-    // JButton ftableCopyButton = new JButton();
-
     LabelledItemPanel audioFileInfoPanel = new LabelledItemPanel();
     
     UndoManager undo = new UndoRedo.Manager();
@@ -123,6 +117,7 @@ public class AudioFileEditor extends SoundObjectEditor {
         });
         
         csoundCode.setUndoManager(undo);
+        csoundCode.getDocument().addUndoableEditListener(undo);
 
         // INFORMATION PANEL
 

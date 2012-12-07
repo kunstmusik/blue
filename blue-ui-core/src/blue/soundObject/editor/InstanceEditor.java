@@ -12,12 +12,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import blue.gui.BlueEditorPane;
-import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import org.openide.util.Exceptions;
 
 /**
@@ -34,7 +33,7 @@ public class InstanceEditor extends SoundObjectEditor {
 
     JLabel editorLabel = new JLabel();
 
-    BlueEditorPane scoreEditPane = new BlueEditorPane();
+    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/x-csound-sco");
 
     JButton testButton = new JButton();
 
@@ -54,7 +53,7 @@ public class InstanceEditor extends SoundObjectEditor {
         editorLabel.setText("generic editor");
         this.setLayout(new BorderLayout());
 
-        scoreEditPane.setEditable(false);
+        scoreEditPane.getJEditorPane().setEditable(false);
 
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
