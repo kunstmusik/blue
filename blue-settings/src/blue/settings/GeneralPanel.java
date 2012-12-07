@@ -45,7 +45,6 @@ final class GeneralPanel extends javax.swing.JPanel {
             }
         };
 
-        csoundDocRootText.getDocument().addDocumentListener(changeListener);
         defaultDirectoryField.getDocument().addDocumentListener(changeListener);
     }
 
@@ -59,7 +58,6 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         jLabel15 = new javax.swing.JLabel();
         useCsoundAPIBox = new javax.swing.JCheckBox();
-        jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -71,9 +69,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         newUserDefaultsEnabled = new javax.swing.JCheckBox();
         defaultDirectoryField = new javax.swing.JTextField();
         directoryOpenButton = new javax.swing.JButton();
-        csoundDocRootText = new javax.swing.JTextField();
-        jPanel1 = new javax.swing.JPanel();
-        csoundDocDirectoryOpenButton = new javax.swing.JButton();
 
         jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(jLabel15, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel15.text_1")); // NOI18N
@@ -86,10 +81,6 @@ final class GeneralPanel extends javax.swing.JPanel {
                 useCsoundAPIBoxActionPerformed(evt);
             }
         });
-
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel1.text_1")); // NOI18N
-        jLabel1.setAlignmentX(1.0F);
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel2.text_1")); // NOI18N
@@ -152,26 +143,6 @@ final class GeneralPanel extends javax.swing.JPanel {
             }
         });
 
-        csoundDocRootText.setText(org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.csoundDocRootText.text_1")); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 244, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 36, Short.MAX_VALUE)
-        );
-
-        org.openide.awt.Mnemonics.setLocalizedText(csoundDocDirectoryOpenButton, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.csoundDocDirectoryOpenButton.text")); // NOI18N
-        csoundDocDirectoryOpenButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                csoundDocDirectoryOpenButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -180,7 +151,6 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
@@ -188,35 +158,23 @@ final class GeneralPanel extends javax.swing.JPanel {
                     .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE))
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(csoundDocRootText, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(defaultDirectoryField, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
-                    .addComponent(useCsoundAPIBox, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                    .addComponent(useCsoundAPIBox, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
                     .addComponent(alphaEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(messageColorsEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(csoundErrorWarningEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(newUserDefaultsEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(directoryOpenButton)
-                    .addComponent(csoundDocDirectoryOpenButton))
+                .addComponent(directoryOpenButton)
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(277, Short.MAX_VALUE)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(12, 12, 12))
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel1, jLabel15, jLabel2, jLabel4, jLabel6, jLabel8, jLabel9});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel15, jLabel2, jLabel4, jLabel6, jLabel8, jLabel9});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(csoundDocRootText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(csoundDocDirectoryOpenButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(defaultDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -241,9 +199,7 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(csoundErrorWarningEnabled)
                     .addComponent(jLabel9))
-                .addGap(26, 26, 26)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -282,24 +238,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_directoryOpenButtonActionPerformed
 
-    private void csoundDocDirectoryOpenButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_csoundDocDirectoryOpenButtonActionPerformed
-         JFileChooser jfc = SettingsFileChooser.getFileChooser();
-        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        jfc.setCurrentDirectory(GeneralSettings.getInstance().getDefaultDirectory());
-
-        int rValue = jfc.showOpenDialog(this);
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            String path = jfc.getSelectedFile().getAbsolutePath();
-
-            if(!path.endsWith(File.separator)) {
-                path = path + File.separator;
-            }
-
-            csoundDocRootText.setText(path);
-            controller.changed();
-        }
-    }//GEN-LAST:event_csoundDocDirectoryOpenButtonActionPerformed
-
 
     void load() {
 
@@ -307,7 +245,6 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         GeneralSettings settings = GeneralSettings.getInstance();
 
-        csoundDocRootText.setText(settings.getCsoundDocRoot());
         defaultDirectoryField.setText(settings.getDefaultDirectory().getAbsolutePath());
         useCsoundAPIBox.setSelected(settings.isUsingCsoundAPI());
         newUserDefaultsEnabled.setSelected(settings.isNewUserDefaultsEnabled());
@@ -322,7 +259,6 @@ final class GeneralPanel extends javax.swing.JPanel {
 
         GeneralSettings settings = GeneralSettings.getInstance();
 
-        settings.setCsoundDocRoot(csoundDocRootText.getText());
         settings.setDefaultDirectory(new File(defaultDirectoryField.getText()));
         settings.setUsingCsoundAPI(useCsoundAPIBox.isSelected());
         settings.setNewUserDefaultsEnabled(newUserDefaultsEnabled.isSelected());
@@ -340,19 +276,15 @@ final class GeneralPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox alphaEnabled;
-    private javax.swing.JButton csoundDocDirectoryOpenButton;
-    private javax.swing.JTextField csoundDocRootText;
     private javax.swing.JCheckBox csoundErrorWarningEnabled;
     private javax.swing.JTextField defaultDirectoryField;
     private javax.swing.JButton directoryOpenButton;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JCheckBox messageColorsEnabled;
     private javax.swing.JCheckBox newUserDefaultsEnabled;
     private javax.swing.JCheckBox useCsoundAPIBox;

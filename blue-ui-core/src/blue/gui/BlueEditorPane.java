@@ -418,25 +418,25 @@ public class BlueEditorPane extends JEditTextArea {
         }
 
         public void openDocumentation() {
-            String word = getWordAroundCaret();
-            if (word == null || word.length() == 0) {
-                return;
-            }
+//            String word = getWordAroundCaret();
+//            if (word == null || word.length() == 0) {
+//                return;
+//            }
 
-            String url = GeneralSettings.getInstance().getCsoundDocRoot()
-                    + word + ".html";
-
-            if (!url.startsWith("http") && !url.startsWith("file://")) {
-                url = "file://" + url;
-            }
-
-            url = url.replace(" ", "%20");
-
-            try {
-                URLDisplayer.getDefault().showURL(new URL(url));
-            } catch (MalformedURLException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+//            String url = GeneralSettings.getInstance().getCsoundDocRoot()
+//                    + word + ".html";
+//
+//            if (!url.startsWith("http") && !url.startsWith("file://")) {
+//                url = "file://" + url;
+//            }
+//
+//            url = url.replace(" ", "%20");
+//
+//            try {
+//                URLDisplayer.getDefault().showURL(new URL(url));
+//            } catch (MalformedURLException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
         }
 
     }
@@ -453,48 +453,48 @@ public class BlueEditorPane extends JEditTextArea {
 
         public void actionPerformed(ActionEvent e) {
             if (isEditable()) {
-                openDocumentationExample();
+//                openDocumentationExample();
             }
         }
 
-        public void openDocumentationExample() {
-            String word = getWordAroundCaret();
-            if (word == null || word.length() == 0) {
-                return;
-            }
-
-            String fileName = GeneralSettings.getInstance()
-                    .getCsoundDocRoot()
-                    + File.separator
-                    + "examples"
-                    + File.separator
-                    + word
-                    + ".csd";
-
-            File f = new File(fileName);
-
-            if (!f.exists() || f.isDirectory()) {
-                JOptionPane.showMessageDialog(BlueEditorPane.this,
-                        "Could not find manual example for opcode: " + word,
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            try {
-                String text = TextUtilities.getTextFromFile(f);
-                InfoDialog.showInformationDialogCode(SwingUtilities
-                        .getRoot(BlueEditorPane.this), text,
-                        "Manual Example for " + word);
-            } catch (FileNotFoundException e) {
-                JOptionPane.showMessageDialog(BlueEditorPane.this,
-                        "Could not find file " + f.getAbsolutePath(), "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(BlueEditorPane.this,
-                        "Could not open file " + f.getAbsolutePath(), "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
+//        public void openDocumentationExample() {
+//            String word = getWordAroundCaret();
+//            if (word == null || word.length() == 0) {
+//                return;
+//            }
+//
+//            String fileName = GeneralSettings.getInstance()
+//                    .getCsoundDocRoot()
+//                    + File.separator
+//                    + "examples"
+//                    + File.separator
+//                    + word
+//                    + ".csd";
+//
+//            File f = new File(fileName);
+//
+//            if (!f.exists() || f.isDirectory()) {
+//                JOptionPane.showMessageDialog(BlueEditorPane.this,
+//                        "Could not find manual example for opcode: " + word,
+//                        "Error", JOptionPane.ERROR_MESSAGE);
+//                return;
+//            }
+//
+//            try {
+//                String text = TextUtilities.getTextFromFile(f);
+//                InfoDialog.showInformationDialogCode(SwingUtilities
+//                        .getRoot(BlueEditorPane.this), text,
+//                        "Manual Example for " + word);
+//            } catch (FileNotFoundException e) {
+//                JOptionPane.showMessageDialog(BlueEditorPane.this,
+//                        "Could not find file " + f.getAbsolutePath(), "Error",
+//                        JOptionPane.ERROR_MESSAGE);
+//            } catch (IOException e) {
+//                JOptionPane.showMessageDialog(BlueEditorPane.this,
+//                        "Could not open file " + f.getAbsolutePath(), "Error",
+//                        JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
 
     }
 

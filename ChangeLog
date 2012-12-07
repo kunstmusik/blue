@@ -26,7 +26,7 @@ NEW/UPDATED
 
   * Csound Orc Code
      
-    * Code Completion now all is done through ctrl-space (cmd-space on Mac); 
+    * All Code Completion is now done through ctrl-space (cmd-space on Mac); 
     this includes opcode completion, variable name matches, and BSB Widget names
 
     * Code Editors that have been replaced: GenericScore, BlueSynthBuilder, 
@@ -38,6 +38,15 @@ NEW/UPDATED
 
     * Code Editors that have been replaced: PythonObject, Python Instrument
 
+UPDATED
+
+* Now packaging Csound Manual together with blue, for use with new editor's 
+  code completion to show opcode information while coding
+
+* Removed Csound Manual Documentation Root option in Program Options
+
+* Removed Help button on main toolbar as it was redundant to Csound Manual 
+  options in Help Menu
 
 FIX
 

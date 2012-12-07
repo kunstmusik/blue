@@ -36,6 +36,7 @@ import javax.swing.event.DocumentListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
@@ -780,16 +781,12 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_benchmarkCBoxActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        String url =
-                GeneralSettings.getInstance().getCsoundDocRoot()
-                + "CommandFlags.html";
-
-        if (!url.startsWith("http") && !url.startsWith("file://")) {
-            url = "file://" + url;
-        }
-
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        
+        String url = "file://" + manualDir.getAbsolutePath() + "/CommandFlags.html";
+        
         url = url.replace(" ", "%20");
-
 
         try {
             URLDisplayer.getDefault().showURL(new URL(url));

@@ -30,6 +30,7 @@ import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 
 final class DiskRenderSettingsPanel extends javax.swing.JPanel {
@@ -541,15 +542,13 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_rewriteHeaderCBoxActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        String url =
-                GeneralSettings.getInstance().getCsoundDocRoot()
-                + "CommandFlags.html";
-        if (!url.startsWith("http") && !url.startsWith("file://")) {
-            url = "file://" + url;
-        }
-
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        
+        String url = "file://" + manualDir.getAbsolutePath() + "/CommandFlags.html";
+        
         url = url.replace(" ", "%20");
-
+        
         try {
             URLDisplayer.getDefault().showURL(new URL(url));
         } catch (MalformedURLException ex) {
