@@ -35,13 +35,10 @@ import blue.scripting.PythonProxy;
 import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
-import java.awt.Color;
-import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
@@ -51,9 +48,6 @@ import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
-import org.syntax.jedit.SyntaxStyle;
-import org.syntax.jedit.TextAreaDefaults;
-import org.syntax.jedit.tokenmarker.Token;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -98,16 +92,7 @@ public class Installer extends ModuleInstall {
 //            }
 //        });
 
-        initializeTextDefaults();
-
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
-
-        textColorChangeListener = new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                setTextColors();
-            }
-        };
 
         windowTitlePropertyChangeListener = new PropertyChangeListener() {
 
@@ -265,51 +250,6 @@ public class Installer extends ModuleInstall {
     public void saveLibraries() {
         BlueSystem.saveUserInstrumentLibrary();
         BlueSystem.saveUDOLibrary();
-    }
-
-    public void initializeTextDefaults() {
-        if (!textDefaultsInitialized) {
-            TextAreaDefaults defaults = TextAreaDefaults.getDefaults();
-
-            defaults.caretBlinks = true;
-            defaults.caretColor = Color.WHITE;
-            defaults.selectionColor = new Color(0x666680);
-            defaults.lineHighlight = false;
-
-            setTextColors();
-
-            textDefaultsInitialized = true;
-        }
-    }
-
-    public void setTextColors() {
-        TextAreaDefaults defaults = TextAreaDefaults.getDefaults();
-
-        SyntaxStyle[] styles = defaults.styles;
-
-        TextColorsSettings settings = TextColorsSettings.getInstance();
-
-        styles[Token.NULL] = new SyntaxStyle(settings.blueSyntaxNormal, false,
-                false);
-
-        styles[Token.KEYWORD1] = new SyntaxStyle(settings.blueSyntaxKeyword,
-                false, true);
-        styles[Token.KEYWORD2] = new SyntaxStyle(settings.blueSyntaxVariable,
-                false,
-                false);
-        styles[Token.KEYWORD3] = new SyntaxStyle(settings.blueSyntaxPfield,
-                false,
-                false);
-        styles[Token.COMMENT1] = new SyntaxStyle(settings.blueSyntaxComment,
-                false,
-                false);
-
-        styles[Token.LITERAL1] = new SyntaxStyle(settings.blueSyntaxQuote, false,
-                false);
-        styles[Token.LITERAL2] = new SyntaxStyle(settings.blueSyntaxQuote, false,
-                true);
-
-        defaults.bracketHighlightColor = settings.blueSyntaxNormal;
     }
 
 }

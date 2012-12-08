@@ -24,7 +24,6 @@ import javax.swing.tree.TreePath;
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.gui.OpcodePopup;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
@@ -117,7 +116,6 @@ public class CodeRepositoryDialog extends JDialog implements
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) codeTree
                         .getModel().getRoot();
                 CodeRepositoryManager.saveCodeRepository(node);
-                OpcodePopup.getOpcodePopup().reinitialize();
                 setVisible(false);
             }
         });

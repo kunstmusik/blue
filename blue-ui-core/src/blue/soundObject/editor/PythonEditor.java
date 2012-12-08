@@ -39,12 +39,8 @@ import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 import org.openide.awt.UndoRedo;
-import org.syntax.jedit.tokenmarker.PythonTokenMarker;
 
 /**
  *

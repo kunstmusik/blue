@@ -7,24 +7,14 @@ package blue.ui.core.orchestra.editor;
 
 import java.util.HashMap;
 
-import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 
-import org.syntax.jedit.tokenmarker.JavaScriptTokenMarker;
-import org.syntax.jedit.tokenmarker.PythonTokenMarker;
 
-import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.actions.RedoAction;
-import blue.actions.UndoAction;
-import blue.gui.CsoundTokenMarker;
 import blue.gui.InfoDialog;
-import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
-import blue.orchestra.PythonInstrument;
-import blue.orchestra.RhinoInstrument;
 import blue.orchestra.editor.GenericEditable;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
@@ -50,12 +40,6 @@ public class GenericEditor extends InstrumentEditor {
     protected MimeTypeEditorComponent globalScoEditor =
             new MimeTypeEditorComponent("text/x-csound-sco");
 
-    static {
-        tokenMarkerTypes.put(GenericInstrument.class, new CsoundTokenMarker());
-        tokenMarkerTypes.put(PythonInstrument.class, new PythonTokenMarker());
-        tokenMarkerTypes
-                .put(RhinoInstrument.class, new JavaScriptTokenMarker());
-    }
     GenericEditable instr;
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
     UndoManager undo = new UndoRedo.Manager();
