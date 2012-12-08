@@ -8,12 +8,16 @@ package blue.ui.core.tables;
 import blue.Tables;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -27,10 +31,14 @@ final class TablesTopComponent extends TopComponent {
     private static TablesTopComponent instance;
     /** path to the icon used by the component and its open action */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
+    
+    private MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent("text/x-csound-sco");
 
     private static final String PREFERRED_ID = "TablesTopComponent";
 
     private Tables tables = null;
+    
+    UndoManager undo = new UndoRedo.Manager();
 
     private TablesTopComponent() {
         initComponents();
@@ -50,29 +58,33 @@ final class TablesTopComponent extends TopComponent {
 
         reinitialize();
 
-        blueEditorPane1.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        tablesText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
             public void documentChanged(DocumentEvent e) {
                 if (tables != null) {
-                    tables.setTables(blueEditorPane1.getText());
+                    tables.setTables(tablesText.getText());
                 }
             }
         });
-
+        
+        tablesText.setUndoManager(undo);
+        tablesText.getDocument().addUndoableEditListener(undo);
+        this.add(tablesText,BorderLayout.CENTER);
     }
 
      private void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         if (project == null) {
-            blueEditorPane1.setText("");
-            blueEditorPane1.setEditable(false);
+            tablesText.setText("");
+            tablesText.getJEditorPane().setEditable(false);
         } else {
             Tables localTables = project.getData().getTableSet();
-            blueEditorPane1.setText(localTables.getTables());
-            blueEditorPane1.setEditable(true);
+            tablesText.setText(localTables.getTables());
+            tablesText.getJEditorPane().setEditable(true);
             tables = localTables;
         }
+        undo.discardAllEdits();
     }
 
     /** This method is called from within the constructor to
@@ -83,23 +95,11 @@ final class TablesTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        blueEditorPane1 = new blue.gui.BlueEditorPane();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.gui.BlueEditorPane blueEditorPane1;
     // End of variables declaration//GEN-END:variables
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,

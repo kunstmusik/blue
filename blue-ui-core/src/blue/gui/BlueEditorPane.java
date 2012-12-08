@@ -26,10 +26,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,12 +40,10 @@ import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 
-import org.openide.util.Exceptions;
 import org.syntax.jedit.InputHandler;
 import org.syntax.jedit.JEditTextArea;
 import org.syntax.jedit.SyntaxDocument;
@@ -61,13 +55,8 @@ import org.syntax.jedit.tokenmarker.TokenMarker;
 
 import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.components.FindReplaceDialog;
-import blue.settings.GeneralSettings;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
-import blue.utility.TextUtilities;
-import java.net.URL;
-import org.openide.awt.HtmlBrowser.URLDisplayer;
 
 /**
  * Text Editor Component for blue
@@ -514,7 +503,7 @@ public class BlueEditorPane extends JEditTextArea {
         }
 
         protected void findReplace() {
-            FindReplaceDialog.showFindReplace(BlueEditorPane.this);
+//            FindReplaceDialog.showFindReplace(BlueEditorPane.this);
         }
 
     }

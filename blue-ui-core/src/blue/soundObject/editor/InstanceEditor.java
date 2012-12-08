@@ -11,7 +11,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import blue.gui.BlueEditorPane;
 import blue.gui.InfoDialog;
 import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
