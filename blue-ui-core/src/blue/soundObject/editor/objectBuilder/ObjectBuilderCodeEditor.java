@@ -23,27 +23,20 @@ package blue.soundObject.editor.objectBuilder;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
 import blue.BlueSystem;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.gui.BlueEditorPane;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.soundObject.ObjectBuilder;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
@@ -166,50 +159,6 @@ public class ObjectBuilderCodeEditor extends JComponent {
         codePane.getJEditorPane().setEnabled(false);
 
         undo.setLimit(1000);
-    }
-
-    public void codeComplete(BlueEditorPane bPane) {
-        BSBGraphicInterface bsbGr = objBuilder.getGraphicInterface();
-
-        if (bsbGr.size() == 0) {
-            return;
-        }
-
-        ArrayList matches = new ArrayList();
-
-        for (int i = 0; i < bsbGr.size(); i++) {
-            BSBObject bsbObj = bsbGr.getBSBObject(i);
-            String objName = bsbObj.getObjectName();
-
-            if (objName != null && !objName.equals("")) {
-                matches.addAll(Arrays.asList(bsbObj.getReplacementKeys()));
-            }
-        }
-
-        if (matches.size() == 0) {
-            return;
-        }
-
-        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem
-                .getString("instrument.bsb.codeComplete.message"), BlueSystem
-                .getString("instrument.bsb.codeComplete.title"),
-                JOptionPane.INFORMATION_MESSAGE, null, matches.toArray(),
-                matches.get(0));
-
-        if (selectedValue == null) {
-            return;
-        }
-
-        int position = bPane.getCaretPosition();
-
-        try {
-            bPane.getDocument().insertString(position,
-                    "<" + selectedValue.toString() + ">", null);
-        } catch (BadLocationException e) {
-            // should never occur
-            e.printStackTrace();
-        }
-
     }
 
     /**
