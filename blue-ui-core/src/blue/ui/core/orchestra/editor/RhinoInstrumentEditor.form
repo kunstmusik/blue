@@ -21,7 +21,7 @@
                   <Component id="tabs" alignment="0" pref="430" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="editorLabel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="257" max="32767" attributes="0"/>
+                      <EmptySpace pref="193" max="32767" attributes="0"/>
                       <Component id="testButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -47,7 +47,7 @@
   <SubComponents>
     <Component class="javax.swing.JLabel" name="editorLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="jLabel1"/>
+        <Property name="text" type="java.lang.String" value="Rhino Instrument"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="testButton">

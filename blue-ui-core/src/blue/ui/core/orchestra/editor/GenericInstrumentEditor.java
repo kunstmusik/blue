@@ -14,8 +14,8 @@ import javax.swing.undo.UndoManager;
 
 import blue.BlueSystem;
 import blue.gui.InfoDialog;
+import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
-import blue.orchestra.editor.GenericEditable;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
@@ -27,7 +27,7 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-public class GenericEditor extends InstrumentEditor {
+public class GenericInstrumentEditor extends InstrumentEditor {
 
     private static HashMap tokenMarkerTypes = new HashMap();
     
@@ -40,14 +40,14 @@ public class GenericEditor extends InstrumentEditor {
     protected MimeTypeEditorComponent globalScoEditor =
             new MimeTypeEditorComponent("text/x-csound-sco");
 
-    GenericEditable instr;
+    GenericInstrument instr;
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
     UndoManager undo = new UndoRedo.Manager();
 
     /**
      * Creates new form GenericEditor2
      */
-    public GenericEditor() {
+    public GenericInstrumentEditor() {
         initComponents();
 
         tabs.add("Instrument Text", codeEditor);
@@ -109,7 +109,7 @@ public class GenericEditor extends InstrumentEditor {
             return;
         }
 
-        if (!(instr instanceof GenericEditable)) {
+        if (!(instr instanceof GenericInstrument)) {
             this.instr = null;
             editorLabel.setText(BlueSystem
                     .getString("instrument.noEditorAvailable"));
@@ -126,10 +126,7 @@ public class GenericEditor extends InstrumentEditor {
 //            textEditPane.setTokenMarker((TokenMarker) marker);
 //        }
 
-        editorLabel.setText("Generic Editor - Type: "
-                + instr.getClass().getName());
-
-        this.instr = (GenericEditable) instr;
+        this.instr = (GenericInstrument) instr;
 
         codeEditor.setText(this.instr.getText());
         codeEditor.getJEditorPane().setEnabled(true);
@@ -161,7 +158,7 @@ public class GenericEditor extends InstrumentEditor {
         testButton = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
 
-        editorLabel.setText("jLabel1");
+        editorLabel.setText("Generic Instrument");
 
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new java.awt.event.ActionListener() {
@@ -180,7 +177,7 @@ public class GenericEditor extends InstrumentEditor {
                     .addComponent(tabs, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(editorLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 257, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 182, Short.MAX_VALUE)
                         .addComponent(testButton)))
                 .addContainerGap())
         );
@@ -214,6 +211,6 @@ public class GenericEditor extends InstrumentEditor {
 
     @Override
     public Class getInstrumentClass() {
-        return GenericEditable.class;
+        return GenericInstrument.class;
     }
 }

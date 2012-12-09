@@ -1,7 +1,6 @@
 package blue.orchestra;
 
 import blue.Tables;
-import blue.orchestra.editor.GenericEditable;
 import blue.scripting.RhinoProxy;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
@@ -31,7 +30,7 @@ import java.util.HashMap;
  */
 
 public class RhinoInstrument extends AbstractInstrument implements
-        Serializable, GenericEditable {
+        Serializable {
 
     String instrumentText;
 

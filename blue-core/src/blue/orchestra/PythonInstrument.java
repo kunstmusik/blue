@@ -1,7 +1,6 @@
 package blue.orchestra;
 
 import blue.Tables;
-import blue.orchestra.editor.GenericEditable;
 import blue.scripting.PythonProxy;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
@@ -30,7 +29,7 @@ import java.util.HashMap;
  */
 
 public class PythonInstrument extends AbstractInstrument implements
-        Serializable, GenericEditable {
+        Serializable {
 
     String instrumentText;
 
