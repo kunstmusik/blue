@@ -54,11 +54,7 @@
             </file>
         </folder>
     </folder>
-    <folder name="Keymaps">
-        <!-- <file name="NetBeans_hidden"/>
-        <folder name="blue">
-        </folder>--> 
-    </folder>
+    
     <folder name="Menu">
         <folder name="File">
             <file name="Separator3.instance_hidden"/>

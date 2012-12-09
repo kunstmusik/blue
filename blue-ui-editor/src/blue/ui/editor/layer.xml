@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
-  <folder name="Editors">
+  <folder name="Actions">
+        <folder name="Edit">
+            <file name="org-netbeans-modules-search-FindInFilesAction.instance_hidden"/>
+            <file name="org-netbeans-modules-search-ReplaceInFilesAction.instance_hidden"/>
+        </folder>
+    </folder>
+    <folder name="Editors">
+    
+    <attr name="currentFontColorProfile" stringvalue="Blue"/>
+    
+<!--    <folder name="Keybindings">
+        <folder name="NetBeans">
+            <folder name="Defaults">
+                <file name="org-netbeans-modules-editor-csound-orc-actions-keybindings.xml" url="csound/orc/actions/DefaultKeyBindings.xml"/> 
+            </folder>
+        </folder>
+    </folder>-->
     
     <folder name="FontsColors">
       <folder name="blueDefault">
@@ -48,6 +64,8 @@
             </folder>
           </folder>
         </folder>
+        
+        
         
       </folder>
       
@@ -108,6 +126,15 @@
             </folder>
           </folder>
         </folder>
+        
+        <!--<folder name="Keybindings">
+            <folder name="NetBeans">
+                <folder name="Defaults">
+                    <file name="org-netbeans-modules-editor-blueSynthBuilder-keybindings.xml" url="csound/orc/actions/DefaultKeyBindings.xml"/> 
+                </folder>
+            </folder>
+        </folder>-->
+        
       </folder>
       
       <!-- OBJECT BUILDER -->
@@ -155,18 +182,21 @@
     </folder>
   </folder>
   
-  <folder name="Menu">
+    <folder name="Menu">
     <folder name="Edit">
       <file name="Separator1.instance_hidden"/>
-      <file name="SeparatorAfterProjectsSearch.instance_hidden"/>
+      <file name="SeparatorAfterFindPrevious.instance_hidden"/>
+            <file name="SeparatorAfterProjectsSearch.instance_hidden"/>
       <file name="WhereUsedAction.shadow_hidden"/>
       <file name="org-netbeans-modules-editor-MainMenuAction$StartMacroRecordingAction.instance_hidden"/>
       <file name="org-netbeans-modules-editor-MainMenuAction$StopMacroRecordingAction.instance_hidden"/>
       <file name="org-netbeans-modules-search-FindInFilesAction-separatorBefore.instance_hidden"/>
       <file name="org-netbeans-modules-search-FindInFilesAction.shadow_hidden"/>
       <file name="org-netbeans-modules-search-ReplaceInFilesAction.shadow_hidden"/>
-      <file name="org-openide-actions-RedoAction.shadow_hidden"/>
-      <file name="org-openide-actions-UndoAction.shadow_hidden"/>
+      <file name="org-openide-actions-FindAction.shadow_hidden"/>
+            <file name="org-openide-actions-RedoAction.shadow_hidden"/>
+      <file name="org-openide-actions-ReplaceAction.shadow_hidden"/>
+            <file name="org-openide-actions-UndoAction.shadow_hidden"/>
     </folder>
   </folder>
   <folder name="OptionsDialog">

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE bindings PUBLIC "-//NetBeans//DTD Editor KeyBindings settings 1.1//EN" "http://www.netbeans.org/dtds/EditorKeyBindings-1_1.dtd">
+<!--
+    IMPORTANT:  To handle Apple-specific keybindings, some of the keybindings
+    added here are modified in DefaultKeyBindings-Mac.xml.
+-->
+<bindings>
+    <bind actionName="add-semi-colon-line-comment" key="D-SEMICOLON"/>
+    <bind actionName="remove-semi-colon-line-comment" key="DS-SEMICOLON"/>
+</bindings>
