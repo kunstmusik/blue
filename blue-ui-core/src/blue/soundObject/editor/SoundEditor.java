@@ -1,5 +1,7 @@
 package blue.soundObject.editor;
 
+import blue.Arrangement;
+import blue.Arrangement;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,9 +20,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 
 import blue.BlueSystem;
+import blue.CompileData;
+import blue.Tables;
+import blue.Tables;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
-import blue.soundObject.GenericEditable;
+import blue.soundObject.Sound;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
@@ -35,11 +40,11 @@ import org.openide.awt.UndoRedo;
  * @version 1.0
  */
 
-public class GenericEditor extends SoundObjectEditor {
+public class SoundEditor extends SoundObjectEditor {
 
-    GenericEditable sObj;
+    Sound sObj;
 
-    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/x-csound-sco");
+    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/x-csound-orc");
 
     JLabel editorLabel = new JLabel();
 
@@ -49,7 +54,7 @@ public class GenericEditor extends SoundObjectEditor {
 
     UndoManager undo = new UndoRedo.Manager();
 
-    public GenericEditor() {
+    public SoundEditor() {
         try {
             jbInit();
         } catch (Exception e) {
@@ -60,7 +65,7 @@ public class GenericEditor extends SoundObjectEditor {
     private void jbInit() throws Exception {
         this.setLayout(new BorderLayout());
         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+        
         scoreEditPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
@@ -73,7 +78,7 @@ public class GenericEditor extends SoundObjectEditor {
 
         initActions();
 
-        editorLabel.setText("generic editor");
+        editorLabel.setText("Sound");
 
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
@@ -122,7 +127,7 @@ public class GenericEditor extends SoundObjectEditor {
             return;
         }
 
-        if (!(sObj instanceof GenericEditable)) {
+        if (!(sObj instanceof Sound)) {
             this.sObj = null;
             editorLabel.setText("no editor available");
             scoreEditPane
@@ -131,14 +136,7 @@ public class GenericEditor extends SoundObjectEditor {
             return;
         }
 
-//        Object marker = tokenMarkerTypes.get(sObj.getClass());
-//
-//        scoreEditPane.setTokenMarker((TokenMarker) marker);
-
-        editorLabel.setText("Generic Editor - Type: "
-                + sObj.getClass().getName());
-
-        this.sObj = (GenericEditable) sObj;
+        this.sObj = (Sound) sObj;
         scoreEditPane.setText(this.sObj.getText());
         scoreEditPane.getJEditorPane().setEnabled(true);
         scoreEditPane.getJEditorPane().setCaretPosition(0);
@@ -154,7 +152,7 @@ public class GenericEditor extends SoundObjectEditor {
         NoteList notes = null;
 
         try {
-            notes = ((SoundObject) this.sObj).generateForCSD(null, 0.0f, -1.0f);
+            notes = ((SoundObject) this.sObj).generateForCSD(new CompileData(new Arrangement(), new Tables()), 0.0f, -1.0f);
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
         }

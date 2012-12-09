@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
  */
 
 public class DurationsSequence extends AbstractSoundObject implements
-        Serializable, Cloneable, GenericEditable, GenericViewable {
+        Serializable, Cloneable, GenericViewable {
 
 //    private static BarRenderer renderer = new GenericRenderer();
 

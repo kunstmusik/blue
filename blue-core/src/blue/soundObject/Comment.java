@@ -15,7 +15,7 @@ import java.util.Map;
  */
 
 public class Comment extends AbstractSoundObject implements Serializable,
-        Cloneable, GenericEditable {
+        Cloneable {
 
 //    private static BarRenderer renderer = new CommentRenderer();
 

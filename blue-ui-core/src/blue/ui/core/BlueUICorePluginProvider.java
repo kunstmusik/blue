@@ -42,7 +42,10 @@ public class BlueUICorePluginProvider extends DefaultBluePluginProvider {
         factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
         factory.appendPlugin(LineEditor.class, LineObject.class);
         factory.appendPlugin(PythonEditor.class, PythonObject.class);
-        factory.appendPlugin(GenericEditor.class, GenericEditable.class);
+        factory.appendPlugin(GenericScoreEditor.class, GenericScore.class);
+        factory.appendPlugin(CommentEditor.class, Comment.class);
+        factory.appendPlugin(RhinoObjectEditor.class, RhinoObject.class);
+        factory.appendPlugin(SoundEditor.class, Sound.class);
         factory.appendPlugin(ObjectBuilderEditor.class, ObjectBuilder.class);
         factory.appendPlugin(TrackerEditor.class, TrackerObject.class);
         factory.appendPlugin(InstanceEditor.class, Instance.class);

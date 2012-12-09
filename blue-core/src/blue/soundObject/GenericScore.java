@@ -37,7 +37,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 public class GenericScore extends AbstractSoundObject implements Serializable,
-        Cloneable, GenericEditable, GenericViewable {
+        Cloneable, GenericViewable {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
 
