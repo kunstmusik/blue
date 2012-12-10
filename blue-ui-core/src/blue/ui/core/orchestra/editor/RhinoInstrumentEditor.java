@@ -32,7 +32,7 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
     private static HashMap tokenMarkerTypes = new HashMap();
     
     protected MimeTypeEditorComponent codeEditor =
-            new MimeTypeEditorComponent("text/x-javascript");
+            new MimeTypeEditorComponent("text/javascript");
     
     protected MimeTypeEditorComponent globalOrcEditor =
             new MimeTypeEditorComponent("text/x-csound-orc");

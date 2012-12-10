@@ -39,7 +39,7 @@ public class RhinoObjectEditor extends SoundObjectEditor {
 
     RhinoObject sObj;
 
-    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/x-javascript");
+    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/javascript");
 
     JLabel editorLabel = new JLabel();
 
