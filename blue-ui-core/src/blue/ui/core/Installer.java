@@ -32,14 +32,12 @@ import blue.projects.BlueProjectManager;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.scripting.PythonProxy;
-import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeListener;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
@@ -56,7 +54,6 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     BackupFileSaver backupFileSaver;
-    private ChangeListener textColorChangeListener;
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
@@ -159,9 +156,7 @@ public class Installer extends ModuleInstall {
         OSCManager oscManager = OSCManager.getInstance();
         OSCActions.installActions(oscManager);
         oscManager.start();
-        
-        TextColorsSettings.getInstance().addChangeListener(textColorChangeListener);
-        
+                
         Lookup lkp = Lookups.forPath("blue/score/layers");
         result = lkp.lookupResult(LayerGroupProvider.class);
         result.addLookupListener(lookupListener);
@@ -193,7 +188,6 @@ public class Installer extends ModuleInstall {
         ParameterTimeManagerFactory.setInstance(null);
         BlueProjectManager.getInstance().removePropertyChangeListener(windowTitlePropertyChangeListener);
         MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
-        TextColorsSettings.getInstance().removeChangeListener(textColorChangeListener);
 
         logger.info("blue-ui-core Installer uninstalled");
     }

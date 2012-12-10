@@ -22,7 +22,9 @@ NEW/UPDATED
   * Editor provides much nicer code completion and opcode documentation shows
   in the application (Csound Manual now included with blue)
 
-  * Fonts and Colors for code editor are configurable
+  * Fonts and Colors for code editor are configurable, as a many other settings
+    (i.e. tab size, spaces to insert for soft tabs), settings available in 
+    ProgramOptions
 
   * Csound Orc Code
      
