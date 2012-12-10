@@ -20,7 +20,7 @@ public class CsoundScoEditorKit extends NbEditorKit {
     public Document createDefaultDocument() {
         
         Document doc = new CsoundScoEditorDocument(getContentType());
-        doc.putProperty(Language.class, CsoundOrcTokenId.language());
+        doc.putProperty(Language.class, CsoundScoTokenId.language());
         return doc;
         
     }

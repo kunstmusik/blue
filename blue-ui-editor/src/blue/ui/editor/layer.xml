@@ -2,16 +2,16 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
   <folder name="Actions">
-        <folder name="Edit">
-            <file name="org-netbeans-modules-search-FindInFilesAction.instance_hidden"/>
-            <file name="org-netbeans-modules-search-ReplaceInFilesAction.instance_hidden"/>
-        </folder>
+    <folder name="Edit">
+      <file name="org-netbeans-modules-search-FindInFilesAction.instance_hidden"/>
+      <file name="org-netbeans-modules-search-ReplaceInFilesAction.instance_hidden"/>
     </folder>
-    <folder name="Editors">
+  </folder>
+  <folder name="Editors">
     
     <attr name="currentFontColorProfile" stringvalue="Blue"/>
     
-<!--    <folder name="Keybindings">
+    <!--    <folder name="Keybindings">
         <folder name="NetBeans">
             <folder name="Defaults">
                 <file name="org-netbeans-modules-editor-csound-orc-actions-keybindings.xml" url="csound/orc/actions/DefaultKeyBindings.xml"/> 
@@ -71,15 +71,15 @@
       
       <!-- CSOUND SCO -->
       
-       <folder name="x-csound-sco">
+      <folder name="x-csound-sco">
         <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
-<!--        <file name="language.instance">
-          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.sco.CsoundScoTokenId.language"/>
           <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
-        </file>-->
+        </file>
         <file name="EditorKit.instance">
           <attr name="instanceClass" stringvalue="blue.ui.editor.csound.sco.CsoundScoEditorKit"/>
-          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.csound.orc.CsoundScoEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.csound.sco.CsoundScoEditorKit"/>
           <attr name="beaninfo" boolvalue="false"/>
         </file>
         <!--
@@ -182,11 +182,11 @@
     </folder>
   </folder>
   
-    <folder name="Menu">
+  <folder name="Menu">
     <folder name="Edit">
       <file name="Separator1.instance_hidden"/>
       <file name="SeparatorAfterFindPrevious.instance_hidden"/>
-            <file name="SeparatorAfterProjectsSearch.instance_hidden"/>
+      <file name="SeparatorAfterProjectsSearch.instance_hidden"/>
       <file name="WhereUsedAction.shadow_hidden"/>
       <file name="org-netbeans-modules-editor-MainMenuAction$StartMacroRecordingAction.instance_hidden"/>
       <file name="org-netbeans-modules-editor-MainMenuAction$StopMacroRecordingAction.instance_hidden"/>
@@ -194,9 +194,9 @@
       <file name="org-netbeans-modules-search-FindInFilesAction.shadow_hidden"/>
       <file name="org-netbeans-modules-search-ReplaceInFilesAction.shadow_hidden"/>
       <file name="org-openide-actions-FindAction.shadow_hidden"/>
-            <file name="org-openide-actions-RedoAction.shadow_hidden"/>
+      <file name="org-openide-actions-RedoAction.shadow_hidden"/>
       <file name="org-openide-actions-ReplaceAction.shadow_hidden"/>
-            <file name="org-openide-actions-UndoAction.shadow_hidden"/>
+      <file name="org-openide-actions-UndoAction.shadow_hidden"/>
     </folder>
   </folder>
   <folder name="OptionsDialog">
