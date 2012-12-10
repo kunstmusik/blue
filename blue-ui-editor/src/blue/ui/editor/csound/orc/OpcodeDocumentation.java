@@ -29,25 +29,28 @@ public class OpcodeDocumentation {
         }
         
         boolean appending = false;
-        
-        buffer.append("<html>");
+                
+        String imgDir = "src=\"file://" + manualDir + "/images";
         
         try {
             BufferedReader br = new BufferedReader(new FileReader(docFile));
             String line;
             while ((line = br.readLine().trim()) != null) {
+                
+                line = line.replace("src=\"images", imgDir);
+                
                 if(appending) {
                     if(line.startsWith("<div class=\"navfooter\">")) {
                         break;
                     }
-                    buffer.append(line).append("\n");
+                    buffer.append(line); //.append("\n");
                 } else {
                     if(line.startsWith("<div class=\"refentry\"")) {
                         
-                        buffer.append(line).append("\n");
+                        buffer.append(line); //.append("\n");
                     } else if(line.startsWith("<div class=\"refnamediv\">")) {
                         appending = true;
-                        buffer.append(line).append("\n");
+                        buffer.append(line); //.append("\n");
                     }
                 }
             }
@@ -57,8 +60,6 @@ public class OpcodeDocumentation {
             Exceptions.printStackTrace(ex);
         }
         
-        buffer.append("</html>");
-
         return buffer.toString();   
     }
 }
