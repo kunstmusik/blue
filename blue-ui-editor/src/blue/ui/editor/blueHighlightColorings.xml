@@ -75,7 +75,7 @@ made subject to such option by the copyright holder.
     <fontcolor bgColor="ffe0e8f1" name="block-search"/>
     <fontcolor foreColor="ff253e5a" name="code-folding-bar"/>
     <fontcolor bgColor="ff4e687d" name="selection"/>
-    <fontcolor foreColor="blue" name="hyperlinks" underline="blue"/>
+    <fontcolor foreColor="F8BB00" name="hyperlinks" underline="F8BB00"/>
     <fontcolor foreColor="ff253e5a" name="text-limit-line-color"/>
     <fontcolor bgColor="ff38566f" name="highlight-search"/>
     <fontcolor foreColor="ff996600" name="synchronized-text-blocks-ext-slave"/>
