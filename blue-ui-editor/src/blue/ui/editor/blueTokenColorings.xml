@@ -48,30 +48,52 @@ made subject to such option by the copyright holder.
 <fontscolors>
     <!-- #146541, do not set font size. By default it has to pick up value of
          the "fontsize" command line option. -->
-    <fontcolor name="default" foreColor="white" bgColor="black"/>
-    <fontcolor name="char" foreColor="8AA6C1"/>
+<!--    <fontcolor name="default" foreColor="white" bgColor="ff0d1622"/>
+    <fontcolor name="char" foreColor="ff8aa6c1"/>
     <fontcolor name="comment" foreColor="428BDD"/>
-    <fontcolor name="error" waveUnderlined="red"/>
+    <fontcolor name="error" waveUnderlined="ffff3333"/>
     <fontcolor name="identifier"/>
-    <fontcolor name="keyword" foreColor="F8BB00"/>
-    <fontcolor name="number" foreColor="EDDD3D"/>
+    <fontcolor name="keyword" foreColor="ff0099ff"/>
+    <fontcolor name="ff99ff00" foreColor="EDDD3D"/>
     <fontcolor name="operator"/>
-    <fontcolor name="string" foreColor="E2CE00"/>
+    <fontcolor name="string" foreColor="ff99ff99"/>
     <fontcolor name="separator"/>
     <fontcolor name="warning" waveUnderlined="yellow"/>
-    <fontcolor name="whitespace" foreColor="white"/>
+    <fontcolor name="whitespace"/>-->
     
-    <!-- OO languages -->    
+    <fontcolor name="whitespace"/>
+    <fontcolor default="string" name="markup-attribute-value"/>
+    <fontcolor bgColor="ff0d1622" foreColor="white" name="default">
+        <font name="Monospaced" size="13" style="plain"/>
+    </fontcolor>
+    <fontcolor name="operator"/>
+    <fontcolor foreColor="428BDD" name="comment">
+        <font style="italic"/>
+    </fontcolor>
+    <fontcolor name="error" underline="ffff3333"/>
+    <fontcolor default="keyword" name="markup-element"/>
+    <fontcolor default="default" name="entity-reference"/>
+    <fontcolor foreColor="F8BB00" name="keyword"/>
+    <fontcolor foreColor="ff8aa6c1" name="char"/>
+    <fontcolor foreColor="ff99ff99" name="string"/>
+    <fontcolor name="separator"/>
+    <fontcolor name="identifier"/>
+    <fontcolor default="identifier" name="field"/>
+    <fontcolor default="field" name="markup-attribute"/>
+    <fontcolor default="identifier" name="method"/>
+    <fontcolor name="number"/>
+    
+<!--     OO languages     
     <fontcolor name="field" foreColor="ff009900" default="identifier"/>
     <fontcolor name="method" default="identifier"/>
     
-    <!-- Tag based languages -->
+     Tag based languages 
     
     <fontcolor name="markup-element" default="keyword"/>
     <fontcolor name="markup-attribute" default="field"/>
     <fontcolor name="markup-attribute-value" default="string"/>
     <fontcolor name="entity-reference" foreColor="white" default="default">
         <font style="bold"/>
-    </fontcolor>
+    </fontcolor>-->
     
 </fontscolors>
