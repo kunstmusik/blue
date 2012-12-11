@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.3.1<
-[released 2012.12.xx]
+[released 2012.12.12]
 
 NEW/UPDATED
 
@@ -22,9 +22,11 @@ NEW/UPDATED
   * Editor provides much nicer code completion and opcode documentation shows
   in the application (Csound Manual now included with blue)
 
-  * Fonts and Colors for code editor are configurable, as a many other settings
-    (i.e. tab size, spaces to insert for soft tabs), settings available in 
-    ProgramOptions
+  * Fonts and Colors for code editor are configurable, as well as many other 
+    settings (i.e. tab size, spaces to insert for soft tabs), settings available 
+    in ProgramOptions
+
+  * Text can be zoomed in using alt+mouse scrolling
 
   * Csound Orc Code
      
@@ -32,13 +34,21 @@ NEW/UPDATED
     this includes opcode completion, variable name matches, and BSB Widget names
 
     * Code Editors that have been replaced: GenericScore, BlueSynthBuilder, 
-    Effects Editor, User-Defined Opcode Editor
+    Effects Editor, User-Defined Opcode Editor, Global Orchestra (incl. tabs 
+    within instrument editors)
 
   * Csound Score Code
+    
+    * Code Editors that have been replaced: Global Score (incl. tabs within 
+    instrument editors), GenericScore
 
   * Python Code
 
     * Code Editors that have been replaced: PythonObject, Python Instrument
+
+  * Javascript Code
+
+    * Code Editors that have been replaced: RhinoObject, Rhino Instrument
 
 UPDATED
 
@@ -46,6 +56,8 @@ UPDATED
   code completion to show opcode information while coding
 
 * Removed Csound Manual Documentation Root option in Program Options
+
+* Removed old text color settings panel
 
 * Removed Help button on main toolbar as it was redundant to Csound Manual 
   options in Help Menu
