@@ -143,8 +143,8 @@
         <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
 
         <file name="EditorKit.instance">
-          <attr name="instanceClass" stringvalue="org.netbeans.modules.editor.plain.PlainKit"/>
-          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.editor.plain.PlainKit"/>
+          <attr name="instanceClass" stringvalue="blue.ui.editor.objectBuilder.ObjectBuilderEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.objectBuilder.ObjectBuilderEditorKit"/>
           <attr name="beaninfo" boolvalue="false"/>
                     
         </file>

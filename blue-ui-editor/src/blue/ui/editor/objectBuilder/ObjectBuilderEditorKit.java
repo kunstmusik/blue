@@ -21,7 +21,7 @@ public class ObjectBuilderEditorKit extends NbEditorKit {
     public Document createDefaultDocument() {
         
         Document doc = new ObjectBuilderEditorDocument(getContentType());
-        doc.putProperty(Language.class, CsoundOrcTokenId.language());
+//        doc.putProperty(Language.class, CsoundOrcTokenId.language());
         return doc;
         
     }
