@@ -19,7 +19,9 @@
  */
 package org.netbeans.modules.python.editor;
 
+import javax.swing.Action;
 import javax.swing.text.Document;
+import javax.swing.text.TextAction;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.modules.editor.NbEditorDocument;
 import org.netbeans.modules.editor.NbEditorKit;
@@ -32,12 +34,18 @@ import org.netbeans.modules.python.editor.lexer.PythonTokenId;
 public class PythonEditorKit extends NbEditorKit {
 
     @Override
+    protected Action[] createActions() {
+        Action[] nbEditorActions = new Action[] {
+                                      new ToggleCommentAction("#"),
+                                   };
+        return TextAction.augmentList(super.createActions(), nbEditorActions);
+    }
+    
+    @Override
     public Document createDefaultDocument() {
-        
         Document doc = new PythonEditorKit.PythonDocument(getContentType());
         doc.putProperty(Language.class, PythonTokenId.language());
-        return doc;
-        
+        return doc;  
     }
     
     @Override
