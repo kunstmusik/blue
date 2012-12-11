@@ -13,6 +13,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.netbeans.api.editor.completion.Completion;
+import org.netbeans.editor.DocumentUtilities;
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;
@@ -50,19 +51,16 @@ public class BSBCompletionItem implements CompletionItem {
         String text = jtc.getText();
         int len = text.length();
         
-        char c = text.charAt(index1);
+        char c;
         
-        while (index1 >= 0 && !(Character.isWhitespace(c) || c == '(')) {
+        while (index1 >= 0 && !(Character.isWhitespace(c = text.charAt(index1)) || c == '(')) {
             index1--;
-            c = text.charAt(index1);
         }
         
         index1 += 1;
 
-        c = text.charAt(index2);
-        while (index2 < len && !(Character.isWhitespace(c) || c == ')')) {
+        while (index2 < len && !(Character.isWhitespace(c = text.charAt(index1)) || c == ')')) {
             index2++;
-             c = text.charAt(index2);
         }
         
         try {
