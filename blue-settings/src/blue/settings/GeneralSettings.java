@@ -33,8 +33,6 @@ import org.openide.util.NbPreferences;
  */
 public class GeneralSettings implements Serializable {
 
-    private static final String CSOUND_DOC_ROOT = "csoundDocRoot";
-
     private static final String CSOUND_ERROR_WARNING_ENABLED = "csoundErrorWarningEnabled";
 
     private static final String DEFAULT_WORK_DIRECTORY = "defaultWorkDirectory";
@@ -73,7 +71,6 @@ public class GeneralSettings implements Serializable {
 
             final Preferences prefs = NbPreferences.forModule(GeneralSettings.class);
 
-            instance.csoundDocRoot = prefs.get(CSOUND_DOC_ROOT, "http://www.csounds.com/manual/html/");
             instance.defaultDirectory = new File(prefs.get(DEFAULT_WORK_DIRECTORY, ""));
             instance.usingCsoundAPI = prefs.getBoolean(USE_CSOUND_API, true);
             instance.newUserDefaultsEnabled = prefs.getBoolean(NEW_USER_DEFAULTS_ENABLED, true);
@@ -89,7 +86,6 @@ public class GeneralSettings implements Serializable {
 
         final Preferences prefs = NbPreferences.forModule(GeneralSettings.class);
 
-        prefs.put(CSOUND_DOC_ROOT, csoundDocRoot);
         prefs.put(DEFAULT_WORK_DIRECTORY, defaultDirectory.getAbsolutePath());
         prefs.putBoolean(USE_CSOUND_API, usingCsoundAPI);
         prefs.putBoolean(NEW_USER_DEFAULTS_ENABLED, newUserDefaultsEnabled);
@@ -105,13 +101,6 @@ public class GeneralSettings implements Serializable {
     }
 
     /* GETTER/SETTER METHODS */
-    public String getCsoundDocRoot() {
-        return csoundDocRoot;
-    }
-
-    public void setCsoundDocRoot(String csoundDocRoot) {
-        this.csoundDocRoot = csoundDocRoot;
-    }
 
     public File getDefaultDirectory() {
         return defaultDirectory;

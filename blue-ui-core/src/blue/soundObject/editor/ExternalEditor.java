@@ -18,21 +18,18 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
 import blue.BlueSystem;
-import blue.gui.BlueEditorPane;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.External;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.undo.NoStyleChangeUndoManager;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import org.openide.awt.UndoRedo;
 
 /**
  * <p>
@@ -58,7 +55,7 @@ public class ExternalEditor extends SoundObjectEditor {
 
     JLabel editorLabel = new JLabel();
 
-    BlueEditorPane scoreEditPane = new BlueEditorPane();
+    MimeTypeEditorComponent score1EditPane = new MimeTypeEditorComponent("text/plain");
 
     JPanel commandPanel = new JPanel();
 
@@ -70,7 +67,7 @@ public class ExternalEditor extends SoundObjectEditor {
 
     JTextField commandText = new JTextField();
 
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     private boolean isUpdating = false;
 
@@ -89,9 +86,10 @@ public class ExternalEditor extends SoundObjectEditor {
 
         this.setLayout(new BorderLayout());
 
-        scoreEditPane.setEditable(true);
-        scoreEditPane.setSyntaxSettable(true);
-        scoreEditPane.addPropertyChangeListener(new PropertyChangeListener() {
+        score1EditPane.getJEditorPane().setEditable(true);
+        score1EditPane.setUndoManager(undo);
+        score1EditPane.getDocument().addUndoableEditListener(undo);
+        score1EditPane.addPropertyChangeListener(new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
                 if (isUpdating) {
@@ -106,42 +104,20 @@ public class ExternalEditor extends SoundObjectEditor {
 
         });
 
-        scoreEditPane.getDocument().addDocumentListener(new DocumentListener() {
+        score1EditPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
+            @Override
+            public void documentChanged(DocumentEvent e) {
                 if (external != null) {
-                    external.setText(scoreEditPane.getText());
-                }
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                if (external != null) {
-                    external.setText(scoreEditPane.getText());
-                }
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                if (external != null) {
-                    external.setText(scoreEditPane.getText());
+                    external.setText(score1EditPane.getText());
                 }
             }
         });
 
-        commandText.getDocument().addDocumentListener(new DocumentListener() {
+        commandText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
-                if (external != null) {
-                    external.setCommandLine(commandText.getText());
-                }
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                if (external != null) {
-                    external.setCommandLine(commandText.getText());
-                }
-            }
-
-            public void changedUpdate(DocumentEvent e) {
+            @Override
+            public void documentChanged(DocumentEvent e) {
                 if (external != null) {
                     external.setCommandLine(commandText.getText());
                 }
@@ -155,7 +131,7 @@ public class ExternalEditor extends SoundObjectEditor {
         commandPanel.add(editorLabel, BorderLayout.NORTH);
         commandPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         this.add(commandPanel, BorderLayout.NORTH);
-        this.add(scoreEditPane, BorderLayout.CENTER);
+        this.add(score1EditPane, BorderLayout.CENTER);
 
         testButton.addActionListener(new ActionListener() {
 
@@ -171,43 +147,16 @@ public class ExternalEditor extends SoundObjectEditor {
 
     private void initActions() {
 
-        InputMap inputMap = scoreEditPane.getInputMap();
-        ActionMap actions = scoreEditPane.getActionMap();
+        InputMap inputMap = score1EditPane.getInputMap();
+        ActionMap actions = score1EditPane.getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
                 .getMenuShortcutKey()), "testSoundObject");
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
-                .getMenuShortcutKey()), "undo");
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem
-                .getMenuShortcutKey()
-                | KeyEvent.SHIFT_DOWN_MASK), "redo");
 
         actions.put("testSoundObject", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
-            }
-
-        });
-
-        actions.put("undo", new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (undo.canUndo()) {
-                    undo.undo();
-                }
-            }
-
-        });
-
-        actions.put("redo", new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (undo.canRedo()) {
-                    undo.redo();
-                }
             }
 
         });
@@ -228,20 +177,11 @@ public class ExternalEditor extends SoundObjectEditor {
 
         this.external = (External) sObj;
 
-        scoreEditPane.setSyntaxType(external.getSyntaxType());
+        //FIXME - need to implement updatable syntax editing here...
+//        scoreEditPane.setSyntaxType(external.getSyntaxType());
 
-        scoreEditPane.setText(this.external.getText());
+        score1EditPane.setText(this.external.getText());
         commandText.setText(this.external.getCommandLine());
-
-        scoreEditPane.getDocument().addUndoableEditListener(
-                new UndoableEditListener() {
-
-                    public void undoableEditHappened(UndoableEditEvent e) {
-                        UndoableEdit edit = e.getEdit();
-                        undo.addEdit(edit);
-
-                    }
-                });
 
         undo.discardAllEdits();
 

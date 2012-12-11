@@ -37,7 +37,7 @@ import java.util.Map;
  */
 
 public class RhinoObject extends AbstractSoundObject implements Serializable,
-        Cloneable, GenericEditable {
+        Cloneable {
 
     private String javaScriptCode;
 

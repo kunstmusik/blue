@@ -32,17 +32,12 @@ import blue.projects.BlueProjectManager;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
 import blue.scripting.PythonProxy;
-import blue.settings.TextColorsSettings;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
-import java.awt.Color;
-import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
@@ -51,9 +46,6 @@ import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
-import org.syntax.jedit.SyntaxStyle;
-import org.syntax.jedit.TextAreaDefaults;
-import org.syntax.jedit.tokenmarker.Token;
 
 /**
  * Manages a module's lifecycle. Remember that an installer is optional and
@@ -61,8 +53,7 @@ import org.syntax.jedit.tokenmarker.Token;
  */
 public class Installer extends ModuleInstall {
 
-    BackupFileSaver backupFileSaver = new BackupFileSaver();
-    private ChangeListener textColorChangeListener;
+    BackupFileSaver backupFileSaver;
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
@@ -73,6 +64,8 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
 
+        System.setProperty("jffi.unsafe.disabled", "true");
+        
 //        System.setProperty("netbeans.winsys.no_toolbars", "true");
 //
 //        SwingUtilities.invokeLater(new Runnable() {
@@ -96,21 +89,7 @@ public class Installer extends ModuleInstall {
 //            }
 //        });
 
-        initializeTextDefaults();
-
-        Thread t = new Thread(backupFileSaver);
-        t.setPriority(Thread.MIN_PRIORITY);
-        t.setDaemon(true);
-        t.start();
-
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
-
-        textColorChangeListener = new ChangeListener() {
-
-            public void stateChanged(ChangeEvent e) {
-                setTextColors();
-            }
-        };
 
         windowTitlePropertyChangeListener = new PropertyChangeListener() {
 
@@ -129,6 +108,11 @@ public class Installer extends ModuleInstall {
 
             public void run() {
                 setWindowTitle();
+                backupFileSaver = new BackupFileSaver();
+                Thread t = new Thread(backupFileSaver);
+                t.setPriority(Thread.MIN_PRIORITY);
+                t.setDaemon(true);
+                t.start();
             }
         });
         
@@ -161,14 +145,18 @@ public class Installer extends ModuleInstall {
 //            }
 //        });
 
-        MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+            }
+        });
         
         OSCManager oscManager = OSCManager.getInstance();
         OSCActions.installActions(oscManager);
         oscManager.start();
-        
-        TextColorsSettings.getInstance().addChangeListener(textColorChangeListener);
-        
+                
         Lookup lkp = Lookups.forPath("blue/score/layers");
         result = lkp.lookupResult(LayerGroupProvider.class);
         result.addLookupListener(lookupListener);
@@ -200,7 +188,6 @@ public class Installer extends ModuleInstall {
         ParameterTimeManagerFactory.setInstance(null);
         BlueProjectManager.getInstance().removePropertyChangeListener(windowTitlePropertyChangeListener);
         MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
-        TextColorsSettings.getInstance().removeChangeListener(textColorChangeListener);
 
         logger.info("blue-ui-core Installer uninstalled");
     }
@@ -257,51 +244,6 @@ public class Installer extends ModuleInstall {
     public void saveLibraries() {
         BlueSystem.saveUserInstrumentLibrary();
         BlueSystem.saveUDOLibrary();
-    }
-
-    public void initializeTextDefaults() {
-        if (!textDefaultsInitialized) {
-            TextAreaDefaults defaults = TextAreaDefaults.getDefaults();
-
-            defaults.caretBlinks = true;
-            defaults.caretColor = Color.WHITE;
-            defaults.selectionColor = new Color(0x666680);
-            defaults.lineHighlight = false;
-
-            setTextColors();
-
-            textDefaultsInitialized = true;
-        }
-    }
-
-    public void setTextColors() {
-        TextAreaDefaults defaults = TextAreaDefaults.getDefaults();
-
-        SyntaxStyle[] styles = defaults.styles;
-
-        TextColorsSettings settings = TextColorsSettings.getInstance();
-
-        styles[Token.NULL] = new SyntaxStyle(settings.blueSyntaxNormal, false,
-                false);
-
-        styles[Token.KEYWORD1] = new SyntaxStyle(settings.blueSyntaxKeyword,
-                false, true);
-        styles[Token.KEYWORD2] = new SyntaxStyle(settings.blueSyntaxVariable,
-                false,
-                false);
-        styles[Token.KEYWORD3] = new SyntaxStyle(settings.blueSyntaxPfield,
-                false,
-                false);
-        styles[Token.COMMENT1] = new SyntaxStyle(settings.blueSyntaxComment,
-                false,
-                false);
-
-        styles[Token.LITERAL1] = new SyntaxStyle(settings.blueSyntaxQuote, false,
-                false);
-        styles[Token.LITERAL2] = new SyntaxStyle(settings.blueSyntaxQuote, false,
-                true);
-
-        defaults.bracketHighlightColor = settings.blueSyntaxNormal;
     }
 
 }

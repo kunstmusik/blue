@@ -94,15 +94,15 @@ public class InfoDialog {
         infoText.setText("");
     }
 
-    public static final void showInformationDialogCode(Component parent,
-            String information, String title) {
-        BlueEditorPane bep = new BlueEditorPane();
-
-        bep.setText(information);
-        bep.setCaretPosition(0);
-        JOptionPane.showMessageDialog(parent, bep, title,
-                JOptionPane.PLAIN_MESSAGE);
-    }
+//    public static final void showInformationDialogCode(Component parent,
+//            String information, String title) {
+//        BlueEditorPane bep = new BlueEditorPane();
+//
+//        bep.setText(information);
+//        bep.setCaretPosition(0);
+//        JOptionPane.showMessageDialog(parent, bep, title,
+//                JOptionPane.PLAIN_MESSAGE);
+//    }
 
     public static final void showInformationDialogTabs(String information,
             String title) {

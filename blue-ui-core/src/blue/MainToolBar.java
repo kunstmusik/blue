@@ -94,8 +94,6 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     JTextField playTimeText = new JTextField();
 
-    JButton helpButton = new JButton();
-
     BlueData data;
 
     APIRunner apiRunner;
@@ -194,29 +192,6 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         playTimeText.setText(EMPTY_TIME);
         playTimeText.setPreferredSize(new Dimension(80, 23));
 
-        helpButton.setText(" [ ? ] ");
-        helpButton.setPreferredSize(new Dimension(helpButton.getWidth(), 23));
-        helpButton.addActionListener(new java.awt.event.ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                String url = GeneralSettings.getInstance().getCsoundDocRoot() + "index.html";
-
-                if (!url.startsWith("http") && !url.startsWith("file://")) {
-                    url = "file://" + url;
-                }
-
-                url = url.replace(" ", "%20");
-
-                System.out.println(BlueSystem.getString(
-                        "playBar.helpButton.executingHelp") + " " + url);
-                try {
-                    URLDisplayer.getDefault().showURL(new URL(url));
-                } catch (MalformedURLException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
-            }
-        });
-
         loopBox.setFocusable(false);
         loopBox.setText("Loop");
         loopBox.addActionListener(new ActionListener() {
@@ -238,8 +213,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(rewindButton, null);
         this.add(playButton, null);
         this.add(stopButton, null);
-        this.add(helpButton, null);
-
+        
         commandlineRunner.addPlayModeListener(this);
 
         // Setup as Listener to RenderTimeManager

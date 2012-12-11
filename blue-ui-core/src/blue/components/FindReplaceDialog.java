@@ -32,9 +32,9 @@ import javax.swing.text.Document;
 
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.gui.BlueEditorPane;
 import blue.utility.GUI;
 import electric.xml.Element;
+import javax.swing.text.JTextComponent;
 
 /**
  * 
@@ -45,12 +45,12 @@ import electric.xml.Element;
 public class FindReplaceDialog extends javax.swing.JDialog implements
         WindowSettingsSavable {
 
-    BlueEditorPane textArea = null;
+    JTextComponent textArea = null;
 
     private static WeakHashMap<Component, FindReplaceDialog> map =
             new WeakHashMap<Component, FindReplaceDialog>();
 
-    public static void showFindReplace(BlueEditorPane textComponent) {
+    public static void showFindReplace(JTextComponent textComponent) {
         Component root = SwingUtilities.getRoot(textComponent);
 
         if (!map.containsKey(root)) {
@@ -420,7 +420,7 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     // return textArea;
     // }
 
-    public void setTextArea(BlueEditorPane textArea) {
+    public void setTextArea(JTextComponent textArea) {
         this.textArea = textArea;
     }
 

@@ -464,13 +464,13 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
             float scoreTime = (float) csound.GetScoreTime();
             float currentTime = 0.0f;
+            float renderStartSeconds = 0.0f;
 
             if (renderUpdatesTime) {
                 if (mapper != null) {
-                    float renderStartSeconds = mapper.beatsToSeconds(startTime);
+                    renderStartSeconds = mapper.beatsToSeconds(startTime);
                     currentTime = mapper.secondsToBeats(
                             scoreTime + renderStartSeconds);
-                    currentTime -= startTime;
                 } else {
                     currentTime = startTime + scoreTime;
                 }
@@ -497,11 +497,8 @@ public class APIRunner implements CSDRunner, PlayModeListener {
 
                 if (renderUpdatesTime) {
                     if (mapper != null) {
-                        float renderStartSeconds = mapper.beatsToSeconds(
-                                startTime);
                         currentTime = mapper.secondsToBeats(
                                 scoreTime + renderStartSeconds);
-                        currentTime -= startTime;
                     } else {
                         currentTime = startTime + scoreTime;
                     }

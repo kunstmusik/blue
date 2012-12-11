@@ -38,15 +38,17 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import blue.BlueSystem;
-import blue.gui.BlueEditorPane;
 import blue.gui.LabelledItemPanel;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 /**
  * @author Administrator
@@ -60,7 +62,7 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     JButton findAudioFile = new JButton();
 
-    BlueEditorPane csoundCode = new BlueEditorPane();
+    MimeTypeEditorComponent csoundCode = new MimeTypeEditorComponent("text/x-csound-orc");
 
     AudioFile af = null;
 
@@ -82,11 +84,9 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     JLabel channelVariables = new JLabel();
 
-    // JPanel ftablePanel = new JPanel();
-    // JTextField fTableText = new JTextField();
-    // JButton ftableCopyButton = new JButton();
-
     LabelledItemPanel audioFileInfoPanel = new LabelledItemPanel();
+    
+    UndoManager undo = new UndoRedo.Manager();
 
     public AudioFileEditor() {
         this.setLayout(new BorderLayout());
@@ -105,26 +105,19 @@ public class AudioFileEditor extends SoundObjectEditor {
 
         audioFileName.setEditable(false);
 
-        csoundCode.getDocument().addDocumentListener(new DocumentListener() {
+        csoundCode.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
+            @Override
+            public void documentChanged(DocumentEvent e) {
                 if (af != null) {
                     af.setCsoundPostCode(csoundCode.getText());
                 }
             }
-
-            public void removeUpdate(DocumentEvent e) {
-                if (af != null) {
-                    af.setCsoundPostCode(csoundCode.getText());
-                }
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                if (af != null) {
-                    af.setCsoundPostCode(csoundCode.getText());
-                }
-            }
+        
         });
+        
+        csoundCode.setUndoManager(undo);
+        csoundCode.getDocument().addUndoableEditListener(undo);
 
         // INFORMATION PANEL
 
@@ -234,6 +227,8 @@ public class AudioFileEditor extends SoundObjectEditor {
 
         csoundCode.setText(af.getCsoundPostCode());
         setAudioFileInfo(af.getSoundFileName());
+        
+        undo.discardAllEdits();
     }
 
     private void setAudioFileInfo(String audioFile) {

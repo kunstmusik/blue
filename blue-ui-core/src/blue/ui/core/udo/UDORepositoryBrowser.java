@@ -48,9 +48,9 @@ import javax.swing.tree.TreePath;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
 import blue.components.LabelledPanel;
-import blue.gui.BlueEditorPane;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.utility.GUI;
 import blue.utility.TextUtilities;
 import electric.xml.Document;
@@ -457,13 +457,13 @@ public class UDORepositoryBrowser extends JDialog {
     }
 
     class UDODisplayPanel extends JComponent {
-        private BlueEditorPane codeText;
+        private MimeTypeEditorComponent codeText;
 
         private UserDefinedOpcode udo;
 
         public UDODisplayPanel() {
-            codeText = new BlueEditorPane();
-            codeText.setEditable(false);
+            codeText = new MimeTypeEditorComponent("text/x-csound-orc");
+            codeText.getJEditorPane().setEditable(false);
 
             this.setLayout(new BorderLayout());
 

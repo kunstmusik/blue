@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE fontscolors PUBLIC "-//NetBeans//DTD Editor Fonts and Colors settings 1.1//EN" "http://www.netbeans.org/dtds/EditorFontsColors-1_1.dtd">
+
+<fontscolors>
+    <fontcolor name="keyword" default="keyword"/>
+
+    <fontcolor name="FLOAT_LITERAL" default="number"/>
+    <fontcolor name="ANY_OPERATOR" default="operator"/>
+    <fontcolor name="STRING_LITERAL" default="string"/>
+    <fontcolor name="BLOCK_COMMENT" default="comment"/>
+    <fontcolor name="ERROR" default="error"/>
+    <fontcolor name="LINE_COMMENT" default="comment"/>
+    <fontcolor name="IDENTIFIER" default="identifier"/>
+    <fontcolor name="WHITESPACE" default="whitespace"/>
+
+    <fontcolor name="mod-unused" waveUnderlined="999999"/>
+    <fontcolor name="mod-parameter" foreColor="A06001"/> 
+    <fontcolor name="mod-global" default="field"/> 
+    <fontcolor name="mod-method">
+        <font style="bold" />
+    </fontcolor>
+    <fontcolor name="mod-class" />
+    <fontcolor name="mod-deprecated" strikeThrough="404040" />
+    <fontcolor name="mod-regexp" foreColor="9933CC" default="regexp" />
+    <fontcolor name="mark-occurrences" bgColor="ECEBA3"/>
+    <!-- E4X -->
+    <fontcolor name="mod-custom1" bgColor="ffffe4ff" foreColor="black" />
+    <!-- E4X: element -->
+    <fontcolor name="mod-custom2" foreColor="blue" />
+    <!-- E4X: text -->
+    <fontcolor name="mod-custom3">
+        <font style="bold" />
+    </fontcolor>
+</fontscolors>

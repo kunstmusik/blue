@@ -82,7 +82,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
         }
     }
 
-    public Iterator iterator() {
+    public Iterator<BSBObject> iterator() {
         return interfaceItems.iterator();
     }
 

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+  <folder name="Actions">
+    <folder name="Edit">
+      <file name="org-netbeans-modules-search-FindInFilesAction.instance_hidden"/>
+      <file name="org-netbeans-modules-search-ReplaceInFilesAction.instance_hidden"/>
+    </folder>
+  </folder>
+  <folder name="Editors">
+    
+    <attr name="currentFontColorProfile" stringvalue="Blue"/>
+    
+    <!--    <folder name="Keybindings">
+        <folder name="NetBeans">
+            <folder name="Defaults">
+                <file name="org-netbeans-modules-editor-csound-orc-actions-keybindings.xml" url="csound/orc/actions/DefaultKeyBindings.xml"/> 
+            </folder>
+        </folder>
+    </folder>-->
+    
+    <folder name="FontsColors">
+      <folder name="blueDefault">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+        <attr name="position" intvalue="0"/>
+        <folder name="Defaults">
+          <file name="org-netbeans-modules-defaults-token-colorings.xml" url="blueTokenColorings.xml">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+          </file>
+          <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="blueHighlightColorings.xml">
+            <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.Bundle"/>
+            <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
+          </file>
+        </folder>
+      </folder>
+    </folder>
+    
+    <folder name="text">
+      
+      <!-- Csound ORC -->
+      
+      <folder name="x-csound-orc">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.csound.orc.CsoundOrcEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.csound.orc.CsoundOrcEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+        <!--
+        <folder name="TokenListProvider">
+          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
+        </folder>-->
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="csound/orc/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+        
+        
+        
+      </folder>
+      
+      <!-- CSOUND SCO -->
+      
+      <folder name="x-csound-sco">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.sco.CsoundScoTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.csound.sco.CsoundScoEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.csound.sco.CsoundScoEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+        <!--
+        <folder name="TokenListProvider">
+          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
+        </folder>-->
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="csound/sco/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+        
+      </folder>
+      
+      <!-- BSB -->
+      
+      <folder name="x-blue-synth-builder">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.csound.orc.CsoundOrcTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.blueSynthBuilder.BlueSynthBuilderEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.blueSynthBuilder.BlueSynthBuilderEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+        <!--
+        <folder name="TokenListProvider">
+          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
+        </folder>-->
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="csound/orc/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.orc.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+        
+        <!--<folder name="Keybindings">
+            <folder name="NetBeans">
+                <folder name="Defaults">
+                    <file name="org-netbeans-modules-editor-blueSynthBuilder-keybindings.xml" url="csound/orc/actions/DefaultKeyBindings.xml"/> 
+                </folder>
+            </folder>
+        </folder>-->
+        
+      </folder>
+      
+      <!-- OBJECT BUILDER -->
+      
+      <folder name="x-object-builder">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.csound.sco.Bundle"/>
+
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.objectBuilder.ObjectBuilderEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.objectBuilder.ObjectBuilderEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+                    
+        </file>
+        
+      </folder>
+      
+      <!-- PYTHON -->
+      
+      <folder name="x-python">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.python.editor.Bundle"/>
+
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="org.netbeans.modules.python.editor.lexer.PythonTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="org.netbeans.modules.python.editor.PythonEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.python.editor.PythonEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+                
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="/org/netbeans/modules/python/editor/resources/fontsColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.python.editor.resources.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+                
+      </folder>
+      
+      <!-- Javascript -->
+      
+      <folder name="javascript">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript.editing.lexer.Bundle"/>
+
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="org.netbeans.modules.javascript.editing.lexer..JsTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="org.netbeans.modules.javascript.editing.lexer.JsEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.javascript.editing.lexer.JsEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+                
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="/org/netbeans/modules/javascript/editing/lexer/fontsColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript.editing.lexer.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+                
+      </folder>
+      
+    </folder>
+  </folder>
+  
+  <folder name="Menu">
+    <folder name="Edit">
+      <file name="Separator1.instance_hidden"/>
+      <file name="SeparatorAfterFindPrevious.instance_hidden"/>
+      <file name="SeparatorAfterProjectsSearch.instance_hidden"/>
+      <file name="WhereUsedAction.shadow_hidden"/>
+      <file name="org-netbeans-modules-editor-MainMenuAction$StartMacroRecordingAction.instance_hidden"/>
+      <file name="org-netbeans-modules-editor-MainMenuAction$StopMacroRecordingAction.instance_hidden"/>
+      <file name="org-netbeans-modules-search-FindInFilesAction-separatorBefore.instance_hidden"/>
+      <file name="org-netbeans-modules-search-FindInFilesAction.shadow_hidden"/>
+      <file name="org-netbeans-modules-search-ReplaceInFilesAction.shadow_hidden"/>
+      <file name="org-openide-actions-FindAction.shadow_hidden"/>
+      <file name="org-openide-actions-RedoAction.shadow_hidden"/>
+      <file name="org-openide-actions-ReplaceAction.shadow_hidden"/>
+      <file name="org-openide-actions-UndoAction.shadow_hidden"/>
+    </folder>
+  </folder>
+  <folder name="OptionsDialog">
+    <folder name="PreviewExamples">
+      <folder name="text">
+        <file name="x-csound-orc" url="csound/orc/CsoundOrcTemplate.orc"/>
+      </folder>
+      <folder name="text">
+        <file name="x-csound-sco" url="csound/sco/CsoundScoTemplate.sco"/>
+      </folder>
+    </folder>
+  </folder>
+</filesystem>

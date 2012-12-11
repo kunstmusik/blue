@@ -31,12 +31,14 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import blue.gui.BlueEditorPane;
 import blue.noteProcessor.Code;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.utility.GUI;
 
 import com.l2fprod.common.swing.BaseDialog;
 import java.awt.Frame;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 import org.openide.windows.WindowManager;
 
 /**
@@ -124,7 +126,9 @@ public class CodeEditor extends JComponent {
 
     private static class CodeEditDialog extends BaseDialog {
 
-        BlueEditorPane editor = new BlueEditorPane();
+        MimeTypeEditorComponent editor = new MimeTypeEditorComponent("text/x-python");
+        
+        UndoManager undo = new UndoRedo.Manager();
 
         public CodeEditDialog(Frame parent) {
             super(parent, "Edit Code", true);
@@ -133,16 +137,17 @@ public class CodeEditor extends JComponent {
 
             this.setDefaultCloseOperation(HIDE_ON_CLOSE);
 
-            editor.setSyntaxSettable(false);
-            editor.setSyntaxType("Python");
-
             Container contentPane = this.getContentPane();
             contentPane.setLayout(new BorderLayout());
             contentPane.add(editor, BorderLayout.CENTER);
+            
+            editor.setUndoManager(undo);
+            editor.getDocument().addUndoableEditListener(undo);
         }
 
         public void setCodeText(String code) {
             editor.setText(code);
+            undo.discardAllEdits();
         }
 
         public String getCodeText() {
