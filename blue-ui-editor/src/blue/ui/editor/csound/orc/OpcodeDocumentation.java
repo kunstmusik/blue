@@ -43,14 +43,14 @@ public class OpcodeDocumentation {
                     if(line.startsWith("<div class=\"navfooter\">")) {
                         break;
                     }
-                    buffer.append(line); //.append("\n");
+                    buffer.append(line).append("\n");
                 } else {
                     if(line.startsWith("<div class=\"refentry\"")) {
                         
-                        buffer.append(line); //.append("\n");
+                        buffer.append(line).append("\n");
                     } else if(line.startsWith("<div class=\"refnamediv\">")) {
                         appending = true;
-                        buffer.append(line); //.append("\n");
+                        buffer.append(line).append("\n");
                     }
                 }
             }
