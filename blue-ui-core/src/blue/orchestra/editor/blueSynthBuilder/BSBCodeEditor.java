@@ -21,69 +21,62 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
-import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.actions.RedoAction;
-import blue.actions.UndoAction;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.gui.BlueEditorPane;
 import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
-import blue.undo.TabSelectionWrapper;
+import blue.undo.TabWatchingUndoableEditGenerator;
+import org.openide.awt.UndoRedo;
 
 /**
  * @author steven
  */
 public class BSBCodeEditor extends JComponent {
+    
+    BSBCompletionProvider completionProvider = new BSBCompletionProvider();
 
-    BlueEditorPane codePane = new BlueEditorPane();
+    MimeTypeEditorComponent codePane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane alwaysOnCodePane = new BlueEditorPane();
+    MimeTypeEditorComponent alwaysOnCodePane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane globalOrcEditPane = new BlueEditorPane();
+    MimeTypeEditorComponent globalOrcEditPane = 
+            new MimeTypeEditorComponent("text/x-blue-synth-builder");
 
-    BlueEditorPane globalScoEditPane = new BlueEditorPane();
-
+    MimeTypeEditorComponent globalScoEditPane = 
+            new MimeTypeEditorComponent("text/x-csound-sco");
+    
     BlueSynthBuilder bsb = new BlueSynthBuilder();
 
     EditEnabledCheckBox editBox = new EditEnabledCheckBox();
 
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     public BSBCodeEditor() {
 
         editBox.addEditModeListener(new EditModeListener() {
 
             public void setEditing(boolean isEditing) {
-                codePane.setEnabled(isEditing);
-                alwaysOnCodePane.setEnabled(isEditing);
-                globalOrcEditPane.setEnabled(isEditing);
-                globalScoEditPane.setEnabled(isEditing);
+                codePane.getJEditorPane().setEnabled(isEditing);
+                alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
+                globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
+                globalScoEditPane.getJEditorPane().setEnabled(isEditing);
 
                 if (bsb != null) {
                     bsb.setEditEnabled(isEditing);
@@ -145,88 +138,33 @@ public class BSBCodeEditor extends JComponent {
         this.add(topBar, BorderLayout.NORTH);
         this.add(tabs, BorderLayout.CENTER);
 
-        UndoableEditListener ul = new UndoableEditListener() {
+        new TabWatchingUndoableEditGenerator(tabs, undo);
 
-            public void undoableEditHappened(UndoableEditEvent e) {
-                UndoableEdit event = e.getEdit();
+        codePane.getDocument().addUndoableEditListener(undo);
+        alwaysOnCodePane.getDocument().addUndoableEditListener(undo);
+        globalOrcEditPane.getDocument().addUndoableEditListener(undo);
+        globalScoEditPane.getDocument().addUndoableEditListener(undo);
 
-                if (event.getPresentationName().equals("style change")) {
-                    undo.addEdit(event);
-                } else {
-                    TabSelectionWrapper wrapper = new TabSelectionWrapper(
-                            event, tabs);
-                    undo.addEdit(wrapper);
-                }
-            }
-        };
-
-        codePane.getDocument().addUndoableEditListener(ul);
-        alwaysOnCodePane.getDocument().addUndoableEditListener(ul);
-        globalOrcEditPane.getDocument().addUndoableEditListener(ul);
-        globalScoEditPane.getDocument().addUndoableEditListener(ul);
-
-        Action[] undoActions = new Action[]{new UndoAction(undo),
-            new RedoAction(undo)};
-
-        SwingUtil.installActions(codePane, undoActions);
-        SwingUtil.installActions(alwaysOnCodePane, undoActions);
-        SwingUtil.installActions(globalOrcEditPane, undoActions);
-        SwingUtil.installActions(globalScoEditPane, undoActions);
-
+        codePane.setUndoManager(undo);
+        alwaysOnCodePane.setUndoManager(undo);
+        globalOrcEditPane.setUndoManager(undo);
+        globalScoEditPane.setUndoManager(undo);
+        
         undo.setLimit(1000);
+        
+        codePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
+        alwaysOnCodePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
+        globalOrcEditPane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
 
         initActions();
 
-        codePane.setEnabled(false);
-        alwaysOnCodePane.setEnabled(false);
-        globalOrcEditPane.setEnabled(false);
-        globalScoEditPane.setEnabled(false);
-
-    }
-
-    public void codeComplete(BlueEditorPane bPane) {
-        BSBGraphicInterface bsbGr = bsb.getGraphicInterface();
-
-        if (bsbGr.size() == 0) {
-            return;
-        }
-
-        // String[] matches = new String[bsbGr.size()];
-
-        ArrayList matches = new ArrayList();
-
-        for (int i = 0; i < bsbGr.size(); i++) {
-            BSBObject bsbObj = bsbGr.getBSBObject(i);
-            String objName = bsbObj.getObjectName();
-
-            if (objName != null && !objName.equals("")) {
-                matches.addAll(Arrays.asList(bsbObj.getReplacementKeys()));
-            }
-        }
-
-        if (matches.size() == 0) {
-            return;
-        }
-
-        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem.
-                getString("instrument.bsb.codeComplete.message"), BlueSystem.
-                getString("instrument.bsb.codeComplete.title"),
-                JOptionPane.INFORMATION_MESSAGE, null, matches.toArray(),
-                matches.get(0));
-
-        if (selectedValue == null) {
-            return;
-        }
-
-        int position = bPane.getCaretPosition();
-
-        try {
-            bPane.getDocument().insertString(position,
-                    "<" + selectedValue.toString() + ">", null);
-        } catch (BadLocationException e) {
-            // should never occur
-            e.printStackTrace();
-        }
+        codePane.getJEditorPane().setEnabled(false);
+        alwaysOnCodePane.getJEditorPane().setEnabled(false);
+        globalOrcEditPane.getJEditorPane().setEnabled(false);
+        globalScoEditPane.getJEditorPane().setEnabled(false);
 
     }
 
@@ -234,29 +172,6 @@ public class BSBCodeEditor extends JComponent {
      * 
      */
     private void initActions() {
-
-        AbstractAction codeCompleteAction = new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (codePane.isEditable()) {
-                    codeComplete((BlueEditorPane) e.getSource());
-                }
-            }
-        };
-
-        KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
-                KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK
-                | InputEvent.SHIFT_DOWN_MASK, false);
-
-
-        setupCodeCompleteAction(codePane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(alwaysOnCodePane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(globalOrcEditPane, codeCompleteKeyStroke,
-                codeCompleteAction);
-        setupCodeCompleteAction(globalScoEditPane, codeCompleteKeyStroke,
-                codeCompleteAction);
 
         this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem.
@@ -286,23 +201,25 @@ public class BSBCodeEditor extends JComponent {
         this.bsb = null;
 
         codePane.setText(bsb.getInstrumentText());
-        codePane.setCaretPosition(0);
+        codePane.getJEditorPane().setCaretPosition(0);
 
         alwaysOnCodePane.setText(bsb.getAlwaysOnInstrumentText());
-        alwaysOnCodePane.setCaretPosition(0);
+        alwaysOnCodePane.getJEditorPane().setCaretPosition(0);
 
         globalOrcEditPane.setText(bsb.getGlobalOrc());
-        globalOrcEditPane.setCaretPosition(0);
+        globalOrcEditPane.getJEditorPane().setCaretPosition(0);
 
         globalScoEditPane.setText(bsb.getGlobalSco());
-        globalScoEditPane.setCaretPosition(0);
+        globalScoEditPane.getJEditorPane().setCaretPosition(0);
 
         if (bsb != null) {
             if (editBox.isSelected() != bsb.isEditEnabled()) {
                 editBox.doClick();
             }
+            completionProvider.setBSBGraphicInterface(bsb.getGraphicInterface());
         } else {
             editBox.setSelected(false);
+            completionProvider.setBSBGraphicInterface(null);
         }
 
         this.bsb = bsb;

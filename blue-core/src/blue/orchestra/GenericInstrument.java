@@ -21,7 +21,6 @@
 package blue.orchestra;
 
 import blue.Tables;
-import blue.orchestra.editor.GenericEditable;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -39,7 +38,7 @@ import java.util.HashMap;
  */
 
 public class GenericInstrument extends AbstractInstrument implements
-        Serializable, GenericEditable {
+        Serializable {
 
     String instrumentText;
 

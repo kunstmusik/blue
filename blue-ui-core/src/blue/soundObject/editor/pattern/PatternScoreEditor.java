@@ -23,59 +23,57 @@ import java.awt.BorderLayout;
 
 import javax.swing.JComponent;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import blue.components.LabelledPanel;
-import blue.gui.BlueEditorPane;
 import blue.soundObject.pattern.Pattern;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 public class PatternScoreEditor extends JComponent {
     Pattern pattern = null;
 
-    BlueEditorPane score = new BlueEditorPane();
+    MimeTypeEditorComponent score1 = new MimeTypeEditorComponent("text/x-csound-sco");
+    
+    UndoManager undo = new UndoRedo.Manager();
 
     public PatternScoreEditor() {
         this.setLayout(new BorderLayout());
 
-        score.getDocument().addDocumentListener(new DocumentListener() {
+        score1.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
-                updatePattern();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                updatePattern();
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                updatePattern();
-            }
-
-            private void updatePattern() {
-                if (score.isEditable() && pattern != null) {
-                    pattern.setPatternScore(score.getText());
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (score1.getJEditorPane().isEditable() && pattern != null) {
+                    pattern.setPatternScore(score1.getText());
                 }
             }
         });
 
         LabelledPanel title = new LabelledPanel("Pattern Score", null);
 
-        score.setEditable(false);
+        score1.getJEditorPane().setEditable(false);
 
         this.add(title, BorderLayout.NORTH);
-        this.add(score, BorderLayout.CENTER);
+        this.add(score1, BorderLayout.CENTER);
+        
+        score1.setUndoManager(undo);
+        score1.getDocument().addUndoableEditListener(undo);
     }
 
     public void setPattern(Pattern pattern) {
         this.pattern = pattern;
 
         if (pattern == null) {
-            score.setEditable(false);
-            score.setText("");
+            score1.getJEditorPane().setEditable(false);
+            score1.setText("");
         } else {
-            score.setText(pattern.getPatternScore());
-            score.setEditable(true);
+            score1.setText(pattern.getPatternScore());
+            score1.getJEditorPane().setEditable(true);
         }
+        
+        undo.discardAllEdits();
     }
 
 }

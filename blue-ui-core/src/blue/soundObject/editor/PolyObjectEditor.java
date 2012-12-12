@@ -40,15 +40,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
-import blue.gui.BlueEditorPane;
-import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
 import blue.udo.OpcodeList;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import org.openide.util.Exceptions;
 
 /**
@@ -78,7 +76,8 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
     JPanel sObjPropPanel = new JPanel();
 
-    BlueEditorPane sObjScoreDisplay = new BlueEditorPane();
+    MimeTypeEditorComponent sObjScoreDisplay = 
+            new MimeTypeEditorComponent("text/x-csound-sco");
 
     BorderLayout borderLayout2 = new BorderLayout();
 
@@ -119,7 +118,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
         sObjScoreDisplay.setText(BlueSystem
                 .getString("polyObject.selectToDisplay"));
-        sObjScoreDisplay.setEditable(false);
+        sObjScoreDisplay.getJEditorPane().setEditable(false);
         sObjPropPanel.setLayout(borderLayout2);
         sObjPropPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         nameLabel.setToolTipText("");

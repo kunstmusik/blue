@@ -13,7 +13,7 @@ import java.util.Map;
  */
 
 public class RepetitionObject extends AbstractSoundObject implements
-        Serializable, Cloneable, GenericEditable, GenericViewable {
+        Serializable, Cloneable, GenericViewable {
 //    private static BarRenderer renderer = new GenericRenderer();
 
     private String text = "; insert standard score here";

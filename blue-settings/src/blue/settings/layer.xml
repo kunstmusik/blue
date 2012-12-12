@@ -22,15 +22,6 @@
                 <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_ProjectDefaults"/>
                 <attr name="position" intvalue="200"/>
             </file>
-            <file name="blue-settings-TextColorsAdvancedOption.instance">
-                <attr name="controller" newvalue="blue.settings.TextColorsOptionsPanelController"/>
-                <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_TextColors"/>
-                <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.AdvancedOption.createSubCategory"/>
-                <attr name="keywords" bundlevalue="blue.settings.Bundle#AdvancedOption_Keywords_TextColors"/>
-                <attr name="keywordsCategory" stringvalue="BlueOptionsCategory/null"/>
-                <attr name="toolTip" bundlevalue="blue.settings.Bundle#AdvancedOption_Tooltip_TextColors"/>
-                <attr name="position" intvalue="300"/>
-            </file>
             <file name="blue-settings-PlaybackAdvancedOption.instance">
                 <attr name="controller" newvalue="blue.settings.PlaybackOptionsPanelController"/>
                 <attr name="displayName" bundlevalue="blue.settings.Bundle#AdvancedOption_DisplayName_Playback"/>

@@ -6,6 +6,9 @@ package blue.ui.core;
 
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.BlueX7;
+import blue.orchestra.GenericInstrument;
+import blue.orchestra.PythonInstrument;
+import blue.orchestra.RhinoInstrument;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.plugin.BluePlugin;
 import blue.plugin.BluePluginFactory;
@@ -14,6 +17,9 @@ import blue.soundObject.*;
 import blue.soundObject.editor.*;
 import blue.ui.core.orchestra.editor.BlueSynthBuilderEditor;
 import blue.ui.core.orchestra.editor.BlueX7Editor;
+import blue.ui.core.orchestra.editor.GenericInstrumentEditor;
+import blue.ui.core.orchestra.editor.PythonInstrumentEditor;
+import blue.ui.core.orchestra.editor.RhinoInstrumentEditor;
 import blue.ui.core.soundObject.renderer.*;
 
 /**
@@ -36,7 +42,10 @@ public class BlueUICorePluginProvider extends DefaultBluePluginProvider {
         factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
         factory.appendPlugin(LineEditor.class, LineObject.class);
         factory.appendPlugin(PythonEditor.class, PythonObject.class);
-        factory.appendPlugin(GenericEditor.class, GenericEditable.class);
+        factory.appendPlugin(GenericScoreEditor.class, GenericScore.class);
+        factory.appendPlugin(CommentEditor.class, Comment.class);
+        factory.appendPlugin(RhinoObjectEditor.class, RhinoObject.class);
+        factory.appendPlugin(SoundEditor.class, Sound.class);
         factory.appendPlugin(ObjectBuilderEditor.class, ObjectBuilder.class);
         factory.appendPlugin(TrackerEditor.class, TrackerObject.class);
         factory.appendPlugin(InstanceEditor.class, Instance.class);
@@ -53,8 +62,12 @@ public class BlueUICorePluginProvider extends DefaultBluePluginProvider {
         factory.appendPlugin(BlueSynthBuilderEditor.class,
                 BlueSynthBuilder.class);
         factory.appendPlugin(BlueX7Editor.class, BlueX7.class);
-        factory.appendPlugin(blue.ui.core.orchestra.editor.GenericEditor.class,
-                blue.orchestra.editor.GenericEditable.class);
+        factory.appendPlugin(GenericInstrumentEditor.class,
+                GenericInstrument.class);
+        factory.appendPlugin(PythonInstrumentEditor.class,
+                PythonInstrument.class);
+        factory.appendPlugin(RhinoInstrumentEditor.class,
+                RhinoInstrument.class);
 
 
         // BAR RENDERERS

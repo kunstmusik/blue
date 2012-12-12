@@ -23,51 +23,33 @@ package blue.soundObject.editor.objectBuilder;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
-import javax.swing.InputMap;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
-
-import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.actions.RedoAction;
-import blue.actions.UndoAction;
 import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
-import blue.gui.BlueEditorPane;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.soundObject.ObjectBuilder;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.NoStyleChangeUndoManager;
 import blue.utility.GUI;
+import org.openide.awt.UndoRedo;
 
 public class ObjectBuilderCodeEditor extends JComponent {
 
-    BlueEditorPane codePane = new BlueEditorPane();
+    //FIXME - maybe need to recreate for each syntax type?
+    MimeTypeEditorComponent codePane = new MimeTypeEditorComponent("text/x-object-builder");
+    
+    BSBCompletionProvider completionProvider = new BSBCompletionProvider();
 
     ObjectBuilder objBuilder = new ObjectBuilder();
 
@@ -77,7 +59,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
     JTextField commandLineText = new JTextField();
 
-    UndoManager undo = new NoStyleChangeUndoManager();
+    UndoManager undo = new UndoRedo.Manager();
 
     private boolean isUpdating = false;
 
@@ -96,7 +78,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
                     isUpdating = true;
 
-                    setCodeSyntaxType(objBuilder);
+//                    setCodeSyntaxType(objBuilder);
 
                     isUpdating = false;
                 }
@@ -117,7 +99,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
         editBox.addEditModeListener(new EditModeListener() {
 
             public void setEditing(boolean isEditing) {
-                codePane.setEnabled(isEditing);
+                codePane.getJEditorPane().setEnabled(isEditing);
 
                 if (objBuilder != null) {
                     objBuilder.setEditEnabled(isEditing);
@@ -125,20 +107,20 @@ public class ObjectBuilderCodeEditor extends JComponent {
             }
         });
 
-        codePane.addPropertyChangeListener(new PropertyChangeListener() {
-
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (isUpdating) {
-                    return;
-                }
-
-                if (evt.getPropertyName().equals("syntaxType")) {
-                    String type = (String) evt.getNewValue();
-                    objBuilder.setSyntaxType(type);
-                }
-            }
-
-        });
+//        codePane.addPropertyChangeListener(new PropertyChangeListener() {
+//
+//            public void propertyChange(PropertyChangeEvent evt) {
+//                if (isUpdating) {
+//                    return;
+//                }
+//
+//                if (evt.getPropertyName().equals("syntaxType")) {
+//                    String type = (String) evt.getNewValue();
+//                    objBuilder.setSyntaxType(type);
+//                }
+//            }
+//
+//        });
 
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
@@ -169,113 +151,14 @@ public class ObjectBuilderCodeEditor extends JComponent {
         this.setLayout(new BorderLayout());
         this.add(topBar, BorderLayout.NORTH);
         this.add(codePane, BorderLayout.CENTER);
-
-        UndoableEditListener ul = new UndoableEditListener() {
-
-            public void undoableEditHappened(UndoableEditEvent e) {
-                UndoableEdit event = e.getEdit();
-
-                // if (event.getPresentationName().equals("style change")) {
-                undo.addEdit(event);
-                // } else {
-                // undo.addEdit(event);
-                // }
-            }
-
-        };
-
-        codePane.getDocument().addUndoableEditListener(ul);
-
-        Action[] undoActions = new Action[] { new UndoAction(undo),
-                new RedoAction(undo) };
-
-        SwingUtil.installActions(codePane, undoActions);
+        
+        codePane.getDocument().addUndoableEditListener(undo);
+        codePane.setUndoManager(undo);
+        codePane.getJEditorPane().putClientProperty("bsb-completion-provider", 
+                completionProvider);
+        codePane.getJEditorPane().setEnabled(false);
 
         undo.setLimit(1000);
-
-        initActions();
-
-        codePane.setEnabled(false);
-    }
-
-    public void codeComplete(BlueEditorPane bPane) {
-        BSBGraphicInterface bsbGr = objBuilder.getGraphicInterface();
-
-        if (bsbGr.size() == 0) {
-            return;
-        }
-
-        ArrayList matches = new ArrayList();
-
-        for (int i = 0; i < bsbGr.size(); i++) {
-            BSBObject bsbObj = bsbGr.getBSBObject(i);
-            String objName = bsbObj.getObjectName();
-
-            if (objName != null && !objName.equals("")) {
-                matches.addAll(Arrays.asList(bsbObj.getReplacementKeys()));
-            }
-        }
-
-        if (matches.size() == 0) {
-            return;
-        }
-
-        Object selectedValue = JOptionPane.showInputDialog(null, BlueSystem
-                .getString("instrument.bsb.codeComplete.message"), BlueSystem
-                .getString("instrument.bsb.codeComplete.title"),
-                JOptionPane.INFORMATION_MESSAGE, null, matches.toArray(),
-                matches.get(0));
-
-        if (selectedValue == null) {
-            return;
-        }
-
-        int position = bPane.getCaretPosition();
-
-        try {
-            bPane.getDocument().insertString(position,
-                    "<" + selectedValue.toString() + ">", null);
-        } catch (BadLocationException e) {
-            // should never occur
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * 
-     */
-    private void initActions() {
-
-        AbstractAction codeCompleteAction = new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (codePane.isEditable()) {
-                    codeComplete((BlueEditorPane) e.getSource());
-                }
-            }
-        };
-
-        KeyStroke codeCompleteKeyStroke = KeyStroke.getKeyStroke(
-                KeyEvent.VK_SPACE, BlueSystem.getMenuShortcutKey()
-                        | InputEvent.SHIFT_DOWN_MASK, false);
-
-        InputMap inputMap = codePane.getInputMap(WHEN_FOCUSED);
-        ActionMap actionMap = codePane.getActionMap();
-
-        inputMap.put(codeCompleteKeyStroke, "bsbCodeComplete");
-
-        actionMap.put("bsbCodeComplete", codeCompleteAction);
-
-        this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-                KeyStroke.getKeyStroke(KeyEvent.VK_E, BlueSystem
-                        .getMenuShortcutKey()), "switchEditMode");
-        this.getActionMap().put("switchEditMode", new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                editBox.doClick();
-            }
-        });
     }
 
     /**
@@ -286,10 +169,10 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
         isUpdating = true;
 
-        setCodeSyntaxType(objBuilder);
+//        setCodeSyntaxType(objBuilder);
 
         codePane.setText(objBuilder.getCode());
-        codePane.setCaretPosition(0);
+        codePane.getJEditorPane().setCaretPosition(0);
 
         if (objBuilder != null) {
             if (editBox.isSelected() != objBuilder.isEditEnabled()) {
@@ -304,23 +187,25 @@ public class ObjectBuilderCodeEditor extends JComponent {
         commandLineText.setText(objBuilder.getCommandLine());
 
         this.objBuilder = objBuilder;
+        
+        completionProvider.setBSBGraphicInterface(objBuilder.getGraphicInterface());
 
         undo.discardAllEdits();
 
         isUpdating = false;
     }
 
-    private void setCodeSyntaxType(ObjectBuilder objBuilder) {
-        if (objBuilder.isExternal()) {
-            codePane.setSyntaxType(objBuilder.getSyntaxType());
-        } else {
-            codePane.setSyntaxType("Python");
-        }
-
-        codePane.setSyntaxSettable(objBuilder.isExternal());
-
-        codePane.repaint();
-    }
+//    private void setCodeSyntaxType(ObjectBuilder objBuilder) {
+//        if (objBuilder.isExternal()) {
+//            codePane.setSyntaxType(objBuilder.getSyntaxType());
+//        } else {
+//            codePane.setSyntaxType("Python");
+//        }
+//
+//        codePane.setSyntaxSettable(objBuilder.isExternal());
+//
+//        codePane.repaint();
+//    }
 
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();

@@ -64,7 +64,7 @@ public class UtilitySettings {
     }
 
     public void save() {
-        final Preferences prefs = NbPreferences.forModule(TextColorsSettings.class);
+        final Preferences prefs = NbPreferences.forModule(UtilitySettings.class);
 
         prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
         prefs.put(FREEZE_FLAGS, freezeFlags);

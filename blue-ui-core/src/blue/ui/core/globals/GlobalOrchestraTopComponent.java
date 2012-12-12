@@ -7,12 +7,16 @@ package blue.ui.core.globals;
 import blue.GlobalOrcSco;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -30,6 +34,10 @@ final class GlobalOrchestraTopComponent extends TopComponent {
     private static final String PREFERRED_ID = "GlobalOrchestraTopComponent";
 
     private GlobalOrcSco globalOrcSco = null;
+    
+    UndoManager undo = new UndoRedo.Manager();
+
+    MimeTypeEditorComponent editor;
 
     private GlobalOrchestraTopComponent() {
         initComponents();
@@ -37,6 +45,12 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         setToolTipText(NbBundle.getMessage(GlobalOrchestraTopComponent.class, "HINT_GlobalOrchestraTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
+        editor = new MimeTypeEditorComponent("text/x-csound-orc");
+        this.add(editor, BorderLayout.CENTER);
+        
+        editor.getDocument().addUndoableEditListener(undo);
+
+        
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
@@ -49,13 +63,14 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         });
 
         reinitialize();
+        editor.setUndoManager(undo);
 
-        blueEditorPane1.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        editor.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
             public void documentChanged(DocumentEvent e) {
                 if (globalOrcSco != null) {
-                    globalOrcSco.setGlobalOrc(blueEditorPane1.getText());
+                    globalOrcSco.setGlobalOrc(editor.getText());
                 }
             }
         });
@@ -64,14 +79,18 @@ final class GlobalOrchestraTopComponent extends TopComponent {
     private void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         if (project == null) {
-            blueEditorPane1.setText("");
-            blueEditorPane1.setEditable(false);
+            editor.setText("");
+            editor.getJEditorPane().setEditable(false);
         } else {
             GlobalOrcSco localGlobals = project.getData().getGlobalOrcSco();
-            blueEditorPane1.setText(localGlobals.getGlobalOrc());
-            blueEditorPane1.setEditable(true);
+            editor.setText(localGlobals.getGlobalOrc());
+            editor.getJEditorPane().setEditable(true);
             globalOrcSco = localGlobals;
         }
+        
+        editor.getJEditorPane().setCaretPosition(0);
+
+        undo.discardAllEdits();
     }
 
     /** This method is called from within the constructor to
@@ -82,21 +101,9 @@ final class GlobalOrchestraTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        blueEditorPane1 = new blue.gui.BlueEditorPane();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 596, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(blueEditorPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 463, Short.MAX_VALUE)
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.gui.BlueEditorPane blueEditorPane1;
     // End of variables declaration//GEN-END:variables
 
     /**

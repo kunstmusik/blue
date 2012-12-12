@@ -28,7 +28,9 @@ import blue.soundObject.NoteList;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.undo.NoStyleChangeUndoManager;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
@@ -37,13 +39,8 @@ import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
-import org.openide.util.Exceptions;
-import org.syntax.jedit.tokenmarker.PythonTokenMarker;
+import org.openide.awt.UndoRedo;
 
 /**
  *
@@ -52,60 +49,39 @@ import org.syntax.jedit.tokenmarker.PythonTokenMarker;
 public class PythonEditor extends SoundObjectEditor {
 
     PythonObject pObj = null;
-    UndoManager undo = new NoStyleChangeUndoManager();
-
+    UndoManager undo = new UndoRedo.Manager();
+    
+    MimeTypeEditorComponent codeEditor = new MimeTypeEditorComponent("text/x-python");
     /** Creates new form PythonEditor */
     public PythonEditor() {
         initComponents();
 
         initActions();
+        
+        this.add(codeEditor, BorderLayout.CENTER);
 
-        codeEditPane.getDocument().addDocumentListener(new DocumentListener() {
+        codeEditor.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void insertUpdate(DocumentEvent e) {
+            @Override
+            public void documentChanged(DocumentEvent e) {
                 if (pObj != null) {
-                    pObj.setText(codeEditPane.getText());
-                }
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                if (pObj != null) {
-                    pObj.setText(codeEditPane.getText());
-                }
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                if (pObj != null) {
-                    pObj.setText(codeEditPane.getText());
+                    pObj.setText(codeEditor.getText());
                 }
             }
         });
 
-        codeEditPane.getDocument().addUndoableEditListener(
-                new UndoableEditListener() {
-
-                    public void undoableEditHappened(UndoableEditEvent e) {
-                        UndoableEdit edit = e.getEdit();
-                        undo.addEdit(edit);
-
-                    }
-                });
+        codeEditor.setUndoManager(undo);
+        codeEditor.getDocument().addUndoableEditListener(undo);
 
         undo.setLimit(1000);
     }
 
     private void initActions() {
-        InputMap inputMap = codeEditPane.getInputMap();
-        ActionMap actions = codeEditPane.getActionMap();
+        InputMap inputMap = codeEditor.getJEditorPane().getInputMap();
+        ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
                 getMenuShortcutKey()), "testSoundObject");
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem.
-                getMenuShortcutKey()), "undo");
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, BlueSystem.
-                getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK), "redo");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -114,51 +90,32 @@ public class PythonEditor extends SoundObjectEditor {
             }
         });
 
-        actions.put("undo", new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (undo.canUndo()) {
-                    undo.undo();
-                }
-            }
-        });
-
-        actions.put("redo", new AbstractAction() {
-
-            public void actionPerformed(ActionEvent e) {
-                if (undo.canRedo()) {
-                    undo.redo();
-                }
-            }
-        });
     }
 
     public final void editSoundObject(SoundObject sObj) {
         this.pObj = null;
         
         if (sObj == null) {
-            codeEditPane.setText("null soundObject");
-            codeEditPane.setEnabled(false);
+            codeEditor.setText("null soundObject");
+            codeEditor.getJEditorPane().setEnabled(false);
             processOnLoadCheckBox.setEnabled(false);
             return;
         }
 
         if (!(sObj instanceof PythonObject)) {            
-            codeEditPane.setText(
+            codeEditor.setText(
                     "[ERROR] GenericEditor::editSoundObject - not instance " +
                     "of GenericEditable");
-            codeEditPane.setEnabled(false);
+            codeEditor.getJEditorPane().setEnabled(false);
             processOnLoadCheckBox.setEnabled(false);
             return;
         }
 
         PythonObject tempPObj = (PythonObject) sObj;
 
-        codeEditPane.setTokenMarker(new PythonTokenMarker());
-
-        codeEditPane.setText(tempPObj.getText());
-        codeEditPane.setEnabled(true);
-        codeEditPane.setCaretPosition(0);
+        codeEditor.setText(tempPObj.getText());
+        codeEditor.getJEditorPane().setEnabled(true);
+        codeEditor.getJEditorPane().setCaretPosition(0);
 
         processOnLoadCheckBox.setSelected(tempPObj.isOnLoadProcessable());
         processOnLoadCheckBox.setEnabled(true);
@@ -196,20 +153,25 @@ public class PythonEditor extends SoundObjectEditor {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        codeEditPane = new blue.gui.BlueEditorPane();
-        testButton = new javax.swing.JButton();
-        processOnLoadCheckBox = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        processOnLoadCheckBox = new javax.swing.JCheckBox();
+        testButton = new javax.swing.JButton();
 
         setPreferredSize(new java.awt.Dimension(596, 222));
+        setLayout(new java.awt.BorderLayout());
 
-        testButton.setText(BlueSystem.getString("common.test"));
-        testButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                testButtonActionPerformed(evt);
-            }
-        });
+        jPanel1.setLayout(new java.awt.GridBagLayout());
+
+        jLabel1.setText("PythonObject");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(3, 6, 3, 0);
+        jPanel1.add(jLabel1, gridBagConstraints);
 
         processOnLoadCheckBox.setText("Process On Load");
         processOnLoadCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -217,37 +179,21 @@ public class PythonEditor extends SoundObjectEditor {
                 processOnLoadCheckBoxActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 0);
+        jPanel1.add(processOnLoadCheckBox, gridBagConstraints);
 
-        jLabel1.setText("PythonObject");
+        testButton.setText(BlueSystem.getString("common.test"));
+        testButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
+        jPanel1.add(testButton, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(codeEditPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 556, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 200, Short.MAX_VALUE)
-                        .addComponent(processOnLoadCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(testButton)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(testButton)
-                    .addComponent(processOnLoadCheckBox)
-                    .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(codeEditPane, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+        add(jPanel1, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void processOnLoadCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processOnLoadCheckBoxActionPerformed
@@ -260,8 +206,8 @@ public class PythonEditor extends SoundObjectEditor {
         testSoundObject();
     }//GEN-LAST:event_testButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private blue.gui.BlueEditorPane codeEditPane;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JCheckBox processOnLoadCheckBox;
     private javax.swing.JButton testButton;
     // End of variables declaration//GEN-END:variables

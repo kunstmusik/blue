@@ -22,21 +22,22 @@ package blue.application;
 import blue.settings.GeneralSettings;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 
 public final class CsoundManualFramesAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
-        String url = GeneralSettings.getInstance().getCsoundDocRoot()
-                + "indexframes.html";
-
-        if (!url.startsWith("http") && !url.startsWith("file://")) {
-            url = "file://" + url;
-        }
-
+        
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        
+        String url = "file://" + manualDir.getAbsolutePath() + "/indexframes.html";
+        
         url = url.replace(" ", "%20");
 
         try {

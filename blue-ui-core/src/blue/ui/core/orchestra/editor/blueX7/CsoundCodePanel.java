@@ -26,10 +26,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-import blue.gui.BlueEditorPane;
 import blue.orchestra.BlueX7;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import javax.swing.undo.UndoManager;
+import org.openide.awt.UndoRedo;
 
 /**
  * @author steven
@@ -38,7 +39,9 @@ import blue.orchestra.BlueX7;
 public class CsoundCodePanel extends JComponent {
     BlueX7 blueX7 = null;
 
-    BlueEditorPane postCodeText = new BlueEditorPane();
+    MimeTypeEditorComponent postCodeText = new MimeTypeEditorComponent("text/x-csound-orc");
+    
+    UndoManager undo = new UndoRedo.Manager();
 
     public CsoundCodePanel() {
         this.setLayout(new BorderLayout());
@@ -47,34 +50,24 @@ public class CsoundCodePanel extends JComponent {
 
         this.add(postCodeText, BorderLayout.CENTER);
 
-        postCodeText.getDocument().addDocumentListener(new DocumentListener() {
+        postCodeText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
-            public void changedUpdate(DocumentEvent e) {
-                updatePostCode();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                updatePostCode();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                updatePostCode();
-            }
-
-            private void updatePostCode() {
-                if (blueX7 != null) {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                 if (blueX7 != null) {
                     blueX7.setProperty("postCode", postCodeText.getText());
                 }
-
             }
 
         });
-
+        postCodeText.setUndoManager(undo);
+        postCodeText.getDocument().addUndoableEditListener(undo);
     }
 
     public void editBlueX7(BlueX7 blueX7) {
         this.blueX7 = null;
         postCodeText.setText(blueX7.getProperty("postCode"));
+        undo.discardAllEdits();
         this.blueX7 = blueX7;
     }
 }

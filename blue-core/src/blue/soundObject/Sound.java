@@ -39,7 +39,7 @@ import java.util.Map;
  */
 
 public class Sound extends AbstractSoundObject implements Serializable,
-        Cloneable, GenericEditable {
+        Cloneable {
 
     String instrument;
 

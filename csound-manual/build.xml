@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See harness/README in the NetBeans platform -->
+<!-- for some information on what you could do (e.g. targets to override). -->
+<!-- If you delete this file and reopen the project it will be recreated. -->
+<project name="csound.manual" default="netbeans" basedir=".">
+  <description>Builds, tests, and runs the project csound.manual.</description>
+  <import file="nbproject/build-impl.xml"/>
+    
+  <property name="CS_MANUAL_DIR" 
+              value="/Users/stevenyi/work/csound/manual"/>
+    
+  <target name="copy-csound-manual"
+            description="Copies HTML Csound Manual into project">
+    <delete dir="release/csoundManual"/>
+    <copy todir="release/csoundManual">
+      <fileset dir="${CS_MANUAL_DIR}/html"/>
+    </copy>
+  </target>
+    
+  <target name="generate-opcodes-xml" description="Generate opcodes.xml">
+    <exec executable="python">
+      <arg value="quickrefBlue.py"/>
+      <arg value="${CS_MANUAL_DIR}"/>
+      <arg value="src/csound/manual/impl/opcodes.xml"/>
+    </exec>
+  </target>
+</project>
