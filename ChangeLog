@@ -6,11 +6,26 @@ email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
 
 This program comes with ABSOLUTELY NO WARRANTY is licensed under the GNU Public
-License. This is a free program and you are welcome to redistrbute it under
+License. This is a free program and you are welcome to redistribute it under
 certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+>Notes for 2.3.2<
+[released 2012.12.16]
+
+FIX
+
+* Editors would lose ability to use code completion after leaving and coming 
+back to Editor
+
+* Code completion items did not parser opcodes.xml correctly, resulting in
+incomplete signature completions and missing entries
+
+* modified code in Brian Wong's "Falltan" and "Tritium Tea", as well as Dave
+Seidel's "Palimpsest" to work with Csound new parser
+
 
 >Notes for 2.3.1<
 [released 2012.12.12]

@@ -1,4 +1,4 @@
-<blueData version='0.124.0'>
+<blueData version='2.3.2'>
   <projectProperties>
     <title>Palimpsest</title>
     <author>Dave Seidel</author>
@@ -22,9 +22,13 @@ uncomment by removing the leading semicolons, then edit as desired.
     <sampleRate>44100</sampleRate>
     <ksmps>1</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>96000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
     <useMidiIn>false</useMidiIn>
@@ -44,14 +48,6 @@ uncomment by removing the leading semicolons, then edit as desired.
     <diskAdvancedSettings></diskAdvancedSettings>
     <diskCompleteOverride>false</diskCompleteOverride>
     <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
-    <csladspaSettings>
-      <name></name>
-      <maker></maker>
-      <uniqueId>0</uniqueId>
-      <copyright></copyright>
-      <portDefinitionList/>
-      <enabled>false</enabled>
-    </csladspaSettings>
   </projectProperties>
   <arrangement>
     <instrumentAssignment arrangementId='1' isEnabled='true'>
@@ -155,7 +151,7 @@ gifn1	ftgen	1, 0, giTblSz, 10, 1
 ; globals left/right channels
 gaL	init	0
 gaR	init	0</globalOrc>
-    <globalSco># tempo scaling
+    <globalSco>; tempo scaling
 t 0 20 316 60</globalSco>
   </globalOrcSco>
   <opcodeList/>
@@ -163,44 +159,77 @@ t 0 20 316 60</globalSco>
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
-  <soundObject type='blue.soundObject.PolyObject'>
-    <subjectiveDuration>2.0</subjectiveDuration>
-    <startTime>0.0</startTime>
-    <name>root</name>
-    <backgroundColor>-10066279</backgroundColor>
-    <timeBehavior>0</timeBehavior>
+  <score>
+    <tempo>
+      <enabled>false</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='60.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>32</pixelSecond>
+      <snapEnabled>true</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>1</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
     <noteProcessorChain/>
-    <isRoot>true</isRoot>
-    <pixelSecond>32</pixelSecond>
-    <defaultHeightIndex>0</defaultHeightIndex>
-    <snapEnabled>true</snapEnabled>
-    <snapValue>1.0</snapValue>
-    <timeDisplay>1</timeDisplay>
-    <timeUnit>5</timeUnit>
-    <soundLayer name='reverb/mixer' muted='false' solo='false' heightIndex='0'>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
       <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>0.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-12566464</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='reverb/mixer' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>i2 0 337 .9 30720 .5 .7
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>i2 0 337 .9 30720 .5 .7
 </score>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='code' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PythonObject'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>0.0</startTime>
-        <name>PythonObject</name>
-        <backgroundColor>-12566464</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='code' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <pythonCode>#
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>PythonObject</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode>#
 # music settings
 #
 # base pitch (Hz)
@@ -307,101 +336,106 @@ def generate(instr,start,beat,dur,amp,base,pan,height,width,rule,h):
     return renderOrc(instr,start,beat,dur,amp,base,pan,data,height,width,h)
 
 </pythonCode>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='la illaha (in breath)' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PolyObject'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>0.0</startTime>
-        <name>polyObject</name>
-        <backgroundColor>-10066279</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='la illaha (in breath)' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <isRoot>false</isRoot>
-        <pixelSecond>64</pixelSecond>
-        <defaultHeightIndex>0</defaultHeightIndex>
-        <snapEnabled>false</snapEnabled>
-        <snapValue>1.0</snapValue>
-        <timeDisplay>0</timeDisplay>
-        <timeUnit>5</timeUnit>
-        <soundLayer name='1/1' muted='false' solo='false' heightIndex='0'>
+        <soundObject type='blue.soundObject.PolyObject'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>polyObject</name>
+          <backgroundColor>-10066279</backgroundColor>
+          <timeBehavior>2</timeBehavior>
           <noteProcessorChain/>
-          <soundObject type='blue.soundObject.PythonObject'>
-            <subjectiveDuration>5.0</subjectiveDuration>
-            <startTime>0.0</startTime>
-            <name>PythonObject</name>
-            <backgroundColor>-12566464</backgroundColor>
-            <timeBehavior>2</timeBehavior>
+          <isRoot>false</isRoot>
+          <defaultHeightIndex>0</defaultHeightIndex>
+          <timeState>
+            <pixelSecond>64</pixelSecond>
+            <snapEnabled>false</snapEnabled>
+            <snapValue>1.0</snapValue>
+            <timeDisplay>0</timeDisplay>
+            <timeUnit>5</timeUnit>
+          </timeState>
+          <soundLayer name='1/1' muted='false' solo='false' heightIndex='0'>
             <noteProcessorChain/>
-            <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+            <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+              <subjectiveDuration>5.0</subjectiveDuration>
+              <startTime>0.0</startTime>
+              <name>PythonObject</name>
+              <backgroundColor>-12566464</backgroundColor>
+              <timeBehavior>2</timeBehavior>
+              <noteProcessorChain/>
+              <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
 score = generate(1, 0, 3.0, g_dur, g_amp, g_base, 1.0, g_height, g_width, g_rule, 1.0)
 </pythonCode>
-          </soundObject>
-        </soundLayer>
-        <soundLayer name='2/1 + 3/2' muted='false' solo='false' heightIndex='0'>
-          <noteProcessorChain/>
-          <soundObject type='blue.soundObject.PythonObject'>
-            <subjectiveDuration>5.0</subjectiveDuration>
-            <startTime>0.0</startTime>
-            <name>PythonObject</name>
-            <backgroundColor>-12566464</backgroundColor>
-            <timeBehavior>2</timeBehavior>
+            </soundObject>
+          </soundLayer>
+          <soundLayer name='2/1 + 3/2' muted='false' solo='false' heightIndex='0'>
             <noteProcessorChain/>
-            <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+            <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+              <subjectiveDuration>5.0</subjectiveDuration>
+              <startTime>0.0</startTime>
+              <name>PythonObject</name>
+              <backgroundColor>-12566464</backgroundColor>
+              <timeBehavior>2</timeBehavior>
+              <noteProcessorChain/>
+              <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
 score = generate(1, 0, 3.0, g_dur, g_amp*.9, (g_base*2)*(3.0/2.0), 0.3, g_height, g_width, g_rule, 1.0)
 </pythonCode>
-          </soundObject>
-        </soundLayer>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='ilalla (out breath)' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PolyObject'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>0.0</startTime>
-        <name>polyObject</name>
-        <backgroundColor>-10066279</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+            </soundObject>
+          </soundLayer>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='ilalla (out breath)' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <isRoot>false</isRoot>
-        <pixelSecond>64</pixelSecond>
-        <defaultHeightIndex>0</defaultHeightIndex>
-        <snapEnabled>false</snapEnabled>
-        <snapValue>1.0</snapValue>
-        <timeDisplay>0</timeDisplay>
-        <timeUnit>5</timeUnit>
-        <soundLayer name='9/8' muted='false' solo='false' heightIndex='0'>
+        <soundObject type='blue.soundObject.PolyObject'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>polyObject</name>
+          <backgroundColor>-10066279</backgroundColor>
+          <timeBehavior>2</timeBehavior>
           <noteProcessorChain/>
-          <soundObject type='blue.soundObject.PythonObject'>
-            <subjectiveDuration>5.0</subjectiveDuration>
-            <startTime>0.0</startTime>
-            <name>PythonObject</name>
-            <backgroundColor>-12566464</backgroundColor>
-            <timeBehavior>2</timeBehavior>
+          <isRoot>false</isRoot>
+          <defaultHeightIndex>0</defaultHeightIndex>
+          <timeState>
+            <pixelSecond>64</pixelSecond>
+            <snapEnabled>false</snapEnabled>
+            <snapValue>1.0</snapValue>
+            <timeDisplay>0</timeDisplay>
+            <timeUnit>5</timeUnit>
+          </timeState>
+          <soundLayer name='9/8' muted='false' solo='false' heightIndex='0'>
             <noteProcessorChain/>
-            <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+            <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+              <subjectiveDuration>5.0</subjectiveDuration>
+              <startTime>0.0</startTime>
+              <name>PythonObject</name>
+              <backgroundColor>-12566464</backgroundColor>
+              <timeBehavior>2</timeBehavior>
+              <noteProcessorChain/>
+              <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
 score = generate(1, 3.0, 3.0, g_dur, g_amp, g_base*(9.0/8.0), 0.0, g_height, g_width, g_rule, 1.0)
 </pythonCode>
-          </soundObject>
-        </soundLayer>
-        <soundLayer name='2/1 + 3/2' muted='false' solo='false' heightIndex='0'>
-          <noteProcessorChain/>
-          <soundObject type='blue.soundObject.PythonObject'>
-            <subjectiveDuration>5.0</subjectiveDuration>
-            <startTime>0.0</startTime>
-            <name>PythonObject</name>
-            <backgroundColor>-12566464</backgroundColor>
-            <timeBehavior>2</timeBehavior>
+            </soundObject>
+          </soundLayer>
+          <soundLayer name='2/1 + 3/2' muted='false' solo='false' heightIndex='0'>
             <noteProcessorChain/>
-            <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
+            <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+              <subjectiveDuration>5.0</subjectiveDuration>
+              <startTime>0.0</startTime>
+              <name>PythonObject</name>
+              <backgroundColor>-12566464</backgroundColor>
+              <timeBehavior>2</timeBehavior>
+              <noteProcessorChain/>
+              <pythonCode>#def generate(instr,start,beat,dur,base,pan,height,width,rule,h)
 score = generate(1, 3.0, 3.0, g_dur, g_amp*.9, (g_base*2)*(3.0/2.0), 0.7, g_height, g_width, g_rule, 1.0)
 </pythonCode>
-          </soundObject>
-        </soundLayer>
-      </soundObject>
-    </soundLayer>
-  </soundObject>
+            </soundObject>
+          </soundLayer>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
   <scratchPadData>
     <isWordWrapEnabled>true</isWordWrapEnabled>
     <scratchText/>
@@ -411,11 +445,29 @@ score = generate(1, 3.0, 3.0, g_dur, g_amp*.9, (g_base*2)*(3.0/2.0), 0.7, g_heig
   <renderEndTime>-1.0</renderEndTime>
   <markersList/>
   <loopRendering>false</loopRendering>
-  <tempo>
-    <enabled>false</enabled>
-    <visible>false</visible>
-    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
-      <linePoint x='0.0' y='60.0'/>
-    </line>
-  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant></pitchConstant>
+    <ampConstant></ampConstant>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
 </blueData>

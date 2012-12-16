@@ -39,6 +39,9 @@ public class MimeTypeEditorComponent extends JPanel {
     
     public MimeTypeEditorComponent(String mimeType) {
         this.setLayout(new BorderLayout());
+        
+        editor.putClientProperty("usedByCloneableEditor", true);
+        
         this.add(BlueNbUtilities.convertEditorForMimeType(editor, mimeType));
     }
     
