@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.3.2<
+[released 2012.12.16]
+
+FIX
+
+* Editors would lose ability to use code completion after leaving and coming 
+back to Editor
+
+
 >Notes for 2.3.1<
 [released 2012.12.12]
 
