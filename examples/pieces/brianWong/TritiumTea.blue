@@ -1,4 +1,4 @@
-<blueData version='2.0.9'>
+<blueData version='2.3.2'>
   <projectProperties>
     <title>Tritium Tea</title>
     <author>Brian Wong</author>
@@ -6,9 +6,13 @@
     <sampleRate>48000</sampleRate>
     <ksmps>50</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>96000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>true</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
     <useMidiIn>false</useMidiIn>
@@ -28,14 +32,6 @@
     <diskAdvancedSettings></diskAdvancedSettings>
     <diskCompleteOverride>false</diskCompleteOverride>
     <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
-    <csladspaSettings>
-      <name/>
-      <maker/>
-      <uniqueId>0</uniqueId>
-      <copyright/>
-      <portDefinitionList/>
-      <enabled>false</enabled>
-    </csladspaSettings>
   </projectProperties>
   <arrangement>
     <instrumentAssignment arrangementId='1' isEnabled='true'>
@@ -65,8 +61,7 @@ gi_t3h8TET_&lt;INSTR_ID&gt; 	ftgenonce 0,0,32,-2,8,3,110,50,1.0,1.14720269,1.316
 gi_s3h8TET_&lt;INSTR_ID&gt;	ftgenonce 0,0,65536,9,1,.5,0,1.743371,.25,0,2.3094,.125,0,3.0393427466,.0625,0
 </globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0						; set 0dbfs level
-iamp = ampdbfs(p4)					; amplitude (effective range of -63 to 1)
+        <instrumentText>iamp = ampdbfs(p4)					; amplitude (effective range of -63 to 1)
 if (p6==0) then						; subpatch 0 : 2h12TET (standard tuning) pseudoharmonics 1 to 13
     imf = 2						; set modulator base frequency
     imodfn = gi_s2h12TET_&lt;INSTR_ID&gt;			; set modulator partials table
@@ -164,8 +159,7 @@ gi_s3h6TET_&lt;INSTR_ID&gt;	ftgenonce 0,0,65536,9,1,.33,0,1.6653663533,.2,0,2.30
 gi_t3h8TET_&lt;INSTR_ID&gt; 	ftgenonce 0,0,32,-2,8,3,110,50,1.0,1.14720269,1.31607401,1.50980365,1.73205081,1.98701335,2.27950706,2.61505663,3.0
 </globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0						; set 0dbfs level
-iamp = ampdbfs(p4)					; amplitude (effective range of -63 to 1)
+        <instrumentText>iamp = ampdbfs(p4)					; amplitude (effective range of -63 to 1)
 if (p6==0) then						; subpatch 0 : 2h12TET (standard tuning) pseudoharmonics 1 to 13
     imf = 2						; set modulator base frequency
     imodfn = gi_s2h12TET_&lt;INSTR_ID&gt;			; set modulator partials table
@@ -262,13 +256,14 @@ continue:				; ... the timout
 kgate	poscil3	 .3, p4, itriwav	; envshape; dur fixed at .1, p4 = vib freq in Hz
 asig 	foscili	 kgate, p6*knv, kcar, kmod, kndx, isinwav
 ;asig	poscil3	 kgate, p6*knv, isinwav	; make a 1 kHz beep tone, using f1 p6 = fundamental frequency
-a1 = asig*kphrase*p5			; apply the overall phrase dynamic p5 = amplitude
+a1 = asig*kphrase*(p5 / 32768)			; apply the overall phrase dynamic p5 = amplitude
 kpan line p7,p3,p8				; panning line
 krtl     =	sqrt(2) / 2 * cos(kpan) + sin(kpan) 	; CONSTANT POWER PANNING
 krtr     =      sqrt(2) / 2 * cos(kpan) - sin(kpan)	; FROM C.ROADS &quot;CM TUTORIAL&quot; pp460
 aLeft 	=	a1 * krtl				; assign left channel
 aRight	=	a1 * krtr				; assign right channel
 blueMixerOut aLeft,aRight</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
         <graphicInterface editEnabled='true'/>
         <bsbParameterList/>
         <presetGroup name='Presets'/>
@@ -418,7 +413,7 @@ aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))/2
             </bsbObject>
           </graphicInterface>
           <bsbParameterList>
-            <parameter uniqueId='-1444023617' name='hfdamp' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.5602821'>
+            <parameter uniqueId='-1444023617' name='hfdamp' label='' min='0.0' max='1.0' resolution='-1.0' automationEnabled='false' value='0.6084609'>
               <line name='' version='2' max='1.0' min='0.0' resolution='-1.0' color='-14623488' rightBound='false' endPointsLinked='false'>
                 <linePoint x='0.0' y='0.6084609'/>
                 <linePoint x='66.0' y='0.56'/>
@@ -459,31 +454,64 @@ aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))/2
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
-  <soundObject type='blue.soundObject.PolyObject'>
-    <subjectiveDuration>2.0</subjectiveDuration>
-    <startTime>0.0</startTime>
-    <name>root</name>
-    <backgroundColor>-10066279</backgroundColor>
-    <timeBehavior>0</timeBehavior>
+  <score>
+    <tempo>
+      <enabled>false</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='60.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>16</pixelSecond>
+      <snapEnabled>true</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
     <noteProcessorChain/>
-    <isRoot>true</isRoot>
-    <pixelSecond>16</pixelSecond>
-    <defaultHeightIndex>0</defaultHeightIndex>
-    <snapEnabled>true</snapEnabled>
-    <snapValue>1.0</snapValue>
-    <timeDisplay>0</timeDisplay>
-    <timeUnit>5</timeUnit>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
       <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>15.0</startTime>
-        <name>Ringer_0a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>15.0</startTime>
+          <name>Ringer_0a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -584,15 +612,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>20.0</startTime>
-        <name>Ringer_0b</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>20.0</startTime>
+          <name>Ringer_0b</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -693,15 +721,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>Ringer_0c</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>Ringer_0c</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -802,15 +830,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>30.0</startTime>
-        <name>Ringer_0d</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>30.0</startTime>
+          <name>Ringer_0d</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -911,15 +939,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>35.0</startTime>
-        <name>Ringer_0e</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>35.0</startTime>
+          <name>Ringer_0e</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;f&apos;,&apos;e&apos;,&apos;g&apos;]			# rhythm
@@ -1020,15 +1048,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>40.0</startTime>
-        <name>Ringer_0a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>40.0</startTime>
+          <name>Ringer_0a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1129,15 +1157,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>Ringer_0b</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>Ringer_0b</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1238,15 +1266,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>50.0</startTime>
-        <name>Ringer_0c</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>50.0</startTime>
+          <name>Ringer_0c</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1347,15 +1375,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>55.0</startTime>
-        <name>Ringer_0d</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>55.0</startTime>
+          <name>Ringer_0d</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1456,15 +1484,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>60.0</startTime>
-        <name>Ringer_0f</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>60.0</startTime>
+          <name>Ringer_0f</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;f&apos;,&apos;e&apos;,&apos;g&apos;]			# rhythm
@@ -1565,15 +1593,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>66.0</startTime>
-        <name>Ringer_4a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>66.0</startTime>
+          <name>Ringer_4a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1674,15 +1702,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>71.0</startTime>
-        <name>Ringer_4b</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>71.0</startTime>
+          <name>Ringer_4b</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1783,15 +1811,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>76.0</startTime>
-        <name>Ringer_4c</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>76.0</startTime>
+          <name>Ringer_4c</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -1892,15 +1920,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>81.0</startTime>
-        <name>Ringer_4d</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>81.0</startTime>
+          <name>Ringer_4d</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2001,15 +2029,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>86.0</startTime>
-        <name>Ringer_4e</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>86.0</startTime>
+          <name>Ringer_4e</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;f&apos;,&apos;e&apos;,&apos;g&apos;]			# rhythm
@@ -2110,15 +2138,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>91.0</startTime>
-        <name>Ringer_4a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>91.0</startTime>
+          <name>Ringer_4a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2219,15 +2247,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>96.0</startTime>
-        <name>Ringer_0b</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>96.0</startTime>
+          <name>Ringer_0b</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2328,15 +2356,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>101.0</startTime>
-        <name>Ringer_4c</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>101.0</startTime>
+          <name>Ringer_4c</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2437,15 +2465,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>106.0</startTime>
-        <name>Ringer_0d</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>106.0</startTime>
+          <name>Ringer_0d</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2546,15 +2574,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>111.0</startTime>
-        <name>Ringer_4e</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>111.0</startTime>
+          <name>Ringer_4e</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;f&apos;,&apos;e&apos;,&apos;g&apos;]			# rhythm
@@ -2655,15 +2683,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>121.0</startTime>
-        <name>Ringer_8a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>121.0</startTime>
+          <name>Ringer_8a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2764,15 +2792,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>126.0</startTime>
-        <name>Ringer_4b</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>126.0</startTime>
+          <name>Ringer_4b</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2873,15 +2901,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>131.0</startTime>
-        <name>Ringer_8a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>131.0</startTime>
+          <name>Ringer_8a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -2982,15 +3010,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>136.0</startTime>
-        <name>Ringer_8a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>136.0</startTime>
+          <name>Ringer_8a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;d&apos;,&apos;f&apos;]			# rhythm
@@ -3091,15 +3119,15 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>141.0</startTime>
-        <name>Ringer_8a</name>
-        <backgroundColor>-11495836</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_0 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>141.0</startTime>
+          <name>Ringer_8a</name>
+          <backgroundColor>-11495836</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_0 - 3h13TET
 scoreText_0 = &quot;&quot;                              	# scoreText_0 is cleared
 bart_0 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_0 = [&apos;e&apos;,&apos;7&apos;,&apos;-&apos;]			# rhythm
@@ -3200,19 +3228,19 @@ while i_0 &lt; 1 :                               	# loop until end of soundObjec
     c_0 = 0
 score = scoreText_0
 </pythonCode>
-      </soundObject>
-      <parameterId>-1365060600</parameterId>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>15.0</startTime>
-        <name>Ringer_1a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+        <parameterId>-1365060600</parameterId>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>15.0</startTime>
+          <name>Ringer_1a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -3313,15 +3341,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>20.0</startTime>
-        <name>Ringer_1b</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>20.0</startTime>
+          <name>Ringer_1b</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -3422,15 +3450,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>Ringer_1c</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>Ringer_1c</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;a&apos;,&apos;b&apos;,&apos;c&apos;]			# rhythm
@@ -3531,15 +3559,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>30.0</startTime>
-        <name>Ringer_1d</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>30.0</startTime>
+          <name>Ringer_1d</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -3640,15 +3668,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>35.0</startTime>
-        <name>Ringer_1e</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>35.0</startTime>
+          <name>Ringer_1e</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;c&apos;,&apos;b&apos;,&apos;d&apos;]			# rhythm
@@ -3749,15 +3777,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>40.0</startTime>
-        <name>Ringer_1a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>40.0</startTime>
+          <name>Ringer_1a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -3858,15 +3886,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>Ringer_1b</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>Ringer_1b</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -3967,15 +3995,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>50.0</startTime>
-        <name>Ringer_1c</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>50.0</startTime>
+          <name>Ringer_1c</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;a&apos;,&apos;b&apos;,&apos;c&apos;]			# rhythm
@@ -4076,15 +4104,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>55.0</startTime>
-        <name>Ringer_1d</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>55.0</startTime>
+          <name>Ringer_1d</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -4185,15 +4213,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>60.0</startTime>
-        <name>Ringer_1f</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>60.0</startTime>
+          <name>Ringer_1f</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;c&apos;,&apos;b&apos;,&apos;d&apos;]			# rhythm
@@ -4294,15 +4322,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>66.0</startTime>
-        <name>Ringer_5a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>66.0</startTime>
+          <name>Ringer_5a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -4403,15 +4431,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>71.0</startTime>
-        <name>Ringer_5b</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>71.0</startTime>
+          <name>Ringer_5b</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -4512,15 +4540,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>76.0</startTime>
-        <name>Ringer_5c</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>76.0</startTime>
+          <name>Ringer_5c</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;a&apos;,&apos;b&apos;,&apos;c&apos;]			# rhythm
@@ -4621,15 +4649,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>81.0</startTime>
-        <name>Ringer_5d</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>81.0</startTime>
+          <name>Ringer_5d</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -4730,15 +4758,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>86.0</startTime>
-        <name>Ringer_5e</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>86.0</startTime>
+          <name>Ringer_5e</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;c&apos;,&apos;b&apos;,&apos;d&apos;]			# rhythm
@@ -4839,15 +4867,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>91.0</startTime>
-        <name>Ringer_5a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>91.0</startTime>
+          <name>Ringer_5a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -4948,15 +4976,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>96.0</startTime>
-        <name>Ringer_1b</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>96.0</startTime>
+          <name>Ringer_1b</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5057,15 +5085,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>101.0</startTime>
-        <name>Ringer_5c</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>101.0</startTime>
+          <name>Ringer_5c</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;a&apos;,&apos;b&apos;,&apos;c&apos;]			# rhythm
@@ -5166,15 +5194,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>106.0</startTime>
-        <name>Ringer_1d</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>106.0</startTime>
+          <name>Ringer_1d</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5275,15 +5303,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>111.0</startTime>
-        <name>Ringer_5e</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>111.0</startTime>
+          <name>Ringer_5e</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;c&apos;,&apos;b&apos;,&apos;d&apos;]			# rhythm
@@ -5384,15 +5412,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>121.0</startTime>
-        <name>Ringer_9a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>121.0</startTime>
+          <name>Ringer_9a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5493,15 +5521,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>126.0</startTime>
-        <name>Ringer_9b</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>126.0</startTime>
+          <name>Ringer_9b</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5602,15 +5630,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>131.0</startTime>
-        <name>Ringer_9a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>131.0</startTime>
+          <name>Ringer_9a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5711,15 +5739,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>136.0</startTime>
-        <name>Ringer_9d</name>
-        <backgroundColor>-341966</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>136.0</startTime>
+          <name>Ringer_9d</name>
+          <backgroundColor>-341966</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;a&apos;,&apos;c&apos;]			# rhythm
@@ -5820,15 +5848,15 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>141.0</startTime>
-        <name>Ringer_9a</name>
-        <backgroundColor>-14286</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_1 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>141.0</startTime>
+          <name>Ringer_9a</name>
+          <backgroundColor>-14286</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_1 - 3h13TET
 scoreText_1 = &quot;&quot;                              	# scoreText_1 is cleared
 bart_1 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_1 = [&apos;b&apos;,&apos;4&apos;,&apos;-&apos;]			# rhythm
@@ -5929,18 +5957,32 @@ while i_1 &lt; 1 :                               	# loop until end of soundObjec
     c_1 = 0
 score = scoreText_1
 </pythonCode>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>15.0</startTime>
-        <name>Ringer_2a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>15.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>Tapout_0</name>
+          <backgroundColor>-16711736</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	strt	dur	vibfreq	amp	basefq		pana	panb	car	mod	ndx	ndxmul	ndxcrv
+i3 	0 	15 	.06 	22000 	261.62558 	-1	1	1	3	5	.66	0
+i3 	5 	10 	.04	20000 	32.7031975 	1	-1	7	11	3	.66	0
+i3 	7 	8 	.028 	18500 	123.470832 	-1	1	2	5	23	.66	0
+
+</score>
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>15.0</startTime>
+          <name>Ringer_2a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6041,15 +6083,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>20.0</startTime>
-        <name>Ringer_2b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>20.0</startTime>
+          <name>Ringer_2b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6150,124 +6192,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>30.0</startTime>
-        <name>Ringer_2d</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
-scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
-bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
-rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
-bpb_2 = len(rhythmr0_2)                         # beats per bar
-beat_2 = bart_2/bpb_2                           # time of beat in seconds
-notetime_2 = 0                                  # set intitial note start time
-durlist_2 = [2.66]			# note duration list
-notelist_2 = [49]				# note list
-splist_2 = [1]				# subpatch list
-panalist_2 = [-.1]			# pana list
-panblist_2 = [.1]			# panb list
-nvatlist_2 = [1]			# nvat list
-nvaclist_2 = [.5]				# nvac list
-nvpalist_2 = [1]				# nvpa list
-nvtalist_2 = [.5]			# nvta list
-nvxalist_2 = [0]			# nvxa list
-nvpblist_2 = [.9]			# nvpb list
-nvxblist_2 = [.5]			# nvxb list
-nvpclist_2 = [.7]			# nvpc list
-nvtclist_2 = [1]			# nvtc list
-nvxclist_2 = [1.5]			# nvxc list
-matlist_2 = [1]		# mat list
-maclist_2 = [0]			# mac list
-mpalist_2 = [.5]			# mpa list
-mtalist_2 = [.5]		# mta list
-mxalist_2 = [.5]			# mxa list
-mpblist_2 = [.5]			# mpb list
-mxblist_2 = [.5]			# mxb list
-mpclist_2 = [.3]		# mpc list
-mtclist_2 = [1]			# mtc list
-mxclist_2 = [1.5]			# mxc list
-bndalist_2 = [1]			# bnda list
-bndblist_2 = [1]			# bndb list
-bndclist_2 = [1]			# bndc list
-bndtlist_2 = [.5]			# bndt list
-bndulist_2 = [.5]			# bndu list
-bndvlist_2 = [.5]			# bndv list
-i_2 = 0						# loop iteration counter
-c_2 = 0						# note iteration counter
-while i_2 &lt; 1 :                               	# loop until end of soundObject
-                                    	# ****** Rhythm Parser ******
-    for a_2 in range(bpb_2) :                           # loop through the items in the rhythm list
-        sb_2 = rhythmr0_2[a_2]                          # sb is current item in the rhythm list
-        subeat_2 = beat_2/len(sb_2)                     # subeat is the number of sub-beats in the beat
-        for b_2 in range(len(sb_2)) :                   # loop through the items in the beat string
-            if sb_2[b_2].isalnum() :                    # check if character is alphanumeric
-                asky = ord(sb_2[b_2])                   # get ascii number of the character
-                if sb_2[b_2].isdigit() :                # check if character is numeric
-                    amp_2 = (asky-47)                   # assign amplitude
-                elif sb_2[b_2].isupper() :              # check if character is uppercase
-                    amp_2 = (asky-54)                   # assign amplitude
-                else :                                  # else character must be lowercase
-                    amp_2 = (asky-60)                   # assign amplitude
-            elif sb_2[b_2] == &apos;-&apos; : amp_2 = 0           # character for amp = 0                         
-            elif sb_2[b_2] == &apos;&gt;&apos; : amp_2 = 63          # character for amp = 1
-            else :                                      # error trap for invalid rhythym list
-                alert(&apos;Invalid rhythm list!&apos;)           # show error alert 
-                notetime_2 = blueDuration + 1           # set notetime_2 &gt; blueduration
-                scoreText_2 = &apos;&apos;                        # clear scoreText_2
-            if notetime_2 &gt;= blueDuration : break       # break out of the loop
-	    if amp_2 &gt; 0 :				# if note exists (amplitude &gt; 0)
-		dur_2 = durlist_2[c_2]			# get duration from durlist
-		amp_2 = amp_2-62			# move amp value to correct dbfs range (max=1)
-		note_2 = notelist_2[c_2]		# get note from notelist
-	        sp_2 = splist_2[c_2]			# get subpatch from splist
-		pana_2 = panalist_2[c_2]		# get pana from panalist
-		panb_2 = panblist_2[c_2]		# get panb from panblist
-		nvat_2 = nvatlist_2[c_2]		# get nvat from nvatlist
-		nvac_2 = nvaclist_2[c_2]		# get nvac from nvatlist
-		nvpa_2 = nvpalist_2[c_2]		# get nvpa from nvpalist
-		nvta_2 = nvtalist_2[c_2]		# get nvta from nvtalist
-		nvxa_2 = nvxalist_2[c_2]		# get nvxa from nvxalist
-		nvpb_2 = nvpblist_2[c_2]		# get nvpb from nvpblist
-		nvxb_2 = nvxblist_2[c_2]		# get nvxb from nvxblist
-		nvpc_2 = nvpclist_2[c_2]		# get nvpc from nvpclist
-		nvtc_2 = nvtclist_2[c_2]		# get nvtc from nvtclist
-		nvxc_2 = nvxclist_2[c_2]		# get nvxc from nvxclist
-		mat_2 = matlist_2[c_2]			# get mat from matlist
-		mac_2 = maclist_2[c_2]			# get mac from maclist
-		mpa_2 = mpalist_2[c_2]			# get mpa from mpalist
-		mta_2 = mtalist_2[c_2]			# get mta from mtalist
-		mxa_2 = mxalist_2[c_2]			# get mxa from mxalist
-		mpb_2 = mpblist_2[c_2]			# get mpb from mpblist
-		mxb_2 = mxblist_2[c_2]			# get mxb from mxblist
-		mpc_2 = mpclist_2[c_2]			# get mpc from mpclist
-		mtc_2 = mtclist_2[c_2]			# get mtc from mtclist
-		mxc_2 = mxclist_2[c_2]			# get mxc from mxclist
-		bnda_2 = bndalist_2[c_2]		# get bnda from bndalist
-		bndb_2 = bndblist_2[c_2]		# get bndb from bndblist
-		bndc_2 = bndclist_2[c_2]		# get bndc from bndclist
-		bndt_2 = bndtlist_2[c_2]		# get bndt from bndtlist		
-		bndu_2 = bndulist_2[c_2]		# get bndu from bndulist		
-		bndv_2 = bndvlist_2[c_2]		# get bndv from bndvlist		
-                c_2 = c_2 + 1
-                scoreText_2 += &quot;i1 &quot;+str(notetime_2)+&quot; &quot;+str(dur_2)+&quot; &quot;+str(amp_2)+&quot; &quot;+str(note_2)+&quot; &quot;+str(sp_2)+&quot; &quot;+str(pana_2)+&quot; &quot;+str(panb_2)+&quot; &quot;+str(nvat_2)+&quot; &quot;+str(nvac_2)+&quot; &quot;+str(nvpa_2)+&quot; &quot;+str(nvta_2)+&quot; &quot;+str(nvxa_2)+&quot; &quot;+str(nvpb_2)+&quot; &quot;+str(nvxb_2)+&quot; &quot;+str(nvpc_2)+&quot; &quot;+str(nvtc_2)+&quot; &quot;+str(nvxc_2)+&quot; &quot;+str(mat_2)+&quot; &quot;+str(mac_2)+&quot; &quot;+str(mpa_2)+&quot; &quot;+str(mta_2)+&quot; &quot;+str(mxa_2)+&quot; &quot;+str(mpb_2)+&quot; &quot;+str(mxb_2)+&quot; &quot;+str(mpc_2)+&quot; &quot;+str(mtc_2)+&quot; &quot;+str(mxc_2)+&quot; &quot;+str(bnda_2)+&quot; &quot;+str(bndb_2)+&quot; &quot;+str(bndc_2)+&quot; &quot;+str(bndt_2)+&quot; &quot;+str(bndu_2)+&quot; &quot;+str(bndv_2)+&quot; \n&quot;
-            notetime_2 = notetime_2 + subeat_2                      # increment notetime by subeat time value
-    i_2 = i_2 + 1
-    c_2 = 0
-score = scoreText_2
-</pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>Ringer_2c</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>Ringer_2c</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6368,15 +6301,124 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>35.0</startTime>
-        <name>Ringer_2e</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>30.0</startTime>
+          <name>Ringer_2d</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
+scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
+bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
+rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
+bpb_2 = len(rhythmr0_2)                         # beats per bar
+beat_2 = bart_2/bpb_2                           # time of beat in seconds
+notetime_2 = 0                                  # set intitial note start time
+durlist_2 = [2.66]			# note duration list
+notelist_2 = [49]				# note list
+splist_2 = [1]				# subpatch list
+panalist_2 = [-.1]			# pana list
+panblist_2 = [.1]			# panb list
+nvatlist_2 = [1]			# nvat list
+nvaclist_2 = [.5]				# nvac list
+nvpalist_2 = [1]				# nvpa list
+nvtalist_2 = [.5]			# nvta list
+nvxalist_2 = [0]			# nvxa list
+nvpblist_2 = [.9]			# nvpb list
+nvxblist_2 = [.5]			# nvxb list
+nvpclist_2 = [.7]			# nvpc list
+nvtclist_2 = [1]			# nvtc list
+nvxclist_2 = [1.5]			# nvxc list
+matlist_2 = [1]		# mat list
+maclist_2 = [0]			# mac list
+mpalist_2 = [.5]			# mpa list
+mtalist_2 = [.5]		# mta list
+mxalist_2 = [.5]			# mxa list
+mpblist_2 = [.5]			# mpb list
+mxblist_2 = [.5]			# mxb list
+mpclist_2 = [.3]		# mpc list
+mtclist_2 = [1]			# mtc list
+mxclist_2 = [1.5]			# mxc list
+bndalist_2 = [1]			# bnda list
+bndblist_2 = [1]			# bndb list
+bndclist_2 = [1]			# bndc list
+bndtlist_2 = [.5]			# bndt list
+bndulist_2 = [.5]			# bndu list
+bndvlist_2 = [.5]			# bndv list
+i_2 = 0						# loop iteration counter
+c_2 = 0						# note iteration counter
+while i_2 &lt; 1 :                               	# loop until end of soundObject
+                                    	# ****** Rhythm Parser ******
+    for a_2 in range(bpb_2) :                           # loop through the items in the rhythm list
+        sb_2 = rhythmr0_2[a_2]                          # sb is current item in the rhythm list
+        subeat_2 = beat_2/len(sb_2)                     # subeat is the number of sub-beats in the beat
+        for b_2 in range(len(sb_2)) :                   # loop through the items in the beat string
+            if sb_2[b_2].isalnum() :                    # check if character is alphanumeric
+                asky = ord(sb_2[b_2])                   # get ascii number of the character
+                if sb_2[b_2].isdigit() :                # check if character is numeric
+                    amp_2 = (asky-47)                   # assign amplitude
+                elif sb_2[b_2].isupper() :              # check if character is uppercase
+                    amp_2 = (asky-54)                   # assign amplitude
+                else :                                  # else character must be lowercase
+                    amp_2 = (asky-60)                   # assign amplitude
+            elif sb_2[b_2] == &apos;-&apos; : amp_2 = 0           # character for amp = 0                         
+            elif sb_2[b_2] == &apos;&gt;&apos; : amp_2 = 63          # character for amp = 1
+            else :                                      # error trap for invalid rhythym list
+                alert(&apos;Invalid rhythm list!&apos;)           # show error alert 
+                notetime_2 = blueDuration + 1           # set notetime_2 &gt; blueduration
+                scoreText_2 = &apos;&apos;                        # clear scoreText_2
+            if notetime_2 &gt;= blueDuration : break       # break out of the loop
+	    if amp_2 &gt; 0 :				# if note exists (amplitude &gt; 0)
+		dur_2 = durlist_2[c_2]			# get duration from durlist
+		amp_2 = amp_2-62			# move amp value to correct dbfs range (max=1)
+		note_2 = notelist_2[c_2]		# get note from notelist
+	        sp_2 = splist_2[c_2]			# get subpatch from splist
+		pana_2 = panalist_2[c_2]		# get pana from panalist
+		panb_2 = panblist_2[c_2]		# get panb from panblist
+		nvat_2 = nvatlist_2[c_2]		# get nvat from nvatlist
+		nvac_2 = nvaclist_2[c_2]		# get nvac from nvatlist
+		nvpa_2 = nvpalist_2[c_2]		# get nvpa from nvpalist
+		nvta_2 = nvtalist_2[c_2]		# get nvta from nvtalist
+		nvxa_2 = nvxalist_2[c_2]		# get nvxa from nvxalist
+		nvpb_2 = nvpblist_2[c_2]		# get nvpb from nvpblist
+		nvxb_2 = nvxblist_2[c_2]		# get nvxb from nvxblist
+		nvpc_2 = nvpclist_2[c_2]		# get nvpc from nvpclist
+		nvtc_2 = nvtclist_2[c_2]		# get nvtc from nvtclist
+		nvxc_2 = nvxclist_2[c_2]		# get nvxc from nvxclist
+		mat_2 = matlist_2[c_2]			# get mat from matlist
+		mac_2 = maclist_2[c_2]			# get mac from maclist
+		mpa_2 = mpalist_2[c_2]			# get mpa from mpalist
+		mta_2 = mtalist_2[c_2]			# get mta from mtalist
+		mxa_2 = mxalist_2[c_2]			# get mxa from mxalist
+		mpb_2 = mpblist_2[c_2]			# get mpb from mpblist
+		mxb_2 = mxblist_2[c_2]			# get mxb from mxblist
+		mpc_2 = mpclist_2[c_2]			# get mpc from mpclist
+		mtc_2 = mtclist_2[c_2]			# get mtc from mtclist
+		mxc_2 = mxclist_2[c_2]			# get mxc from mxclist
+		bnda_2 = bndalist_2[c_2]		# get bnda from bndalist
+		bndb_2 = bndblist_2[c_2]		# get bndb from bndblist
+		bndc_2 = bndclist_2[c_2]		# get bndc from bndclist
+		bndt_2 = bndtlist_2[c_2]		# get bndt from bndtlist		
+		bndu_2 = bndulist_2[c_2]		# get bndu from bndulist		
+		bndv_2 = bndvlist_2[c_2]		# get bndv from bndvlist		
+                c_2 = c_2 + 1
+                scoreText_2 += &quot;i1 &quot;+str(notetime_2)+&quot; &quot;+str(dur_2)+&quot; &quot;+str(amp_2)+&quot; &quot;+str(note_2)+&quot; &quot;+str(sp_2)+&quot; &quot;+str(pana_2)+&quot; &quot;+str(panb_2)+&quot; &quot;+str(nvat_2)+&quot; &quot;+str(nvac_2)+&quot; &quot;+str(nvpa_2)+&quot; &quot;+str(nvta_2)+&quot; &quot;+str(nvxa_2)+&quot; &quot;+str(nvpb_2)+&quot; &quot;+str(nvxb_2)+&quot; &quot;+str(nvpc_2)+&quot; &quot;+str(nvtc_2)+&quot; &quot;+str(nvxc_2)+&quot; &quot;+str(mat_2)+&quot; &quot;+str(mac_2)+&quot; &quot;+str(mpa_2)+&quot; &quot;+str(mta_2)+&quot; &quot;+str(mxa_2)+&quot; &quot;+str(mpb_2)+&quot; &quot;+str(mxb_2)+&quot; &quot;+str(mpc_2)+&quot; &quot;+str(mtc_2)+&quot; &quot;+str(mxc_2)+&quot; &quot;+str(bnda_2)+&quot; &quot;+str(bndb_2)+&quot; &quot;+str(bndc_2)+&quot; &quot;+str(bndt_2)+&quot; &quot;+str(bndu_2)+&quot; &quot;+str(bndv_2)+&quot; \n&quot;
+            notetime_2 = notetime_2 + subeat_2                      # increment notetime by subeat time value
+    i_2 = i_2 + 1
+    c_2 = 0
+score = scoreText_2
+</pythonCode>
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>35.0</startTime>
+          <name>Ringer_2e</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;d&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6477,15 +6519,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>40.0</startTime>
-        <name>Ringer_2a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>40.0</startTime>
+          <name>Ringer_2a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6586,15 +6628,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>Ringer_2b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>Ringer_2b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6695,124 +6737,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>55.0</startTime>
-        <name>Ringer_2d</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
-scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
-bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
-rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
-bpb_2 = len(rhythmr0_2)                         # beats per bar
-beat_2 = bart_2/bpb_2                           # time of beat in seconds
-notetime_2 = 0                                  # set intitial note start time
-durlist_2 = [2.66]			# note duration list
-notelist_2 = [49]				# note list
-splist_2 = [1]				# subpatch list
-panalist_2 = [-.1]			# pana list
-panblist_2 = [.1]			# panb list
-nvatlist_2 = [1]			# nvat list
-nvaclist_2 = [.5]				# nvac list
-nvpalist_2 = [1]				# nvpa list
-nvtalist_2 = [.5]			# nvta list
-nvxalist_2 = [0]			# nvxa list
-nvpblist_2 = [.9]			# nvpb list
-nvxblist_2 = [.5]			# nvxb list
-nvpclist_2 = [.7]			# nvpc list
-nvtclist_2 = [1]			# nvtc list
-nvxclist_2 = [1.5]			# nvxc list
-matlist_2 = [1]		# mat list
-maclist_2 = [0]			# mac list
-mpalist_2 = [.5]			# mpa list
-mtalist_2 = [.5]		# mta list
-mxalist_2 = [.5]			# mxa list
-mpblist_2 = [.5]			# mpb list
-mxblist_2 = [.5]			# mxb list
-mpclist_2 = [.3]		# mpc list
-mtclist_2 = [1]			# mtc list
-mxclist_2 = [1.5]			# mxc list
-bndalist_2 = [1]			# bnda list
-bndblist_2 = [1]			# bndb list
-bndclist_2 = [1]			# bndc list
-bndtlist_2 = [.5]			# bndt list
-bndulist_2 = [.5]			# bndu list
-bndvlist_2 = [.5]			# bndv list
-i_2 = 0						# loop iteration counter
-c_2 = 0						# note iteration counter
-while i_2 &lt; 1 :                               	# loop until end of soundObject
-                                    	# ****** Rhythm Parser ******
-    for a_2 in range(bpb_2) :                           # loop through the items in the rhythm list
-        sb_2 = rhythmr0_2[a_2]                          # sb is current item in the rhythm list
-        subeat_2 = beat_2/len(sb_2)                     # subeat is the number of sub-beats in the beat
-        for b_2 in range(len(sb_2)) :                   # loop through the items in the beat string
-            if sb_2[b_2].isalnum() :                    # check if character is alphanumeric
-                asky = ord(sb_2[b_2])                   # get ascii number of the character
-                if sb_2[b_2].isdigit() :                # check if character is numeric
-                    amp_2 = (asky-47)                   # assign amplitude
-                elif sb_2[b_2].isupper() :              # check if character is uppercase
-                    amp_2 = (asky-54)                   # assign amplitude
-                else :                                  # else character must be lowercase
-                    amp_2 = (asky-60)                   # assign amplitude
-            elif sb_2[b_2] == &apos;-&apos; : amp_2 = 0           # character for amp = 0                         
-            elif sb_2[b_2] == &apos;&gt;&apos; : amp_2 = 63          # character for amp = 1
-            else :                                      # error trap for invalid rhythym list
-                alert(&apos;Invalid rhythm list!&apos;)           # show error alert 
-                notetime_2 = blueDuration + 1           # set notetime_2 &gt; blueduration
-                scoreText_2 = &apos;&apos;                        # clear scoreText_2
-            if notetime_2 &gt;= blueDuration : break       # break out of the loop
-	    if amp_2 &gt; 0 :				# if note exists (amplitude &gt; 0)
-		dur_2 = durlist_2[c_2]			# get duration from durlist
-		amp_2 = amp_2-62			# move amp value to correct dbfs range (max=1)
-		note_2 = notelist_2[c_2]		# get note from notelist
-	        sp_2 = splist_2[c_2]			# get subpatch from splist
-		pana_2 = panalist_2[c_2]		# get pana from panalist
-		panb_2 = panblist_2[c_2]		# get panb from panblist
-		nvat_2 = nvatlist_2[c_2]		# get nvat from nvatlist
-		nvac_2 = nvaclist_2[c_2]		# get nvac from nvatlist
-		nvpa_2 = nvpalist_2[c_2]		# get nvpa from nvpalist
-		nvta_2 = nvtalist_2[c_2]		# get nvta from nvtalist
-		nvxa_2 = nvxalist_2[c_2]		# get nvxa from nvxalist
-		nvpb_2 = nvpblist_2[c_2]		# get nvpb from nvpblist
-		nvxb_2 = nvxblist_2[c_2]		# get nvxb from nvxblist
-		nvpc_2 = nvpclist_2[c_2]		# get nvpc from nvpclist
-		nvtc_2 = nvtclist_2[c_2]		# get nvtc from nvtclist
-		nvxc_2 = nvxclist_2[c_2]		# get nvxc from nvxclist
-		mat_2 = matlist_2[c_2]			# get mat from matlist
-		mac_2 = maclist_2[c_2]			# get mac from maclist
-		mpa_2 = mpalist_2[c_2]			# get mpa from mpalist
-		mta_2 = mtalist_2[c_2]			# get mta from mtalist
-		mxa_2 = mxalist_2[c_2]			# get mxa from mxalist
-		mpb_2 = mpblist_2[c_2]			# get mpb from mpblist
-		mxb_2 = mxblist_2[c_2]			# get mxb from mxblist
-		mpc_2 = mpclist_2[c_2]			# get mpc from mpclist
-		mtc_2 = mtclist_2[c_2]			# get mtc from mtclist
-		mxc_2 = mxclist_2[c_2]			# get mxc from mxclist
-		bnda_2 = bndalist_2[c_2]		# get bnda from bndalist
-		bndb_2 = bndblist_2[c_2]		# get bndb from bndblist
-		bndc_2 = bndclist_2[c_2]		# get bndc from bndclist
-		bndt_2 = bndtlist_2[c_2]		# get bndt from bndtlist		
-		bndu_2 = bndulist_2[c_2]		# get bndu from bndulist		
-		bndv_2 = bndvlist_2[c_2]		# get bndv from bndvlist		
-                c_2 = c_2 + 1
-                scoreText_2 += &quot;i1 &quot;+str(notetime_2)+&quot; &quot;+str(dur_2)+&quot; &quot;+str(amp_2)+&quot; &quot;+str(note_2)+&quot; &quot;+str(sp_2)+&quot; &quot;+str(pana_2)+&quot; &quot;+str(panb_2)+&quot; &quot;+str(nvat_2)+&quot; &quot;+str(nvac_2)+&quot; &quot;+str(nvpa_2)+&quot; &quot;+str(nvta_2)+&quot; &quot;+str(nvxa_2)+&quot; &quot;+str(nvpb_2)+&quot; &quot;+str(nvxb_2)+&quot; &quot;+str(nvpc_2)+&quot; &quot;+str(nvtc_2)+&quot; &quot;+str(nvxc_2)+&quot; &quot;+str(mat_2)+&quot; &quot;+str(mac_2)+&quot; &quot;+str(mpa_2)+&quot; &quot;+str(mta_2)+&quot; &quot;+str(mxa_2)+&quot; &quot;+str(mpb_2)+&quot; &quot;+str(mxb_2)+&quot; &quot;+str(mpc_2)+&quot; &quot;+str(mtc_2)+&quot; &quot;+str(mxc_2)+&quot; &quot;+str(bnda_2)+&quot; &quot;+str(bndb_2)+&quot; &quot;+str(bndc_2)+&quot; &quot;+str(bndt_2)+&quot; &quot;+str(bndu_2)+&quot; &quot;+str(bndv_2)+&quot; \n&quot;
-            notetime_2 = notetime_2 + subeat_2                      # increment notetime by subeat time value
-    i_2 = i_2 + 1
-    c_2 = 0
-score = scoreText_2
-</pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>50.0</startTime>
-        <name>Ringer_2c</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>50.0</startTime>
+          <name>Ringer_2c</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -6913,15 +6846,124 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>60.0</startTime>
-        <name>Ringer_2f</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>55.0</startTime>
+          <name>Ringer_2d</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
+scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
+bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
+rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
+bpb_2 = len(rhythmr0_2)                         # beats per bar
+beat_2 = bart_2/bpb_2                           # time of beat in seconds
+notetime_2 = 0                                  # set intitial note start time
+durlist_2 = [2.66]			# note duration list
+notelist_2 = [49]				# note list
+splist_2 = [1]				# subpatch list
+panalist_2 = [-.1]			# pana list
+panblist_2 = [.1]			# panb list
+nvatlist_2 = [1]			# nvat list
+nvaclist_2 = [.5]				# nvac list
+nvpalist_2 = [1]				# nvpa list
+nvtalist_2 = [.5]			# nvta list
+nvxalist_2 = [0]			# nvxa list
+nvpblist_2 = [.9]			# nvpb list
+nvxblist_2 = [.5]			# nvxb list
+nvpclist_2 = [.7]			# nvpc list
+nvtclist_2 = [1]			# nvtc list
+nvxclist_2 = [1.5]			# nvxc list
+matlist_2 = [1]		# mat list
+maclist_2 = [0]			# mac list
+mpalist_2 = [.5]			# mpa list
+mtalist_2 = [.5]		# mta list
+mxalist_2 = [.5]			# mxa list
+mpblist_2 = [.5]			# mpb list
+mxblist_2 = [.5]			# mxb list
+mpclist_2 = [.3]		# mpc list
+mtclist_2 = [1]			# mtc list
+mxclist_2 = [1.5]			# mxc list
+bndalist_2 = [1]			# bnda list
+bndblist_2 = [1]			# bndb list
+bndclist_2 = [1]			# bndc list
+bndtlist_2 = [.5]			# bndt list
+bndulist_2 = [.5]			# bndu list
+bndvlist_2 = [.5]			# bndv list
+i_2 = 0						# loop iteration counter
+c_2 = 0						# note iteration counter
+while i_2 &lt; 1 :                               	# loop until end of soundObject
+                                    	# ****** Rhythm Parser ******
+    for a_2 in range(bpb_2) :                           # loop through the items in the rhythm list
+        sb_2 = rhythmr0_2[a_2]                          # sb is current item in the rhythm list
+        subeat_2 = beat_2/len(sb_2)                     # subeat is the number of sub-beats in the beat
+        for b_2 in range(len(sb_2)) :                   # loop through the items in the beat string
+            if sb_2[b_2].isalnum() :                    # check if character is alphanumeric
+                asky = ord(sb_2[b_2])                   # get ascii number of the character
+                if sb_2[b_2].isdigit() :                # check if character is numeric
+                    amp_2 = (asky-47)                   # assign amplitude
+                elif sb_2[b_2].isupper() :              # check if character is uppercase
+                    amp_2 = (asky-54)                   # assign amplitude
+                else :                                  # else character must be lowercase
+                    amp_2 = (asky-60)                   # assign amplitude
+            elif sb_2[b_2] == &apos;-&apos; : amp_2 = 0           # character for amp = 0                         
+            elif sb_2[b_2] == &apos;&gt;&apos; : amp_2 = 63          # character for amp = 1
+            else :                                      # error trap for invalid rhythym list
+                alert(&apos;Invalid rhythm list!&apos;)           # show error alert 
+                notetime_2 = blueDuration + 1           # set notetime_2 &gt; blueduration
+                scoreText_2 = &apos;&apos;                        # clear scoreText_2
+            if notetime_2 &gt;= blueDuration : break       # break out of the loop
+	    if amp_2 &gt; 0 :				# if note exists (amplitude &gt; 0)
+		dur_2 = durlist_2[c_2]			# get duration from durlist
+		amp_2 = amp_2-62			# move amp value to correct dbfs range (max=1)
+		note_2 = notelist_2[c_2]		# get note from notelist
+	        sp_2 = splist_2[c_2]			# get subpatch from splist
+		pana_2 = panalist_2[c_2]		# get pana from panalist
+		panb_2 = panblist_2[c_2]		# get panb from panblist
+		nvat_2 = nvatlist_2[c_2]		# get nvat from nvatlist
+		nvac_2 = nvaclist_2[c_2]		# get nvac from nvatlist
+		nvpa_2 = nvpalist_2[c_2]		# get nvpa from nvpalist
+		nvta_2 = nvtalist_2[c_2]		# get nvta from nvtalist
+		nvxa_2 = nvxalist_2[c_2]		# get nvxa from nvxalist
+		nvpb_2 = nvpblist_2[c_2]		# get nvpb from nvpblist
+		nvxb_2 = nvxblist_2[c_2]		# get nvxb from nvxblist
+		nvpc_2 = nvpclist_2[c_2]		# get nvpc from nvpclist
+		nvtc_2 = nvtclist_2[c_2]		# get nvtc from nvtclist
+		nvxc_2 = nvxclist_2[c_2]		# get nvxc from nvxclist
+		mat_2 = matlist_2[c_2]			# get mat from matlist
+		mac_2 = maclist_2[c_2]			# get mac from maclist
+		mpa_2 = mpalist_2[c_2]			# get mpa from mpalist
+		mta_2 = mtalist_2[c_2]			# get mta from mtalist
+		mxa_2 = mxalist_2[c_2]			# get mxa from mxalist
+		mpb_2 = mpblist_2[c_2]			# get mpb from mpblist
+		mxb_2 = mxblist_2[c_2]			# get mxb from mxblist
+		mpc_2 = mpclist_2[c_2]			# get mpc from mpclist
+		mtc_2 = mtclist_2[c_2]			# get mtc from mtclist
+		mxc_2 = mxclist_2[c_2]			# get mxc from mxclist
+		bnda_2 = bndalist_2[c_2]		# get bnda from bndalist
+		bndb_2 = bndblist_2[c_2]		# get bndb from bndblist
+		bndc_2 = bndclist_2[c_2]		# get bndc from bndclist
+		bndt_2 = bndtlist_2[c_2]		# get bndt from bndtlist		
+		bndu_2 = bndulist_2[c_2]		# get bndu from bndulist		
+		bndv_2 = bndvlist_2[c_2]		# get bndv from bndvlist		
+                c_2 = c_2 + 1
+                scoreText_2 += &quot;i1 &quot;+str(notetime_2)+&quot; &quot;+str(dur_2)+&quot; &quot;+str(amp_2)+&quot; &quot;+str(note_2)+&quot; &quot;+str(sp_2)+&quot; &quot;+str(pana_2)+&quot; &quot;+str(panb_2)+&quot; &quot;+str(nvat_2)+&quot; &quot;+str(nvac_2)+&quot; &quot;+str(nvpa_2)+&quot; &quot;+str(nvta_2)+&quot; &quot;+str(nvxa_2)+&quot; &quot;+str(nvpb_2)+&quot; &quot;+str(nvxb_2)+&quot; &quot;+str(nvpc_2)+&quot; &quot;+str(nvtc_2)+&quot; &quot;+str(nvxc_2)+&quot; &quot;+str(mat_2)+&quot; &quot;+str(mac_2)+&quot; &quot;+str(mpa_2)+&quot; &quot;+str(mta_2)+&quot; &quot;+str(mxa_2)+&quot; &quot;+str(mpb_2)+&quot; &quot;+str(mxb_2)+&quot; &quot;+str(mpc_2)+&quot; &quot;+str(mtc_2)+&quot; &quot;+str(mxc_2)+&quot; &quot;+str(bnda_2)+&quot; &quot;+str(bndb_2)+&quot; &quot;+str(bndc_2)+&quot; &quot;+str(bndt_2)+&quot; &quot;+str(bndu_2)+&quot; &quot;+str(bndv_2)+&quot; \n&quot;
+            notetime_2 = notetime_2 + subeat_2                      # increment notetime by subeat time value
+    i_2 = i_2 + 1
+    c_2 = 0
+score = scoreText_2
+</pythonCode>
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>60.0</startTime>
+          <name>Ringer_2f</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;d&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7022,29 +7064,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>15.0</subjectiveDuration>
-        <startTime>0.0</startTime>
-        <name>Tapout_0</name>
-        <backgroundColor>-16711736</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	strt	dur	vibfreq	amp	basefq		pana	panb	car	mod	ndx	ndxmul	ndxcrv
-i3 	0 	15 	.06 	22000 	261.62558 	-1	1	1	3	5	.66	0
-i3 	5 	10 	.04	20000 	32.7031975 	1	-1	7	11	3	.66	0
-i3 	7 	8 	.028 	18500 	123.470832 	-1	1	2	5	23	.66	0
-
-</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>66.0</startTime>
-        <name>Ringer_6a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>66.0</startTime>
+          <name>Ringer_6a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7145,15 +7173,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>71.0</startTime>
-        <name>Ringer_6b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>71.0</startTime>
+          <name>Ringer_6b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7254,15 +7282,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>76.0</startTime>
-        <name>Ringer_6c</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>76.0</startTime>
+          <name>Ringer_6c</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7363,15 +7391,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>81.0</startTime>
-        <name>Ringer_6b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>81.0</startTime>
+          <name>Ringer_6b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7472,15 +7500,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>86.0</startTime>
-        <name>Ringer_6e</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>86.0</startTime>
+          <name>Ringer_6e</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7581,15 +7609,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>91.0</startTime>
-        <name>Ringer_6a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>91.0</startTime>
+          <name>Ringer_6a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7690,15 +7718,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>96.0</startTime>
-        <name>Ringer_2b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>96.0</startTime>
+          <name>Ringer_2b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7799,15 +7827,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>101.0</startTime>
-        <name>Ringer_6a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>101.0</startTime>
+          <name>Ringer_6a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -7908,15 +7936,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>106.0</startTime>
-        <name>Ringer_2d</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>106.0</startTime>
+          <name>Ringer_2d</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8017,15 +8045,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>111.0</startTime>
-        <name>Ringer_6e</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>111.0</startTime>
+          <name>Ringer_6e</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8126,29 +8154,29 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>116.0</startTime>
-        <name>Tapout_0</name>
-        <backgroundColor>-16711736</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	strt		dur		vibfreq		amp	basefq		pana	panb	car	mod		ndx	ndxmul	ndxcrv
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>116.0</startTime>
+          <name>Tapout_0</name>
+          <backgroundColor>-16711736</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	strt		dur		vibfreq		amp	basefq		pana	panb	car	mod		ndx	ndxmul	ndxcrv
 i3 	0		5 		.01 		12000 	110 		1	-1	1	2		9	3	3
 i3 	1 		4 		.008 		7000 	330 		-1	1	1	3.9740267	27	3	3
 i3 	1.66666666 	3.33333333 	.0066666666 	9500 	330 		-1	1	1	5.23011326	6	3	3
 
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>121.0</startTime>
-        <name>Ringer_10a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>121.0</startTime>
+          <name>Ringer_10a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8249,15 +8277,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>126.0</startTime>
-        <name>Ringer_10b</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>126.0</startTime>
+          <name>Ringer_10b</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8358,15 +8386,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>131.0</startTime>
-        <name>Ringer_10a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>131.0</startTime>
+          <name>Ringer_10a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;g&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8467,15 +8495,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>136.0</startTime>
-        <name>Ringer_10d</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>136.0</startTime>
+          <name>Ringer_10d</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;e&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8576,15 +8604,15 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>141.0</startTime>
-        <name>Ringer_10a</name>
-        <backgroundColor>-10092442</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_2 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>141.0</startTime>
+          <name>Ringer_10a</name>
+          <backgroundColor>-10092442</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_2 - 3h13TET
 scoreText_2 = &quot;&quot;                              	# scoreText_2 is cleared
 bart_2 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_2 = [&apos;-&apos;,&apos;b&apos;,&apos;-&apos;,&apos;-&apos;,&apos;-&apos;]			# rhythm
@@ -8685,18 +8713,18 @@ while i_2 &lt; 1 :                               	# loop until end of soundObjec
     c_2 = 0
 score = scoreText_2
 </pythonCode>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>15.0</startTime>
-        <name>Ringer_3a</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>15.0</startTime>
+          <name>Ringer_3a</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -8797,15 +8825,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>20.0</startTime>
-        <name>Ringer_3b</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>20.0</startTime>
+          <name>Ringer_3b</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -8906,15 +8934,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>Ringer_3c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>Ringer_3c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9015,15 +9043,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>30.0</startTime>
-        <name>Ringer_3d</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>30.0</startTime>
+          <name>Ringer_3d</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9124,15 +9152,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>35.0</startTime>
-        <name>Ringer_3e</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>35.0</startTime>
+          <name>Ringer_3e</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9233,15 +9261,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>40.0</startTime>
-        <name>Ringer_3a</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>40.0</startTime>
+          <name>Ringer_3a</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9342,15 +9370,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>Ringer_3b</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>Ringer_3b</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9451,15 +9479,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>50.0</startTime>
-        <name>Ringer_3c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>50.0</startTime>
+          <name>Ringer_3c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9560,15 +9588,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>55.0</startTime>
-        <name>Ringer_3d</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>55.0</startTime>
+          <name>Ringer_3d</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbece&apos;]		# rhythm
@@ -9669,15 +9697,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>60.0</startTime>
-        <name>Ringer_3f</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>60.0</startTime>
+          <name>Ringer_3f</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;gbeba&apos;,&apos;fbeba&apos;,&apos;fbecU&apos;]		# rhythm
@@ -9778,15 +9806,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>66.0</startTime>
-        <name>Ringer_7a</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>66.0</startTime>
+          <name>Ringer_7a</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -9887,15 +9915,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>71.0</startTime>
-        <name>Ringer_7b</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>71.0</startTime>
+          <name>Ringer_7b</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -9996,15 +10024,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>76.0</startTime>
-        <name>Ringer_7c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>76.0</startTime>
+          <name>Ringer_7c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10105,15 +10133,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>81.0</startTime>
-        <name>Ringer_7d</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>81.0</startTime>
+          <name>Ringer_7d</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10214,15 +10242,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>86.0</startTime>
-        <name>Ringer_7e</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>86.0</startTime>
+          <name>Ringer_7e</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10323,15 +10351,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>91.0</startTime>
-        <name>Ringer_7a</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>91.0</startTime>
+          <name>Ringer_7a</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10432,15 +10460,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>96.0</startTime>
-        <name>Ringer_3b</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>96.0</startTime>
+          <name>Ringer_3b</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10541,15 +10569,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>101.0</startTime>
-        <name>Ringer_7c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>101.0</startTime>
+          <name>Ringer_7c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10650,15 +10678,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>106.0</startTime>
-        <name>Ringer_3d</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>106.0</startTime>
+          <name>Ringer_3d</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10759,15 +10787,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>111.0</startTime>
-        <name>Ringer_7e</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>111.0</startTime>
+          <name>Ringer_7e</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10868,15 +10896,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>121.0</startTime>
-        <name>Ringer_11a</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>121.0</startTime>
+          <name>Ringer_11a</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -10977,15 +11005,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>126.0</startTime>
-        <name>Ringer_11b</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>126.0</startTime>
+          <name>Ringer_11b</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;fadaZ&apos;,&apos;eadaZ&apos;,&apos;eadbd&apos;]		# rhythm
@@ -11086,15 +11114,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>131.0</startTime>
-        <name>Ringer_11c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>131.0</startTime>
+          <name>Ringer_11c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;baZYZYXWVWVUTSR&apos;,&apos;e&apos;,&apos;U&apos;]	# rhythm
@@ -11195,15 +11223,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>136.0</startTime>
-        <name>Ringer_11d</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h13TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>136.0</startTime>
+          <name>Ringer_11d</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h13TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;e&apos;,&apos;-&apos;,&apos;baZYZYXWVWVUTSR&apos;]		# rhythm
@@ -11304,15 +11332,15 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
-        <subjectiveDuration>5.0</subjectiveDuration>
-        <startTime>141.0</startTime>
-        <name>Ringer_11c</name>
-        <backgroundColor>-6710785</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <pythonCode># Ringer_3 - 3h6TET
+        </soundObject>
+        <soundObject type='blue.soundObject.PythonObject' onLoadProcessable='false'>
+          <subjectiveDuration>5.0</subjectiveDuration>
+          <startTime>141.0</startTime>
+          <name>Ringer_11c</name>
+          <backgroundColor>-6710785</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <pythonCode># Ringer_3 - 3h6TET
 scoreText_3 = &quot;&quot;                              	# scoreText_3 is cleared
 bart_3 = 5.0                                    # duration of bar in seconds ** THIS NUMBER SHOULD BE AN INTEGER EXPRESSED AS FLOATING POINT **
 rhythmr0_3 = [&apos;TSRQPRQPONPONML&apos;,&apos;f&apos;,&apos;-&apos;]	# rhythm
@@ -11413,10 +11441,11 @@ while i_3 &lt; 1 :                               	# loop until end of soundObjec
     c_3 = 0
 score = scoreText_3
 </pythonCode>
-      </soundObject>
-      <parameterId>-1444023782</parameterId>
-    </soundLayer>
-  </soundObject>
+        </soundObject>
+        <parameterId>-1444023782</parameterId>
+      </soundLayer>
+    </soundObject>
+  </score>
   <scratchPadData>
     <isWordWrapEnabled>true</isWordWrapEnabled>
     <scratchText/>
@@ -11426,11 +11455,29 @@ score = scoreText_3
   <renderEndTime>-1.0</renderEndTime>
   <markersList/>
   <loopRendering>false</loopRendering>
-  <tempo>
-    <enabled>false</enabled>
-    <visible>false</visible>
-    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
-      <linePoint x='0.0' y='60.0'/>
-    </line>
-  </tempo>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant></pitchConstant>
+    <ampConstant></ampConstant>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
 </blueData>
