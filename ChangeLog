@@ -20,6 +20,9 @@ FIX
 * Editors would lose ability to use code completion after leaving and coming 
 back to Editor
 
+* Code completion items did not parser opcodes.xml correctly, resulting in
+incomplete signature completions and missing entries
+
 
 >Notes for 2.3.1<
 [released 2012.12.12]

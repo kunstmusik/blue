@@ -40,7 +40,7 @@ public class OpcodesParser extends DefaultHandler {
 
     Stack<OpcodeDocCategory> categories = new Stack<OpcodeDocCategory>();    
     OpcodeDoc currentOpcode = null;
-    String currentValue = null;
+    StringBuilder currentValue = new StringBuilder();
     
     private OpcodesParser() {
         OpcodeDocCategory root = new OpcodeDocCategory();
@@ -87,14 +87,15 @@ public class OpcodesParser extends DefaultHandler {
             categories.peek().opcodes.add(currentOpcode);
             currentOpcode = null;
         } else if("name".equals(qName)) {
-            currentOpcode.opcodeName = currentValue;
+            currentOpcode.opcodeName = currentValue.toString().trim();
         } else if("signature".equals(qName)) {
-            currentOpcode.signature = currentValue;
+            currentOpcode.signature = currentValue.toString().trim();
         }
+        currentValue = new StringBuilder();
     }
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        currentValue = new String(ch, start, length).trim();
+        currentValue.append(ch, start, length);
     }
 }
