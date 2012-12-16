@@ -22,6 +22,7 @@ package blue.score.layers.patterns.core;
 import blue.CompileData;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
+import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -40,7 +41,7 @@ public class PatternLayerTest {
      * Test of generateForCSD method, of class PatternLayer.
      */
     @Test
-    public void testGenerateForCSD() {
+    public void testGenerateForCSD() throws SoundObjectException {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 0.0F;

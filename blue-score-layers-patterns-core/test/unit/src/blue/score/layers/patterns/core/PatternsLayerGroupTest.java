@@ -20,6 +20,7 @@
 package blue.score.layers.patterns.core;
 
 import blue.CompileData;
+import blue.score.ScoreGenerationException;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import org.junit.*;
@@ -38,7 +39,7 @@ public class PatternsLayerGroupTest {
      * Test of generateForCSD method, of class PatternsLayerGroup.
      */
     @Test
-    public void testGenerateForCSD() {
+    public void testGenerateForCSD() throws ScoreGenerationException {
         CompileData compileData = null;
         float startTime = 4.0F;
         float endTime = 0.0F;
