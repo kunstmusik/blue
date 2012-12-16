@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.score.ayers.audio.core
+OpenIDE-Module-Localizing-Bundle: blue/score/ayers/audio/core/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.score.layers.audio.ui
+OpenIDE-Module-Localizing-Bundle: blue/score/layers/audio/ui/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+
