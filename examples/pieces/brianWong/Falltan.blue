@@ -1,4 +1,4 @@
-<blueData version='2.1.0'>
+<blueData version='2.3.2'>
   <projectProperties>
     <title>Falltan</title>
     <author>Brian Wong</author>
@@ -6,9 +6,13 @@
     <sampleRate>48000</sampleRate>
     <ksmps>50</ksmps>
     <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
     <diskSampleRate>96000</diskSampleRate>
     <diskKsmps>1</diskKsmps>
     <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>true</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
     <useAudioOut>true</useAudioOut>
     <useAudioIn>false</useAudioIn>
     <useMidiIn>false</useMidiIn>
@@ -28,14 +32,6 @@
     <diskAdvancedSettings></diskAdvancedSettings>
     <diskCompleteOverride>false</diskCompleteOverride>
     <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
-    <csladspaSettings>
-      <name/>
-      <maker/>
-      <uniqueId>0</uniqueId>
-      <copyright/>
-      <portDefinitionList/>
-      <enabled>false</enabled>
-    </csladspaSettings>
   </projectProperties>
   <arrangement>
     <instrumentAssignment arrangementId='1' isEnabled='true'>
@@ -45,8 +41,7 @@
         <globalOrc>;[once](
 gi_sine ftgen 0,0,65536,10,1</globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0
-gi_fq = p4
+        <instrumentText>gi_fq = p4
 kamp linseg 0,p3*.5,ampdbfs(p5),p3*.5,0 
 a0 foscil kamp,p4,1,1,kamp*.0005,gi_sine,p6 
 blueMixerOut a0*(sqrt(2)/2*cos(p7)+sin(p7)),a0*(sqrt(2)/2*cos(p7)-sin(p7)) 
@@ -60,8 +55,7 @@ blueMixerOut a0*(sqrt(2)/2*cos(p7)+sin(p7)),a0*(sqrt(2)/2*cos(p7)-sin(p7))
         <comment></comment>
         <globalOrc></globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0
-seed 0
+        <instrumentText>seed 0
 irnd random 2, 5
 imul = int(irnd)
 ifq = gi_fq*imul
@@ -78,8 +72,7 @@ blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6))
         <comment></comment>
         <globalOrc></globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0
-seed 0
+        <instrumentText>seed 0
 irnd random 2, 5
 imul = int(irnd)*.66
 ifq = gi_fq*imul
@@ -96,8 +89,7 @@ blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6))
         <comment></comment>
         <globalOrc></globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0
-ifq = gi_fq*.5
+        <instrumentText>ifq = gi_fq*.5
 kamp linseg 0,p3*.5,ampdbfs(p4),p3*.5,0 
 a0 foscil kamp,ifq,1,1,kamp*.0005,gi_sine,p6 
 blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
@@ -111,8 +103,7 @@ blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6))
         <comment></comment>
         <globalOrc></globalOrc>
         <globalSco></globalSco>
-        <instrumentText>0dbfs = 1.0
-ifq = gi_fq*1.5
+        <instrumentText>ifq = gi_fq*1.5
 kamp linseg 0,p3*.5,ampdbfs(p4),p3*.5,0 
 a0 poscil3 kamp,ifq,gi_sine,p5 
 blueMixerOut a0*(sqrt(2)/2*cos(p6)+sin(p6)),a0*(sqrt(2)/2*cos(p6)-sin(p6)) 
@@ -312,295 +303,330 @@ aout2 = (arev2*&lt;level&gt;)+(ain2*(1-&lt;level&gt;))
     <commandLine>csound -Wdo devaudio -L stdin</commandLine>
     <commandLineEnabled>false</commandLineEnabled>
     <commandLineOverride>false</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
   </liveData>
-  <soundObject type='blue.soundObject.PolyObject'>
-    <subjectiveDuration>2.0</subjectiveDuration>
-    <startTime>0.0</startTime>
-    <name>root</name>
-    <backgroundColor>-10066279</backgroundColor>
-    <timeBehavior>0</timeBehavior>
+  <score>
+    <tempo>
+      <enabled>true</enabled>
+      <visible>true</visible>
+      <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='55.0'/>
+        <linePoint x='73.0' y='55.0'/>
+        <linePoint x='81.0' y='33.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>26</pixelSecond>
+      <snapEnabled>true</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
     <noteProcessorChain/>
-    <isRoot>true</isRoot>
-    <pixelSecond>26</pixelSecond>
-    <defaultHeightIndex>0</defaultHeightIndex>
-    <snapEnabled>true</snapEnabled>
-    <snapValue>1.0</snapValue>
-    <timeDisplay>0</timeDisplay>
-    <timeUnit>5</timeUnit>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
       <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>1.0</startTime>
-        <name>FMaestro</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>FMaestro</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	0
 i1	1	1.4	450	-22	.1	.1
 i1	2	1.4	200	-18	.8	-.1
 i1	3	1.4	375	-25	.75	.2</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>5.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>5.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	500	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	450	-25	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>9.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>9.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	600	-28	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>13.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>13.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	500	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	1.4	450	-18	.8	.1
 i1	3	1.4	350	-25	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>17.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>17.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	0
 i1	1	1.4	450	-22	.1	.1
 i1	2	1.4	200	-18	.8	-.1
 i1	3	1.4	375	-25	.75	.2</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>21.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>21.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	500	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	450	-25	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	600	-28	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>29.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>29.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	500	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	2.8	450	-18	.8	.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>33.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>33.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	500	-20	0	0
 i1	1	1.4	750	-22	.1	.1
 i1	2	1.4	666.666	-18	.8	-.1
 i1	3	1.4	333.333	-25	.75	.2</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>37.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>37.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	500	-20	0	0
 i1	1	1.4	750	-22	.1	.1
 i1	2	2.7	600	-20	.8	-.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>41.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>41.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	1 	1.4	500	-20	0	0
 i1	2	1.4	666.666	-22	.1	.1
 i1	3	2.7	375	-18	.8	-.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	750	-20	0	0
 i1	1	1.4	495	-22	.1	.1
 i1	2	2.4	330	-18	.8	-.1
 i1	3	2.4	300	-38	.5	-.1
 
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>49.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>49.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	0
 i1	1	1.4	450	-22	.1	.1
 i1	2	1.4	200	-18	.8	-.1
 i1	3	1.4	375	-25	.75	.2</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>53.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>53.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	500	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	450	-25	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>57.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>57.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	300	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	1.4	200	-18	.8	.1
 i1	3	1.4	600	-28	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>61.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>61.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.4	500	-20	0	-1
 i1	1	1.4	400	-22	.1	-.5
 i1	2	1.4	450	-18	.8	.1
 i1	3	1.4	350	-25	.75	.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>65.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>65.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.9	525	-20	0	-1
 i1	1.5	1.3	393.75	-22	.1	-.5
 i1	2	1.2	656.25	-26	.8	.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>69.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>69.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.9	525	-20	0	-1
 i1	1.5	1.3	393.75	-22	.1	-.5
 i1	2	1.2	656.25	-33	.8	.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>73.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>73.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.9	393.75	-20	0	-1
 i1	1	2.3	259.875	-22	.1	-.5
 i1	3	1.6	590.625	-46	.8	.1
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>6.0</subjectiveDuration>
-        <startTime>77.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-6750055</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	freq	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>6.0</subjectiveDuration>
+          <startTime>77.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-6750055</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	freq	amp	phase	pan	
 i1 	0 	1.9	393.75	-20	0	-1
 i1	1	4.1	259.875	-32	.1	-.5
 </score>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>1.0</startTime>
-        <name>Sinex0</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>Sinex0</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -610,15 +636,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>5.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>5.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -628,15 +654,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>9.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>9.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -646,15 +672,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>13.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>13.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -664,15 +690,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>17.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>17.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -682,15 +708,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>21.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>21.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -700,15 +726,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -718,15 +744,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>29.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>29.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -736,15 +762,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>33.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>33.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -754,15 +780,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>37.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>37.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -772,15 +798,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>41.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>41.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -790,15 +816,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -808,15 +834,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>49.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>49.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -826,15 +852,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>53.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>53.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -844,15 +870,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>57.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>57.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -862,15 +888,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>61.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>61.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -880,15 +906,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>65.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>65.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -898,15 +924,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>69.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>69.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -916,15 +942,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>73.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>73.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -934,15 +960,15 @@ i2	2.5	1	-22	.1	-.5
 i2	3	1	-18	.8	.1
 i2	3.5	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>6.0</subjectiveDuration>
-        <startTime>77.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-13421569</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>6.0</subjectiveDuration>
+          <startTime>77.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-13421569</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i2 	0 	1	-20	0	-1
 i2	.5	1	-22	.1	-.5
 i2	1	1	-18	.8	.1
@@ -952,18 +978,18 @@ i2	2.5	1	-50	.1	-.5
 i2	3	1	-60	.8	.1
 i2	3.5	1	-70	.75	.7
 </score>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>1.0</startTime>
-        <name>Sinex1</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>Sinex1</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -981,15 +1007,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>5.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>5.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1007,15 +1033,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>9.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>9.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1033,15 +1059,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>13.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>13.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1059,15 +1085,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>17.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>17.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1085,15 +1111,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>21.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>21.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1111,15 +1137,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1137,15 +1163,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>29.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>29.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1163,15 +1189,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>33.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>33.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1189,15 +1215,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>37.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>37.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1215,15 +1241,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>41.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>41.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1241,15 +1267,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1267,15 +1293,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>49.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>49.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1293,15 +1319,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>53.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>53.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1319,15 +1345,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>57.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>57.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1345,15 +1371,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>61.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>61.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1371,15 +1397,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>65.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>65.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1397,15 +1423,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>69.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>69.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1423,15 +1449,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>73.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>73.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1449,15 +1475,15 @@ i3	3.25	1	-22	.1	-.5
 i3	3.5	1	-18	.8	.1
 i3	3.75	1	-25	.75	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>6.0</subjectiveDuration>
-        <startTime>77.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-39424</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>6.0</subjectiveDuration>
+          <startTime>77.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-39424</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i3 	0 	1	-20	0	-1
 i3	.25	1	-22	.1	-.5
 i3	.5	1	-18	.8	.1
@@ -1475,533 +1501,534 @@ i3	3.25	1	-70	.1	-.5
 i3	3.5	1	-80	.8	.1
 i3	3.75	1	-89	.75	.7
 </score>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>1.0</startTime>
-        <name>FMx0</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>FMx0</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>5.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>5.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>9.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>9.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-20	.8	.7
 i4	3	1.6	-18	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>13.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>13.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>17.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>17.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>21.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>21.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-20	.8	.7
 i4	3	1.6	-18	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>29.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>29.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>33.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>33.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>37.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>37.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>41.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>41.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>49.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>49.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>53.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>53.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>57.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>57.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-20	.8	.7
 i4	3	1.6	-18	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>61.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>61.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-14	.8	.7
 i4	3	1.6	-12	.75	.6</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>65.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>65.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1.5	1.3	-16	.1	.8
 i4	2	1.4	-24	.8	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>69.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>69.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	1.6	-16	.1	.8
 i4	2	1.6	-24	.8	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>73.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>73.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	2.6	-16	.1	.8
 i4	3	1.6	-34	.8	.7
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>6.0</subjectiveDuration>
-        <startTime>77.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-3355648</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>6.0</subjectiveDuration>
+          <startTime>77.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-3355648</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i4 	0 	1.6	-18	0	1
 i4	1	4.1	-19	.1	.8
 </score>
-      </soundObject>
-    </soundLayer>
-    <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-      <noteProcessorChain/>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>1.0</startTime>
-        <name>Sinex2</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>Sinex2</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>5.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>5.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>9.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>9.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-18	.8	-.6
 i5	3	1.8	-17	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>13.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>13.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>17.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>17.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>21.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>21.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>25.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>25.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-18	.8	-.6
 i5	3	1.8	-17	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>29.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>29.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>33.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>33.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>37.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>37.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-18	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>41.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>41.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>45.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>45.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>49.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>49.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>53.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>53.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>57.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>57.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-18	.8	-.6
 i5	3	1.8	-17	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>61.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>61.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-12	.8	-.6
 i5	3	1.8	-10	.75	-.7</score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>65.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>65.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1.5	1.3	-14	.1	-.5
 i5	2	1.2	-22	.8	-.6
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>69.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>69.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-16	0	-1
 i5	1	1.8	-14	.1	-.5
 i5	2	1.8	-22	.8	-.6
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>4.0</subjectiveDuration>
-        <startTime>73.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>4.0</subjectiveDuration>
+          <startTime>73.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.8	-26	0	-1
 i5	1	2.8	-24	.1	-.5
 i5	3	1.8	-42	.8	-.6
 </score>
-      </soundObject>
-      <soundObject type='blue.soundObject.GenericScore'>
-        <subjectiveDuration>6.0</subjectiveDuration>
-        <startTime>77.0</startTime>
-        <name>GenericScore</name>
-        <backgroundColor>-10027162</backgroundColor>
-        <timeBehavior>2</timeBehavior>
-        <noteProcessorChain/>
-        <score>;inst	start	dur	amp	phase	pan	
+        </soundObject>
+        <soundObject type='blue.soundObject.GenericScore'>
+          <subjectiveDuration>6.0</subjectiveDuration>
+          <startTime>77.0</startTime>
+          <name>GenericScore</name>
+          <backgroundColor>-10027162</backgroundColor>
+          <timeBehavior>2</timeBehavior>
+          <noteProcessorChain/>
+          <score>;inst	start	dur	amp	phase	pan	
 i5 	0 	1.7	-26	0	-1
 i5	1	4.1	-20	.1	-.5
 </score>
-      </soundObject>
-    </soundLayer>
-  </soundObject>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
   <scratchPadData>
     <isWordWrapEnabled>true</isWordWrapEnabled>
     <scratchText/>
@@ -2011,15 +2038,6 @@ i5	1	4.1	-20	.1	-.5
   <renderEndTime>-1.0</renderEndTime>
   <markersList/>
   <loopRendering>false</loopRendering>
-  <tempo>
-    <enabled>true</enabled>
-    <visible>true</visible>
-    <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
-      <linePoint x='0.0' y='55.0'/>
-      <linePoint x='73.0' y='55.0'/>
-      <linePoint x='81.0' y='33.0'/>
-    </line>
-  </tempo>
   <midiInputProcessor>
     <keyMapping>PCH</keyMapping>
     <velMapping>MIDI</velMapping>

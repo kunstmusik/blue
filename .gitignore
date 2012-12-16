@@ -20,6 +20,6 @@ hs_err_pid[0-9]*.log
 #\.chg\..*$
 #\.conflict\~$
 manual/docbook/index.xml
-#tempCsd.*\.csd$
+tempCsd*.csd
 jython/release/modules/ext/cachedir/*
 jython/release/*.pyc
