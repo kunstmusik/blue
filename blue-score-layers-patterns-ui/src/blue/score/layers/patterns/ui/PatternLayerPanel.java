@@ -53,7 +53,7 @@ import org.openide.util.Exceptions;
 public class PatternLayerPanel extends javax.swing.JPanel 
         implements PropertyChangeListener {
     
-    protected PatternLayer patternLayer;
+    private PatternLayer patternLayer;
 
     private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
@@ -362,7 +362,17 @@ public class PatternLayerPanel extends javax.swing.JPanel
     @Override
     public void removeNotify() {
         super.removeNotify();
-        this.patternLayer.removePropertyChangeListener(this);
+        if(this.patternLayer != null) {
+            this.patternLayer.removePropertyChangeListener(this);
+        }
+    }
+    
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if(this.patternLayer != null) {
+            this.patternLayer.addPropertyChangeListener(this);
+        }
     }
     
     public void setPatternLayer(PatternLayer patternLayer) {        
