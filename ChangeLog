@@ -12,19 +12,29 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.3.3<
+[released 2012.12.18]
+
+FIX
+
+* Bug #75 - restored ctrl-; and ctrl-shift-; shortcuts for Csound Score text 
+  editors
+
+
+
 >Notes for 2.3.2<
 [released 2012.12.16]
 
 FIX
 
 * Editors would lose ability to use code completion after leaving and coming 
-back to Editor
+  back to Editor
 
 * Code completion items did not parser opcodes.xml correctly, resulting in
-incomplete signature completions and missing entries
+  incomplete signature completions and missing entries
 
 * modified code in Brian Wong's "Falltan" and "Tritium Tea", as well as Dave
-Seidel's "Palimpsest" to work with Csound new parser
+  Seidel's "Palimpsest" to work with Csound new parser
 
 
 >Notes for 2.3.1<
