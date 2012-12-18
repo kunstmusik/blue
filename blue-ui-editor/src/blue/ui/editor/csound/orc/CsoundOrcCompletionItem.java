@@ -4,15 +4,14 @@
  */
 package blue.ui.editor.csound.orc;
 
-import csound.manual.CsoundManualUtilities;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTML;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.netbeans.api.editor.completion.Completion;
 import org.netbeans.spi.editor.completion.CompletionItem;
@@ -97,9 +96,10 @@ public class CsoundOrcCompletionItem implements CompletionItem {
             protected void query(CompletionResultSet completionResultSet, Document document, int i) {
 
                 String doc = OpcodeDocumentation.getOpcodeDocumentation(opName);
+                URL url = OpcodeDocumentation.getOpcodeDocumentationUrl(opName);
                 if(doc != null) {
                     completionResultSet.setDocumentation(
-                        new CsoundOrcCompletionDocumentation(doc));
+                        new CsoundOrcCompletionDocumentation(doc, url));
                 }
                 
                 completionResultSet.finish();

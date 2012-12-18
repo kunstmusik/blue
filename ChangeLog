@@ -15,7 +15,14 @@ information.
 >Notes for 2.3.3<
 [released 2012.12.18]
 
+UPDATED
+
+* Code Completion: for documentation window, implemented link handling and open 
+  documentation in browser button
+
 FIX
+
+* Bug #74 - fixed issues with layer edit panels losing ability to function
 
 * Bug #75 - restored ctrl-; and ctrl-shift-; shortcuts for Csound Score text 
   editors
