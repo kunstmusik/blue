@@ -920,8 +920,6 @@ public class CSDRender {
         boolean useAPI = (isRealTime && APIUtilities.isCsoundAPIAvailable()
                 && GeneralSettings.getInstance().isUsingCsoundAPI());
 
-        StrBuilder apiParamInstr = new StrBuilder();
-
         for(StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
             
@@ -932,9 +930,6 @@ public class CSDRender {
             if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
                 initStatements.append(varName).append("\", 3\n");
-                
-                apiParamInstr.append(varName).append(" chnget \"");
-                apiParamInstr.append(varName).append("\"\n");
             } 
         }
         
@@ -961,18 +956,17 @@ public class CSDRender {
                 initialVal = param.getFixedValue();
             }
 
-
+            
             // init statements
-            initStatements.append(varName);
-            initStatements.append(" init ");
-            initStatements.append(NumberUtilities.formatFloat(initialVal));
-            initStatements.append("\n");
+                initStatements.append(varName);
+                initStatements.append(" init ");
+                initStatements.append(NumberUtilities.formatFloat(initialVal));
+                initStatements.append("\n");
 
             if (useAPI) {
-                apiParamInstr.append(varName).append(" chnget \"");
-                apiParamInstr.append(varName).append("\"\n");
+                initStatements.append(varName).append(" chnexport \"");
+                initStatements.append(varName).append("\", 3\n");
             } else if (param.isAutomationEnabled()) {
-
                 // gk instrument
                 GenericInstrument instr = getParameterInstrument(param);
                 int instrId = arrangement.addInstrumentAtEnd(instr);
@@ -980,22 +974,6 @@ public class CSDRender {
                 // score for values
                 appendParameterScore(param, instrId, paramScore, startTime,
                         endTime);
-            }
-        }
-
-        if (useAPI) {
-
-            String str = apiParamInstr.toString().trim();
-
-            if (str.length() > 0) {
-                GenericInstrument instr = new GenericInstrument();
-                instr.setText(str);
-                int instrId = arrangement.addInstrumentAtEnd(instr);
-
-                float dur = endTime - startTime;
-
-                paramScore.append("i").append(instrId);
-                paramScore.append(" 0 ").append(dur);
             }
         }
 
@@ -1024,8 +1002,6 @@ public class CSDRender {
         boolean useAPI = (APIUtilities.isCsoundAPIAvailable()
                 && GeneralSettings.getInstance().isUsingCsoundAPI());
 
-        StrBuilder apiParamInstr = new StrBuilder();
-
         for(StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
             
@@ -1036,9 +1012,6 @@ public class CSDRender {
             if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
                 initStatements.append(varName).append("\", 3\n");            
-                
-                apiParamInstr.append(varName).append(" chnget \"");
-                apiParamInstr.append(varName).append("\"\n");
             } 
         }
         
@@ -1058,27 +1031,17 @@ public class CSDRender {
                 initialVal = param.getResolutionAdjustedValue(initialVal);
             }
 
-
             // init statements
             initStatements.append(varName);
             initStatements.append(" init ");
             initStatements.append(NumberUtilities.formatFloat(initialVal));
             initStatements.append("\n");
 
-            apiParamInstr.append(varName).append(" chnget \"");
-            apiParamInstr.append(varName).append("\"\n");
+            if(useAPI) {
+                initStatements.append(varName).append(" chnexport \"");
+                initStatements.append(varName).append("\", 3\n");
+            }
         }
-
-
-        GenericInstrument instr = new GenericInstrument();
-        instr.setText(apiParamInstr.toString());
-        int instrId = arrangement.addInstrumentAtEnd(instr);
-
-        float dur = 36000f;
-
-        paramScore.append("i").append(instrId);
-        paramScore.append(" 0 ").append(dur);
-
 
         globalOrcSco.appendGlobalOrc(initStatements.toString());
         try {

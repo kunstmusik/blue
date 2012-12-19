@@ -61,7 +61,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private static SoundLayerPanelMenu OTHER_MENU = null;
 
-    SoundLayer sLayer = null;
+    private SoundLayer sLayer = null;
 
     private boolean automatable = true;
 
@@ -133,14 +133,24 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void removeNotify() {
         if (this.paramIdList != null) {
             paramIdList.removeListSelectionListener(this);
-            this.paramIdList = null;
         }
 
         if (this.sLayer != null) {
             this.sLayer.removePropertyChangeListener(this);
-            this.sLayer = null;
         }
         super.removeNotify();
+    }
+    
+    @Override
+    public void addNotify() {
+        if (this.paramIdList != null) {
+            paramIdList.addListSelectionListener(this);
+        }
+
+        if (this.sLayer != null) {
+            this.sLayer.addPropertyChangeListener(this);
+        }
+        super.addNotify();
     }
 
     /**

@@ -314,10 +314,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             Component c = getComponent(start);
 
             SoundLayerPanel panel = (SoundLayerPanel) c;
-            SoundLayer sLayer = panel.sLayer;
             remove(start);
             add(c, end);
-            panel.setSoundLayer(sLayer);
             
             int i1 = selection.getStartIndex() - 1;
             int i2 = selection.getEndIndex() - 1;
@@ -330,10 +328,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             Component c = getComponent(-start);
 
             SoundLayerPanel panel = (SoundLayerPanel) c;
-            SoundLayer sLayer = panel.sLayer;
             remove(-start);
             add(c, -end);
-            panel.setSoundLayer(sLayer);
 
             int i1 = selection.getStartIndex() + 1;
             int i2 = selection.getEndIndex() + 1;
