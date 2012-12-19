@@ -20,6 +20,9 @@ UPDATED
 * Code Completion: for documentation window, implemented link handling and open 
   documentation in browser button
 
+* Updated code generation when using API: use chnexport instead of chnget as it
+  is more efficient
+
 FIX
 
 * Bug #74 - fixed issues with layer edit panels losing ability to function
