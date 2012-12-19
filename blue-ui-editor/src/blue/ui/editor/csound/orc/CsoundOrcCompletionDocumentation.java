@@ -14,9 +14,11 @@ import org.netbeans.spi.editor.completion.CompletionDocumentation;
  */
 public class CsoundOrcCompletionDocumentation implements CompletionDocumentation {
     private final String docText;
+    private final URL url;
 
-    public CsoundOrcCompletionDocumentation(String docText) {
+    public CsoundOrcCompletionDocumentation(String docText, URL url) {
         this.docText = docText;
+        this.url = url;
     }
     
     @Override
@@ -26,12 +28,19 @@ public class CsoundOrcCompletionDocumentation implements CompletionDocumentation
 
     @Override
     public URL getURL() {
-        return null;
+        return url;
     }
 
     @Override
     public CompletionDocumentation resolveLink(String link) {
-        System.err.println("LINK: " + link);
+        if(link.endsWith(".html")) {
+            String opName = link.substring(0, link.length() - 5);
+            String doc = OpcodeDocumentation.getOpcodeDocumentation(opName);
+            if(doc != null) {
+                URL url = OpcodeDocumentation.getOpcodeDocumentationUrl(opName);
+                return new CsoundOrcCompletionDocumentation(doc, url);
+            }
+        }
         return null;
     }
 

@@ -7,6 +7,8 @@ package blue.ui.editor.csound.orc;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 
@@ -15,6 +17,24 @@ import org.openide.util.Exceptions;
  * @author stevenyi
  */
 public class OpcodeDocumentation {
+    
+    public static URL getOpcodeDocumentationUrl(String opcodeName) {
+        File manualDir = InstalledFileLocator.getDefault().
+                locate("csoundManual", "csound-manual", false);
+        
+        String filename = manualDir.getAbsolutePath() + "/" + opcodeName + ".html";
+        File docFile = new File(filename);
+        
+        if(docFile.exists()) {
+            try {
+                return docFile.toURL();
+            } catch (MalformedURLException ex) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
     public static String getOpcodeDocumentation(String opcodeName) {
         StringBuffer buffer = new StringBuffer();
         
