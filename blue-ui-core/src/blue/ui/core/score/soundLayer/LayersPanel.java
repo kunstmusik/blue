@@ -203,11 +203,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         for (int i = 0; i < pObj.getSize(); i++) {
             SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
 
-            SoundLayerPanel panel = new SoundLayerPanel();
-            panel.setNoteProcessorChainMap(npcMap);
-            panel.setAutomatable(pObj.isRoot());
-            panel.setSoundLayer(sLayer);
-
+            SoundLayerPanel panel = new SoundLayerPanel(sLayer, npcMap, pObj.isRoot());
             this.add(panel);
         }
         revalidate();
@@ -280,12 +276,9 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         int index = e.getStartIndex();
         SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
 
-        SoundLayerPanel panel = new SoundLayerPanel();
-        panel.setNoteProcessorChainMap(npcMap);
-        panel.setAutomatable(pObj.isRoot());
-        panel.setSoundLayer(sLayer);
-
+        SoundLayerPanel panel = new SoundLayerPanel(sLayer, npcMap, pObj.isRoot());
         this.add(panel, index);
+        
         checkSize();
     }
 

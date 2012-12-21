@@ -53,7 +53,7 @@ import org.openide.util.Exceptions;
 public class PatternLayerPanel extends javax.swing.JPanel 
         implements PropertyChangeListener {
     
-    private PatternLayer patternLayer;
+    private final PatternLayer patternLayer;
 
     private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
@@ -120,7 +120,15 @@ public class PatternLayerPanel extends javax.swing.JPanel
         
         setBorder(border);
         
-        setPatternLayer(layer);
+        this.patternLayer = layer;
+        
+        nameLabel.setText(patternLayer.getName());
+        muteToggleButton.setSelected(patternLayer.isMuted());
+        soloToggleButton.setSelected(patternLayer.isSolo());
+        
+        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+        this.patternLayer.addPropertyChangeListener(this);
     }
 
     protected void editSoundObject() {
@@ -373,18 +381,6 @@ public class PatternLayerPanel extends javax.swing.JPanel
         if(this.patternLayer != null) {
             this.patternLayer.addPropertyChangeListener(this);
         }
-    }
-    
-    public void setPatternLayer(PatternLayer patternLayer) {        
-        this.patternLayer = patternLayer;
-        
-        nameLabel.setText(patternLayer.getName());
-        muteToggleButton.setSelected(patternLayer.isMuted());
-        soloToggleButton.setSelected(patternLayer.isSolo());
-        
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
-        this.patternLayer.addPropertyChangeListener(this);
     }
         
     public void setSelected(boolean val) {
