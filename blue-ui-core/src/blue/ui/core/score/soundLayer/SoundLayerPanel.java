@@ -61,37 +61,31 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private static SoundLayerPanelMenu OTHER_MENU = null;
 
-    private SoundLayer sLayer = null;
+    private final SoundLayer sLayer;
 
     private boolean automatable = true;
 
-    ParameterIdList paramIdList = null;
+    private final ParameterIdList paramIdList;
 
     boolean updating = false;
 
     private NoteProcessorChainMap npcMap;
 
     /** Creates new form SoundLayerPanel */
-    public SoundLayerPanel() {
+    public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap, boolean automatable) {
         initComponents();
         setSelected(false);
 
         muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
-    }
-
-    public void setAutomatable(boolean val) {
-        automationButton.setVisible(val);
-        paramSelectPanel.setVisible(val);
-        this.automatable = val;
-    }
-
-    public void setSelected(boolean val) {
-        setBorder(val ? SELECTED_BORDER : NORMAL_BORDER);
-    }
-
-    public void setSoundLayer(SoundLayer sLayer) {
-        this.sLayer = sLayer;
+        
+        automationButton.setVisible(automatable);
+        paramSelectPanel.setVisible(automatable);
+        this.automatable = automatable;
+        
+        this.npcMap = npcMap;
+        
+        this.sLayer = soundLayer;
 
         sLayer.addPropertyChangeListener(this);
 
@@ -117,6 +111,10 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         }
 
         updateParameterPanel();
+    }
+
+    public void setSelected(boolean val) {
+        setBorder(val ? SELECTED_BORDER : NORMAL_BORDER);
     }
 
     public void editName() {
@@ -576,10 +574,6 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     public void valueChanged(ListSelectionEvent e) {
         updateParameterPanel();
-    }
-
-    void setNoteProcessorChainMap(NoteProcessorChainMap npcMap) {
-        this.npcMap = npcMap;
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
