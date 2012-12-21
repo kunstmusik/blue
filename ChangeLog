@@ -27,6 +27,9 @@ UPDATED
 * Updated code generation when using API: use chnexport instead of chnget as it
   is more efficient
 
+* Made all scrollpanes respond to horizontal scrolling on trackpads (includes
+  documentation popup window in code completion)
+
 FIX
 
 * Bug #74 - fixed issues with layer edit panels losing ability to function

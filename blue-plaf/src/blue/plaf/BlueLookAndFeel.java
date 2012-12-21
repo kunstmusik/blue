@@ -80,6 +80,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // putDefault(table, "MenuUI");
         putDefault(table, "ToolBarUI");
         putDefault(table, "ScrollBarUI");
+        putDefault(table, "ScrollPaneUI");
         putDefault(table, "TableUI");
 
         // putDefault(table, "ScrollButton");
