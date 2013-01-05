@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.3.4<
+[released 2013.xx.xx]
+
+FIX
+
+* Bug #77: Fixed detection of Jack Input/Output options in Program Options ->
+  Realtime Render Settings
+
+
 >Notes for 2.3.3<
 [released 2012.12.19]
 
