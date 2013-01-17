@@ -1,0 +1,25 @@
+digraph {
+ node[fontsize=9,shape=record,style=filled,fillcolor=white]
+ edge[fontsize=8]
+
+ subgraph cluster_0 {
+   label="Blue Application";
+   style=filled; fillcolor=lightgrey
+
+   live[label="blueLive"]
+
+ }
+
+ midi[label="MIDI"]
+
+ edge[label="MIDI Bytes"]
+
+ midi->{live, csound}
+
+ edge[label="SCO Notes"] 
+
+ live->csound;
+
+}
+
+
