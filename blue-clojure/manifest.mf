@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: blue.clojure
+OpenIDE-Module-Localizing-Bundle: blue/clojure/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+
