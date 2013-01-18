@@ -28,6 +28,7 @@
                 <package>clojure.repl.proxy$java.lang</package>
                 <package>clojure.test</package>
                 <package>clojure.xml.proxy$java.lang</package>
+                <package>de.torq.clojure.jsr223</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/clojure-1.4.0.jar</runtime-relative-path>
