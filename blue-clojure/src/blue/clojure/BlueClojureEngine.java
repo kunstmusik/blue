@@ -59,21 +59,18 @@ public class BlueClojureEngine {
 
     public String processScript(String code, 
             HashMap<String, ? extends Object> values, 
-            String returnVariableName) {
+            String returnVariableName) throws ScriptException {
         
         if(engine == null) {
             reinitialize();
         }
         
         String retVal = null;
-        try {
-            engine.eval(code);
-            Object obj = engine.eval("(str score)");
-            if(obj != null) {
-                retVal = obj.toString();
-            }
-        } catch (ScriptException ex) {
-            Exceptions.printStackTrace(ex);
+        
+        engine.eval(code);
+        Object obj = engine.eval("(str score)");
+        if(obj != null) {
+            retVal = obj.toString();
         }
         
         
