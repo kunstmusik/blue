@@ -21,6 +21,7 @@ package blue.clojure;
 
 import java.io.File;
 import java.util.HashMap;
+import javax.script.ScriptException;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -77,7 +78,12 @@ public class BlueClojureEngineTest {
         String returnVariableName = "score";
         BlueClojureEngine instance = new BlueClojureEngine();
         String expResult = "i1 0 2";
-        String result = instance.processScript(code, values, returnVariableName);
-        assertEquals(expResult, result);
+        try {
+            String result = instance.processScript(code, values, returnVariableName);
+            assertEquals(expResult, result);
+        } catch(ScriptException se) {
+            fail("Script threw exception");
+        }
+        
     }
 }
