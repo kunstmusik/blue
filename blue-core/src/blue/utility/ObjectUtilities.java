@@ -87,7 +87,7 @@ public class ObjectUtilities {
     public static Object loadFromXML(Element elem,
             Map<String, Object> objRefMap) throws Exception {
         String npClass = elem.getAttributeValue("type");
-        Class classToLoad = BlueSystem.getClassLoader().loadClass(npClass);
+        Class classToLoad = Thread.currentThread().getContextClassLoader().loadClass(npClass);
 
         Object retVal = null;
 
