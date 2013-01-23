@@ -220,10 +220,12 @@
           <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.clojure.ClojureEditorKit"/>
           <attr name="beaninfo" boolvalue="false"/>
         </file>
-        <!--
-        <folder name="TokenListProvider">
-          <file name="org-netbeans-modules-spellchecker-plain-PlainTokenListProvider.instance" />
-        </folder>-->
+        
+        <folder name="BracesMatchers">
+          <file name="blue-ui-editor-clojure-ClojureBracesMatcherFactory.instance">
+            <attr name="position" intvalue="0"/>
+          </file>
+        </folder>
         
         <folder name="FontsColors">
           <folder name="blueDefault">
