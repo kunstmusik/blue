@@ -3,30 +3,14 @@
 
 <fontscolors>
   
-  
-  
-    <fontcolor default="default" foreColor="ff008080" name="string"/>
-    <fontcolor default="default" foreColor="ff000000" name="symbol"/>
-    <fontcolor default="default" foreColor="ff1100dd" name="macro" />
-    <fontcolor default="default" foreColor="ffcc0099" name="keyword"/>
-    <fontcolor default="default" foreColor="ff990066" name="map-start"/>
-    <fontcolor default="map-start" name="map-end"/>
-    <fontcolor default="default" name="list-start"/>
-    <fontcolor default="list-start" name="list-end"/>
-    <fontcolor default="ff000066" name="vec-start"/>
-    <fontcolor default="vec-start" name="vec-end"/>
-    <fontcolor default="default" foreColor="ff110000" name="ns-publics"/>
-    <fontcolor default="default" foreColor="ff1100dd" name="ns-interns"/>
-    <fontcolor default="default" foreColor="ff1100ff" name="ns-imports"/>
-    <fontcolor default="default" name="deref"/>
-    <fontcolor default="default" name="error"/>
-    <fontcolor default="default" foreColor="ff008000" name="char"/>
-    <fontcolor default="default" foreColor="blue" name="number"/>
-    <fontcolor default="default" name="meta"/>
-    <fontcolor default="default" foreColor="ff1100dd" name="function"/>
-    <fontcolor default="default" name="unquote"/>
-    <fontcolor default="default" name="quote"/>
-    <fontcolor default="default" name="any"/>
-    <fontcolor default="default" foreColor="ff1100dd" name="compiler-special"/>
-    <fontcolor default="default" foreColor="lightGray" name="comment"/>
+    <fontcolor name="string" default="string"/>
+    <fontcolor name="number" default="number"/>
+    <fontcolor name="special" default="keyword"/>
+    <fontcolor name="macro-character" default="keyword"/>
+    <fontcolor name="string" default="string"/>
+    <fontcolor name="comment" default="comment"/>
+    <fontcolor name="whitespace" default="whitespace"/>
+    <fontcolor name="symbol" default="identifier"/>
+    <fontcolor name="character" default="character"/>
+    
 </fontscolors>
