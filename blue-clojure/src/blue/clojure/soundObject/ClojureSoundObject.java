@@ -70,6 +70,18 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
         this.clojureCode = code;
     }
     
+    private Throwable getRootCauseException(ScriptException se) {
+        ScriptException root = se;
+        Throwable e = se;
+        while(e != null) {
+            e = e.getCause();
+            if(e instanceof ScriptException) {
+                root = (ScriptException)e;
+            }
+        }
+        return root.getCause();
+    }
+    
     protected final NoteList generateNotes(float renderStart, float renderEnd) throws
             SoundObjectException {
         
@@ -79,7 +91,9 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
             tempScore = BlueClojureEngine.getInstance().
                     processScript(clojureCode, null, "score");
         } catch (ScriptException scriptEx) {
-            String msg = "Clojure Error:\n" + scriptEx.toString();
+            
+            String msg = "Clojure Error:\n" + 
+                    getRootCauseException(scriptEx).toString();
             throw new SoundObjectException(this, msg);
         }
 
