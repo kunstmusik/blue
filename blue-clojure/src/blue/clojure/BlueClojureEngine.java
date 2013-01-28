@@ -20,6 +20,7 @@
 package blue.clojure;
 
 import clojure.lang.RT;
+import clojure.lang.Symbol;
 import clojure.lang.Var;
 import de.torq.clojure.jsr223.ClojureScriptEngine;
 import de.torq.clojure.jsr223.ClojureScriptEngineFactory;
@@ -65,14 +66,24 @@ public class BlueClojureEngine {
             reinitialize();
         }
         
-        String retVal = null;
+        String retVal = "";
+        
+        if(values != null) {
+            for(String key : values.keySet()) {
+                Var.intern(engine.getInstanceNameSpace(), Symbol.create(key), values.get(key));
+            }
+        }
         
         engine.eval(code);
+        
+        try {
         Object obj = engine.eval("(str score)");
         if(obj != null) {
             retVal = obj.toString();
         }
-        
+        } catch (Exception e) {
+            e.printStackTrace();;
+        }
         
         return retVal;
     }
