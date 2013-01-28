@@ -25,13 +25,13 @@ import blue.ui.core.soundObject.renderer.LetterRenderer;
  *
  * @author stevenyi
  */
-public class ClojureSoundObjectRenderer extends LetterRenderer {
-    public ClojureSoundObjectRenderer() {
+public class ClojureObjectRenderer extends LetterRenderer {
+    public ClojureObjectRenderer() {
         super("C");
     }
 
     @Override
     public Class getSoundObjectClass() {
-        return ClojureSoundObject.class;
+        return ClojureObject.class;
     }
 }

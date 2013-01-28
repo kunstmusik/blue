@@ -15,11 +15,30 @@ information.
 >Notes for 2.4.0<
 [released 2013.xx.xx]
 
+NEW
+
+* ClojureObject - SoundObject that uses Clojure (http://www.clojure.org) code
+  for generating notes
+     
+  * Clojure 1.4.0 is embedded with blue so that user does not have to install 
+    Clojure themselves, as well as guarantees code to run on every platform
+
+  * Editor has Syntax Highlighting and Parentheses/brace matching
+
+  * Script menu option added to Reinitialize Clojure engine
+
+  * clojureSoundObject.blue added to blue/examples/soundObject
+
+  * clojure-piano-phase.blue added to blue/examples/general; this is a 
+    translation of reich.cm from Common Music 2.10.0 by Heinrich Taube that 
+    demonstrates phase technique
+
+
 FIX
 
 * code completion for BSB Widgets would replace all code after cursor location 
-or up until ")" if found, fixed to behave as Csound ORC completion
- does
+  or up until ")" if found, fixed to behave as Csound ORC completion does
+
 
 >Notes for 2.3.3<
 [released 2012.12.19]

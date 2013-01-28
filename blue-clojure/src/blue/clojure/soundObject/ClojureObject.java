@@ -43,7 +43,7 @@ import javax.script.ScriptException;
  *
  * @author stevenyi
  */
-public class ClojureSoundObject extends AbstractSoundObject implements Serializable,
+public class ClojureObject extends AbstractSoundObject implements Serializable,
         Cloneable, OnLoadProcessable {
     
     private NoteProcessorChain npc = new NoteProcessorChain();
@@ -56,8 +56,8 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
 
     private boolean onLoadProcessable = false;
     
-    public ClojureSoundObject() {
-        setName("(clojure-sound-object)");
+    public ClojureObject() {
+        setName("(clojure-object)");
 
         clojureCode = ";use symbol blueDuration for duration from blue\n";
         clojureCode += "(def score \"i1 0 2 3 4 5\")";
@@ -172,7 +172,7 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
      */
     public static SoundObject loadFromXML(Element data,
             Map<String, Object> objRefMap) throws Exception {
-        ClojureSoundObject clojureObj = new ClojureSoundObject();
+        ClojureObject clojureObj = new ClojureObject();
 
         SoundObjectUtilities.initBasicFromXML(data, clojureObj);
 

@@ -47,14 +47,14 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-public class ClojureSoundObjectEditor extends SoundObjectEditor {
+public class ClojureObjectEditor extends SoundObjectEditor {
 
-    ClojureSoundObject clojureObj = null;
+    ClojureObject clojureObj = null;
     UndoManager undo = new UndoRedo.Manager();
     
     MimeTypeEditorComponent codeEditor = new MimeTypeEditorComponent("text/x-clojure");
     /** Creates new form PythonEditor */
-    public ClojureSoundObjectEditor() {
+    public ClojureObjectEditor() {
         initComponents();
 
         initActions();
@@ -103,7 +103,7 @@ public class ClojureSoundObjectEditor extends SoundObjectEditor {
             return;
         }
 
-        if (!(sObj instanceof ClojureSoundObject)) {            
+        if (!(sObj instanceof ClojureObject)) {            
             codeEditor.setText(
                     "[ERROR] not instance " +
                     "of ClojoureSOundObject");
@@ -112,7 +112,7 @@ public class ClojureSoundObjectEditor extends SoundObjectEditor {
             return;
         }
 
-        ClojureSoundObject tempPObj = (ClojureSoundObject) sObj;
+        ClojureObject tempPObj = (ClojureObject) sObj;
 
         codeEditor.setText(tempPObj.getClojureCode());
         codeEditor.getJEditorPane().setEnabled(true);
@@ -166,7 +166,7 @@ public class ClojureSoundObjectEditor extends SoundObjectEditor {
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        jLabel1.setText("(clojure-sound-object)");
+        jLabel1.setText("(clojure-object)");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;

@@ -19,9 +19,9 @@
  */
 package blue.clojure;
 
-import blue.clojure.soundObject.ClojureSoundObject;
-import blue.clojure.soundObject.ClojureSoundObjectEditor;
-import blue.clojure.soundObject.ClojureSoundObjectRenderer;
+import blue.clojure.soundObject.ClojureObject;
+import blue.clojure.soundObject.ClojureObjectEditor;
+import blue.clojure.soundObject.ClojureObjectRenderer;
 import blue.plugin.BluePlugin;
 import blue.plugin.BluePluginFactory;
 import blue.plugin.DefaultBluePluginProvider;
@@ -42,15 +42,15 @@ public class BlueClojurePluginProvider extends DefaultBluePluginProvider {
         factory.setPluginType(SoundObject.class);
         factory.setPropertyType(BluePlugin.PROP_LIVE);
 
-        factory.appendPlugin(ClojureSoundObject.class, false);
+        factory.appendPlugin(ClojureObject.class, false);
         
         factory.setPluginType(SoundObjectEditor.class);
         factory.setPropertyType(BluePlugin.PROP_EDIT_CLASS);
 
-        factory.appendPlugin(ClojureSoundObjectEditor.class, ClojureSoundObject.class);
+        factory.appendPlugin(ClojureObjectEditor.class, ClojureObject.class);
 
         factory.setPluginType(BarRenderer.class);
-        factory.appendPlugin(ClojureSoundObjectRenderer.class, ClojureSoundObject.class);
+        factory.appendPlugin(ClojureObjectRenderer.class, ClojureObject.class);
 
     }
 

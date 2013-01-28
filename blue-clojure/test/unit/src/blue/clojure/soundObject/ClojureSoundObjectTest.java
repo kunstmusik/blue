@@ -37,7 +37,7 @@ public class ClojureSoundObjectTest {
     }
 
     /**
-     * Test of generateForCSD method, of class ClojureSoundObject.
+     * Test of generateForCSD method, of class ClojureObject.
      */
     @Test
     public void testGenerateForCSD() throws Exception {
@@ -45,7 +45,7 @@ public class ClojureSoundObjectTest {
         CompileData compileData = null;
         float startTime = 0.0F;
         float endTime = 0.0F;
-        ClojureSoundObject instance = new ClojureSoundObject();
+        ClojureObject instance = new ClojureObject();
         NoteList expResult = null;
         NoteList result = instance.generateForCSD(compileData, startTime,
                 endTime);
@@ -55,13 +55,13 @@ public class ClojureSoundObjectTest {
     }
 
     /**
-     * Test of saveAsXML method, of class ClojureSoundObject.
+     * Test of saveAsXML method, of class ClojureObject.
      */
     @Test
     public void testSaveAsXML() {
         System.out.println("saveAsXML");
         Map<Object, String> objRefMap = null;
-        ClojureSoundObject instance = new ClojureSoundObject();
+        ClojureObject instance = new ClojureObject();
         Element expResult = null;
         Element result = instance.saveAsXML(objRefMap);
         assertEquals(expResult, result);
