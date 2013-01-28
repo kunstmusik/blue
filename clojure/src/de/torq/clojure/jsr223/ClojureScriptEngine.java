@@ -33,6 +33,8 @@ import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
 
+
+
 /**
  * The design of Clojure is somewhat special in that there is no way to get
  * some kind of context-object that serves as handle for a certain instance of
@@ -59,6 +61,9 @@ public class ClojureScriptEngine extends AbstractScriptEngine
     private final ExecutorService executor;
 
     private final Symbol instanceNS = Symbol.create("cse-" + Integer.toString(RT.nextID()));
+    
+    private final Namespace instanceNameSpace = Namespace.findOrCreate(
+            instanceNS);
 
     public final String namespaceSeparator = "/";
 
@@ -171,6 +176,10 @@ public class ClojureScriptEngine extends AbstractScriptEngine
         return null;
     }
 
+    public Namespace getInstanceNameSpace() {
+        return instanceNameSpace;
+    }
+    
     @Override // required by Invocable-interface
     public Object invokeFunction(String name, Object... args)
         throws ScriptException
@@ -205,6 +214,8 @@ public class ClojureScriptEngine extends AbstractScriptEngine
         }
     }
 
+    
+    
     /**
      * Create an ISeq from an array of objects.
      */
@@ -221,8 +232,6 @@ public class ClojureScriptEngine extends AbstractScriptEngine
         }
     }
 }
-
-
 class CallableClojureInitialization implements Callable<Object>
 {
     private final Associative bindings;
@@ -316,7 +325,7 @@ class CallableEval implements Callable<Object>
                     {
                         c = c.getCause();
                     }
-                    ScriptException scriptException = new ScriptException("Some exception in Clojure RT");
+                    ScriptException scriptException = new ScriptException("Exception in Clojure RT");
                     scriptException.initCause(e instanceof Compiler.CompilerException ? e : c);
                     throw scriptException;
                 }
