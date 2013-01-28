@@ -34,7 +34,9 @@ import blue.soundObject.SoundObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
+import javax.script.Bindings;
 import javax.script.ScriptException;
 
 /**
@@ -57,7 +59,8 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
     public ClojureSoundObject() {
         setName("(clojure-sound-object)");
 
-        clojureCode = "(def score \"i1 0 2 3 4 5\")";
+        clojureCode = ";use symbol blueDuration for duration from blue\n";
+        clojureCode += "(def score \"i1 0 2 3 4 5\")";
 
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
@@ -86,10 +89,14 @@ public class ClojureSoundObject extends AbstractSoundObject implements Serializa
             SoundObjectException {
         
         String tempScore = null;
-
+        
+        HashMap<String, Object> initObjects = new HashMap<String,Object>();
+        initObjects.put("score", "");
+        initObjects.put("blueDuration", getSubjectiveDuration());
+        
         try {
             tempScore = BlueClojureEngine.getInstance().
-                    processScript(clojureCode, null, "score");
+                    processScript(clojureCode, initObjects, "score");
         } catch (ScriptException scriptEx) {
             
             String msg = "Clojure Error:\n" + 
