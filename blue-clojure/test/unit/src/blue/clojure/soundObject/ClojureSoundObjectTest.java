@@ -20,10 +20,10 @@
 package blue.clojure.soundObject;
 
 import blue.CompileData;
-import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.util.Map;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -41,32 +41,29 @@ public class ClojureSoundObjectTest {
      */
     @Test
     public void testGenerateForCSD() throws Exception {
-        System.out.println("generateForCSD");
         CompileData compileData = null;
         float startTime = 0.0F;
-        float endTime = 0.0F;
+        float endTime = 2.0F;
         ClojureObject instance = new ClojureObject();
-        NoteList expResult = null;
+        instance.setClojureCode("(def score \"i1 0 2 3 5\")");
         NoteList result = instance.generateForCSD(compileData, startTime,
                 endTime);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        assertEquals(result.getNote(0).getPField(5), "5");
     }
 
     /**
      * Test of saveAsXML method, of class ClojureObject.
      */
     @Test
-    public void testSaveAsXML() {
+    public void testSaveAsXML() throws Exception {
         System.out.println("saveAsXML");
         Map<Object, String> objRefMap = null;
         ClojureObject instance = new ClojureObject();
-        Element expResult = null;
+        instance.setClojureCode("(def score \"i1 0 2 3 5\")");
+
         Element result = instance.saveAsXML(objRefMap);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        ClojureObject instance2 = (ClojureObject)ClojureObject.loadFromXML(result, null);
+        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, null));
     }
 
 }
