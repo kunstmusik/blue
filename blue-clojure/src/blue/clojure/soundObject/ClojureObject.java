@@ -19,6 +19,7 @@
  */
 package blue.clojure.soundObject;
 
+import blue.BlueSystem;
 import blue.CompileData;
 import blue.clojure.BlueClojureEngine;
 import blue.noteProcessor.NoteProcessorChain;
@@ -33,6 +34,7 @@ import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
+import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,9 +92,16 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
         
         String tempScore = null;
         
+        File currentDirFile = BlueSystem.getCurrentProjectDirectory();
+
+        String currentDir = (currentDirFile == null) ? "" : currentDirFile
+                .getAbsolutePath()
+                + File.separator;
+        
         HashMap<String, Object> initObjects = new HashMap<String,Object>();
         initObjects.put("score", "");
         initObjects.put("blueDuration", getSubjectiveDuration());
+        initObjects.put("blueProjectDir", currentDirFile);
         
         try {
             tempScore = BlueClojureEngine.getInstance().
