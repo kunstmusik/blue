@@ -3027,7 +3027,7 @@ xout aout</codeBody>
       </timeState>
       <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>8.0</subjectiveDuration>
           <startTime>0.0</startTime>
           <name>Composing Functions</name>
@@ -3055,7 +3055,7 @@ xout aout</codeBody>
       </soundLayer>
       <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>32.0</subjectiveDuration>
           <startTime>0.0</startTime>
           <name>Arpeggio 1</name>
@@ -3069,7 +3069,7 @@ xout aout</codeBody>
       </soundLayer>
       <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>12.0</subjectiveDuration>
           <startTime>4.0</startTime>
           <name>Arpeggio 2</name>
@@ -3079,7 +3079,7 @@ xout aout</codeBody>
           <clojureCode>(def score (arpeggiate blueDuration 1 0.125 [9 4] [0 3 7] -12))
 </clojureCode>
         </soundObject>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>12.0</subjectiveDuration>
           <startTime>20.0</startTime>
           <name>Arpeggio 2</name>
@@ -3092,7 +3092,7 @@ xout aout</codeBody>
       </soundLayer>
       <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>8.0</subjectiveDuration>
           <startTime>8.0</startTime>
           <name>Arpeggio 3</name>
@@ -3102,7 +3102,7 @@ xout aout</codeBody>
           <clojureCode>(def score (arpeggiate blueDuration 1 0.5 [6 7] [0 3 7] -12))
 </clojureCode>
         </soundObject>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>8.0</subjectiveDuration>
           <startTime>24.0</startTime>
           <name>Arpeggio 3</name>
