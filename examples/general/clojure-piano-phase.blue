@@ -2,7 +2,7 @@
   <projectProperties>
     <title>reich.cm - Piano Phase</title>
     <author></author>
-    <notes>;; This is a translation of the reich.cm example from Common Music
+    <notes>;; This is a translation of the reich.cm example from Common Music 2.10.0
 ;;
 ;; Original by Heinrich Taube
 ;;
@@ -5944,14 +5944,14 @@ xout aout</codeBody>
       </timeState>
       <soundLayer name='' muted='false' solo='false' heightIndex='5'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureSoundObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
           <subjectiveDuration>170.0</subjectiveDuration>
           <startTime>0.0</startTime>
           <name>(piano-phase)</name>
           <backgroundColor>-12566464</backgroundColor>
           <timeBehavior>2</timeBehavior>
           <noteProcessorChain/>
-          <clojureCode>;; This is a translation of the reich.cm example from Common Music
+          <clojureCode>;; This is a translation of the reich.cm example from Common Music 2.10.0
 ;;
 ;; Original by Heinrich Taube
 ;;
@@ -5963,13 +5963,8 @@ xout aout</codeBody>
 
 (defn accum 
     &quot;Utility function to create an accumulated sequence of pulses&quot;
-    ([stop xs]
-        (accum [0.0] (dec stop) xs))
-    ([vec stop xs] 
-        (if (zero? stop) 
-            vec
-            (recur (conj vec (+ (last vec) (first xs)))
-                (dec stop) (next xs)))))
+    [durPattern] 
+    (map first (iterate (fn [[a b]] [(+ a (first b)) (rest b)]) [0.0 durPattern])))
              
 
 (defn piano-phase [trope pulse amp stay move]
@@ -6007,26 +6002,25 @@ xout aout</codeBody>
     (clojure.string/join \newline 
         
         (concat
-            (map (fn [[start pch]] (format note-template 1 start dur pch amp))
-                (map #(vector %1 %2)
-                    (map #(* % pulse) (range 0 stop))
-                    (cycle trope)))
+            (map (fn [start pch] (format note-template 1 start dur pch amp))
+                (map #(* % pulse) (range 0 stop))
+                (cycle trope))
 
-            (map (fn [[start pch]] (format note-template 2 start dur pch amp))
-                (map #(vector %1 %2)
-                    (map #(* % pulse) 
-                        (accum stop 
-                            (cycle (concat 
-                                (repeat stay-length 1)
-                                (repeat move-length 
-                                    (/ (- move-length 1) move-length))))))
-                    (cycle trope)))))))
+            (map (fn [start pch] (format note-template 2 start dur pch amp))
+               (map #(* % pulse) 
+                    (take stop 
+                        (accum (cycle (concat 
+                            (repeat stay-length 1)
+                            (repeat move-length 
+                                (/ (- move-length 1) move-length)))))))
+                (cycle trope))))))
      
     
 
 (def pnotes [&quot;8.04&quot; &quot;8.06&quot; &quot;8.11&quot; &quot;9.01&quot; &quot;9.02&quot; &quot;8.06&quot; &quot;8.04&quot; &quot;9.01&quot; &quot;8.11&quot; &quot;8.06&quot; &quot;9.02&quot; &quot;9.01&quot;])
 
-(def score (piano-phase pnotes 0.15 -12.0 5 3))</clojureCode>
+(def score (piano-phase pnotes 0.15 -12.0 5 3))
+</clojureCode>
         </soundObject>
       </soundLayer>
     </soundObject>
