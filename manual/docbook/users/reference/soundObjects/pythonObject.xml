@@ -1,7 +1,7 @@
 <section id="pythonObject">
   <title>PythonObject</title>
 
-  <para>Accepts NoteProcessors: no</para>
+  <para>Accepts NoteProcessors: yes</para>
 
   <para>
     Allows for using of the Python programming language to generate score 
@@ -84,7 +84,7 @@ i1	1.5	0.5	8.03	80
         </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <!-- <varlistentry>
         <term>userConfigDir</term>
         <listitem>
           <para>
@@ -100,7 +100,7 @@ i1	1.5	0.5	8.03	80
             The location of blue's lib directory. Includes path separator at end.
           </para>
         </listitem>
-      </varlistentry>
+      </varlistentry> -->
 
       <varlistentry>
         <term>blueProjectDir</term>

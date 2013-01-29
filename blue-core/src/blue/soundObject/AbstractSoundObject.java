@@ -14,13 +14,13 @@ import java.util.Vector;
  */
 
 public abstract class AbstractSoundObject implements SoundObject, Serializable {
-    float subjectiveDuration = 2.0f;
+    protected float subjectiveDuration = 2.0f;
 
-    float startTime = 0.0f;
+    protected float startTime = 0.0f;
 
-    String name = "";
+    protected String name = "";
 
-    Color backgroundColor = Color.DARK_GRAY;
+    protected Color backgroundColor = Color.DARK_GRAY;
 
     transient Vector<SoundObjectListener> soundObjectListeners = null;
 

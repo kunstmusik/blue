@@ -52,7 +52,7 @@ public class LineUtilsTest extends TestCase {
 
 		assertEquals(1.2f, LineUtils.snapToResolution(1.20f, -20.0f, 20.0f, .1f), 0.0001f);
 		
-		assertEquals(1.4f, LineUtils.snapToResolution(1.20f, -20.0f, 20.0f, .2f), 0.0001f);
+		assertEquals(1.4f, LineUtils.snapToResolution(1.40f, -20.0f, 20.0f, .2f), 0.0001f);
     }
 
 }

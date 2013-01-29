@@ -139,6 +139,7 @@
   &audioFileObject;
   &ceciliaModule;
   &comment;
+  &clojureObject;
   &external;
   &genericScore;
   &instance;
