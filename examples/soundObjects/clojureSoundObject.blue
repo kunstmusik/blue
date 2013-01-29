@@ -2933,7 +2933,7 @@ xout aout</codeBody>
   </arrangement>
   <mixer>
     <enabled>true</enabled>
-    <extraRenderTime>0.0</extraRenderTime>
+    <extraRenderTime>2.0</extraRenderTime>
     <channelList list='channels'>
       <channel>
         <name>1</name>
@@ -3027,7 +3027,7 @@ xout aout</codeBody>
       </timeState>
       <soundLayer name='' muted='false' solo='false' heightIndex='0'>
         <noteProcessorChain/>
-        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='false'>
+        <soundObject type='blue.clojure.soundObject.ClojureObject' onLoadProcessable='true'>
           <subjectiveDuration>8.0</subjectiveDuration>
           <startTime>0.0</startTime>
           <name>Composing Functions</name>
