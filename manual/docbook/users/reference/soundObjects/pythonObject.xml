@@ -1,7 +1,7 @@
 <section id="pythonObject">
   <title>PythonObject</title>
 
-  <para>Accepts NoteProcessors: no</para>
+  <para>Accepts NoteProcessors: yes</para>
 
   <para>
     Allows for using of the Python programming language to generate score 

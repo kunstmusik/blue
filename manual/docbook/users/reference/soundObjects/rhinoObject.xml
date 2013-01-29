@@ -1,7 +1,7 @@
 <section id="rhinoObject">
 <title>RhinoObject</title>
          
-<para>Accepts NoteProcessors: no</para>
+<para>Accepts NoteProcessors: yes</para>
          
 <para>Allows for the use of the JavaScript programming language to create score
 data. uses the Rhino interpreter to interpret JavaScript scripts.</para>
