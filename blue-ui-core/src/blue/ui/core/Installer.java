@@ -56,6 +56,7 @@ public class Installer extends ModuleInstall {
     BackupFileSaver backupFileSaver;
     private boolean textDefaultsInitialized = false;
     private PropertyChangeListener windowTitlePropertyChangeListener;
+    private TempFileCleaner tempFileCleaner = new TempFileCleaner();
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     
     Result<LayerGroupProvider> result = null;
@@ -103,6 +104,8 @@ public class Installer extends ModuleInstall {
 
 
         BlueProjectManager.getInstance().addPropertyChangeListener(windowTitlePropertyChangeListener);
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                tempFileCleaner);
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
@@ -187,6 +190,8 @@ public class Installer extends ModuleInstall {
     public void uninstalled() {
         ParameterTimeManagerFactory.setInstance(null);
         BlueProjectManager.getInstance().removePropertyChangeListener(windowTitlePropertyChangeListener);
+        BlueProjectManager.getInstance().removePropertyChangeListener(
+                tempFileCleaner);
         MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
 
         logger.info("blue-ui-core Installer uninstalled");

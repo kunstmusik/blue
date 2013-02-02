@@ -33,6 +33,11 @@ NEW
     translation of reich.cm from Common Music 2.10.0 by Heinrich Taube that 
     demonstrates phase technique
 
+* RFE #137 - added temp file check when opening projects that searches for 
+  leftover tempCsd*.csd files from previous blue sessions (usually only happens
+  if blue/csound has crashed).  Offers to delete the temp files after opening,
+  also checks if another project in the same folder is currently open and skips
+  temp file check
 
 FIX
 
