@@ -39,6 +39,8 @@ NEW
   also checks if another project in the same folder is currently open and skips
   temp file check
 
+* Added three examples of using AthenaCL with Blue to blue/examples/soundObjects
+  folder (external_AthenaCL1.blue, etc.); contributed by Menno Knevel
 
 NEW/FIX
 

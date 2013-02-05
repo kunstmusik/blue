@@ -1,0 +1,283 @@
+<blueData version='2.3.3'>
+  <projectProperties>
+    <title>Athena CL Integration - Example 2</title>
+    <author>Menno Knevel</author>
+    <notes>This example calls the athenaPipe.py file to process the AthenaCL scripts with AthenaCL.  This requires that you have Python installed as well as AthenaCL installed into site-packages for your Python runtime.</notes>
+    <sampleRate>44100</sampleRate>
+    <ksmps>20</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>true</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings>csound</diskAdvancedSettings>
+    <diskCompleteOverride>true</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.BlueSynthBuilder' editEnabled='true'>
+        <name>basicSynth</name>
+        <comment>Be sure to keep the manual of AthenaCL at hand (http://www.flexatone.org/static/docs/athenacl/www/index.htm)!
+
+
+Sets TextureModule to LineGroove.   Different TextureModules can have a great impact on the structures the produced events.
+
+
+
+
+
+	
+	
+	
+	
+	
+
+</comment>
+        <globalOrc>gi_cosine	ftgen	0, 0, 65536,	11,	1, 1
+</globalOrc>
+        <globalSco/>
+        <instrumentText>
+ipch = cpsoct(p4)                                                               ;convert an octave-point-decimal value to cycles-per-second
+kenv linseg 0, p3*.1, .5, p3*.9, 0                                              ;simple envelope
+asig vco2 p5*kenv, ipch                                                  
+asig lowpass2 asig, p6, p7
+
+blueMixerOut asig, asig
+</instrumentText>
+        <alwaysOnInstrumentText></alwaysOnInstrumentText>
+        <graphicInterface editEnabled='true'>
+          <bsbObject type='blue.orchestra.blueSynthBuilder.BSBLabel'>
+            <objectName></objectName>
+            <x>24</x>
+            <y>17</y>
+            <label>BasicSynth</label>
+          </bsbObject>
+        </graphicInterface>
+        <bsbParameterList/>
+        <presetGroup name='Presets'/>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>true</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='-1846652153' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1935210509' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables></tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc></globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
+  </liveData>
+  <score>
+    <tempo>
+      <enabled>false</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='60.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>34</pixelSecond>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
+    <noteProcessorChain/>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>1</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.External'>
+          <subjectiveDuration>20.0</subjectiveDuration>
+          <startTime>1.0</startTime>
+          <name>External1</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <text>emo ce
+tmo lg
+tin b 1 4     
+tie t 0, 35
+tie r l, ((4,1,1),(16,1,0),(8,1,0)), oc                                                  
+tie x0 bg, oc, (6.3,5,7.5,9)
+tie x1 ws, e, 3, 0, 0, 1
+tie x2 ws, e, 30, 0.5, 100, 8000
+tie x3 ru, 0, 100</text>
+          <commandLine>python athenaPipe.py $infile</commandLine>
+          <syntaxType>Python</syntaxType>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>SoundObject Layer Group</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.Comment'>
+          <subjectiveDuration>5.7352943</subjectiveDuration>
+          <startTime>0.82352936</startTime>
+          <name>Comment</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <commentText>emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
+
+tmo lg is used here. LineGroove performs each set of a Path as a simple monophonic line.
+
+tin b 1 4 : make a new texture with the name b. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3)
+    and assign these 4 extra parameters values meaningful for this instrument: pitch, amplitude, cut off frequency for filter and resonance of filter.
+
+tie t 0, 35 : influences the speed (time range)
+
+tie r l, ((4,1,1),(16,1,0),(8,1,0)), oc:  a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
+
+p4 (=x0) = pitch. 
+tie x0 bg, oc, (6.3,5,7.5,9). Chooses values from a user-supplied list (valueList).
+
+p5 (=x1) = amplitude.
+tie x1 ws, e, 3, 0, 0, 1 Here in the form of a wave sine between 0 and 1. (In this instr. 0dbfs = 1)
+
+p6 (=x2) = cutoff frequency of filter.
+tie x2 ws, e, 30, 0.5, 100, 8000. Here a sinusoid oscillation between 100 and 80000 at the rate given in either time per period.
+
+p7 (=x3) = resonance of filter.
+tie x3 ru, 0, 100. Here random uniform between 0 and 200.
+</commentText>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>22.617647</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>
