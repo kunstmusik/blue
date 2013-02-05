@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2013
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,14 +19,12 @@
  */
 package blue.ui.core.score.layers;
 
-import java.awt.Graphics2D;
+import javax.swing.JComponent;
 
 /**
  *
  * @author stevenyi
  */
-public interface LayerGroupPanel {
-    public void marqueeSelectionPerformed(SelectionMarquee marquee);
-    
-    public void paintNavigatorView(Graphics2D g2d);
+public interface SelectionMarquee {
+    public boolean intersects(JComponent comp);
 }

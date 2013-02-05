@@ -39,6 +39,14 @@ NEW
   also checks if another project in the same folder is currently open and skips
   temp file check
 
+
+NEW/FIX
+
+* Bug #80/81: Optimized ScoreNavigatorView: introduced new paintNavigatorView
+  to LayerGroupPanels so that they could paint a simplified view for the 
+  Score Navigator; fixes broken painting and improves issues with time pointer
+  rendering triggering frequent paints in the navigator view
+
 FIX
 
 * code completion for BSB Widgets would replace all code after cursor location 
@@ -46,6 +54,7 @@ FIX
 
 * Bug #77: Fixed detection of Jack Input/Output options in Program Options ->
   Realtime Render Settings
+
 
 
 >Notes for 2.3.3<

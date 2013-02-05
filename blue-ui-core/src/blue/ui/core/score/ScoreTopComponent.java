@@ -408,6 +408,7 @@ public final class ScoreTopComponent extends TopComponent
                     navigator = new JScrollNavigator(
                             WindowManager.getDefault().getMainWindow());
                     navigator.setJScrollPane(scrollPane);
+                    navigator.setLayerPanel(layerPanel);
                 }
                 navigator.setVisible(true);
             }
