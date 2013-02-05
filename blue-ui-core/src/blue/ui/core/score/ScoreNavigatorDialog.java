@@ -17,7 +17,7 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.components;
+package blue.ui.core.score;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -56,7 +56,7 @@ import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.utility.GUI;
 import electric.xml.Element;
 
-public class JScrollNavigator extends JDialog implements ComponentListener,
+public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         AdjustmentListener, WindowSettingsSavable {
 
     private JScrollPane jScrollPane;
@@ -66,11 +66,11 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
     boolean isAdjusting = false;
     private JPanel layerPanel;
 
-    public JScrollNavigator() {
+    public ScoreNavigatorDialog() {
         this(null);
     }
 
-    public JScrollNavigator(Frame owner) {
+    public ScoreNavigatorDialog(Frame owner) {
         super(owner);
 
         this.setTitle("Navigation");
@@ -182,7 +182,7 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
 
         jsp.setViewportView(blueEditorPane);
 
-        JScrollNavigator nav = new JScrollNavigator();
+        ScoreNavigatorDialog nav = new ScoreNavigatorDialog();
         nav.setJScrollPane(jsp);
 
         GUI.showComponentAsStandalone(jsp, "JScrollNavigator Test", true);

@@ -25,7 +25,6 @@ import blue.MainToolBar;
 import blue.automation.AutomationManager;
 import blue.components.AlphaMarquee;
 import blue.ui.components.IconFactory;
-import blue.components.JScrollNavigator;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
@@ -100,7 +99,7 @@ public final class ScoreTopComponent extends TopComponent
     TimelinePropertiesPanel timeProperties = new TimelinePropertiesPanel();
     TempoEditorControl tempoControlPanel = new TempoEditorControl();
     TempoEditor tempoEditor = new TempoEditor();
-    JScrollNavigator navigator = null;
+    ScoreNavigatorDialog navigator = null;
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
@@ -405,7 +404,7 @@ public final class ScoreTopComponent extends TopComponent
         zoomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (navigator == null) {
-                    navigator = new JScrollNavigator(
+                    navigator = new ScoreNavigatorDialog(
                             WindowManager.getDefault().getMainWindow());
                     navigator.setJScrollPane(scrollPane);
                     navigator.setLayerPanel(layerPanel);
