@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.4.0<
-[released 2013.xx.xx]
+[released 2013.02.05]
 
 NEW
 
@@ -53,10 +53,6 @@ FIX
 
 * code completion for BSB Widgets would replace all code after cursor location 
   or up until ")" if found, fixed to behave as Csound ORC completion does
-
-* Bug #77: Fixed detection of Jack Input/Output options in Program Options ->
-  Realtime Render Settings
-
 
 
 >Notes for 2.3.3<
