@@ -36,7 +36,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     BSBDropdownItemList dropdownItems = new BSBDropdownItemList();
 
-    int selectedIndex = 0;
+    int selectedIndex = -1;
 
     private boolean randomizable = true;
 

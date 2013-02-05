@@ -73,6 +73,7 @@
 
     <!ENTITY audioFileObject SYSTEM "users/reference/soundObjects/audioFileObject.xml">
     <!ENTITY ceciliaModule SYSTEM "users/reference/soundObjects/ceciliaModule.xml">
+    <!ENTITY clojureObject SYSTEM "users/reference/soundObjects/clojureObject.xml">
     <!ENTITY comment SYSTEM "users/reference/soundObjects/comment.xml">
     <!ENTITY external SYSTEM "users/reference/soundObjects/external.xml">
     <!ENTITY genericScore SYSTEM "users/reference/soundObjects/genericScore.xml">

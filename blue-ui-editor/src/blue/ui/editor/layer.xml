@@ -207,6 +207,38 @@
                 
       </folder>
       
+      <!-- Clojure -->
+      
+      <folder name="x-clojure">
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.clojure.Bundle"/>
+        <file name="language.instance">
+          <attr name="instanceCreate" methodvalue="blue.ui.editor.clojure.ClojureTokenId.language"/>
+          <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
+        </file>
+        <file name="EditorKit.instance">
+          <attr name="instanceClass" stringvalue="blue.ui.editor.clojure.ClojureEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,blue.ui.editor.clojure.ClojureEditorKit"/>
+          <attr name="beaninfo" boolvalue="false"/>
+        </file>
+        
+        <folder name="BracesMatchers">
+          <file name="blue-ui-editor-clojure-ClojureBracesMatcherFactory.instance">
+            <attr name="position" intvalue="0"/>
+          </file>
+        </folder>
+        
+        <folder name="FontsColors">
+          <folder name="blueDefault">
+            <folder name="Defaults">
+              <file name="FontAndColors.xml" url="clojure/FontAndColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.editor.clojure.Bundle"/>
+              </file>
+            </folder>
+          </folder>
+        </folder>
+        
+      </folder>
+      
     </folder>
   </folder>
   

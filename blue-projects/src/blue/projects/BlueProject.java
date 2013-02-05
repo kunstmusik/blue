@@ -22,6 +22,8 @@ public class BlueProject {
     private File dataFile;
 
     private File tempFile;
+    
+    private boolean tempCsdFilesChecked = false;
 
     private final HashMap<String, UndoManager> undo = new HashMap<String, UndoManager>();
 
@@ -89,6 +91,14 @@ public class BlueProject {
 
     public HashMap<String, UndoManager> getUndoManager() {
         return this.undo;
+    }
+
+    public boolean isTempCsdFilesChecked() {
+        return tempCsdFilesChecked;
+    }
+
+    public void setTempCsdFilesChecked(boolean tempCsdFilesChecked) {
+        this.tempCsdFilesChecked = tempCsdFilesChecked;
     }
 
 }

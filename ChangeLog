@@ -12,6 +12,49 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.4.0<
+[released 2013.02.05]
+
+NEW
+
+* ClojureObject - SoundObject that uses Clojure (http://www.clojure.org) code
+  for generating notes
+     
+  * Clojure 1.4.0 is embedded with blue so that user does not have to install 
+    Clojure themselves, as well as guarantees code to run on every platform
+
+  * Editor has Syntax Highlighting and Parentheses/brace matching
+
+  * Script menu option added to Reinitialize Clojure engine
+
+  * clojureSoundObject.blue added to blue/examples/soundObject
+
+  * clojure-piano-phase.blue added to blue/examples/general; this is a 
+    translation of reich.cm from Common Music 2.10.0 by Heinrich Taube that 
+    demonstrates phase technique
+
+* RFE #137 - added temp file check when opening projects that searches for 
+  leftover tempCsd*.csd files from previous blue sessions (usually only happens
+  if blue/csound has crashed).  Offers to delete the temp files after opening,
+  also checks if another project in the same folder is currently open and skips
+  temp file check
+
+* Added three examples of using AthenaCL with Blue to blue/examples/soundObjects
+  folder (external_AthenaCL1.blue, etc.); contributed by Menno Knevel
+
+NEW/FIX
+
+* Bug #80/81: Optimized ScoreNavigatorView: introduced new paintNavigatorView
+  to LayerGroupPanels so that they could paint a simplified view for the 
+  Score Navigator; fixes broken painting and improves issues with time pointer
+  rendering triggering frequent paints in the navigator view
+
+FIX
+
+* code completion for BSB Widgets would replace all code after cursor location 
+  or up until ")" if found, fixed to behave as Csound ORC completion does
+
+
 >Notes for 2.3.3<
 [released 2012.12.19]
 
@@ -32,7 +75,6 @@ FIX
 
 * Bug #75 - restored ctrl-; and ctrl-shift-; shortcuts for Csound Score text 
   editors
-
 
 
 >Notes for 2.3.2<

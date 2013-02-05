@@ -39,7 +39,7 @@ public class ObjectUtilities {
             byte[] objectBuffer = byteArrayOutputStream.toByteArray();
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
                     objectBuffer);
-            ObjectInputStream objectInputStream = new ObjectInputStream(
+            ObjectInputStream objectInputStream = new PluginObjectInputStream(
                     byteArrayInputStream);
             Object myClone = objectInputStream.readObject();
             return myClone;
@@ -87,7 +87,7 @@ public class ObjectUtilities {
     public static Object loadFromXML(Element elem,
             Map<String, Object> objRefMap) throws Exception {
         String npClass = elem.getAttributeValue("type");
-        Class classToLoad = BlueSystem.getClassLoader().loadClass(npClass);
+        Class classToLoad = Thread.currentThread().getContextClassLoader().loadClass(npClass);
 
         Object retVal = null;
 
@@ -107,26 +107,25 @@ public class ObjectUtilities {
 
 }
 
-//class PluginObjectInputStream extends ObjectInputStream {
-//
-//    public PluginObjectInputStream(InputStream in) throws IOException {
-//        super(in);
-//        // TODO Auto-generated constructor stub
-//    }
-//
-//    protected Class resolveClass(ObjectStreamClass desc) throws IOException,
-//            ClassNotFoundException {
-//        String className = desc.getName();
-//
-//        PluginClassLoader loader = BlueSystem.getClassLoader();
-//
-//        Class c = loader.loadClass(className);
-//
-//        if (c == null) {
-//            return super.resolveClass(desc);
-//        }
-//
-//        return c;
-//    }
-//
-//}
+class PluginObjectInputStream extends ObjectInputStream {
+
+    public PluginObjectInputStream(InputStream in) throws IOException {
+        super(in);
+    }
+
+    protected Class resolveClass(ObjectStreamClass desc) throws IOException,
+            ClassNotFoundException {
+        String className = desc.getName();
+
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+
+        Class c = Class.forName(className, false, cl);
+
+        if (c == null) {
+            return super.resolveClass(desc);
+        }
+
+        return c;
+    }
+
+}

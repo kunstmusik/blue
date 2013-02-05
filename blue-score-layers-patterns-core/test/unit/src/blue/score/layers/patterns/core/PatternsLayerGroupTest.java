@@ -23,6 +23,7 @@ import blue.CompileData;
 import blue.score.ScoreGenerationException;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
+import blue.soundObject.SoundObject;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -49,6 +50,7 @@ public class PatternsLayerGroupTest {
         instance.newLayerAt(-1);
         PatternLayer patternLayer = (PatternLayer)instance.getLayerAt(0);
         GenericScore score = new GenericScore();
+        score.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         score.setText("i1 0 .25 1 2\ni1 1 .25 1 2");
         patternLayer.setSoundObject(score);
         patternLayer.getPatternData().setPattern(0, true);

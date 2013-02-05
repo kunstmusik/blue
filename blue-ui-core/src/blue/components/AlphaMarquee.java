@@ -21,6 +21,7 @@
 package blue.components;
 
 import blue.settings.GeneralSettings;
+import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
@@ -30,7 +31,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 
-public class AlphaMarquee extends JComponent {
+public class AlphaMarquee extends JComponent implements SelectionMarquee {
 
     private static final Color alphaWhite = new Color(255, 255, 255, 64);
 

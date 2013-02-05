@@ -68,4 +68,27 @@ public class StringChannel implements Serializable, PropertyChangeListener {
             setValue((String)evt.getNewValue());
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final StringChannel other = (StringChannel) obj;
+        if (this.dirty != other.dirty) {
+            return false;
+        }
+        if ((this.value == null) ? (other.value != null) : !this.value.equals(other.value)) {
+            return false;
+        }
+        if ((this.channelName == null) ? (other.channelName != null) : !this.channelName.equals(other.channelName)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }

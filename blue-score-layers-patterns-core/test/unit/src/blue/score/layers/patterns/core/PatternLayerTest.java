@@ -22,6 +22,7 @@ package blue.score.layers.patterns.core;
 import blue.CompileData;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
+import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
 import org.junit.*;
@@ -48,6 +49,7 @@ public class PatternLayerTest {
         int patternBeatsLength = 4;
         PatternLayer instance = new PatternLayer();
         GenericScore score = new GenericScore();
+        score.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         score.setText("i1 0 .25 1 2\ni1 1 .25 1 2");
         instance.setSoundObject(score);
         instance.getPatternData().setPattern(0, true);
@@ -55,6 +57,7 @@ public class PatternLayerTest {
         instance.getPatternData().setPattern(2, true);
         NoteList result = instance.generateForCSD(compileData, startTime,
                 endTime, patternBeatsLength);
+        System.out.println(result.toString());
         assertEquals(6, result.size());
         assertEquals("1.0", result.getNote(1).getPField(2));
         assertEquals("8.0", result.getNote(4).getPField(2));
