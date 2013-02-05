@@ -462,7 +462,7 @@
       </opcode>
       <opcode>
         <name>loopseg</name>
-        <signature>ksig 	loopseg	 kfreq, ktrig, ktime0, kvalue0 [, ktime1] [, kvalue1] \
+        <signature>ksig 	loopseg	 kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
       [, ktime2] [, kvalue2] [...]</signature>
       </opcode>
       <opcode>
@@ -477,13 +477,12 @@
       </opcode>
       <opcode>
         <name>loopxseg</name>
-        <signature>ksig 	loopxseg	 kfreq, ktrig, ktime0, kvalue0 [, ktime1] [, kvalue1] \
+        <signature>ksig 	loopxseg	 kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
       [, ktime2] [, kvalue2] [...]</signature>
       </opcode>
       <opcode>
         <name>lpshold</name>
-        <signature>ksig 	lpshold	 kfreq, ktrig, ktime0, kvalue0  [, ktime1] [, kvalue1] \
-      [, ktime2] [, kvalue2] [...]</signature>
+        <signature>ksig 	lpshold	 kfreq, ktrig, iphase, ktime0, kvalue0  [, ktime1] [, kvalue1] [, ktime2] [, kvalue2] [...]</signature>
       </opcode>
       <opcode>
         <name>lpsholdp</name>
