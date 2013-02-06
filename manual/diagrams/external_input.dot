@@ -1,0 +1,49 @@
+digraph {
+ node[fontsize=9,shape=record,style=filled,fillcolor=white]
+ edge[fontsize=8]
+
+ subgraph cluster_0 {
+   label="Blue Application";
+   style=filled; fillcolor=lightgrey
+
+   score[label="Score"]
+   orch[label="Orch"]
+   live[label="blueLive"]
+
+   live->score; //live->orch;
+//   score->orch;
+  
+   {rank=same; score, live}
+
+ }
+
+ user[label="User"]
+ midi[label="MIDI"]
+ osc[label="OSC"]
+
+ {rank=same; user, external}
+ {rank=same; midi,osc}
+ external->{osc,midi}
+
+ osc->live;
+ midi->live;
+
+ user->midi;
+ user->osc;
+
+ user->score;
+ user->live;
+ user->orch;
+
+ edge[label="Notes"] 
+
+ live->csound;
+ score->csound;
+
+ edge[label="Instruments"] 
+ orch->csound;
+
+
+}
+
+

@@ -59,7 +59,7 @@ public class BSBCompletionItem implements CompletionItem {
         
         index1 += 1;
 
-        while (index2 < len && !(Character.isWhitespace(c = text.charAt(index1)) || c == ')')) {
+        while (index2 < len && !(Character.isWhitespace(c = text.charAt(index2)) || c == ')')) {
             index2++;
         }
         

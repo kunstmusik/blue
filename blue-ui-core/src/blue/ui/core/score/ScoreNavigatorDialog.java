@@ -17,7 +17,7 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.components;
+package blue.ui.core.score;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -52,11 +52,11 @@ import javax.swing.border.LineBorder;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.gui.DialogUtil;
-import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
+import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.utility.GUI;
 import electric.xml.Element;
 
-public class JScrollNavigator extends JDialog implements ComponentListener,
+public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         AdjustmentListener, WindowSettingsSavable {
 
     private JScrollPane jScrollPane;
@@ -64,12 +64,13 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
     private NavBox overBox = new NavBox();
 
     boolean isAdjusting = false;
+    private JPanel layerPanel;
 
-    public JScrollNavigator() {
+    public ScoreNavigatorDialog() {
         this(null);
     }
 
-    public JScrollNavigator(Frame owner) {
+    public ScoreNavigatorDialog(Frame owner) {
         super(owner);
 
         this.setTitle("Navigation");
@@ -181,7 +182,7 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
 
         jsp.setViewportView(blueEditorPane);
 
-        JScrollNavigator nav = new JScrollNavigator();
+        ScoreNavigatorDialog nav = new ScoreNavigatorDialog();
         nav.setJScrollPane(jsp);
 
         GUI.showComponentAsStandalone(jsp, "JScrollNavigator Test", true);
@@ -239,6 +240,10 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
         if (!isAdjusting) {
             updateOverBox();
         }
+    }
+
+    public void setLayerPanel(JPanel layerPanel) {
+        this.layerPanel = layerPanel;
     }
 
     static class NavBox extends JPanel {
@@ -322,6 +327,11 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
     }
 
     private class PreviewPanel extends JComponent {
+        
+        public PreviewPanel() {
+            super();
+            setDoubleBuffered(true);
+        }
 
         public void paintComponent(Graphics g) {
             if (jScrollPane == null) {
@@ -338,15 +348,28 @@ public class JScrollNavigator extends JDialog implements ComponentListener,
             int w = this.getWidth();
             int h = this.getHeight();
 
-            double xscale = (double) w / view.getWidth();
-            double yscale = (double) h / view.getHeight();
+            
 
             g2d.setColor(Color.BLACK);
             g2d.fillRect(0, 0, w, h);
 
-            g2d.scale(xscale, yscale);
+            if(layerPanel != null) {
+                
+                double xscale = ((double) w) / view.getWidth();
+                double yscale = ((double) h) / view.getHeight();
+                g2d.scale(xscale, yscale);
 
-            view.paint(g2d);
+                Component[] comps = layerPanel.getComponents();
+                
+                for(Component c : comps) {
+                    if(c instanceof LayerGroupPanel) {
+                        g2d.translate(c.getX(), c.getY());
+                        ((LayerGroupPanel)c).paintNavigatorView(g2d);
+                        g2d.translate(-c.getX(), -c.getY());
+                    }
+                }
+                
+            }
 
             g2d.dispose();
 

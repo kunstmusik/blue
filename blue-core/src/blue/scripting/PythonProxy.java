@@ -101,15 +101,15 @@ public class PythonProxy {
         return tempScore.toString();
     }
 
-    public static final void processPythonFile(String jythonFileName) {
-        if (interp == null) {
-            reinitialize();
-        }
-        System.out.println(BlueSystem
-                .getString("scripting.python.interpreting")
-                + " " + jythonFileName);
-        interp.execfile(jythonFileName);
-    }
+//    public static final void processPythonFile(String jythonFileName) {
+//        if (interp == null) {
+//            reinitialize();
+//        }
+//        System.out.println(BlueSystem
+//                .getString("scripting.python.interpreting")
+//                + " " + jythonFileName);
+//        interp.execfile(jythonFileName);
+//    }
 
     public static final String processPythonInstrument(String pythonCode) {
         if (interp == null) {

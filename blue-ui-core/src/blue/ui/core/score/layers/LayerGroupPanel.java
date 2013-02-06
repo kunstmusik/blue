@@ -19,12 +19,14 @@
  */
 package blue.ui.core.score.layers;
 
-import blue.components.AlphaMarquee;
+import java.awt.Graphics2D;
 
 /**
  *
  * @author stevenyi
  */
 public interface LayerGroupPanel {
-    public void marqueeSelectionPerformed(AlphaMarquee marquee);
+    public void marqueeSelectionPerformed(SelectionMarquee marquee);
+    
+    public void paintNavigatorView(Graphics2D g2d);
 }

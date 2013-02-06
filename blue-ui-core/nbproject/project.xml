@@ -306,6 +306,7 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
+                <package>blue.gui</package>
                 <package>blue.soundObject.editor</package>
                 <package>blue.ui.core.score</package>
                 <package>blue.ui.core.score.layers</package>

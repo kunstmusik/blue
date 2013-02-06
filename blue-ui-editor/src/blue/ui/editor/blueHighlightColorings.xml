@@ -79,7 +79,7 @@ made subject to such option by the copyright holder.
     <fontcolor foreColor="ff253e5a" name="text-limit-line-color"/>
     <fontcolor bgColor="ff38566f" name="highlight-search"/>
     <fontcolor foreColor="ff996600" name="synchronized-text-blocks-ext-slave"/>
-    <fontcolor bgColor="ff313641" name="nbeditor-bracesMatching-match">
+    <fontcolor bgColor="428BDD" name="nbeditor-bracesMatching-match">
         <font style="bold"/>
     </fontcolor>
     <fontcolor bgColor="red" name="status-bar-bold"/>

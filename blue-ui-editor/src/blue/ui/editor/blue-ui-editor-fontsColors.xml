@@ -46,7 +46,7 @@ made subject to such option by the copyright holder.
 <!DOCTYPE fontscolors PUBLIC "-//NetBeans//DTD Editor Fonts and Colors settings 1.1//EN" "http://www.netbeans.org/dtds/EditorFontsColors-1_1.dtd">
 
 <fontscolors>
-    <fontcolor name="nbeditor-bracesMatching-match" bgColor="FFF3FF0F"/>
+    <fontcolor name="nbeditor-bracesMatching-match" bgColor="428BDD"/>
     <fontcolor name="nbeditor-bracesMatching-mismatch" bgColor="FFD83636"/>
     <fontcolor name="nbeditor-bracesMatching-match-multichar" bgColor="FFF3FF0F"/>
     <fontcolor name="nbeditor-bracesMatching-mismatch-multichar" bgColor="FFD83636"/>

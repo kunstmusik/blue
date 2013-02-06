@@ -50,7 +50,7 @@ public class ProjectDefaultsSettings {
             final Preferences prefs = NbPreferences.forModule(ProjectDefaultsSettings.class);
 
             instance.defaultAuthor = prefs.get(DEFAULT_AUTHOR, "");
-            instance.mixerEnabled = prefs.getBoolean(MIXER_ENABLED, false);
+            instance.mixerEnabled = prefs.getBoolean(MIXER_ENABLED, true);
         }
         return instance;
     }

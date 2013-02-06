@@ -16,6 +16,7 @@ dist
 tags
 gensrc
 hs_err_pid[0-9]*.log
+blueTempText*.txt
 #\.orig\..*$
 #\.chg\..*$
 #\.conflict\~$

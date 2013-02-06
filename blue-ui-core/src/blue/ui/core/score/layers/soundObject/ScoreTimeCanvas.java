@@ -65,8 +65,10 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.layers.SelectionMarquee;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
+import java.awt.Graphics2D;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
 
@@ -957,6 +959,19 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             
         }
     }
+    
+    @Override
+    public void paintNavigatorView(Graphics2D g2d) {
+        Component[] components = getSoundObjectPanel().getComponents();
+        
+        for (Component c : components) {
+            SoundObjectView component = (SoundObjectView) c;
+            Rectangle r = component.getBounds();
+            
+            g2d.setColor(component.getSoundObject().getBackgroundColor());
+            g2d.fillRect(r.x, r.y, r.width, r.height);
+        }
+    }
 
 //    public void paintPreview(Graphics g) {
 //        synchronized (getTreeLock()) {
@@ -1137,7 +1152,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     @Override
-    public void marqueeSelectionPerformed(AlphaMarquee marquee) {
+    public void marqueeSelectionPerformed(SelectionMarquee marquee) {
         Component[] comps = sObjPanel.getComponents();
         for (int i = 0; i < comps.length; i++) {
             if (!(comps[i] instanceof SoundObjectView)) {

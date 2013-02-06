@@ -98,7 +98,7 @@ public class DriverUtils {
 
             buffer.append(csoundCommand);
             buffer.append(" -+msg_color=false -+rtaudio=jack");
-            buffer.append(" -o dac:xxx ");
+            buffer.append(" -o dac:xxx -B4096 ");
 
             String retVal = null;
 
@@ -358,7 +358,7 @@ public class DriverUtils {
 
             buffer.append(csoundCommand);
             buffer.append(" -+msg_color=false -+rtaudio=jack");
-            buffer.append(" -i adc:xxx ");
+            buffer.append(" -i adc:xxx -B4096 ");
 
             String retVal = null;
 

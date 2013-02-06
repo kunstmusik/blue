@@ -26,9 +26,12 @@ import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternData;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
+import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -41,7 +44,7 @@ import javax.swing.JPanel;
  * @author stevenyi
  */
 public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
-        PropertyChangeListener {
+        PropertyChangeListener, LayerGroupPanel {
 
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private PatternsLayerGroup layerGroup;
@@ -171,5 +174,35 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
             g.drawLine(x, bounds.y, x, maxY);
         }
 
+    }
+
+    @Override
+    public void marqueeSelectionPerformed(SelectionMarquee marquee) {
+        // ignore as this panel does not handle this event
+    }
+
+    @Override
+    public void paintNavigatorView(Graphics2D g2d) {
+        int pixelSecond = timeState.getPixelSecond();
+
+        int patternBeatsLength = layerGroup.getPatternBeatsLength();
+        int patternWidth = patternBeatsLength * pixelSecond;
+        
+        for (int i = 0; i < layerGroup.getSize(); i++) {
+            int y = i * Layer.LAYER_HEIGHT;
+            int x = 0; 
+            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternData data = layer.getPatternData();
+
+            g2d.setColor(PATTERN_COLOR);
+
+            for (int j = 0; x < getBounds().getMaxX(); j++) {
+                x = (j * patternBeatsLength) * pixelSecond;
+                if (data.isPatternSet(j)) {
+                    //System.out.println("pattern set: " + j);
+                    g2d.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);
+                }
+            }
+        }
     }
 }
