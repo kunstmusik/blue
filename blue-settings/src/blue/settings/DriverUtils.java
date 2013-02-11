@@ -95,7 +95,7 @@ public class DriverUtils {
             }
         } else if (driverLow.equals("jack")) {
             if (!detectJackPortsWithCsound(csoundCommand, vals, " -o dac:xxx -B4096 ")) {
-                if(!detectJackPortsWithJackLsp(vals, "input")) {
+                if(!detectJackPortsWithJackLsp(vals, "audio", "input")) {
                     return null;
                 }
             }
@@ -272,7 +272,7 @@ public class DriverUtils {
             }
         } else if (driverLow.equals("jack")) {
             if (!detectJackPortsWithCsound(csoundCommand, vals, " -i adc:xxx -B4096 ")) {
-                if (!detectJackPortsWithJackLsp(vals, "output")) {
+                if (!detectJackPortsWithJackLsp(vals, "audio", "output")) {
                     return null;
                 }
             }
@@ -796,7 +796,7 @@ public class DriverUtils {
         return null;
     }
 
-    public static boolean detectJackPortsWithJackLsp(Vector vals, String portType) {
+    public static boolean detectJackPortsWithJackLsp(Vector vals, String portType, String subType) {
         
         ProcessRunner pc = new ProcessRunner();
         String retVal = null;
@@ -816,7 +816,7 @@ public class DriverUtils {
         }
         
         try {
-            pc.execWaitAndCollect(jackLspPath + " -p", null);
+            pc.execWaitAndCollect(jackLspPath + " -t -p", null);
             retVal = pc.getCollectedOutput();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -825,47 +825,7 @@ public class DriverUtils {
         if(retVal == null || retVal.length() == 0) {
             return false;
         }
-        
-//        System.out.println(retVal);
-        
-        String[] lines = retVal.split("\\n");
-        ArrayList<String> ports = new ArrayList<String>();
-        Map<String, Integer> portMap = new HashMap<String, Integer>();
-        
-        for(int i = 0; i < lines.length; i += 2) {
-            if(lines[i + 1].contains(portType)) {
-                String port = lines[i].trim();
-                int end = port.length() - 1;
-                while(end >= 0 && Character.isDigit(port.charAt(end))) {
-                    end--;
-                }
-                end++;
-                
-                String portName = port.substring(0, end);
-                String chn = port.substring(end);
-                
-                if(portMap.containsKey(portName)) {
-                    int p = portMap.get(portName);
-                    if(p < new Integer(chn)) {
-                        portMap.put(portName, new Integer(chn));
-                    }
-                } else {
-                    portMap.put(portName, new Integer(chn));
-                }
-            }
-        }
-        
-        for(Map.Entry<String, Integer> entry : portMap.entrySet()) {
-            JackCardInfo cardInfo = new JackCardInfo();
-            cardInfo.deviceName = entry.getKey();
-            
-            if(entry.getValue().intValue() == 1) {
-                cardInfo.description = cardInfo.deviceName + " (1 channel)";
-            } else {
-                cardInfo.description = cardInfo.deviceName + " (" + entry.getValue().intValue() + " channels)";
-            }
-            vals.add(cardInfo);
-        }
+        parseJackLspOutput(retVal, portType, subType, vals);
         
         return true;
     }
@@ -942,6 +902,50 @@ public class DriverUtils {
             }
         }
         return true;
+    }
+
+    protected static void parseJackLspOutput(String output, String portType, String subType, Vector vals) throws NumberFormatException {
+        //        System.out.println(retVal);
+                
+                String[] lines = output.split("\\n");
+                ArrayList<String> ports = new ArrayList<String>();
+                Map<String, Integer> portMap = new HashMap<String, Integer>();
+                
+                for(int i = 0; i < lines.length; i += 3) {
+                    if(lines[i + 2].contains(portType) && 
+                            lines[i + 1].contains(subType)) {
+                        String port = lines[i].trim();
+                        int end = port.length() - 1;
+                        while(end >= 0 && Character.isDigit(port.charAt(end))) {
+                            end--;
+                        }
+                        end++;
+                        
+                        String portName = port.substring(0, end);
+                        String chn = port.substring(end);
+                        
+                        if(portMap.containsKey(portName)) {
+                            int p = portMap.get(portName);
+                            if(p < new Integer(chn)) {
+                                portMap.put(portName, new Integer(chn));
+                            }
+                        } else {
+                            portMap.put(portName, new Integer(chn));
+                        }
+                    }
+                }
+                
+                for(Map.Entry<String, Integer> entry : portMap.entrySet()) {
+                    JackCardInfo cardInfo = new JackCardInfo();
+                    cardInfo.deviceName = entry.getKey();
+                    
+                    if(entry.getValue().intValue() == 1) {
+                        cardInfo.description = cardInfo.deviceName + " (1 channel)";
+                    } else {
+                        cardInfo.description = cardInfo.deviceName + " (" + entry.getValue().intValue() + " channels)";
+                    }
+                    vals.add(cardInfo);
+                }
     }
 
     public static class CardInfo {

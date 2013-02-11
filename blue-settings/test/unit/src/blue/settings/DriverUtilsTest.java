@@ -29,88 +29,141 @@ import static org.junit.Assert.*;
  */
 public class DriverUtilsTest {
     
+    private static String TEST_JACK_LSP_OUTPUT = "system:capture_1\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_2\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_3\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_4\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_5\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_6\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_7\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_8\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_9\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_10\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_11\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:capture_12\n"
+            + "    properties: output,can-monitor,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_1\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_2\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_3\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_4\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_5\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_6\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_7\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_8\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_9\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:playback_10\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    32 bit float mono audio\n"
+            + "system:midi_capture_1\n"
+            + "    properties: output,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "system:midi_playback_1\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "system:midi_capture_2\n"
+            + "    properties: output,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "system:midi_playback_2\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "a2j:Midi Through [14] (capture): Midi Through Port-0\n"
+            + "    properties: output,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "a2j:Midi Through [14] (playback): Midi Through Port-0\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "a2j:M Audio Audiophile 24/96 [20] (capture): M Audio Audiophile 24/96 MIDI\n"
+            + "    properties: output,physical,terminal,\n"
+            + "    8 bit raw midi\n"
+            + "a2j:M Audio Audiophile 24/96 [20] (playback): M Audio Audiophile 24/96 MIDI\n"
+            + "    properties: input,physical,terminal,\n"
+            + "    8 bit raw midi";
+    
     public DriverUtilsTest() {
     }
 
-//    /**
-//     * Test of getAudioOutputs method, of class DriverUtils.
-//     */
-//    @Test
-//    public void testGetAudioOutputs() {
-//        System.out.println("getAudioOutputs");
-//        String csoundCommand = "";
-//        String driver = "";
-//        Vector expResult = null;
-//        Vector result = DriverUtils.getAudioOutputs(csoundCommand, driver);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of getAudioInputs method, of class DriverUtils.
-//     */
-//    @Test
-//    public void testGetAudioInputs() {
-//        System.out.println("getAudioInputs");
-//        String csoundCommand = "";
-//        String driver = "";
-//        Vector expResult = null;
-//        Vector result = DriverUtils.getAudioInputs(csoundCommand, driver);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of getMIDIOutputs method, of class DriverUtils.
-//     */
-//    @Test
-//    public void testGetMIDIOutputs() {
-//        System.out.println("getMIDIOutputs");
-//        String csoundCommand = "";
-//        String driver = "";
-//        Vector expResult = null;
-//        Vector result = DriverUtils.getMIDIOutputs(csoundCommand, driver);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-//
-//    /**
-//     * Test of getMIDIInputs method, of class DriverUtils.
-//     */
-//    @Test
-//    public void testGetMIDIInputs() {
-//        System.out.println("getMIDIInputs");
-//        String csoundCommand = "";
-//        String driver = "";
-//        Vector expResult = null;
-//        Vector result = DriverUtils.getMIDIInputs(csoundCommand, driver);
-//        assertEquals(expResult, result);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
-
     @Test
-    public void testDetectJackPortsWithJackLsp() {
-        Vector vals = new Vector();
-        boolean retVal = DriverUtils.detectJackPortsWithJackLsp(vals, "input");
-        assertTrue(retVal);
-        assertEquals(1, vals.size());
+    public void testParseJackLspOutput() {
+        Vector v = new Vector();
+        DriverUtils.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
+                "audio", "input", v);
         
-        DriverUtils.JackCardInfo info = (DriverUtils.JackCardInfo) vals.get(0);
+        assertEquals(1, v.size());
+        DriverUtils.JackCardInfo info = (DriverUtils.JackCardInfo) v.get(0);
         assertEquals("system:playback_", info.deviceName);
-        assertEquals("(2 channels)", info.description);
+        assertEquals("system:playback_ (10 channels)", info.description);
         
-        vals.removeAllElements();
         
-        retVal = DriverUtils.detectJackPortsWithJackLsp(vals, "output");
-        assertTrue(retVal);
-        assertEquals(1, vals.size());
+        v.removeAllElements();
+        DriverUtils.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
+                "audio", "output", v);
         
-        info = (DriverUtils.JackCardInfo) vals.get(0);
+        assertEquals(1, v.size());
+        info = (DriverUtils.JackCardInfo) v.get(0);
         assertEquals("system:capture_", info.deviceName);
-        assertEquals("(2 channels)", info.description);
+        assertEquals("system:capture_ (12 channels)", info.description);
     }
+
+//    @Test
+//    public void testDetectJackPortsWithJackLsp() {
+//        Vector vals = new Vector();
+//        boolean retVal = DriverUtils.detectJackPortsWithJackLsp(vals, "input");
+//        assertTrue(retVal);
+//        assertEquals(1, vals.size());
+//        
+//        DriverUtils.JackCardInfo info = (DriverUtils.JackCardInfo) vals.get(0);
+//        assertEquals("system:playback_", info.deviceName);
+//        assertEquals("(2 channels)", info.description);
+//        
+//        vals.removeAllElements();
+//        
+//        retVal = DriverUtils.detectJackPortsWithJackLsp(vals, "output");
+//        assertTrue(retVal);
+//        assertEquals(1, vals.size());
+//        
+//        info = (DriverUtils.JackCardInfo) vals.get(0);
+//        assertEquals("system:capture_", info.deviceName);
+//        assertEquals("(2 channels)", info.description);
+//    }
 }
