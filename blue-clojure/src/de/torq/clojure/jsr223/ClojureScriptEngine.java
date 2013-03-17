@@ -1,10 +1,6 @@
 package de.torq.clojure.jsr223;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 
@@ -24,7 +20,7 @@ import javax.script.ScriptException;
 
 import clojure.lang.Associative;
 import clojure.lang.Compiler;
-import clojure.lang.IFn;
+import clojure.lang.DynamicClassLoader;
 import clojure.lang.ISeq;
 import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
@@ -32,6 +28,12 @@ import clojure.lang.Namespace;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.script.SimpleScriptContext;
 
 
 
@@ -81,14 +83,15 @@ public class ClojureScriptEngine extends AbstractScriptEngine
     // END From clojure.lang.Repl
 
     private ClojureBindings engineBindings = new ClojureBindings();
-    private static final Associative globalBindings = RT.map(
-        ns, ns.get(),
-        warn_on_reflection, warn_on_reflection.get(),
-        print_meta, print_meta.get(),
-        print_length, print_length.get(),
-        print_level, print_level.get(),
-        compile_path, "classes"
-    );
+//    private static final Associative globalBindings = RT.map(
+//        ns, ns.get(),
+//        warn_on_reflection, warn_on_reflection.get(),
+//        print_meta, print_meta.get(),
+//        print_length, print_length.get(),
+//        print_level, print_level.get(),
+//        compile_path, "classes"
+//            
+//    );
 
     public ClojureScriptEngine()
         throws ScriptException
@@ -99,10 +102,38 @@ public class ClojureScriptEngine extends AbstractScriptEngine
         //Var.pushThreadBindings();
         executor = Executors.newSingleThreadExecutor(
             new ClojureScriptEngineThreadFactory());
-        submitAndGetResult(new CallableClojureInitialization(globalBindings, instanceNS));
+        //submitAndGetResult(new CallableClojureInitialization(globalBindings, instanceNS));
+        submitAndGetResult(new CallableClojureInitialization(getAssociativeBindings(), instanceNS));
+        
         eval("(ns " + instanceNS.getName() + " (:refer-clojure))");
     }
 
+    private Associative getAssociativeBindings() {
+        DynamicClassLoader dynamicClassLoader = null;
+        try {
+            URL url = new File("/Users/stevenyi/.blue").toURI().toURL();
+    //         urls.add();
+    //            BlueProject bp = BlueProjectManager.getInstance().getCurrentProject();
+    //            if(bp != null && bp.getDataFile() != null) {
+    //            }
+    //            }
+            dynamicClassLoader = new DynamicClassLoader(
+                    Thread.currentThread().getContextClassLoader());
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(ClojureScriptEngine.class.getName()).log(Level.SEVERE,
+                    null, ex);
+        }
+            
+        return RT.map(
+        ns, ns.get(),
+        warn_on_reflection, warn_on_reflection.get(),
+        print_meta, print_meta.get(),
+        print_length, print_length.get(),
+        print_level, print_level.get(),
+        compile_path, "classes",
+        clojure.lang.Compiler.LOADER, dynamicClassLoader);
+    }
+    
     /**
      * Submit the given callable to our executor and block until we have the
      * result.
@@ -297,7 +328,27 @@ class CallableEval implements Callable<Object>
         Object result = null;
         try
         {
-            Var.pushThreadBindings(a);
+            //Var.pushThreadBindings(a);
+            
+            DynamicClassLoader dynamicClassLoader = null;
+            try {
+            URL url = new File("/Users/stevenyi/.blue").toURI().toURL();
+    //         urls.add();
+    //            BlueProject bp = BlueProjectManager.getInstance().getCurrentProject();
+    //            if(bp != null && bp.getDataFile() != null) {
+    //            }
+    //            }
+            dynamicClassLoader = new DynamicClassLoader(
+                    Thread.currentThread().getContextClassLoader());
+            dynamicClassLoader.addURL(url);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(ClojureScriptEngine.class.getName()).log(Level.SEVERE,
+                    null, ex);
+        }
+//            sc.getBindings(ScriptContext.ENGINE_SCOPE).
+//            b.put(clojure.lang.Compiler.LOADER, dynamicClassLoader);
+            Var.pushThreadBindings(RT.map(clojure.lang.Compiler.LOADER, dynamicClassLoader));
+            
 
             //repl IO support
             LineNumberingPushbackReader rdr = new LineNumberingPushbackReader(reader);
