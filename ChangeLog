@@ -20,6 +20,8 @@ NEW
 * Added external_AthenaCL4.blue example to blue/examples/soundObjects folder; 
   contributed by Menno Knevel
 
+* Added Dave Seidel's piece "Triune" to blue/examples/pieces/daveSeidel folder
+
 UPDATED
 
 * Updated Clojure library to 1.5.1
