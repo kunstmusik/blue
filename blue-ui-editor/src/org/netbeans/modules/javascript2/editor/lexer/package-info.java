@@ -18,6 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 @TemplateRegistration(folder = "Other", content = "JavaScriptExample.js")
-package org.netbeans.modules.javascript.editing.lexer;
+package org.netbeans.modules.javascript2.editor.lexer;
 
 import org.netbeans.api.templates.TemplateRegistration;

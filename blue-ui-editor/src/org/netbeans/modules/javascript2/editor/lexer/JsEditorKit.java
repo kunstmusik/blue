@@ -17,14 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package org.netbeans.modules.javascript.editing.lexer;
+package org.netbeans.modules.javascript2.editor.lexer;
 
-import org.netbeans.modules.python.editor.*;
 import javax.swing.text.Document;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.modules.editor.NbEditorDocument;
 import org.netbeans.modules.editor.NbEditorKit;
-import org.netbeans.modules.python.editor.lexer.PythonTokenId;
+import org.netbeans.modules.javascript2.editor.lexer.JsTokenId;
 
 /**
  *
@@ -36,7 +35,7 @@ public class JsEditorKit extends NbEditorKit {
     public Document createDefaultDocument() {
         
         Document doc = new JsEditorKit.JsDocument(getContentType());
-        doc.putProperty(Language.class, JsTokenId.language());
+        doc.putProperty(Language.class, JsTokenId.javascriptLanguage());
         return doc;
         
     }
