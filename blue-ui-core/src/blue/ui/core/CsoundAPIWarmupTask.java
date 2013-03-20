@@ -28,7 +28,7 @@ public class CsoundAPIWarmupTask implements Runnable {
         
         if(APIUtilities.isCsoundAPIAvailable()) {
             Csound csound = new Csound();
-            File f;
+            File f, f2;
             try {
 
                 StringBuilder csd = new StringBuilder();
@@ -39,15 +39,26 @@ public class CsoundAPIWarmupTask implements Runnable {
                 csd.append("</CsInstruments>\n"); 
                 csd.append("<CsScore>\ni1 0 .01\n</CsScore>\n"); 
                 csd.append("</CsoundSynthesizer>\n"); 
+                
                 f = File.createTempFile("dummy", ".csd");
+                f2 = File.createTempFile("dummy", ".wav");
+                
                 FileOutputStream fos = new FileOutputStream(f);
                 fos.write(csd.toString().getBytes()); 
                 
-                if(csound.Compile(f.getAbsolutePath()) == 0) {
+                if(csound.Compile(f.getAbsolutePath(), "-o", f2.getAbsolutePath()) == 0) {
                     csound.Perform();
                 }
                 csound.Reset();
                 csound.delete();
+                
+                if(f.exists()) {
+                    f.delete();
+                }
+                
+                if(f2.exists()) {
+                    f2.delete();
+                }
                 
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
