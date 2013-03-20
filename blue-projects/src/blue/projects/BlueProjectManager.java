@@ -62,6 +62,10 @@ public class BlueProjectManager {
 
     private static BlueProjectManager instance = null;
 
+    public boolean isProjectStillOpen(BlueProject project) {
+        return projects.contains(project);
+    }
+
     ArrayList<BlueProject> projects = new ArrayList<BlueProject>();
 
     BlueProject currentProject = null;
@@ -215,11 +219,9 @@ public class BlueProjectManager {
             if (projects.size() == 0) {
                 setCurrentProject(createNewProject());
             } else if (index >= projects.size()) {
-                currentProject = projects.get(projects.size() - 1);
-                fireUpdatedCurrentProject();
+                setCurrentProject(projects.get(projects.size() - 1));
             } else {
-                currentProject = projects.get(index);
-                fireUpdatedCurrentProject();
+                setCurrentProject(projects.get(index));
             }
         }
 
@@ -427,11 +429,9 @@ public class BlueProjectManager {
                 if (projects.size() == 0) {
                     return true;
                 } else if (index >= projects.size()) {
-                    currentProject = projects.get(projects.size() - 1);
-                    fireUpdatedCurrentProject();
+                    setCurrentProject(projects.get(projects.size() - 1));
                 } else {
-                    currentProject = projects.get(index);
-                    fireUpdatedCurrentProject();
+                    setCurrentProject(projects.get(index));
                 }
             } else {
                 return false;
@@ -494,4 +494,5 @@ public class BlueProjectManager {
 
         setCurrentProject(projects.get(index));
     }
+
 }

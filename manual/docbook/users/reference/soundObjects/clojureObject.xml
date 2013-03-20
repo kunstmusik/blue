@@ -174,5 +174,25 @@ i1	3.75	0.25	8.04	-12
       loaded into the Clojure interpreter when you load your projects.
     </para>
   </simplesect>
+  
+  <simplesect>
+    <title>Using External CLJ Scripts</title>
+    
+    <para>
+      Blue is able to load external .clj scripts, resolved from the 
+      .blue/script/clojure or PROJECT_DIR/script/clojure directory.  
+      For example, if you use:
+    </para>
+    
+    <programlisting>
+(use 'my.script)      
+    </programlisting>
+    
+    <para>
+      This will try to load the script from 
+      "/Users/me/.blue/script/clojure/my/script.clj" or 
+      "/path/to/blueProject/script/clojure/script.clj".
+    </para>
+  </simplesect>
 
 </section>

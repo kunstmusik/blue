@@ -31,6 +31,9 @@ import java.util.Vector;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 
@@ -91,92 +94,9 @@ public class DriverUtils {
                 return null;
             }
         } else if (driverLow.equals("jack")) {
-            String jackCSD = TextUtilities
-                    .getTextFromSystemResource(DriverUtils.class, "tempJack.csd");
-
-            StringBuffer buffer = new StringBuffer();
-
-            buffer.append(csoundCommand);
-            buffer.append(" -+msg_color=false -+rtaudio=jack");
-            buffer.append(" -o dac:xxx -B4096 ");
-
-            String retVal = null;
-
-            // INITIAL RUN TO FIND OUT TRUE SRATE
-
-            String tempText = jackCSD.replaceAll("\\$SR", "1000");
-
-            File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
-                    null, tempText);
-
-            String command = buffer.toString() + tempFile.getAbsolutePath();
-
-            ProcessRunner pc = new ProcessRunner();
-
-            try {
-                pc.execWaitAndCollect(command, null);
-                retVal = pc.getCollectedOutput();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            String sr = null;
-
-            if (retVal != null
-                    && retVal.indexOf("does not match JACK sample rate") >= 0) {
-                String[] lines = retVal.split("\n");
-
-                for (int i = 0; i < lines.length; i++) {
-                    String line = lines[i];
-
-                    if (line.indexOf("does not match JACK sample rate") >= 0) {
-                        sr = line.substring(line.lastIndexOf(" ") + 1);
-                    }
-                }
-            } else {
-                // MIGHT WANT TO GIVE MESSAGE SAYING COULD NOT CONNECT TO JACK
-                return null;
-            }
-
-            if (sr == null) {
-                return null;
-            }
-
-            tempText = jackCSD.replaceAll("\\$SR", sr);
-
-            tempFile = FileUtilities.createTempTextFile("temp", ".csd", null,
-                    tempText);
-
-            command = buffer.toString() + tempFile.getAbsolutePath();
-
-            try {
-                pc.execWaitAndCollect(command, null);
-                retVal = pc.getCollectedOutput();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            if (retVal == null) {
-                return null;
-            }
-
-            // Find Devices
-            StringTokenizer st = new StringTokenizer(retVal, "\n");
-
-            while (st.hasMoreTokens()) {
-                String line = st.nextToken().trim();
-
-                if (line.endsWith("channel)") || line.endsWith("channels)")) {
-                    String deviceName = line.substring(1, line
-                            .lastIndexOf("\""));
-                    String description = deviceName + " "
-                            + line.substring(line.indexOf("("));
-
-                    JackCardInfo cardInfo = new JackCardInfo();
-                    cardInfo.deviceName = deviceName;
-                    cardInfo.description = description;
-
-                    vals.add(cardInfo);
+            if (!detectJackPortsWithCsound(csoundCommand, vals, " -o dac:xxx -B4096 ")) {
+                if(!detectJackPortsWithJackLsp(vals, "audio", "input")) {
+                    return null;
                 }
             }
         } else {
@@ -351,93 +271,9 @@ public class DriverUtils {
                 return null;
             }
         } else if (driverLow.equals("jack")) {
- String jackCSD = TextUtilities
-                    .getTextFromSystemResource(DriverUtils.class, "tempJack.csd");
-
-            StringBuffer buffer = new StringBuffer();
-
-            buffer.append(csoundCommand);
-            buffer.append(" -+msg_color=false -+rtaudio=jack");
-            buffer.append(" -i adc:xxx -B4096 ");
-
-            String retVal = null;
-
-            // INITIAL RUN TO FIND OUT TRUE SRATE
-
-            String tempText = jackCSD.replaceAll("\\$SR", "1000");
-
-            File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
-                    null, tempText);
-
-            String command = buffer.toString() + tempFile.getAbsolutePath();
-
-            ProcessRunner pc = new ProcessRunner();
-
-            try {
-                pc.execWaitAndCollect(command, null);
-                retVal = pc.getCollectedOutput();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            String sr = null;
-
-            if (retVal != null
-                    && retVal.indexOf("does not match JACK sample rate") >= 0) {
-                String[] lines = retVal.split("\n");
-
-                for (int i = 0; i < lines.length; i++) {
-                    String line = lines[i];
-
-                    if (line.indexOf("does not match JACK sample rate") >= 0) {
-                        sr = line.substring(line.lastIndexOf(" ") + 1);
-                        break;
-                    }
-                }
-            } else {
-                // MIGHT WANT TO GIVE MESSAGE SAYING COULD NOT CONNECT TO JACK
-                return null;
-            }
-
-            if (sr == null) {
-                return null;
-            }
-
-            tempText = jackCSD.replaceAll("\\$SR", sr);
-
-            tempFile = FileUtilities.createTempTextFile("temp", ".csd", null,
-                    tempText);
-
-            command = buffer.toString() + tempFile.getAbsolutePath();
-
-            try {
-                pc.execWaitAndCollect(command, null);
-                retVal = pc.getCollectedOutput();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-
-            if (retVal == null) {
-                return null;
-            }
-
-            // Find Devices
-            StringTokenizer st = new StringTokenizer(retVal, "\n");
-
-            while (st.hasMoreTokens()) {
-                String line = st.nextToken().trim();
-
-                if (line.endsWith("channel)") || line.endsWith("channels)")) {
-                    String deviceName = line.substring(1, line
-                            .lastIndexOf("\""));
-                    String description = deviceName + " "
-                            + line.substring(line.indexOf("("));
-
-                    JackCardInfo cardInfo = new JackCardInfo();
-                    cardInfo.deviceName = deviceName;
-                    cardInfo.description = description;
-
-                    vals.add(cardInfo);
+            if (!detectJackPortsWithCsound(csoundCommand, vals, " -i adc:xxx -B4096 ")) {
+                if (!detectJackPortsWithJackLsp(vals, "audio", "output")) {
+                    return null;
                 }
             }
         } else {
@@ -948,6 +784,168 @@ public class DriverUtils {
             System.out.println(it.next());
         }
 
+    }
+    
+    public static String findExecutableInPath(String exe, String[] paths) {
+        for(String p : paths) {
+            System.out.println(new File(p + File.separator + exe));
+            if(new File(p + File.separator + exe).exists()) {
+                return p + File.separator + exe;
+            }
+        }
+        return null;
+    }
+
+    public static boolean detectJackPortsWithJackLsp(Vector vals, String portType, String subType) {
+        
+        ProcessRunner pc = new ProcessRunner();
+        String retVal = null;
+        
+        String path = System.getenv("PATH");
+        
+        if(!File.pathSeparator.equals(";")) {
+            path += File.pathSeparator + "/usr/local/bin";
+        }
+        
+        String[] paths = path.split(File.pathSeparator);
+        
+        String jackLspPath = findExecutableInPath("jack_lsp", paths);
+
+        if(jackLspPath == null || jackLspPath.length() == 0) {
+            return false;
+        }
+        
+        try {
+            pc.execWaitAndCollect(jackLspPath + " -t -p", null);
+            retVal = pc.getCollectedOutput();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        
+        if(retVal == null || retVal.length() == 0) {
+            return false;
+        }
+        parseJackLspOutput(retVal, portType, subType, vals);
+        
+        return true;
+    }
+    
+    public static boolean detectJackPortsWithCsound(String csoundCommand, Vector vals, String commandlineArg) {
+        String jackCSD = TextUtilities
+                           .getTextFromSystemResource(DriverUtils.class, "tempJack.csd");
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(csoundCommand);
+        buffer.append(" -+msg_color=false -+rtaudio=jack");
+        buffer.append(commandlineArg);
+        String retVal = null;
+        // INITIAL RUN TO FIND OUT TRUE SRATE
+        String tempText = jackCSD.replaceAll("\\$SR", "1000");
+        File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
+                null, tempText);
+        String command = buffer.toString() + tempFile.getAbsolutePath();
+        ProcessRunner pc = new ProcessRunner();
+        try {
+            pc.execWaitAndCollect(command, null);
+            retVal = pc.getCollectedOutput();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        String sr = null;
+        if (retVal != null
+                && retVal.indexOf("does not match JACK sample rate") >= 0) {
+            String[] lines = retVal.split("\n");
+
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+
+                if (line.indexOf("does not match JACK sample rate") >= 0) {
+                    sr = line.substring(line.lastIndexOf(" ") + 1);
+                    break;
+                }
+            }
+        } else {
+            // MIGHT WANT TO GIVE MESSAGE SAYING COULD NOT CONNECT TO JACK
+            return false;
+        }
+        if (sr == null) {
+            return false;
+        }
+        tempText = jackCSD.replaceAll("\\$SR", sr);
+        tempFile = FileUtilities.createTempTextFile("temp", ".csd", null,
+                tempText);
+        command = buffer.toString() + tempFile.getAbsolutePath();
+        try {
+            pc.execWaitAndCollect(command, null);
+            retVal = pc.getCollectedOutput();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        if (retVal == null) {
+            return false;
+        }
+        // Find Devices
+        StringTokenizer st = new StringTokenizer(retVal, "\n");
+        while (st.hasMoreTokens()) {
+            String line = st.nextToken().trim();
+
+            if (line.endsWith("channel)") || line.endsWith("channels)")) {
+                String deviceName = line.substring(1, line
+                        .lastIndexOf("\""));
+                String description = deviceName + " "
+                        + line.substring(line.indexOf("("));
+
+                JackCardInfo cardInfo = new JackCardInfo();
+                cardInfo.deviceName = deviceName;
+                cardInfo.description = description;
+
+                vals.add(cardInfo);
+            }
+        }
+        return true;
+    }
+
+    protected static void parseJackLspOutput(String output, String portType, String subType, Vector vals) throws NumberFormatException {
+        //        System.out.println(retVal);
+                
+                String[] lines = output.split("\\n");
+                ArrayList<String> ports = new ArrayList<String>();
+                Map<String, Integer> portMap = new HashMap<String, Integer>();
+                
+                for(int i = 0; i < lines.length; i += 3) {
+                    if(lines[i + 2].contains(portType) && 
+                            lines[i + 1].contains(subType)) {
+                        String port = lines[i].trim();
+                        int end = port.length() - 1;
+                        while(end >= 0 && Character.isDigit(port.charAt(end))) {
+                            end--;
+                        }
+                        end++;
+                        
+                        String portName = port.substring(0, end);
+                        String chn = port.substring(end);
+                        
+                        if(portMap.containsKey(portName)) {
+                            int p = portMap.get(portName);
+                            if(p < new Integer(chn)) {
+                                portMap.put(portName, new Integer(chn));
+                            }
+                        } else {
+                            portMap.put(portName, new Integer(chn));
+                        }
+                    }
+                }
+                
+                for(Map.Entry<String, Integer> entry : portMap.entrySet()) {
+                    JackCardInfo cardInfo = new JackCardInfo();
+                    cardInfo.deviceName = entry.getKey();
+                    
+                    if(entry.getValue().intValue() == 1) {
+                        cardInfo.description = cardInfo.deviceName + " (1 channel)";
+                    } else {
+                        cardInfo.description = cardInfo.deviceName + " (" + entry.getValue().intValue() + " channels)";
+                    }
+                    vals.add(cardInfo);
+                }
     }
 
     public static class CardInfo {

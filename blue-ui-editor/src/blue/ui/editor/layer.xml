@@ -182,24 +182,24 @@
       <!-- Javascript -->
       
       <folder name="javascript">
-        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript.editing.lexer.Bundle"/>
+        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript2.editor.lexer.Bundle"/>
 
         <file name="language.instance">
-          <attr name="instanceCreate" methodvalue="org.netbeans.modules.javascript.editing.lexer..JsTokenId.language"/>
+          <attr name="instanceCreate" methodvalue="org.netbeans.modules.javascript2.editor.lexer.JsTokenId.javascriptLanguage"/>
           <attr name="instanceOf" stringvalue="org.netbeans.api.lexer.Language"/>
         </file>
         
         <file name="EditorKit.instance">
-          <attr name="instanceClass" stringvalue="org.netbeans.modules.javascript.editing.lexer.JsEditorKit"/>
-          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.javascript.editing.lexer.JsEditorKit"/>
+          <attr name="instanceClass" stringvalue="org.netbeans.modules.javascript2.editor.lexer.JsEditorKit"/>
+          <attr name="instanceOf" stringvalue="javax.swing.text.EditorKit,org.netbeans.modules.javascript2.editor.lexer.JsEditorKit"/>
           <attr name="beaninfo" boolvalue="false"/>
         </file>
                 
         <folder name="FontsColors">
           <folder name="blueDefault">
             <folder name="Defaults">
-              <file name="FontAndColors.xml" url="/org/netbeans/modules/javascript/editing/lexer/fontsColors.xml">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript.editing.lexer.Bundle"/>
+              <file name="FontAndColors.xml" url="/org/netbeans/modules/javascript2/editor/lexer/fontsColors.xml">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.javascript2.editor.lexer.Bundle"/>
               </file>
             </folder>
           </folder>

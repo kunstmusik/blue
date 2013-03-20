@@ -5,6 +5,7 @@ dist
 */nbproject/private
 */nbproject/sqe.properties
 */nbproject/findbugs.settings
+*/nbproject/genfiles.properties
 *test/(coverage|lib|results|work)
 #derby.log
 *.class

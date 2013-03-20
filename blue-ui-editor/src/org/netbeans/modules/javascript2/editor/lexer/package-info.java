@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2012
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,26 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.clojure;
+@TemplateRegistration(folder = "Other", content = "JavaScriptExample.js")
+package org.netbeans.modules.javascript2.editor.lexer;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionRegistration;
-import org.openide.util.NbBundle.Messages;
-
-@ActionID(
-    category = "Script",
-id = "blue.clojure.ReinitializeClojureAction")
-@ActionRegistration(
-    displayName = "#CTL_ReinitializeClojureAction")
-@ActionReference(path = "Menu/Script", position = 210)
-@Messages("CTL_ReinitializeClojureAction=Reinitialize Clojure Engine")
-public final class ReinitializeClojureAction implements ActionListener {
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        BlueClojureEngine.getInstance().reinitialize();
-    }
-}
+import org.netbeans.api.templates.TemplateRegistration;

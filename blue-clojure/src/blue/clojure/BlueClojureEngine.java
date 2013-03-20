@@ -19,11 +19,14 @@
  */
 package blue.clojure;
 
-import clojure.lang.RT;
+import blue.BlueSystem;
+import blue.projects.BlueProject;
+import blue.projects.BlueProjectManager;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
 import de.torq.clojure.jsr223.ClojureScriptEngine;
-import de.torq.clojure.jsr223.ClojureScriptEngineFactory;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.HashMap;
 import javax.script.ScriptException;
@@ -33,58 +36,95 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class BlueClojureEngine {
+public class BlueClojureEngine implements PropertyChangeListener {
 
     private static BlueClojureEngine instance = null;
-    private static File libDir;
-    private static ClojureScriptEngine engine = null;
-
-    public static void setLibDir(File newLibDir) {
-        libDir = newLibDir;
-    }
+    private BlueProject currentProject = null;
+    private HashMap<BlueProject, ClojureScriptEngine> engines =
+            new HashMap<BlueProject, ClojureScriptEngine>();
 
     public static BlueClojureEngine getInstance() {
         if (instance == null) {
             instance = new BlueClojureEngine();
+            BlueProjectManager.getInstance().addPropertyChangeListener(instance);
+            instance.currentProject = BlueProjectManager.getInstance().getCurrentProject();
         }
         return instance;
     }
 
-    public static void reinitialize() {
+    public void reinitialize() {
         try {
-            engine = new ClojureScriptEngine();
+            if (currentProject == null) {
+                return;
+            }
+
+            File f = BlueSystem.getCurrentProjectDirectory();
+            File projScriptDir = null;
+
+            if (f != null) {
+                projScriptDir = new File(
+                        f.getAbsolutePath() + File.separator + "script"
+                        + File.separator + "clojure");
+            }
+
+            ClassLoader cl = new BlueClojureClassLoader(
+                    new File(BlueSystem.getUserScriptDir()
+                        + File.separator + "clojure"),
+                    projScriptDir);
+
+            ClojureScriptEngine engine = new ClojureScriptEngine(cl);
+
+            engines.put(currentProject,
+                    engine);
         } catch (ScriptException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
 
-    public String processScript(String code, 
-            HashMap<String, ? extends Object> values, 
+    public String processScript(String code,
+            HashMap<String, ? extends Object> values,
             String returnVariableName) throws ScriptException {
-        
-        if(engine == null) {
+
+        if (engines.get(currentProject) == null) {
             reinitialize();
         }
         
+        ClojureScriptEngine engine = engines.get(currentProject);
+
         String retVal = "";
-        
-        if(values != null) {
-            for(String key : values.keySet()) {
-                Var.intern(engine.getInstanceNameSpace(), Symbol.create(key), values.get(key));
+
+        if (values != null) {
+            for (String key : values.keySet()) {
+                Var.intern(engine.getInstanceNameSpace(), Symbol.create(key),
+                        values.get(key));
             }
         }
-        
+
         engine.eval(code);
-        
+
         try {
-        Object obj = engine.eval("(str score)");
-        if(obj != null) {
-            retVal = obj.toString();
-        }
+            Object obj = engine.eval("(str score)");
+            if (obj != null) {
+                retVal = obj.toString();
+            }
         } catch (Exception e) {
             e.printStackTrace();;
         }
-        
+
         return retVal;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
+            if (this.currentProject != null
+                    && !BlueProjectManager.getInstance().isProjectStillOpen(this.currentProject)) {
+                if(engines.containsKey(this.currentProject)) {
+                    engines.remove(this.currentProject);
+                }
+            }
+
+            this.currentProject = (BlueProject) evt.getNewValue();
+        }
     }
 }

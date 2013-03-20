@@ -152,6 +152,10 @@ public class BlueSystem {
     public static String getProgramRootDir() {
         return programRootDir;
     }
+    
+    public static String getUserScriptDir() {
+        return getUserConfigurationDirectory() + File.separator + "script";
+    }
 
     public static String getConfDir() {
         return programRootDir + File.separator + "conf";
