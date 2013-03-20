@@ -22,6 +22,9 @@ NEW
 
 * Added Dave Seidel's piece "Triune" to blue/examples/pieces/daveSeidel folder
 
+* ClojureObject: can now load clj scripts from $HOME/.blue/script/clojure and 
+  $PROJECT_DIR/script/clojure
+
 UPDATED
 
 * Updated Clojure library to 1.5.1

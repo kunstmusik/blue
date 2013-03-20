@@ -37,6 +37,6 @@ public final class ReinitializeClojureAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        BlueClojureEngine.reinitialize();
+        BlueClojureEngine.getInstance().reinitialize();
     }
 }

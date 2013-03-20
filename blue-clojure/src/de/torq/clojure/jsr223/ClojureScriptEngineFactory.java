@@ -137,14 +137,14 @@ public class ClojureScriptEngineFactory implements ScriptEngineFactory
     @Override
     public ScriptEngine getScriptEngine()
     {
-        try
-        {
-            return new ClojureScriptEngine();
-        }
-        catch (ScriptException ex)
-        {
+//        try
+//        {
+//            return new ClojureScriptEngine();
+//        }
+//        catch (ScriptException ex)
+//        {
             return null;
-        }
+//        }
     }
 
 }
