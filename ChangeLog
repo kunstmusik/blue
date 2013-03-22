@@ -25,6 +25,10 @@ FIX
 
 * Default background color for output window was white instead of black
 
+* Program Settings were not saving/loading correctly and could overwrite each
+  other (i.e. sr, ksmps, etc. could get overwritten between disk and realtime
+  settings)
+
 
 >Notes for 2.4.1<
 [released 2013.03.20]

@@ -30,26 +30,26 @@ import org.openide.util.NbPreferences;
  */
 public class PlaybackSettings {
 
+    private static final String PREFIX = "playback.";
     private static final String PLAYBACK_FPS = "playbackFPS";
-
     private static final String PLAYBACK_LATENCY_CORRECTION = "playbackLatencyCorrection";
-
     private int playbackFPS;
     private float playbackLatencyCorrection;
-
     private static PlaybackSettings instance = null;
 
-    private PlaybackSettings() {}
+    private PlaybackSettings() {
+    }
 
     public static PlaybackSettings getInstance() {
-        if(instance == null) {
+        if (instance == null) {
             instance = new PlaybackSettings();
 
-            final Preferences prefs = NbPreferences.forModule(PlaybackSettings.class);
+            final Preferences prefs = NbPreferences.forModule(
+                    PlaybackSettings.class);
 
-            instance.playbackFPS = prefs.getInt(PLAYBACK_FPS, 24);
-            instance.playbackLatencyCorrection  =
-                    prefs.getFloat(PLAYBACK_LATENCY_CORRECTION, 0.00f);
+            instance.playbackFPS = prefs.getInt(PREFIX + PLAYBACK_FPS, 24);
+            instance.playbackLatencyCorrection =
+                    prefs.getFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION, 0.00f);
 
         }
 
@@ -59,9 +59,10 @@ public class PlaybackSettings {
     public void save() {
         final Preferences prefs = NbPreferences.forModule(PlaybackSettings.class);
 
-        prefs.putInt(PLAYBACK_FPS, playbackFPS);
-        prefs.putFloat(PLAYBACK_LATENCY_CORRECTION, playbackLatencyCorrection);
-        
+        prefs.putInt(PREFIX + PLAYBACK_FPS, playbackFPS);
+        prefs.putFloat(PREFIX + PLAYBACK_LATENCY_CORRECTION,
+                playbackLatencyCorrection);
+
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {

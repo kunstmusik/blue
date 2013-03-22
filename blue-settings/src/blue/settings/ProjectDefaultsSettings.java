@@ -30,14 +30,11 @@ import org.openide.util.NbPreferences;
  */
 public class ProjectDefaultsSettings {
 
+    private static final String PREFIX = "projectDefaults.";
     private static final String DEFAULT_AUTHOR = "defaultAuthor";
-
     private static final String MIXER_ENABLED = "mixerEnabled";
-
     public String defaultAuthor;
-
     public boolean mixerEnabled;
-
     private static ProjectDefaultsSettings instance = null;
 
     private ProjectDefaultsSettings() {
@@ -47,19 +44,22 @@ public class ProjectDefaultsSettings {
         if (instance == null) {
             instance = new ProjectDefaultsSettings();
 
-            final Preferences prefs = NbPreferences.forModule(ProjectDefaultsSettings.class);
+            final Preferences prefs = NbPreferences.forModule(
+                    ProjectDefaultsSettings.class);
 
-            instance.defaultAuthor = prefs.get(DEFAULT_AUTHOR, "");
-            instance.mixerEnabled = prefs.getBoolean(MIXER_ENABLED, true);
+            instance.defaultAuthor = prefs.get(PREFIX + DEFAULT_AUTHOR, "");
+            instance.mixerEnabled = prefs.getBoolean(PREFIX + MIXER_ENABLED,
+                    true);
         }
         return instance;
     }
 
     public void save() {
-        final Preferences prefs = NbPreferences.forModule(ProjectDefaultsSettings.class);
+        final Preferences prefs = NbPreferences.forModule(
+                ProjectDefaultsSettings.class);
 
-        prefs.put(DEFAULT_AUTHOR, defaultAuthor);
-        prefs.putBoolean(MIXER_ENABLED, mixerEnabled);
+        prefs.put(PREFIX + DEFAULT_AUTHOR, defaultAuthor);
+        prefs.putBoolean(PREFIX + MIXER_ENABLED, mixerEnabled);
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
