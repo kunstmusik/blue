@@ -23,6 +23,8 @@ FIX
   format, depending on the precision and the value after rounding" (from 
   documentation for java.util.Formatter)
 
+* Default background color for output window was white instead of black
+
 
 >Notes for 2.4.1<
 [released 2013.03.20]
