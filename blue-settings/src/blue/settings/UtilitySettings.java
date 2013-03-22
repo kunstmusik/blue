@@ -17,7 +17,6 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.settings;
 
 import java.util.prefs.BackingStoreException;
@@ -30,17 +29,18 @@ import org.openide.util.NbPreferences;
  * @author syi
  */
 public class UtilitySettings {
+
+    public static final String PREFIX = "utility.";
     public static final String CSOUND_EXECUTABLE = "csoundExecutable";
     public static final String FREEZE_FLAGS = "freezeFlags";
-
     public String csoundExecutable = null;
     public String freezeFlags = null;
-
     private static UtilitySettings instance = null;
 
-    private UtilitySettings() {}
+    private UtilitySettings() {
+    }
 
-     public static UtilitySettings getInstance() {
+    public static UtilitySettings getInstance() {
         if (instance == null) {
             instance = new UtilitySettings();
 
@@ -55,10 +55,13 @@ public class UtilitySettings {
             String defaultFreezeFlags = "-" + flag + "do";
 
 
-            final Preferences prefs = NbPreferences.forModule(UtilitySettings.class);
+            final Preferences prefs = NbPreferences.forModule(
+                    UtilitySettings.class);
 
-            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, "csound");
-            instance.freezeFlags = prefs.get(FREEZE_FLAGS, defaultFreezeFlags);
+            instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
+                    "csound");
+            instance.freezeFlags = prefs.get(PREFIX + FREEZE_FLAGS,
+                    defaultFreezeFlags);
         }
         return instance;
     }
@@ -66,8 +69,8 @@ public class UtilitySettings {
     public void save() {
         final Preferences prefs = NbPreferences.forModule(UtilitySettings.class);
 
-        prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
-        prefs.put(FREEZE_FLAGS, freezeFlags);
+        prefs.put(PREFIX + CSOUND_EXECUTABLE, csoundExecutable);
+        prefs.put(PREFIX + FREEZE_FLAGS, freezeFlags);
 
         try {
             prefs.sync();

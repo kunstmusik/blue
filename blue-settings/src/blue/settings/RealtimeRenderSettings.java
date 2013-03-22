@@ -33,6 +33,7 @@ import org.openide.util.NbPreferences;
  */
 public class RealtimeRenderSettings implements Serializable {
 
+    private static final String PREFIX = "realtimeRender.";
     private static final String ADVANCED_SETTINGS = "advancedSettings";
     private static final String AUDIO_DRIVER = "audioDriver";
     private static final String AUDIO_DRIVER_ENABLED = "audioDriverEnabled";
@@ -125,46 +126,46 @@ public class RealtimeRenderSettings implements Serializable {
             final Preferences prefs = NbPreferences.forModule(
                     RealtimeRenderSettings.class);
 
-            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, csoundExecutableDefault);
-            instance.defaultSr = prefs.get(DEFAULT_SR, "44100");
-            instance.defaultKsmps = prefs.get(DEFAULT_KSMPS, "1");
-            instance.defaultNchnls = prefs.get(DEFAULT_NCHNLS, "2");
+            instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE, csoundExecutableDefault);
+            instance.defaultSr = prefs.get(PREFIX + DEFAULT_SR, "44100");
+            instance.defaultKsmps = prefs.get(PREFIX + DEFAULT_KSMPS, "1");
+            instance.defaultNchnls = prefs.get(PREFIX + DEFAULT_NCHNLS, "2");
 
-            instance.audioDriverEnabled = prefs.getBoolean(AUDIO_DRIVER_ENABLED, true);
-            instance.audioDriver = prefs.get(AUDIO_DRIVER, audioDriverDefault);
-            instance.audioOutEnabled = prefs.getBoolean(AUDIO_OUT_ENABLED, true);
-            instance.audioOutText = prefs.get(AUDIO_OUT_TEXT, "dac");
-            instance.audioInEnabled = prefs.getBoolean(AUDIO_IN_ENABLED, false);
-            instance.audioInText = prefs.get(AUDIO_IN_TEXT, "adc");
+            instance.audioDriverEnabled = prefs.getBoolean(PREFIX + AUDIO_DRIVER_ENABLED, true);
+            instance.audioDriver = prefs.get(PREFIX + AUDIO_DRIVER, audioDriverDefault);
+            instance.audioOutEnabled = prefs.getBoolean(PREFIX + AUDIO_OUT_ENABLED, true);
+            instance.audioOutText = prefs.get(PREFIX + AUDIO_OUT_TEXT, "dac");
+            instance.audioInEnabled = prefs.getBoolean(PREFIX + AUDIO_IN_ENABLED, false);
+            instance.audioInText = prefs.get(PREFIX + AUDIO_IN_TEXT, "adc");
 
-            instance.midiDriverEnabled = prefs.getBoolean(MIDI_DRIVER_ENABLED, true);
-            instance.midiDriver = prefs.get(MIDI_DRIVER, "PortMidi");
-            instance.midiOutEnabled = prefs.getBoolean(MIDI_OUT_ENABLED, false);
-            instance.midiOutText = prefs.get(MIDI_OUT_TEXT, "");
-            instance.midiInEnabled = prefs.getBoolean(MIDI_IN_ENABLED, false);
-            instance.midiInText = prefs.get(MIDI_IN_TEXT, "");
+            instance.midiDriverEnabled = prefs.getBoolean(PREFIX + MIDI_DRIVER_ENABLED, true);
+            instance.midiDriver = prefs.get(PREFIX + MIDI_DRIVER, "PortMidi");
+            instance.midiOutEnabled = prefs.getBoolean(PREFIX + MIDI_OUT_ENABLED, false);
+            instance.midiOutText = prefs.get(PREFIX + MIDI_OUT_TEXT, "");
+            instance.midiInEnabled = prefs.getBoolean(PREFIX + MIDI_IN_ENABLED, false);
+            instance.midiInText = prefs.get(PREFIX + MIDI_IN_TEXT, "");
 
-            instance.hardwareBufferEnabled = prefs.getBoolean(HARDWARE_BUFFER_ENABLED,
+            instance.hardwareBufferEnabled = prefs.getBoolean(PREFIX + HARDWARE_BUFFER_ENABLED,
                     false);
-            instance.hardwareBufferSize = prefs.getInt(HARDWARE_BUFFER_SIZE,
+            instance.hardwareBufferSize = prefs.getInt(PREFIX + HARDWARE_BUFFER_SIZE,
                     hardwareBufferSize);
 
-            instance.softwareBufferEnabled = prefs.getBoolean(SOFTWARE_BUFFER_ENABLED,
+            instance.softwareBufferEnabled = prefs.getBoolean(PREFIX + SOFTWARE_BUFFER_ENABLED,
                     false);
-            instance.softwareBufferSize = prefs.getInt(SOFTWARE_BUFFER_SIZE,
+            instance.softwareBufferSize = prefs.getInt(PREFIX + SOFTWARE_BUFFER_SIZE,
                     softwareBufferSize);
 
-            instance.noteAmpsEnabled = prefs.getBoolean(NOTE_AMPS_ENABLED, true);
-            instance.outOfRangeEnabled = prefs.getBoolean(OUT_OF_RANGE_ENABLED, true);
-            instance.warningsEnabled = prefs.getBoolean(WARNINGS_ENABLED, true);
-            instance.benchmarkEnabled = prefs.getBoolean(BENCHMARK_ENABLED, true);
+            instance.noteAmpsEnabled = prefs.getBoolean(PREFIX + NOTE_AMPS_ENABLED, true);
+            instance.outOfRangeEnabled = prefs.getBoolean(PREFIX + OUT_OF_RANGE_ENABLED, true);
+            instance.warningsEnabled = prefs.getBoolean(PREFIX + WARNINGS_ENABLED, true);
+            instance.benchmarkEnabled = prefs.getBoolean(PREFIX + BENCHMARK_ENABLED, true);
 
-            instance.displaysDisabled = prefs.getBoolean(DISPLAYS_DISABLED, true);
+            instance.displaysDisabled = prefs.getBoolean(PREFIX + DISPLAYS_DISABLED, true);
             
-            instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
+            instance.advancedSettings = prefs.get(PREFIX + ADVANCED_SETTINGS, "");
 
-            instance.useZeroDbFS = prefs.getBoolean(USE_ZERO_DBFS, true);
-            instance.zeroDbFS = prefs.get(ZERO_DB_FS, "1");
+            instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
+            instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
         }
         return instance;
     }
@@ -173,42 +174,42 @@ public class RealtimeRenderSettings implements Serializable {
         final Preferences prefs = NbPreferences.forModule(
                 RealtimeRenderSettings.class);
 
-        prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
-        prefs.put(DEFAULT_SR, defaultSr);
-        prefs.put(DEFAULT_KSMPS, defaultKsmps);
-        prefs.put(DEFAULT_NCHNLS, defaultNchnls);
+        prefs.put(PREFIX + CSOUND_EXECUTABLE, csoundExecutable);
+        prefs.put(PREFIX + DEFAULT_SR, defaultSr);
+        prefs.put(PREFIX + DEFAULT_KSMPS, defaultKsmps);
+        prefs.put(PREFIX + DEFAULT_NCHNLS, defaultNchnls);
 
-        prefs.putBoolean(AUDIO_DRIVER_ENABLED, audioDriverEnabled);
-        prefs.put(AUDIO_DRIVER, audioDriver);
-        prefs.putBoolean(AUDIO_OUT_ENABLED, audioOutEnabled);
-        prefs.put(AUDIO_OUT_TEXT, audioOutText);
-        prefs.putBoolean(AUDIO_IN_ENABLED, audioInEnabled);
-        prefs.put(AUDIO_IN_TEXT, audioInText);
+        prefs.putBoolean(PREFIX + AUDIO_DRIVER_ENABLED, audioDriverEnabled);
+        prefs.put(PREFIX + AUDIO_DRIVER, audioDriver);
+        prefs.putBoolean(PREFIX + AUDIO_OUT_ENABLED, audioOutEnabled);
+        prefs.put(PREFIX + AUDIO_OUT_TEXT, audioOutText);
+        prefs.putBoolean(PREFIX + AUDIO_IN_ENABLED, audioInEnabled);
+        prefs.put(PREFIX + AUDIO_IN_TEXT, audioInText);
 
-        prefs.putBoolean(MIDI_DRIVER_ENABLED, midiDriverEnabled);
-        prefs.put(MIDI_DRIVER, midiDriver);
-        prefs.putBoolean(MIDI_OUT_ENABLED, midiOutEnabled);
-        prefs.put(MIDI_OUT_TEXT, midiOutText.toString());
-        prefs.putBoolean(MIDI_IN_ENABLED, midiInEnabled);
-        prefs.put(MIDI_IN_TEXT, midiInText);
+        prefs.putBoolean(PREFIX + MIDI_DRIVER_ENABLED, midiDriverEnabled);
+        prefs.put(PREFIX + MIDI_DRIVER, midiDriver);
+        prefs.putBoolean(PREFIX + MIDI_OUT_ENABLED, midiOutEnabled);
+        prefs.put(PREFIX + MIDI_OUT_TEXT, midiOutText.toString());
+        prefs.putBoolean(PREFIX + MIDI_IN_ENABLED, midiInEnabled);
+        prefs.put(PREFIX + MIDI_IN_TEXT, midiInText);
 
-        prefs.putBoolean(HARDWARE_BUFFER_ENABLED, hardwareBufferEnabled);
-        prefs.putInt(HARDWARE_BUFFER_SIZE, hardwareBufferSize);
+        prefs.putBoolean(PREFIX + HARDWARE_BUFFER_ENABLED, hardwareBufferEnabled);
+        prefs.putInt(PREFIX + HARDWARE_BUFFER_SIZE, hardwareBufferSize);
 
-        prefs.putBoolean(SOFTWARE_BUFFER_ENABLED, softwareBufferEnabled);
-        prefs.putInt(SOFTWARE_BUFFER_SIZE, softwareBufferSize);
+        prefs.putBoolean(PREFIX + SOFTWARE_BUFFER_ENABLED, softwareBufferEnabled);
+        prefs.putInt(PREFIX + SOFTWARE_BUFFER_SIZE, softwareBufferSize);
 
-        prefs.putBoolean(NOTE_AMPS_ENABLED, noteAmpsEnabled);
-        prefs.putBoolean(WARNINGS_ENABLED, warningsEnabled);
-        prefs.putBoolean(OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
-        prefs.putBoolean(BENCHMARK_ENABLED, benchmarkEnabled);
+        prefs.putBoolean(PREFIX + NOTE_AMPS_ENABLED, noteAmpsEnabled);
+        prefs.putBoolean(PREFIX + WARNINGS_ENABLED, warningsEnabled);
+        prefs.putBoolean(PREFIX + OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
+        prefs.putBoolean(PREFIX + BENCHMARK_ENABLED, benchmarkEnabled);
 
-        prefs.putBoolean(DISPLAYS_DISABLED, displaysDisabled);
+        prefs.putBoolean(PREFIX + DISPLAYS_DISABLED, displaysDisabled);
         
-        prefs.put(ADVANCED_SETTINGS, advancedSettings);
+        prefs.put(PREFIX + ADVANCED_SETTINGS, advancedSettings);
 
-        prefs.putBoolean(USE_ZERO_DBFS, useZeroDbFS);
-        prefs.put(ZERO_DB_FS, zeroDbFS);
+        prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
+        prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
         
         try {
             prefs.sync();

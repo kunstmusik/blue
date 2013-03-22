@@ -28,37 +28,25 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 
 /**
- * 
+ *
  * @author steven
  */
 public class GeneralSettings implements Serializable {
 
+    private static final String PREFIX = "general.";
     private static final String CSOUND_ERROR_WARNING_ENABLED = "csoundErrorWarningEnabled";
-
     private static final String DEFAULT_WORK_DIRECTORY = "defaultWorkDirectory";
-
     private static final String DRAW_ALPHA_BACKGROUND_ON_MARQUEE = "drawAlphaBackgroundOnMarquee";
-
     private static final String MESSAGE_COLORS_ENABLED = "messageColorsEnabled";
-
     private static final String NEW_USER_DEFAULTS_ENABLED = "newUserDefaultsEnabled";
-
     private static final String USE_CSOUND_API = "useCsoundApi";
-
     private String csoundDocRoot = "";
-
     private File defaultDirectory = null;
-
     private boolean usingCsoundAPI = true;
-
     private boolean newUserDefaultsEnabled = true;
-
     private boolean alphaEnabled = false;
-
     private boolean messageColorsEnabled = false;
-
     private boolean csoundErrorWarningEnabled = true;
-
     private static GeneralSettings instance = null;
 
     private GeneralSettings() {
@@ -69,14 +57,21 @@ public class GeneralSettings implements Serializable {
         if (instance == null) {
             instance = new GeneralSettings();
 
-            final Preferences prefs = NbPreferences.forModule(GeneralSettings.class);
+            final Preferences prefs = NbPreferences.forModule(
+                    GeneralSettings.class);
 
-            instance.defaultDirectory = new File(prefs.get(DEFAULT_WORK_DIRECTORY, ""));
-            instance.usingCsoundAPI = prefs.getBoolean(USE_CSOUND_API, true);
-            instance.newUserDefaultsEnabled = prefs.getBoolean(NEW_USER_DEFAULTS_ENABLED, true);
-            instance.alphaEnabled = prefs.getBoolean(DRAW_ALPHA_BACKGROUND_ON_MARQUEE, false);
-            instance.messageColorsEnabled = prefs.getBoolean(MESSAGE_COLORS_ENABLED, false);
-            instance.csoundErrorWarningEnabled = prefs.getBoolean(CSOUND_ERROR_WARNING_ENABLED, true);
+            instance.defaultDirectory = new File(prefs.get(
+                    PREFIX + DEFAULT_WORK_DIRECTORY, ""));
+            instance.usingCsoundAPI = prefs.getBoolean(PREFIX + USE_CSOUND_API,
+                    true);
+            instance.newUserDefaultsEnabled = prefs.getBoolean(
+                    PREFIX + NEW_USER_DEFAULTS_ENABLED, true);
+            instance.alphaEnabled = prefs.getBoolean(
+                    PREFIX + DRAW_ALPHA_BACKGROUND_ON_MARQUEE, false);
+            instance.messageColorsEnabled = prefs.getBoolean(
+                    PREFIX + MESSAGE_COLORS_ENABLED, false);
+            instance.csoundErrorWarningEnabled = prefs.getBoolean(
+                    PREFIX + CSOUND_ERROR_WARNING_ENABLED, true);
         }
 
         return instance;
@@ -86,13 +81,16 @@ public class GeneralSettings implements Serializable {
 
         final Preferences prefs = NbPreferences.forModule(GeneralSettings.class);
 
-        prefs.put(DEFAULT_WORK_DIRECTORY, defaultDirectory.getAbsolutePath());
-        prefs.putBoolean(USE_CSOUND_API, usingCsoundAPI);
-        prefs.putBoolean(NEW_USER_DEFAULTS_ENABLED, newUserDefaultsEnabled);
-        prefs.putBoolean(DRAW_ALPHA_BACKGROUND_ON_MARQUEE, alphaEnabled);
-        prefs.putBoolean(MESSAGE_COLORS_ENABLED, messageColorsEnabled);
-        prefs.putBoolean(CSOUND_ERROR_WARNING_ENABLED, csoundErrorWarningEnabled);
-        
+        prefs.put(PREFIX + DEFAULT_WORK_DIRECTORY,
+                defaultDirectory.getAbsolutePath());
+        prefs.putBoolean(PREFIX + USE_CSOUND_API, usingCsoundAPI);
+        prefs.putBoolean(PREFIX + NEW_USER_DEFAULTS_ENABLED,
+                newUserDefaultsEnabled);
+        prefs.putBoolean(PREFIX + DRAW_ALPHA_BACKGROUND_ON_MARQUEE, alphaEnabled);
+        prefs.putBoolean(PREFIX + MESSAGE_COLORS_ENABLED, messageColorsEnabled);
+        prefs.putBoolean(PREFIX + CSOUND_ERROR_WARNING_ENABLED,
+                csoundErrorWarningEnabled);
+
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
@@ -101,7 +99,6 @@ public class GeneralSettings implements Serializable {
     }
 
     /* GETTER/SETTER METHODS */
-
     public File getDefaultDirectory() {
         return defaultDirectory;
     }
