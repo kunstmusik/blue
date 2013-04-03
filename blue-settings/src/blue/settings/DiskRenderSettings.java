@@ -27,101 +27,58 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
 
 /**
- * 
+ *
  * @author steven
  */
 public class DiskRenderSettings implements Serializable {
 
     public static final String[] FILE_FORMATS = new String[]{"WAV", "AIFF",
         "AU", "RAW", "IRCAM", "W64", "WAVEX", "SD2", "FLAC"};
-
     public static final String[] SAMPLE_FORMATS = new String[]{"ALAW",
         "ULAW", "SCHAR", "UCHAR", "FLOAT", "SHORT", "LONG", "24BIT"};
-
+    private static final String PREFIX = "diskRender.";
     private static final String ADVANCED_SETTINGS = "advancedSettings";
-
     private static final String BENCHMARK_ENABLED = "benchmarkEnabled";
-
     private static final String CSOUND_EXECUTABLE = "csoundExecutable";
-
     private static final String DEFAULT_KSMPS = "defaultKsmps";
-
     private static final String DEFAULT_NCHNLS = "defaultNchnls";
-
     private static final String DEFAULT_SR = "defaultSr";
-
     private static final String DITHER_OUTPUT = "ditherOutput";
-
     private static final String EXTERNAL_PLAY_COMMAND = "externalPlayCommand";
-
     private static final String EXTERNAL_PLAY_COMMAND_ENABLED = "externalPlayCommandEnabled";
-
     private static final String FILE_FORMAT = "fileFormat";
-
     private static final String FILE_FORMAT_ENABLED = "fileFormatEnabled";
-
     private static final String NOTE_AMPS_ENABLED = "noteAmpsEnabled";
-
     private static final String OUT_OF_RANGE_ENABLED = "outOfRangeEnabled";
-
     private static final String REWRITE_HEADER = "rewriteHeader";
-
     private static final String SAMPLE_FORMAT = "sampleFormat";
-
     private static final String SAMPLE_FORMAT_ENABLED = "sampleFormatEnabled";
-
     private static final String SAVE_PEAK_INFORMATION = "savePeakInformation";
-
     private static final String WARNINGS_ENABLED = "warningsEnabled";
-
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
-    
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
-    
     private static final String ZERO_DB_FS = "zeroDbFS";
-    
     public String csoundExecutable = "csound";
-
     public String fileFormat = "WAV";
-
     public String sampleFormat = "SHORT";
-
     public String defaultSr = "44100";
-
     public String defaultKsmps = "1";
-
     public String defaultNchnls = "2";
-
     public boolean noteAmpsEnabled = true;
-
     public boolean outOfRangeEnabled = true;
-
     public boolean warningsEnabled = true;
-
     public boolean benchmarkEnabled = true;
-
     public boolean fileFormatEnabled = true;
-
     public boolean sampleFormatEnabled = true;
-
     public boolean savePeakInformation = true;
-
     public boolean ditherOutput = false;
-
     public boolean rewriteHeader = false;
-
     public boolean externalPlayCommandEnabled = false;
-
     public String externalPlayCommand = "command $outfile";
-
     public boolean displaysDisabled = true;
-    
     public String advancedSettings = "";
-    
     public boolean useZeroDbFS = true;
-    
     public String zeroDbFS = "1";
-
     private static DiskRenderSettings instance = null;
 
     private DiskRenderSettings() {
@@ -137,39 +94,51 @@ public class DiskRenderSettings implements Serializable {
 
             String osName = System.getProperty("os.name");
 
-            String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0) ?
-						"csound" : "/usr/local/bin/csound";
-			
-            instance.csoundExecutable = prefs.get(CSOUND_EXECUTABLE, csoundExecutableDefault);
-            instance.defaultSr = prefs.get(DEFAULT_SR, "44100");
-            instance.defaultKsmps = prefs.get(DEFAULT_KSMPS, "1");
-            instance.defaultNchnls = prefs.get(DEFAULT_NCHNLS, "2");
+            String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0)
+                    ? "csound" : "/usr/local/bin/csound";
+
+            instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
+                    csoundExecutableDefault);
+            instance.defaultSr = prefs.get(PREFIX + DEFAULT_SR, "44100");
+            instance.defaultKsmps = prefs.get(PREFIX + DEFAULT_KSMPS, "1");
+            instance.defaultNchnls = prefs.get(PREFIX + DEFAULT_NCHNLS, "2");
 
             instance.externalPlayCommandEnabled = prefs.getBoolean(
-                    EXTERNAL_PLAY_COMMAND_ENABLED, false);
-            instance.externalPlayCommand = prefs.get(EXTERNAL_PLAY_COMMAND,
+                    PREFIX + EXTERNAL_PLAY_COMMAND_ENABLED, false);
+            instance.externalPlayCommand = prefs.get(
+                    PREFIX + EXTERNAL_PLAY_COMMAND,
                     "command $outfile");
 
-            instance.fileFormatEnabled = prefs.getBoolean(FILE_FORMAT_ENABLED, true);
-            instance.fileFormat = prefs.get(FILE_FORMAT, "WAV");
-            instance.sampleFormatEnabled = prefs.getBoolean(SAMPLE_FORMAT_ENABLED,
+            instance.fileFormatEnabled = prefs.getBoolean(
+                    PREFIX + FILE_FORMAT_ENABLED, true);
+            instance.fileFormat = prefs.get(PREFIX + FILE_FORMAT, "WAV");
+            instance.sampleFormatEnabled = prefs.getBoolean(
+                    PREFIX + SAMPLE_FORMAT_ENABLED,
                     true);
-            instance.sampleFormat = prefs.get(SAMPLE_FORMAT, "SHORT");
-            instance.savePeakInformation = prefs.getBoolean(SAVE_PEAK_INFORMATION, true);
-            instance.ditherOutput = prefs.getBoolean(DITHER_OUTPUT, false);
-            instance.rewriteHeader = prefs.getBoolean(REWRITE_HEADER, true);
+            instance.sampleFormat = prefs.get(PREFIX + SAMPLE_FORMAT, "SHORT");
+            instance.savePeakInformation = prefs.getBoolean(
+                    PREFIX + SAVE_PEAK_INFORMATION, true);
+            instance.ditherOutput = prefs.getBoolean(PREFIX + DITHER_OUTPUT,
+                    false);
+            instance.rewriteHeader = prefs.getBoolean(PREFIX + REWRITE_HEADER,
+                    true);
 
-            instance.noteAmpsEnabled = prefs.getBoolean(NOTE_AMPS_ENABLED, true);
-            instance.outOfRangeEnabled = prefs.getBoolean(OUT_OF_RANGE_ENABLED, true);
-            instance.warningsEnabled = prefs.getBoolean(WARNINGS_ENABLED, true);
-            instance.benchmarkEnabled = prefs.getBoolean(BENCHMARK_ENABLED, true);
+            instance.noteAmpsEnabled = prefs.getBoolean(
+                    PREFIX + NOTE_AMPS_ENABLED, true);
+            instance.outOfRangeEnabled = prefs.getBoolean(
+                    PREFIX + OUT_OF_RANGE_ENABLED, true);
+            instance.warningsEnabled = prefs.getBoolean(
+                    PREFIX + WARNINGS_ENABLED, true);
+            instance.benchmarkEnabled = prefs.getBoolean(
+                    PREFIX + BENCHMARK_ENABLED, true);
 
-            instance.displaysDisabled = prefs.getBoolean(DISPLAYS_DISABLED, true);
-            
-            instance.advancedSettings = prefs.get(ADVANCED_SETTINGS, "");
-            
-            instance.useZeroDbFS = prefs.getBoolean(USE_ZERO_DBFS, true);
-            instance.zeroDbFS = prefs.get(ZERO_DB_FS, "1");
+            instance.displaysDisabled = prefs.getBoolean(
+                    PREFIX + DISPLAYS_DISABLED, true);
+
+            instance.advancedSettings = prefs.get(PREFIX + ADVANCED_SETTINGS, "");
+
+            instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
+            instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
 
         }
 
@@ -177,38 +146,39 @@ public class DiskRenderSettings implements Serializable {
     }
 
     public void save() {
-         final Preferences prefs = NbPreferences.forModule(
+        final Preferences prefs = NbPreferences.forModule(
                 DiskRenderSettings.class);
 
-        prefs.put(CSOUND_EXECUTABLE, csoundExecutable);
-        prefs.put(DEFAULT_SR, defaultSr);
-        prefs.put(DEFAULT_KSMPS, defaultKsmps);
-        prefs.put(DEFAULT_NCHNLS, defaultNchnls);
+        prefs.put(PREFIX + CSOUND_EXECUTABLE, csoundExecutable);
+        prefs.put(PREFIX + DEFAULT_SR, defaultSr);
+        prefs.put(PREFIX + DEFAULT_KSMPS, defaultKsmps);
+        prefs.put(PREFIX + DEFAULT_NCHNLS, defaultNchnls);
 
-        prefs.putBoolean(EXTERNAL_PLAY_COMMAND_ENABLED, externalPlayCommandEnabled);
-        prefs.put(EXTERNAL_PLAY_COMMAND, externalPlayCommand);
+        prefs.putBoolean(PREFIX + EXTERNAL_PLAY_COMMAND_ENABLED,
+                externalPlayCommandEnabled);
+        prefs.put(PREFIX + EXTERNAL_PLAY_COMMAND, externalPlayCommand);
 
-        prefs.putBoolean(FILE_FORMAT_ENABLED, fileFormatEnabled);
-        prefs.put(FILE_FORMAT, fileFormat);
+        prefs.putBoolean(PREFIX + FILE_FORMAT_ENABLED, fileFormatEnabled);
+        prefs.put(PREFIX + FILE_FORMAT, fileFormat);
 
-        prefs.putBoolean(SAMPLE_FORMAT_ENABLED, sampleFormatEnabled);
-        prefs.put(SAMPLE_FORMAT, sampleFormat);
-        prefs.putBoolean(SAVE_PEAK_INFORMATION, savePeakInformation);
-        prefs.putBoolean(DITHER_OUTPUT, ditherOutput);
-        prefs.putBoolean(REWRITE_HEADER, rewriteHeader);
+        prefs.putBoolean(PREFIX + SAMPLE_FORMAT_ENABLED, sampleFormatEnabled);
+        prefs.put(PREFIX + SAMPLE_FORMAT, sampleFormat);
+        prefs.putBoolean(PREFIX + SAVE_PEAK_INFORMATION, savePeakInformation);
+        prefs.putBoolean(PREFIX + DITHER_OUTPUT, ditherOutput);
+        prefs.putBoolean(PREFIX + REWRITE_HEADER, rewriteHeader);
 
-        prefs.putBoolean(NOTE_AMPS_ENABLED, noteAmpsEnabled);
-        prefs.putBoolean(WARNINGS_ENABLED, warningsEnabled);
-        prefs.putBoolean(OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
-        prefs.putBoolean(BENCHMARK_ENABLED, benchmarkEnabled);
+        prefs.putBoolean(PREFIX + NOTE_AMPS_ENABLED, noteAmpsEnabled);
+        prefs.putBoolean(PREFIX + WARNINGS_ENABLED, warningsEnabled);
+        prefs.putBoolean(PREFIX + OUT_OF_RANGE_ENABLED, outOfRangeEnabled);
+        prefs.putBoolean(PREFIX + BENCHMARK_ENABLED, benchmarkEnabled);
 
-        prefs.putBoolean(DISPLAYS_DISABLED, displaysDisabled);
-        
-        prefs.put(ADVANCED_SETTINGS, advancedSettings);
+        prefs.putBoolean(PREFIX + DISPLAYS_DISABLED, displaysDisabled);
 
-        prefs.putBoolean(USE_ZERO_DBFS, useZeroDbFS);
-        prefs.put(ZERO_DB_FS, zeroDbFS);        
-        
+        prefs.put(PREFIX + ADVANCED_SETTINGS, advancedSettings);
+
+        prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
+        prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
+
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
@@ -223,7 +193,7 @@ public class DiskRenderSettings implements Serializable {
 //                GeneralSettings.getInstance().isUsingCsoundAPI()) {
 //            buffer.append("csound ");
 //        } else {
-            buffer.append(csoundExecutable).append(" ");
+        buffer.append(csoundExecutable).append(" ");
 //        }
 
         if (!GeneralSettings.getInstance().isMessageColorsEnabled()) {

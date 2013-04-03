@@ -1,4 +1,4 @@
-<blueData version='2.4.0_beta'>
+<blueData version='2.4.1'>
   <projectProperties>
     <title>reich.cm - Piano Phase</title>
     <author></author>
@@ -5972,7 +5972,7 @@ xout aout</codeBody>
     (let [len (count trope)
         dur (- (* pulse 2) 0.01)
         stop (* len len (+ stay move))
-        note-template &quot;i%d %s %f %s %f&quot;
+        note-template &quot;i%d %s %g %s %g&quot;
         stay-length (* len stay)
         move-length (* len move)]
     
