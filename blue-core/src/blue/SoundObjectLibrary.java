@@ -83,6 +83,14 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
         
         while (sObjects.hasMoreElements()) {
             Element node = sObjects.next();
+            
+            // For corrupt projects that have Instances within the library, 
+            // skip adding of Instance but increment index
+            if("blue.soundObject.Instance".equals(node.getAttributeValue("type"))) {
+                index++;
+                continue;
+            }
+            
             SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
                     node, objRefMap);
             sObjLib.add(sObj);

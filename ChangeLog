@@ -12,6 +12,17 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.4.3<
+[released 2013.xx.xx]
+
+FIX
+
+* Ignore orphan Instance objects that are found in the SoundObjectLibrary when
+  loading projects; Blue should have prevented this situation from occurring in
+  the first place, but this fix is here in case older Blue versions saved 
+  projects incorrectly
+
+
 >Notes for 2.4.2<
 [released 2013.03.22]
 
