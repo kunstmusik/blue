@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
 OpenIDE-Module: blue.score.layers.audio.core
+OpenIDE-Module-Install: blue/score/layers/audio/core/Installer.class
 OpenIDE-Module-Localizing-Bundle: blue/score/layers/audio/core/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0
 
