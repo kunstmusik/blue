@@ -21,20 +21,14 @@ package blue.score.layers.audio.core;
 
 import blue.CompileData;
 import blue.score.layers.Layer;
-import blue.soundObject.GenericScore;
+import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.utility.ObjectUtilities;
-import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -46,6 +40,10 @@ public class AudioLayer implements Layer {
     private String name = "";
     private boolean muted = false;
     private boolean solo = false;
+    
+    private int heightIndex = 0;
+
+    public static int HEIGHT_MAX_INDEX = 9;
     
     private transient Vector<PropertyChangeListener> propListeners = null;
 
@@ -84,14 +82,38 @@ public class AudioLayer implements Layer {
     public void setSolo(boolean solo) {
         this.solo = solo;
     }
+    
+    public int getHeightIndex() {
+        return heightIndex;
+    }
+
+    public void setHeightIndex(int heightIndex) {
+        if (this.heightIndex == heightIndex) {
+            return;
+        }
+
+        int oldHeight = this.heightIndex;
+        this.heightIndex = heightIndex;
+
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, "heightIndex",
+                new Integer(oldHeight), new Integer(heightIndex));
+
+        firePropertyChangeEvent(pce);
+    }
+
+    public int getSoundLayerHeight() {
+        return (heightIndex + 1) * LAYER_HEIGHT;
+    }
 
     public Element saveAsXML() {
-        Element retVal = new Element("patternLayer");
+        Element retVal = new Element("audioLayer");
 
         retVal.setAttribute("name", getName());
         retVal.setAttribute("muted", Boolean.toString(isMuted()));
         retVal.setAttribute("solo", Boolean.toString(isSolo()));
-
+        retVal.setAttribute("heightIndex", Integer.toString(this
+                .getHeightIndex()));
+        
         return retVal;
     }
 
@@ -104,11 +126,24 @@ public class AudioLayer implements Layer {
         layer.setSolo(
                 Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
 
+        String heightIndexStr = data.getAttributeValue("heightIndex");
+        if (heightIndexStr != null) {
+            layer.setHeightIndex(Integer.parseInt(heightIndexStr));
+        }
+        
         return layer;
     }
 
     void clearListeners() {
-        //
+        if (propListeners != null) {
+            propListeners.clear();
+            propListeners = null;
+        }
+
+//        if (layerListeners != null) {
+//            layerListeners.clear();
+//            layerListeners = null;
+//        }
     }
 
     NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) throws SoundObjectException {
