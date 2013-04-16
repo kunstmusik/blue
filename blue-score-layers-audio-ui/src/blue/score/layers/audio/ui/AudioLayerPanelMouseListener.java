@@ -31,7 +31,7 @@ import java.awt.event.MouseEvent;
  */
 public class AudioLayerPanelMouseListener extends MouseAdapter {
 
-    private final AudioLayerPanel panel;
+    private final AudioLayersPanel panel;
 
     private final AudioLayerGroup layerGroup;
     private final TimeState timeState;
@@ -40,7 +40,7 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
     int lastIndex = -1;
     AudioLayer currentAudioLayer = null;
 
-    public AudioLayerPanelMouseListener(AudioLayerPanel panel, 
+    public AudioLayerPanelMouseListener(AudioLayersPanel panel, 
             AudioLayerGroup layerGroup, 
             TimeState timeState) {
         this.panel = panel;

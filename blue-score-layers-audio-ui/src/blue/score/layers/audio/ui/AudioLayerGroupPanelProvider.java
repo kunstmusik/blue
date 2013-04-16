@@ -37,7 +37,7 @@ public class AudioLayerGroupPanelProvider implements LayerGroupPanelProvider {
             TimeState timeState, BlueData data) {
         
         if (layerGroup instanceof AudioLayerGroup) {
-            return new AudioLayerPanel((AudioLayerGroup) layerGroup,
+            return new AudioLayersPanel((AudioLayerGroup) layerGroup,
                     timeState);
         }
         return null;

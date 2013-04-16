@@ -38,14 +38,14 @@ import javax.swing.JPanel;
  *
  * @author stevenyi
  */
-public class AudioLayerPanel extends JPanel implements LayerGroupListener,
+public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         PropertyChangeListener, LayerGroupPanel {
 
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private AudioLayerGroup layerGroup;
     private final TimeState timeState;
 
-    public AudioLayerPanel(AudioLayerGroup layerGroup, TimeState timeState) {
+    public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
         this.layerGroup = layerGroup;
         this.timeState = timeState;
 
