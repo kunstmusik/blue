@@ -13,7 +13,7 @@ import blue.soundObject.SoundObjectException;
  *
  * @author syi
  */
-public interface CSDRunner {
+public interface RealtimeRenderService {
 
     void addPlayModeListener(PlayModeListener listener);
 

@@ -28,7 +28,7 @@ import blue.projects.BlueProjectManager;
 import blue.settings.GeneralSettings;
 import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.CSDRunner;
+import blue.ui.core.render.RealtimeRenderService;
 import blue.ui.core.render.CommandlineRunner;
 import blue.utility.APIUtilities;
 import java.awt.event.ActionEvent;
@@ -51,7 +51,7 @@ public class BlueLiveToolBar extends JToolBar {
     BlueData data = null;
     APIRunner apiRunner;
     CommandlineRunner commandlineRunner = new CommandlineRunner();
-    volatile CSDRunner csdRunner = null;
+    volatile RealtimeRenderService csdRunner = null;
     JToggleButton runButton = new JToggleButton("blueLive");
     JButton refreshButton = new JButton("Recompile");
     JButton allNotesOffButton = new JButton("All Notes Off");

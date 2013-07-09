@@ -47,7 +47,7 @@ import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.APIRunner;
 import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CSDRunner;
+import blue.ui.core.render.RealtimeRenderService;
 import blue.ui.core.render.CommandlineRunner;
 import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.AuditionManager;
@@ -310,7 +310,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         playButton.setEnabled(false);
 
-        CSDRunner csdRunner;
+        RealtimeRenderService csdRunner;
 
         if (apiRunner != null
                 && APIUtilities.isCsoundAPIAvailable()

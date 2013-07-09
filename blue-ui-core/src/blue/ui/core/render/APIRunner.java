@@ -52,7 +52,7 @@ import org.openide.windows.InputOutput;
  *
  * @author syi
  */
-public class APIRunner implements CSDRunner, PlayModeListener {
+public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     Vector<PlayModeListener> listeners = null;
 

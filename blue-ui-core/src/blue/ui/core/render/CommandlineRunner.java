@@ -39,7 +39,7 @@ import org.openide.util.Exceptions;
  * @version 1.0
  */
 
-public class CommandlineRunner implements PlayModeListener, CSDRunner {
+public class CommandlineRunner implements PlayModeListener, RealtimeRenderService {
     ProcessConsole console = new ProcessConsole();
 
     RunProxy runProxy;
