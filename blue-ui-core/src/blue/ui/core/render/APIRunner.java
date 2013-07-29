@@ -45,6 +45,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
@@ -53,6 +54,7 @@ import org.openide.windows.InputOutput;
  *
  * @author syi
  */
+@ServiceProvider(service = RealtimeRenderService.class, position = 100)
 public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     Vector<PlayModeListener> listeners = null;

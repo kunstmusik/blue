@@ -31,6 +31,7 @@ import blue.utility.TextUtilities;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -40,6 +41,7 @@ import org.openide.util.Exceptions;
  * @version 1.0
  */
 
+@ServiceProvider(service = RealtimeRenderService.class, position = 500)
 public class CommandlineRunner implements PlayModeListener, RealtimeRenderService {
     ProcessConsole console = new ProcessConsole();
 
