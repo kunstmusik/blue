@@ -10,6 +10,7 @@ import java.util.Vector;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
+import blue.services.render.DiskRenderService;
 import blue.settings.PlaybackSettings;
 import csnd.Csound;
 import csnd.CsoundArgVList;
@@ -21,7 +22,7 @@ import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 
-public class APIDiskRenderer {
+public class APIDiskRenderer implements DiskRenderService {
 
     Vector listeners = new Vector();
     RenderTimeManager renderTimeManager = null;

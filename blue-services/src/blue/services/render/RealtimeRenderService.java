@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package blue.ui.core.render;
+package blue.services.render;
 
 import blue.BlueData;
 import blue.event.PlayModeListener;

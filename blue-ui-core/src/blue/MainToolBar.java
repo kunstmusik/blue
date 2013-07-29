@@ -26,7 +26,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import java.net.MalformedURLException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -43,11 +42,11 @@ import blue.gui.InfoDialog;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreGenerationException;
+import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.APIRunner;
 import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.RealtimeRenderService;
 import blue.ui.core.render.CommandlineRunner;
 import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.AuditionManager;
@@ -55,11 +54,8 @@ import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.RenderTimeManagerListener;
 import blue.utility.APIUtilities;
 import blue.utility.NumberUtilities;
-import java.net.URL;
 import javax.swing.JToolBar;
-import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.awt.StatusDisplayer;
-import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
 
 /**

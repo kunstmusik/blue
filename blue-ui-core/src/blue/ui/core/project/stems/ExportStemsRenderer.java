@@ -21,16 +21,10 @@ package blue.ui.core.project.stems;
 
 import blue.BlueData;
 import blue.InstrumentAssignment;
-import blue.settings.GeneralSettings;
 import blue.ui.core.project.RenderToDiskUtility;
-import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.RealtimeRenderService;
-import blue.ui.core.render.CommandlineRunner;
-import blue.utility.APIUtilities;
 import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.Iterator;
-import org.openide.util.Exceptions;
 
 /**
  *

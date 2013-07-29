@@ -14,6 +14,7 @@ import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.ui.core.score.AuditionManager;
 import blue.score.tempo.Tempo;
+import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.Note;

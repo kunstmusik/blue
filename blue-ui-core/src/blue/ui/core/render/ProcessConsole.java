@@ -32,6 +32,7 @@ import java.util.Iterator;
 //import blue.BlueMainFrame;
 import blue.BlueSystem;
 import blue.event.PlayModeListener;
+import blue.services.render.DiskRenderService;
 import java.awt.Color;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
@@ -48,7 +49,7 @@ import org.openide.windows.InputOutput;
  * modified by steven yi, 2001-2002
  */
 
-public final class ProcessConsole implements java.io.Serializable {
+public final class ProcessConsole implements java.io.Serializable, DiskRenderService {
     // private TimeBar timeBar;
 
     private RenderTimeManager renderTimeManager = null;

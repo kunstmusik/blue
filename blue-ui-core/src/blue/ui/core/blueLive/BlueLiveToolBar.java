@@ -21,14 +21,13 @@ package blue.ui.core.blueLive;
 
 import blue.BlueData;
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
 import blue.midi.MidiInputManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.soundObject.SoundObjectException;
 import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.RealtimeRenderService;
 import blue.ui.core.render.CommandlineRunner;
 import blue.utility.APIUtilities;
 import java.awt.event.ActionEvent;
@@ -40,7 +39,6 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import org.openide.util.Exceptions;
-import org.openide.windows.WindowManager;
 
 /**
  *
