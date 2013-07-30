@@ -18,10 +18,12 @@ import java.awt.Color;
 import java.io.IOException;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 
+@ServiceProvider(service = DiskRenderService.class, position = 100)
 public class APIDiskRenderer implements DiskRenderService {
 
     Vector listeners = new Vector();
@@ -32,6 +34,14 @@ public class APIDiskRenderer implements DiskRenderService {
     public APIDiskRenderer() {
     }
 
+    public boolean isAvailable() {
+        return true;
+    }
+    
+    public String toString() {
+        return "Csound 5 API";
+    }
+    
     public boolean isRunning() {
         return keepRunning;
     }

@@ -35,6 +35,7 @@ import blue.event.PlayModeListener;
 import blue.services.render.DiskRenderService;
 import java.awt.Color;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
@@ -49,15 +50,14 @@ import org.openide.windows.InputOutput;
  * modified by steven yi, 2001-2002
  */
 
+
+@ServiceProvider(service = DiskRenderService.class, position = 500)
 public final class ProcessConsole implements java.io.Serializable, DiskRenderService {
     // private TimeBar timeBar;
 
     private RenderTimeManager renderTimeManager = null;
 
     private InputOutput io = null;
-
-    public ProcessConsole() {
-    }
 
     transient OutputThread stdoutThread = null;
 
@@ -78,6 +78,17 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
     StringBuffer buffer = null;
 
     private int lastExitValue = 0;
+
+    public ProcessConsole() {
+    }
+
+    public boolean isAvailable() {
+        return true;
+    }
+    
+    public String toString() {
+        return "Commmandline Runner";
+    }
 
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);

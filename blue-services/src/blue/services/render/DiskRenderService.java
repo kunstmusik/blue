@@ -24,5 +24,5 @@ package blue.services.render;
  * @author stevenyi
  */
 public interface DiskRenderService {
-    
+   public boolean isAvailable(); 
 }

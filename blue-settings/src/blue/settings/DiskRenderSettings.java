@@ -19,11 +19,15 @@
  */
 package blue.settings;
 
+import blue.services.render.DiskRenderService;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 
 /**
@@ -58,6 +62,8 @@ public class DiskRenderSettings implements Serializable {
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
     private static final String ZERO_DB_FS = "zeroDbFS";
+    private static final String DISK_RENDER_SERVICE = "diskRenderService";
+
     public String csoundExecutable = "csound";
     public String fileFormat = "WAV";
     public String sampleFormat = "SHORT";
@@ -79,9 +85,36 @@ public class DiskRenderSettings implements Serializable {
     public String advancedSettings = "";
     public boolean useZeroDbFS = true;
     public String zeroDbFS = "1";
+    public DiskRenderService renderService = null;
+    
     private static DiskRenderSettings instance = null;
 
     private DiskRenderSettings() {
+    }
+
+    private static DiskRenderService findDiskRenderService(String renderServiceName) {
+        Collection<? extends DiskRenderService> results = 
+            Lookup.getDefault().lookupAll(DiskRenderService.class);
+
+        DiskRenderService foundService = null;
+       
+    
+        if(renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = (DiskRenderService) results.toArray()[0];
+        }
+       
+        for(DiskRenderService service : results) {
+            if(service.toString().equals(renderServiceName)) {
+                foundService = service;
+                break;
+            }
+        }
+
+        if(foundService == null) {
+            foundService = (DiskRenderService) results.toArray()[0];
+        }
+
+        return foundService;
     }
 
     public static DiskRenderSettings getInstance() {
@@ -140,6 +173,12 @@ public class DiskRenderSettings implements Serializable {
             instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
             instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
 
+
+            String renderServiceName = 
+                    prefs.get(PREFIX + DISK_RENDER_SERVICE, null);
+
+            instance.renderService = findDiskRenderService(renderServiceName);
+            
         }
 
         return instance;
@@ -178,6 +217,8 @@ public class DiskRenderSettings implements Serializable {
 
         prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
         prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
+
+        prefs.put(PREFIX + DISK_RENDER_SERVICE, renderService.toString());
 
         try {
             prefs.sync();
@@ -229,4 +270,19 @@ public class DiskRenderSettings implements Serializable {
 
         return buffer.toString();
     }
+
+    public static DiskRenderService[] getAvailableDiskRenderServices() {
+        Collection<? extends DiskRenderService> results = 
+                Lookup.getDefault().lookupAll(DiskRenderService.class);
+
+        ArrayList<DiskRenderService> retVal = new ArrayList<DiskRenderService>();
+        for(DiskRenderService service : results) {
+            if(service.isAvailable()) {
+                retVal.add(service);
+            }
+        }
+        
+        return retVal.toArray(new DiskRenderService[0]);
+    }
+    
 }
