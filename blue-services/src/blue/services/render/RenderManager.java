@@ -24,7 +24,5 @@ package blue.services.render;
  * @author stevenyi
  */
 public interface RenderManager {
-    public DiskRenderService getSelectedDiskRenderService();
-    public RealtimeRenderService getSelectedRealtimeRenderService();
     public void stopAllRenders();
 }

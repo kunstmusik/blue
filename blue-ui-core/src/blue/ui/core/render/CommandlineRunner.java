@@ -76,6 +76,16 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
         });
     }
 
+    @Override
+    public String toString() {
+        return "Commmandline Runner";
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return true;
+    }
+    
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);
     }

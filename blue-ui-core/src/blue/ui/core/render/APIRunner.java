@@ -92,6 +92,18 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     }
 
+
+    @Override
+    public String toString() {
+        return "Csound 5 API";    
+    }
+
+    @Override
+    public boolean isAvailable() {
+        //FIXME - need to calculate
+        return true;
+    }
+    
     public boolean isRunning() {
         return runnerThread != null;
     }
@@ -390,6 +402,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
 
     }
+
 
     static class APIRunnerThread implements Runnable {
 

@@ -19,6 +19,7 @@
  */
 package blue.settings;
 
+import blue.services.render.RealtimeRenderService;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.HeadlessException;
@@ -110,6 +111,12 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel6 = new javax.swing.JPanel();
+        renderServiceComboBox = new javax.swing.JComboBox();
+        jLabel4 = new javax.swing.JLabel();
+        csoundExecText = new javax.swing.JTextField();
+        jButton5 = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -117,9 +124,6 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         nchnlsText = new javax.swing.JTextField();
         ksmpsText = new javax.swing.JTextField();
         srText = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        csoundExecText = new javax.swing.JTextField();
-        jButton5 = new javax.swing.JButton();
         zeroDBFSCheckBox = new javax.swing.JCheckBox();
         zeroDBFSText = new javax.swing.JTextField();
         jPanel2 = new javax.swing.JPanel();
@@ -155,464 +159,503 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         jPanel7 = new javax.swing.JPanel();
         disableDisplaysCBox = new javax.swing.JCheckBox();
 
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel5.border.title_1"))); // NOI18N
+        jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel6.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel1.text_1")); // NOI18N
+        renderServiceComboBox.setModel(new DefaultComboBoxModel(
+            RealtimeRenderSettings.getAvailableRealtimeRenderServices()));
+    renderServiceComboBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            renderServiceComboBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel2.text_1")); // NOI18N
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel4.text_1")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel3.text_1")); // NOI18N
+    csoundExecText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.csoundExecText.text_1")); // NOI18N
 
-        nchnlsText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.nchnlsText.text_1")); // NOI18N
+    org.openide.awt.Mnemonics.setLocalizedText(jButton5, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton5.text_1")); // NOI18N
+    jButton5.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton5ActionPerformed(evt);
+        }
+    });
 
-        ksmpsText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.ksmpsText.text_1")); // NOI18N
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel5.text")); // NOI18N
 
-        srText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.srText.text_1")); // NOI18N
+    javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+    jPanel6.setLayout(jPanel6Layout);
+    jPanel6Layout.setHorizontalGroup(
+        jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel6Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel6Layout.createSequentialGroup()
+                    .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(jButton5))
+                .addComponent(renderServiceComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap())
+    );
+    jPanel6Layout.setVerticalGroup(
+        jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel6Layout.createSequentialGroup()
+            .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel4)
+                .addComponent(jButton5)
+                .addComponent(csoundExecText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(renderServiceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel5))
+            .addContainerGap())
+    );
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel4.text_1")); // NOI18N
+    jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel5.border.title_1"))); // NOI18N
 
-        csoundExecText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.csoundExecText.text_1")); // NOI18N
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel1.text_1")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton5, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton5.text_1")); // NOI18N
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel2.text_1")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(zeroDBFSCheckBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSCheckBox.text")); // NOI18N
-        zeroDBFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                zeroDBFSCheckBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jLabel3.text_1")); // NOI18N
 
-        zeroDBFSText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSText.text")); // NOI18N
+    nchnlsText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.nchnlsText.text_1")); // NOI18N
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1)
-                    .addComponent(zeroDBFSCheckBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(zeroDBFSText)
-                    .addComponent(nchnlsText, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
-                    .addComponent(ksmpsText, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
-                    .addComponent(srText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addComponent(csoundExecText, javax.swing.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton5)))
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(jButton5)
-                    .addComponent(csoundExecText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(srText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(ksmpsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(nchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(zeroDBFSCheckBox)
-                    .addComponent(zeroDBFSText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        );
+    ksmpsText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.ksmpsText.text_1")); // NOI18N
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel2.border.title_1"))); // NOI18N
+    srText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.srText.text_1")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(softwareBufferCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.softwareBufferCBox.text_1")); // NOI18N
-        softwareBufferCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        softwareBufferCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        softwareBufferCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                softwareBufferCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(zeroDBFSCheckBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSCheckBox.text")); // NOI18N
+    zeroDBFSCheckBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zeroDBFSCheckBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(hardwareBufferCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.hardwareBufferCBox.text_1")); // NOI18N
-        hardwareBufferCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        hardwareBufferCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        hardwareBufferCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                hardwareBufferCBoxActionPerformed(evt);
-            }
-        });
+    zeroDBFSText.setText(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.zeroDBFSText.text")); // NOI18N
 
-        softwareBufferSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-        softwareBufferSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                softwareBufferSpinnerStateChanged(evt);
-            }
-        });
+    javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+    jPanel5.setLayout(jPanel5Layout);
+    jPanel5Layout.setHorizontalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jLabel3)
+                .addComponent(jLabel2)
+                .addComponent(jLabel1)
+                .addComponent(zeroDBFSCheckBox))
+            .addGap(58, 58, 58)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(zeroDBFSText)
+                .addComponent(nchnlsText)
+                .addComponent(ksmpsText)
+                .addComponent(srText, javax.swing.GroupLayout.Alignment.TRAILING))
+            .addContainerGap())
+    );
+    jPanel5Layout.setVerticalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel1)
+                .addComponent(srText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel2)
+                .addComponent(ksmpsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel3)
+                .addComponent(nchnlsText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(zeroDBFSCheckBox)
+                .addComponent(zeroDBFSText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+    );
 
-        hardwareBufferSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-        hardwareBufferSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                hardwareBufferSpinnerStateChanged(evt);
-            }
-        });
+    jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel2.border.title_1"))); // NOI18N
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(hardwareBufferCBox)
-                    .addComponent(softwareBufferCBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(hardwareBufferSpinner)
-                    .addComponent(softwareBufferSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE))
-                .addContainerGap(402, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(softwareBufferCBox)
-                    .addComponent(softwareBufferSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(hardwareBufferCBox)
-                    .addComponent(hardwareBufferSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+    org.openide.awt.Mnemonics.setLocalizedText(softwareBufferCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.softwareBufferCBox.text_1")); // NOI18N
+    softwareBufferCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    softwareBufferCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    softwareBufferCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            softwareBufferCBoxActionPerformed(evt);
+        }
+    });
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel4.border.title_1"))); // NOI18N
+    org.openide.awt.Mnemonics.setLocalizedText(hardwareBufferCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.hardwareBufferCBox.text_1")); // NOI18N
+    hardwareBufferCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    hardwareBufferCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    hardwareBufferCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            hardwareBufferCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton6, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton6.text_1")); // NOI18N
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
-            }
-        });
+    softwareBufferSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+    softwareBufferSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+        public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            softwareBufferSpinnerStateChanged(evt);
+        }
+    });
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(advancedText, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton6)
-                .addContainerGap())
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(advancedText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton6))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+    hardwareBufferSpinner.setModel(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+    hardwareBufferSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+        public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            hardwareBufferSpinnerStateChanged(evt);
+        }
+    });
 
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel3.border.title_1"))); // NOI18N
+    javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+    jPanel2.setLayout(jPanel2Layout);
+    jPanel2Layout.setHorizontalGroup(
+        jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel2Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(hardwareBufferCBox)
+                .addComponent(softwareBufferCBox))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(hardwareBufferSpinner)
+                .addComponent(softwareBufferSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel2Layout.setVerticalGroup(
+        jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(softwareBufferCBox)
+                .addComponent(softwareBufferSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(hardwareBufferCBox)
+                .addComponent(hardwareBufferSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
 
-        org.openide.awt.Mnemonics.setLocalizedText(noteAmpCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.noteAmpCBox.text_1")); // NOI18N
-        noteAmpCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        noteAmpCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        noteAmpCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                noteAmpCBoxActionPerformed(evt);
-            }
-        });
+    jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel4.border.title_1"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(outOfRangeCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.outOfRangeCBox.text_1")); // NOI18N
-        outOfRangeCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        outOfRangeCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        outOfRangeCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                outOfRangeCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(jButton6, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jButton6.text_1")); // NOI18N
+    jButton6.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton6ActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(warningsCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.warningsCBox.text_1")); // NOI18N
-        warningsCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        warningsCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        warningsCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                warningsCBoxActionPerformed(evt);
-            }
-        });
+    javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+    jPanel4.setLayout(jPanel4Layout);
+    jPanel4Layout.setHorizontalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(advancedText)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jButton6)
+            .addContainerGap())
+    );
+    jPanel4Layout.setVerticalGroup(
+        jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel4Layout.createSequentialGroup()
+            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(advancedText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jButton6))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
 
-        org.openide.awt.Mnemonics.setLocalizedText(benchmarkCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.benchmarkCBox.text_1")); // NOI18N
-        benchmarkCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        benchmarkCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        benchmarkCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                benchmarkCBoxActionPerformed(evt);
-            }
-        });
+    jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel3.border.title_1"))); // NOI18N
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(outOfRangeCBox)
-                    .addComponent(noteAmpCBox)
-                    .addComponent(warningsCBox)
-                    .addComponent(benchmarkCBox))
-                .addContainerGap(467, Short.MAX_VALUE))
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(noteAmpCBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+    org.openide.awt.Mnemonics.setLocalizedText(noteAmpCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.noteAmpCBox.text_1")); // NOI18N
+    noteAmpCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    noteAmpCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    noteAmpCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            noteAmpCBoxActionPerformed(evt);
+        }
+    });
+
+    org.openide.awt.Mnemonics.setLocalizedText(outOfRangeCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.outOfRangeCBox.text_1")); // NOI18N
+    outOfRangeCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    outOfRangeCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    outOfRangeCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            outOfRangeCBoxActionPerformed(evt);
+        }
+    });
+
+    org.openide.awt.Mnemonics.setLocalizedText(warningsCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.warningsCBox.text_1")); // NOI18N
+    warningsCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    warningsCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    warningsCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            warningsCBoxActionPerformed(evt);
+        }
+    });
+
+    org.openide.awt.Mnemonics.setLocalizedText(benchmarkCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.benchmarkCBox.text_1")); // NOI18N
+    benchmarkCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    benchmarkCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    benchmarkCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            benchmarkCBoxActionPerformed(evt);
+        }
+    });
+
+    javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+    jPanel3.setLayout(jPanel3Layout);
+    jPanel3Layout.setHorizontalGroup(
+        jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel3Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(outOfRangeCBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(noteAmpCBox)
                 .addComponent(warningsCBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(benchmarkCBox)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+                .addComponent(benchmarkCBox))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel3Layout.setVerticalGroup(
+        jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel3Layout.createSequentialGroup()
+            .addComponent(noteAmpCBox)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(outOfRangeCBox)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(warningsCBox)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(benchmarkCBox)
+            .addContainerGap(10, Short.MAX_VALUE))
+    );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel1.border.title_1"))); // NOI18N
+    jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel1.border.title_1"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(audioInCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInCBox.text_1")); // NOI18N
-        audioInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        audioInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        audioInCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioInCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(audioInCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInCBox.text_1")); // NOI18N
+    audioInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    audioInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    audioInCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioInCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(midiInCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInCBox.text_1")); // NOI18N
-        midiInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        midiInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        midiInCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiInCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(midiInCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInCBox.text_1")); // NOI18N
+    midiInCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    midiInCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    midiInCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiInCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(midiOutCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutCBox.text_1")); // NOI18N
-        midiOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        midiOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        midiOutCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiOutCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(midiOutCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutCBox.text_1")); // NOI18N
+    midiOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    midiOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    midiOutCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiOutCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(audioOutButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutButton.text_1")); // NOI18N
-        audioOutButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioOutButtonActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(audioOutButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutButton.text_1")); // NOI18N
+    audioOutButton.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioOutButtonActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(audioInButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInButton.text_1")); // NOI18N
-        audioInButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioInButtonActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(audioInButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioInButton.text_1")); // NOI18N
+    audioInButton.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioInButtonActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(midiInButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInButton.text_1")); // NOI18N
-        midiInButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiInButtonActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(midiInButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiInButton.text_1")); // NOI18N
+    midiInButton.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiInButtonActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(midiOutButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutButton.text_1")); // NOI18N
-        midiOutButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiOutButtonActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(midiOutButton, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiOutButton.text_1")); // NOI18N
+    midiOutButton.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiOutButtonActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(audioOutCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutCBox.text_1")); // NOI18N
-        audioOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        audioOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        audioOutCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioOutCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(audioOutCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioOutCBox.text_1")); // NOI18N
+    audioOutCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    audioOutCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    audioOutCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioOutCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(audioDriverCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioDriverCBox.text_1")); // NOI18N
-        audioDriverCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        audioDriverCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        audioDriverCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioDriverCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(audioDriverCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.audioDriverCBox.text_1")); // NOI18N
+    audioDriverCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    audioDriverCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    audioDriverCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioDriverCBoxActionPerformed(evt);
+        }
+    });
 
-        org.openide.awt.Mnemonics.setLocalizedText(midiDriverCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiDriverCBox.text_1")); // NOI18N
-        midiDriverCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        midiDriverCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        midiDriverCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiDriverCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(midiDriverCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.midiDriverCBox.text_1")); // NOI18N
+    midiDriverCBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    midiDriverCBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
+    midiDriverCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiDriverCBoxActionPerformed(evt);
+        }
+    });
 
-        audioDriverCombo.setModel(new DefaultComboBoxModel(RealtimeRenderSettings.getAudioDrivers()));
-        audioDriverCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                audioDriverComboActionPerformed(evt);
-            }
-        });
+    audioDriverCombo.setModel(new DefaultComboBoxModel(RealtimeRenderSettings.getAudioDrivers()));
+    audioDriverCombo.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            audioDriverComboActionPerformed(evt);
+        }
+    });
 
-        midiDriverCombo.setModel(new DefaultComboBoxModel(RealtimeRenderSettings.getMIDIDrivers()));
-        midiDriverCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                midiDriverComboActionPerformed(evt);
-            }
-        });
+    midiDriverCombo.setModel(new DefaultComboBoxModel(RealtimeRenderSettings.getMIDIDrivers()));
+    midiDriverCombo.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            midiDriverComboActionPerformed(evt);
+        }
+    });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
+    javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+    jPanel1.setLayout(jPanel1Layout);
+    jPanel1Layout.setHorizontalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(audioDriverCBox)
+                .addComponent(midiDriverCBox)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(audioDriverCBox)
-                    .addComponent(midiDriverCBox)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(midiOutCBox)
-                        .addComponent(audioOutCBox, javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(audioInCBox)
-                        .addComponent(midiInCBox)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(midiOutText, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
-                            .addComponent(midiInText, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
-                            .addComponent(audioInText, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
-                            .addComponent(audioOutText, javax.swing.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(midiOutButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
-                            .addComponent(midiInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
-                            .addComponent(audioInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, 1, Short.MAX_VALUE)
-                            .addComponent(audioOutButton, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addComponent(audioDriverCombo, 0, 519, Short.MAX_VALUE)
-                    .addComponent(midiDriverCombo, 0, 519, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(audioDriverCBox)
-                    .addComponent(audioDriverCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(audioOutButton)
-                    .addComponent(audioOutCBox)
-                    .addComponent(audioOutText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(audioInButton)
-                    .addComponent(audioInCBox)
-                    .addComponent(audioInText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(midiDriverCBox)
-                    .addComponent(midiDriverCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(midiInButton)
-                    .addComponent(midiInText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(midiInCBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(midiOutCBox)
-                    .addComponent(midiOutButton)
-                    .addComponent(midiOutText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+                    .addComponent(audioOutCBox, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(audioInCBox)
+                    .addComponent(midiInCBox)))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(midiOutText)
+                        .addComponent(midiInText)
+                        .addComponent(audioInText)
+                        .addComponent(audioOutText))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(midiOutButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(midiInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(audioInButton, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(audioOutButton, javax.swing.GroupLayout.Alignment.TRAILING)))
+                .addComponent(audioDriverCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(midiDriverCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap())
+    );
+    jPanel1Layout.setVerticalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(audioDriverCBox)
+                .addComponent(audioDriverCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(audioOutButton)
+                .addComponent(audioOutCBox)
+                .addComponent(audioOutText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(audioInButton)
+                .addComponent(audioInCBox)
+                .addComponent(audioInText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(midiDriverCBox)
+                .addComponent(midiDriverCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(midiInButton)
+                .addComponent(midiInText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(midiInCBox))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(midiOutCBox)
+                .addComponent(midiOutButton)
+                .addComponent(midiOutText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
 
-        jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel7.border.title"))); // NOI18N
+    jPanel7.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.jPanel7.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(disableDisplaysCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.disableDisplaysCBox.text")); // NOI18N
-        disableDisplaysCBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                disableDisplaysCBoxActionPerformed(evt);
-            }
-        });
+    org.openide.awt.Mnemonics.setLocalizedText(disableDisplaysCBox, org.openide.util.NbBundle.getMessage(RealtimeRenderSettingsPanel.class, "RealtimeRenderSettingsPanel.disableDisplaysCBox.text")); // NOI18N
+    disableDisplaysCBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            disableDisplaysCBoxActionPerformed(evt);
+        }
+    });
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(disableDisplaysCBox)
-                .addContainerGap(515, Short.MAX_VALUE))
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addComponent(disableDisplaysCBox)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+    javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+    jPanel7.setLayout(jPanel7Layout);
+    jPanel7Layout.setHorizontalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addContainerGap()
+            .addComponent(disableDisplaysCBox)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel7Layout.setVerticalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addComponent(disableDisplaysCBox)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(14, 14, 14)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(20, 20, 20))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(1, 1, 1)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(2, 2, 2)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
+    javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+    this.setLayout(layout);
+    layout.setHorizontalGroup(
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGap(14, 14, 14)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(20, 20, 20))
+    );
+    layout.setVerticalGroup(
+        layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(layout.createSequentialGroup()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(3, 3, 3)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(2, 2, 2)
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
     }// </editor-fold>//GEN-END:initComponents
 
     private void audioInCBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_audioInCBoxActionPerformed
@@ -803,6 +846,10 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         fireUpdate();
     }//GEN-LAST:event_zeroDBFSCheckBoxActionPerformed
 
+    private void renderServiceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renderServiceComboBoxActionPerformed
+        fireUpdate(); 
+    }//GEN-LAST:event_renderServiceComboBoxActionPerformed
+
     void load() {
         loading = true;
 
@@ -845,6 +892,8 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         zeroDBFSCheckBox.setSelected(settings.useZeroDbFS);
         zeroDBFSText.setText(settings.zeroDbFS);
 
+        renderServiceComboBox.setSelectedItem(settings.renderService);
+        
         loading = false;
     }
 
@@ -889,6 +938,8 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 
         settings.useZeroDbFS = zeroDBFSCheckBox.isSelected();
         settings.zeroDbFS = zeroDBFSText.getText();
+       
+        settings.renderService = (RealtimeRenderService) renderServiceComboBox.getSelectedItem();
         
         settings.save();
     }
@@ -918,11 +969,13 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JTextField ksmpsText;
     private javax.swing.JCheckBox midiDriverCBox;
@@ -936,6 +989,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JTextField nchnlsText;
     private javax.swing.JCheckBox noteAmpCBox;
     private javax.swing.JCheckBox outOfRangeCBox;
+    private javax.swing.JComboBox renderServiceComboBox;
     private javax.swing.JCheckBox softwareBufferCBox;
     private javax.swing.JSpinner softwareBufferSpinner;
     private javax.swing.JTextField srText;

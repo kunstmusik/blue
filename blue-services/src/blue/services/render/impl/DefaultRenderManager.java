@@ -30,16 +30,6 @@ import blue.services.render.RenderManager;
 public class DefaultRenderManager implements RenderManager {
 
     @Override
-    public DiskRenderService getSelectedDiskRenderService() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public RealtimeRenderService getSelectedRealtimeRenderService() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public void stopAllRenders() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

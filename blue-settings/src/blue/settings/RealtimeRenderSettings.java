@@ -19,12 +19,16 @@
  */
 package blue.settings;
 
+import blue.services.render.RealtimeRenderService;
 import java.io.Serializable;
 
 import blue.utility.APIUtilities;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 
 /**
@@ -62,8 +66,35 @@ public class RealtimeRenderSettings implements Serializable {
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
     private static final String ZERO_DB_FS = "zeroDbFS";
+    private static final String REALTIME_RENDER_SERVICE = "realtimeRenderService";
     private static String[] AUDIO_DRIVERS = null;
     private static String[] MIDI_DRIVERS = null;
+
+    private static RealtimeRenderService findRealtimeRenderService(String renderServiceName) {
+        Collection<? extends RealtimeRenderService> results = 
+            Lookup.getDefault().lookupAll(RealtimeRenderService.class);
+
+        RealtimeRenderService foundService = null;
+       
+    
+        if(renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = (RealtimeRenderService) results.toArray()[0];
+        }
+       
+        for(RealtimeRenderService service : results) {
+            if(service.toString().equals(renderServiceName)) {
+                foundService = service;
+                break;
+            }
+        }
+
+        if(foundService == null) {
+            foundService = (RealtimeRenderService) results.toArray()[0];
+        }
+
+        return foundService;
+    }
+
     // PROPERTIES
     public boolean audioDriverEnabled = true;
     public String audioDriver = "PortAudio";
@@ -93,6 +124,7 @@ public class RealtimeRenderSettings implements Serializable {
     public String advancedSettings = "";
     public boolean useZeroDbFS = true;
     public String zeroDbFS = "1";
+    public RealtimeRenderService renderService = null;
     
     private static RealtimeRenderSettings instance = null;
 
@@ -166,6 +198,11 @@ public class RealtimeRenderSettings implements Serializable {
 
             instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
             instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
+
+            String renderServiceName = 
+                    prefs.get(PREFIX + REALTIME_RENDER_SERVICE, null);
+
+            instance.renderService = findRealtimeRenderService(renderServiceName);
         }
         return instance;
     }
@@ -210,6 +247,8 @@ public class RealtimeRenderSettings implements Serializable {
 
         prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
         prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
+
+        prefs.put(PREFIX + REALTIME_RENDER_SERVICE, renderService.toString());
         
         try {
             prefs.sync();
@@ -313,5 +352,19 @@ public class RealtimeRenderSettings implements Serializable {
         }
 
         return AUDIO_DRIVERS;
+    }
+
+    public static RealtimeRenderService[] getAvailableRealtimeRenderServices() {
+        Collection<? extends RealtimeRenderService> results = 
+                Lookup.getDefault().lookupAll(RealtimeRenderService.class);
+
+        ArrayList<RealtimeRenderService> retVal = new ArrayList<RealtimeRenderService>();
+        for(RealtimeRenderService service : results) {
+            if(service.isAvailable()) {
+                retVal.add(service);
+            }
+        }
+        
+        return retVal.toArray(new RealtimeRenderService[0]);
     }
 }
