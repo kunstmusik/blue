@@ -20,6 +20,7 @@
 package blue.ui.core.render;
 
 import blue.automation.Parameter;
+import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import java.util.ArrayList;
 
@@ -30,12 +31,15 @@ import java.util.ArrayList;
 public class CsdRenderResult {
 
     private String csdText;
+    private TempoMapper tempoMapper;
     private ArrayList<Parameter> parameters;
     private ArrayList<StringChannel> stringChannels;
 
-    public CsdRenderResult(String csdText, ArrayList<Parameter> parameters, 
+    public CsdRenderResult(String csdText, TempoMapper tempoMapper, 
+            ArrayList<Parameter> parameters, 
             ArrayList<StringChannel> stringChannels) {
         this.csdText = csdText;
+        this.tempoMapper = tempoMapper;
         this.parameters = parameters;
         this.stringChannels = stringChannels;
     }
@@ -44,24 +48,15 @@ public class CsdRenderResult {
         return csdText;
     }
 
-    public void setCsdText(String csdText) {
-        this.csdText = csdText;
-    }
-
     public ArrayList<Parameter> getParameters() {
         return parameters;
-    }
-
-    public void setParameters(ArrayList<Parameter> parameters) {
-        this.parameters = parameters;
     }
 
     public ArrayList<StringChannel> getStringChannels() {
         return stringChannels;
     }
-
-    public void setStringChannels(ArrayList<StringChannel> stringChannels) {
-        this.stringChannels = stringChannels;
+   
+    public TempoMapper getTempoMapper() {
+        return tempoMapper;
     }
-    
 }

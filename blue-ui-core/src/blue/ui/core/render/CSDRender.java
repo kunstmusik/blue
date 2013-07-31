@@ -159,9 +159,19 @@ public class CSDRender {
 
         score.append("</CsoundSynthesizer>");
 
+
+//        Tempo tempo = data.getScore().getTempo();
+        TempoMapper tempoMapper = null;
+
+//        if (tempo.isEnabled()) {
+//            tempoMapper = CSDRender.getTempoMapper(tempo);
+//        } else {
+//            tempoMapper = CSDRender.getTempoMapper(globalSco);
+//        }
+        
         CsdRenderResult renderResult =
-                new CsdRenderResult(score.toString(), originalParameters, 
-                    stringChannels);
+                new CsdRenderResult(score.toString(), tempoMapper,
+                originalParameters, stringChannels);
 
 
         return renderResult;
@@ -265,10 +275,13 @@ public class CSDRender {
 
         Tempo tempo = data.getScore().getTempo();
         TempoMapper tempoMapper = null;
+
         if (tempo.isEnabled()) {
+            tempoMapper = CSDRender.getTempoMapper(tempo);
             globalOrcSco.appendGlobalSco(
-                    getTempoScore(tempo, renderStartTime, endTime));
-            tempoMapper = getTempoMapper(tempo);
+                getTempoScore(tempo, renderStartTime, endTime));
+        } else {
+            tempoMapper = CSDRender.getTempoMapper(globalOrcSco.getGlobalSco());
         }
 
         float totalDur = blue.utility.ScoreUtilities.getTotalDuration(
@@ -372,8 +385,11 @@ public class CSDRender {
 
         csd.append("</CsoundSynthesizer>");
 
+
         CsdRenderResult renderResult =
-                new CsdRenderResult(csd.toString(), originalParameters, stringChannels);
+                new CsdRenderResult(csd.toString(), tempoMapper,
+                originalParameters, stringChannels);
+        
 
         return renderResult;
     }
@@ -1067,7 +1083,7 @@ public class CSDRender {
         return TempoMapper.createTempoMapper(buffer.toString());
     }
 
-    public static TempoMapper getTempoMapper(String globalSco) {
+    private static TempoMapper getTempoMapper(String globalSco) {
         TempoMapper mapper = null;
 
         StringTokenizer st = new StringTokenizer(globalSco, "\n");

@@ -144,17 +144,8 @@ public class AuditionManager {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getScore().getTempo();
-            TempoMapper tempoMapper = null;
-            
-            if(tempo.isEnabled()) {
-                tempoMapper = CSDRender.getTempoMapper(tempo);
-            } else {
-                tempoMapper = CSDRender.getTempoMapper(globalSco);
-            }
-
             RenderTimeManager timeManager = RenderTimeManager.getInstance();
-            timeManager.setTempoMapper(tempoMapper);
+            timeManager.setTempoMapper(result.getTempoMapper());
             //FIXME
             //timeManager.setRootPolyObject(data.getPolyObject());
 
@@ -173,7 +164,8 @@ public class AuditionManager {
                                 
                 play(args2, 
                         BlueSystem.getCurrentProjectDirectory(), 
-                        data, minTime, tempoMapper, result.getParameters());
+                        data, minTime, result.getTempoMapper(),
+                        result.getParameters());
                 
             } else {
                 command += " \"" + temp.getAbsolutePath() + "\"";

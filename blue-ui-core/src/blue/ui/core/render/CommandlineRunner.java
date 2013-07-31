@@ -134,19 +134,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getScore().getTempo();
-            TempoMapper tempoMapper = null;
-            
-            if(tempo.isEnabled()) {
-                tempoMapper = CSDRender.getTempoMapper(tempo);
-            } else {
-                tempoMapper = CSDRender.getTempoMapper(globalSco);
-            }
-            
 //            System.out.println(tempoMapper);
 
-            RenderTimeManager timeManager = RenderTimeManager.getInstance();
-            timeManager.setTempoMapper(tempoMapper);
             // FIXME
 //            timeManager.setRootPolyObject(data.getPolyObject());
 
@@ -155,6 +144,9 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
             CsdRenderResult result = CSDRender.generateCSD(data, startTime, endTime);
             
+            RenderTimeManager timeManager = RenderTimeManager.getInstance();
+            timeManager.setTempoMapper(result.getTempoMapper());
+
             String csd = result.getCsdText();
 
             File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",

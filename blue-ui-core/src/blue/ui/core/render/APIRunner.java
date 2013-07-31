@@ -109,7 +109,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
     }
 
     public void play(BlueData blueData, CsdRenderResult result,
-            TempoMapper mapper,
             String[] args, File currentWorkingDirectory, float renderStart) {
         AuditionManager audition = AuditionManager.getInstance();
         audition.stop();
@@ -197,7 +196,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
-                result.getParameters(), result.getStringChannels(), mapper, renderStart);
+                result.getParameters(), result.getStringChannels(), 
+                result.getTempoMapper(), renderStart);
         
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
@@ -224,19 +224,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getScore().getTempo();
-            TempoMapper tempoMapper = null;
-
-            if (tempo.isEnabled()) {
-                tempoMapper = CSDRender.getTempoMapper(tempo);
-            } else {
-                tempoMapper = CSDRender.getTempoMapper(globalSco);
-            }
-
 //            System.out.println(tempoMapper);
 
-            RenderTimeManager timeManager = RenderTimeManager.getInstance();
-            timeManager.setTempoMapper(tempoMapper);
             //FIXME
             //timeManager.setRootPolyObject(data.getPolyObject());
 
@@ -245,6 +234,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
             CsdRenderResult result = CSDRender.generateCSD(data, startTime,
                     endTime);
+
+            RenderTimeManager timeManager = RenderTimeManager.getInstance();
+            timeManager.setTempoMapper(result.getTempoMapper());
 
             String csd = result.getCsdText();
 
@@ -256,7 +248,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             System.arraycopy(args, 0, args2, 0, args.length);
             args2[args.length] = temp.getAbsolutePath();
 
-            play(null, result, tempoMapper, args2, BlueSystem.getCurrentProjectDirectory(), startTime);
+            play(null, result, args2, BlueSystem.getCurrentProjectDirectory(), startTime);
         } catch (SoundObjectException soe) {
             throw soe;
         } catch (Exception ex) {
@@ -305,7 +297,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         System.arraycopy(args, 0, args2, 0, args.length);
         args2[args.length] = temp.getAbsolutePath();
 
-        play(this.data, result, null, args2, BlueSystem.getCurrentProjectDirectory(), -1.0f);
+        play(this.data, result, args2, BlueSystem.getCurrentProjectDirectory(), -1.0f);
 //        play(command, BlueSystem.getCurrentProjectDirectory(), -1);
     }
 
