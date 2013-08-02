@@ -19,15 +19,51 @@
  */
 package blue.ui.core.project;
 
-import blue.MainToolBar;
+import blue.BlueData;
+import blue.BlueSystem;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.projects.BlueProjectManager;
+import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.SwingUtilities;
+import org.openide.awt.StatusDisplayer;
+import org.openide.windows.WindowManager;
 
 public final class GenerateCsdToScreenAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
-        MainToolBar mainToolBar = MainToolBar.getInstance();
+        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
 
-        mainToolBar.generateScoreForTesting();
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+        
+        try {
+            float startTime = data.getRenderStartTime();
+            float endTime = data.getRenderEndTime();
+
+            /*
+             * try { tempStart = Float.parseFloat(playStartText.getText()); }
+             * catch(NumberFormatException nfe) { tempStart = 0.0f;
+             * playStartText.setText(Float.toString(tempStart));
+             * JOptionPane.showMessageDialog(null, BlueSystem
+             * .getString("message.generateScore.startingFromZero")); }
+             */
+
+            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(data, startTime,
+                    endTime,
+                    false);
+
+            String csd = result.getCsdText();
+
+            InfoDialog.showInformationDialog(WindowManager.getDefault().getMainWindow(), csd,
+                    BlueSystem.getString("message.generateScore.csdTest"));
+        } catch (Exception ex) {
+            ExceptionDialog.showExceptionDialog(WindowManager.getDefault().getMainWindow(),
+                    ex);
+            throw new RuntimeException("CSDRender Failed");
+        }
     }
 }

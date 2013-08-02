@@ -1,5 +1,6 @@
 package blue.ui.core.render;
 
+import blue.services.render.CsdRenderResult;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +16,8 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
+import blue.services.render.CSDRenderService;
 import blue.ui.core.score.AuditionManager;
-import blue.score.tempo.Tempo;
 import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.soundObject.Note;
@@ -142,7 +142,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();
 
-            CsdRenderResult result = CSDRender.generateCSD(data, startTime, endTime);
+            CsdRenderResult result = CSDRenderService.getDefault()
+                    .generateCSD(data, startTime, endTime);
             
             RenderTimeManager timeManager = RenderTimeManager.getInstance();
             timeManager.setTempoMapper(result.getTempoMapper());
@@ -173,7 +174,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     public void renderForBlueLive() throws SoundObjectException {
-        CsdRenderResult result = CSDRender.generateCSDForBlueLive(this.data);
+        CsdRenderResult result = CSDRenderService.getDefault()
+                .generateCSDForBlueLive(this.data);
         String tempCSD = result.getCsdText();
 
         File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",

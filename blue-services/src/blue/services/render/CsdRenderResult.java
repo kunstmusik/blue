@@ -17,7 +17,7 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-package blue.ui.core.render;
+package blue.services.render;
 
 import blue.automation.Parameter;
 import blue.noteProcessor.TempoMapper;

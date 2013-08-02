@@ -19,7 +19,6 @@
  */
 package blue;
 
-import blue.ui.core.render.CsdRenderResult;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,15 +37,12 @@ import javax.swing.border.EmptyBorder;
 
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.CommandlineRunner;
 import blue.ui.core.render.RenderTimeManager;
 import blue.ui.core.score.AuditionManager;
@@ -323,43 +319,6 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
                     soe);
         }
-    }
-
-    public void generateScoreForTesting() {
-        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
-
-        try {
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
-
-            /*
-             * try { tempStart = Float.parseFloat(playStartText.getText()); }
-             * catch(NumberFormatException nfe) { tempStart = 0.0f;
-             * playStartText.setText(Float.toString(tempStart));
-             * JOptionPane.showMessageDialog(null, BlueSystem
-             * .getString("message.generateScore.startingFromZero")); }
-             */
-
-            CsdRenderResult result = CSDRender.generateCSD(this.data, startTime,
-                    endTime,
-                    false);
-
-            String csd = result.getCsdText();
-
-            InfoDialog.showInformationDialog(SwingUtilities.getRoot(this), csd,
-                    BlueSystem.getString("message.generateScore.csdTest"));
-        } catch (ScoreGenerationException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                    soe);
-            throw new RuntimeException("CSDRender Failed");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.
-                    getString("message.generateScore.error"));
-            System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.
-                    getLocalizedMessage());
-        }
-
     }
 
     public void stopRendering() {

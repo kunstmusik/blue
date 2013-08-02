@@ -24,8 +24,8 @@ import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreGenerationException;
-import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CsdRenderResult;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
 import blue.ui.utilities.FileChooserManager;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -48,7 +48,7 @@ public final class GenerateCsdAction implements ActionListener {
 
         if (rValue == JFileChooser.APPROVE_OPTION) {
 
-            BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
+            BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
 
             File temp = FileChooserManager.getDefault().getSelectedFile(FILE_GEN);
             if (!(temp.getName().trim().endsWith(".csd"))) {
@@ -57,7 +57,7 @@ public final class GenerateCsdAction implements ActionListener {
             try {
                 PrintWriter out = new PrintWriter(new BufferedWriter(
                         new FileWriter(temp)));
-                final CsdRenderResult renderResult = CSDRender.generateCSD(
+                final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
                         data, data.getRenderStartTime(), data.
                         getRenderEndTime(), false);
 
@@ -68,17 +68,9 @@ public final class GenerateCsdAction implements ActionListener {
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                         "message.generateScore.success") + " " + temp.getName());
 
-            } catch (ScoreGenerationException soe) {
-                ExceptionDialog.showExceptionDialog(mainWindow,
-                        soe);
-                throw new RuntimeException("CSDRender Failed");
             } catch (Exception ex) {
-                StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString(
-                        "message.error") + "] " + BlueSystem.getString(
-                        "message.generateScore.error"));
-                System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.
-                        getLocalizedMessage());
-                ex.printStackTrace();
+                ExceptionDialog.showExceptionDialog(mainWindow, ex);
+                throw new RuntimeException("CSDRender Failed");
             }
         }
         if (rValue == JFileChooser.CANCEL_OPTION) {

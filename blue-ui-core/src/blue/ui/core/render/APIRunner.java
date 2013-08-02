@@ -4,6 +4,7 @@
  */
 package blue.ui.core.render;
 
+import blue.services.render.CsdRenderResult;
 import blue.BlueData;
 //import blue.BlueMainFrame;
 import blue.BlueSystem;
@@ -12,8 +13,8 @@ import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
+import blue.services.render.CSDRenderService;
 import blue.ui.core.score.AuditionManager;
-import blue.score.tempo.Tempo;
 import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
@@ -58,26 +59,18 @@ import org.openide.windows.InputOutput;
 public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     Vector<PlayModeListener> listeners = null;
-
     private BlueData data = null;
-
     APIRunnerThread runnerThread = null;
-
     JCheckBox disableMessagesBox = null;
-
     JPanel errorPanel = null;
-
     private boolean shouldStop;
-
     private BlueCallbackWrapper blueCallbackWrapper;
-
     private InputOutput io = null;
-    
+
     public APIRunner() {
 
         AuditionManager audition = AuditionManager.getInstance();
         audition.addPlayModeListener(new PlayModeListener() {
-
             public void playModeChanged(int playMode) {
 
                 if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
@@ -92,10 +85,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     }
 
-
     @Override
     public String toString() {
-        return "Csound 5 API";    
+        return "Csound 5 API";
     }
 
     @Override
@@ -103,7 +95,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         //FIXME - need to calculate
         return true;
     }
-    
+
     public boolean isRunning() {
         return runnerThread != null;
     }
@@ -143,7 +135,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         CsoundArgVList argsList = new CsoundArgVList();
 
         io.getOut().append("Render Command (");
-        
+
         for (int i = 0; i < args.length; i++) {
             argsList.Append(args[i]);
             io.getOut().append(" ").append(args[i]);
@@ -172,7 +164,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
                         JOptionPane.showMessageDialog(null, errorPanel,
-                        "Csound Error", JOptionPane.ERROR_MESSAGE);
+                                "Csound Error", JOptionPane.ERROR_MESSAGE);
 
                         if (disableMessagesBox.isSelected()) {
                             GeneralSettings.getInstance().setCsoundErrorWarningEnabled(
@@ -181,7 +173,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                         }
                     }
                 });
-                
+
             }
             notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
             csound.Stop();
@@ -196,9 +188,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
 
         runnerThread = new APIRunnerThread(blueData, csound, this,
-                result.getParameters(), result.getStringChannels(), 
+                result.getParameters(), result.getStringChannels(),
                 result.getTempoMapper(), renderStart);
-        
+
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
         Thread t = new Thread(runnerThread);
         t.setPriority(Thread.MAX_PRIORITY);
@@ -232,7 +224,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();
 
-            CsdRenderResult result = CSDRender.generateCSD(data, startTime,
+            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
+                    data, startTime,
                     endTime);
 
             RenderTimeManager timeManager = RenderTimeManager.getInstance();
@@ -248,17 +241,21 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             System.arraycopy(args, 0, args2, 0, args.length);
             args2[args.length] = temp.getAbsolutePath();
 
-            play(null, result, args2, BlueSystem.getCurrentProjectDirectory(), startTime);
+            play(null, result, args2, BlueSystem.getCurrentProjectDirectory(),
+                    startTime);
         } catch (SoundObjectException soe) {
             throw soe;
         } catch (Exception ex) {
-            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.getString("message.generateScore.error"));
+            StatusDisplayer.getDefault().setStatusText(
+                    "[" + BlueSystem.getString("message.error") + "] " + BlueSystem.getString(
+                    "message.generateScore.error"));
             ex.printStackTrace();
         }
     }
 
     public void renderForBlueLive() throws SoundObjectException {
-        CsdRenderResult result = CSDRender.generateCSDForBlueLive(this.data);
+        CsdRenderResult result = CSDRenderService.getDefault().generateCSDForBlueLive(
+                this.data);
 
         String tempCSD = result.getCsdText();
 
@@ -297,7 +294,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         System.arraycopy(args, 0, args2, 0, args.length);
         args2[args.length] = temp.getAbsolutePath();
 
-        play(this.data, result, args2, BlueSystem.getCurrentProjectDirectory(), -1.0f);
+        play(this.data, result, args2, BlueSystem.getCurrentProjectDirectory(),
+                -1.0f);
 //        play(command, BlueSystem.getCurrentProjectDirectory(), -1);
     }
 
@@ -376,13 +374,13 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             if (data.isLoopRendering() && !shouldStop) {
 
                 new Thread() {
-
                     public void run() {
                         try {
                             render();
                         } catch (SoundObjectException e) {
                             Exceptions.printStackTrace(e);
-                            notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+                            notifyPlayModeListeners(
+                                    PlayModeListener.PLAY_MODE_STOP);
                         }
                     }
                 }.start();
@@ -395,31 +393,19 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     }
 
-
     static class APIRunnerThread implements Runnable {
 
         private Csound csound;
-
         private boolean keepRunning = true;
-
         private PlayModeListener playModeListener;
-
         private ArrayList parameters;
-        
         private ArrayList<StringChannel> stringChannels;
-
         private TempoMapper mapper;
-
         private float startTime;
-
         private BlueData blueData;
-
         private float[] valuesCache;
-        
         private CsoundMYFLTArray[] channelPtrCache;
-        
         public boolean isRunning = true;
-        
         CountDownLatch latch = new CountDownLatch(1);
 
         public APIRunnerThread(BlueData blueData,
@@ -445,7 +431,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         public void setKeepRunning(boolean val) {
             keepRunning = val;
         }
-        
+
         public void await() {
             try {
                 latch.await();
@@ -487,9 +473,10 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             createValuesCache(currentTime);
 
             for (StringChannel strChannel : stringChannels) {
-                csound.SetChannel(strChannel.getChannelName(), strChannel.getValue());             
+                csound.SetChannel(strChannel.getChannelName(),
+                        strChannel.getValue());
             }
-            
+
             do {
                 counter++;
 
@@ -530,14 +517,16 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
                     if (value != valuesCache[i]) {
                         valuesCache[i] = value;
-                        channelPtrCache[i].SetValue(0, (double)value);
+                        channelPtrCache[i].SetValue(0, (double) value);
                     }
                 }
-                
+
                 for (StringChannel strChannel : stringChannels) {
-                    if(strChannel.isDirty()) {
-                        System.out.println("Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
-                        csound.SetChannel(strChannel.getChannelName(), strChannel.getValue());
+                    if (strChannel.isDirty()) {
+                        System.out.println(
+                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
+                        csound.SetChannel(strChannel.getChannelName(),
+                                strChannel.getValue());
                     }
                 }
             } while (csound.PerformKsmps() == 0 && keepRunning);
@@ -547,7 +536,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
-            
+
             if (renderUpdatesTime) {
                 RenderTimeManager.getInstance().endRender();
             }
@@ -577,7 +566,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                 }
 
                 channelPtrCache[i] = new CsoundMYFLTArray(1);
-                csound.GetChannelPtr(channelPtrCache[i].GetPtr(), varName, csndConstants.CSOUND_CONTROL_CHANNEL | csndConstants.CSOUND_INPUT_CHANNEL);
+                csound.GetChannelPtr(channelPtrCache[i].GetPtr(), varName,
+                        csndConstants.CSOUND_CONTROL_CHANNEL | csndConstants.CSOUND_INPUT_CHANNEL);
 
                 channelPtrCache[i].SetValue(0, valuesCache[i]);
             }

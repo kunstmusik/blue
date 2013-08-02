@@ -19,7 +19,7 @@
  */
 package blue.ui.core.score;
 
-import blue.ui.core.render.CsdRenderResult;
+import blue.services.render.CsdRenderResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,11 +33,9 @@ import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.mixer.Mixer;
 import blue.noteProcessor.TempoMapper;
-import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
 import blue.ui.core.render.APIDiskRenderer;
-import blue.ui.core.render.CSDRender;
 import blue.ui.core.render.RenderTimeManager;
-import blue.score.tempo.Tempo;
 import blue.settings.GeneralSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
@@ -127,9 +125,9 @@ public class AuditionManager {
         CsdRenderResult result;
 
         try {
-            result = CSDRender.generateCSD(tempData, minTime, maxTime, true);
+            result = CSDRenderService.getDefault().generateCSD(tempData, minTime, maxTime, true);
             tempCSD = result.getCsdText();
-        } catch (ScoreGenerationException e) {
+        } catch (Exception e) {
             Exceptions.printStackTrace(e);
             return;
             //throw new RuntimeException("CSDRender Failed");

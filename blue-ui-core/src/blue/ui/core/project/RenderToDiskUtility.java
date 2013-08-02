@@ -25,10 +25,10 @@ import blue.MainToolBar;
 import blue.ProjectProperties;
 import blue.gui.ExceptionDialog;
 import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
 import blue.settings.DiskRenderSettings;
 import blue.settings.GeneralSettings;
-import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CsdRenderResult;
+import blue.services.render.CsdRenderResult;
 import blue.ui.core.render.ProcessConsole;
 import blue.ui.core.soundFile.AudioFilePlayerTopComponent;
 import blue.ui.utilities.FileChooserManager;
@@ -157,7 +157,7 @@ public class RenderToDiskUtility {
                 endTime = -1.0f;
             }
 
-            CsdRenderResult result = CSDRender.generateCSD(data, startTime,
+            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(data, startTime,
                     endTime, false);
 
             String csd = result.getCsdText();
@@ -171,16 +171,10 @@ public class RenderToDiskUtility {
                     playAfterRender, command[1]);
             // console.execWaitForDisk(command,
             // BlueSystem.getCurrentProjectDirectory());
-        } catch (ScoreGenerationException soe) {
+        } catch (Exception ex) {
             ExceptionDialog.showExceptionDialog(WindowManager.getDefault().
                     getMainWindow(),
-                    soe);
-        } catch (Exception ex) {
-            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.
-                    getString("message.error") + "] " + BlueSystem.getString(
-                    "message.generateScore.error"));
-            System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.
-                    getLocalizedMessage());
+                    ex);
         }
     }
 

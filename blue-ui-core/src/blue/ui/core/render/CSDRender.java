@@ -7,6 +7,7 @@ package blue.ui.core.render;
  * @author steven yi
  * @version 1.0
  */
+import blue.services.render.CsdRenderResult;
 import blue.CompileData;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
@@ -31,6 +32,7 @@ import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
 import blue.score.ScoreGenerationException;
 import blue.score.tempo.Tempo;
+import blue.services.render.CSDRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.GenericScore;
@@ -48,13 +50,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrBuilder;
+import org.openide.util.lookup.ServiceProvider;
 
-public class CSDRender {
+@ServiceProvider(service = CSDRenderService.class)
+public class CSDRender extends CSDRenderService {
 
-    private static MessageFormat PARAM_VAR_NAME = new MessageFormat(
+    private final MessageFormat PARAM_VAR_NAME = new MessageFormat(
             "gk_blue_auto{0}");
 
-    public static synchronized CsdRenderResult generateCSDForBlueLive(
+    @Override
+    protected synchronized CsdRenderResult generateCSDForBlueLiveImpl(
             BlueData data) {
 
         ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
@@ -177,19 +182,9 @@ public class CSDRender {
         return renderResult;
     }
 
-    public static CsdRenderResult generateCSD(BlueData data) throws
-            ScoreGenerationException {
-        return generateCSD(data, 0.0f, -1.0f);
-    }
-
-    public static CsdRenderResult generateCSD(BlueData data, float startTime,
-            float endTime) throws ScoreGenerationException {
-        return generateCSD(data, startTime, endTime, true);
-    }
-
-    public static synchronized CsdRenderResult generateCSD(BlueData data,
-            float startTime, float endTime, boolean isRealTime)
-            throws ScoreGenerationException {
+    @Override
+    protected CsdRenderResult generateCSDImpl(BlueData data,
+            float startTime, float endTime, boolean isRealTime) {
 
         ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
         
@@ -253,8 +248,13 @@ public class CSDRender {
         arrangement.generateFTables(tables);
         
         CompileData compileData = new CompileData(arrangement, tables);
-        NoteList generatedNotes = data.getScore().generateForCSD(compileData, 
-                startTime, endTime);
+        NoteList generatedNotes;
+        try {
+            generatedNotes = data.getScore().generateForCSD(compileData, 
+           startTime, endTime);
+        } catch (ScoreGenerationException ex) {
+            throw new RuntimeException(ex);    
+        }
         
         String ftables = tables.getTables();
         
@@ -277,11 +277,11 @@ public class CSDRender {
         TempoMapper tempoMapper = null;
 
         if (tempo.isEnabled()) {
-            tempoMapper = CSDRender.getTempoMapper(tempo);
+            tempoMapper = getTempoMapper(tempo);
             globalOrcSco.appendGlobalSco(
                 getTempoScore(tempo, renderStartTime, endTime));
         } else {
-            tempoMapper = CSDRender.getTempoMapper(globalOrcSco.getGlobalSco());
+            tempoMapper = getTempoMapper(globalOrcSco.getGlobalSco());
         }
 
         float totalDur = blue.utility.ScoreUtilities.getTotalDuration(
@@ -301,7 +301,12 @@ public class CSDRender {
         globalSco = preprocessSco(globalSco, totalDur, renderStartTime,
                 processingStart, tempoMapper);
 
-        float globalDur = getGlobalDuration(globalSco);
+        float globalDur;
+        try {
+            globalDur = getGlobalDuration(globalSco);
+        } catch (SoundObjectException ex) {
+            throw new RuntimeException(ex);
+        }
 
         if (globalDur < totalDur) {
             globalDur = totalDur;
@@ -394,7 +399,7 @@ public class CSDRender {
         return renderResult;
     }
 
-    private static ArrayList<StringChannel> getStringChannels(Arrangement arrangement) {
+    private ArrayList<StringChannel> getStringChannels(Arrangement arrangement) {
         ArrayList<StringChannel> params = new ArrayList<StringChannel>();
         StringChannelNameManager scnm = new StringChannelNameManager();
 
@@ -423,7 +428,7 @@ public class CSDRender {
         return params;
     }
     
-    private static void clearUnusedMixerChannels(Mixer mixer,
+    private void clearUnusedMixerChannels(Mixer mixer,
             Arrangement arrangement) {
 
         ArrayList ids = new ArrayList();
@@ -438,7 +443,7 @@ public class CSDRender {
         channelList.clearChannelsNotInList(ids);
     }
 
-    private static void appendFtgenTableNumbers(String globalOrc, Tables tables) {
+    private void appendFtgenTableNumbers(String globalOrc, Tables tables) {
         Pattern p = Pattern.compile("ftgen\\s+-?(\\d+)");
         Matcher m = p.matcher(globalOrc);
 
@@ -450,7 +455,7 @@ public class CSDRender {
         }
     }
 
-    private static void createParamNote(StrBuilder paramScore, int instrId,
+    private void createParamNote(StrBuilder paramScore, int instrId,
             float startTime, float dur, float startVal, float endVal) {
         paramScore.append("i");
         paramScore.append(instrId).append("\t");
@@ -465,7 +470,7 @@ public class CSDRender {
      * @return
      * @throws SoundObjectException
      */
-    private static float getGlobalDuration(String globalSco)
+    private float getGlobalDuration(String globalSco)
             throws SoundObjectException {
         NoteList globalNotes;
         try {
@@ -484,7 +489,7 @@ public class CSDRender {
      * @param data
      * @return
      */
-    private static int getNchnls(BlueData data, boolean isRealtime) {
+    private int getNchnls(BlueData data, boolean isRealtime) {
         int nchnls = 2;
 
         try {
@@ -500,7 +505,7 @@ public class CSDRender {
         return nchnls;
     }
 
-    private static Instrument createRenderEndInstrument() {
+    private Instrument createRenderEndInstrument() {
         GenericInstrument instr = new GenericInstrument();
 
         String instrText = "event \"e\", 0, 0, 0.1";
@@ -510,7 +515,7 @@ public class CSDRender {
         return instr;
     }
 
-    private static Instrument createBlueTimePointerInstrument() {
+    private Instrument createBlueTimePointerInstrument() {
         GenericInstrument instr = new GenericInstrument();
 
         int fps = PlaybackSettings.getInstance().getPlaybackFPS();
@@ -523,7 +528,7 @@ public class CSDRender {
         return instr;
     }
 
-    protected static Instrument createAllNotesOffInstrument(String[] instrIds) {
+    protected Instrument createAllNotesOffInstrument(String[] instrIds) {
         GenericInstrument instr = new GenericInstrument();
         StrBuilder buffer = new StrBuilder();
 
@@ -556,7 +561,7 @@ public class CSDRender {
         return instr;
     }
 
-    private static void appendProjectInfo(BlueData data, StrBuilder score) {
+    private void appendProjectInfo(BlueData data, StrBuilder score) {
         ProjectProperties props = data.getProjectProperties();
         String notes = props.notes.replaceAll("\n", "\n; ");
 
@@ -571,7 +576,7 @@ public class CSDRender {
         score.append(";\n\n");
     }
 
-    private static void appendCsScore(String globalSco, String ftables,
+    private void appendCsScore(String globalSco, String ftables,
             NoteList generatedNotes, float totalDur, StrBuilder score) {
 
         score.append("<CsScore>\n\n");
@@ -589,7 +594,7 @@ public class CSDRender {
         score.append("</CsScore>\n\n");
     }
 
-    private static void appendCsInstruments(BlueData data, OpcodeList udos,
+    private void appendCsInstruments(BlueData data, OpcodeList udos,
             Arrangement arrangement, GlobalOrcSco globalOrcSco,
             StrBuilder score, Mixer mixer, boolean isRealTime) {
 
@@ -646,7 +651,7 @@ public class CSDRender {
         score.append("</CsInstruments>\n\n");
     }
 
-    private static String preprocessSco(String in, float totalDur,
+    private String preprocessSco(String in, float totalDur,
             float renderStartTime, float processingStart,
             TempoMapper tempoMapper) {
         String temp = blue.utility.TextUtilities.replaceAll(in, "<TOTAL_DUR>",
@@ -677,7 +682,7 @@ public class CSDRender {
         return temp;
     }
 
-    private static GenericInstrument getParameterInstrument(Parameter param) {
+    private GenericInstrument getParameterInstrument(Parameter param) {
         GenericInstrument instr = new GenericInstrument();
         instr.setName("Param: " + param.getName());
 
@@ -702,7 +707,7 @@ public class CSDRender {
         return instr;
     }
 
-    private static void appendParameterScore(Parameter param, int instrId,
+    private void appendParameterScore(Parameter param, int instrId,
             StrBuilder paramScore, float renderStart, float renderEnd) {
 
         Line line = param.getLine();
@@ -872,7 +877,7 @@ public class CSDRender {
 
     }
 
-    protected static String getTempoScore(Tempo tempo, float renderStart,
+    protected String getTempoScore(Tempo tempo, float renderStart,
             float renderEnd) {
 
         Line line = tempo.getLine();
@@ -911,7 +916,7 @@ public class CSDRender {
         return buffer.toString();
     }
 
-    private static void assignParameterNames(ArrayList parameters) {
+    private void assignParameterNames(ArrayList parameters) {
         Object[] varNum = new Object[1];
 
         for (int i = 0; i < parameters.size(); i++) {
@@ -923,7 +928,7 @@ public class CSDRender {
         }
     }
 
-    private static void handleParameters(ArrayList parameters,
+    private void handleParameters(ArrayList parameters,
             ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement,
             float startTime, float endTime, boolean isRealTime) {
@@ -1006,7 +1011,7 @@ public class CSDRender {
 
     }
 
-    private static void handleParametersForBlueLive(ArrayList parameters,
+    private void handleParametersForBlueLive(ArrayList parameters,
             ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement) {
 
@@ -1070,7 +1075,7 @@ public class CSDRender {
 
     }
 
-    public static TempoMapper getTempoMapper(Tempo tempo) {
+    public TempoMapper getTempoMapper(Tempo tempo) {
         StrBuilder buffer = new StrBuilder();
         Line line = tempo.getLine();
         for (int i = 0; i < line.size(); i++) {
@@ -1083,7 +1088,7 @@ public class CSDRender {
         return TempoMapper.createTempoMapper(buffer.toString());
     }
 
-    private static TempoMapper getTempoMapper(String globalSco) {
+    private TempoMapper getTempoMapper(String globalSco) {
         TempoMapper mapper = null;
 
         StringTokenizer st = new StringTokenizer(globalSco, "\n");
