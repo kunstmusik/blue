@@ -1075,7 +1075,7 @@ public class CSDRender extends CSDRenderService {
 
     }
 
-    public TempoMapper getTempoMapper(Tempo tempo) {
+    protected TempoMapper getTempoMapper(Tempo tempo) {
         StrBuilder buffer = new StrBuilder();
         Line line = tempo.getLine();
         for (int i = 0; i < line.size(); i++) {
