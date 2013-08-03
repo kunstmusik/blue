@@ -36,19 +36,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.services.render.RealtimeRenderService;
-import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
-import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.CommandlineRunner;
 import blue.ui.core.render.RenderTimeManager;
-import blue.ui.core.score.AuditionManager;
-import blue.soundObject.SoundObjectException;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.render.RenderTimeManagerListener;
-import blue.utility.APIUtilities;
 import blue.utility.NumberUtilities;
 import javax.swing.JToolBar;
 import org.openide.awt.StatusDisplayer;
@@ -88,10 +81,6 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     BlueData data;
 
-    APIRunner apiRunner;
-
-    CommandlineRunner commandlineRunner = new CommandlineRunner();
-
     JCheckBox loopBox = new JCheckBox();
 
     private boolean isUpdating = false;
@@ -108,12 +97,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         setFloatable(false);
 
-        try {
-            apiRunner = new APIRunner();
-            apiRunner.addPlayModeListener(this);
-        } catch (Throwable t) {
-            apiRunner = null;
-        }
+        RealtimeRenderManager.getInstance().addPlayModeListener(this);
 
         previousMarkerButton = new JButton(new PreviousMarkerAction());
         nextMarkerButton = new JButton(new NextMarkerAction());
@@ -206,8 +190,6 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(playButton, null);
         this.add(stopButton, null);
         
-        commandlineRunner.addPlayModeListener(this);
-
         // Setup as Listener to RenderTimeManager
         RenderTimeManager manager = RenderTimeManager.getInstance();
 
@@ -284,59 +266,61 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     public void renderProject() {
-        if(AuditionManager.getInstance().isRunning()) {
-            AuditionManager.getInstance().stop();
-        }
-        
-        if (apiRunner != null && apiRunner.isRunning()) {
-            apiRunner.stop();
-            return;
-        }
-
-        if (commandlineRunner.isRunning()) {
-            commandlineRunner.stop();
-            return;
-        }
-
-        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
-
-        playButton.setEnabled(false);
-
-        RealtimeRenderService csdRunner;
-
-        if (apiRunner != null
-                && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            csdRunner = apiRunner;
-        } else {
-            csdRunner = commandlineRunner;
-        }
-
-        csdRunner.setData(data);
-        try {
-            csdRunner.render();
-        } catch (SoundObjectException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                    soe);
-        }
+//        if(AuditionManager.getInstance().isRunning()) {
+//            AuditionManager.getInstance().stop();
+//        }
+//        
+//        if (apiRunner != null && apiRunner.isRunning()) {
+//            apiRunner.stop();
+//            return;
+//        }
+//
+//        if (commandlineRunner.isRunning()) {
+//            commandlineRunner.stop();
+//            return;
+//        }
+//
+//        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
+//
+//        playButton.setEnabled(false);
+//
+//        RealtimeRenderService csdRunner;
+//
+//        if (apiRunner != null
+//                && APIUtilities.isCsoundAPIAvailable()
+//                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//            csdRunner = apiRunner;
+//        } else {
+//            csdRunner = commandlineRunner;
+//        }
+//
+//        csdRunner.setData(data);
+//        try {
+//            csdRunner.render();
+//        } catch (SoundObjectException soe) {
+//            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
+//                    soe);
+//        }
+        RealtimeRenderManager.getInstance().renderProject(data);
     }
 
     public void stopRendering() {
-        AuditionManager.getInstance().stop();
-
-        if (isRendering()) {
-            if (apiRunner != null && apiRunner.isRunning()) {
-                apiRunner.stop();
-            } else {
-                commandlineRunner.stop();
-            }
-        }
-        playModeChanged(PLAY_MODE_STOP);
+//        AuditionManager.getInstance().stop();
+//
+//        if (isRendering()) {
+//            if (apiRunner != null && apiRunner.isRunning()) {
+//                apiRunner.stop();
+//            } else {
+//                commandlineRunner.stop();
+//            }
+//        }
+//        playModeChanged(PLAY_MODE_STOP);
+        RealtimeRenderManager.getInstance().stopRendering();
     }
 
+    //FIXME - remove this and change callers to use RealtimeRenderManager
     public boolean isRendering() {
-        return ((apiRunner != null && apiRunner.isRunning()) || commandlineRunner.
-                isRunning());
+        return RealtimeRenderManager.getInstance().isRendering();
     }
 
     /**

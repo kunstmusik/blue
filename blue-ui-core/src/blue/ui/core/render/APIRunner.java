@@ -14,7 +14,6 @@ import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
-import blue.ui.core.score.AuditionManager;
 import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
@@ -69,19 +68,19 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     public APIRunner() {
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.addPlayModeListener(new PlayModeListener() {
-            public void playModeChanged(int playMode) {
-
-                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-                    if (isRunning()) {
-                        stop();
-                        blueCallbackWrapper.setInputOutput(null);
-                    }
-                }
-
-            }
-        });
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.addPlayModeListener(new PlayModeListener() {
+//            public void playModeChanged(int playMode) {
+//
+//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
+//                    if (isRunning()) {
+//                        stop();
+//                        blueCallbackWrapper.setInputOutput(null);
+//                    }
+//                }
+//
+//            }
+//        });
 
     }
 
@@ -92,8 +91,14 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     @Override
     public boolean isAvailable() {
-        //FIXME - need to calculate
-        return true;
+        try {
+            csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
+            Csound csound = new Csound();
+            return true;
+        } catch (Throwable e) {
+            
+        }
+        return false;
     }
 
     public boolean isRunning() {
@@ -102,8 +107,8 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     public void play(BlueData blueData, CsdRenderResult result,
             String[] args, File currentWorkingDirectory, float renderStart) {
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.stop();
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.stop();
 
         if (runnerThread != null) {
             runnerThread.setKeepRunning(false);

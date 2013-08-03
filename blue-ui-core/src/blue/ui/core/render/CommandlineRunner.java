@@ -17,7 +17,6 @@ import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
 import blue.services.render.CSDRenderService;
-import blue.ui.core.score.AuditionManager;
 import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.soundObject.Note;
@@ -61,19 +60,19 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
         
         console.addPlayModeListener(this);
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.addPlayModeListener(new PlayModeListener() {
-
-            public void playModeChanged(int playMode) {
-                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-                    if (isRunning()) {
-                        stop();
-                    }
-                }
-
-            }
-
-        });
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.addPlayModeListener(new PlayModeListener() {
+//
+//            public void playModeChanged(int playMode) {
+//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
+//                    if (isRunning()) {
+//                        stop();
+//                    }
+//                }
+//
+//            }
+//
+//        });
     }
 
     @Override
@@ -217,8 +216,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
         // stop();
         // }
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.stop();
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.stop();
 
         runProxy = new RunProxy(command, currentWorkingDirectory, renderStart);
         Thread t = new Thread(runProxy);

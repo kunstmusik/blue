@@ -20,6 +20,7 @@
 package blue.settings;
 
 import blue.services.render.RealtimeRenderService;
+import blue.services.render.RealtimeRenderServiceFactory;
 import java.io.Serializable;
 
 import blue.utility.APIUtilities;
@@ -32,7 +33,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 
 /**
- * 
+ *
  * @author steven
  */
 public class RealtimeRenderSettings implements Serializable {
@@ -66,35 +67,33 @@ public class RealtimeRenderSettings implements Serializable {
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
     private static final String ZERO_DB_FS = "zeroDbFS";
-    private static final String REALTIME_RENDER_SERVICE = "realtimeRenderService";
+    private static final String REALTIME_RENDER_SERVICE_FACTORY = "realtimeRenderServiceFactory";
     private static String[] AUDIO_DRIVERS = null;
     private static String[] MIDI_DRIVERS = null;
 
-    private static RealtimeRenderService findRealtimeRenderService(String renderServiceName) {
-        Collection<? extends RealtimeRenderService> results = 
-            Lookup.getDefault().lookupAll(RealtimeRenderService.class);
+    private static RealtimeRenderServiceFactory findRealtimeRenderServiceFactory(String renderServiceName) {
+        Collection<? extends RealtimeRenderServiceFactory> results =
+                Lookup.getDefault().lookupAll(RealtimeRenderServiceFactory.class);
 
-        RealtimeRenderService foundService = null;
-       
-    
-        if(renderServiceName == null || renderServiceName.isEmpty()) {
-            foundService = (RealtimeRenderService) results.toArray()[0];
-        }
-       
-        for(RealtimeRenderService service : results) {
-            if(service.toString().equals(renderServiceName)) {
-                foundService = service;
-                break;
+        RealtimeRenderServiceFactory foundService = null;
+
+        if (renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = (RealtimeRenderServiceFactory) results.toArray()[0];
+        } else {
+            for (RealtimeRenderServiceFactory service : results) {
+                if (service.toString().equals(renderServiceName)) {
+                    foundService = service;
+                    break;
+                }
             }
         }
 
-        if(foundService == null) {
-            foundService = (RealtimeRenderService) results.toArray()[0];
+        if (foundService == null) {
+            foundService = (RealtimeRenderServiceFactory) results.toArray()[0];
         }
 
         return foundService;
     }
-
     // PROPERTIES
     public boolean audioDriverEnabled = true;
     public String audioDriver = "PortAudio";
@@ -124,8 +123,7 @@ public class RealtimeRenderSettings implements Serializable {
     public String advancedSettings = "";
     public boolean useZeroDbFS = true;
     public String zeroDbFS = "1";
-    public RealtimeRenderService renderService = null;
-    
+    public RealtimeRenderServiceFactory renderServiceFactory = null;
     private static RealtimeRenderSettings instance = null;
 
     private RealtimeRenderSettings() {
@@ -158,51 +156,69 @@ public class RealtimeRenderSettings implements Serializable {
             final Preferences prefs = NbPreferences.forModule(
                     RealtimeRenderSettings.class);
 
-            instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE, csoundExecutableDefault);
+            instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
+                    csoundExecutableDefault);
             instance.defaultSr = prefs.get(PREFIX + DEFAULT_SR, "44100");
             instance.defaultKsmps = prefs.get(PREFIX + DEFAULT_KSMPS, "1");
             instance.defaultNchnls = prefs.get(PREFIX + DEFAULT_NCHNLS, "2");
 
-            instance.audioDriverEnabled = prefs.getBoolean(PREFIX + AUDIO_DRIVER_ENABLED, true);
-            instance.audioDriver = prefs.get(PREFIX + AUDIO_DRIVER, audioDriverDefault);
-            instance.audioOutEnabled = prefs.getBoolean(PREFIX + AUDIO_OUT_ENABLED, true);
+            instance.audioDriverEnabled = prefs.getBoolean(
+                    PREFIX + AUDIO_DRIVER_ENABLED, true);
+            instance.audioDriver = prefs.get(PREFIX + AUDIO_DRIVER,
+                    audioDriverDefault);
+            instance.audioOutEnabled = prefs.getBoolean(
+                    PREFIX + AUDIO_OUT_ENABLED, true);
             instance.audioOutText = prefs.get(PREFIX + AUDIO_OUT_TEXT, "dac");
-            instance.audioInEnabled = prefs.getBoolean(PREFIX + AUDIO_IN_ENABLED, false);
+            instance.audioInEnabled = prefs.getBoolean(PREFIX + AUDIO_IN_ENABLED,
+                    false);
             instance.audioInText = prefs.get(PREFIX + AUDIO_IN_TEXT, "adc");
 
-            instance.midiDriverEnabled = prefs.getBoolean(PREFIX + MIDI_DRIVER_ENABLED, true);
+            instance.midiDriverEnabled = prefs.getBoolean(
+                    PREFIX + MIDI_DRIVER_ENABLED, true);
             instance.midiDriver = prefs.get(PREFIX + MIDI_DRIVER, "PortMidi");
-            instance.midiOutEnabled = prefs.getBoolean(PREFIX + MIDI_OUT_ENABLED, false);
+            instance.midiOutEnabled = prefs.getBoolean(PREFIX + MIDI_OUT_ENABLED,
+                    false);
             instance.midiOutText = prefs.get(PREFIX + MIDI_OUT_TEXT, "");
-            instance.midiInEnabled = prefs.getBoolean(PREFIX + MIDI_IN_ENABLED, false);
+            instance.midiInEnabled = prefs.getBoolean(PREFIX + MIDI_IN_ENABLED,
+                    false);
             instance.midiInText = prefs.get(PREFIX + MIDI_IN_TEXT, "");
 
-            instance.hardwareBufferEnabled = prefs.getBoolean(PREFIX + HARDWARE_BUFFER_ENABLED,
+            instance.hardwareBufferEnabled = prefs.getBoolean(
+                    PREFIX + HARDWARE_BUFFER_ENABLED,
                     false);
-            instance.hardwareBufferSize = prefs.getInt(PREFIX + HARDWARE_BUFFER_SIZE,
+            instance.hardwareBufferSize = prefs.getInt(
+                    PREFIX + HARDWARE_BUFFER_SIZE,
                     hardwareBufferSize);
 
-            instance.softwareBufferEnabled = prefs.getBoolean(PREFIX + SOFTWARE_BUFFER_ENABLED,
+            instance.softwareBufferEnabled = prefs.getBoolean(
+                    PREFIX + SOFTWARE_BUFFER_ENABLED,
                     false);
-            instance.softwareBufferSize = prefs.getInt(PREFIX + SOFTWARE_BUFFER_SIZE,
+            instance.softwareBufferSize = prefs.getInt(
+                    PREFIX + SOFTWARE_BUFFER_SIZE,
                     softwareBufferSize);
 
-            instance.noteAmpsEnabled = prefs.getBoolean(PREFIX + NOTE_AMPS_ENABLED, true);
-            instance.outOfRangeEnabled = prefs.getBoolean(PREFIX + OUT_OF_RANGE_ENABLED, true);
-            instance.warningsEnabled = prefs.getBoolean(PREFIX + WARNINGS_ENABLED, true);
-            instance.benchmarkEnabled = prefs.getBoolean(PREFIX + BENCHMARK_ENABLED, true);
+            instance.noteAmpsEnabled = prefs.getBoolean(
+                    PREFIX + NOTE_AMPS_ENABLED, true);
+            instance.outOfRangeEnabled = prefs.getBoolean(
+                    PREFIX + OUT_OF_RANGE_ENABLED, true);
+            instance.warningsEnabled = prefs.getBoolean(
+                    PREFIX + WARNINGS_ENABLED, true);
+            instance.benchmarkEnabled = prefs.getBoolean(
+                    PREFIX + BENCHMARK_ENABLED, true);
 
-            instance.displaysDisabled = prefs.getBoolean(PREFIX + DISPLAYS_DISABLED, true);
-            
+            instance.displaysDisabled = prefs.getBoolean(
+                    PREFIX + DISPLAYS_DISABLED, true);
+
             instance.advancedSettings = prefs.get(PREFIX + ADVANCED_SETTINGS, "");
 
             instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
             instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
 
-            String renderServiceName = 
-                    prefs.get(PREFIX + REALTIME_RENDER_SERVICE, null);
+            String factoryName =
+                    prefs.get(PREFIX + REALTIME_RENDER_SERVICE_FACTORY, null);
 
-            instance.renderService = findRealtimeRenderService(renderServiceName);
+            instance.renderServiceFactory = findRealtimeRenderServiceFactory(
+                    factoryName);
         }
         return instance;
     }
@@ -242,14 +258,15 @@ public class RealtimeRenderSettings implements Serializable {
         prefs.putBoolean(PREFIX + BENCHMARK_ENABLED, benchmarkEnabled);
 
         prefs.putBoolean(PREFIX + DISPLAYS_DISABLED, displaysDisabled);
-        
+
         prefs.put(PREFIX + ADVANCED_SETTINGS, advancedSettings);
 
         prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
         prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
 
-        prefs.put(PREFIX + REALTIME_RENDER_SERVICE, renderService.toString());
-        
+        prefs.put(PREFIX + REALTIME_RENDER_SERVICE_FACTORY,
+                renderServiceFactory.toString());
+
         try {
             prefs.sync();
         } catch (BackingStoreException ex) {
@@ -261,12 +278,12 @@ public class RealtimeRenderSettings implements Serializable {
             boolean useMidiIn, boolean useMidiOut) {
         StringBuffer buffer = new StringBuffer();
 
-        if (APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            buffer.append("csound ");
-        } else {
+//        if (APIUtilities.isCsoundAPIAvailable()
+//                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//            buffer.append("csound ");
+//        } else {
             buffer.append(csoundExecutable).append(" ");
-        }
+  //      }
 
         if (!GeneralSettings.getInstance().isMessageColorsEnabled()) {
             buffer.append("-+msg_color=false ");
@@ -354,17 +371,17 @@ public class RealtimeRenderSettings implements Serializable {
         return AUDIO_DRIVERS;
     }
 
-    public static RealtimeRenderService[] getAvailableRealtimeRenderServices() {
-        Collection<? extends RealtimeRenderService> results = 
-                Lookup.getDefault().lookupAll(RealtimeRenderService.class);
+    public static RealtimeRenderServiceFactory[] getAvailableRealtimeRenderServices() {
+        Collection<? extends RealtimeRenderServiceFactory> results =
+                Lookup.getDefault().lookupAll(RealtimeRenderServiceFactory.class);
 
-        ArrayList<RealtimeRenderService> retVal = new ArrayList<RealtimeRenderService>();
-        for(RealtimeRenderService service : results) {
-            if(service.isAvailable()) {
+        ArrayList<RealtimeRenderServiceFactory> retVal = new ArrayList<RealtimeRenderServiceFactory>();
+        for (RealtimeRenderServiceFactory service : results) {
+            if (service.isAvailable()) {
                 retVal.add(service);
             }
         }
-        
-        return retVal.toArray(new RealtimeRenderService[0]);
+
+        return retVal.toArray(new RealtimeRenderServiceFactory[0]);
     }
 }

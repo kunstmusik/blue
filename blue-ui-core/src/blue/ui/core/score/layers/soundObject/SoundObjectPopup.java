@@ -30,7 +30,6 @@ import blue.event.SelectionEvent;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.score.TimeState;
 import blue.ui.core.render.APIDiskRenderer;
 import blue.services.render.CsdRenderResult;

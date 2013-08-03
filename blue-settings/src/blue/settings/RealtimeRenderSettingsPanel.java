@@ -19,7 +19,7 @@
  */
 package blue.settings;
 
-import blue.services.render.RealtimeRenderService;
+import blue.services.render.RealtimeRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.HeadlessException;
@@ -892,7 +892,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         zeroDBFSCheckBox.setSelected(settings.useZeroDbFS);
         zeroDBFSText.setText(settings.zeroDbFS);
 
-        renderServiceComboBox.setSelectedItem(settings.renderService);
+        renderServiceComboBox.setSelectedItem(settings.renderServiceFactory);
         
         loading = false;
     }
@@ -939,7 +939,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         settings.useZeroDbFS = zeroDBFSCheckBox.isSelected();
         settings.zeroDbFS = zeroDBFSText.getText();
        
-        settings.renderService = (RealtimeRenderService) renderServiceComboBox.getSelectedItem();
+        settings.renderServiceFactory = (RealtimeRenderServiceFactory) renderServiceComboBox.getSelectedItem();
         
         settings.save();
     }
