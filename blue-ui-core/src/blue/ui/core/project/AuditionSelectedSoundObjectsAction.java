@@ -8,7 +8,7 @@ import blue.BlueData;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,9 +34,7 @@ public final class AuditionSelectedSoundObjectsAction implements ActionListener 
             return;
         }
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.stop();
-        audition.auditionSoundObjects(data, soundObjects);
+        RealtimeRenderManager.getInstance().auditionSoundObjects(data, soundObjects);
 
     }
 }

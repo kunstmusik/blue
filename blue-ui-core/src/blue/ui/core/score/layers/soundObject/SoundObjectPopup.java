@@ -48,7 +48,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.ProcessConsole;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.APIUtilities;
@@ -874,9 +874,7 @@ public class SoundObjectPopup extends JPopupMenu {
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
         SoundObject[] soundObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
 
-        AuditionManager audition = AuditionManager.getInstance();
-
-        audition.auditionSoundObjects(data, soundObjects);
+        RealtimeRenderManager.getInstance().auditionSoundObjects(data, soundObjects);
     }
 
     /**

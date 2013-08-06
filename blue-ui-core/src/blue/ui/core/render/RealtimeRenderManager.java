@@ -21,12 +21,17 @@ package blue.ui.core.render;
 
 import blue.BlueData;
 import blue.BlueSystem;
+import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
+import blue.mixer.Mixer;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.settings.RealtimeRenderSettings;
+import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
+import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
@@ -46,11 +51,15 @@ public final class RealtimeRenderManager {
     private RealtimeRenderService currentBlueLiveRenderService = null;
     private PlayModeListener realtimeListener;
     private PlayModeListener blueLiveListener;
+    private boolean auditioning = false;
 
     private RealtimeRenderManager() {
         realtimeListener = new PlayModeListener() {
             @Override
             public void playModeChanged(int playMode) {
+                if(playMode == PlayModeListener.PLAY_MODE_STOP) {
+                    auditioning = false;
+                }
                 for (PlayModeListener listener : listeners) {
                     listener.playModeChanged(playMode);
                 }
@@ -93,15 +102,23 @@ public final class RealtimeRenderManager {
         blueLiveListeners.remove(listener);
     }
 
-    public void renderProject(BlueData data) {
+    public void renderProject(BlueData data) { 
+        this.renderProject(data, false);
+    }
 
-        if (currentRenderService != null && currentRenderService.isRunning()) {
-            currentRenderService.stop();
+    protected void renderProject(BlueData data, boolean auditioning) {
+
+        if (isRendering()) {
+            stopRendering();
         }
 
         if (data == null) {
+            this.auditioning = false;
             return;
         }
+
+
+        this.auditioning = auditioning;
 
         StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                 "message.generatingCSD"));
@@ -166,20 +183,79 @@ public final class RealtimeRenderManager {
 
     }
 
+    public void auditionSoundObjects(BlueData data, SoundObject[] soundObjects) {
+
+        if (soundObjects == null || soundObjects.length == 0) {
+            return;
+        }
+       
+        if (isRendering()) {
+            stopRendering();
+        }
+        
+        BlueData tempData = (BlueData) ObjectUtilities.clone(data);
+
+        PolyObject tempPObj = new PolyObject(true);
+        SoundLayer sLayer = (SoundLayer)tempPObj.newLayerAt(-1);
+
+        float minTime = Float.MAX_VALUE;
+        float maxTime = Float.MIN_VALUE;
+
+        for (int i = 0; i < soundObjects.length; i++) {
+            SoundObject sObj = soundObjects[i];
+            float startTime = sObj.getStartTime();
+            float endTime = startTime + sObj.getSubjectiveDuration();
+
+            if (startTime < minTime) {
+                minTime = startTime;
+            }
+
+            if (endTime > maxTime) {
+                maxTime = endTime;
+            }
+
+            sLayer.addSoundObject((SoundObject) sObj.clone());
+        }
+
+        tempData.getScore().clearLayerGroups();
+        tempData.getScore().addLayerGroup(tempPObj);
+
+        Mixer m = tempData.getMixer();
+
+        if (m.isEnabled()) {
+            maxTime += m.getExtraRenderTime();
+        }
+
+        tempData.setRenderStartTime(minTime);
+        tempData.setRenderEndTime(maxTime);
+
+        renderProject(tempData, true);
+    }
+    
     public void stopRendering() {
         if (isRendering()) {
             currentRenderService.stop();
+            realtimeListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);
         }
-        realtimeListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);
     }
 
     public void stopBlueLiveRendering() {
         if (isBlueLiveRendering()) {
             currentBlueLiveRenderService.stop();
+            blueLiveListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);
         }
-        blueLiveListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);
     }
 
+    public void stopAuditioning() {
+        if (isAuditioning()) {
+            stopRendering();
+        } 
+    }
+
+    public boolean isAuditioning() {
+        return (isRendering() && auditioning);
+    }
+    
     public boolean isRendering() {
         return (currentRenderService != null && currentRenderService.isRunning());
     }
