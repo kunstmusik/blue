@@ -24,6 +24,10 @@ FIX
 * On Mac, fixed default csound command for Utility and DiskRender settings to be
   "/usr/local/bin/csound" instead of "csound"
 
+* UDO Import Dialog for importing from UDO Repository on Csounds.com was 
+  throwing a NullPointerException when opened from a Dialog (i.e. Effects
+  Library Dialog)
+
  
 >Notes for 2.4.3<
 [released 2013.04.05]
