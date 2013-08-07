@@ -21,7 +21,6 @@ package blue.ui.core.score;
 
 import blue.ui.utilities.LinearLayout;
 import blue.BlueData;
-import blue.MainToolBar;
 import blue.automation.AutomationManager;
 import blue.components.AlphaMarquee;
 import blue.ui.components.IconFactory;
@@ -38,8 +37,8 @@ import blue.score.tempo.Tempo;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.render.RenderTimeManager;
-import blue.ui.core.render.RenderTimeManagerListener;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
 import blue.ui.core.score.layers.LayerGroupHeaderPanelProviderManager;
 import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
 import blue.ui.core.score.layers.soundObject.MotionBuffer;
@@ -59,6 +58,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -105,6 +105,11 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseWheelListener mouseWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this);
     TimeState currentTimeState = null;
+
+
+    RenderTimeManager renderTimeManager = 
+                Lookup.getDefault().lookup(RenderTimeManager.class);
+
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -146,7 +151,6 @@ public final class ScoreTopComponent extends TopComponent
                     }
                 });
 
-        RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
 
@@ -705,7 +709,7 @@ public final class ScoreTopComponent extends TopComponent
             return;
         }
 
-        if (!(RenderTimeManager.getInstance().isCurrentProjectRendering())) {
+        if (!renderTimeManager.isCurrentProjectRendering()) {
             return;
         }
 
@@ -735,7 +739,7 @@ public final class ScoreTopComponent extends TopComponent
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == RenderTimeManager.getInstance()) {
+        if (evt.getSource() == renderTimeManager) {
             //FIXME - check if root score object
 //            if (this.pObj.isRoot()) {
             if (evt.getPropertyName().equals(RenderTimeManager.RENDER_START)) {

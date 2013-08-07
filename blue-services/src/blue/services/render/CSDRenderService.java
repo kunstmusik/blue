@@ -33,28 +33,28 @@ public abstract class CSDRenderService {
         return Lookup.getDefault().lookup(CSDRenderService.class);
     }
     
-    public synchronized CsdRenderResult generateCSDForBlueLive(BlueData data) {
-        return generateCSDForBlueLiveImpl(data);
+    public synchronized CsdRenderResult generateCSDForBlueLive(BlueData data, boolean useAPI) {
+        return generateCSDForBlueLiveImpl(data, useAPI);
     }
     
-    protected abstract CsdRenderResult generateCSDForBlueLiveImpl(BlueData data);
+    protected abstract CsdRenderResult generateCSDForBlueLiveImpl(BlueData data, boolean useAPI);
     
-    public final synchronized CsdRenderResult generateCSD(BlueData data) throws
+    public final synchronized CsdRenderResult generateCSD(BlueData data, boolean useAPI) throws
             ScoreGenerationException {
-        return generateCSD(data, 0.0f, -1.0f);
+        return generateCSD(data, 0.0f, -1.0f, useAPI);
     }
     
     public final synchronized CsdRenderResult generateCSD(BlueData data, float startTime,
-            float endTime) throws ScoreGenerationException {
-        return generateCSD(data, startTime, endTime, true);
+            float endTime, boolean useAPI) throws ScoreGenerationException {
+        return generateCSD(data, startTime, endTime, true, useAPI);
     }
     
     public final synchronized CsdRenderResult generateCSD(BlueData data,
-            float startTime, float endTime, boolean isRealTime) {
-        return generateCSDImpl(data, startTime, endTime, isRealTime);
+            float startTime, float endTime, boolean isRealTime, boolean useAPI) {
+        return generateCSDImpl(data, startTime, endTime, isRealTime, useAPI);
     }
 
     protected abstract CsdRenderResult generateCSDImpl(BlueData data,
-            float startTime, float endTime, boolean isRealTime); 
+            float startTime, float endTime, boolean isRealTime, boolean useAPI); 
             
     }

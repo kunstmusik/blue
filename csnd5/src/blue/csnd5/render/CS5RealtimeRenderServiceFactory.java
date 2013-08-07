@@ -17,31 +17,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.services.render;
+package blue.csnd5.render;
 
-import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
-import java.io.File;
-import java.util.ArrayList;
+import blue.services.render.RealtimeRenderService;
+import blue.services.render.RealtimeRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
-public interface DiskRenderService {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            float startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+@ServiceProvider(service = RealtimeRenderServiceFactory.class, position=200)
+public class CS5RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    @Override
+    public Class getRenderServiceClass() {
+        return APIRunner.class;
+    }
 
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
+    @Override
+    public RealtimeRenderService createInstance() {
+        return new APIRunner();
+    }
 
-    public void stop();
-    
+    @Override 
+    public String toString() {
+        return "Csound 5 API";
+    }
+
+    @Override
+    public boolean isAvailable() {
+        return APIUtilities.isCsoundAPIAvailable();
+    }
 }

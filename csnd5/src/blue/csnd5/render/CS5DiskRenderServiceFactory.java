@@ -17,46 +17,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.render;
+package blue.csnd5.render;
 
-import blue.services.render.RealtimeRenderService;
-import blue.services.render.RealtimeRenderServiceFactory;
-import csnd.Csound;
-import csnd.csnd;
+import blue.services.render.DiskRenderService;
+import blue.services.render.DiskRenderServiceFactory;
+import blue.settings.DiskRenderSettings;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
-
-@ServiceProvider(service = RealtimeRenderServiceFactory.class, position=200)
-public class CS5RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
+@ServiceProvider(service = DiskRenderServiceFactory.class, position = 200)
+public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
     public Class getRenderServiceClass() {
-        return APIRunner.class;
+        return APIDiskRenderer.class;
     }
 
     @Override
-    public RealtimeRenderService createInstance() {
-        return new APIRunner();
-    }
-
-    @Override 
-    public String toString() {
-        return "Csound 5 API";
+    public DiskRenderService createInstance() {
+        return new APIDiskRenderer();
     }
 
     @Override
     public boolean isAvailable() {
-        try {
-            csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
-            Csound csound = new Csound();
-            return true;
-        } catch (Throwable e) {
-            
-        }
-        return false;
+        return APIUtilities.isCsoundAPIAvailable();
+    }
+    
+    @Override 
+    public String toString() {
+        return "Csound 5 API";
     }
 }

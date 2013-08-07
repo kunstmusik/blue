@@ -19,29 +19,53 @@
  */
 package blue.services.render;
 
-import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
+import blue.BlueData;
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  *
  * @author stevenyi
  */
-public interface DiskRenderService {
+public final class DiskRenderJob {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            float startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+    private String args[];
+    private String filename;
+    private BlueData data;
+    File currentWorkingDirectory;
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    public DiskRenderJob(String args[], String filename, BlueData data,
+            File currentWorkingDirectory) {
+        this.args = args;
+        this.filename = filename;
+        this.data = data;
+        this.currentWorkingDirectory = currentWorkingDirectory;
+    }
 
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
+    /**
+     * @return the args
+     */
+    public String[] getArgs() {
+        return args;
+    }
 
-    public void stop();
-    
+    /**
+     * @return the filename
+     */
+    public String getFilename() {
+        return filename;
+    }
+
+    /**
+     * @return the data
+     */
+    public BlueData getData() {
+        return data;
+    }
+
+    /**
+     * @return the currentWorkingDirectory
+     */
+    public File getCurrentWorkingDirectory() {
+        return currentWorkingDirectory;
+    }
 }

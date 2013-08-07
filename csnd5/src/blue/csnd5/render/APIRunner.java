@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blue.ui.core.render;
+package blue.csnd5.render;
 
 import blue.services.render.CsdRenderResult;
 import blue.BlueData;
@@ -15,14 +15,15 @@ import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
 import blue.services.render.RealtimeRenderService;
+import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
+import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
-import blue.utility.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import csnd.Csound;
@@ -45,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
@@ -230,10 +232,9 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             float endTime = data.getRenderEndTime();
 
             CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
-                    data, startTime,
-                    endTime);
+                    data, startTime, endTime, true);
 
-            RenderTimeManager timeManager = RenderTimeManager.getInstance();
+            RenderTimeManager timeManager = Lookup.getDefault().lookup(RenderTimeManager.class);
             timeManager.setTempoMapper(result.getTempoMapper());
 
             String csd = result.getCsdText();
@@ -260,7 +261,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
     public void renderForBlueLive() throws SoundObjectException {
         CsdRenderResult result = CSDRenderService.getDefault().generateCSDForBlueLive(
-                this.data);
+                this.data, true);
 
         String tempCSD = result.getCsdText();
 
@@ -455,7 +456,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             final boolean renderUpdatesTime = startTime >= 0.0F;
 
             if (renderUpdatesTime) {
-                manager = RenderTimeManager.getInstance();
+                manager = Lookup.getDefault().lookup(RenderTimeManager.class);
                 manager.initiateRender(startTime);
             }
 
@@ -543,7 +544,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             csound.Reset();
 
             if (renderUpdatesTime) {
-                RenderTimeManager.getInstance().endRender();
+                manager.endRender();
             }
 
             playModeListener.playModeChanged(PlayModeListener.PLAY_MODE_STOP);

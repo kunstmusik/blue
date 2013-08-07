@@ -19,7 +19,7 @@
  */
 package blue.settings;
 
-import blue.services.render.DiskRenderService;
+import blue.services.render.DiskRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.io.File;
@@ -660,7 +660,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         zeroDBFSCheckBox.setSelected(settings.useZeroDbFS);
         zeroDBFSText.setText(settings.zeroDbFS);
 
-        renderServiceComboBox.setSelectedItem(settings.renderService);
+        renderServiceComboBox.setSelectedItem(settings.renderServiceFactory);
 
         loading = false;
     }
@@ -697,7 +697,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         settings.useZeroDbFS = zeroDBFSCheckBox.isSelected();
         settings.zeroDbFS = zeroDBFSText.getText();
 
-        settings.renderService = (DiskRenderService) renderServiceComboBox.getSelectedItem();
+        settings.renderServiceFactory = (DiskRenderServiceFactory) renderServiceComboBox.getSelectedItem();
        
 
         settings.save();

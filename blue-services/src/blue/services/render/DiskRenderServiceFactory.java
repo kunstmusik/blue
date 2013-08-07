@@ -19,29 +19,27 @@
  */
 package blue.services.render;
 
-import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
-import java.io.File;
-import java.util.ArrayList;
-
 /**
- *
+ * Provider Service class that will provide instances of DiskRenderServices. 
+ * 
+ * Implementers should override toString as that will be displayed in the 
+ * settings dropdown to the user.
+ * 
  * @author stevenyi
  */
-public interface DiskRenderService {
+public interface DiskRenderServiceFactory {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            float startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+    /** Returns the Class for the generated RenderServices */
+    public Class getRenderServiceClass();
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    /** Creates an instance of a RealtimeRenderService */
+    public DiskRenderService createInstance();
 
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
-
-    public void stop();
-    
+    /** 
+     * reports if this service is available.  For example, if the the user does
+     * not have the Csound 6 API available, then the CS6 factory would report
+     * false.
+     * @return 
+     */
+    public boolean isAvailable();
 }

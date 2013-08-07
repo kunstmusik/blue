@@ -1,23 +1,30 @@
-package blue.ui.core.render;
+package blue.csnd5.render;
 
+import blue.BlueData;
+import blue.BlueSystem;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
-
-
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
+import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
+import blue.services.render.DiskRenderJob;
 import blue.services.render.DiskRenderService;
+import blue.services.render.RenderTimeManager;
 import blue.settings.PlaybackSettings;
+import blue.utility.FileUtilities;
 import csnd.Csound;
 import csnd.CsoundArgVList;
 import java.awt.Color;
 import java.io.IOException;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
@@ -37,11 +44,11 @@ public class APIDiskRenderer implements DiskRenderService {
     public boolean isAvailable() {
         return true;
     }
-    
+
     public String toString() {
         return "Csound 5 API";
     }
-    
+
     public boolean isRunning() {
         return keepRunning;
     }
@@ -82,6 +89,9 @@ public class APIDiskRenderer implements DiskRenderService {
         CsoundArgVList argsList = new CsoundArgVList();
 
         for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
+                args[i] = args[i].substring(1, args[i].length() - 1);
+            }
             argsList.Append(args[i]);
         }
 
@@ -101,7 +111,8 @@ public class APIDiskRenderer implements DiskRenderService {
                 / PlaybackSettings.getInstance().getPlaybackFPS());
         int counter = 0;
 
-        RenderTimeManager manager = RenderTimeManager.getInstance();
+        RenderTimeManager manager = Lookup.getDefault().lookup(
+                RenderTimeManager.class);
         manager.initiateRender(startTime);
 
         Parameter param;
@@ -122,7 +133,8 @@ public class APIDiskRenderer implements DiskRenderService {
             if (startTime >= 0.0f) {
                 if (mapper != null) {
                     float renderStartSeconds = mapper.beatsToSeconds(startTime);
-                    currentTime = mapper.secondsToBeats(scoreTime + renderStartSeconds);
+                    currentTime = mapper.secondsToBeats(
+                            scoreTime + renderStartSeconds);
                     currentTime -= startTime;
                 } else {
                     currentTime = startTime + scoreTime;
@@ -147,7 +159,8 @@ public class APIDiskRenderer implements DiskRenderService {
         csound.SetHostData(null);
         csound.Reset();
 
-        RenderTimeManager.getInstance().endRender();
+
+        manager.endRender();
 
         keepRunning = false;
 
@@ -190,6 +203,9 @@ public class APIDiskRenderer implements DiskRenderService {
         CsoundArgVList argsList = new CsoundArgVList();
 
         for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
+                args[i] = args[i].substring(1, args[i].length() - 1);
+            }
             argsList.Append(args[i]);
         }
 
@@ -198,7 +214,7 @@ public class APIDiskRenderer implements DiskRenderService {
         if (retVal != 0) {
             blueCallbackWrapper.setStringBuffer(null);
             csound.Stop();
-            csound.Cleanup();            
+            csound.Cleanup();
             csound.SetMessageCallback(null);
             csound.SetHostData(null);
             csound.Reset();
@@ -239,5 +255,108 @@ public class APIDiskRenderer implements DiskRenderService {
             PlayModeListener listener = (PlayModeListener) iter.next();
             listener.playModeChanged(playMode);
         }
+    }
+
+    /**
+     *
+     * @param data
+     * @return the absolute path of the temp CSD file on disk
+     */
+    protected String generateCsd(BlueData data) {
+
+        float startTime = data.getRenderStartTime();
+        float endTime = data.getRenderEndTime();
+
+        if (data.getProjectProperties().diskAlwaysRenderEntireProject) {
+            startTime = 0.0f;
+            endTime = -1.0f;
+        }
+
+
+        CsdRenderResult result;
+        try {
+            result = CSDRenderService.getDefault().generateCSD(
+                    data, startTime,
+                    endTime, true);
+        } catch (ScoreGenerationException ex) {
+            Exceptions.printStackTrace(ex);
+            return null;
+        }
+
+        String csd = result.getCsdText();
+
+        File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
+                BlueSystem.getCurrentProjectDirectory(), csd);
+
+        return temp.getAbsolutePath();
+    }
+
+    @Override
+    @SuppressWarnings("empty-statement")
+    public void renderToDisk(DiskRenderJob job) {
+
+        String csdPath = generateCsd(job.getData());
+
+        if (csdPath == null) {
+            return;
+        }
+
+        initialize();
+
+        Csound csound = new Csound();
+        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
+        blueCallbackWrapper.SetMessageCallback();
+        final InputOutput ioProvider = IOProvider.getDefault().
+                getIO("Csound (Disk)", false);
+
+        try {
+            ioProvider.getOut().reset();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        IOColors.setColor(ioProvider, IOColors.OutputType.OUTPUT, Color.WHITE);
+        blueCallbackWrapper.setInputOutput(ioProvider);
+
+        notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
+
+        CsoundArgVList argsList = new CsoundArgVList();
+
+        String args[] = job.getArgs();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
+                args[i] = args[i].substring(1, args[i].length() - 1);
+            }
+            argsList.Append(args[i]);
+        }
+
+        argsList.Append(csdPath);
+
+        int retVal = csound.Compile(argsList.argc(), argsList.argv());
+
+        if (retVal != 0) {
+            notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+            csound.Stop();
+            csound.Cleanup();
+            csound.SetMessageCallback(null);
+            csound.SetHostData(null);
+            csound.Reset();
+            return;
+        }
+
+        while (csound.PerformKsmps() == 0 && keepRunning) {
+            
+        };
+        csound.Stop();
+        csound.Cleanup();
+        csound.SetMessageCallback(null);
+        csound.SetHostData(null);
+        csound.Reset();
+
+        keepRunning = false;
+
+        notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
+
+
     }
 }

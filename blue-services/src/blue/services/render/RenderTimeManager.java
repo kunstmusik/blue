@@ -19,29 +19,41 @@
  */
 package blue.services.render;
 
-import blue.automation.Parameter;
 import blue.noteProcessor.TempoMapper;
-import java.io.File;
-import java.util.ArrayList;
+import java.beans.PropertyChangeListener;
 
 /**
  *
  * @author stevenyi
  */
-public interface DiskRenderService {
+public interface RenderTimeManager {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            float startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+    public static String RENDER_START = "renderStart";
+    public static String TIME_POINTER = "timePointer";
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    // Property Change Methods
+    void addPropertyChangeListener(PropertyChangeListener pcl);
 
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
+    void addRenderTimeManagerListener(RenderTimeManagerListener listener);
 
-    public void stop();
+    void endRender();
+
+    float getRenderStartTime();
+
+    float getRenderTime();
+
+    TempoMapper getTempoMapper();
+
+    void initiateRender(float renderStart);
+
+    boolean isCurrentProjectRendering();
+
+    void removePropertyChangeListener(PropertyChangeListener pcl);
+
+    void removeRenderTimeManagerListener(RenderTimeManagerListener listener);
+
+    void setTempoMapper(TempoMapper tempoMapper);
+
+    void updateTimePointer(float timePointer);
     
 }

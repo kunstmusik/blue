@@ -19,11 +19,9 @@
  */
 package blue.settings;
 
-import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import java.io.Serializable;
 
-import blue.utility.APIUtilities;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.prefs.BackingStoreException;

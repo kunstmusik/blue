@@ -41,7 +41,6 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.udo.OpcodeList;
-import blue.utility.APIUtilities;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -60,14 +59,11 @@ public class CSDRender extends CSDRenderService {
 
     @Override
     protected synchronized CsdRenderResult generateCSDForBlueLiveImpl(
-            BlueData data) {
+            BlueData data, boolean usingAPI) {
 
         ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
 
         ParameterHelper.clearCompilationVarNames(data);
-
-        boolean usingAPI = APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI();
 
         float totalDur = 36000f;
 
@@ -134,7 +130,7 @@ public class CSDRender extends CSDRenderService {
 //                    arrangement, mixer);
             generatedNotes = new NoteList();
             handleParametersForBlueLive(originalParameters, stringChannels, globalOrcSco,
-                    generatedNotes, arrangement);
+                    generatedNotes, arrangement, usingAPI);
 
         }
 
@@ -184,14 +180,13 @@ public class CSDRender extends CSDRenderService {
 
     @Override
     protected CsdRenderResult generateCSDImpl(BlueData data,
-            float startTime, float endTime, boolean isRealTime) {
+            float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
 
         ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
         
         ParameterHelper.clearCompilationVarNames(data);
 
-        boolean usingAPI = isRealTime && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI();
+        boolean usingAPI = isRealTime && _usingAPI;
 
         float renderStartTime = data.getRenderStartTime();
 
@@ -362,12 +357,10 @@ public class CSDRender extends CSDRenderService {
         handleParameters(originalParameters, stringChannels, globalOrcSco, generatedNotes,
                 arrangement,
                 startTime,
-                startTime + globalDur, isRealTime);
+                startTime + globalDur, isRealTime, _usingAPI);
 
 
-        if (isRealTime
-                && !(APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI())) {
+        if (isRealTime && !usingAPI) {
             Instrument instr = createBlueTimePointerInstrument();
             int instrId = arrangement.addInstrument(instr);
 
@@ -931,15 +924,14 @@ public class CSDRender extends CSDRenderService {
     private void handleParameters(ArrayList parameters,
             ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement,
-            float startTime, float endTime, boolean isRealTime) {
+            float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
 
         Object[] varNum = new Object[1];
 
         StrBuilder initStatements = new StrBuilder();
         StrBuilder paramScore = new StrBuilder();
 
-        boolean useAPI = (isRealTime && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI());
+        boolean useAPI = isRealTime && _usingAPI;
 
         for(StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
@@ -1013,15 +1005,13 @@ public class CSDRender extends CSDRenderService {
 
     private void handleParametersForBlueLive(ArrayList parameters,
             ArrayList<StringChannel> stringChannels,
-            GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement) {
+            GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement,
+            boolean useAPI) {
 
         Object[] varNum = new Object[1];
 
         StrBuilder initStatements = new StrBuilder();
         StrBuilder paramScore = new StrBuilder();
-
-        boolean useAPI = (APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI());
 
         for(StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();

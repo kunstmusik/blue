@@ -19,6 +19,8 @@
  */
 package blue.ui.core.render;
 
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -32,16 +34,17 @@ import java.util.concurrent.TimeUnit;
 import org.jdesktop.core.animation.timing.TimingSource;
 import org.jdesktop.core.animation.timing.TimingSource.TickListener;
 import org.jdesktop.swing.animation.timing.sources.SwingTimerTimingSource;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * 
  * @author Steven Yi
  */
-public class RenderTimeManager {
+@ServiceProvider(service = RenderTimeManager.class)
+public class RenderTimeManagerImpl implements RenderTimeManager {
 
-    public static String RENDER_START = "renderStart";
-    public static String TIME_POINTER = "timePointer";
-    private static RenderTimeManager renderManager;
+    
+    private static RenderTimeManagerImpl renderManager;
     private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
     private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<RenderTimeManagerListener>();
     protected float renderStart = -1.0f;
@@ -54,17 +57,8 @@ public class RenderTimeManager {
     
     BlueProject currentRenderingProject = null;
 
-    private RenderTimeManager() {
-    }
 
-    public static RenderTimeManager getInstance() {
-        if (renderManager == null) {
-            renderManager = new RenderTimeManager();
-        }
-
-        return renderManager;
-    }
-
+    @Override
     public void initiateRender(float renderStart) {
         this.setRenderStart(renderStart);
 
@@ -108,6 +102,7 @@ public class RenderTimeManager {
         currentRenderingProject = BlueProjectManager.getInstance().getCurrentProject();
     }
 
+    @Override
     public void updateTimePointer(float timePointer) {
         if (timeAdjustCounter == 0) {
             float timeP = (this.timePointer >= 0) ? this.timePointer : 0.0f; 
@@ -120,6 +115,7 @@ public class RenderTimeManager {
         }
     }
 
+    @Override
     public void endRender() {
         this.setRenderStart(-1.0f);
         this.setTimePointer(-1.0f);
@@ -156,39 +152,48 @@ public class RenderTimeManager {
 //                new Float(this.timePointer));
     }
 
+    @Override
     public float getRenderStartTime() {
         return renderStart;
     }
 
+    @Override
     public float getRenderTime() {
         return timePointer - timeAdjust;
     }
 
     // Property Change Methods
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         listeners.addPropertyChangeListener(pcl);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
         listeners.removePropertyChangeListener(pcl);
     }
 
+    @Override
     public void setTempoMapper(TempoMapper tempoMapper) {
         this.tempoMapper = tempoMapper;
     }
 
+    @Override
     public TempoMapper getTempoMapper() {
         return this.tempoMapper;
     }
 
+    @Override
     public void addRenderTimeManagerListener(RenderTimeManagerListener listener) {
         renderListeners.add(listener);
     }
 
+    @Override
     public void removeRenderTimeManagerListener(RenderTimeManagerListener listener) {
         renderListeners.remove(listener);
     }
     
+    @Override
     public boolean isCurrentProjectRendering() {
         return currentRenderingProject == 
                 BlueProjectManager.getInstance().getCurrentProject();

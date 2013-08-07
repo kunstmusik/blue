@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package blue.utility;
+package blue.csnd5.render;
 
 /**
  *
@@ -16,7 +16,7 @@ public class APIUtilities {
     public static boolean isCsoundAPIAvailable() {
         if(!hasBeenInitialized) {
             try {
-                Class c = Class.forName("blue.utility.APITest", true, Thread.currentThread().getContextClassLoader());
+                Class c = Class.forName("blue.csnd5.render.APITest", true, Thread.currentThread().getContextClassLoader());
                 APIInterface apiInterface = (APIInterface) c.newInstance();
                 
                 apiAvailable = apiInterface.isCsoundAPIAvailable();

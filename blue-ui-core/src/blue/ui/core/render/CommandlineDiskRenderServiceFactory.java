@@ -17,31 +17,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.services.render;
+package blue.ui.core.render;
 
-import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
-import java.io.File;
-import java.util.ArrayList;
+import blue.services.render.DiskRenderService;
+import blue.services.render.DiskRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
-public interface DiskRenderService {
+@ServiceProvider(service = DiskRenderServiceFactory.class)
+public class CommandlineDiskRenderServiceFactory implements DiskRenderServiceFactory {
 
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            float startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
+    @Override
+    public Class getRenderServiceClass() {
+        return ProcessConsole.class;
+    }
 
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
+    @Override
+    public DiskRenderService createInstance() {
+        return new ProcessConsole();
+    }
 
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
-
-    public void stop();
-    
+    @Override
+    public boolean isAvailable() {
+        return true;
+    }
+   
+    @Override
+    public String toString() {
+        return "Commandline Runner";
+    }
 }

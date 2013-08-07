@@ -18,7 +18,7 @@
  * USA
  */
 
-package blue.utility;
+package blue.settings;
 
 import blue.ProjectProperties;
 import blue.settings.GeneralSettings;

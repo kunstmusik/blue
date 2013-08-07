@@ -39,13 +39,14 @@ import blue.event.PlayModeListener;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.settings.PlaybackSettings;
-import blue.ui.core.render.RenderTimeManager;
+import blue.services.render.RenderTimeManager;
 import blue.ui.core.render.RealtimeRenderManager;
-import blue.ui.core.render.RenderTimeManagerListener;
+import blue.services.render.RenderTimeManagerListener;
 import blue.utility.NumberUtilities;
 import javax.swing.JToolBar;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 
 /**
  * @author steven
@@ -84,6 +85,9 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     JCheckBox loopBox = new JCheckBox();
 
     private boolean isUpdating = false;
+
+    RenderTimeManager renderTimeManager = 
+                Lookup.getDefault().lookup(RenderTimeManager.class);
 
     public static MainToolBar getInstance() {
         if (instance == null) {
@@ -191,16 +195,13 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(stopButton, null);
         
         // Setup as Listener to RenderTimeManager
-        RenderTimeManager manager = RenderTimeManager.getInstance();
 
-        manager.addPropertyChangeListener(new PropertyChangeListener() {
+        renderTimeManager.addPropertyChangeListener(new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
                 String prop = evt.getPropertyName();
 
-                RenderTimeManager timeManager = RenderTimeManager.getInstance();
-
-                if (evt.getSource() == timeManager) {
+                if (evt.getSource() == renderTimeManager) {
                     if (prop.equals(RenderTimeManager.TIME_POINTER)) {
                         float val = ((Float) evt.getNewValue()).floatValue();
 
@@ -210,7 +211,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                             float latency = PlaybackSettings.getInstance().
                                     getPlaybackLatencyCorrection();
 
-                            float newVal = val + timeManager.getRenderStartTime() - latency;
+                            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
 
                             playTimeText.setText(NumberUtilities.formatTime(
                                     newVal));
@@ -220,7 +221,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                 }
             }
         });
-        manager.addRenderTimeManagerListener(this);
+        renderTimeManager.addRenderTimeManagerListener(this);
 
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
@@ -410,7 +411,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             float latency = PlaybackSettings.getInstance().
                     getPlaybackLatencyCorrection();
 
-            float newVal = val + RenderTimeManager.getInstance().getRenderStartTime() - latency;
+            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
 
             playTimeText.setText(NumberUtilities.formatTime(
                     newVal));

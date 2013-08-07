@@ -2,9 +2,8 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blue.ui.core;
+package blue.csnd5.render;
 
-import blue.utility.APIUtilities;
 import csnd.Csound;
 import java.io.File;
 import java.io.FileOutputStream;
