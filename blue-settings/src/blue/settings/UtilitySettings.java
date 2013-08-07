@@ -48,8 +48,11 @@ public class UtilitySettings {
 
             String flag = "W";
 
+            String defaultCsoundCommand = "csound";
+            
             if (osName.indexOf("Mac") >= 0) {
                 flag = "A";
+                defaultCsoundCommand = "/usr/local/bin/csound";
             }
 
             String defaultFreezeFlags = "-" + flag + "do";
@@ -59,7 +62,7 @@ public class UtilitySettings {
                     UtilitySettings.class);
 
             instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
-                    "csound");
+                    defaultCsoundCommand);
             instance.freezeFlags = prefs.get(PREFIX + FREEZE_FLAGS,
                     defaultFreezeFlags);
         }

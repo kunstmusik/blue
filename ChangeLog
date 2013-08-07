@@ -19,6 +19,11 @@ NEW
 
 * Added Steven Yi's "TimeSphere" to the examples/pieces/stevenYi folder
 
+FIX
+
+* On Mac, fixed default csound command for Utility and DiskRender settings to be
+  "/usr/local/bin/csound" instead of "csound"
+
  
 >Notes for 2.4.3<
 [released 2013.04.05]
