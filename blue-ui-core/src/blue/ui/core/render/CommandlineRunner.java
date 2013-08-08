@@ -77,14 +77,11 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     @Override
-    public boolean isAvailable() {
-        return true;
-    }
-
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);
     }
 
+    @Override
     public void removePlayModeListener(PlayModeListener listener) {
         listeners.remove(listener);
     }
@@ -97,10 +94,12 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     /* RENDER METHODS */
+    @Override
     public void setData(BlueData data) {
         this.data = data;
     }
 
+    @Override
     public void render() throws SoundObjectException {
         if (this.data == null) {
             return;
@@ -168,6 +167,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
         }
     }
 
+    @Override
     public void renderForBlueLive() throws SoundObjectException {
         CsdRenderResult result = CSDRenderService.getDefault()
                 .generateCSDForBlueLive(this.data, false);
@@ -222,15 +222,18 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
     }
 
+    @Override
     public boolean isRunning() {
         return console.isRunning();
     }
 
+    @Override
     public void stop() {
         shouldStop = true;
         runProxy.stop();
     }
 
+    @Override
     public void passToStdin(String text) {
         NoteList nl = null;
 
@@ -265,6 +268,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             this.currentWorkingDirectory = currentWorkingDirectory;
         }
 
+        @Override
         public void run() {
             try {
                 if (renderStart >= 0.0f) {
@@ -290,6 +294,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
         }
     }
 
+    @Override
     public void playModeChanged(int playMode) {
         if (playMode == PlayModeListener.PLAY_MODE_STOP) {
 
@@ -317,6 +322,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
 
                     SwingUtilities.invokeLater(new Runnable() {
+                        @Override
                         public void run() {
                             JOptionPane.showMessageDialog(null, errorPanel,
                                     "Csound Error", JOptionPane.ERROR_MESSAGE);

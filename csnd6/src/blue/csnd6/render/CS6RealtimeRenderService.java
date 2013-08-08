@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blue.csnd5.render;
+package blue.csnd6.render;
 
 import blue.services.render.CsdRenderResult;
 import blue.BlueData;
@@ -26,11 +26,11 @@ import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
-import csnd.Csound;
-import csnd.CsoundArgVList;
-import csnd.CsoundMYFLTArray;
-import csnd.csnd;
-import csnd.csndConstants;
+import csnd6.Csound;
+import csnd6.CsoundArgVList;
+import csnd6.CsoundMYFLTArray;
+import csnd6.controlChannelType;
+import csnd6.csnd6;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
@@ -47,7 +47,6 @@ import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
@@ -56,7 +55,7 @@ import org.openide.windows.InputOutput;
  *
  * @author syi
  */
-public class APIRunner implements RealtimeRenderService, PlayModeListener {
+public class CS6RealtimeRenderService implements RealtimeRenderService, PlayModeListener {
 
     Vector<PlayModeListener> listeners = null;
     private BlueData data = null;
@@ -67,22 +66,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
     private BlueCallbackWrapper blueCallbackWrapper;
     private InputOutput io = null;
 
-    public APIRunner() {
-
-//        AuditionManager audition = AuditionManager.getInstance();
-//        audition.addPlayModeListener(new PlayModeListener() {
-//            public void playModeChanged(int playMode) {
-//
-//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-//                    if (isRunning()) {
-//                        stop();
-//                        blueCallbackWrapper.setInputOutput(null);
-//                    }
-//                }
-//
-//            }
-//        });
-
+    public CS6RealtimeRenderService() {
     }
 
     @Override
@@ -90,6 +74,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         return "Csound 5 API";
     }
 
+    @Override
     public boolean isRunning() {
         return runnerThread != null;
     }
@@ -109,7 +94,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
         if (this.io != null) {
             try {
-//            this.io.closeInputOutput();
                 this.io.getOut().reset();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -128,7 +112,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         for (int i = 0; i < args.length; i++) {
             argsList.Append(args[i]);
             io.getOut().append(" ").append(args[i]);
-//            System.out.println("[" + i + "] " + args[i] );
         }
         io.getOut().append(" )\n");
 
@@ -151,6 +134,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
                 disableMessagesBox.setSelected(false);
 
                 SwingUtilities.invokeLater(new Runnable() {
+                    @Override
                     public void run() {
                         JOptionPane.showMessageDialog(null, errorPanel,
                                 "Csound Error", JOptionPane.ERROR_MESSAGE);
@@ -168,7 +152,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
-            csound.SetHostData(null);
             csound.Reset();
             csound = null;
             blueCallbackWrapper = null;
@@ -186,11 +169,14 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         t.start();
     }
 
+    @Override
     public void render() throws SoundObjectException {
         if (this.data == null) {
             return;
         }
 
+        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+        
         shouldStop = false;
 
         String command;
@@ -205,10 +191,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-//            System.out.println(tempoMapper);
-
-            //FIXME
-            //timeManager.setRootPolyObject(data.getPolyObject());
 
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();
@@ -241,7 +223,11 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
     }
 
+    @Override
     public void renderForBlueLive() throws SoundObjectException {
+
+        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+        
         CsdRenderResult result = CSDRenderService.getDefault().generateCSDForBlueLive(
                 this.data, true);
 
@@ -262,20 +248,12 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             } else {
                 command = ProjectPropertiesUtil.getRealtimeCommandLine(
                         data.getProjectProperties());
-//                command += " -Lstdin ";
                 command += liveData.getCommandLine();
             }
         } else {
             command = ProjectPropertiesUtil.getRealtimeCommandLine(
                     data.getProjectProperties());
-//            command += " -Lstdin ";
         }
-
-//        if (osName.indexOf("Windows") >= 0) {
-//            command += " \"" + temp.getAbsolutePath() + "\"";
-//        } else {
-//            command += " " + temp.getAbsolutePath();
-//        }   
 
         String[] args = command.split("\\s+");
         String[] args2 = new String[args.length + 1];
@@ -284,13 +262,14 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
         play(this.data, result, args2, BlueSystem.getCurrentProjectDirectory(),
                 -1.0f);
-//        play(command, BlueSystem.getCurrentProjectDirectory(), -1);
     }
 
+    @Override
     public void setData(BlueData data) {
         this.data = data;
     }
 
+    @Override
     public void stop() {
         if (runnerThread != null) {
             shouldStop = true;
@@ -304,13 +283,13 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         //notifyPlayModeListeners(PlayModeListener.PLAY_MODE_STOP);
     }
 
+    @Override
     public void passToStdin(String text) {
         NoteList nl = null;
 
         try {
             nl = ScoreUtilities.getNotes(text);
         } catch (NoteParseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             nl = null;
         }
@@ -325,6 +304,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
     }
 
+    @Override
     public void addPlayModeListener(PlayModeListener listener) {
         if (listeners == null) {
             listeners = new Vector<PlayModeListener>();
@@ -333,6 +313,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         listeners.add(listener);
     }
 
+    @Override
     public void removePlayModeListener(PlayModeListener listener) {
         if (listeners != null) {
             listeners.remove(listener);
@@ -350,6 +331,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
         }
     }
 
+    @Override
     public void playModeChanged(int playMode) {
         if (playMode == PlayModeListener.PLAY_MODE_STOP) {
 
@@ -362,6 +344,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             if (data.isLoopRendering() && !shouldStop) {
 
                 new Thread() {
+                    @Override
                     public void run() {
                         try {
                             render();
@@ -428,6 +411,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             }
         }
 
+        @Override
         public void run() {
             int updateRate = (int) (csound.GetKr()
                     / PlaybackSettings.getInstance().getPlaybackFPS());
@@ -522,7 +506,6 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
-            csound.SetHostData(null);
             csound.Reset();
 
             if (renderUpdatesTime) {
@@ -555,7 +538,7 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
 
                 channelPtrCache[i] = new CsoundMYFLTArray(1);
                 csound.GetChannelPtr(channelPtrCache[i].GetPtr(), varName,
-                        csndConstants.CSOUND_CONTROL_CHANNEL | csndConstants.CSOUND_INPUT_CHANNEL);
+                        controlChannelType.CSOUND_CONTROL_CHANNEL.swigValue() | controlChannelType.CSOUND_INPUT_CHANNEL.swigValue());
 
                 channelPtrCache[i].SetValue(0, valuesCache[i]);
             }

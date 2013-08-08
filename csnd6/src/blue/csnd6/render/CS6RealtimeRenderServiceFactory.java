@@ -17,34 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
+package blue.csnd6.render;
 
-import blue.services.render.DiskRenderService;
-import blue.services.render.DiskRenderServiceFactory;
+import blue.services.render.RealtimeRenderService;
+import blue.services.render.RealtimeRenderServiceFactory;
 
 /**
  *
  * @author stevenyi
  */
-public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
+
+public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
 
     @Override
     public Class getRenderServiceClass() {
-        return APIDiskRenderer.class;
+        return CS6RealtimeRenderService.class;
     }
 
     @Override
-    public DiskRenderService createInstance() {
-        return new APIDiskRenderer();
+    public RealtimeRenderService createInstance() {
+        return new CS6RealtimeRenderService();
+    }
+
+    @Override 
+    public String toString() {
+        return "Csound 6 API";
     }
 
     @Override
     public boolean isAvailable() {
         return APIUtilities.isCsoundAPIAvailable();
-    }
-    
-    @Override 
-    public String toString() {
-        return "Csound 5 API";
     }
 }

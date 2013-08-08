@@ -1,4 +1,4 @@
-package blue.csnd5.render;
+package blue.csnd6.render;
 
 import blue.BlueData;
 import blue.BlueSystem;
@@ -18,32 +18,30 @@ import blue.services.render.DiskRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.PlaybackSettings;
 import blue.utility.FileUtilities;
-import csnd.Csound;
-import csnd.CsoundArgVList;
+import csnd6.Csound;
+import csnd6.CsoundArgVList;
 import java.awt.Color;
 import java.io.IOException;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
 
-@ServiceProvider(service = DiskRenderService.class, position = 100)
-public class APIDiskRenderer implements DiskRenderService {
+public class CS6DiskRendererService implements DiskRenderService {
 
     Vector listeners = new Vector();
     RenderTimeManager renderTimeManager = null;
     private volatile boolean keepRunning = false;
-    private static APIDiskRenderer instance = null;
+    private static CS6DiskRendererService instance = null;
 
-    public APIDiskRenderer() {
+    public CS6DiskRendererService() {
     }
 
     @Override
     public String toString() {
-        return "Csound 5 API";
+        return "Csound 6 API";
     }
 
     @Override
@@ -100,7 +98,6 @@ public class APIDiskRenderer implements DiskRenderService {
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
-            csound.SetHostData(null);
             csound.Reset();
             return;
         }
@@ -154,7 +151,6 @@ public class APIDiskRenderer implements DiskRenderService {
         csound.Stop();
         csound.Cleanup();
         csound.SetMessageCallback(null);
-        csound.SetHostData(null);
         csound.Reset();
 
 
@@ -173,26 +169,14 @@ public class APIDiskRenderer implements DiskRenderService {
             TempoMapper mapper,
             ArrayList<Parameter> parameters) {
         initialize();
-//        Csound csound = new Csound();
-//        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
-//        blueCallbackWrapper.SetMessageCallback();
-
-//        if (GeneralSettings.getInstance().isShowCsoundOutputEnabled()) {
-//            blueCallbackWrapper.setInputOutput(IOProvider.getDefault().getIO("Csound", false));
-//        } else {
-//            blueCallbackWrapper.setInputOutput(null);
-//        }
-
         exec(args, currentWorkingDirectory, startTime, mapper, parameters);
-
-//        blueCallbackWrapper.setInputOutput(null);
     }
 
     @Override
     public String execWaitAndCollect(String[] args,
             File currentWorkingDirectory) {
         initialize();
-        //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
+
         Csound csound = new Csound();
         BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
@@ -216,7 +200,6 @@ public class APIDiskRenderer implements DiskRenderService {
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
-            csound.SetHostData(null);
             csound.Reset();
             return buffer.toString();
         }
@@ -228,7 +211,6 @@ public class APIDiskRenderer implements DiskRenderService {
         csound.Stop();
         csound.Cleanup();
         csound.SetMessageCallback(null);
-        csound.SetHostData(null);
         csound.Reset();
 
         keepRunning = false;
@@ -340,7 +322,6 @@ public class APIDiskRenderer implements DiskRenderService {
             csound.Stop();
             csound.Cleanup();
             csound.SetMessageCallback(null);
-            csound.SetHostData(null);
             csound.Reset();
             return;
         }
@@ -351,7 +332,6 @@ public class APIDiskRenderer implements DiskRenderService {
         csound.Stop();
         csound.Cleanup();
         csound.SetMessageCallback(null);
-        csound.SetHostData(null);
         csound.Reset();
 
         keepRunning = false;

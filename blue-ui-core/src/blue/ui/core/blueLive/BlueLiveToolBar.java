@@ -58,22 +58,12 @@ public class BlueLiveToolBar extends JToolBar {
     private BlueLiveToolBar() {
         setFloatable(false);
 
-        //FIXME - need to sort out render listener system, listening for what
-        // render job is being acted upon
         PlayModeListener playModeListener = new PlayModeListener() {
 
             public void playModeChanged(int playMode) {
                 if (playMode == PlayModeListener.PLAY_MODE_STOP) {
                     
-                    //System.out.println("Play mode stop");
-                    
-//                    if(restartInProgress) {
-//                        restartInProgress = false;
-
-//                        finishRefresh();
-//                    } else if (runButton.isSelected()) {
                         runButton.setSelected(false);
-//                    }
                 } else if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
                     runButton.setSelected(true);
                 }

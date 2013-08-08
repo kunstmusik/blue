@@ -20,6 +20,7 @@
 package blue.settings;
 
 import blue.services.render.DiskRenderServiceFactory;
+import central.lookup.CentralLookup;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +64,6 @@ public class DiskRenderSettings implements Serializable {
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
     private static final String ZERO_DB_FS = "zeroDbFS";
     private static final String DISK_RENDER_SERVICE_FACTORY = "diskRenderServiceFactory";
-
     public String csoundExecutable = "csound";
     public String fileFormat = "WAV";
     public String sampleFormat = "SHORT";
@@ -86,33 +86,32 @@ public class DiskRenderSettings implements Serializable {
     public boolean useZeroDbFS = true;
     public String zeroDbFS = "1";
     public DiskRenderServiceFactory renderServiceFactory = null;
-    
     private static DiskRenderSettings instance = null;
 
     private DiskRenderSettings() {
     }
 
     private static DiskRenderServiceFactory findDiskRenderService(String renderServiceName) {
-        Collection<? extends DiskRenderServiceFactory> results = 
-            Lookup.getDefault().lookupAll(DiskRenderServiceFactory.class);
+        DiskRenderServiceFactory[] services = getAvailableDiskRenderServices();
 
         DiskRenderServiceFactory foundService = null;
-       
-    
-        if(renderServiceName == null || renderServiceName.isEmpty()) {
-            foundService = (DiskRenderServiceFactory) results.toArray()[0];
-        }
-       
-        for(DiskRenderServiceFactory service : results) {
-            if(service.toString().equals(renderServiceName)) {
-                foundService = service;
-                break;
+
+
+        if (renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = services[0];
+        } else {
+
+            for (DiskRenderServiceFactory service : services) {
+                if (service.toString().equals(renderServiceName)) {
+                    foundService = service;
+                    break;
+                }
+            }
+            if (foundService == null) {
+                foundService = services[0];
             }
         }
 
-        if(foundService == null) {
-            foundService = (DiskRenderServiceFactory) results.toArray()[0];
-        }
 
         return foundService;
     }
@@ -128,7 +127,7 @@ public class DiskRenderSettings implements Serializable {
             String osName = System.getProperty("os.name");
 
             String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0)
-                    ? "/usr/local/bin/csound" : "csound" ;
+                    ? "/usr/local/bin/csound" : "csound";
 
             instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
                     csoundExecutableDefault);
@@ -174,11 +173,12 @@ public class DiskRenderSettings implements Serializable {
             instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
 
 
-            String renderServiceName = 
+            String renderServiceName =
                     prefs.get(PREFIX + DISK_RENDER_SERVICE_FACTORY, null);
 
-            instance.renderServiceFactory = findDiskRenderService(renderServiceName);
-            
+            instance.renderServiceFactory = findDiskRenderService(
+                    renderServiceName);
+
         }
 
         return instance;
@@ -218,7 +218,8 @@ public class DiskRenderSettings implements Serializable {
         prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
         prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
 
-        prefs.put(PREFIX + DISK_RENDER_SERVICE_FACTORY, renderServiceFactory.toString());
+        prefs.put(PREFIX + DISK_RENDER_SERVICE_FACTORY,
+                renderServiceFactory.toString());
 
         try {
             prefs.sync();
@@ -272,17 +273,16 @@ public class DiskRenderSettings implements Serializable {
     }
 
     public static DiskRenderServiceFactory[] getAvailableDiskRenderServices() {
-        Collection<? extends DiskRenderServiceFactory> results = 
-                Lookup.getDefault().lookupAll(DiskRenderServiceFactory.class);
+        DiskRenderServiceFactory apiService = CentralLookup.getDefault().lookup(
+                DiskRenderServiceFactory.class);
 
-        ArrayList<DiskRenderServiceFactory> retVal = new ArrayList<DiskRenderServiceFactory>();
-        for(DiskRenderServiceFactory service : results) {
-            if(service.isAvailable()) {
-                retVal.add(service);
-            }
+        DiskRenderServiceFactory consoleService = Lookup.getDefault().lookup(
+                DiskRenderServiceFactory.class);
+
+        if (apiService == null) {
+            return new DiskRenderServiceFactory[]{consoleService};
         }
-        
-        return retVal.toArray(new DiskRenderServiceFactory[0]);
+        return new DiskRenderServiceFactory[]{apiService, consoleService};
+
     }
-    
 }

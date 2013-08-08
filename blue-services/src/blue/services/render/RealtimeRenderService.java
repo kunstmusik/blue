@@ -15,8 +15,6 @@ import blue.soundObject.SoundObjectException;
  */
 public interface RealtimeRenderService {
 
-    public boolean isAvailable();
-    
     void addPlayModeListener(PlayModeListener listener);
 
     boolean isRunning();

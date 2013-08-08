@@ -2,11 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blue.csnd5.render;
+package blue.csnd6.render;
 
 import blue.services.render.DiskRenderServiceFactory;
 import central.lookup.CentralLookup;
-import csnd.Csound;
+import csnd6.Csound;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,18 +18,17 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class CsoundAPIWarmupTask implements Runnable {
+public class Csound6APIWarmupTask implements Runnable {
 
     @Override
     public void run() {
-
         DiskRenderServiceFactory service = CentralLookup.getDefault().lookup(DiskRenderServiceFactory.class);
 
-        if(service.getClass() != CS5DiskRenderServiceFactory.class) {
+        if(service.getClass() != CS6DiskRenderServiceFactory.class) {
             return;
         }
-        
-        Logger.getLogger("CsoundAPIWarmupTask").log(Level.INFO, "Warming up Csound 5 API");
+
+        Logger.getLogger("Csound6APIWarmupTask").log(Level.INFO, "Warming up Csound 6 API");
         
         if(APIUtilities.isCsoundAPIAvailable()) {
             Csound csound = new Csound();

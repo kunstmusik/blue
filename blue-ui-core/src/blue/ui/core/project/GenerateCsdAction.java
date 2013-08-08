@@ -59,7 +59,7 @@ public final class GenerateCsdAction implements ActionListener {
                         new FileWriter(temp)));
                 final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
                         data, data.getRenderStartTime(), data.
-                        getRenderEndTime(), false);
+                        getRenderEndTime(), false, false);
 
                 out.print(renderResult.getCsdText());
                 out.flush();

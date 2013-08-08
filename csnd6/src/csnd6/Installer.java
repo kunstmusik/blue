@@ -17,34 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
+package csnd6;
 
-import blue.services.render.DiskRenderService;
-import blue.services.render.DiskRenderServiceFactory;
+import blue.csnd6.render.APIUtilities;
+import blue.csnd6.render.CS6DiskRenderServiceFactory;
+import blue.csnd6.render.CS6RealtimeRenderServiceFactory;
+import central.lookup.CentralLookup;
+import org.openide.modules.ModuleInstall;
 
-/**
- *
- * @author stevenyi
- */
-public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
-
-    @Override
-    public Class getRenderServiceClass() {
-        return APIDiskRenderer.class;
-    }
+public class Installer extends ModuleInstall {
 
     @Override
-    public DiskRenderService createInstance() {
-        return new APIDiskRenderer();
-    }
-
-    @Override
-    public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
-    }
-    
-    @Override 
-    public String toString() {
-        return "Csound 5 API";
+    public void restored() {
+        if(APIUtilities.isCsoundAPIAvailable()) {
+            CentralLookup.getDefault().add(new CS6DiskRenderServiceFactory());
+            CentralLookup.getDefault().add(new CS6RealtimeRenderServiceFactory());
+        }
     }
 }

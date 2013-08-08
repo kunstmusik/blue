@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
+package blue.csnd6.render;
 
 import blue.services.render.DiskRenderService;
 import blue.services.render.DiskRenderServiceFactory;
@@ -26,16 +26,16 @@ import blue.services.render.DiskRenderServiceFactory;
  *
  * @author stevenyi
  */
-public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
+public class CS6DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
     public Class getRenderServiceClass() {
-        return APIDiskRenderer.class;
+        return CS6DiskRendererService.class;
     }
 
     @Override
     public DiskRenderService createInstance() {
-        return new APIDiskRenderer();
+        return new CS6DiskRendererService();
     }
 
     @Override
@@ -45,6 +45,6 @@ public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
     
     @Override 
     public String toString() {
-        return "Csound 5 API";
+        return "Csound 6 API";
     }
 }

@@ -20,10 +20,9 @@
 package blue.settings;
 
 import blue.services.render.RealtimeRenderServiceFactory;
+import central.lookup.CentralLookup;
 import java.io.Serializable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
@@ -68,30 +67,6 @@ public class RealtimeRenderSettings implements Serializable {
     private static final String REALTIME_RENDER_SERVICE_FACTORY = "realtimeRenderServiceFactory";
     private static String[] AUDIO_DRIVERS = null;
     private static String[] MIDI_DRIVERS = null;
-
-    private static RealtimeRenderServiceFactory findRealtimeRenderServiceFactory(String renderServiceName) {
-        Collection<? extends RealtimeRenderServiceFactory> results =
-                Lookup.getDefault().lookupAll(RealtimeRenderServiceFactory.class);
-
-        RealtimeRenderServiceFactory foundService = null;
-
-        if (renderServiceName == null || renderServiceName.isEmpty()) {
-            foundService = (RealtimeRenderServiceFactory) results.toArray()[0];
-        } else {
-            for (RealtimeRenderServiceFactory service : results) {
-                if (service.toString().equals(renderServiceName)) {
-                    foundService = service;
-                    break;
-                }
-            }
-        }
-
-        if (foundService == null) {
-            foundService = (RealtimeRenderServiceFactory) results.toArray()[0];
-        }
-
-        return foundService;
-    }
     // PROPERTIES
     public boolean audioDriverEnabled = true;
     public String audioDriver = "PortAudio";
@@ -125,6 +100,28 @@ public class RealtimeRenderSettings implements Serializable {
     private static RealtimeRenderSettings instance = null;
 
     private RealtimeRenderSettings() {
+    }
+
+    private static RealtimeRenderServiceFactory findRealtimeRenderServiceFactory(String renderServiceName) {
+        RealtimeRenderServiceFactory[] services = getAvailableRealtimeRenderServices();
+
+        RealtimeRenderServiceFactory foundService = null;
+
+        if (renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = services[0];
+        } else {
+            for (RealtimeRenderServiceFactory service : services) {
+                if (service.toString().equals(renderServiceName)) {
+                    foundService = service;
+                    break;
+                }
+            }
+            if (foundService == null) {
+                foundService = services[0];
+            }
+        }
+
+        return foundService;
     }
 
     public static RealtimeRenderSettings getInstance() {
@@ -280,8 +277,8 @@ public class RealtimeRenderSettings implements Serializable {
 //                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
 //            buffer.append("csound ");
 //        } else {
-            buffer.append(csoundExecutable).append(" ");
-  //      }
+        buffer.append(csoundExecutable).append(" ");
+        //      }
 
         if (!GeneralSettings.getInstance().isMessageColorsEnabled()) {
             buffer.append("-+msg_color=false ");
@@ -370,16 +367,15 @@ public class RealtimeRenderSettings implements Serializable {
     }
 
     public static RealtimeRenderServiceFactory[] getAvailableRealtimeRenderServices() {
-        Collection<? extends RealtimeRenderServiceFactory> results =
-                Lookup.getDefault().lookupAll(RealtimeRenderServiceFactory.class);
+        RealtimeRenderServiceFactory apiService = CentralLookup.getDefault().lookup(
+                RealtimeRenderServiceFactory.class);
 
-        ArrayList<RealtimeRenderServiceFactory> retVal = new ArrayList<RealtimeRenderServiceFactory>();
-        for (RealtimeRenderServiceFactory service : results) {
-            if (service.isAvailable()) {
-                retVal.add(service);
-            }
+        RealtimeRenderServiceFactory consoleService = Lookup.getDefault().lookup(
+                RealtimeRenderServiceFactory.class);
+
+        if (apiService == null) {
+            return new RealtimeRenderServiceFactory[]{consoleService};
         }
-
-        return retVal.toArray(new RealtimeRenderServiceFactory[0]);
+        return new RealtimeRenderServiceFactory[]{apiService, consoleService};
     }
 }

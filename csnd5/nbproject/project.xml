@@ -3,7 +3,7 @@
     <type>org.netbeans.modules.apisupport.project</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
-            <code-name-base>csnd</code-name-base>
+            <code-name-base>csnd5</code-name-base>
             <suite-component/>
             <module-dependencies>
                 <dependency>
@@ -23,7 +23,23 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>central.lookup</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>com.kunstmusik.blue</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>csnd6</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
@@ -55,6 +71,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.openide.modules</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>7.35.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.openide.util</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -72,7 +96,7 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
-                <package>csnd</package>
+                <package>csnd5</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/csnd.jar</runtime-relative-path>

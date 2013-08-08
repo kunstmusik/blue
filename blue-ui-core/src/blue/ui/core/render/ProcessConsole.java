@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 
 //import blue.BlueMainFrame;
@@ -43,7 +42,6 @@ import blue.utility.FileUtilities;
 import java.awt.Color;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
-import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
 import org.openide.windows.InputOutput;
@@ -57,7 +55,6 @@ import org.openide.windows.InputOutput;
  *
  * modified by steven yi, 2001-2002
  */
-@ServiceProvider(service = DiskRenderService.class, position = 500)
 public final class ProcessConsole implements java.io.Serializable, DiskRenderService {
     // private TimeBar timeBar;
 
@@ -77,10 +74,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
     public ProcessConsole() {
     }
 
-    public boolean isAvailable() {
-        return true;
-    }
-
+    @Override
     public String toString() {
         return "Commmandline Runner";
     }
@@ -94,8 +88,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
     }
 
     public void notifyPlayModeListeners(int playMode) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = (PlayModeListener) iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -497,8 +490,6 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
                     yield();
                 }
-
-                // System.out.println("Finished.");
 
             } catch (IOException e) {
                 // e.printStackTrace ();
