@@ -25,7 +25,7 @@ public class CsoundAPIWarmupTask implements Runnable {
 
         DiskRenderServiceFactory service = CentralLookup.getDefault().lookup(DiskRenderServiceFactory.class);
 
-        if(service.getClass() != CS5DiskRenderServiceFactory.class) {
+        if(service == null || service.getClass() != CS5DiskRenderServiceFactory.class) {
             return;
         }
         

@@ -16,10 +16,8 @@ public class APIUtilities {
     public static boolean isCsoundAPIAvailable() {
         if(!hasBeenInitialized) {
             try {
-                Class c = Class.forName("blue.csnd6.render.APITest", true, Thread.currentThread().getContextClassLoader());
-                APIInterface apiInterface = (APIInterface) c.newInstance();
-                
-                apiAvailable = apiInterface.isCsoundAPIAvailable();
+                System.loadLibrary("_jcsound6");
+                apiAvailable = true;
             } catch (Throwable e) {
                 apiAvailable = false;
             }
