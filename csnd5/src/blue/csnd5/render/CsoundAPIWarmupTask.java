@@ -6,6 +6,7 @@ package blue.csnd5.render;
 
 import blue.services.render.DiskRenderServiceFactory;
 import central.lookup.CentralLookup;
+import csnd.csnd;
 import csnd.Csound;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +33,7 @@ public class CsoundAPIWarmupTask implements Runnable {
         Logger.getLogger("CsoundAPIWarmupTask").log(Level.INFO, "Warming up Csound 5 API");
         
         if(APIUtilities.isCsoundAPIAvailable()) {
+            csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
             Csound csound = new Csound();
             File f, f2;
             try {
@@ -55,7 +57,6 @@ public class CsoundAPIWarmupTask implements Runnable {
                     csound.Perform();
                 }
                 csound.Reset();
-                csound.delete();
                 
                 if(f.exists()) {
                     f.delete();
