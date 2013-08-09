@@ -25,7 +25,8 @@ NEW
   * Added support for Csound6 API.  If Csound6 is found, user gets option for
     CS6 or Commandline.  If CS6 is not found, Blue will check if CS5 is 
     available. If it is, user will get that option, or only have option for 
-    Commandline runner.
+    Commandline runner. Additionally, user can add -J-DDISABLE_CSOUND6=true in
+    blue/etc/blue.conf to disable CS6 API usage and allow CS5 option.
 
   * Service selection is now done in Program Options under Realtime and Disk
     Render settings.  
