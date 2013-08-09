@@ -29,6 +29,12 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
+        String val = System.getProperty("DISABLE_CSOUND6");
+
+        if("true".equals(val)) {
+            return;
+        }
+        
         if(APIUtilities.isCsoundAPIAvailable()) {
             CentralLookup.getDefault().add(new CS6DiskRenderServiceFactory());
             CentralLookup.getDefault().add(new CS6RealtimeRenderServiceFactory());
