@@ -4,8 +4,6 @@
  */
 package blue.csnd6.render;
 
-import blue.services.render.DiskRenderServiceFactory;
-import central.lookup.CentralLookup;
 import csnd6.Csound;
 import csnd6.csnd6;
 import java.io.File;
@@ -23,17 +21,15 @@ public class Csound6APIWarmupTask implements Runnable {
 
     @Override
     public void run() {
-        DiskRenderServiceFactory service = CentralLookup.getDefault().lookup(
-                DiskRenderServiceFactory.class);
 
-        if (service == null || service.getClass() != CS6DiskRenderServiceFactory.class) {
+        if (!API6Utilities.isCsoundAPIAvailable()) {
             return;
         }
 
         Logger.getLogger("Csound6APIWarmupTask").log(Level.INFO,
                 "Warming up Csound 6 API");
 
-        if (APIUtilities.isCsoundAPIAvailable()) {
+        if (API6Utilities.isCsoundAPIAvailable()) {
 
             csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
 

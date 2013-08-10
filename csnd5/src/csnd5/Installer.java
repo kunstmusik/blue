@@ -20,24 +20,13 @@
 package csnd5;
 
 import blue.csnd5.render.APIUtilities;
-import blue.csnd5.render.CS5DiskRenderServiceFactory;
-import blue.csnd5.render.CS5RealtimeRenderServiceFactory;
-import blue.services.render.DiskRenderServiceFactory;
-import central.lookup.CentralLookup;
 import org.openide.modules.ModuleInstall;
 
 public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        CentralLookup lookup = CentralLookup.getDefault();
-
-        // if csound 6 hasn't loaded, then try loading Csound 5 API's
-        if (lookup.lookupAll(DiskRenderServiceFactory.class).isEmpty()) {
-            if (APIUtilities.isCsoundAPIAvailable()) {
-                lookup.add(new CS5DiskRenderServiceFactory());
-                lookup.add(new CS5RealtimeRenderServiceFactory());
-            }
-        }
+        System.setProperty("CSND5_LOADED", 
+                Boolean.toString(APIUtilities.isCsoundAPIAvailable())); 
     }
 }

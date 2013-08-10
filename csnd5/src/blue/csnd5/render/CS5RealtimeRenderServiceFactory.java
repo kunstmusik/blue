@@ -21,12 +21,14 @@ package blue.csnd5.render;
 
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
 
+@ServiceProvider (service = RealtimeRenderServiceFactory.class, position = 200)
 public class CS5RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
 
     @Override

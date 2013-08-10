@@ -21,11 +21,13 @@ package blue.csnd5.render;
 
 import blue.services.render.DiskRenderService;
 import blue.services.render.DiskRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
+@ServiceProvider (service = DiskRenderServiceFactory.class, position = 200)
 public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override

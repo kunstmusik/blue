@@ -21,11 +21,13 @@ package blue.csnd6.render;
 
 import blue.services.render.DiskRenderService;
 import blue.services.render.DiskRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
+@ServiceProvider(service = DiskRenderServiceFactory.class, position = 100)
 public class CS6DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
@@ -40,7 +42,7 @@ public class CS6DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
     public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
+        return API6Utilities.isCsoundAPIAvailable();
     }
     
     @Override 

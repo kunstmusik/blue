@@ -19,25 +19,14 @@
  */
 package csnd6;
 
-import blue.csnd6.render.APIUtilities;
-import blue.csnd6.render.CS6DiskRenderServiceFactory;
-import blue.csnd6.render.CS6RealtimeRenderServiceFactory;
-import central.lookup.CentralLookup;
+import blue.csnd6.render.API6Utilities;
 import org.openide.modules.ModuleInstall;
 
 public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        String val = System.getProperty("DISABLE_CSOUND6");
-
-        if("true".equals(val)) {
-            return;
-        }
-        
-        if(APIUtilities.isCsoundAPIAvailable()) {
-            CentralLookup.getDefault().add(new CS6DiskRenderServiceFactory());
-            CentralLookup.getDefault().add(new CS6RealtimeRenderServiceFactory());
-        }
+        System.setProperty("CSND6_LOADED", 
+                Boolean.toString(API6Utilities.isCsoundAPIAvailable())); 
     }
 }

@@ -20,7 +20,6 @@
 package blue.settings;
 
 import blue.services.render.DiskRenderServiceFactory;
-import central.lookup.CentralLookup;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -273,16 +272,17 @@ public class DiskRenderSettings implements Serializable {
     }
 
     public static DiskRenderServiceFactory[] getAvailableDiskRenderServices() {
-        DiskRenderServiceFactory apiService = CentralLookup.getDefault().lookup(
-                DiskRenderServiceFactory.class);
+        Collection<? extends DiskRenderServiceFactory> services = Lookup.getDefault().lookupAll(
+                                                               DiskRenderServiceFactory.class);
 
-        DiskRenderServiceFactory consoleService = Lookup.getDefault().lookup(
-                DiskRenderServiceFactory.class);
-
-        if (apiService == null) {
-            return new DiskRenderServiceFactory[]{consoleService};
+        ArrayList<DiskRenderServiceFactory> results = new ArrayList<DiskRenderServiceFactory>();
+        
+        for (DiskRenderServiceFactory factory : services) {
+           if(factory.isAvailable()) {
+               results.add(factory);
+           } 
         }
-        return new DiskRenderServiceFactory[]{apiService, consoleService};
-
+        
+        return results.toArray(new DiskRenderServiceFactory[0]);
     }
 }

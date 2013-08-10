@@ -4,8 +4,6 @@
  */
 package blue.csnd5.render;
 
-import blue.services.render.DiskRenderServiceFactory;
-import central.lookup.CentralLookup;
 import csnd.csnd;
 import csnd.Csound;
 import java.io.File;
@@ -24,9 +22,7 @@ public class CsoundAPIWarmupTask implements Runnable {
     @Override
     public void run() {
 
-        DiskRenderServiceFactory service = CentralLookup.getDefault().lookup(DiskRenderServiceFactory.class);
-
-        if(service == null || service.getClass() != CS5DiskRenderServiceFactory.class) {
+        if(!APIUtilities.isCsoundAPIAvailable()) {
             return;
         }
         

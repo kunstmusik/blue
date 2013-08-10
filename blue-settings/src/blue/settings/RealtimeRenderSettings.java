@@ -20,8 +20,9 @@
 package blue.settings;
 
 import blue.services.render.RealtimeRenderServiceFactory;
-import central.lookup.CentralLookup;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -367,15 +368,17 @@ public class RealtimeRenderSettings implements Serializable {
     }
 
     public static RealtimeRenderServiceFactory[] getAvailableRealtimeRenderServices() {
-        RealtimeRenderServiceFactory apiService = CentralLookup.getDefault().lookup(
+        Collection<? extends RealtimeRenderServiceFactory> services = Lookup.getDefault().lookupAll(
                 RealtimeRenderServiceFactory.class);
 
-        RealtimeRenderServiceFactory consoleService = Lookup.getDefault().lookup(
-                RealtimeRenderServiceFactory.class);
+        ArrayList<RealtimeRenderServiceFactory> results = new ArrayList<RealtimeRenderServiceFactory>();
 
-        if (apiService == null) {
-            return new RealtimeRenderServiceFactory[]{consoleService};
+        for (RealtimeRenderServiceFactory factory : services) {
+            if (factory.isAvailable()) {
+                results.add(factory);
+            }
         }
-        return new RealtimeRenderServiceFactory[]{apiService, consoleService};
+
+        return results.toArray(new RealtimeRenderServiceFactory[0]);
     }
 }

@@ -21,12 +21,14 @@ package blue.csnd6.render;
 
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  *
  * @author stevenyi
  */
 
+@ServiceProvider(service = RealtimeRenderServiceFactory.class, position = 100)
 public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
 
     @Override
@@ -46,6 +48,6 @@ public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFac
 
     @Override
     public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
+        return API6Utilities.isCsoundAPIAvailable();
     }
 }
