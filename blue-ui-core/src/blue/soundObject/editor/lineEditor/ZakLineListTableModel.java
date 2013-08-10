@@ -76,9 +76,9 @@ public class ZakLineListTableModel extends LineListTableModel {
             String strChannel = (String) value;
             try {
                 int tempChannel = Integer.parseInt(strChannel);
-                if (tempChannel < 1) {
+                if (tempChannel < 0) {
                     throw new NumberFormatException(
-                            "No negatives or zeros allowed");
+                            "Zak Channel numbers must be 0 or greater");
                 }
                 line.setChannel(tempChannel);
                 fireTableCellUpdated(row, col);

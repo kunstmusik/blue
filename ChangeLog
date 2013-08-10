@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2012 Steven Yi - all rights reserved
+copyright (c) 2001-2013 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -46,6 +46,8 @@ FIX
 * UDO Import Dialog for importing from UDO Repository on Csounds.com was 
   throwing a NullPointerException when opened from a Dialog (i.e. Effects
   Library Dialog)
+
+* Bug #84 - Fixed Zak LineObject to allow using 0 for channel
 
  
 >Notes for 2.4.3<
