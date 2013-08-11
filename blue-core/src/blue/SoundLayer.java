@@ -137,7 +137,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         fireSoundObjectRemoved(sObj);
     }
 
-    public ArrayList getSoundObjects() {
+    public ArrayList<SoundObject> getSoundObjects() {
         return soundObjects;
     }
 

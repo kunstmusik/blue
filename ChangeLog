@@ -40,6 +40,10 @@ NEW
 
 FIX
 
+* SoundObject Library: When removing a library item, dialog now asks users to 
+  confirm action.  If confirmed, all Instances of the SoundObject will be 
+  removed from the Score and SoundObjectLibrary.
+
 * On Mac, fixed default csound command for Utility and DiskRender settings to be
   "/usr/local/bin/csound" instead of "csound"
 
