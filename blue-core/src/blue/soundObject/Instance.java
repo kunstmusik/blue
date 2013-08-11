@@ -131,6 +131,9 @@ public class Instance extends AbstractSoundObject implements Serializable {
         String id = data.getElement("soundObjectReference")
                 .getAttributeValue("soundObjectLibraryID");
 
+        if("null".equals(id)) {
+            throw new Exception("ERROR: SoundObject Instance found pointing to an library item that no longer exists");
+        }
         
         Object sObj = objRefMap.get(id);
         if(sObj != null) {
