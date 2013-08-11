@@ -21,7 +21,8 @@
       <screeninfo>Program Options - General</screeninfo>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="images/programOptions_general.png" format="PNG" />
+          <imagedata fileref="images/programOptions_general.png" format="PNG" 
+          scalefit="1" width="100%"/>
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -165,7 +166,7 @@
       <mediaobject>
         <imageobject>
           <imagedata fileref="images/programOptions_projectDefaults.png"
-            format="PNG" />
+            format="PNG" scalefit="1" width="100%"/>
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -204,7 +205,8 @@
       <screeninfo>Program Options - Playback</screeninfo>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="images/programOptions_playBack.png" format="PNG" />
+          <imagedata fileref="images/programOptions_playBack.png" format="PNG" 
+                     scalefit="1" width="100%" />
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -252,7 +254,8 @@
       <screeninfo>Program Options - Utility</screeninfo>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="images/programOptions_utility.png" format="PNG" />
+          <imagedata fileref="images/programOptions_utility.png" format="PNG"
+          scalefit="1" width="100%"/>
         </imageobject>
         <textobject>
           <phrase>Program Options - Utility</phrase>
@@ -313,7 +316,8 @@
       <screeninfo>Program Options - Realtime</screeninfo>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="images/programOptions_realtime.png" format="PNG" />
+          <imagedata fileref="images/programOptions_realtime.png" format="PNG"
+          scalefit="1" width="100%"/>
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -710,7 +714,7 @@
       <mediaobject>
         <imageobject>
           <imagedata fileref="images/programOptions_diskRender.png"
-            format="PNG" />
+            format="PNG" scalefit="1" width="100%"/>
         </imageobject>
       </mediaobject>
     </screenshot>
