@@ -13,7 +13,7 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.5.0<
-[released xxxx.xx.xx]
+[released 2013.08.12]
 
 NEW
 
@@ -35,6 +35,8 @@ NEW
     Settings. 
 
   * Bug #82 (issue with auditioning causing crashes) should now be fixed
+
+  * Manual entries updated for Installation and Program Options
  
 * Added Steven Yi's "TimeSphere" to the examples/pieces/stevenYi folder
 
