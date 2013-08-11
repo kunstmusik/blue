@@ -199,36 +199,6 @@
   </simplesect>
 
   <simplesect>
-    <title>Text Colors</title>
-
-    <screenshot>
-      <screeninfo>Program Options - Text Colors</screeninfo>
-      <mediaobject>
-        <imageobject>
-          <imagedata fileref="images/programOptions_textColors.png"
-            format="PNG" />
-        </imageobject>
-        <textobject>
-          <phrase>Program Options - Text Colors</phrase>
-        </textobject>
-        <caption>
-          <para>Program Options - Text Colors</para>
-        </caption>
-      </mediaobject>
-    </screenshot>
-
-    <para>
-      This section of the program options allows the user to set what colors
-      will be used when hilighting the syntax of code in blue's text editors
-      that support syntax highlighting. The chosen colors will be reflected for
-      each syntax-highlighted language(i.e. the Keyword color will affect the
-      color for both Csound highlighting and Python highlighting).
-    </para>
-
-
-  </simplesect>
-
-  <simplesect>
     <title>Playback</title>
     <screenshot>
       <screeninfo>Program Options - Playback</screeninfo>
@@ -379,6 +349,27 @@
             </note>
 
         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Render Method</term>
+          <listitem>
+            <para>
+                Choose which render service to use for rendering the project. 
+                When the program loads, Blue will first try to see if the Csound
+                6 API is available and if so, show that option here.  If it can
+                not find the Csound 6 API, it will search for the Csound 5 API
+                and show that option here instead if it is found.  If neither is
+                found, the Commandline Runner option will always be available to
+                use.                
+            </para>
+
+            <para>Note: If you have both Csound 5 and Csound 6 installed, you 
+                can force Blue to ignore Csound 6 on load by adding 
+                "-J-DDISABLE_CSOUND=true" to the blue/etc/blue.conf file in the
+                default_options section. On OSX, this will be in 
+                blue.app/Contents/Resources/blue/etc/blue.conf.</para>
+          </listitem>
         </varlistentry>
 
         <varlistentry>
@@ -751,6 +742,27 @@
             </note>
 
         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Render Method</term>
+          <listitem>
+            <para>
+                Choose which render service to use for rendering the project. 
+                When the program loads, Blue will first try to see if the Csound
+                6 API is available and if so, show that option here.  If it can
+                not find the Csound 6 API, it will search for the Csound 5 API
+                and show that option here instead if it is found.  If neither is
+                found, the Commandline Runner option will always be available to
+                use.                
+            </para>
+
+            <para>Note: If you have both Csound 5 and Csound 6 installed, you 
+                can force Blue to ignore Csound 6 on load by adding 
+                "-J-DDISABLE_CSOUND=true" to the blue/etc/blue.conf file in the
+                default_options section. On OSX, this will be in 
+                blue.app/Contents/Resources/blue/etc/blue.conf.</para>
+          </listitem>
         </varlistentry>
 
         <varlistentry>

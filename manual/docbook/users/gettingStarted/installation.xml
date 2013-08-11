@@ -5,7 +5,7 @@
     <title>Requirements</title>
 
     <para>
-      blue requires a Java 6 (also known as 1.6) or greater JVM (Java Virtual 
+      blue requires a Java 7 (also known as 1.7) or greater JVM (Java Virtual 
       Machine). To test to see if you have a JVM installed and what version, at 
       a command prompt type "java -version". If you see something along the 
       lines of "command not found" then you need to install a Java Virtual 
@@ -33,14 +33,18 @@
     <title>Installing blue</title>
 
     <para>
-      To install blue, you should download the latest ZIP file from
+      To install blue, you should download the latest ZIP file or DMG from
       the blue Sourceforge page
       <ulink url="http://www.sourceforge.net/projects/bluemusic">here</ulink>. 
-      Unzip the file to a location of your choice. After unzipping, locate the 
-      bin folder and use either the "blue" script or "blue.exe", depending if 
-      you are on Linux/OSX or Windows. For OSX users, unzipping the zip should 
-      produce a blue.app directory that will appear as a clickable application. 
-      Simply double-clicking this should start blue.</para>
+      For OSX users, download the DMG file which contains a blue.app.  You can 
+      double-click the Application to run, as well as copy it to your 
+      Applications folder to install it.</para>
+
+    <para>
+      For Linux and Windows users, download the ZIP file and unzip it. Inside of
+      the bin folder you will see a "blue" script for Linux or a "blue.exe" file
+      for use on Windows.</para>
+
     <para>
       Note: After starting blue, 
       you may want to explore the example projects and pieces found in the 
@@ -160,10 +164,11 @@
       </note>
           
       <para>
-        The Java API for Csound is split into two parts: the csnd.jar file as 
-        well as the lib_jcsound.so native library (this file is csound 
-        jcsound.dll on Windows, and lib_jcsound.jnilib on Mac OSX). blue comes 
-        with it's own copy of csnd.jar, so to use the API from blue it will need 
+        The Java API for Csound is split into two parts: the csnd6.jar file as 
+        well as the lib_jcsound6.so native library (this file is called
+        _jcsound6.dll on Windows, and lib_jcsound6.jnilib on Mac OSX). For 
+          Csound 5, the names use "csnd" and "_jcsound" instead. blue comes 
+        with it's own copy of csnd.jar and csnd6.jar; to use the API from blue it will need 
         to have access to the native library to work. If the API is not enabled
         for use out-of-the-box, the following explains how to setup the API on 
         different platforms.
@@ -179,7 +184,7 @@
           you have compiled Csound yourself and the location of jcsound.dll is 
           different from where it is installed with the installer, you can 
           modify the blue/etc/blue.conf file to tell blue where to find the 
-          jcsound.dll. For example, if the directory where jcsound.dll is 
+          _jcsound6.dll. For example, if the directory where jcsound6.dll is 
           located is in c:\myCsound, open up blue/etc/blue.conf and modify the 
           default so that it contains:
         </para>
@@ -196,7 +201,7 @@ default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
           Linux users should install a doubles version of Csound. The version of 
           Csound found in package repositories should be one compiled for 
           doubles. After installing Csound and the Java interface for Csound,
-          locate where lib_jcsound.so is and modify the blue/bin/blue file. 
+          locate where lib_jcsound6.so is and modify the blue/bin/blue file. 
           Search for the lines that contain "-J-Djava.library.path=/usr/lib/jni"
           and modify /usr/lib/jni (the default for Debian/Ubuntu-based systems)
           to the directory where lib_jcsound.so is located.
@@ -220,17 +225,16 @@ default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
         <title>Checking the API is Enabled</title>
         
         <para>
-          To check if the API is enabled, open blue and open up the Project 
-          menu. On this menu is an option called "Use Csound API".  If the 
-          menu is not enabled (it will be greyed out, and you will be unable
-          to select the menu item), then the blue could not load up the Csound
-          API.  Note, this is different than if it is enabled but not selected.
-          Whether the menu is enabled or not tells if the API is found and can
-          be used, while selecting it and making it checked or not tells blue
-          if you want to use the API or the commandline runner.  If the API is
-          not found or the is not selected, then blue will use the commandline
-          runner.
-        </para>
+          To check if the API is enabled, open blue and open up the Program 
+          Options. This is available from the Blue->Preferences menu option on 
+          OSX, and from the Tools->Options menu option Windows and Linux. In the 
+          Blue tab, under both Disk and Realtime Render settings, there is an 
+          option called "Render Method".  If Csound 6 is availble on your system
+          and Blue was able to find it, it will show a "Csound 6 API" option. If
+          it was not found but Csound 5 was found, then a "Csound 5 API" option
+          will show. If neither could be found, you will only have the 
+          "Commandline Runner" option which is always available.
+                  </para>
           
       </simplesect>
     
