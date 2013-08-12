@@ -24,8 +24,8 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.projects.BlueProjectManager;
 import blue.projects.actions.OpenProjectAction;
-import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CsdRenderResult;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -108,7 +108,7 @@ public class CompileProcessor extends OptionProcessor {
             out = new PrintWriter(new BufferedWriter(
                     new FileWriter(outFileName)));
             CsdRenderResult renderResult =
-                    CSDRender.generateCSD(tempData, 0.0F, -1.0F, false);
+                    CSDRenderService.getDefault().generateCSD(tempData, 0.0F, -1.0F, false);
             out.print(renderResult.getCsdText());
             out.close();
 

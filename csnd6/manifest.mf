@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+OpenIDE-Module: csnd6
+OpenIDE-Module-Install: csnd6/Installer.class
+OpenIDE-Module-Layer: csnd6/layer.xml
+OpenIDE-Module-Localizing-Bundle: csnd6/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

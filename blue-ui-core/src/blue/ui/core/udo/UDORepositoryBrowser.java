@@ -31,7 +31,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -57,6 +56,7 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.awt.Window;
 
 /**
  * @author Steven Yi
@@ -83,7 +83,7 @@ public class UDORepositoryBrowser extends JDialog {
 
     OpcodeList opcodeList = null;
 
-    public UDORepositoryBrowser(JFrame owner) {
+    public UDORepositoryBrowser(Window owner) {
         super(owner);
 
         this.setTitle("User-Defined Opcode Repository Browser");

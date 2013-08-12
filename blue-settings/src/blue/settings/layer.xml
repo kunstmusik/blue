@@ -62,7 +62,7 @@
         <file name="BlueOptionsCategory.instance">
             <attr name="advancedOptionsFolder" stringvalue="OptionsDialog/BlueOptionsCategory"/>
             <attr name="categoryName" bundlevalue="blue.settings.Bundle#OptionsCategory_Name_Blue"/>
-            <attr name="iconBase" stringvalue="blue/ui/core/options/blueIcon_32x32.png"/>
+            <attr name="iconBase" stringvalue="blue/settings/blueIcon_32x32.png"/>
             <attr name="instanceCreate" methodvalue="org.netbeans.spi.options.OptionsCategory.createCategory"/>
             <attr name="keywords" bundlevalue="blue.settings.Bundle#OptionsCategory_Keywords_Blue"/>
             <attr name="keywordsCategory" stringvalue="Blue"/>

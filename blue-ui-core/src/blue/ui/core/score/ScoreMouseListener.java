@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score;
 
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Component;
 import java.awt.Point;
@@ -41,7 +42,7 @@ public class ScoreMouseListener extends MouseAdapter {
     
     @Override
     public void mousePressed(MouseEvent e) {
-        AuditionManager.getInstance().stop();
+        RealtimeRenderManager.getInstance().stopAuditioning();
         
         if(e.isConsumed()) {
             return;

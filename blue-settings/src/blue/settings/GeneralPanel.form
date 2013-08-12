@@ -19,7 +19,6 @@
           <Group type="102" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel15" linkSize="1" alignment="0" pref="213" max="32767" attributes="1"/>
                   <Component id="jLabel2" linkSize="1" alignment="0" pref="213" max="32767" attributes="1"/>
                   <Component id="jLabel4" linkSize="1" alignment="0" pref="213" max="32767" attributes="1"/>
                   <Component id="jLabel9" linkSize="1" alignment="0" pref="213" max="32767" attributes="1"/>
@@ -28,9 +27,8 @@
               </Group>
               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="defaultDirectoryField" alignment="0" pref="195" max="32767" attributes="0"/>
-                  <Component id="useCsoundAPIBox" alignment="0" pref="223" max="32767" attributes="1"/>
-                  <Component id="alphaEnabled" alignment="0" pref="195" max="32767" attributes="0"/>
+                  <Component id="defaultDirectoryField" alignment="0" pref="223" max="32767" attributes="0"/>
+                  <Component id="alphaEnabled" alignment="0" pref="223" max="32767" attributes="0"/>
                   <Component id="messageColorsEnabled" alignment="0" pref="195" max="32767" attributes="0"/>
                   <Component id="csoundErrorWarningEnabled" alignment="0" pref="195" max="32767" attributes="0"/>
                   <Component id="newUserDefaultsEnabled" alignment="0" pref="195" max="32767" attributes="0"/>
@@ -49,11 +47,6 @@
                   <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="defaultDirectoryField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="directoryOpenButton" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
-                  <Component id="useCsoundAPIBox" alignment="1" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
@@ -75,36 +68,12 @@
                   <Component id="csoundErrorWarningEnabled" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="31" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="jLabel15">
-      <Properties>
-        <Property name="horizontalAlignment" type="int" value="4"/>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="blue/settings/Bundle.properties" key="GeneralPanel.jLabel15.text_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-        <Property name="alignmentX" type="float" value="1.0"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="useCsoundAPIBox">
-      <Properties>
-        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-          <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
-            <EmptyBorder bottom="0" left="0" right="0" top="0"/>
-          </Border>
-        </Property>
-        <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
-          <Insets value="[0, 0, 0, 0]"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useCsoundAPIBoxActionPerformed"/>
-      </Events>
-    </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
         <Property name="horizontalAlignment" type="int" value="4"/>

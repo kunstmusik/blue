@@ -37,7 +37,7 @@ import blue.event.SelectionListener;
 import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
@@ -81,8 +81,8 @@ class MultiLineMouseProcessor extends MouseAdapter {
         }
         
         e.consume();
-        AuditionManager.getInstance().stop();
-
+        RealtimeRenderManager.getInstance().stopAuditioning();
+        
         Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
                 e.getPoint());
 

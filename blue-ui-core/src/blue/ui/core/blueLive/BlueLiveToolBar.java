@@ -21,16 +21,10 @@ package blue.ui.core.blueLive;
 
 import blue.BlueData;
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
 import blue.midi.MidiInputManager;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.settings.GeneralSettings;
-import blue.soundObject.SoundObjectException;
-import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.CSDRunner;
-import blue.ui.core.render.CommandlineRunner;
-import blue.utility.APIUtilities;
+import blue.ui.core.render.RealtimeRenderManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -38,9 +32,6 @@ import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
-import org.openide.windows.WindowManager;
 
 /**
  *
@@ -49,9 +40,6 @@ import org.openide.windows.WindowManager;
 public class BlueLiveToolBar extends JToolBar {
 
     BlueData data = null;
-    APIRunner apiRunner;
-    CommandlineRunner commandlineRunner = new CommandlineRunner();
-    volatile CSDRunner csdRunner = null;
     JToggleButton runButton = new JToggleButton("blueLive");
     JButton refreshButton = new JButton("Recompile");
     JButton allNotesOffButton = new JButton("All Notes Off");
@@ -75,26 +63,17 @@ public class BlueLiveToolBar extends JToolBar {
             public void playModeChanged(int playMode) {
                 if (playMode == PlayModeListener.PLAY_MODE_STOP) {
                     
-                    System.out.println("Play mode stop");
-                    
-                    if(restartInProgress) {
-                        restartInProgress = false;
-
-                        finishRefresh();
-                    } else if (runButton.isSelected()) {
                         runButton.setSelected(false);
-                    }
+                } else if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
+                    runButton.setSelected(true);
                 }
 
             }
         };
 
-        try {
-            apiRunner = new APIRunner();
-            apiRunner.addPlayModeListener(playModeListener);
-        } catch (Throwable t) {
-            apiRunner = null;
-        }
+//FIXME
+        RealtimeRenderManager.getInstance().addBlueLivePlayModeListener(playModeListener);
+        
 
         runButton.addActionListener(new ActionListener() {
 
@@ -158,46 +137,53 @@ public class BlueLiveToolBar extends JToolBar {
     }
 
     protected void runButtonActionPerformed() {
-        if (data == null) {
-            return;
-        }
+        //        if (data == null) {
+        //            return;
+        //        }
+        //
+        //        if (csdRunner != null && csdRunner.isRunning()) {
+        //            csdRunner.stop();
+        //
+        //            csdRunner = null;
+        //
+        //            if (runButton.isSelected()) {
+        //                runButton.setSelected(false);
+        //            }
+        //
+        //            return;
+        //        }
+        //
+        //        if (!runButton.isSelected()) {
+        //            runButton.setSelected(true);
+        //        }
+        //
+        //        if (apiRunner != null
+        //                && APIUtilities.isCsoundAPIAvailable()
+        //                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+        //            csdRunner = apiRunner;
+        //        } else {
+        //            csdRunner = commandlineRunner;
+        //        }
+        //
+        //        csdRunner.setData(data);
+        //
+        //        new Thread() {
+        //
+        //            public void run() {
+        //                try {
+        //                    csdRunner.renderForBlueLive();
+        //                } catch (SoundObjectException soe) {
+        //                    Exceptions.printStackTrace(soe);
+        //                }
+        //            }
+        //        }.run();
+        RealtimeRenderManager manager = RealtimeRenderManager.getInstance();
 
-        if (csdRunner != null && csdRunner.isRunning()) {
-            csdRunner.stop();
-            
-            csdRunner = null;
-
-            if (runButton.isSelected()) {
-                runButton.setSelected(false);
-            }
-
-            return;
-        }
-
-        if (!runButton.isSelected()) {
-            runButton.setSelected(true);
-        }
-
-        if (apiRunner != null
-                && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            csdRunner = apiRunner;
+        if(manager.isBlueLiveRendering()) {
+            manager.stopBlueLiveRendering();
         } else {
-            csdRunner = commandlineRunner;
+            manager.renderForBlueLive(data);
         }
-
-        csdRunner.setData(data);
-
-        new Thread() {
-
-            public void run() {
-                try {
-                    csdRunner.renderForBlueLive();
-                } catch (SoundObjectException soe) {
-                    Exceptions.printStackTrace(soe);
-                }
-            }
-        }.run();
     }
 
     protected void refreshButtonActionPerformed() {
@@ -205,41 +191,43 @@ public class BlueLiveToolBar extends JToolBar {
             return;
         }
 
-        if (csdRunner != null && csdRunner.isRunning()) {
-            
-            restartInProgress = true;
-            
-            csdRunner.stop();
+//        if (csdRunner != null && csdRunner.isRunning()) {
+//            
+//            restartInProgress = true;
+//            
+//            csdRunner.stop();
+//        
+//        }
         
-        }
+        RealtimeRenderManager.getInstance().renderForBlueLive(data);
     }
     
     protected void finishRefresh() {
-        if (apiRunner != null
-                && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            csdRunner = apiRunner;
-        } else {
-            csdRunner = commandlineRunner;
-        }
-
-        csdRunner.setData(data);
-
-        new Thread() {
-
-            public void run() {
-                try {
-                    csdRunner.renderForBlueLive();
-                } catch (final SoundObjectException soe) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            Exceptions.printStackTrace(soe);
-                        }
-                    });
-                    
-                }
-            }
-        }.run();
+//        if (apiRunner != null
+//                && APIUtilities.isCsoundAPIAvailable()
+//                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//            csdRunner = apiRunner;
+//        } else {
+//            csdRunner = commandlineRunner;
+//        }
+//
+//        csdRunner.setData(data);
+//
+//        new Thread() {
+//
+//            public void run() {
+//                try {
+//                    csdRunner.renderForBlueLive();
+//                } catch (final SoundObjectException soe) {
+//                    SwingUtilities.invokeLater(new Runnable() {
+//                        public void run() {
+//                            Exceptions.printStackTrace(soe);
+//                        }
+//                    });
+//                    
+//                }
+//            }
+//        }.run();
     }
     
     public void midiButtonActionPerformed() {
@@ -257,26 +245,21 @@ public class BlueLiveToolBar extends JToolBar {
     }
 
     public void sendEvents(String scoText) {        
-        if (csdRunner != null && csdRunner.isRunning()) {
-            csdRunner.passToStdin(scoText);
-        }
+        RealtimeRenderManager.getInstance().passToStdin(scoText);
     }
 
     public boolean isRunning() {
-        return csdRunner != null && csdRunner.isRunning();
+        return RealtimeRenderManager.getInstance().isBlueLiveRendering();
     }
 
     public void stopRendering() {
-        if (csdRunner != null && csdRunner.isRunning()) {
-            csdRunner.stop();
-
-            csdRunner = null;
+        RealtimeRenderManager manager = RealtimeRenderManager.getInstance();
+        if (manager.isBlueLiveRendering()) {
+            manager.stopBlueLiveRendering();
 
             if (runButton.isSelected()) {
                 runButton.setSelected(false);
             }
-
-            return;
         }
     }
 }

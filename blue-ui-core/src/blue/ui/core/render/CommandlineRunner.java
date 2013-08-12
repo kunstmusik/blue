@@ -1,5 +1,7 @@
 package blue.ui.core.render;
 
+import blue.services.render.RenderTimeManager;
+import blue.services.render.CsdRenderResult;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.io.IOException;
@@ -15,68 +17,71 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
-import blue.ui.core.score.AuditionManager;
-import blue.score.tempo.Tempo;
+import blue.services.render.CSDRenderService;
+import blue.services.render.RealtimeRenderService;
 import blue.settings.GeneralSettings;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
-import blue.utility.ProjectPropertiesUtil;
+import blue.settings.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.ServiceProvider;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author
  * @version 1.0
  */
+@ServiceProvider(service = RealtimeRenderService.class, position = 500)
+public class CommandlineRunner implements PlayModeListener, RealtimeRenderService {
 
-public class CommandlineRunner implements PlayModeListener, CSDRunner {
     ProcessConsole console = new ProcessConsole();
-
     RunProxy runProxy;
-
     ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
-
     private BlueData data = null;
-
     private boolean shouldStop = false;
-
     JCheckBox disableMessagesBox = null;
-
     JPanel errorPanel = null;
 
     public CommandlineRunner() {
-        
+
         console.addPlayModeListener(this);
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.addPlayModeListener(new PlayModeListener() {
-
-            public void playModeChanged(int playMode) {
-                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-                    if (isRunning()) {
-                        stop();
-                    }
-                }
-
-            }
-
-        });
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.addPlayModeListener(new PlayModeListener() {
+//
+//            public void playModeChanged(int playMode) {
+//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
+//                    if (isRunning()) {
+//                        stop();
+//                    }
+//                }
+//
+//            }
+//
+//        });
     }
 
+    @Override
+    public String toString() {
+        return "Commmandline Runner";
+    }
+
+    @Override
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);
     }
 
+    @Override
     public void removePlayModeListener(PlayModeListener listener) {
         listeners.remove(listener);
     }
@@ -89,11 +94,12 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
     }
 
     /* RENDER METHODS */
-
+    @Override
     public void setData(BlueData data) {
         this.data = data;
     }
 
+    @Override
     public void render() throws SoundObjectException {
         if (this.data == null) {
             return;
@@ -121,27 +127,21 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
-            Tempo tempo = data.getScore().getTempo();
-            TempoMapper tempoMapper = null;
-            
-            if(tempo.isEnabled()) {
-                tempoMapper = CSDRender.getTempoMapper(tempo);
-            } else {
-                tempoMapper = CSDRender.getTempoMapper(globalSco);
-            }
-            
 //            System.out.println(tempoMapper);
 
-            RenderTimeManager timeManager = RenderTimeManager.getInstance();
-            timeManager.setTempoMapper(tempoMapper);
             // FIXME
 //            timeManager.setRootPolyObject(data.getPolyObject());
 
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();
 
-            CsdRenderResult result = CSDRender.generateCSD(data, startTime, endTime);
-            
+            CsdRenderResult result = CSDRenderService.getDefault()
+                    .generateCSD(data, startTime, endTime, false);
+
+            RenderTimeManager timeManager = Lookup.getDefault().lookup(
+                    RenderTimeManager.class);
+            timeManager.setTempoMapper(result.getTempoMapper());
+
             String csd = result.getCsdText();
 
             File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
@@ -167,8 +167,10 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
         }
     }
 
+    @Override
     public void renderForBlueLive() throws SoundObjectException {
-        CsdRenderResult result = CSDRender.generateCSDForBlueLive(this.data);
+        CsdRenderResult result = CSDRenderService.getDefault()
+                .generateCSDForBlueLive(this.data, false);
         String tempCSD = result.getCsdText();
 
         File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
@@ -185,7 +187,7 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
                 command = liveData.getCommandLine();
             } else {
                 command = ProjectPropertiesUtil.getRealtimeCommandLine(
-                    data.getProjectProperties());
+                        data.getProjectProperties());
                 command += " -Lstdin ";
                 command += liveData.getCommandLine();
             }
@@ -199,8 +201,8 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             command += " \"" + temp.getAbsolutePath() + "\"";
         } else {
             command += " " + temp.getAbsolutePath();
-        }   
-        
+        }
+
         play(command, BlueSystem.getCurrentProjectDirectory(), -1);
     }
 
@@ -210,8 +212,8 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
         // stop();
         // }
 
-        AuditionManager audition = AuditionManager.getInstance();
-        audition.stop();
+//        AuditionManager audition = AuditionManager.getInstance();
+//        audition.stop();
 
         runProxy = new RunProxy(command, currentWorkingDirectory, renderStart);
         Thread t = new Thread(runProxy);
@@ -220,16 +222,19 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
 
     }
 
+    @Override
     public boolean isRunning() {
         return console.isRunning();
     }
 
+    @Override
     public void stop() {
         shouldStop = true;
         runProxy.stop();
     }
 
-     public void passToStdin(String text) {
+    @Override
+    public void passToStdin(String text) {
         NoteList nl = null;
 
         try {
@@ -249,12 +254,11 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             console.passToStdin(note.toString());
         }
     }
-    
+
     class RunProxy implements Runnable {
+
         String command;
-
         File currentWorkingDirectory;
-
         float renderStart = -1.0f;
 
         public RunProxy(String command, File currentWorkingDirectory,
@@ -264,10 +268,12 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             this.currentWorkingDirectory = currentWorkingDirectory;
         }
 
+        @Override
         public void run() {
             try {
-                if(renderStart >= 0.0f) {
-                    RenderTimeManager manager = RenderTimeManager.getInstance();
+                if (renderStart >= 0.0f) {
+                    RenderTimeManager manager = Lookup.getDefault().lookup(
+                            RenderTimeManager.class);
                     manager.initiateRender(renderStart);
                     console.setRenderTimeManager(manager);
                 } else {
@@ -288,6 +294,7 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
         }
     }
 
+    @Override
     public void playModeChanged(int playMode) {
         if (playMode == PlayModeListener.PLAY_MODE_STOP) {
 
@@ -300,12 +307,12 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
                         errorPanel = new JPanel(new BorderLayout());
                         errorPanel
                                 .add(
-                                        new JLabel(
-                                                "<html>There was an error in "
-                                                        + "running Csound.<br>"
-                                                        + "Please view the Csound Output Dialog for "
-                                                        + "more information.<br><br></html>"),
-                                        BorderLayout.CENTER);
+                                new JLabel(
+                                "<html>There was an error in "
+                                + "running Csound.<br>"
+                                + "Please view the Csound Output Dialog for "
+                                + "more information.<br><br></html>"),
+                                BorderLayout.CENTER);
                         disableMessagesBox = new JCheckBox(
                                 "Disable Error Message Dialog");
                         errorPanel.add(disableMessagesBox, BorderLayout.SOUTH);
@@ -313,11 +320,12 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
 
                     disableMessagesBox.setSelected(false);
 
-                    
+
                     SwingUtilities.invokeLater(new Runnable() {
+                        @Override
                         public void run() {
                             JOptionPane.showMessageDialog(null, errorPanel,
-                            "Csound Error", JOptionPane.ERROR_MESSAGE);
+                                    "Csound Error", JOptionPane.ERROR_MESSAGE);
 
                             if (disableMessagesBox.isSelected()) {
                                 generalSettings
@@ -326,7 +334,7 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
                             }
                         }
                     });
-                    
+
                 }
                 notifyPlayModeListeners(playMode);
                 return;
@@ -348,5 +356,4 @@ public class CommandlineRunner implements PlayModeListener, CSDRunner {
             notifyPlayModeListeners(playMode);
         }
     }
-
 }

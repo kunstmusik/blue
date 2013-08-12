@@ -19,23 +19,19 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.tools.soundFont;
 
-import blue.settings.GeneralSettings;
 import blue.settings.UtilitySettings;
+import blue.ui.core.render.DiskRenderManager;
 import java.io.File;
 import java.util.StringTokenizer;
 
-import blue.ui.core.render.APIDiskRenderer;
-import blue.utilities.ProcessRunner;
-import blue.utility.APIUtilities;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
 
 /**
  * @author Steven yi
- * 
+ *
  */
 public class SoundFontUtility {
 
@@ -134,43 +130,40 @@ public class SoundFontUtility {
                 tempCSD);
 
         String osName = System.getProperty("os.name");
-        
-        String command;
 
-        if (APIUtilities.isCsoundAPIAvailable() && 
-                        GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            command = "csound ";
-        } else {
-            command = UtilitySettings.getInstance().csoundExecutable;
-        }       
+        String command = UtilitySettings.getInstance().csoundExecutable;
+        String[] args = new String[]{command, temp.getAbsolutePath()};
 
-        String csoundOutput = "";
+        String csoundOutput = DiskRenderManager.getInstance()
+                .execWaitAndCollect(args, null);
 
-        if (APIUtilities.isCsoundAPIAvailable() && 
-                GeneralSettings.getInstance().isUsingCsoundAPI()) {
 
-            String[] args = command.split("\\s+");
-                               
-            String[] args2 = new String[args.length + 1];
-            System.arraycopy(args, 0, args2, 0, args.length);
-            args2[args.length] = temp.getAbsolutePath();
-                            
-            APIDiskRenderer renderer = new APIDiskRenderer();
-            csoundOutput = renderer.execWaitAndCollect(args2, null);
-        } else {
-            
-            try {
-                command += " \"" + temp.getAbsolutePath() + "\"";
-                
-                ProcessRunner p = new ProcessRunner();
-                p.execWaitAndCollect(command, null);
-                csoundOutput = p.getCollectedOutput();
-    
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
+           // FIXME - remove commented out code 
+//        if (APIUtilities.isCsoundAPIAvailable() && 
+//                GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//
+//            String[] args = command.split("\\s+");
+//                               
+//            String[] args2 = new String[args.length + 1];
+//            System.arraycopy(args, 0, args2, 0, args.length);
+//            args2[args.length] = temp.getAbsolutePath();
+//                            
+//            APIDiskRenderer renderer = new APIDiskRenderer();
+//            csoundOutput = renderer.execWaitAndCollect(args2, null);
+//        } else {
+//            
+//            try {
+//                command += " \"" + temp.getAbsolutePath() + "\"";
+//                
+//                ProcessRunner p = new ProcessRunner();
+//                p.execWaitAndCollect(command, null);
+//                csoundOutput = p.getCollectedOutput();
+//    
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                return null;
+//            }
+//        }
 
         String instrumentList = getInstrumentList(csoundOutput);
         String presetList = getPresetList(csoundOutput);
@@ -181,10 +174,10 @@ public class SoundFontUtility {
     }
 
     public static void main(String args[]) {
-        SoundFontInfo info = getSoundFontInfo("c:\\csound\\samples\\sf2\\Chinese Flute Zhudi Analog (906KB).sf2");
+        SoundFontInfo info = getSoundFontInfo(
+                "c:\\csound\\samples\\sf2\\Chinese Flute Zhudi Analog (906KB).sf2");
 
         System.out.println(info.instrumentList);
         System.out.println(info.presetList);
     }
-
 }

@@ -39,19 +39,19 @@
       </opcode>
       <opcode>
         <name>oscil</name>
-        <signature>ares 	oscil	 xamp, xcps, ifn [, iphs]</signature>
+        <signature>ares 	oscil	 xamp, xcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>oscil</name>
-        <signature>kres 	oscil	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>kres 	oscil	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>oscil3</name>
-        <signature>ares 	oscil3	 xamp, xcps, ifn [, iphs]</signature>
+        <signature>ares 	oscil3	 xamp, xcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>oscil3</name>
-        <signature>kres 	oscil3	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>kres 	oscil3	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>oscili</name>
@@ -87,51 +87,51 @@
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>ares 	poscil	 aamp, acps, ifn [, iphs]</signature>
+        <signature>ares 	poscil	 aamp, acps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>ares 	poscil	 aamp, kcps, ifn [, iphs]</signature>
+        <signature>ares 	poscil	 aamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>ares 	poscil	 kamp, acps, ifn [, iphs]</signature>
+        <signature>ares 	poscil	 kamp, acps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>ares 	poscil	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>ares 	poscil	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>ires 	poscil	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>ires 	poscil	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil</name>
-        <signature>kres 	poscil	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>kres 	poscil	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>ares 	poscil3	 aamp, acps, ifn [, iphs]</signature>
+        <signature>ares 	poscil3	 aamp, acps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>ares 	poscil3	 aamp, kcps, ifn [, iphs]</signature>
+        <signature>ares 	poscil3	 aamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>ares 	poscil3	 kamp, acps, ifn [, iphs]</signature>
+        <signature>ares 	poscil3	 kamp, acps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>ares 	poscil3	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>ares 	poscil3	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>ires 	poscil3	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>ires 	poscil3	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>poscil3</name>
-        <signature>kres 	poscil3	 kamp, kcps, ifn [, iphs]</signature>
+        <signature>kres 	poscil3	 kamp, kcps [, ifn, iphs]</signature>
       </opcode>
       <opcode>
         <name>vibr</name>
@@ -204,13 +204,13 @@
       </opcode>
       <opcode>
         <name>fmb3</name>
-        <signature>ares 	fmb3	 kamp, kfreq, kc1, kc2, kvdepth, kvrate, ifn1, ifn2, ifn3, \
-      ifn4, ivfn</signature>
+        <signature>ares 	fmb3	 kamp, kfreq, kc1, kc2, kvdepth, kvrate[, ifn1, ifn2, ifn3, \
+      ifn4, ivfn]</signature>
       </opcode>
       <opcode>
         <name>fmbell</name>
-        <signature>ares 	fmbell	 kamp, kfreq, kc1, kc2, kvdepth, kvrate, ifn1, ifn2, ifn3, \
-      ifn4, ivfn[, isus]</signature>
+        <signature>ares 	fmbell	 kamp, kfreq, kc1, kc2, kvdepth, kvrate[, ifn1, ifn2, ifn3, \
+      ifn4, ivfn, isus]</signature>
       </opcode>
       <opcode>
         <name>fmmetal</name>
@@ -219,8 +219,8 @@
       </opcode>
       <opcode>
         <name>fmpercfl</name>
-        <signature>ares 	fmpercfl	 kamp, kfreq, kc1, kc2, kvdepth, kvrate, ifn1, ifn2, \
-      ifn3, ifn4, ivfn</signature>
+        <signature>ares 	fmpercfl	 kamp, kfreq, kc1, kc2, kvdepth, kvrate[, ifn1, ifn2, \
+      ifn3, ifn4, ivfn]</signature>
       </opcode>
       <opcode>
         <name>fmrhode</name>
@@ -229,8 +229,8 @@
       </opcode>
       <opcode>
         <name>fmvoice</name>
-        <signature>ares 	fmvoice	 kamp, kfreq, kvowel, ktilt, kvibamt, kvibrate, ifn1, \
-      ifn2, ifn3, ifn4, ivibfn</signature>
+        <signature>ares 	fmvoice	 kamp, kfreq, kvowel, ktilt, kvibamt, kvibrate[, ifn1, \
+      ifn2, ifn3, ifn4, ivibfn]</signature>
       </opcode>
       <opcode>
         <name>fmwurlie</name>
@@ -1295,31 +1295,31 @@
     <opcodeGroup name="STK Opcodes">
       <opcode>
         <name>STKBandedWG</name>
-        <signature>asignal 	STKBandedWG	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+        <signature>asignal 	STKBandedWG	 ifrequency, iamplitude, [kpress, kv1[, kmot, kv2[, klfo, kv3[, klfodepth, kv4[, kvel, kv5[, kstrk, kv6[, kinstr, kv7]]]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKBeeThree</name>
-        <signature>asignal 	STKBeeThree	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKBeeThree	 ifrequency, iamplitude, [kop4, kv1[, kop3, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKBlowBotl</name>
-        <signature>asignal 	STKBlowBotl	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4]]]]</signature>
+        <signature>asignal 	STKBlowBotl	 ifrequency, iamplitude, [knoise, kv1[, klfo, kv2[, klfodepth, kv3[, kvol, kv4]]]]</signature>
       </opcode>
       <opcode>
         <name>STKBlowHole</name>
-        <signature>asignal 	STKBlowHole	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKBlowHole	 ifrequency, iamplitude, [kreed, kv1[, knoise, kv2[, khole, kv3[, kreg, kv4[, kbreath, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKBowed</name>
-        <signature>asignal 	STKBowed	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKBowed	 ifrequency, iamplitude, [kpress, kv1[, kpos, kv2[, klfo, kv3[, klfodepth, kv4[, kvol, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKBrass</name>
-        <signature>asignal 	STKBrass	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKBrass	 ifrequency, iamplitude, [klip, kv1[, kslide, kv2[, klfo, kv3[, klfodepth, kv4[, kvol, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKClarinet</name>
-        <signature>asignal 	STKClarinet	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKClarinet	 ifrequency, iamplitude, [kstiff, kv1[, knoise, kv2[, klfo, kv3[, klfodepth, kv4[, kbreath, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKDrummer</name>
@@ -1327,31 +1327,31 @@
       </opcode>
       <opcode>
         <name>STKFMVoices</name>
-        <signature>asignal 	STKFMVoices	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKFMVoices	 ifrequency, iamplitude, [kvowel, kv1[, kspec, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKFlute</name>
-        <signature>asignal 	STKFlute	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKFlute	 ifrequency, iamplitude, [kjet, kv1[, knoise, kv2[, klfo, kv3[, klfodepth, kv4[, kbreath, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKHevyMetl</name>
-        <signature>asignal 	STKHevyMetl	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKHevyMetl	 ifrequency, iamplitude, [kmod, kv1[, kcross, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKMandolin</name>
-        <signature>asignal 	STKMandolin	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKMandolin	 ifrequency, iamplitude, [kbody, kv1[, kpos, kv2[, ksus, kv3[, kdetune, kv4[, kmic, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKModalBar</name>
-        <signature>asignal 	STKModalBar	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+        <signature>asignal 	STKModalBar	 ifrequency, iamplitude, [khard, kv1[, kpos, kv2[, klfo, kv3[, klfodepth, kv4[, kmix, kv5[, kvol, kv6[, kinstr, kv7]]]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKMoog</name>
-        <signature>asignal 	STKMoog	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKMoog	 ifrequency, iamplitude, [kq, kv1[, krate, kv2[, klfo, kv3[, klfodepth, kv4[, kvol, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKPercFlut</name>
-        <signature>asignal 	STKPercFlut	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKPercFlut	 ifrequency, iamplitude, [kmod, kv1[, kcross, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKPlucked</name>
@@ -1359,23 +1359,23 @@
       </opcode>
       <opcode>
         <name>STKResonate</name>
-        <signature>asignal 	STKResonate	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKResonate	 ifrequency, iamplitude, [kfreq, kv1[, kpole, kv2[, knotch, kv3[, kzero, kv4[, kenv, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKRhodey</name>
-        <signature>asignal 	STKRhodey	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKRhodey	 ifrequency, iamplitude, [kmod, kv1[, kcross, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKSaxofony</name>
-        <signature>asignal 	STKSaxofony	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6[, kc7, kv7]]]]]]]</signature>
+        <signature>asignal 	STKSaxofony	 ifrequency, iamplitude, [kstiff, kv1[, kapert, kv2[, kblow, kv3[, knoise, kv4[, klfo, kv5[, klfodepth, kv6[, kbreath, kv7]]]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKShakers</name>
-        <signature>asignal 	STKShakers	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5[, kc6, kv6]]]]]]</signature>
+        <signature>asignal 	STKShakers	 ifrequency, iamplitude, [kenerg, kv1[, kdecay, kv2[, kshake, kv3[, knum, kv4[, kres, kv5[, kinstr, kv6]]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKSimple</name>
-        <signature>asignal 	STKSimple	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4]]]]</signature>
+        <signature>asignal 	STKSimple	 ifrequency, iamplitude, [kpos, kv1[, kcross, kv2[, kenv, kv3[, kgain, kv4]]]]</signature>
       </opcode>
       <opcode>
         <name>STKSitar</name>
@@ -1383,33 +1383,33 @@
       </opcode>
       <opcode>
         <name>STKStifKarp</name>
-        <signature>asignal 	STKStifKarp	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3]]]</signature>
+        <signature>asignal 	STKStifKarp	 ifrequency, iamplitude, [kpos, kv1[, ksus, kv2[, kstretch, kv3]]]</signature>
       </opcode>
       <opcode>
         <name>STKTubeBell</name>
-        <signature>asignal 	STKTubeBell	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKTubeBell	 ifrequency, iamplitude, [kmod, kv1[, kcross, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKVoicForm</name>
-        <signature>asignal 	STKVoicForm	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKVoicForm	 ifrequency, iamplitude, [kmix, kv1[, ksel, kv2[, klfo, kv3[, klfodepth, kv4[, kloud, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKWhistle</name>
-        <signature>asignal 	STKWhistle	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKWhistle	 ifrequency, iamplitude, [kmod, kv1[, knoise, kv2[, kfipfreq, kv3[, kfipgain, kv4[, kvol, kv5]]]]]</signature>
       </opcode>
       <opcode>
         <name>STKWurley</name>
-        <signature>asignal 	STKWurley	 ifrequency, iamplitude, [kc1, kv1[, kc2, kv2[, kc3, kv3[, kc4, kv4[, kc5, kv5]]]]]</signature>
+        <signature>asignal 	STKWurley	 ifrequency, iamplitude, [kmod, kv1[, kcross, kv2[, klfo, kv3[, klfodepth, kv4[, kadsr, kv5]]]]]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Table Access">
       <opcode>
         <name>oscil1</name>
-        <signature>kres 	oscil1	 idel, kamp, idur, ifn</signature>
+        <signature>kres 	oscil1	 idel, kamp, idur [, ifn]</signature>
       </opcode>
       <opcode>
         <name>oscil1i</name>
-        <signature>kres 	oscil1i	 idel, kamp, idur, ifn</signature>
+        <signature>kres 	oscil1i	 idel, kamp, idur [, ifn]</signature>
       </opcode>
       <opcode>
         <name>ptable</name>
@@ -1833,7 +1833,7 @@
       </opcode>
       <opcode>
         <name>chn_k</name>
-        <signature> 	chn_k	 Sname, imode[, itype, idflt, imin, imax]</signature>
+        <signature> 	chn_k	 Sname, imode[, itype, idflt, imin, ima, ix, iy, iwidth, iheight, Sattributes]</signature>
       </opcode>
       <opcode>
         <name>chn_a</name>
@@ -2477,6 +2477,10 @@
         <signature>k	(x) (i-rate args only)</signature>
       </opcode>
       <opcode>
+        <name>k</name>
+        <signature>k	(x) (a-rate args only)</signature>
+      </opcode>
+      <opcode>
         <name>samphold</name>
         <signature>ares 	samphold	 asig, agate [, ival] [, ivstor]</signature>
       </opcode>
@@ -2991,6 +2995,10 @@
       <opcode>
         <name>mute</name>
         <signature>mute	 &quot;insname&quot; [, iswitch]</signature>
+      </opcode>
+      <opcode>
+        <name>readscore</name>
+        <signature>readscore	 Sin </signature>
       </opcode>
       <opcode>
         <name>remove</name>
@@ -3526,6 +3534,16 @@
         <signature>kres 	times</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name=" Compilation">
+      <opcode>
+        <name>compileorc</name>
+        <signature>compileorc	 Sfilename</signature>
+      </opcode>
+      <opcode>
+        <name>compilestr</name>
+        <signature>compilestr	 Sorch</signature>
+      </opcode>
+    </opcodeGroup>
     <opcodeGroup name="Realtime Performance Monitor">
       <opcode>
         <name>cpumeter</name>
@@ -3666,6 +3684,14 @@
   <opcodeGroup name="Table Control">
     <opcodeGroup name="Table Queries">
       <opcode>
+        <name>array</name>
+        <signature>karray[] 	array	 ival1, ival2,.....ivaln</signature>
+      </opcode>
+      <opcode>
+        <name>fillarray</name>
+        <signature>karray[] 	fillarray	 ival1, ival2,.....ivaln</signature>
+      </opcode>
+      <opcode>
         <name>ftchnls</name>
         <signature>ftchnls	(x) (init-rate args only)</signature>
       </opcode>
@@ -3686,8 +3712,40 @@
         <signature>ftsr	(x) (init-rate args only)</signature>
       </opcode>
       <opcode>
+        <name>genarray</name>
+        <signature>karray 	genarray	 kstart, kens[, inc]</signature>
+      </opcode>
+      <opcode>
+        <name>genarray</name>
+        <signature>iarray 	genarray	 istart, iens[, inc]</signature>
+      </opcode>
+      <opcode>
+        <name>genarray_i</name>
+        <signature>karray 	genarray_i	 istart, iend [,inc]</signature>
+      </opcode>
+      <opcode>
+        <name>lenarray</name>
+        <signature>ir 	lenarray	 karray</signature>
+      </opcode>
+      <opcode>
+        <name>lenarray</name>
+        <signature>kr 	lenarray	 karray</signature>
+      </opcode>
+      <opcode>
+        <name>maparray</name>
+        <signature>karray 	maparray	 kinarray, String</signature>
+      </opcode>
+      <opcode>
+        <name>maparray_i</name>
+        <signature>karray 	maparray_i	 kinarray, String</signature>
+      </opcode>
+      <opcode>
         <name>nsamp</name>
         <signature>nsamp	(x) (init-rate args only)</signature>
+      </opcode>
+      <opcode>
+        <name>slicearray</name>
+        <signature>karray 	slicearray	 kinarray, istart, iend</signature>
       </opcode>
       <opcode>
         <name>tableng</name>
@@ -4477,6 +4535,10 @@
         <signature>cosinv	(x) (no rate restriction)</signature>
       </opcode>
       <opcode>
+        <name>signum</name>
+        <signature>signum	(x) (no rate restriction)</signature>
+      </opcode>
+      <opcode>
         <name>sin</name>
         <signature>sin	(x) (no rate restriction)</signature>
       </opcode>
@@ -4543,6 +4605,10 @@
         <signature>kres 	divz	 ka, kb, ksubst</signature>
       </opcode>
       <opcode>
+        <name>divz</name>
+        <signature>...	divz	(ka, kb, ksubst)... (no rate restriction)</signature>
+      </opcode>
+      <opcode>
         <name>mac</name>
         <signature>ares 	mac	 ksig1, asig1 [, ksig2] [, asig2] [, ksig3] [, asig3] [...]</signature>
       </opcode>
@@ -4586,41 +4652,37 @@
         <name>taninv2</name>
         <signature>kres 	taninv2	 ky, kx</signature>
       </opcode>
+      <opcode>
+        <name>taninv2</name>
+        <signature>...	taninv2	(ky, kx)... (no rate restriction)</signature>
+      </opcode>
     </opcodeGroup>
     <opcodeGroup name="Vectors">
     </opcodeGroup>
     <opcodeGroup name=" Vectors">
       <opcode>
-        <name>copy2ftab</name>
-        <signature>tans 	copy2ftab	 tab, kftbl</signature>
+        <name>copya2ftab</name>
+        <signature>copya2ftab	 tab, kftbl</signature>
       </opcode>
       <opcode>
-        <name>copy2ttab</name>
-        <signature>tans 	copy2ttab	 tab, kftbl</signature>
+        <name>copyf2array</name>
+        <signature>copyf2array	 tab, kftbl</signature>
       </opcode>
       <opcode>
-        <name>maxtab</name>
-        <signature>kmax 	maxtab	 tab</signature>
+        <name>maxarray</name>
+        <signature>kmax 	maxarray	 karray</signature>
       </opcode>
       <opcode>
-        <name>mintab</name>
-        <signature>kmin 	mintab	 tab</signature>
+        <name>minarray</name>
+        <signature>kmin 	minarray	 karray</signature>
       </opcode>
       <opcode>
-        <name>multtab</name>
-        <signature>tans 	multtab	 tleft, tright</signature>
+        <name>scalearray</name>
+        <signature>scalearray	 tarray, kmin, kmax[, kleft, kright]</signature>
       </opcode>
       <opcode>
-        <name>plustab</name>
-        <signature>tans 	plustab	 tleft, tright</signature>
-      </opcode>
-      <opcode>
-        <name>scalet</name>
-        <signature>scalet	 tab, kmin, kmax[, kleft, kright]</signature>
-      </opcode>
-      <opcode>
-        <name>sumtab</name>
-        <signature>ksum 	sumtab	 tab</signature>
+        <name>sumarray</name>
+        <signature>ksum 	sumarray	 karray</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Trigonometric
@@ -6618,6 +6680,54 @@ inum_parm, kupdate</signature>
       <name>centroid</name>
       <signature>kcent 	centroid	 asig, ktrig, ifftsize</signature>
     </opcode>
+    <opcode>
+      <name>readscratch</name>
+      <signature>ival 	readscratch	[index]</signature>
+    </opcode>
+    <opcode>
+      <name>writescratch</name>
+      <signature>writescratch	ival[, index]</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Compilation Opcodes">
+    <opcodeGroup name=" evaluation">
+      <opcode>
+        <name>evalstr</name>
+        <signature>ires 	evalstr	 Scode </signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" instantiation">
+      <opcode>
+        <name>return</name>
+        <signature>return	 ival </signature>
+      </opcode>
+    </opcodeGroup>
+  </opcodeGroup>
+  <opcodeGroup name="Faust Opcodes">
+    <opcodeGroup name=" instantiation">
+      <opcode>
+        <name>ihandle,a1[,a2,...] faustaudio</name>
+        <signature>ihandle,a1[,a2,...] faustaudio	 ifac[,ain1,...] </signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" compilation">
+      <opcode>
+        <name>ihandle faustcompile</name>
+        <signature>ihandle faustcompile	 Scode, Sargs </signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" control">
+      <opcode>
+        <name>faustctl</name>
+        <signature>faustctl	 idsp,Scontrol,kval </signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" instantiaion">
+      <opcode>
+        <name>ihandle,a1[,a2,...] faustgen</name>
+        <signature>ihandle,a1[,a2,...] faustgen	 SCode[,ain1,...] </signature>
+      </opcode>
+    </opcodeGroup>
   </opcodeGroup>
   <opcodeGroup name="Spectral processing">
     <opcodeGroup name=" mincer">

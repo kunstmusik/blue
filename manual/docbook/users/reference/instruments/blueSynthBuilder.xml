@@ -164,10 +164,10 @@ aout    vco2 iamp, 440
 </programlisting>
 <!-- </example> -->
 
-<para> For convenience, a replacement key code completion popup has been added.
-When editing code
-press ctrl-shift-space and a popup dialog will appear with a list of all the
-replacement keys that have been assigned to interface objects. Selecting a
+<para> For convenience, the standard code completion popup will auto-complete
+text for replacement keys. When editing code, type "&lt;" then press ctrl-space. 
+The standard code completion popup will show a list of all of the replacement 
+keys that have been assigned to interface objects. Selecting a
 replacement key will insert that key into the code text area, already formatted
 within &lt; and &gt;.</para>
 

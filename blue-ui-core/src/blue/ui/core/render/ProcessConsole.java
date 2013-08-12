@@ -17,22 +17,30 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.render;
 
+import blue.BlueData;
+import blue.services.render.RenderTimeManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 
 //import blue.BlueMainFrame;
 import blue.BlueSystem;
+import blue.automation.Parameter;
 import blue.event.PlayModeListener;
+import blue.noteProcessor.TempoMapper;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
+import blue.services.render.DiskRenderJob;
+import blue.services.render.DiskRenderService;
+import blue.utility.FileUtilities;
 import java.awt.Color;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
 import org.openide.windows.IOProvider;
@@ -41,42 +49,35 @@ import org.openide.windows.InputOutput;
 /**
  * Pulls stderr and stdout out of a process without an independent console.
  * Useful for running "DOS" processes on Windows.
- * 
+ *
  * @author Copyright (C) 1999 by Michael Gogins. All rights reserved. <ADDRESS>
- *         gogins@pipeline.com </ADDRESS>
- * 
+ * gogins@pipeline.com </ADDRESS>
+ *
  * modified by steven yi, 2001-2002
  */
-
-public final class ProcessConsole implements java.io.Serializable {
+public final class ProcessConsole implements java.io.Serializable, DiskRenderService {
     // private TimeBar timeBar;
 
     private RenderTimeManager renderTimeManager = null;
-
     private InputOutput io = null;
+    transient OutputThread stdoutThread = null;
+    transient OutputThread stderrThread = null;
+    transient BufferedReader bufferedReaderStdout = null;
+    transient BufferedReader bufferedReaderStderr = null;
+    transient public Process process = null;
+    String commandLine = null;
+    transient PrintWriter stdin = null;
+    ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
+    StringBuffer buffer = null;
+    private int lastExitValue = 0;
 
     public ProcessConsole() {
     }
 
-    transient OutputThread stdoutThread = null;
-
-    transient OutputThread stderrThread = null;
-
-    transient BufferedReader bufferedReaderStdout = null;
-
-    transient BufferedReader bufferedReaderStderr = null;
-
-    transient public Process process = null;
-
-    String commandLine = null;
-
-    transient PrintWriter stdin = null;
-
-    ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
-
-    StringBuffer buffer = null;
-
-    private int lastExitValue = 0;
+    @Override
+    public String toString() {
+        return "Commmandline Runner";
+    }
 
     public void addPlayModeListener(PlayModeListener listener) {
         listeners.add(listener);
@@ -87,8 +88,7 @@ public final class ProcessConsole implements java.io.Serializable {
     }
 
     public void notifyPlayModeListeners(int playMode) {
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PlayModeListener listener = (PlayModeListener) iter.next();
+        for (PlayModeListener listener : listeners) {
             listener.playModeChanged(playMode);
         }
     }
@@ -104,7 +104,7 @@ public final class ProcessConsole implements java.io.Serializable {
         }
     }
 
-    public void execWaitAndCollect(String commandLine,
+    private void execWaitAndCollect(String commandLine,
             File currentWorkingDirectory) throws IOException {
         try {
             exec(commandLine, currentWorkingDirectory, true);
@@ -122,12 +122,12 @@ public final class ProcessConsole implements java.io.Serializable {
         }
     }
 
-    public void execWaitForDisk(String commandLine, File currentWorkingDirectory)
-            throws IOException {
+    @Override
+    public void renderToDisk(DiskRenderJob job) {
 
-        if(this.io != null) {
+
+        if (this.io != null) {
             try {
-//            this.io.closeInputOutput();
                 this.io.getOut().reset();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -139,12 +139,35 @@ public final class ProcessConsole implements java.io.Serializable {
             IOColors.setColor(io, IOColors.OutputType.OUTPUT, Color.WHITE);
             io.select();
 
-            execDisk(commandLine, currentWorkingDirectory);
+            String commandLine = StringUtils.join(job.getArgs(), " ");
+            BlueData data = job.getData();
+
+            float startTime = data.getRenderStartTime();
+            float endTime = data.getRenderEndTime();
+
+            if (data.getProjectProperties().diskAlwaysRenderEntireProject) {
+                startTime = 0.0f;
+                endTime = -1.0f;
+            }
+
+            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
+                    data, startTime,
+                    endTime, false);
+
+            String csd = result.getCsdText();
+
+            File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
+                    BlueSystem.getCurrentProjectDirectory(), csd);
+
+            commandLine += " \"" + temp.getAbsolutePath() + "\"";
+            commandLine += " -L stdin";
+
+            execDisk(commandLine, job.getCurrentWorkingDirectory());
             process.waitFor();
             destroy(true, true);
-            
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -216,38 +239,31 @@ public final class ProcessConsole implements java.io.Serializable {
             buffer = null;
         }
 
-        if(this.io != null) {
+        if (this.io != null) {
             try {
-//            this.io.closeInputOutput();
                 this.io.getOut().reset();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
 
-//        if (!collecting
-//                && GeneralSettings.getInstance()
-//                        .isShowCsoundOutputEnabled()) {
-            io = IOProvider.getDefault().getIO("Csound", false);
-            IOColors.setColor(io, IOColors.OutputType.OUTPUT, Color.WHITE);
+        io = IOProvider.getDefault().getIO("Csound", false);
+        IOColors.setColor(io, IOColors.OutputType.OUTPUT, Color.WHITE);
 
-//        } else {
-//            io = null;
-//        }
-
-        io.getOut().append("[CommandlineRunner] - ").append(BlueSystem.getString("processConsole.start") + "("
+        io.getOut().append("[CommandlineRunner] - ").append(
+                BlueSystem.getString("processConsole.start") + "("
                 + commandLine + ").").append("\n");
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
         this.commandLine = commandLine;
-        
+
         if (System.getProperty("os.name").indexOf("Windows") >= 0) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {
-            
+
             this.commandLine += " -L stdin";
- 
+
             String[] cmdArray = splitCommandString(this.commandLine);
 
             process = Runtime.getRuntime().exec(cmdArray, null,
@@ -272,8 +288,9 @@ public final class ProcessConsole implements java.io.Serializable {
             throws IOException {
         destroy(false);
 
-        
-        io.getOut().append("[CommandlineRunner] - ").append(BlueSystem.getString("processConsole.start") + "("
+
+        io.getOut().append("[CommandlineRunner] - ").append(
+                BlueSystem.getString("processConsole.start") + "("
                 + commandLine + ").").append("\n");
 
         this.commandLine = commandLine;
@@ -302,8 +319,16 @@ public final class ProcessConsole implements java.io.Serializable {
         stdin = new PrintWriter(this.process.getOutputStream());
     }
 
+    @Override
     public boolean isRunning() {
         return (process != null);
+    }
+
+    @Override
+    public void stop() {
+        if (isRunning()) {
+            destroy(false, true);
+        }
     }
 
     public void destroy(boolean notifyListeners) {
@@ -313,9 +338,9 @@ public final class ProcessConsole implements java.io.Serializable {
     public void destroy(boolean notifyListeners, boolean killProcess) {
 
         if (killProcess) {
-            
+
             if (System.getProperty("os.name").indexOf("Windows") >= 0) {
-            
+
                 try {
                     if (stderrThread != null) {
                         stderrThread.killThread = true;
@@ -363,7 +388,7 @@ public final class ProcessConsole implements java.io.Serializable {
             } catch (IllegalThreadStateException itse) {
                 // itse.printStackTrace();
                 setLastExitValue(0); // FIXME - not sure this is the right
-                                        // thing to do
+                // thing to do
             }
         }
 
@@ -373,8 +398,8 @@ public final class ProcessConsole implements java.io.Serializable {
         stdin = null;
 
         if (commandLine != null) {
-            
-        io.getOut().append(BlueSystem.getString("processConsole.stop")
+
+            io.getOut().append(BlueSystem.getString("processConsole.stop")
                     + "(" + commandLine + ").").append("\n");
         }
 
@@ -404,11 +429,27 @@ public final class ProcessConsole implements java.io.Serializable {
         return buffer.toString();
     }
 
+    // TODO - finish implementing!
+    @Override
+    public void execWait(String[] args, File currentWorkingDirectory, float startTime, TempoMapper mapper, ArrayList<Parameter> parameters) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String execWaitAndCollect(String[] args, File currentWorkingDirectory) {
+        String command = StringUtils.join(args, " ");
+        try {
+            execWaitAndCollect(command, currentWorkingDirectory);
+        } catch (IOException ex) {
+            return null;
+        }
+        return getCollectedOutput();
+    }
+
     public class OutputThread extends Thread {
+
         BufferedReader reader = null;
-
         volatile boolean killThread = false;
-
         public boolean isCollecting = true;
 
         OutputThread(BufferedReader reader) {
@@ -450,8 +491,6 @@ public final class ProcessConsole implements java.io.Serializable {
                     yield();
                 }
 
-                // System.out.println("Finished.");
-
             } catch (IOException e) {
                 // e.printStackTrace ();
             } catch (NullPointerException npe) {
@@ -460,7 +499,6 @@ public final class ProcessConsole implements java.io.Serializable {
 
             isCollecting = false;
         }
-
     }
 
     /**
@@ -477,5 +515,4 @@ public final class ProcessConsole implements java.io.Serializable {
     public int getLastExitValue() {
         return lastExitValue;
     }
-
 }

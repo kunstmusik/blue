@@ -19,14 +19,12 @@
  */
 package blue;
 
-import blue.ui.core.render.CsdRenderResult;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import java.net.MalformedURLException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -38,29 +36,17 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import blue.event.PlayModeListener;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
-import blue.settings.GeneralSettings;
 import blue.settings.PlaybackSettings;
-import blue.ui.core.render.APIRunner;
-import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CSDRunner;
-import blue.ui.core.render.CommandlineRunner;
-import blue.ui.core.render.RenderTimeManager;
-import blue.ui.core.score.AuditionManager;
-import blue.soundObject.SoundObjectException;
-import blue.ui.core.render.RenderTimeManagerListener;
-import blue.utility.APIUtilities;
+import blue.services.render.RenderTimeManager;
+import blue.ui.core.render.RealtimeRenderManager;
+import blue.services.render.RenderTimeManagerListener;
 import blue.utility.NumberUtilities;
-import java.net.URL;
 import javax.swing.JToolBar;
-import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.awt.StatusDisplayer;
-import org.openide.util.Exceptions;
 import org.openide.util.ImageUtilities;
+import org.openide.util.Lookup;
 
 /**
  * @author steven
@@ -96,13 +82,12 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     BlueData data;
 
-    APIRunner apiRunner;
-
-    CommandlineRunner commandlineRunner = new CommandlineRunner();
-
     JCheckBox loopBox = new JCheckBox();
 
     private boolean isUpdating = false;
+
+    RenderTimeManager renderTimeManager = 
+                Lookup.getDefault().lookup(RenderTimeManager.class);
 
     public static MainToolBar getInstance() {
         if (instance == null) {
@@ -116,12 +101,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         setFloatable(false);
 
-        try {
-            apiRunner = new APIRunner();
-            apiRunner.addPlayModeListener(this);
-        } catch (Throwable t) {
-            apiRunner = null;
-        }
+        RealtimeRenderManager.getInstance().addPlayModeListener(this);
 
         previousMarkerButton = new JButton(new PreviousMarkerAction());
         nextMarkerButton = new JButton(new NextMarkerAction());
@@ -214,19 +194,14 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.add(playButton, null);
         this.add(stopButton, null);
         
-        commandlineRunner.addPlayModeListener(this);
-
         // Setup as Listener to RenderTimeManager
-        RenderTimeManager manager = RenderTimeManager.getInstance();
 
-        manager.addPropertyChangeListener(new PropertyChangeListener() {
+        renderTimeManager.addPropertyChangeListener(new PropertyChangeListener() {
 
             public void propertyChange(PropertyChangeEvent evt) {
                 String prop = evt.getPropertyName();
 
-                RenderTimeManager timeManager = RenderTimeManager.getInstance();
-
-                if (evt.getSource() == timeManager) {
+                if (evt.getSource() == renderTimeManager) {
                     if (prop.equals(RenderTimeManager.TIME_POINTER)) {
                         float val = ((Float) evt.getNewValue()).floatValue();
 
@@ -236,7 +211,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                             float latency = PlaybackSettings.getInstance().
                                     getPlaybackLatencyCorrection();
 
-                            float newVal = val + timeManager.getRenderStartTime() - latency;
+                            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
 
                             playTimeText.setText(NumberUtilities.formatTime(
                                     newVal));
@@ -246,7 +221,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                 }
             }
         });
-        manager.addRenderTimeManagerListener(this);
+        renderTimeManager.addRenderTimeManagerListener(this);
 
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
@@ -292,96 +267,61 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     public void renderProject() {
-        if(AuditionManager.getInstance().isRunning()) {
-            AuditionManager.getInstance().stop();
-        }
-        
-        if (apiRunner != null && apiRunner.isRunning()) {
-            apiRunner.stop();
-            return;
-        }
-
-        if (commandlineRunner.isRunning()) {
-            commandlineRunner.stop();
-            return;
-        }
-
-        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
-
-        playButton.setEnabled(false);
-
-        CSDRunner csdRunner;
-
-        if (apiRunner != null
-                && APIUtilities.isCsoundAPIAvailable()
-                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            csdRunner = apiRunner;
-        } else {
-            csdRunner = commandlineRunner;
-        }
-
-        csdRunner.setData(data);
-        try {
-            csdRunner.render();
-        } catch (SoundObjectException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                    soe);
-        }
-    }
-
-    public void generateScoreForTesting() {
-        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
-
-        try {
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
-
-            /*
-             * try { tempStart = Float.parseFloat(playStartText.getText()); }
-             * catch(NumberFormatException nfe) { tempStart = 0.0f;
-             * playStartText.setText(Float.toString(tempStart));
-             * JOptionPane.showMessageDialog(null, BlueSystem
-             * .getString("message.generateScore.startingFromZero")); }
-             */
-
-            CsdRenderResult result = CSDRender.generateCSD(this.data, startTime,
-                    endTime,
-                    false);
-
-            String csd = result.getCsdText();
-
-            InfoDialog.showInformationDialog(SwingUtilities.getRoot(this), csd,
-                    BlueSystem.getString("message.generateScore.csdTest"));
-        } catch (ScoreGenerationException soe) {
-            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
-                    soe);
-            throw new RuntimeException("CSDRender Failed");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            StatusDisplayer.getDefault().setStatusText("[" + BlueSystem.getString("message.error") + "] " + BlueSystem.
-                    getString("message.generateScore.error"));
-            System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.
-                    getLocalizedMessage());
-        }
-
+//        if(AuditionManager.getInstance().isRunning()) {
+//            AuditionManager.getInstance().stop();
+//        }
+//        
+//        if (apiRunner != null && apiRunner.isRunning()) {
+//            apiRunner.stop();
+//            return;
+//        }
+//
+//        if (commandlineRunner.isRunning()) {
+//            commandlineRunner.stop();
+//            return;
+//        }
+//
+//        StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
+//
+//        playButton.setEnabled(false);
+//
+//        RealtimeRenderService csdRunner;
+//
+//        if (apiRunner != null
+//                && APIUtilities.isCsoundAPIAvailable()
+//                && GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//            csdRunner = apiRunner;
+//        } else {
+//            csdRunner = commandlineRunner;
+//        }
+//
+//        csdRunner.setData(data);
+//        try {
+//            csdRunner.render();
+//        } catch (SoundObjectException soe) {
+//            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
+//                    soe);
+//        }
+        RealtimeRenderManager.getInstance().renderProject(data);
     }
 
     public void stopRendering() {
-        AuditionManager.getInstance().stop();
-
-        if (isRendering()) {
-            if (apiRunner != null && apiRunner.isRunning()) {
-                apiRunner.stop();
-            } else {
-                commandlineRunner.stop();
-            }
-        }
-        playModeChanged(PLAY_MODE_STOP);
+//        AuditionManager.getInstance().stop();
+//
+//        if (isRendering()) {
+//            if (apiRunner != null && apiRunner.isRunning()) {
+//                apiRunner.stop();
+//            } else {
+//                commandlineRunner.stop();
+//            }
+//        }
+//        playModeChanged(PLAY_MODE_STOP);
+        RealtimeRenderManager.getInstance().stopRendering();
     }
 
+    //FIXME - remove this and change callers to use RealtimeRenderManager
     public boolean isRendering() {
-        return ((apiRunner != null && apiRunner.isRunning()) || commandlineRunner.
-                isRunning());
+        return RealtimeRenderManager.getInstance().isRendering();
     }
 
     /**
@@ -471,7 +411,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             float latency = PlaybackSettings.getInstance().
                     getPlaybackLatencyCorrection();
 
-            float newVal = val + RenderTimeManager.getInstance().getRenderStartTime() - latency;
+            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
 
             playTimeText.setText(NumberUtilities.formatTime(
                     newVal));
