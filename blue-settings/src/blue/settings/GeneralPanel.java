@@ -56,8 +56,6 @@ final class GeneralPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel15 = new javax.swing.JLabel();
-        useCsoundAPIBox = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -69,18 +67,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         newUserDefaultsEnabled = new javax.swing.JCheckBox();
         defaultDirectoryField = new javax.swing.JTextField();
         directoryOpenButton = new javax.swing.JButton();
-
-        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel15, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel15.text_1")); // NOI18N
-        jLabel15.setAlignmentX(1.0F);
-
-        useCsoundAPIBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        useCsoundAPIBox.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        useCsoundAPIBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useCsoundAPIBoxActionPerformed(evt);
-            }
-        });
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(GeneralPanel.class, "GeneralPanel.jLabel2.text_1")); // NOI18N
@@ -150,7 +136,6 @@ final class GeneralPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                     .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
@@ -158,9 +143,8 @@ final class GeneralPanel extends javax.swing.JPanel {
                     .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE))
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(defaultDirectoryField, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
-                    .addComponent(useCsoundAPIBox, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
-                    .addComponent(alphaEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                    .addComponent(defaultDirectoryField, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
+                    .addComponent(alphaEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE)
                     .addComponent(messageColorsEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(csoundErrorWarningEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
                     .addComponent(newUserDefaultsEnabled, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE))
@@ -169,7 +153,7 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel15, jLabel2, jLabel4, jLabel6, jLabel8, jLabel9});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel2, jLabel4, jLabel6, jLabel8, jLabel9});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -179,10 +163,6 @@ final class GeneralPanel extends javax.swing.JPanel {
                     .addComponent(jLabel2)
                     .addComponent(defaultDirectoryField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(directoryOpenButton))
-                .addGap(7, 7, 7)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel15)
-                    .addComponent(useCsoundAPIBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel4)
@@ -199,13 +179,9 @@ final class GeneralPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(csoundErrorWarningEnabled)
                     .addComponent(jLabel9))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(31, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void useCsoundAPIBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useCsoundAPIBoxActionPerformed
-        controller.changed();
-}//GEN-LAST:event_useCsoundAPIBoxActionPerformed
 
     private void csoundErrorWarningEnabledActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_csoundErrorWarningEnabledActionPerformed
         controller.changed();
@@ -246,7 +222,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         GeneralSettings settings = GeneralSettings.getInstance();
 
         defaultDirectoryField.setText(settings.getDefaultDirectory().getAbsolutePath());
-        useCsoundAPIBox.setSelected(settings.isUsingCsoundAPI());
         newUserDefaultsEnabled.setSelected(settings.isNewUserDefaultsEnabled());
         alphaEnabled.setSelected(settings.isAlphaEnabled());
         messageColorsEnabled.setSelected(settings.isMessageColorsEnabled());
@@ -260,7 +235,6 @@ final class GeneralPanel extends javax.swing.JPanel {
         GeneralSettings settings = GeneralSettings.getInstance();
 
         settings.setDefaultDirectory(new File(defaultDirectoryField.getText()));
-        settings.setUsingCsoundAPI(useCsoundAPIBox.isSelected());
         settings.setNewUserDefaultsEnabled(newUserDefaultsEnabled.isSelected());
         settings.setAlphaEnabled(alphaEnabled.isSelected());
         settings.setMessageColorsEnabled(messageColorsEnabled.isSelected());
@@ -279,7 +253,6 @@ final class GeneralPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox csoundErrorWarningEnabled;
     private javax.swing.JTextField defaultDirectoryField;
     private javax.swing.JButton directoryOpenButton;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
@@ -287,6 +260,5 @@ final class GeneralPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JCheckBox messageColorsEnabled;
     private javax.swing.JCheckBox newUserDefaultsEnabled;
-    private javax.swing.JCheckBox useCsoundAPIBox;
     // End of variables declaration//GEN-END:variables
 }

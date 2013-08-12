@@ -8,10 +8,11 @@ import blue.BlueData;
 import blue.MainToolBar;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.ui.core.render.RenderTimeManager;
+import blue.services.render.RenderTimeManager;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import org.openide.util.Lookup;
 
 public final class AddMarkerAction implements ActionListener {
 
@@ -28,10 +29,13 @@ public final class AddMarkerAction implements ActionListener {
             return;
         }
 
-        RenderTimeManager timeManager = RenderTimeManager.getInstance();
+        RenderTimeManager timeManager = Lookup.getDefault().lookup(
+                RenderTimeManager.class);
 
         if (ScoreTopComponent.getDefault().isEditingRootScore()) {
-            float markerTime = MainToolBar.getInstance().isRendering() ? timeManager.getRenderTime() + timeManager.getRenderStartTime() : data.getRenderStartTime();
+            float markerTime = MainToolBar.getInstance().isRendering()
+                    ? timeManager.getRenderTime() + timeManager.getRenderStartTime()
+                    : data.getRenderStartTime();
             data.getMarkersList().addMarker(markerTime);
         }
 

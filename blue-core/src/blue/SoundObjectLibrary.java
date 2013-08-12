@@ -42,14 +42,10 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
     }
 
     public boolean removeSoundObject(SoundObject sObj) {
-        int size = this.size();
-
-        for (int i = 0; i < size; i++) {
-            if (this.get(i) == sObj) {
-                this.remove(i);
-                fireChangeEvent();
-                return true;
-            }
+        if(this.contains(sObj)) {
+            remove(sObj);
+            fireChangeEvent();
+            return true;
         }
         return false;
     }

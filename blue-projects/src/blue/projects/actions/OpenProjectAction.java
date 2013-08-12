@@ -32,6 +32,7 @@ import javax.swing.JFileChooser;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 public final class OpenProjectAction implements ActionListener {
@@ -194,7 +195,7 @@ public final class OpenProjectAction implements ActionListener {
             DialogDisplayer.getDefault().notify(descriptor);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Exceptions.printStackTrace(e);
             StatusDisplayer.getDefault().setStatusText("Error: Could not open " + temp.
                     toString());
         }

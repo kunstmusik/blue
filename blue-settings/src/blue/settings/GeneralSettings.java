@@ -39,10 +39,8 @@ public class GeneralSettings implements Serializable {
     private static final String DRAW_ALPHA_BACKGROUND_ON_MARQUEE = "drawAlphaBackgroundOnMarquee";
     private static final String MESSAGE_COLORS_ENABLED = "messageColorsEnabled";
     private static final String NEW_USER_DEFAULTS_ENABLED = "newUserDefaultsEnabled";
-    private static final String USE_CSOUND_API = "useCsoundApi";
     private String csoundDocRoot = "";
     private File defaultDirectory = null;
-    private boolean usingCsoundAPI = true;
     private boolean newUserDefaultsEnabled = true;
     private boolean alphaEnabled = false;
     private boolean messageColorsEnabled = false;
@@ -62,8 +60,6 @@ public class GeneralSettings implements Serializable {
 
             instance.defaultDirectory = new File(prefs.get(
                     PREFIX + DEFAULT_WORK_DIRECTORY, ""));
-            instance.usingCsoundAPI = prefs.getBoolean(PREFIX + USE_CSOUND_API,
-                    true);
             instance.newUserDefaultsEnabled = prefs.getBoolean(
                     PREFIX + NEW_USER_DEFAULTS_ENABLED, true);
             instance.alphaEnabled = prefs.getBoolean(
@@ -83,7 +79,6 @@ public class GeneralSettings implements Serializable {
 
         prefs.put(PREFIX + DEFAULT_WORK_DIRECTORY,
                 defaultDirectory.getAbsolutePath());
-        prefs.putBoolean(PREFIX + USE_CSOUND_API, usingCsoundAPI);
         prefs.putBoolean(PREFIX + NEW_USER_DEFAULTS_ENABLED,
                 newUserDefaultsEnabled);
         prefs.putBoolean(PREFIX + DRAW_ALPHA_BACKGROUND_ON_MARQUEE, alphaEnabled);
@@ -137,13 +132,5 @@ public class GeneralSettings implements Serializable {
 
     public void setCsoundErrorWarningEnabled(boolean aCsoundErrorWarningEnabled) {
         csoundErrorWarningEnabled = aCsoundErrorWarningEnabled;
-    }
-
-    public boolean isUsingCsoundAPI() {
-        return usingCsoundAPI;
-    }
-
-    public void setUsingCsoundAPI(boolean usingCsoundAPI) {
-        this.usingCsoundAPI = usingCsoundAPI;
     }
 }

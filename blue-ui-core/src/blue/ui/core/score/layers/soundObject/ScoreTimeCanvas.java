@@ -484,16 +484,14 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         actionMap.put("raisePixelSecond", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                //FIXME
-//                sGUI.timePixel.raisePixelSecond();
+                timeState.raisePixelSecond();
             }
         });
 
         actionMap.put("lowerPixelSecond", new AbstractAction() {
 
             public void actionPerformed(ActionEvent e) {
-                //FIXME
-//                sGUI.timePixel.lowerPixelSecond();
+                timeState.lowerPixelSecond();
             }
         });
 

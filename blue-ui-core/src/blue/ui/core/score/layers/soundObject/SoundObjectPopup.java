@@ -30,13 +30,10 @@ import blue.event.SelectionEvent;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.score.TimeState;
-import blue.ui.core.render.APIDiskRenderer;
-import blue.ui.core.render.CSDRender;
-import blue.ui.core.render.CsdRenderResult;
+import blue.services.render.CsdRenderResult;
 import blue.score.undo.AlignEdit;
-import blue.settings.GeneralSettings;
+import blue.services.render.CSDRenderService;
 import blue.settings.UtilitySettings;
 import blue.ui.core.score.undo.MoveSoundObjectsEdit;
 import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
@@ -48,12 +45,10 @@ import blue.soundObject.ObjectBuilder;
 import blue.soundObject.PolyObject;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
-import blue.ui.core.render.ProcessConsole;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.render.DiskRenderManager;
+import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
-import blue.utility.APIUtilities;
 import blue.utility.FileUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.SoundFileUtilities;
@@ -876,9 +871,7 @@ public class SoundObjectPopup extends JPopupMenu {
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
         SoundObject[] soundObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
 
-        AuditionManager audition = AuditionManager.getInstance();
-
-        audition.auditionSoundObjects(data, soundObjects);
+        RealtimeRenderManager.getInstance().auditionSoundObjects(data, soundObjects);
     }
 
     /**
@@ -936,9 +929,9 @@ public class SoundObjectPopup extends JPopupMenu {
         CsdRenderResult result;
 
         try {
-            result = CSDRender.generateCSD(tempData, tempSObj.getStartTime(), renderEndTime, false);
+            result = CSDRenderService.getDefault().generateCSD(tempData, tempSObj.getStartTime(), renderEndTime, false);
             tempCSD = result.getCsdText();
-        } catch (ScoreGenerationException e) {
+        } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
             throw new RuntimeException("CSDRender Failed", e);
         }
@@ -951,12 +944,7 @@ public class SoundObjectPopup extends JPopupMenu {
         String csoundExec;
         final UtilitySettings utilitySettings = UtilitySettings.getInstance();
 
-        if (APIUtilities.isCsoundAPIAvailable() &&
-                GeneralSettings.getInstance().isUsingCsoundAPI()) {
-            csoundExec = "csound ";
-        } else {
-            csoundExec = utilitySettings.csoundExecutable;
-        }
+        csoundExec = utilitySettings.csoundExecutable;
 
         String flags = utilitySettings.freezeFlags;
 
@@ -970,26 +958,36 @@ public class SoundObjectPopup extends JPopupMenu {
             File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
                     projectDir, tempCSD);
 
-            if (APIUtilities.isCsoundAPIAvailable() &&
-                    GeneralSettings.getInstance().isUsingCsoundAPI()) {
+            String[] args = new String[]{command, temp.getAbsolutePath()};
+            String[] args2 = new String[args.length + 2];
+            System.arraycopy(args, 0, args2, 0, args.length);
+            args2[args.length] = fullTempFileName;
+            args2[args.length + 1] = temp.getAbsolutePath();
 
-                String[] args = command.split("\\s+");
+            String csoundOutput = DiskRenderManager.getInstance()
+                .execWaitAndCollect(args, projectDir);
 
-                String[] args2 = new String[args.length + 2];
-                System.arraycopy(args, 0, args2, 0, args.length);
-                args2[args.length] = fullTempFileName;
-                args2[args.length + 1] = temp.getAbsolutePath();
-
-                APIDiskRenderer renderer = new APIDiskRenderer();
-                renderer.execWaitAndCollect(args2, projectDir);
-            } else {
-                command += "\"" + fullTempFileName + "\"";
-                command += " \"" + temp.getAbsolutePath() + "\"";
-
-                ProcessConsole pConsole = new ProcessConsole();
-
-                pConsole.execWait(command, projectDir);
-            }
+           // FIXME - remove commented out code 
+//            if (APIUtilities.isCsoundAPIAvailable() &&
+//                    GeneralSettings.getInstance().isUsingCsoundAPI()) {
+//
+//                String[] args = command.split("\\s+");
+//
+//                String[] args2 = new String[args.length + 2];
+//                System.arraycopy(args, 0, args2, 0, args.length);
+//                args2[args.length] = fullTempFileName;
+//                args2[args.length + 1] = temp.getAbsolutePath();
+//
+//                APIDiskRenderer renderer = new APIDiskRenderer();
+//                renderer.execWaitAndCollect(args2, projectDir);
+//            } else {
+//                command += "\"" + fullTempFileName + "\"";
+//                command += " \"" + temp.getAbsolutePath() + "\"";
+//
+//                ProcessConsole pConsole = new ProcessConsole();
+//
+//                pConsole.execWait(command, projectDir);
+//            }
 
 
 

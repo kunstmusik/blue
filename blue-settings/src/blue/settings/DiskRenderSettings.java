@@ -19,11 +19,15 @@
  */
 package blue.settings;
 
+import blue.services.render.DiskRenderServiceFactory;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 
 /**
@@ -58,6 +62,7 @@ public class DiskRenderSettings implements Serializable {
     private static final String DISPLAYS_DISABLED = "displaysDisabled";
     private static final String USE_ZERO_DBFS = "useZeroDbFS";
     private static final String ZERO_DB_FS = "zeroDbFS";
+    private static final String DISK_RENDER_SERVICE_FACTORY = "diskRenderServiceFactory";
     public String csoundExecutable = "csound";
     public String fileFormat = "WAV";
     public String sampleFormat = "SHORT";
@@ -79,9 +84,35 @@ public class DiskRenderSettings implements Serializable {
     public String advancedSettings = "";
     public boolean useZeroDbFS = true;
     public String zeroDbFS = "1";
+    public DiskRenderServiceFactory renderServiceFactory = null;
     private static DiskRenderSettings instance = null;
 
     private DiskRenderSettings() {
+    }
+
+    private static DiskRenderServiceFactory findDiskRenderService(String renderServiceName) {
+        DiskRenderServiceFactory[] services = getAvailableDiskRenderServices();
+
+        DiskRenderServiceFactory foundService = null;
+
+
+        if (renderServiceName == null || renderServiceName.isEmpty()) {
+            foundService = services[0];
+        } else {
+
+            for (DiskRenderServiceFactory service : services) {
+                if (service.toString().equals(renderServiceName)) {
+                    foundService = service;
+                    break;
+                }
+            }
+            if (foundService == null) {
+                foundService = services[0];
+            }
+        }
+
+
+        return foundService;
     }
 
     public static DiskRenderSettings getInstance() {
@@ -95,7 +126,7 @@ public class DiskRenderSettings implements Serializable {
             String osName = System.getProperty("os.name");
 
             String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0)
-                    ? "csound" : "/usr/local/bin/csound";
+                    ? "/usr/local/bin/csound" : "csound";
 
             instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,
                     csoundExecutableDefault);
@@ -140,6 +171,13 @@ public class DiskRenderSettings implements Serializable {
             instance.useZeroDbFS = prefs.getBoolean(PREFIX + USE_ZERO_DBFS, true);
             instance.zeroDbFS = prefs.get(PREFIX + ZERO_DB_FS, "1");
 
+
+            String renderServiceName =
+                    prefs.get(PREFIX + DISK_RENDER_SERVICE_FACTORY, null);
+
+            instance.renderServiceFactory = findDiskRenderService(
+                    renderServiceName);
+
         }
 
         return instance;
@@ -178,6 +216,9 @@ public class DiskRenderSettings implements Serializable {
 
         prefs.putBoolean(PREFIX + USE_ZERO_DBFS, useZeroDbFS);
         prefs.put(PREFIX + ZERO_DB_FS, zeroDbFS);
+
+        prefs.put(PREFIX + DISK_RENDER_SERVICE_FACTORY,
+                renderServiceFactory.toString());
 
         try {
             prefs.sync();
@@ -228,5 +269,20 @@ public class DiskRenderSettings implements Serializable {
         // buffer.append(advancedSettings).append(" ");
 
         return buffer.toString();
+    }
+
+    public static DiskRenderServiceFactory[] getAvailableDiskRenderServices() {
+        Collection<? extends DiskRenderServiceFactory> services = Lookup.getDefault().lookupAll(
+                                                               DiskRenderServiceFactory.class);
+
+        ArrayList<DiskRenderServiceFactory> results = new ArrayList<DiskRenderServiceFactory>();
+        
+        for (DiskRenderServiceFactory factory : services) {
+           if(factory.isAvailable()) {
+               results.add(factory);
+           } 
+        }
+        
+        return results.toArray(new DiskRenderServiceFactory[0]);
     }
 }

@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2012 Steven Yi - all rights reserved
+copyright (c) 2001-2013 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -12,6 +12,50 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.0<
+[released 2013.08.12]
+
+NEW
+
+* Java 7 now required for Blue (Netbeans RCP library that Blue uses has 
+  updated to it)
+
+* Render service system reimplemented:
+  
+  * Added support for Csound6 API.  If Csound6 is found, user gets option for
+    CS6 or Commandline.  If CS6 is not found, Blue will check if CS5 is 
+    available. If it is, user will get that option, or only have option for 
+    Commandline runner. Additionally, user can add -J-DDISABLE_CSOUND6=true in
+    blue/etc/blue.conf to disable CS6 API usage and allow CS5 option.
+
+  * Service selection is now done in Program Options under Realtime and Disk
+    Render settings.  
+
+  * The "Use API" button has been removed from the application menu and General
+    Settings. 
+
+  * Bug #82 (issue with auditioning causing crashes) should now be fixed
+
+  * Manual entries updated for Installation and Program Options
+ 
+* Added Steven Yi's "TimeSphere" to the examples/pieces/stevenYi folder
+
+FIX
+
+* SoundObject Library: When removing a library item, dialog now asks users to 
+  confirm action.  If confirmed, all Instances of the SoundObject will be 
+  removed from the Score and SoundObjectLibrary.
+
+* On Mac, fixed default csound command for Utility and DiskRender settings to be
+  "/usr/local/bin/csound" instead of "csound"
+
+* UDO Import Dialog for importing from UDO Repository on Csounds.com was 
+  throwing a NullPointerException when opened from a Dialog (i.e. Effects
+  Library Dialog)
+
+* Bug #84 - Fixed Zak LineObject to allow using 0 for channel
+
+ 
 >Notes for 2.4.3<
 [released 2013.04.05]
 

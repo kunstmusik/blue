@@ -43,7 +43,6 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -65,6 +64,7 @@ import blue.udo.UDOCategory;
 import blue.udo.UserDefinedOpcode;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
+import java.awt.Window;
 import java.util.ArrayList;
 
 /**
@@ -214,7 +214,7 @@ public class OpcodeListEditPanel extends JComponent {
         }
 
         if (browser == null) {
-            browser = new UDORepositoryBrowser((JFrame) SwingUtilities
+            browser = new UDORepositoryBrowser((Window) SwingUtilities
                     .getRoot(this));
         }
 

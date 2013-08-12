@@ -47,15 +47,16 @@ import blue.Marker;
 import blue.MarkersList;
 import blue.score.TimeState;
 import blue.settings.PlaybackSettings;
-import blue.ui.core.render.RenderTimeManager;
+import blue.services.render.RenderTimeManager;
 import blue.soundObject.PolyObject;
-import blue.ui.core.render.RenderTimeManagerListener;
+import blue.services.render.RenderTimeManagerListener;
 import blue.ui.utilities.BlueGradientFactory;
 import blue.ui.utilities.UiUtilities;
 import java.awt.*;
 import javax.swing.JPanel;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
+import org.openide.util.Lookup;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -83,6 +84,9 @@ public final class TimeBar extends JPanel implements
     private float timePointer = 0.0f;
     
     private boolean rootTimeline = true;
+
+    RenderTimeManager renderTimeManager = 
+                Lookup.getDefault().lookup(RenderTimeManager.class);
     
     public TimeBar() {
         this.setDoubleBuffered(true);
@@ -164,7 +168,7 @@ public final class TimeBar extends JPanel implements
             }
         });
 
-        RenderTimeManager renderTimeManager = RenderTimeManager.getInstance();
+        
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
     }
@@ -196,7 +200,7 @@ public final class TimeBar extends JPanel implements
                 g.drawLine(x, 0, x, this.getHeight());
             }
 
-            if (RenderTimeManager.getInstance().isCurrentProjectRendering()) {
+            if (renderTimeManager.isCurrentProjectRendering()) {
                 float latency = PlaybackSettings.getInstance().getPlaybackLatencyCorrection();
 
                 if (timePointer > latency && renderStart >= 0.0f) {
@@ -425,7 +429,7 @@ public final class TimeBar extends JPanel implements
 
                 repaint();
             }
-        } else if (evt.getSource() == RenderTimeManager.getInstance()) {
+        } else if (evt.getSource() == renderTimeManager) {
             if (prop.equals(RenderTimeManager.RENDER_START)) {
                 this.renderStart = ((Float) evt.getNewValue()).floatValue();
                 this.timePointer = -1.0f;

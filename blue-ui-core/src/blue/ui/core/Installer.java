@@ -34,6 +34,7 @@ import blue.score.layers.LayerGroupProviderManager;
 import blue.scripting.PythonProxy;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
+import blue.ui.core.render.RealtimeRenderManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
@@ -242,6 +243,9 @@ public class Installer extends ModuleInstall {
         BlueLiveToolBar.getInstance().stopRendering();
 
         result.removeLookupListener(lookupListener);
+        
+        RealtimeRenderManager.getInstance().stopRendering();
+        RealtimeRenderManager.getInstance().stopBlueLiveRendering();
         
         super.close();
     }

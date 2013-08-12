@@ -22,12 +22,12 @@ package blue.automation;
 import blue.BlueData;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.ui.core.score.AuditionManager;
+import blue.ui.core.render.RealtimeRenderManager;
 
 public class ParameterTimeManagerImpl implements ParameterTimeManager {
 
     public float getTime() {
-        if (AuditionManager.getInstance().isRunning()) {
+        if (RealtimeRenderManager.getInstance().isAuditioning()) {
             return -1.0f;
         }
 

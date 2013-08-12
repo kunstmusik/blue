@@ -113,9 +113,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="blue-ui-core-project-UseCsoundApiAction.instance">
-                <attr name="delegate" newvalue="blue.ui.core.project.UseCsoundApiAction"/>
-            </file>
         </folder>
         <folder name="Script">
             <file name="blue-ui-core-script-ReinitializeJythonAction.instance">
@@ -313,14 +310,6 @@
             <file name="blue-ui-core-project-ToggleLoopRenderingAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-ToggleLoopRenderingAction.instance"/>
                 <attr name="position" intvalue="500"/>
-            </file>
-            <file name="blue-ui-core-project-UseCsoundApiAction-separatorBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="250"/>
-            </file>
-            <file name="blue-ui-core-project-UseCsoundApiAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-UseCsoundApiAction.instance"/>
-                <attr name="position" intvalue="300"/>
             </file>
 
             <file name="blue-ui-core-project-AddMarkerAction-separatorBefore.instance">
@@ -662,8 +651,5 @@
         <file name="WindowManager.wswmgr" url="WindowManager.wswmgr"/>
     </folder>
 
-    <folder name="WarmUp">
-        <file name="blue-ui-core-CsoundAPIWarmupTask.instance"/>
-    </folder>
 
 </filesystem>
