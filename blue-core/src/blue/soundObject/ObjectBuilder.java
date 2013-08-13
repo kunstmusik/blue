@@ -367,6 +367,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         this.syntaxType = syntaxType;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

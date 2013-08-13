@@ -19,11 +19,10 @@
  */
 package blue.clojure;
 
-import java.io.File;
 import java.util.HashMap;
 import javax.script.ScriptException;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

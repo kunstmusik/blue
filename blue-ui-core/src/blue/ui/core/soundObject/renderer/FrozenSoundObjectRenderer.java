@@ -35,6 +35,7 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
 
     private static Color shadeColor = new Color(0, 0, 0, 64);
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
 
@@ -103,9 +104,11 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         }
     }
 
+    @Override
     public void cleanup(SoundObjectView sObjView) {
     }
 
+    @Override
     public Class getSoundObjectClass() {
         return FrozenSoundObject.class;
     }

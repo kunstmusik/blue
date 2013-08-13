@@ -20,21 +20,19 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.BlueSystem;
+import blue.utility.GUI;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-
-import blue.BlueSystem;
-import blue.utility.GUI;
 import org.openide.util.ImageUtilities;
 
 /**
@@ -156,6 +154,7 @@ public class AlignmentPanel extends JComponent implements ActionListener {
      * 
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (jCompList != null && jCompList.size() > 1) {
             String command = e.getActionCommand();

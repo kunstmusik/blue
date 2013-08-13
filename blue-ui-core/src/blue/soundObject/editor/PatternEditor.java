@@ -20,19 +20,6 @@
 
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JToggleButton;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
-import blue.ui.components.IconFactory;
 import blue.soundObject.PatternObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pattern.PatternCanvas;
@@ -41,7 +28,18 @@ import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
 import blue.soundObject.editor.pattern.PatternScoreEditor;
 import blue.soundObject.editor.pattern.PatternTimeBar;
 import blue.soundObject.pattern.Pattern;
+import blue.ui.components.IconFactory;
 import blue.utility.GUI;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JToggleButton;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * @author Steven Yi
@@ -65,6 +63,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         layerPanel.addListSelectionListener(new ListSelectionListener() {
 
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) {
                     return;
@@ -85,6 +84,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         setTimeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 props.setVisible(!props.isVisible());
             }
@@ -121,6 +121,7 @@ public class PatternEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             return;

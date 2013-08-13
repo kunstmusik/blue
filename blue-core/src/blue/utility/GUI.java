@@ -406,6 +406,7 @@ public class GUI {
         if (exitOnClose) {
             mFrame.addWindowListener(new WindowAdapter() {
 
+                @Override
                 public void windowClosing(WindowEvent e) {
                     System.exit(0);
                 }

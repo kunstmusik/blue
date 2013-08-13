@@ -78,6 +78,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
     }
 
 
+    @Override
     public Rectangle getTabRect(int idx, Rectangle rect) {
         Rectangle r = super.getTabRect (idx, rect);
         //For win classic, take up the full space, even the insets, to match
@@ -87,6 +88,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
         return r;
     }
 
+    @Override
     public void install() {
         super.install();
         if (!isGenericUI) {
@@ -95,6 +97,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
         }
     }
 
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         int prefHeight = 28;
         Graphics g = BasicScrollingTabDisplayerUI.getOffscreenGraphics();
@@ -155,6 +158,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
         }
     }
 
+    @Override
     protected void paintAfterTabs(Graphics g) {
         if (isGenericUI) {
             genericPaintAfterTabs(g);
@@ -249,6 +253,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
         }
     }
 
+    @Override
     public Icon getButtonIcon(int buttonId, int buttonState) {
         Icon res = null;
         initIcons();
@@ -259,11 +264,13 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
         return res;
     }
 
+    @Override
     protected Rectangle getControlButtonsRectangle( Container parent ) {
         Component c = getControlButtons();
         return new Rectangle( parent.getWidth()-c.getWidth()-4, 4, c.getWidth(), c.getHeight() );
     }
 
+    @Override
     public Insets getTabAreaInsets() {
         Insets retValue = super.getTabAreaInsets();
         retValue.right += 4;
@@ -274,6 +281,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
      * @return A component that holds control buttons (scroll left/right, drop down menu)
      * that are displayed to right of the tab area.
      */
+    @Override
     protected Component getControlButtons() {
         if( null == controlButtons ) {
             JPanel buttonsPanel = new JPanel( null );

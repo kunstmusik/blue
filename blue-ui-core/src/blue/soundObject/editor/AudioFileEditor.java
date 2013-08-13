@@ -20,11 +20,18 @@
 
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.LabelledItemPanel;
+import blue.soundObject.AudioFile;
+import blue.soundObject.SoundObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -38,15 +45,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-
-import blue.BlueSystem;
-import blue.gui.LabelledItemPanel;
-import blue.soundObject.AudioFile;
-import blue.soundObject.SoundObject;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.utility.GUI;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
@@ -96,6 +94,7 @@ public class AudioFileEditor extends SoundObjectEditor {
         findAudioFile.setText("...");
         findAudioFile.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectFile();
             }
@@ -208,6 +207,7 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             System.err

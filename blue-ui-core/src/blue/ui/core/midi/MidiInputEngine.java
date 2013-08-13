@@ -57,6 +57,7 @@ public final class MidiInputEngine implements Receiver {
     private MidiInputEngine() {
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
                         getPropertyName())) {
@@ -76,6 +77,7 @@ public final class MidiInputEngine implements Receiver {
         }
     }
 
+    @Override
     public void send(MidiMessage message, long timeStamp) {
 
         if (message instanceof ShortMessage) {
@@ -118,6 +120,7 @@ public final class MidiInputEngine implements Receiver {
 
     }
 
+    @Override
     public void close() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

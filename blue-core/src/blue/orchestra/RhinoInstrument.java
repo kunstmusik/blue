@@ -72,6 +72,7 @@ public class RhinoInstrument extends AbstractInstrument implements
 
     // -------------------------------------------
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }
@@ -89,6 +90,7 @@ public class RhinoInstrument extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

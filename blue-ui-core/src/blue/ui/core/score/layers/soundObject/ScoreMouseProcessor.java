@@ -6,39 +6,36 @@ package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueData;
 import blue.BlueSystem;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
-import blue.ui.core.score.undo.AddSoundObjectEdit;
-import blue.ui.core.score.undo.MoveSoundObjectsEdit;
-import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreObjectBar;
 import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.core.score.undo.MoveSoundObjectsEdit;
+import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 
 /**
  * ScoreMouseProcessor handles mouse actions for ScoreTimeCanvas
@@ -97,6 +94,7 @@ class ScoreMouseProcessor extends MouseAdapter {
         this.timeState = timeState;
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         
         if(!isScoreMode()) {
@@ -216,6 +214,7 @@ class ScoreMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         
         if(!isScoreMode()) {
@@ -275,6 +274,7 @@ class ScoreMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         
         if(!isScoreMode()) {
@@ -357,6 +357,7 @@ class ScoreMouseProcessor extends MouseAdapter {
         BlueUndoManager.addEdit(top);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
         
         if(!isScoreMode()) {
@@ -823,6 +824,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -851,6 +853,7 @@ class ScoreMouseProcessor extends MouseAdapter {
     public void selectAllBefore(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -880,6 +883,7 @@ class ScoreMouseProcessor extends MouseAdapter {
     public void selectAllAfter(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();

@@ -20,20 +20,19 @@
 
 package blue.settings;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.MessageFormat;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.StringTokenizer;
-import java.util.Vector;
-
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
+import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  * 
@@ -953,6 +952,7 @@ public class DriverUtils {
 
         String description = "";
 
+        @Override
         public String toString() {
             return cardNum + ") " + description;
         }
@@ -971,18 +971,22 @@ public class DriverUtils {
     }
 
     public static class PulseAudioCardInfo extends CardInfo {
+         @Override
          public String toString() {
             return "PulseAudio";
         }
 
+         @Override
         public String getDacString() {
             return "dac";
         }
 
+         @Override
         public String getAdcString() {
             return "adc";
         }
 
+         @Override
         public String getMIDIString() {
             return "";
         }
@@ -992,6 +996,7 @@ public class DriverUtils {
 
         int portNum = 0;
 
+        @Override
         public String toString() {
             StringBuffer buffer = new StringBuffer();
             buffer.append("(").append(cardNum).append(":").append(portNum)
@@ -1001,6 +1006,7 @@ public class DriverUtils {
             return buffer.toString();
         }
 
+        @Override
         public String getDacString() {
             StringBuffer buffer = new StringBuffer();
             buffer.append("dac:hw:").append(cardNum).append(",")
@@ -1008,6 +1014,7 @@ public class DriverUtils {
             return buffer.toString();
         }
 
+        @Override
         public String getAdcString() {
             StringBuffer buffer = new StringBuffer();
             buffer.append("adc:hw:").append(cardNum).append(",")
@@ -1015,6 +1022,7 @@ public class DriverUtils {
             return buffer.toString();
         }
 
+        @Override
         public String getMIDIString() {
             StringBuffer buffer = new StringBuffer();
             buffer.append("hw:").append(cardNum).append(",").append(portNum);
@@ -1042,18 +1050,22 @@ public class DriverUtils {
 
         String deviceName = "";
 
+        @Override
         public String toString() {
             return description;
         }
 
+        @Override
         public String getDacString() {
             return "dac:" + deviceName;
         }
 
+        @Override
         public String getAdcString() {
             return "adc:" + deviceName;
         }
 
+        @Override
         public String getMIDIString() {
             return "";
         }

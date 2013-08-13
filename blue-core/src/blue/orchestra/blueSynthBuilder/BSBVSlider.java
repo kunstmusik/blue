@@ -53,6 +53,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
     private boolean randomizable = true;
 
     // OVERRIDE to handle parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;

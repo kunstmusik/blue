@@ -34,8 +34,6 @@ import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -49,14 +47,17 @@ public class PatternsLayerGroup implements LayerGroup {
     private String name = "Patterns Layer Group";
     private NoteProcessorChain npc = new NoteProcessorChain();
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }

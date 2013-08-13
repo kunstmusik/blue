@@ -28,13 +28,10 @@ package blue.ui.core.score.layers.soundObject;
  * @version 1.0
  */
 
-import blue.ui.core.score.layers.soundObject.MotionBuffer;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import java.util.ArrayList;
-
 import blue.SoundLayer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import java.util.ArrayList;
 
 public final class SoundObjectBuffer {
 

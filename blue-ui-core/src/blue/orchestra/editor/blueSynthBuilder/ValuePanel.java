@@ -19,10 +19,8 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.utility.NumberUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.*;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,6 +45,7 @@ public class ValuePanel extends JPanel {
 
         valueDisplay.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     editField();
@@ -56,6 +55,7 @@ public class ValuePanel extends JPanel {
 
         valueField.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setValueFromField();
             }
@@ -63,6 +63,7 @@ public class ValuePanel extends JPanel {
 
         valueField.addFocusListener(new FocusAdapter() {
 
+            @Override
             public void focusLost(FocusEvent e) {
                 cards.show(ValuePanel.this, "display");
             }

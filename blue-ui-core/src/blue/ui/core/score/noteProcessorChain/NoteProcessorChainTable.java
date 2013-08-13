@@ -22,7 +22,6 @@ package blue.ui.core.score.noteProcessorChain;
 
 import java.awt.Color;
 import java.awt.Component;
-
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
@@ -32,6 +31,7 @@ public class NoteProcessorChainTable extends JTable {
 
     int hilightRows[];
 
+    @Override
     public Component prepareRenderer(TableCellRenderer renderer, int row,
             int column) {
 
@@ -64,6 +64,7 @@ public class NoteProcessorChainTable extends JTable {
                 new PropertyEditProxyEditor());
     }
     
+    @Override
     public boolean getScrollableTracksViewportHeight() {
         return getPreferredSize().height < getParent().getHeight();
     }

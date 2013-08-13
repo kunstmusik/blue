@@ -4,14 +4,13 @@
  */
 package blue.ui.core.score.undo;
 
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 
 /**
  * @author steven
@@ -47,6 +46,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
 
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -61,6 +61,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -75,6 +76,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public String getPresentationName() {
         if (presentationName != null) {
             return presentationName;

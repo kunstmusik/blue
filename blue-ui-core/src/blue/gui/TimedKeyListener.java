@@ -66,6 +66,7 @@ public class TimedKeyListener
         return set.size();
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
         if (timer.isRunning()) {
             timer.stop();
@@ -82,6 +83,7 @@ public class TimedKeyListener
         }
     }
 
+    @Override
     public void keyReleased(KeyEvent e) {
         if (timer.isRunning()) {
             timer.stop();
@@ -92,10 +94,12 @@ public class TimedKeyListener
         }
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {
         KeyTyped(e);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         timer.stop();
         fireKeyReleased(releaseEvent);

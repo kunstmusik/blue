@@ -19,10 +19,16 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.BlueSystem;
+import blue.components.EditEnabledCheckBox;
+import blue.event.EditModeListener;
+import blue.orchestra.BlueSynthBuilder;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.undo.TabWatchingUndoableEditGenerator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -33,14 +39,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
-
-import blue.BlueSystem;
-import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
-import blue.orchestra.BlueSynthBuilder;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.undo.TabWatchingUndoableEditGenerator;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -72,6 +70,7 @@ public class BSBCodeEditor extends JComponent {
 
         editBox.addEditModeListener(new EditModeListener() {
 
+            @Override
             public void setEditing(boolean isEditing) {
                 codePane.getJEditorPane().setEnabled(isEditing);
                 alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
@@ -87,6 +86,7 @@ public class BSBCodeEditor extends JComponent {
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setInstrumentText(codePane.getText());
@@ -97,6 +97,7 @@ public class BSBCodeEditor extends JComponent {
         alwaysOnCodePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setAlwaysOnInstrumentText(alwaysOnCodePane.
@@ -108,6 +109,7 @@ public class BSBCodeEditor extends JComponent {
         globalOrcEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setGlobalOrc(globalOrcEditPane.getText());
@@ -118,6 +120,7 @@ public class BSBCodeEditor extends JComponent {
         globalScoEditPane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (bsb != null) {
                             bsb.setGlobalSco(globalScoEditPane.getText());
@@ -178,6 +181,7 @@ public class BSBCodeEditor extends JComponent {
                 getMenuShortcutKey()), "switchEditMode");
         this.getActionMap().put("switchEditMode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 editBox.doClick();
             }

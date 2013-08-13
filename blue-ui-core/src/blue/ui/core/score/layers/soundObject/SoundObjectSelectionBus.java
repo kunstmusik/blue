@@ -51,6 +51,7 @@ public class SoundObjectSelectionBus implements SelectionListener {
         listeners.remove(sl);
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
 
         lastSelectionEvent = e;

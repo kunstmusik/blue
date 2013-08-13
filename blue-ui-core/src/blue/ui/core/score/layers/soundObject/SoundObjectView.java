@@ -20,11 +20,6 @@
 
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.BorderLayout;
-import java.awt.Graphics;
-
-import javax.swing.JComponent;
-
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
@@ -32,6 +27,9 @@ import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
 import blue.ui.core.soundObject.renderer.BarRenderer;
 import blue.ui.core.soundObject.renderer.BarRendererCache;
+import java.awt.BorderLayout;
+import java.awt.Graphics;
+import javax.swing.JComponent;
 
 /**
  * Title: blue (Object Composition Environment)
@@ -137,12 +135,14 @@ public final class SoundObjectView extends JComponent implements Comparable,
         return selected;
     }
 
+    @Override
     public void paintComponent(Graphics graphics) {
         if(renderer != null && timeState != null) {
             renderer.render(graphics, this, timeState.getPixelSecond());
         }
     }
 
+    @Override
     public int compareTo(Object sObjView) {
         SoundObjectView a = (SoundObjectView) sObjView;
 
@@ -157,6 +157,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
         return 0;
     }
 
+    @Override
     public void soundObjectChanged(SoundObjectEvent event) {
         if (event == null || event.getSoundObject() != this.sObj) {
             return;

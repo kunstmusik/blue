@@ -413,6 +413,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      *            layout. Usage: container.add(component, new Object[]{align,
      *            colspan, rowspan});
      */
+    @Override
     public void addLayoutComponent(Component comp, Object obj) {
         if (obj instanceof Hashtable) {
             setConstraints(comp, (Hashtable) obj);
@@ -687,6 +688,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @param comp
      *            the component to be added
      */
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
@@ -696,6 +698,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @param comp
      *            the component ot be removed
      */
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
@@ -706,6 +709,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @see java.awt.Component#getPreferredSize()
      * @see LayoutManager
      */
+    @Override
     public Dimension maximumLayoutSize(Container target) {
         return target.getMaximumSize();
     }
@@ -717,6 +721,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * origin, 1 is aligned the furthest away from the origin, 0.5 is centered,
      * etc.
      */
+    @Override
     public float getLayoutAlignmentX(Container target) {
         return 0f;
     }
@@ -728,6 +733,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * origin, 1 is aligned the furthest away from the origin, 0.5 is centered,
      * etc.
      */
+    @Override
     public float getLayoutAlignmentY(Container target) {
         return 0f;
     }
@@ -739,6 +745,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @param target
      *            container to invalidate the layout
      */
+    @Override
     public void invalidateLayout(Container target) {
         valid = false;
     }
@@ -1308,6 +1315,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      * @see Container
      * @see #minimumLayoutSize
      */
+    @Override
     public Dimension preferredLayoutSize(Container target) {
         if (!valid) {
             bindContainer(target);
@@ -1323,6 +1331,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      *            the component which needs to be laid out
      * @see #preferredLayoutSize
      */
+    @Override
     public Dimension minimumLayoutSize(Container target) {
         return preferredLayoutSize(target);
     }
@@ -1336,6 +1345,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
      *            the specified component being laid out.
      * @see Container
      */
+    @Override
     public void layoutContainer(Container target) {
         Insets insets = target.getInsets();
         int nmembers = target.getComponentCount();
@@ -1536,6 +1546,7 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
     /**
      * @return the String representation of this PnutsLayout's values.
      */
+    @Override
     public String toString() {
         return getClass().getName() + "[cols=" + cols + ",padx=" + padx
                 + ",pady=" + pady + ",ipadx=" + ipadx + ",ipady=" + ipady + "]";

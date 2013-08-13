@@ -15,6 +15,7 @@ public final class MakeDonationAction implements ActionListener {
 
     static final String URL_DONATIONS = "http://www.kunstmusik.com/donations";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         try {
             URLDisplayer.getDefault().showURL(new URL(URL_DONATIONS));

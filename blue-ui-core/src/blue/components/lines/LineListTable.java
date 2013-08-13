@@ -19,13 +19,15 @@
  */
 package blue.components.lines;
 
+import blue.components.ColorCellEditor;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -36,10 +38,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
-
-import blue.components.ColorCellEditor;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 
 /**
  * @author steven
@@ -67,6 +65,7 @@ public class LineListTable extends JComponent {
         table.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (listener != null && !e.getValueIsAdjusting()) {
                             int row = table.getSelectedRow();
@@ -101,6 +100,7 @@ public class LineListTable extends JComponent {
         JButton addButton = new JButton("+");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addLine();
             }
@@ -110,6 +110,7 @@ public class LineListTable extends JComponent {
         JButton removeButton = new JButton("-");
         removeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeLine();
             }
@@ -165,6 +166,7 @@ public class LineListTable extends JComponent {
 
 class ColorCellRenderer extends DefaultTableCellRenderer {
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int col) {
 

@@ -372,6 +372,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         return instrText;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

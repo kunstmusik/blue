@@ -20,20 +20,17 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EventListener;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import blue.orchestra.blueSynthBuilder.BSBDropdown;
 
 
 /**
@@ -64,6 +61,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
 
         updateIndexListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!updating) {
                     updateSelectedIndex();
@@ -128,6 +126,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
         setComboBox();
     }
 
+    @Override
     public String toString() {
         return "";
     }
@@ -140,6 +139,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
         dropdown.setRandomizable(randomizable);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getSource() == this.dropdown) {
             if (pce.getPropertyName().equals("selectedIndex")) {
@@ -157,6 +157,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
         }
     }
 
+    @Override
     public void cleanup() {
         dropdown.removePropertyChangeListener(this);
     }
@@ -172,6 +173,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ComboBoxModel#getSelectedItem()
      */
+    @Override
     public Object getSelectedItem() {
         if (dropdown == null || dropdown.getDropdownItems().size() == 0) {
             return null;
@@ -230,6 +232,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ComboBoxModel#setSelectedItem(java.lang.Object)
      */
+    @Override
     public void setSelectedItem(Object anItem) {
         if (dropdown == null) {
             return;
@@ -244,6 +247,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ListModel#getSize()
      */
+    @Override
     public int getSize() {
         if (dropdown == null) {
             return 0;
@@ -256,6 +260,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ListModel#getElementAt(int)
      */
+    @Override
     public Object getElementAt(int index) {
         if (dropdown == null) {
             return null;
@@ -268,6 +273,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ListModel#addListDataListener(javax.swing.event.ListDataListener)
      */
+    @Override
     public void addListDataListener(ListDataListener l) {
         listeners.add(ListDataListener.class, l);
     }
@@ -277,6 +283,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * 
      * @see javax.swing.ListModel#removeListDataListener(javax.swing.event.ListDataListener)
      */
+    @Override
     public void removeListDataListener(ListDataListener l) {
         listeners.remove(ListDataListener.class, l);
     }

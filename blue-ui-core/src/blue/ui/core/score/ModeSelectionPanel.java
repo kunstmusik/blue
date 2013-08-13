@@ -20,6 +20,7 @@ public class ModeSelectionPanel extends javax.swing.JPanel {
         modeScoreToggle.setSelected(true);
 
         ModeManager.getInstance().addModeListener(new ModeListener() {
+            @Override
             public void modeChanged(int mode) {
                 updating = true;
 

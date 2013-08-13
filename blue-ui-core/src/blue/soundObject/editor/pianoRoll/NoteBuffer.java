@@ -19,11 +19,10 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import java.util.ArrayList;
-
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.PianoRoll;
+import java.util.ArrayList;
 import java.util.Collections;
 
 /**
@@ -113,6 +112,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
 
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         Object selectedItem = e.getSelectedItem();
 

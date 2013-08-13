@@ -48,6 +48,7 @@ final class OrchestraTopComponent extends TopComponent {
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();
@@ -57,6 +58,7 @@ final class OrchestraTopComponent extends TopComponent {
 
         userInstrumentLibrary.addSelectionListener(new SelectionListener() {
 
+            @Override
             public void selectionPerformed(SelectionEvent e) {
                 Object obj = e.getSelectedItem();
 
@@ -83,6 +85,7 @@ final class OrchestraTopComponent extends TopComponent {
 
         arrangementPanel.addListSelectionListener(new ListSelectionListener() {
 
+            @Override
             public void valueChanged(ListSelectionEvent e) {
 
                 if (e.getValueIsAdjusting() || isChanging) {

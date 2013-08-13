@@ -19,6 +19,11 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.components.LineCanvas;
+import blue.components.lines.Line;
+import blue.components.lines.LineList;
+import blue.orchestra.blueSynthBuilder.BSBLineObject;
+import blue.ui.components.IconFactory;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -27,19 +32,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.border.LineBorder;
-
 import org.wonderly.awt.Packer;
-
-import blue.ui.components.IconFactory;
-import blue.components.LineCanvas;
-import blue.components.lines.Line;
-import blue.components.lines.LineList;
-import blue.orchestra.blueSynthBuilder.BSBLineObject;
 
 public class BSBLineObjectView extends BSBObjectView implements
         PropertyChangeListener {
@@ -76,6 +73,7 @@ public class BSBLineObjectView extends BSBObjectView implements
         lineObj.addPropertyChangeListener(this);
     }
 
+    @Override
     public void cleanup() {
         lineObj.removePropertyChangeListener(this);
     }
@@ -126,6 +124,7 @@ public class BSBLineObjectView extends BSBObjectView implements
         lineObj.setLeadingZero(leadingZero);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() != lineObj) {
             return;
@@ -167,6 +166,7 @@ public class BSBLineObjectView extends BSBObjectView implements
 
             next.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     nextLine();
                 }
@@ -175,6 +175,7 @@ public class BSBLineObjectView extends BSBObjectView implements
 
             previous.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     previousLine();
                 }
@@ -294,6 +295,7 @@ public class BSBLineObjectView extends BSBObjectView implements
         lineCanvas.setLocked(locked);
     }
 
+    @Override
     public String toString() {
         return "";
     }

@@ -6,9 +6,8 @@
  */
 package blue.soundObject.ceciliaModule;
 
-import java.io.Serializable;
-
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * @author steven

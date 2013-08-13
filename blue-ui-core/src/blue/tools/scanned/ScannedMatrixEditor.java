@@ -1,5 +1,7 @@
 package blue.tools.scanned;
 
+import blue.BlueSystem;
+import blue.ui.utilities.FileChooserManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -11,7 +13,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -21,9 +22,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-
-import blue.BlueSystem;
-import blue.ui.utilities.FileChooserManager;
 
 
 /**
@@ -92,6 +90,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         newButton.setText(BlueSystem.getString("common.new"));
         newButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 newMatrix();
             }
@@ -99,6 +98,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         loadButton.setText(BlueSystem.getString("common.load"));
         loadButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 loadMatrix();
             }
@@ -106,6 +106,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         saveButton.setText(BlueSystem.getString("common.save"));
         saveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveMatrix();
             }
@@ -113,6 +114,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         randomButton.setText(BlueSystem.getString("common.random"));
         randomButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 randomMatrix();
             }
@@ -120,6 +122,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         plusButton.setText("+");
         plusButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 MatrixGridEditor.increaseGridSize();
                 matrixGridEditor.redoSize();
@@ -129,6 +132,7 @@ public class ScannedMatrixEditor extends JComponent {
         });
         minusButton.setText("-");
         minusButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 MatrixGridEditor.decreaseGridSize();
                 matrixGridEditor.redoSize();
@@ -242,6 +246,7 @@ public class ScannedMatrixEditor extends JComponent {
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }

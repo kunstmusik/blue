@@ -15,6 +15,7 @@ public final class ReportBugAction implements ActionListener {
 
     static final String URL_BUGS = "http://sourceforge.net/tracker/?group_id=74382&atid=540830";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         try {
             URLDisplayer.getDefault().showURL(new URL(URL_BUGS));

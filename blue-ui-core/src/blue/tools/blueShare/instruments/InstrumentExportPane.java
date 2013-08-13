@@ -1,11 +1,14 @@
 package blue.tools.blueShare.instruments;
 
+import blue.BlueSystem;
+import blue.orchestra.Instrument;
+import blue.tools.blueShare.BlueShareRemoteCaller;
+import blue.tools.blueShare.NamePasswordPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -20,12 +23,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-
-import blue.BlueSystem;
-import blue.mixer.Effect;
-import blue.orchestra.Instrument;
-import blue.tools.blueShare.BlueShareRemoteCaller;
-import blue.tools.blueShare.NamePasswordPanel;
 
 /**
  * <p>
@@ -147,6 +144,7 @@ public class InstrumentExportPane extends JComponent {
 
         submitButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 submitInstrument();
             }
@@ -154,6 +152,7 @@ public class InstrumentExportPane extends JComponent {
 
         instrumentLibraryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 TreePath path = instrumentLibraryTree.getSelectionPath();

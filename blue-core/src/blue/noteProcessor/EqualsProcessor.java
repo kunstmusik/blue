@@ -23,6 +23,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
     public EqualsProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[add] pfield: " + pfield + " value: " + value;
         return "[equals]";

@@ -19,11 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.util.ArrayList;
-
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import java.util.ArrayList;
 
 public class PresetsUtilities {
     public static void synchronizePresets(PresetGroup presetGroup,

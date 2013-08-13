@@ -1,5 +1,11 @@
 package blue.soundObject.editor;
 
+import blue.soundObject.NotationObject;
+import blue.soundObject.SoundObject;
+import blue.soundObject.notation.NotationEditPoint;
+import blue.soundObject.notation.NotationNote;
+import blue.soundObject.notation.NotationStaffRenderer;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,7 +13,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -15,13 +20,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-
-import blue.soundObject.NotationObject;
-import blue.soundObject.SoundObject;
-import blue.soundObject.notation.NotationEditPoint;
-import blue.soundObject.notation.NotationNote;
-import blue.soundObject.notation.NotationStaffRenderer;
-import blue.ui.utilities.UiUtilities;
 
 /**
  * <p>
@@ -79,6 +77,7 @@ public class NotationEditor extends SoundObjectEditor {
         nStaffRenderer.setRequestFocusEnabled(true);
 
         nStaffRenderer.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 nStaffRenderer.requestFocus();
                 if (UiUtilities.isRightMouseButton(e)) {
@@ -89,6 +88,7 @@ public class NotationEditor extends SoundObjectEditor {
         });
 
         nStaffRenderer.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 System.out.println(e.getKeyCode());
                 int keyCode = e.getKeyCode();
@@ -134,6 +134,7 @@ public class NotationEditor extends SoundObjectEditor {
         optionsMenu.show(this, x, y);
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             this.nObj = null;
@@ -176,6 +177,7 @@ class NotationOptionsMenu extends JPopupMenu implements ActionListener {
         super.show(nEditor, x, y);
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
         if (command == "Bass Clef") {

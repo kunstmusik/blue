@@ -7,7 +7,6 @@
 
 package blue.plaf;
 
-import blue.plaf.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -20,7 +19,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.util.Enumeration;
 import java.util.Vector;
-
 import javax.swing.Icon;
 
 /**

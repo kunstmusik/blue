@@ -25,7 +25,6 @@ import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.NoteList;
-import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.SoundObjectEditor;
@@ -86,6 +85,7 @@ public class ClojureObjectEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -93,6 +93,7 @@ public class ClojureObjectEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public final void editSoundObject(SoundObject sObj) {
         this.clojureObj = null;
         

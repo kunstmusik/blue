@@ -1,9 +1,8 @@
 package blue.ui.core.script.jython.console.streams;
 
+import blue.ui.core.script.jython.console.JConsole;
 import java.io.IOException;
 import java.io.Reader;
-
-import blue.ui.core.script.jython.console.JConsole;
 
 /**
  * Data written into this is data from the console

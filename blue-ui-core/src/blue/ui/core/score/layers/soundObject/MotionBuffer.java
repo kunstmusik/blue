@@ -8,19 +8,18 @@ package blue.ui.core.score.layers.soundObject;
  * @version 1.0
  */
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Map.Entry;
-
 import blue.SoundLayer;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.undo.MoveSoundObjectsEdit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 public final class MotionBuffer extends ArrayList<SoundObjectView> implements SelectionListener {
 
@@ -50,6 +49,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
         return instance;
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         Object selectedItem = e.getSelectedItem();
 

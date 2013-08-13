@@ -19,11 +19,9 @@
  */
 package blue.ui.core.score;
 
-import blue.ui.utilities.LinearLayout;
 import blue.BlueData;
 import blue.automation.AutomationManager;
 import blue.components.AlphaMarquee;
-import blue.ui.components.IconFactory;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
@@ -34,11 +32,12 @@ import blue.score.ScoreListener;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.services.render.RenderTimeManager;
-import blue.services.render.RenderTimeManagerListener;
+import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.LayerGroupHeaderPanelProviderManager;
 import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
 import blue.ui.core.score.layers.soundObject.MotionBuffer;
@@ -46,6 +45,7 @@ import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
+import blue.ui.utilities.LinearLayout;
 import blue.utility.GUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -134,6 +134,7 @@ public final class ScoreTopComponent extends TopComponent
         scoreObjectBar.setScoreBarListener(this);
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(
                         evt.getPropertyName())) {
@@ -383,6 +384,7 @@ public final class ScoreTopComponent extends TopComponent
         leftPanel.add(layerHeaderViewPort, BorderLayout.CENTER);
         leftPanel.add(bottomHeaderPanel, BorderLayout.SOUTH);
         tempoControlPanel.addComponentListener(new ComponentAdapter() {
+            @Override
             public void componentResized(ComponentEvent e) {
                 layerHeaderPanel.setSize(layerHeaderViewPort.getWidth(),
                         layerHeaderPanel.getHeight());
@@ -397,6 +399,7 @@ public final class ScoreTopComponent extends TopComponent
         headerPanel.add(timeBar, BorderLayout.SOUTH);
 
         tempoEditor.addComponentListener(new ComponentAdapter() {
+            @Override
             public void componentResized(ComponentEvent e) {
                 headerPanel.revalidate();
             }
@@ -406,6 +409,7 @@ public final class ScoreTopComponent extends TopComponent
                 "blue/resources/images/ZoomIn16.gif"));
         JButton zoomButton = new JButton(icon);
         zoomButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (navigator == null) {
                     navigator = new ScoreNavigatorDialog(
@@ -449,6 +453,7 @@ public final class ScoreTopComponent extends TopComponent
         this.add(timeProperties, BorderLayout.EAST);
 
         snapButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 // showSnapPopup();
                 timeProperties.setVisible(!timeProperties.isVisible());
@@ -469,6 +474,7 @@ public final class ScoreTopComponent extends TopComponent
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         layerPanel.addComponentListener(new ComponentAdapter() {
+            @Override
             public void componentResized(ComponentEvent e) {
                 int newHeight = layerPanel.getHeight();
 

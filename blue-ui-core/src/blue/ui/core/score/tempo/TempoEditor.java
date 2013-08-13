@@ -9,7 +9,6 @@ import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
 import blue.score.TimeState;
 import blue.score.tempo.Tempo;
-import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
@@ -57,6 +56,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     public TempoEditor() {
         lineListener = new TableModelListener() {
 
+            @Override
             public void tableChanged(TableModelEvent e) {
                 repaint();
             }
@@ -97,6 +97,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -439,15 +440,19 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             this.tempoEditor = tempoEditor;
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
         }
 
+        @Override
         public void mouseEntered(MouseEvent e) {
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
@@ -493,6 +498,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
@@ -502,6 +508,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         }
 
+        @Override
         public void mouseDragged(MouseEvent e) {
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
@@ -549,6 +556,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             }
         }
 
+        @Override
         public void mouseMoved(MouseEvent e) {
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
@@ -571,6 +579,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
         
@@ -590,6 +599,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
             editPointsAction = new AbstractAction("Edit Points") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if(tempo != null) {
                         Component root = SwingUtilities.getRoot(getInvoker());
@@ -605,6 +615,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             };
       
             editBoundariesAction = new AbstractAction("Edit Min/Max") {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if(tempo != null) {
                         if(tempoMinMaxDialog == null) {

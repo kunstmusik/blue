@@ -29,6 +29,7 @@ import org.openide.util.Exceptions;
 
 public final class BlueManualAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         try {
             URLDisplayer.getDefault().showURL(new URL(getPath()));

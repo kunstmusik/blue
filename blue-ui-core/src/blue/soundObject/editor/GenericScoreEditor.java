@@ -1,10 +1,17 @@
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.soundObject.GenericScore;
+import blue.soundObject.NoteList;
+import blue.soundObject.SoundObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -16,15 +23,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
-
-import blue.BlueSystem;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
-import blue.soundObject.GenericScore;
-import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -78,6 +76,7 @@ public class GenericScoreEditor extends SoundObjectEditor {
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -105,6 +104,7 @@ public class GenericScoreEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -113,6 +113,7 @@ public class GenericScoreEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public final void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             this.sObj = null;

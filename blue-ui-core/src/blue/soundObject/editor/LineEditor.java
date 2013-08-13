@@ -20,10 +20,6 @@
 
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JSplitPane;
-
 import blue.components.LineCanvas;
 import blue.components.lines.Line;
 import blue.components.lines.LineListTable;
@@ -32,6 +28,8 @@ import blue.event.SelectionListener;
 import blue.soundObject.LineObject;
 import blue.soundObject.SoundObject;
 import blue.utility.GUI;
+import java.awt.BorderLayout;
+import javax.swing.JSplitPane;
 
 /**
  * @author Steven Yi
@@ -58,6 +56,7 @@ public class LineEditor extends SoundObjectEditor {
 
         lineTable.addSelectionListener(new SelectionListener() {
 
+            @Override
             public void selectionPerformed(SelectionEvent e) {
                 lineCanvas.setSelectedLine((Line) e.getSelectedItem());
             }
@@ -75,6 +74,7 @@ public class LineEditor extends SoundObjectEditor {
         return new LineCanvas();
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             // this.line = null;

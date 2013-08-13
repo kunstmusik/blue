@@ -23,7 +23,6 @@ import blue.services.render.RealtimeRenderServiceFactory;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;

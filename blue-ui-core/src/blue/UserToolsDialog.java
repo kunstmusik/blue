@@ -1,20 +1,18 @@
 package blue;
 
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
-import blue.utility.GUI;
 
 /**
  * <p>
@@ -95,6 +93,7 @@ public final class UserToolsDialog extends JDialog {
 
         addButton.setText(BlueSystem.getString("common.add"));
         addButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addUserTool();
             }
@@ -102,18 +101,21 @@ public final class UserToolsDialog extends JDialog {
 
         pushDownButton.setText(BlueSystem.getString("common.pushDown"));
         pushDownButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushDownUserTool();
             }
         });
         pushUpButton.setText(BlueSystem.getString("common.pushUp"));
         pushUpButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushUpUserTool();
             }
         });
         removeButton.setText(BlueSystem.getString("common.remove"));
         removeButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 deleteUserTool();
             }
@@ -124,6 +126,7 @@ public final class UserToolsDialog extends JDialog {
 
         okButton.setText(BlueSystem.getString("programOptions.okButton"));
         okButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 okButton_actionPerformed();
             }
@@ -131,6 +134,7 @@ public final class UserToolsDialog extends JDialog {
         cancelButton.setText(BlueSystem
                 .getString("programOptions.cancelButton"));
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cancelButton_actionPerformed();
             }
@@ -153,6 +157,7 @@ public final class UserToolsDialog extends JDialog {
         this.setSize(600, 400);
 
         this.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent windowEvent) {
                 isCancelled = true;
                 dispose();
@@ -242,6 +247,7 @@ final class UserToolsTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return BlueSystem.getString("userTools.toolName");
@@ -251,10 +257,12 @@ final class UserToolsTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         UserTool tool = (UserTool) userTools.get(row);
 
@@ -268,6 +276,7 @@ final class UserToolsTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         if (userTools != null) {
             return userTools.size();
@@ -275,14 +284,17 @@ final class UserToolsTableModel extends AbstractTableModel {
         return 0;
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         return true;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         return getValueAt(0, c).getClass();
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         try {
             String val = (String) value;

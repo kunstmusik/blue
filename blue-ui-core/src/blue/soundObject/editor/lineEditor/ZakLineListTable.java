@@ -22,6 +22,7 @@ public class ZakLineListTable extends LineListTable {
         super();
     }
 
+    @Override
     protected LineListTableModel getNewLineTableModel() {
         return new ZakLineListTableModel();
     }

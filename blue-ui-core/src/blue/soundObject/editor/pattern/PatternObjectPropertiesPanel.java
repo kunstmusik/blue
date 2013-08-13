@@ -19,8 +19,9 @@
  */
 package blue.soundObject.editor.pattern;
 
+import blue.gui.LabelledItemPanel;
+import blue.soundObject.PatternObject;
 import java.awt.Dimension;
-
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
@@ -28,9 +29,6 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledItemPanel;
-import blue.soundObject.PatternObject;
 
 public class PatternObjectPropertiesPanel extends JComponent {
 
@@ -62,6 +60,7 @@ public class PatternObjectPropertiesPanel extends JComponent {
         this.add(timePropsPanel);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateProperties();
             }

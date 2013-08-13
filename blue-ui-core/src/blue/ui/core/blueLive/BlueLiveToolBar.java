@@ -60,6 +60,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         PlayModeListener playModeListener = new PlayModeListener() {
 
+            @Override
             public void playModeChanged(int playMode) {
                 if (playMode == PlayModeListener.PLAY_MODE_STOP) {
                     
@@ -77,6 +78,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         runButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 runButtonActionPerformed();
             }
@@ -84,6 +86,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         refreshButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 refreshButtonActionPerformed();
             }
@@ -91,6 +94,7 @@ public class BlueLiveToolBar extends JToolBar {
         
         allNotesOffButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 allNotesOffButtonActionPerformed(e);
             }
@@ -98,6 +102,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         midiButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 midiButtonActionPerformed();
             }
@@ -110,6 +115,7 @@ public class BlueLiveToolBar extends JToolBar {
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();

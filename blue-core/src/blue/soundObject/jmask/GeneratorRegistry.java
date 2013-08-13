@@ -52,6 +52,7 @@ public class GeneratorRegistry {
             generatorClass = clazz;
         }
 
+        @Override
         public String toString() {
             return generatorName;
         }

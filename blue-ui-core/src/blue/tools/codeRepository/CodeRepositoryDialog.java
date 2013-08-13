@@ -1,14 +1,22 @@
 package blue.tools.codeRepository;
 
+import blue.BlueSystem;
+import blue.WindowSettingManager;
+import blue.WindowSettingsSavable;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.ui.utilities.UiUtilities;
+import electric.xml.Element;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -20,16 +28,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-
-import blue.BlueSystem;
-import blue.WindowSettingManager;
-import blue.WindowSettingsSavable;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.ui.utilities.UiUtilities;
-import electric.xml.Element;
-import electric.xml.ParseException;
-import java.awt.Frame;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
@@ -112,6 +110,7 @@ public class CodeRepositoryDialog extends JDialog implements
 
         okButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) codeTree
                         .getModel().getRoot();
@@ -121,6 +120,7 @@ public class CodeRepositoryDialog extends JDialog implements
         });
         cancelButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
@@ -177,6 +177,7 @@ public class CodeRepositoryDialog extends JDialog implements
 
             codeTree.addMouseListener(new MouseAdapter() {
 
+                @Override
                 public void mouseClicked(MouseEvent e) {
                     int row = codeTree.getClosestRowForLocation(e.getX(), e
                             .getY());
@@ -225,6 +226,7 @@ public class CodeRepositoryDialog extends JDialog implements
         popup.show(this, node, elem, x, y);
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
 
@@ -235,6 +237,7 @@ public class CodeRepositoryDialog extends JDialog implements
         }
     }
 
+    @Override
     public Element saveWindowSettings() {
         Element retVal = WindowSettingManager.getBasicSettings(this);
 

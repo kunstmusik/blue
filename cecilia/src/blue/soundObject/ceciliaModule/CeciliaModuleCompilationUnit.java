@@ -20,17 +20,6 @@
 
 package blue.soundObject.ceciliaModule;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 import blue.Arrangement;
 import blue.BlueSystem;
 import blue.GlobalOrcSco;
@@ -45,6 +34,16 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.ceciliaModule.cybil.CybilCompiler;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CeciliaModuleCompilationUnit {
 
@@ -251,6 +250,7 @@ public class CeciliaModuleCompilationUnit {
 
         Collections.sort(keyset, new Comparator() {
 
+            @Override
             public int compare(Object o1, Object o2) {
                 return Integer.parseInt((String) o1)
                         - Integer.parseInt((String) o2);

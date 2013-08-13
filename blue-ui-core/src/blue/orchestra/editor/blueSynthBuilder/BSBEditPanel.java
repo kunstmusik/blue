@@ -19,6 +19,16 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.BlueSystem;
+import blue.components.AlphaMarquee;
+import blue.event.EditModeListener;
+import blue.event.GroupMovementSelectionList;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
@@ -32,23 +42,11 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.Iterator;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JLayeredPane;
 import javax.swing.KeyStroke;
-
-import blue.BlueSystem;
-import blue.components.AlphaMarquee;
-import blue.event.EditModeListener;
-import blue.event.GroupMovementSelectionList;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
-import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -89,11 +87,13 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         cl = new ComponentAdapter() {
 
+            @Override
             public void componentMoved(ComponentEvent e) {
                 recalculateSize();
 
             }
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 recalculateSize();
             }
@@ -109,6 +109,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         this.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 requestFocus();
 
@@ -135,6 +136,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 }
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
 
                 if (marquee.isVisible()) {
@@ -160,6 +162,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 if (isEditing() && marquee.isVisible()) {
                     marquee.setDragPoint(e.getPoint());
@@ -192,6 +195,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("cut", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     cut();
@@ -201,6 +205,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("copy", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     copy();
@@ -210,6 +215,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("delete", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     removeSelectedBSBObjects();
@@ -219,6 +225,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("up", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeUp(1);
@@ -228,6 +235,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("up10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeUp(10);
@@ -237,6 +245,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("down", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeDown(1);
@@ -246,6 +255,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("down10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeDown(10);
@@ -255,6 +265,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("left", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeLeft(1);
@@ -264,6 +275,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("left10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeLeft(10);
@@ -273,6 +285,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("right", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeRight(1);
@@ -282,6 +295,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         actionMap.put("right10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     selectionList.nudgeRight(10);
@@ -321,6 +335,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         return isEditing;
     }
 
+    @Override
     public void setEditing(boolean isEditing) {
         this.isEditing = isEditing;
         for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
@@ -409,6 +424,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         return viewHolder;
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         BSBObjectViewHolder selectedItem = (BSBObjectViewHolder) e.getSelectedItem();
 

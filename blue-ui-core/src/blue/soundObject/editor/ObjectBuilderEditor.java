@@ -19,21 +19,6 @@
  */
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-
 import blue.BlueSystem;
 import blue.CompileData;
 import blue.gui.ExceptionDialog;
@@ -48,7 +33,19 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
 import blue.utility.GUI;
-import org.openide.util.Exceptions;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 public class ObjectBuilderEditor extends SoundObjectEditor {
 
@@ -71,6 +68,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -96,6 +94,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -104,6 +103,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null || !(sObj instanceof ObjectBuilder)) {
             this.objectBuilder = null;

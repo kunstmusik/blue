@@ -21,19 +21,16 @@
 package blue.soundObject;
 
 import blue.*;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import blue.noteProcessor.NoteProcessorChain;
 import blue.soundObject.ceciliaModule.CeciliaModuleCompilationUnit;
 import blue.soundObject.ceciliaModule.CeciliaObject;
 import blue.soundObject.ceciliaModule.ModuleDefinition;
-//import blue.soundObject.renderer.BarRenderer;
-//import blue.soundObject.renderer.LetterRenderer;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -67,28 +64,35 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
         genSize = "8192";
     }
 
+    @Override
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
@@ -190,6 +194,7 @@ public class CeciliaModule extends AbstractSoundObject implements Serializable {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

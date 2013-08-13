@@ -20,10 +20,7 @@
 package blue;
 
 import blue.orchestra.Instrument;
-import blue.udo.OpcodeList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 //TODO - Should probably add methods to this class so that Arrangement, 
 //OpcodeList, etc. are hidden from public and to reduce dependencies

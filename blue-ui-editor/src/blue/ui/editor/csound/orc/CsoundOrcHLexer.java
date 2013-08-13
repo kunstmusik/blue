@@ -46,6 +46,7 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
         tokenFactory = info.tokenFactory();
     }
 
+    @Override
     public org.netbeans.api.lexer.Token<CsoundOrcTokenId> nextToken() {
 
         while (true) {
@@ -201,10 +202,12 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
     }
     
 
+    @Override
     public Object state() {
         return null;
     }
 
+    @Override
     public void release() {
     }
 

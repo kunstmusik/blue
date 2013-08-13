@@ -20,6 +20,7 @@
 package blue.components;
 
 import blue.ui.utilities.UiUtilities;
+import blue.utility.GUI;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -28,12 +29,9 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-
-import blue.utility.GUI;
 
 public class HandGrabberMouseListener implements MouseListener,
         MouseMotionListener {
@@ -60,21 +58,25 @@ public class HandGrabberMouseListener implements MouseListener,
         jsp.getViewport().getView().addMouseMotionListener(this);
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         if (UiUtilities.isRightMouseButton(e) && e.isShiftDown()) {
             isWorking = true;
@@ -93,6 +95,7 @@ public class HandGrabberMouseListener implements MouseListener,
 
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         if (isWorking) {
             jsp.getViewport().getView().setCursor(Cursor.getDefaultCursor());
@@ -102,6 +105,7 @@ public class HandGrabberMouseListener implements MouseListener,
 
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         if (isWorking) {
             int diffX = startX - e.getX();
@@ -157,6 +161,7 @@ public class HandGrabberMouseListener implements MouseListener,
 
             SwingUtilities.invokeLater(new Runnable() {
 
+                @Override
                 public void run() {
                     jsp.getHorizontalScrollBar().setValue(tempX);
                     jsp.getVerticalScrollBar().setValue(tempY);
@@ -167,6 +172,7 @@ public class HandGrabberMouseListener implements MouseListener,
         }
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
         // TODO Auto-generated method stub
 
@@ -175,6 +181,7 @@ public class HandGrabberMouseListener implements MouseListener,
     public static void main(String args[]) {
 
         JPanel panel = new JPanel() {
+            @Override
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
 

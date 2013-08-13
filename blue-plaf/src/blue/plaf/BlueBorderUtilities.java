@@ -26,7 +26,6 @@ package blue.plaf;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-
 import javax.swing.border.Border;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.basic.BasicBorders;

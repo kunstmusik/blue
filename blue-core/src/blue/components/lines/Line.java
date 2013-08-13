@@ -660,6 +660,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
         return y;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

@@ -115,6 +115,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String generateAlwaysOnInstrument() {
         String retVal = bsbCompilationUnit
                 .replaceBSBValues(getAlwaysOnInstrumentText());
@@ -223,6 +224,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

@@ -60,6 +60,7 @@ public class LineList extends ArrayList implements Serializable {
         return this.add(line);
     }
 
+    @Override
     public String toString() {
         return "";
     }

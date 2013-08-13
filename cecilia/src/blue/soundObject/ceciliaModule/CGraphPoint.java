@@ -20,9 +20,8 @@
 
 package blue.soundObject.ceciliaModule;
 
-import java.io.Serializable;
-
 import electric.xml.Element;
+import java.io.Serializable;
 
 /**
  * @author steven yi
@@ -36,6 +35,7 @@ public class CGraphPoint implements Serializable, Comparable {
 
     public float value = 0.0f;
 
+    @Override
     public String toString() {
         return "[CGraphPoint] Time: " + time + " Value: " + value;
     }
@@ -58,6 +58,7 @@ public class CGraphPoint implements Serializable, Comparable {
         return retVal;
     }
 
+    @Override
     public int compareTo(Object o) {
         CGraphPoint a = this;
         CGraphPoint b = (CGraphPoint) o;

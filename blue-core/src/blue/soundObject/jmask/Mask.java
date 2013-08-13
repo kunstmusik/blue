@@ -138,10 +138,12 @@ public class Mask implements Serializable {
 //        return new MaskEditor(this);
 //    }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

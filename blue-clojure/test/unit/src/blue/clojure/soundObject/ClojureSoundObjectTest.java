@@ -24,8 +24,8 @@ import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

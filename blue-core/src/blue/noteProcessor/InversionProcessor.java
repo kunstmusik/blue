@@ -23,6 +23,7 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
     public InversionProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[add] pfield: " + pfield + " value: " + value;
         return "[inversion]";

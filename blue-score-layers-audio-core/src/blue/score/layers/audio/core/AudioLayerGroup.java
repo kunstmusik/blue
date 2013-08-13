@@ -43,10 +43,12 @@ public class AudioLayerGroup implements LayerGroup {
     private ArrayList<AudioLayer> audioLayers = new ArrayList<AudioLayer>();
     private String name = "Audio Layer Group";
     
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }

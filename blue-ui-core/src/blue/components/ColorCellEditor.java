@@ -25,7 +25,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.EventObject;
 import java.util.Vector;
-
 import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
@@ -40,6 +39,7 @@ public class ColorCellEditor implements TableCellEditor {
     public ColorCellEditor() {
         panel.addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("colorSelectionValue")) {
                     fireEditingStopped();
@@ -49,27 +49,33 @@ public class ColorCellEditor implements TableCellEditor {
         });
     }
 
+    @Override
     public Object getCellEditorValue() {
         return panel.getColor();
     }
 
+    @Override
     public boolean isCellEditable(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public boolean shouldSelectCell(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public boolean stopCellEditing() {
         fireEditingStopped();
         return true;
     }
 
+    @Override
     public void cancelCellEditing() {
         fireEditingCanceled();
     }
 
+    @Override
     public void addCellEditorListener(CellEditorListener l) {
         if (listeners == null) {
             listeners = new Vector();
@@ -77,6 +83,7 @@ public class ColorCellEditor implements TableCellEditor {
         listeners.add(l);
     }
 
+    @Override
     public void removeCellEditorListener(CellEditorListener l) {
         if (listeners == null) {
             return;
@@ -108,6 +115,7 @@ public class ColorCellEditor implements TableCellEditor {
         }
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int row, int column) {
         panel.setColor((Color) value);

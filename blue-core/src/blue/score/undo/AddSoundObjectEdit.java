@@ -42,6 +42,7 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
 
@@ -53,6 +54,7 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
 
@@ -63,6 +65,7 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public String getPresentationName() {
         return BlueSystem.getString("scoreGUI.action.addSoundObject");
     }

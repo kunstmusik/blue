@@ -26,7 +26,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
-
 import javax.swing.JComponent;
 import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
@@ -92,6 +91,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param isSelected
      *            True if the tab to paint is selected otherwise false.
      */
+    @Override
     protected void paintTabBackground(Graphics g, int tabPlacement,
             int tabIndex, int x, int y, int w, int h, boolean isSelected) {
         // if (isSelected)
@@ -129,6 +129,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param selectedIndex
      *            The index of the selected tab.
      */
+    @Override
     protected void paintContentBorder(Graphics g, int tabPlacement,
             int selectedIndex) {
         int width = tabPane.getWidth();
@@ -183,6 +184,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param h
      *            The height.
      */
+    @Override
     protected void paintContentBorderTopEdge(Graphics g, int tabPlacement,
             int selectedIndex, int x, int y, int w, int h) {
         if (tabPlacement != TOP
@@ -234,6 +236,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param h
      *            The height.
      */
+    @Override
     protected void paintContentBorderLeftEdge(Graphics g, int tabPlacement,
             int selectedIndex, int x, int y, int w, int h) {
         if (tabPlacement != LEFT
@@ -281,6 +284,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param h
      *            The height.
      */
+    @Override
     protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement,
             int selectedIndex, int x, int y, int w, int h) {
         g.setColor(innerShadow);
@@ -325,6 +329,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param h
      *            The height.
      */
+    @Override
     protected void paintContentBorderRightEdge(Graphics g, int tabPlacement,
             int selectedIndex, int x, int y, int w, int h) {
 
@@ -372,6 +377,7 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
      * @param isSelected
      *            True if the tab to paint is selected otherwise false.
      */
+    @Override
     protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex,
             int x, int y, int w, int h, boolean isSelected) {
         g.setColor(outerHighlight);
@@ -473,12 +479,14 @@ public class BlueTabbedPaneUI extends BasicTabbedPaneUI {
         }
     }
 
+    @Override
     protected void installListeners() {
         super.installListeners();
 
 //        new DropTarget(tabPane, new TabbedPaneSwitchDropTarget(tabPane));
     }
 
+    @Override
     protected void uninstallListeners() {
         // TODO Auto-generated method stub
         super.uninstallListeners();

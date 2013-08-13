@@ -6,13 +6,20 @@
 
 package blue.soundObject.editor.tracker;
 
+import blue.BlueSystem;
+import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
+import blue.soundObject.pianoRoll.Scale;
+import blue.soundObject.tracker.Column;
+import blue.soundObject.tracker.Track;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.utility.GUI;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-
 import javax.swing.JFileChooser;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
@@ -22,15 +29,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
-
-import blue.BlueSystem;
-import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
-import blue.soundObject.pianoRoll.Scale;
-import blue.soundObject.tracker.Column;
-import blue.soundObject.tracker.Track;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.utility.GUI;
 
 /**
  * 
@@ -65,6 +63,7 @@ public class TrackEditor extends javax.swing.JPanel {
         columnsScroll.getVerticalScrollBar().setPreferredSize(miniScrollDim);
 
         ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 if (selectedColumn == null) {
@@ -94,6 +93,7 @@ public class TrackEditor extends javax.swing.JPanel {
         MIN_DOUBLE_MODEL = new SpinnerNumberModel(0.0d,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0d) {
 
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -119,6 +119,7 @@ public class TrackEditor extends javax.swing.JPanel {
         MAX_DOUBLE_MODEL = new SpinnerNumberModel(0.0d,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0d) {
 
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -144,6 +145,7 @@ public class TrackEditor extends javax.swing.JPanel {
         MIN_INT_MODEL = new SpinnerNumberModel(0, Integer.MIN_VALUE,
                 Integer.MAX_VALUE, 1) {
 
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -169,6 +171,7 @@ public class TrackEditor extends javax.swing.JPanel {
         MAX_INT_MODEL = new SpinnerNumberModel(0, Integer.MIN_VALUE,
                 Integer.MAX_VALUE, 1) {
 
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -200,6 +203,7 @@ public class TrackEditor extends javax.swing.JPanel {
         columnsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         columnsTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (!e.getValueIsAdjusting()) {
                             int index = columnsTable.getSelectedRow();
@@ -229,6 +233,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         trackNameTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (track != null) {
                             track.setName(trackNameTextField.getText());
@@ -238,6 +243,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         noteTemplateTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (track != null) {
                             track.setNoteTemplate(noteTemplateTextField
@@ -248,6 +254,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         instrIdTextField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (track != null) {
                             track.setInstrumentId(instrIdTextField.getText());
@@ -257,6 +264,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         baseFreqText.addFocusListener(new FocusAdapter() {
 
+            @Override
             public void focusLost(FocusEvent e) {
                 updateBaseFrequency();
             }
@@ -265,6 +273,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         baseFreqText.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateBaseFrequency();
             }

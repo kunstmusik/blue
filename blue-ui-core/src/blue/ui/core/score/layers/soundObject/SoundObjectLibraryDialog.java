@@ -19,26 +19,6 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.border.EmptyBorder;
-
 import blue.BlueSystem;
 import blue.SoundObjectLibrary;
 import blue.WindowSettingManager;
@@ -49,6 +29,24 @@ import blue.gui.DialogUtil;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import electric.xml.Element;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.EmptyBorder;
 
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
@@ -123,6 +121,7 @@ public final class SoundObjectLibraryDialog extends JDialog implements
 
         copyButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copySoundObject();
             }
@@ -131,6 +130,7 @@ public final class SoundObjectLibraryDialog extends JDialog implements
 
         copyInstanceButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyInstanceOfSoundObject();
             }
@@ -138,6 +138,7 @@ public final class SoundObjectLibraryDialog extends JDialog implements
 
         removeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeSoundObject();
             }
@@ -145,6 +146,7 @@ public final class SoundObjectLibraryDialog extends JDialog implements
 
         sObjLibTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 int index = sObjLibTable.getSelectedRow();
@@ -275,6 +277,7 @@ public final class SoundObjectLibraryDialog extends JDialog implements
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
 
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -294,10 +297,12 @@ public final class SoundObjectLibraryDialog extends JDialog implements
         return sObjLib.contains(soundObject);
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

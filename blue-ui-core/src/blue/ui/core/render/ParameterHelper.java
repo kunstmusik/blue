@@ -19,8 +19,6 @@
  */
 package blue.ui.core.render;
 
-import java.util.ArrayList;
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.InstrumentAssignment;
@@ -32,6 +30,7 @@ import blue.mixer.ChannelList;
 import blue.mixer.EffectsChain;
 import blue.mixer.Mixer;
 import blue.orchestra.Instrument;
+import java.util.ArrayList;
 
 public class ParameterHelper {
     public static ArrayList<Parameter> getAllParameters(Arrangement arr, Mixer mixer) {

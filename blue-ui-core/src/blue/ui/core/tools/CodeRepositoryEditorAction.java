@@ -28,6 +28,7 @@ public final class CodeRepositoryEditorAction implements ActionListener {
 
     CodeRepositoryDialog c;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (c == null) {
             c = new CodeRepositoryDialog(WindowManager.getDefault().getMainWindow());

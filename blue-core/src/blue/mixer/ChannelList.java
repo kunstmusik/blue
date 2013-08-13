@@ -185,10 +185,12 @@ public class ChannelList implements ListModel, Serializable {
         return channels.contains(channel);
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

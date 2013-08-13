@@ -67,6 +67,7 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addPresetListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Object obj = e.getSource();
 
@@ -82,6 +83,7 @@ public class PresetsPanel extends javax.swing.JPanel {
 
         addFolderListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Object obj = e.getSource();
 
@@ -191,6 +193,7 @@ public class PresetsPanel extends javax.swing.JPanel {
         JMenuItem addPreset = new AddPresetMenuItem(pGroup);
         Action syncPresetsAction = new AbstractAction("Synchronize Presets") {
 	
+            @Override
             public void actionPerformed(ActionEvent e) {
                 PresetsUtilities.synchronizePresets(
                         PresetsPanel.this.presetGroup, gInterface);
@@ -198,6 +201,7 @@ public class PresetsPanel extends javax.swing.JPanel {
         };
 	
 	Action managePresetsAction = new AbstractAction("Manage Presets") {
+        @Override
 	    public void actionPerformed(ActionEvent e) {
 		    if (presetsManager == null) {
            		presetsManager = new PresetsManagerDialog(
@@ -365,6 +369,7 @@ public class PresetsPanel extends javax.swing.JPanel {
             this.presetsPanel = presetsPanel;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             this.presetsPanel.firePresetSelected(preset);
         }

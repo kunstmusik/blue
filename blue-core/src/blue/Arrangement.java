@@ -302,6 +302,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

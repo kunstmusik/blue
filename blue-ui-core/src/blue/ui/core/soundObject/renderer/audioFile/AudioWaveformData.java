@@ -15,6 +15,7 @@ public class AudioWaveformData {
     /** Channels x datapairs (equal 2 * width for min/max pairs) */
     public double[][] data;
 
+    @Override
     public String toString() {
         return "[AudioWaveformData] - " + fileName + " : " + pixelSeconds;
     }

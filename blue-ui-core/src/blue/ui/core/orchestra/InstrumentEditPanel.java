@@ -1,12 +1,15 @@
 package blue.ui.core.orchestra;
 
+import blue.orchestra.Instrument;
+import blue.orchestra.editor.InstrumentEditor;
 import blue.plugin.BluePlugin;
+import blue.ui.core.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.HashMap;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,11 +21,6 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import blue.orchestra.Instrument;
-import blue.orchestra.editor.InstrumentEditor;
-import blue.ui.core.BluePluginManager;
-import java.util.ArrayList;
 import org.openide.util.Exceptions;
 
 /**
@@ -76,14 +74,17 @@ public final class InstrumentEditPanel extends JComponent {
         editPanel.add(new JPanel(), "none");
 
         commentPane.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 updateComment();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 updateComment();
             }
 
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 updateComment();
             }

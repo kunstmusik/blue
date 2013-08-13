@@ -27,6 +27,7 @@ public class RandomMultiplyProcessor implements NoteProcessor,
     public RandomMultiplyProcessor() {
     }
 
+    @Override
     public String toString() {
         return "[random multiply]";
     }

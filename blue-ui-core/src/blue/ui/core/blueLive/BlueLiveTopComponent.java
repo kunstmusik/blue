@@ -53,12 +53,11 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.util.Exceptions;
 import skt.swing.SwingUtil;
 
 /**
@@ -115,6 +114,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         liveObjectsTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (!e.getValueIsAdjusting()) {
                             if (data == null) {
@@ -129,6 +129,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                             if (lObj != null) {
                                 SwingUtilities.invokeLater(new Runnable() {
 
+                                    @Override
                                     public void run() {
                                         SelectionEvent se = new SelectionEvent(
                                                 lObj.getSoundObject(),
@@ -141,6 +142,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                             } else {
                                 SwingUtilities.invokeLater(new Runnable() {
 
+                                    @Override
                                     public void run() {
                                         SelectionEvent se = new SelectionEvent(
                                                 null,
@@ -158,6 +160,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         liveObjectsTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     if (bufferPopup == null) {
@@ -189,6 +192,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         liveObjectSetListTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (!e.getValueIsAdjusting()) {
                             if (data == null) {
@@ -260,6 +264,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (data == null) {
                             return;
@@ -276,12 +281,14 @@ public final class BlueLiveTopComponent extends TopComponent {
         // receiver for live space tab
         midiManager.addReceiver(new Receiver() {
 
+            @Override
             public void send(MidiMessage message, long timeStamp) {
                 if (jTabbedPane1.getSelectedIndex() != 0) {
                     return;
                 }
             }
 
+            @Override
             public void close() {
             }
         });
@@ -296,6 +303,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(
                         evt.getPropertyName())) {
@@ -1137,6 +1145,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         final ActionListener al = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (noteTemplateText.isEnabled()) {
                     int loc = noteTemplateText.getCaret().getDot();
@@ -1181,6 +1190,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         int currentRepeat;
         long waitTime;
 
+        @Override
         public void run() {
             while (keepRunning) {
 
@@ -1200,6 +1210,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                     if(blueLiveToolBar.isRunning()) {
                         new Thread() {
 
+                            @Override
                             public void run() {
                                 triggerButtonActionPerformed(null);
                             }
@@ -1252,6 +1263,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         }
 
+        @Override
         public void actionPerformed(ActionEvent ae) {
 
             try {
@@ -1341,6 +1353,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         public BufferMenu() {
             removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
 
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
@@ -1356,6 +1369,7 @@ public final class BlueLiveTopComponent extends TopComponent {
             });
             cutMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                             mouseRow, mouseColumn);
@@ -1377,6 +1391,7 @@ public final class BlueLiveTopComponent extends TopComponent {
             });
             copyMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
 
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
@@ -1395,6 +1410,7 @@ public final class BlueLiveTopComponent extends TopComponent {
             });
             pasteMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     SoundObject sObj = buffer.getBufferedSoundObject();
 
@@ -1415,6 +1431,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertRowBefore.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertRow(mouseRow);
                 }
@@ -1422,6 +1439,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertRowAfter.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertRow(mouseRow + 1);
                 }
@@ -1429,6 +1447,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             removeRow.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.removeRow(mouseRow);
                 }
@@ -1437,6 +1456,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertColumnBefore.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertColumn(mouseColumn);
                 }
@@ -1444,6 +1464,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertColumnAfter.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertColumn(mouseColumn + 1);
                 }
@@ -1451,6 +1472,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             removeColumn.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.removeColumn(mouseColumn);
                 }
@@ -1481,6 +1503,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         private void setupPopupListener() {
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                             mouseRow, mouseColumn);
@@ -1503,9 +1526,11 @@ public final class BlueLiveTopComponent extends TopComponent {
                     }
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
             });

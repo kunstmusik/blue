@@ -147,14 +147,17 @@ public class JMask extends AbstractSoundObject {
         this.field = field;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

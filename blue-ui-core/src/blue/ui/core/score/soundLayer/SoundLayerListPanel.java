@@ -20,19 +20,17 @@
 
 package blue.ui.core.score.soundLayer;
 
+import blue.SoundLayer;
+import blue.noteProcessor.NoteProcessorChainMap;
+import blue.soundObject.PolyObject;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-
-import blue.SoundLayer;
-import blue.noteProcessor.NoteProcessorChainMap;
-import blue.soundObject.PolyObject;
 
 /**
  * 
@@ -85,6 +83,7 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
             super();
 
             ActionListener allListener = new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     if (pObj == null) {
                         return;
@@ -100,6 +99,7 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
             };
 
             ActionListener defaultListener = new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     if (pObj == null) {
                         return;
@@ -133,12 +133,15 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
             this.add(setDefaultMenu);
 
             this.addPopupMenuListener(new PopupMenuListener() {
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     if (pObj == null) {
                         return;

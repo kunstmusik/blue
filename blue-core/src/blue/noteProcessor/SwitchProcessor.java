@@ -30,6 +30,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
 
     int pfield2 = 5;
 
+    @Override
     public String toString() {
         return "[switch]";
     }

@@ -24,7 +24,6 @@ import blue.mixer.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -66,6 +65,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         this.channels = null;
     }
 
+    @Override
     public void setSelectedItem(Object anItem) {
 
         if (Channel.MASTER.equals(anItem)) {
@@ -87,14 +87,17 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         fireListEvent(lde);
     }
 
+    @Override
     public Object getSelectedItem() {
         return selectedItem;
     }
 
+    @Override
     public int getSize() {
         return getReducedList().size();
     }
 
+    @Override
     public Object getElementAt(int index) {
 
         ArrayList choices = getReducedList();
@@ -177,6 +180,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         return isPossibleOut(next, name);
     }
 
+    @Override
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
             listeners = new Vector();
@@ -184,6 +188,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         listeners.add(l);
     }
 
+    @Override
     public void removeListDataListener(ListDataListener l) {
         if (listeners == null) {
             return;
@@ -213,6 +218,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         }
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         // System.out.println("channelOutComboBoxModel::intervalAdded()");
         ListDataEvent lde = new ListDataEvent(this,
@@ -227,6 +233,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         }
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         if (channels.indexByName(selectedItem) < 0) {
             setSelectedItem(Channel.MASTER);
@@ -238,6 +245,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         }
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         System.out.println("channelOutComboBoxModel::contentsChanged()");
     }

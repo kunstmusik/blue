@@ -19,6 +19,11 @@
  */
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.BlueSystem;
+import blue.soundObject.CeciliaModule;
+import blue.soundObject.ceciliaModule.CFileIn;
+import blue.soundObject.ceciliaModule.CeciliaObject;
+import blue.ui.utilities.FileChooserManager;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -28,7 +33,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -38,12 +42,6 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.BlueSystem;
-import blue.soundObject.CeciliaModule;
-import blue.soundObject.ceciliaModule.CFileIn;
-import blue.soundObject.ceciliaModule.CeciliaObject;
-import blue.ui.utilities.FileChooserManager;
 
 /**
  * @author steven
@@ -226,6 +224,7 @@ class CFilePanel extends JComponent {
         JButton fileButton = new JButton("...");
 
         fileButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectFile();
             }
@@ -277,6 +276,7 @@ class CFilePanel extends JComponent {
 
         slider.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 // slider = (JSlider) e.getSource();
 

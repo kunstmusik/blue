@@ -54,6 +54,7 @@ public class ClojureLexer extends Lexer {
     public ClojureLexer(CharStream input, RecognizerSharedState state) {
         super(input,state);
     }
+    @Override
     public String getGrammarFileName() { return "grammar/Clojure.g"; }
 
     // $ANTLR start "OPEN_PAREN"
@@ -2656,6 +2657,7 @@ public class ClojureLexer extends Lexer {
     }
     // $ANTLR end "LAMBDA_ARG"
 
+    @Override
     public void mTokens() throws RecognitionException {
         // grammar/Clojure.g:1:8: ( OPEN_PAREN | CLOSE_PAREN | AMPERSAND | LEFT_SQUARE_BRACKET | RIGHT_SQUARE_BRACKET | LEFT_CURLY_BRACKET | RIGHT_CURLY_BRACKET | BACKSLASH | CIRCUMFLEX | COMMERCIAL_AT | NUMBER_SIGN | APOSTROPHE | SPECIAL_FORM | STRING | REGEX_LITERAL | NUMBER | CHARACTER | HEXDIGIT | NIL | BOOLEAN | SYMBOL | METADATA_TYPEHINT | KEYWORD | SYNTAX_QUOTE | UNQUOTE_SPLICING | UNQUOTE | COMMENT | SPACE | LAMBDA_ARG )
         int alt31=29;
@@ -3105,9 +3107,11 @@ public class ClojureLexer extends Lexer {
             this.special = DFA31_special;
             this.transition = DFA31_transition;
         }
+        @Override
         public String getDescription() {
             return "1:1: Tokens : ( OPEN_PAREN | CLOSE_PAREN | AMPERSAND | LEFT_SQUARE_BRACKET | RIGHT_SQUARE_BRACKET | LEFT_CURLY_BRACKET | RIGHT_CURLY_BRACKET | BACKSLASH | CIRCUMFLEX | COMMERCIAL_AT | NUMBER_SIGN | APOSTROPHE | SPECIAL_FORM | STRING | REGEX_LITERAL | NUMBER | CHARACTER | HEXDIGIT | NIL | BOOLEAN | SYMBOL | METADATA_TYPEHINT | KEYWORD | SYNTAX_QUOTE | UNQUOTE_SPLICING | UNQUOTE | COMMENT | SPACE | LAMBDA_ARG );";
         }
+        @Override
         public int specialStateTransition(int s, IntStream _input) throws NoViableAltException {
             IntStream input = _input;
         	int _s = s;

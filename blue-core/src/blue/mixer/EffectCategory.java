@@ -42,6 +42,7 @@ public class EffectCategory implements Serializable {
 
     private boolean isRoot = false;
 
+    @Override
     public String toString() {
         return this.getCategoryName();
     }

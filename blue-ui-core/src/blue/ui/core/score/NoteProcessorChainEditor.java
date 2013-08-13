@@ -20,6 +20,15 @@
 
 package blue.ui.core.score;
 
+import blue.BlueSystem;
+import blue.noteProcessor.NoteProcessor;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorChainMap;
+import blue.ui.core.BluePluginManager;
+import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
+import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -30,8 +39,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -46,18 +55,6 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-
-import blue.BlueSystem;
-import blue.noteProcessor.NoteProcessor;
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorChainMap;
-import blue.ui.core.BluePluginManager;
-
-import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
-import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
-import java.util.HashMap;
 import org.openide.util.Exceptions;
 
 /**
@@ -130,11 +127,13 @@ public class NoteProcessorChainEditor extends JComponent {
 
         npcTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent me) {
                 npcModel.setCurrentNoteProcessor(npcTable.getSelectedRow());
                 updateHilightRows();
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     editPopup.show(npcTable, e.getX(), e.getY());
@@ -147,6 +146,7 @@ public class NoteProcessorChainEditor extends JComponent {
         addButton.setText("+");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 showNoteProcessorPopup(e);
             }
@@ -156,6 +156,7 @@ public class NoteProcessorChainEditor extends JComponent {
         removeButton.setText("-");
         removeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeCurrentNoteProcessor();
             }
@@ -165,6 +166,7 @@ public class NoteProcessorChainEditor extends JComponent {
         pushUpButton.setText("^");
         pushUpButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushUpNoteProcessor(e);
             }
@@ -174,6 +176,7 @@ public class NoteProcessorChainEditor extends JComponent {
         pushDownButton.setText("V");
         pushDownButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushDownNoteProcessor(e);
             }
@@ -357,6 +360,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
             insertChainListener = new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     insertChain(e.getActionCommand());
                 }
@@ -365,6 +369,7 @@ public class NoteProcessorChainEditor extends JComponent {
             saveChain = new JMenuItem("Save");
             saveChain.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     saveChain();
                 }
@@ -373,6 +378,7 @@ public class NoteProcessorChainEditor extends JComponent {
             removeChain = new JMenuItem("Remove");
             removeChain.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     removeChain();
                 }
@@ -389,13 +395,16 @@ public class NoteProcessorChainEditor extends JComponent {
 
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     updateNoteProcessorChainMenuStatus();
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
             });
@@ -504,6 +513,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
         }
 
+        @Override
         public void actionPerformed(ActionEvent ae) {
             try {
                 Class npClass = npNameClassMap.get(ae.getActionCommand());
@@ -552,6 +562,7 @@ public class NoteProcessorChainEditor extends JComponent {
             cutProcessor.setText("Cut");
             cutProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.cutCurrentNoteProcessor();
                 }
@@ -560,6 +571,7 @@ public class NoteProcessorChainEditor extends JComponent {
             copyProcessor.setText("Copy");
             copyProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.copyCurrentNoteProcessor();
                 }
@@ -568,6 +580,7 @@ public class NoteProcessorChainEditor extends JComponent {
             pasteProcessor.setText("Paste");
             pasteProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.pasteCurrentNoteProcessor();
                 }
@@ -577,6 +590,7 @@ public class NoteProcessorChainEditor extends JComponent {
                     .getString("soundObjectProperties.noteProcessors.remove"));
             removeProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.removeCurrentNoteProcessor();
                 }
@@ -591,6 +605,7 @@ public class NoteProcessorChainEditor extends JComponent {
             this.pack();
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             pasteProcessor.setEnabled(NoteProcessorChainEditor.buffer != null);
 

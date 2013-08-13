@@ -136,6 +136,7 @@ public class UserDefinedOpcode implements Serializable {
 
     }
 
+    @Override
     public String toString() {
         return opcodeName;
     }

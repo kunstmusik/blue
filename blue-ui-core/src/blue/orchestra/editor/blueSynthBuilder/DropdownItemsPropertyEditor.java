@@ -19,6 +19,8 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.BSBDropdown;
+import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -29,12 +31,8 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyEditor;
-
 import javax.swing.JButton;
 import javax.swing.JPanel;
-
-import blue.orchestra.blueSynthBuilder.BSBDropdown;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 
 /**
  * @author steven
@@ -61,6 +59,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
 
         button.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 // selectColor();
                 // JOptionPane.showMessageDialog(null, "test");
@@ -92,6 +91,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#getCustomEditor()
      */
+    @Override
     public Component getCustomEditor() {
 
         return editor;
@@ -102,34 +102,42 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#supportsCustomEditor()
      */
+    @Override
     public boolean supportsCustomEditor() {
         return false;
     }
 
+    @Override
     public Object getValue() {
         return view;
     }
 
+    @Override
     public void setValue(Object value) {
         this.view = (BSBDropdownView) value;
         this.items = ((BSBDropdown) view.getBSBObject()).getDropdownItems();
     }
 
+    @Override
     public String getAsText() {
         return null;
     }
 
+    @Override
     public String getJavaInitializationString() {
         return null;
     }
 
+    @Override
     public String[] getTags() {
         return null;
     }
 
+    @Override
     public void setAsText(String text) throws IllegalArgumentException {
     }
 
+    @Override
     public void paintValue(Graphics gfx, Rectangle box) {
     }
 
@@ -138,14 +146,17 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#isPaintable()
      */
+    @Override
     public boolean isPaintable() {
         return false;
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         listeners.addPropertyChangeListener(listener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         listeners.removePropertyChangeListener(listener);
     }

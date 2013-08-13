@@ -31,6 +31,7 @@ public class RemoveSoundObjectEdit extends AbstractUndoableEdit {
         this.soundLayerIndex = soundLayerIndex;
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         this.pObj.removeSoundObject(sObj);
@@ -39,6 +40,7 @@ public class RemoveSoundObjectEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         this.pObj.addSoundObject(soundLayerIndex, this.sObj);
@@ -47,6 +49,7 @@ public class RemoveSoundObjectEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public String getPresentationName() {
         if (nextEdit == null) {
             return BlueSystem.getString("scoreGUI.action.removeSoundObject");

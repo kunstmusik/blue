@@ -258,10 +258,12 @@ public class PresetGroup implements Serializable, Comparable {
         return null;
     }
 
+    @Override
     public String toString() {
         return getPresetGroupName();
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

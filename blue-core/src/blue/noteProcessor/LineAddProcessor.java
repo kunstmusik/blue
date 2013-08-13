@@ -80,6 +80,7 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[line add]";
     }

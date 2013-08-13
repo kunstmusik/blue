@@ -1,11 +1,14 @@
 package blue.tools.blueShare.instruments;
 
+import blue.BlueSystem;
+import blue.tools.blueShare.BlueShareRemoteCaller;
+import blue.tools.blueShare.NamePasswordPanel;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -14,13 +17,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.xmlrpc.XmlRpcException;
-
-import blue.BlueSystem;
-import blue.tools.blueShare.BlueShareRemoteCaller;
-import blue.tools.blueShare.NamePasswordPanel;
-import electric.xml.ParseException;
 
 public class InstrumentManagementPane extends JComponent {
 
@@ -71,6 +68,7 @@ public class InstrumentManagementPane extends JComponent {
 
         fetchInstrumentsButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fetchInstruments();
             }
@@ -78,6 +76,7 @@ public class InstrumentManagementPane extends JComponent {
 
         removeInstrumentButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeInstrument();
             }

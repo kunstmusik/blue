@@ -20,13 +20,23 @@
 
 package blue.ui.core.udo;
 
+import blue.components.LabelledPanel;
+import blue.udo.OpcodeList;
+import blue.udo.UserDefinedOpcode;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.utility.GUI;
+import blue.utility.TextUtilities;
+import electric.xml.Document;
+import electric.xml.Element;
+import electric.xml.Elements;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Vector;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -43,20 +53,8 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
-import blue.components.LabelledPanel;
-import blue.udo.OpcodeList;
-import blue.udo.UserDefinedOpcode;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.utility.GUI;
-import blue.utility.TextUtilities;
-import electric.xml.Document;
-import electric.xml.Element;
-import electric.xml.Elements;
-import electric.xml.ParseException;
-import java.awt.Window;
 
 /**
  * @author Steven Yi
@@ -94,6 +92,7 @@ public class UDORepositoryBrowser extends JDialog {
         categories.getSelectionModel().addTreeSelectionListener(
                 new TreeSelectionListener() {
 
+                    @Override
                     public void valueChanged(TreeSelectionEvent e) {
 
                         TreePath path = e.getNewLeadSelectionPath();
@@ -121,6 +120,7 @@ public class UDORepositoryBrowser extends JDialog {
         udoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         udoList.addListSelectionListener(new ListSelectionListener() {
 
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                     Object obj = udoList.getSelectedValue();
@@ -154,6 +154,7 @@ public class UDORepositoryBrowser extends JDialog {
         JButton importButton = new JButton("Import");
         importButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addUDOtoOpcodeList();
             }
@@ -451,6 +452,7 @@ public class UDORepositoryBrowser extends JDialog {
 
         public int itemId = -1;
 
+        @Override
         public String toString() {
             return itemName;
         }

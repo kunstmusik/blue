@@ -62,6 +62,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
     private boolean randomizable = true;
 
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;
@@ -527,6 +528,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return gap;
     }
 
+    @Override
     public String[] getReplacementKeys() {
         String objName = getObjectName().trim();
 

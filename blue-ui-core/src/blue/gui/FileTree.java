@@ -26,6 +26,8 @@ package blue.gui;
  * 
  */
 
+import blue.BlueSystem;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -40,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Vector;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -56,10 +57,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
-
-
-import blue.BlueSystem;
-import blue.ui.utilities.UiUtilities;
 import org.openide.util.ImageUtilities;
 
 /**
@@ -125,6 +122,7 @@ public class FileTree extends JComponent {
         this.setLayout(new BorderLayout());
 
         fileList.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                                 
                 if (listUpdating) {
@@ -170,6 +168,7 @@ public class FileTree extends JComponent {
         });
 
         driveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 showDrivePopup();
             }
@@ -191,6 +190,7 @@ public class FileTree extends JComponent {
         fileList.setCellRenderer(flcRenderer);
 
         dirList.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!listUpdating) {
                     listUpdating = true;
@@ -304,6 +304,7 @@ public class FileTree extends JComponent {
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -327,6 +328,7 @@ class FileListCellRenderer extends JLabel implements ListCellRenderer {
         this.selectedDir = dir;
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value,
             int index, boolean isSelected, boolean hasCellFocus) {
         File f = (File) value;
@@ -376,6 +378,7 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
         super.show(fileTree, x, y);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         File drive = new File(e.getActionCommand());
         fileTree.setDrive(drive);
@@ -383,6 +386,7 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
 }
 
 class AlphabeticalFileComparator implements Comparator {
+    @Override
     public int compare(Object a, Object b) {
         File aa = (File) a;
         File bb = (File) b;

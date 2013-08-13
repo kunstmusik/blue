@@ -20,15 +20,13 @@
 
 package blue;
 
+import blue.orchestra.Instrument;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
-
 import javax.swing.table.AbstractTableModel;
-
-import blue.orchestra.Instrument;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -46,6 +44,7 @@ public final class OrchestraTableModel extends AbstractTableModel {
     public OrchestraTableModel() {
     }
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return "[X]";
@@ -56,10 +55,12 @@ public final class OrchestraTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getColumnCount() {
         return 3;
     }
 
+    @Override
     public Object getValueAt(int parm1, int parm2) {
         if (orchTree == null) {
             return null;
@@ -117,6 +118,7 @@ public final class OrchestraTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         if (orchTree == null) {
             return 0;
@@ -124,6 +126,7 @@ public final class OrchestraTableModel extends AbstractTableModel {
         return orchTree.size();
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         if (c == 0) {
             return true;
@@ -131,10 +134,12 @@ public final class OrchestraTableModel extends AbstractTableModel {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         return getValueAt(0, c).getClass();
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (orchTree == null) {
             return;

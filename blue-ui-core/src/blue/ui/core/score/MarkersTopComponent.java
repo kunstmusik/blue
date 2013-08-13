@@ -32,11 +32,10 @@ import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
+import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
 
 /**
  * Top component which displays something.
@@ -62,6 +61,7 @@ public final class MarkersTopComponent extends TopComponent {
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();
@@ -218,6 +218,7 @@ public final class MarkersTopComponent extends TopComponent {
             this.add(new DeleteMarkerAction());
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             if (markersTable.getSelectedRow() < 0) {
                 return;
@@ -231,6 +232,7 @@ public final class MarkersTopComponent extends TopComponent {
                 super("Set Start Time to Marker Time");
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int index = markersTable.getSelectedRow();
                 Marker m = data.getMarkersList().getMarker(index);
@@ -244,6 +246,7 @@ public final class MarkersTopComponent extends TopComponent {
                 super("Delete Marker");
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int index = markersTable.getSelectedRow();
                 data.getMarkersList().removeMarker(index);

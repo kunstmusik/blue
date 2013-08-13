@@ -98,6 +98,7 @@ public class XMLSerializer {
         /**
          * Clears all elements.
          */
+        @Override
         public void clear() {
             listsForJavaHashCodes.clear();
             super.clear();

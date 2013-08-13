@@ -38,6 +38,7 @@ public class TCLScoreCompiler {
         Interp interp = new Interp();
 
         Command cmd = new Command() {
+            @Override
             public void cmdProc(Interp interp, TclObject[] argv)
                     throws TclException {
                 if (argv.length != 2) {

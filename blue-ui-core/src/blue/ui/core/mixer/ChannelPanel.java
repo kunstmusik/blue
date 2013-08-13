@@ -20,12 +20,15 @@
 
 package blue.ui.core.mixer;
 
+import blue.BlueSystem;
 import blue.mixer.*;
+import blue.ui.utilities.UiUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -36,7 +39,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.Locale;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -45,10 +47,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.BlueSystem;
-import blue.ui.utilities.UiUtilities;
-import java.awt.Frame;
 import org.openide.windows.WindowManager;
 
 /**
@@ -68,6 +66,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         initComponents();
 
         levelLabel.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     switchLevelValueView(true);
@@ -77,6 +76,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         });
         
         levelValueField.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setLevelValueFromField();
                 switchLevelValueView(false);
@@ -84,6 +84,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         });
         
         levelValueField.addFocusListener(new FocusAdapter() {
+            @Override
             public void focusLost(FocusEvent e) {
                 switchLevelValueView(false);
             }
@@ -101,6 +102,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         levelSlider.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (!updating) {
                     updateLevelValue();
@@ -111,6 +113,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         outputList.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                 if (channel != null) {
                     channel
@@ -607,6 +610,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         return true;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() != this.channel) {
             return;
@@ -634,6 +638,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         }
     }
 
+    @Override
     public int compareTo(Object o) {
         ChannelPanel chanB = (ChannelPanel) o;
 
@@ -686,6 +691,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         }
 
+        @Override
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 

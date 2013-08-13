@@ -25,6 +25,7 @@ import blue.soundObject.NoteList;
 
 class pa extends CybilFunction {
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
         NoteList nl = cybilNoteList.notes;
 

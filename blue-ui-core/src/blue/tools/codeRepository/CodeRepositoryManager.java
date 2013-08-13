@@ -20,12 +20,6 @@
 
 package blue.tools.codeRepository;
 
-import java.io.File;
-import java.io.FileOutputStream;
-
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-
 import blue.BlueSystem;
 import blue.ui.core.editor.actions.CodeRepositoryMenu;
 import electric.xml.Document;
@@ -33,6 +27,10 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
 import electric.xml.XMLDecl;
+import java.io.File;
+import java.io.FileOutputStream;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 public class CodeRepositoryManager {
 

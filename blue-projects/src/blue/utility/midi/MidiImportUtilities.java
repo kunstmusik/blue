@@ -19,18 +19,6 @@
  */
 package blue.utility.midi;
 
-import blue.utility.*;
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
-
 import blue.SoundLayer;
 import blue.soundObject.GenericScore;
 import blue.soundObject.Note;
@@ -38,7 +26,17 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
 import blue.utilities.MidiUtilities;
+import blue.utility.*;
 import java.awt.Frame;
+import java.io.File;
+import java.io.IOException;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Track;
 
 public class MidiImportUtilities {
 

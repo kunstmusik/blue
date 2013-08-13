@@ -42,5 +42,6 @@ public class BSBTabbedPaneView extends BSBObjectView {
     public static void main(String[] args) {
     }
 
+    @Override
     public void cleanup() {}
 }

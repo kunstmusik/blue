@@ -48,6 +48,7 @@ public class GlobalOrcSco implements java.io.Serializable {
         return globalSco;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

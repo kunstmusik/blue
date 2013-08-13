@@ -19,20 +19,18 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
+import blue.soundObject.pianoRoll.Scale;
 import java.awt.Color;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-
-import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.PianoNote;
-import blue.soundObject.pianoRoll.Scale;
 
 /**
  * @author steven
@@ -70,6 +68,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
 
         this.addHierarchyListener(new HierarchyListener() {
 
+            @Override
             public void hierarchyChanged(HierarchyEvent e) {
                 if (getParent() == null) {
                     removeAsListener();
@@ -166,6 +165,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
      * 
      * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == note) {
             updatePropertiesFromNote();

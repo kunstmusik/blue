@@ -1,7 +1,6 @@
 package blue.ui.core.script.jython.console;
 
 import java.awt.GridLayout;
-
 import javax.swing.JFrame;
 
 /**

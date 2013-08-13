@@ -228,6 +228,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         return retVal;
     }
 
+    @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
 

@@ -74,6 +74,7 @@ public class AudioHeaderListPanel extends JPanel implements
         }
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -108,6 +109,7 @@ public class AudioHeaderListPanel extends JPanel implements
         menu.add(pushDownAction);        
         
         this.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 AudioHeaderListPanel.this.requestFocus();
 
@@ -158,6 +160,7 @@ public class AudioHeaderListPanel extends JPanel implements
         });
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -334,6 +337,7 @@ public class AudioHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -356,6 +360,7 @@ public class AudioHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -378,6 +383,7 @@ public class AudioHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;
@@ -401,6 +407,7 @@ public class AudioHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;

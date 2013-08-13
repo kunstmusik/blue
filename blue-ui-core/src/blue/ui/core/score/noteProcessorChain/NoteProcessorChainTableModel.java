@@ -20,15 +20,13 @@
 
 package blue.ui.core.score.noteProcessorChain;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.table.AbstractTableModel;
-
 import blue.BlueSystem;
 import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.table.AbstractTableModel;
 
 public class NoteProcessorChainTableModel extends AbstractTableModel {
 
@@ -199,6 +197,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
 
     // TABLE MODEL FUNCTIONS
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return BlueSystem.getString("propertyEditor.property");
@@ -206,10 +205,12 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         return BlueSystem.getString("propertyEditor.value");
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int column) {
         Object obj = props.get(row);
 
@@ -233,10 +234,12 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
 
     }
 
+    @Override
     public int getRowCount() {
         return props.size();
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         Object obj = props.get(r);
 
@@ -250,6 +253,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         if (c == 0) {
             return String.class;
@@ -257,6 +261,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         return PropertyEditProxy.class;
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 1) {
             try {

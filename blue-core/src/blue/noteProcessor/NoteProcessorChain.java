@@ -28,6 +28,7 @@ public class NoteProcessorChain extends ArrayList implements Cloneable {
         return (NoteProcessor) super.get(i);
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

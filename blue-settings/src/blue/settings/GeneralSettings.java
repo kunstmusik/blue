@@ -21,7 +21,6 @@ package blue.settings;
 
 import java.io.File;
 import java.io.Serializable;
-
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;

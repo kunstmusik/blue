@@ -20,6 +20,12 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
+import blue.soundObject.ceciliaModule.CGraph;
+import blue.soundObject.ceciliaModule.CGraphPoint;
+import blue.soundObject.ceciliaModule.CeciliaObject;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.TextUtilities;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -33,16 +39,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
-
-import blue.soundObject.CeciliaModule;
-import blue.soundObject.ceciliaModule.CGraph;
-import blue.soundObject.ceciliaModule.CGraphPoint;
-import blue.soundObject.ceciliaModule.CeciliaObject;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.TextUtilities;
 
 /**
  * @author Administrator
@@ -77,16 +75,20 @@ public class Grapher extends JComponent {
         // TODO add mouse listeners
         this.addMouseListener(new MouseListener() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 // if (currentGraph == null) { return; }
             }
 
+            @Override
             public void mouseEntered(MouseEvent e) {
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
             }
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (currentGraph == null) {
                     return;
@@ -116,6 +118,7 @@ public class Grapher extends JComponent {
 
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
                 if (currentGraph == null) {
                     return;
@@ -127,6 +130,7 @@ public class Grapher extends JComponent {
 
         this.addMouseMotionListener(new MouseMotionListener() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 if (currentGraph == null) {
                     return;
@@ -161,6 +165,7 @@ public class Grapher extends JComponent {
                 }
             }
 
+            @Override
             public void mouseMoved(MouseEvent e) {
                 if (currentGraph == null) {
                     return;
@@ -326,6 +331,7 @@ public class Grapher extends JComponent {
         // -set new duration
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 

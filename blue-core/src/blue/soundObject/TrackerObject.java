@@ -171,6 +171,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         this.tracks = tracks;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

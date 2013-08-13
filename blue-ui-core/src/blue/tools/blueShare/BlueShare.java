@@ -18,13 +18,6 @@ package blue.tools.blueShare;
  * @version 1.0
  */
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.swing.JOptionPane;
-
-import org.apache.xmlrpc.XmlRpcException;
-
 import blue.BlueSystem;
 import blue.tools.blueShare.effects.BlueShareEffectCategory;
 import blue.tools.blueShare.instruments.BlueShareInstrumentCategory;
@@ -33,6 +26,10 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.io.File;
+import java.io.IOException;
+import javax.swing.JOptionPane;
+import org.apache.xmlrpc.XmlRpcException;
 import org.openide.windows.WindowManager;
 
 public class BlueShare {

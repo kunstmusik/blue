@@ -20,6 +20,10 @@
 package blue.ui.core.orchestra;
 
 import blue.InstrumentLibrary;
+import blue.orchestra.BlueSynthBuilder;
+import blue.orchestra.Instrument;
+import blue.orchestra.InstrumentCategory;
+import blue.utility.ListUtil;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
@@ -30,14 +34,8 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
-
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-
-import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.Instrument;
-import blue.orchestra.InstrumentCategory;
-import blue.utility.ListUtil;
 
 /**
  * @author steven
@@ -53,6 +51,7 @@ public class InstrumentTreeDropTarget implements DropTargetListener {
         target = new DropTarget(targetTree, this);
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         if (!dtde.isDataFlavorSupported(TransferableInstrument.INSTR_FLAVOR)
                 && !dtde
@@ -76,10 +75,12 @@ public class InstrumentTreeDropTarget implements DropTargetListener {
         }
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         dragEnter(dtde);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         Point pt = dtde.getLocation();
         DropTargetContext dtc = dtde.getDropTargetContext();
@@ -168,9 +169,11 @@ public class InstrumentTreeDropTarget implements DropTargetListener {
         }
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
     }
 

@@ -93,6 +93,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         menu.add(pushDownAction);
         
         this.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 LayersPanel.this.requestFocus();
 
@@ -139,15 +140,18 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         });
 
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
         });
 
         this.addFocusListener(new FocusListener() {
+            @Override
             public void focusGained(FocusEvent e) {
             }
 
+            @Override
             public void focusLost(FocusEvent e) {
                 if (!e.isTemporary()) {
                     selection.setAnchor(-1);
@@ -345,6 +349,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     KeyEvent.VK_UP, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -366,6 +371,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -384,6 +390,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     KeyEvent.VK_DOWN, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;
@@ -405,6 +412,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;

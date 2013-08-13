@@ -19,7 +19,6 @@
  */
 package blue.application;
 
-import blue.settings.GeneralSettings;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -31,6 +30,7 @@ import org.openide.util.Exceptions;
 
 public final class CsoundManualFramesAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         
         File manualDir = InstalledFileLocator.getDefault().

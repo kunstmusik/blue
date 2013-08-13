@@ -22,7 +22,6 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.score.ScoreGenerationException;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
@@ -378,6 +377,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         return retVal;
     }
 
+    @Override
     public Object clone() {
         PolyObject pObj = new PolyObject();
 

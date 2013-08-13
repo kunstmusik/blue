@@ -38,6 +38,7 @@ public class PythonProcessor implements NoteProcessor, Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[python]";
     }

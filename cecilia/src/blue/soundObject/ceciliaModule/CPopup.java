@@ -20,9 +20,8 @@
 
 package blue.soundObject.ceciliaModule;
 
-import java.util.StringTokenizer;
-
 import electric.xml.Element;
+import java.util.StringTokenizer;
 
 public class CPopup extends CeciliaObject {
 
@@ -36,6 +35,7 @@ public class CPopup extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#processText(java.lang.String)
      */
+    @Override
     public String processText(String ceciliaText) {
         // TODO Auto-generated method stub
         return null;
@@ -46,6 +46,7 @@ public class CPopup extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#initialize(java.lang.String[])
      */
+    @Override
     public void initialize(String[] tokens) {
         this.setObjectName(tokens[1]);
 
@@ -106,6 +107,7 @@ public class CPopup extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = CeciliaObject.getBasicXML(this);
 

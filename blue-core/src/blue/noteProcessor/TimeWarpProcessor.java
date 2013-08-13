@@ -56,6 +56,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[time warp]";
     }

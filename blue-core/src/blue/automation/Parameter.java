@@ -398,6 +398,7 @@ public class Parameter implements TableModelListener, Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if(!(obj instanceof Parameter)) {
             return false;
@@ -419,6 +420,7 @@ public class Parameter implements TableModelListener, Serializable {
 
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

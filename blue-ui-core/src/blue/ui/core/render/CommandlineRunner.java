@@ -1,33 +1,31 @@
 package blue.ui.core.render;
 
-import blue.services.render.RenderTimeManager;
-import blue.services.render.CsdRenderResult;
-import java.awt.BorderLayout;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
 import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
 import blue.services.render.RealtimeRenderService;
+import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
+import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
-import blue.settings.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import java.awt.BorderLayout;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;

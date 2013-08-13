@@ -46,6 +46,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
 
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -60,6 +61,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -74,6 +76,7 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public String getPresentationName() {
         if (presentationName != null) {
             return presentationName;

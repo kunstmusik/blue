@@ -65,6 +65,7 @@ public class NotationStaffRenderer extends JComponent {
         this.staffData = staffData;
     }
 
+    @Override
     public void paint(Graphics g) {
         // draw backgrounds
         g.setColor(BACKGROUND_COLOR);
@@ -193,6 +194,7 @@ public class NotationStaffRenderer extends JComponent {
         }
     }
 
+    @Override
     public void update(Graphics g) {
         paint(g);
     }
@@ -222,6 +224,7 @@ public class NotationStaffRenderer extends JComponent {
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }

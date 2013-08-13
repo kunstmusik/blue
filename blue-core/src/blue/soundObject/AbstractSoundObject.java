@@ -66,6 +66,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         return subjectiveDuration;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

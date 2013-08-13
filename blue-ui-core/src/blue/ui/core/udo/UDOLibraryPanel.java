@@ -19,6 +19,15 @@
  */
 package blue.ui.core.udo;
 
+import blue.BlueSystem;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.udo.UDOCategory;
+import blue.udo.UDOLibrary;
+import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.GUI;
+import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.dnd.DnDConstants;
@@ -28,7 +37,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -45,16 +53,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-
-import blue.BlueSystem;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.udo.UDOCategory;
-import blue.udo.UDOLibrary;
-import blue.udo.UserDefinedOpcode;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.GUI;
-import blue.utility.ObjectUtilities;
 
 /**
  * @author steven
@@ -123,6 +121,7 @@ public class UDOLibraryPanel extends JComponent {
 
         libraryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 TreePath path = libraryTree.getSelectionPath();
@@ -162,6 +161,7 @@ public class UDOLibraryPanel extends JComponent {
 
         actionMap.put("cutNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cutNode();
             }
@@ -169,6 +169,7 @@ public class UDOLibraryPanel extends JComponent {
 
         actionMap.put("copyNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyNode();
             }
@@ -176,6 +177,7 @@ public class UDOLibraryPanel extends JComponent {
 
         actionMap.put("pasteNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pasteNode();
             }
@@ -183,6 +185,7 @@ public class UDOLibraryPanel extends JComponent {
 
         actionMap.put("deleteNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 deleteNode();
             }
@@ -334,36 +337,42 @@ class UDOTreePopup extends JPopupMenu {
 
         addCategoryMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addUDOCategory();
             }
         });
         removeCategoryMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeUDOCategory();
             }
         });
         removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeUDO();
             }
         });
         cutMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cutNode();
             }
         });
         copyMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyNode();
             }
         });
         pasteMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pasteNode();
             }
@@ -559,6 +568,7 @@ class UDOTreePopup extends JPopupMenu {
         JMenuItem instrumentMenu = new JMenuItem("Add User-Defined Opcode");
 
         instrumentMenu.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 addUDO();
             }

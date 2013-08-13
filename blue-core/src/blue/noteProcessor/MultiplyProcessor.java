@@ -22,6 +22,7 @@ public class MultiplyProcessor implements NoteProcessor, java.io.Serializable {
     public MultiplyProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[multiply] pfield: " + pfield + " value: " + value;
         return "[multiply]";

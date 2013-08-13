@@ -144,10 +144,12 @@ public class Pattern implements Serializable {
     /**
      * @see java.lang.Object#equals(Object)
      */
+    @Override
     public boolean equals(Object object) {
         return EqualsBuilder.reflectionEquals(this, object);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

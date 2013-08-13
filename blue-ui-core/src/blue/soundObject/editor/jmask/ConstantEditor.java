@@ -19,14 +19,12 @@
  */
 package blue.soundObject.editor.jmask;
 
+import blue.soundObject.jmask.Constant;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.Color;
-
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
-
-import blue.soundObject.jmask.Constant;
-import blue.ui.utilities.SimpleDocumentListener;
 
 /**
  * 
@@ -53,6 +51,7 @@ public class ConstantEditor extends javax.swing.JPanel implements DurationSettab
 
         valueText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         try {
                             double val = Double
@@ -125,6 +124,7 @@ public class ConstantEditor extends javax.swing.JPanel implements DurationSettab
     private javax.swing.JTextField valueText;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         //ignore
     }

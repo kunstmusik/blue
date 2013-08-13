@@ -25,6 +25,7 @@ public class TrackListTest extends TestCase {
 
     private TrackList list;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         list = new TrackList();

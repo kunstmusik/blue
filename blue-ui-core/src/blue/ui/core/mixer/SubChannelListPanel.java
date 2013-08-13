@@ -20,7 +20,17 @@
 
 package blue.ui.core.mixer;
 
+import blue.Arrangement;
+import blue.BlueData;
+import blue.actions.BlueAction;
 import blue.mixer.*;
+import blue.orchestra.BlueSynthBuilder;
+import blue.orchestra.Instrument;
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
+import blue.projects.BlueProjectManager;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -34,22 +44,10 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.Scrollable;
-
-import blue.Arrangement;
-import blue.BlueData;
-import blue.actions.BlueAction;
-import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.Instrument;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
-import blue.projects.BlueProjectManager;
-import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -77,6 +75,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
         this.addContainerListener(new ContainerListener() {
 
+            @Override
             public void componentAdded(ContainerEvent e) {
                 Dimension preferredLayoutSize = getLayout()
                         .preferredLayoutSize(SubChannelListPanel.this);
@@ -85,6 +84,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
                 setSize(preferredLayoutSize);
             }
 
+            @Override
             public void componentRemoved(ContainerEvent e) {
                 Dimension preferredLayoutSize = getLayout()
                         .preferredLayoutSize(SubChannelListPanel.this);
@@ -97,6 +97,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
         Action addSubChannel = new BlueAction("mixer.addSubChannel") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addSubChannnel();
             }
@@ -106,6 +107,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
         Action removeSubChannel = new BlueAction("mixer.removeSubChannel") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeSubChannnel();
             }
@@ -115,6 +117,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
         removePanelListener = new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)
                         && e.getSource() instanceof ChannelPanel) {
@@ -126,6 +129,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
         this.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     addPopup.show(SubChannelListPanel.this, e.getX(), e.getY());
@@ -240,28 +244,34 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     // SCROLLABLE METHODS
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect,
             int orientation, int direction) {
         return 1;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect,
             int orientation, int direction) {
         return 10;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
         return getPreferredSize().width < getParent().getWidth();
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
         return getPreferredSize().height < getParent().getHeight();
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         listeners.add(pcl);
     }
@@ -275,6 +285,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getPropertyName().equals(Channel.NAME)) {
 

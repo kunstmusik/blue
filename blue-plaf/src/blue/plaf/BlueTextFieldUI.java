@@ -2,7 +2,6 @@ package blue.plaf;
 
 import java.awt.Color;
 import java.awt.Graphics;
-
 import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTextFieldUI;
@@ -37,6 +36,7 @@ public class BlueTextFieldUI extends BasicTextFieldUI {
         return new BlueTextFieldUI(c);
     }
 
+    @Override
     protected void paintBackground(Graphics g) {
         super.paintBackground(g);
 //        Color c = BlueLookAndFeel.getControlShadow().darker();

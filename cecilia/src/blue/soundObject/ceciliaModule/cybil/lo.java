@@ -25,6 +25,7 @@ import blue.soundObject.NoteList;
 
 class lo extends CybilAlgorithm {
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
         float start = getFloatValue(args.get(0));
         float end = getFloatValue(args.get(1));

@@ -350,6 +350,7 @@ public class Mixer implements Serializable {
         this.subChannels = subChannels;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }
@@ -436,6 +437,7 @@ public class Mixer implements Serializable {
         return subChannelCache;
     }
     
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

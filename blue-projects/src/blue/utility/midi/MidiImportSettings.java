@@ -20,7 +20,6 @@
 package blue.utility.midi;
 
 import java.util.Vector;
-
 import javax.swing.table.AbstractTableModel;
 
 public class MidiImportSettings extends AbstractTableModel {
@@ -42,6 +41,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -62,6 +62,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return 4;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -81,6 +82,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return settings.size();
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 
         TrackImportSettings trSetting = (TrackImportSettings) settings
@@ -117,6 +119,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columnIndex != 0;
     }

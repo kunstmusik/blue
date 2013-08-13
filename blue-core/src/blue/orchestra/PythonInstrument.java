@@ -81,6 +81,7 @@ public class PythonInstrument extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

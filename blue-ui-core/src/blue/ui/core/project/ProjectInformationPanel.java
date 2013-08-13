@@ -29,6 +29,7 @@ public class ProjectInformationPanel extends javax.swing.JPanel {
         titleText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.title = titleText.getText();
@@ -39,6 +40,7 @@ public class ProjectInformationPanel extends javax.swing.JPanel {
         authorText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.author = authorText.getText();
@@ -49,6 +51,7 @@ public class ProjectInformationPanel extends javax.swing.JPanel {
         notesText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.notes = notesText.getText();

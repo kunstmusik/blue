@@ -20,13 +20,11 @@
 
 package blue.soundObject.ceciliaModule;
 
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.sampled.UnsupportedAudioFileException;
-
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
+import java.io.File;
+import java.io.IOException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class CFileIn extends CeciliaObject {
 
@@ -77,6 +75,7 @@ public class CFileIn extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#processText(java.lang.String)
      */
+    @Override
     public String processText(String ceciliaText) {
         // TODO Auto-generated method stub
         return null;
@@ -87,6 +86,7 @@ public class CFileIn extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#initialize(java.lang.String[])
      */
+    @Override
     public void initialize(String[] tokens) {
         this.setObjectName(tokens[1]);
         for (int i = 2; i < tokens.length; i += 2) {
@@ -119,6 +119,7 @@ public class CFileIn extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = CeciliaObject.getBasicXML(this);
 

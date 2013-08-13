@@ -25,6 +25,7 @@ import blue.soundObject.NoteList;
 
 class ma extends CybilAlgorithm {
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
         String ranType = (String) args.get(0);
         boolean isInteger = ranType.equals("i");

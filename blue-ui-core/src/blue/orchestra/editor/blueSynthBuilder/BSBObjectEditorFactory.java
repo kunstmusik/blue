@@ -35,7 +35,6 @@ import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
-import java.util.HashMap;
 
 /**
  *

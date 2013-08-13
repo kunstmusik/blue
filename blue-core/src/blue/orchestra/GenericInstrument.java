@@ -94,6 +94,7 @@ public class GenericInstrument extends AbstractInstrument implements
     public void generateFTables(Tables tables) {
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

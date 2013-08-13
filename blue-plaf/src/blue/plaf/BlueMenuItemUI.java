@@ -1,7 +1,6 @@
 package blue.plaf;
 
 import java.awt.Color;
-
 import javax.swing.plaf.basic.BasicMenuItemUI;
 
 /**

@@ -31,7 +31,6 @@ import blue.projects.BlueProjectManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.logging.Logger;
 import javax.swing.JScrollPane;
 import org.openide.util.NbBundle;
@@ -68,6 +67,7 @@ final class MixerTopComponent extends TopComponent
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();
@@ -138,6 +138,7 @@ final class MixerTopComponent extends TopComponent
         arrangement.addArrangementListener(this);
     }
 
+    @Override
     public void arrangementChanged(ArrangementEvent arrEvt) {
         switch (arrEvt.getType()) {
             case ArrangementEvent.UPDATE:

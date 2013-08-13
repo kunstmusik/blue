@@ -30,7 +30,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-
 import javax.swing.JComponent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -51,6 +50,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 
         this.addContainerListener(new ContainerListener() {
 
+            @Override
             public void componentAdded(ContainerEvent e) {
                 Dimension preferredLayoutSize = getLayout()
                         .preferredLayoutSize(ChannelListPanel.this);
@@ -59,6 +59,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
                 setSize(preferredLayoutSize);
             }
 
+            @Override
             public void componentRemoved(ContainerEvent e) {
                 Dimension preferredLayoutSize = getLayout()
                         .preferredLayoutSize(ChannelListPanel.this);
@@ -120,6 +121,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
         return cPanel;
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         int index0 = e.getIndex0();
         int index1 = e.getIndex1();
@@ -132,6 +134,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
         }
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         int index0 = e.getIndex0();
         int index1 = e.getIndex1();
@@ -144,6 +147,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
         }
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         // System.out.println("contentsChanged");
         rebuildChannelsUI(channels);
@@ -165,6 +169,7 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getPropertyName().equals(Channel.NAME)) {
 

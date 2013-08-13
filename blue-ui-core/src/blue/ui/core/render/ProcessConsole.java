@@ -20,16 +20,6 @@
 package blue.ui.core.render;
 
 import blue.BlueData;
-import blue.services.render.RenderTimeManager;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-
-
-//import blue.BlueMainFrame;
 import blue.BlueSystem;
 import blue.automation.Parameter;
 import blue.event.PlayModeListener;
@@ -38,8 +28,15 @@ import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.services.render.DiskRenderJob;
 import blue.services.render.DiskRenderService;
+import blue.services.render.RenderTimeManager;
 import blue.utility.FileUtilities;
 import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
@@ -456,6 +453,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
             this.reader = reader;
         }
 
+        @Override
         public void run() {
             float time;
 

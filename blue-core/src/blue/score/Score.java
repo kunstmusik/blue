@@ -27,7 +27,6 @@ import blue.score.layers.LayerGroupProviderManager;
 import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObjectException;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;

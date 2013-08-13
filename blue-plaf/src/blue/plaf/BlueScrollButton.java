@@ -24,7 +24,6 @@ package blue.plaf;
 
 import java.awt.Color;
 import java.awt.Graphics;
-
 import javax.swing.plaf.metal.MetalScrollButton;
 
 /**
@@ -52,6 +51,7 @@ public class BlueScrollButton extends MetalScrollButton {
         this.setBackground(BlueLookAndFeel.getControl());
     }
 
+    @Override
     public void paint(Graphics g) {
         boolean leftToRight = this.getComponentOrientation().isLeftToRight();
         boolean isEnabled = getParent().isEnabled();

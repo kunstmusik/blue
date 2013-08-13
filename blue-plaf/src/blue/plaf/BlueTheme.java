@@ -2,7 +2,6 @@ package blue.plaf;
 
 import java.awt.Color;
 import java.awt.Font;
-
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
@@ -138,6 +137,7 @@ public class BlueTheme extends DefaultMetalTheme {
         
     }
     
+    @Override
     public String getName() {
         return "blue";
     }
@@ -157,6 +157,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary 1 color
      */
+    @Override
     protected ColorUIResource getPrimary1() {
         return primary1;
     }
@@ -166,6 +167,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary 2 color
      */
+    @Override
     protected ColorUIResource getPrimary2() {
         return primary2;
     }
@@ -175,6 +177,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary 3 color
      */
+    @Override
     protected ColorUIResource getPrimary3() {
         return primary3;
     }
@@ -184,6 +187,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the secondary 1 color
      */
+    @Override
     protected ColorUIResource getSecondary1() {
         return secondary1;
     }
@@ -193,6 +197,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the secondary 2 color
      */
+    @Override
     protected ColorUIResource getSecondary2() {
         return secondary2;
     }
@@ -202,6 +207,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the secondary 3 color
      */
+    @Override
     protected ColorUIResource getSecondary3() {
         return secondary3;
     }
@@ -211,6 +217,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control text font
      */
+    @Override
     public FontUIResource getControlTextFont() {
         return plainFont;
     }
@@ -220,6 +227,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the system text font
      */
+    @Override
     public FontUIResource getSystemTextFont() {
         return plainFont;
     }
@@ -229,6 +237,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the user text font
      */
+    @Override
     public FontUIResource getUserTextFont() {
         return plainFont;
     } 
@@ -238,6 +247,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu text font
      */
+    @Override
     public FontUIResource getMenuTextFont() {
         return plainFont;
     }
@@ -246,6 +256,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window title font
      */
+    @Override
     public FontUIResource getWindowTitleFont() {
         return boldFont;
     }
@@ -255,6 +266,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the sub-text font
      */
+    @Override
     public FontUIResource getSubTextFont() {
         return super.getSubTextFont();
     }
@@ -265,6 +277,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the white color
      */
+    @Override
     protected ColorUIResource getWhite() { return white; }
 
     /**
@@ -273,6 +286,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the black color
      */
+    @Override
     protected ColorUIResource getBlack() {
         return black; }
 
@@ -282,6 +296,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the focus color
      */
+    @Override
     public ColorUIResource getFocusColor() { return getPrimary2(); }
 
     /**
@@ -290,6 +305,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the desktop color
      */
+    @Override
     public  ColorUIResource getDesktopColor() { return getPrimary2(); }
 
     /**
@@ -298,6 +314,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control color
      */
+    @Override
     public ColorUIResource getControl() { return getSecondary3(); }  
 
     /**
@@ -306,6 +323,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control shadow color
      */
+    @Override
     public ColorUIResource getControlShadow() { return getSecondary2(); }  
 
     /**
@@ -314,6 +332,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control dark shadow color
      */
+    @Override
     public ColorUIResource getControlDarkShadow() { return getSecondary1(); }  
 
     /**
@@ -322,6 +341,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control info color
      */
+    @Override
     public ColorUIResource getControlInfo() { return getWhite(); } 
 
     /**
@@ -330,6 +350,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control highlight color
      */
+    @Override
     public ColorUIResource getControlHighlight() { 
         return getBlack(); }  
 
@@ -339,6 +360,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control disabled color
      */
+    @Override
     public ColorUIResource getControlDisabled() { return getSecondary2(); }  
 
     /**
@@ -347,6 +369,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary control color
      */
+    @Override
     public ColorUIResource getPrimaryControl() { return getPrimary3(); }  
 
     /**
@@ -355,6 +378,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary control shadow color
      */
+    @Override
     public ColorUIResource getPrimaryControlShadow() { return getPrimary2(); }  
     /**
      * Returns the primary control dark shadow color. This 
@@ -362,6 +386,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary control dark shadow color
      */
+    @Override
     public ColorUIResource getPrimaryControlDarkShadow() { return getPrimary1(); }  
 
     /**
@@ -370,6 +395,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary control info color
      */
+    @Override
     public ColorUIResource getPrimaryControlInfo() { return getWhite(); } 
 
     /**
@@ -378,6 +404,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the primary control highlight color
      */
+    @Override
     public ColorUIResource getPrimaryControlHighlight() { return getBlack(); }  
 
     /**
@@ -386,6 +413,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the system text color
      */
+    @Override
     public ColorUIResource getSystemTextColor() { return getWhite(); }
 
     /**
@@ -394,6 +422,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the control text color
      */
+    @Override
     public ColorUIResource getControlTextColor() { return getControlInfo(); }  
 
     /**
@@ -402,6 +431,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the inactive control text color
      */
+    @Override
     public ColorUIResource getInactiveControlTextColor() { return getControlDisabled(); }  
 
     /**
@@ -410,6 +440,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the inactive system text color
      */
+    @Override
     public ColorUIResource getInactiveSystemTextColor() { return getSecondary2(); }
 
     /**
@@ -418,6 +449,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the user text color
      */
+    @Override
     public ColorUIResource getUserTextColor() { return getWhite(); }
 
     /**
@@ -426,6 +458,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the text highlight color
      */
+    @Override
     public ColorUIResource getTextHighlightColor() { return getPrimary3(); }
 
     /**
@@ -434,6 +467,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the highlighted text color
      */
+    @Override
     public ColorUIResource getHighlightedTextColor() { return getControlTextColor(); }
 
     /**
@@ -442,6 +476,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window background color
      */
+    @Override
     public ColorUIResource getWindowBackground() { return getBlack(); }
 
     /**
@@ -450,6 +485,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window title background color
      */
+    @Override
     public ColorUIResource getWindowTitleBackground() { return getPrimary3(); }
 
     /**
@@ -458,6 +494,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window title foreground color
      */
+    @Override
     public ColorUIResource getWindowTitleForeground() { return getWhite(); }  
 
     /**
@@ -466,6 +503,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window title inactive background color
      */
+    @Override
     public ColorUIResource getWindowTitleInactiveBackground() { return getSecondary3(); }
 
     /**
@@ -474,6 +512,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the window title inactive foreground color
      */
+    @Override
     public ColorUIResource getWindowTitleInactiveForeground() { return getWhite(); }
 
     /**
@@ -482,6 +521,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu background color
      */
+    @Override
     public ColorUIResource getMenuBackground() { return getSecondary3(); }
 
     /**
@@ -490,6 +530,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu foreground color
      */
+    @Override
     public ColorUIResource getMenuForeground() { return  getWhite(); }
 
     /**
@@ -498,6 +539,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu selected background color
      */
+    @Override
     public ColorUIResource getMenuSelectedBackground() { return getPrimary2(); }
 
     /**
@@ -506,6 +548,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu selected foreground color
      */
+    @Override
     public ColorUIResource getMenuSelectedForeground() { return getWhite(); }
 
     /**
@@ -514,6 +557,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the menu disabled foreground color
      */
+    @Override
     public ColorUIResource getMenuDisabledForeground() { return getSecondary2(); }
 
     /**
@@ -522,6 +566,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the separator background color
      */
+    @Override
     public ColorUIResource getSeparatorBackground() { return getBlack(); }
 
     /**
@@ -530,6 +575,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the separator foreground color
      */
+    @Override
     public ColorUIResource getSeparatorForeground() { return getPrimary1(); }
 
     /**
@@ -538,6 +584,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the accelerator foreground color
      */
+    @Override
     public ColorUIResource getAcceleratorForeground() { return getPrimary1(); }
 
     /**
@@ -546,6 +593,7 @@ public class BlueTheme extends DefaultMetalTheme {
      *
      * @return the accelerator selected foreground color
      */
+    @Override
     public ColorUIResource getAcceleratorSelectedForeground() { return getWhite(); }
 
 

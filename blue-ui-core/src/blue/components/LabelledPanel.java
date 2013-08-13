@@ -19,21 +19,19 @@
  */
 package blue.components;
 
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
-
-import blue.utility.GUI;
 
 public class LabelledPanel extends JComponent {
 
@@ -72,6 +70,7 @@ public class LabelledPanel extends JComponent {
 
         label.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     fireActionPerformed();
@@ -81,10 +80,12 @@ public class LabelledPanel extends JComponent {
         });
     }
 
+    @Override
     public void setName(String name) {
         label.setText(name);
     }
 
+    @Override
     public String getName() {
         return label.getText();
     }

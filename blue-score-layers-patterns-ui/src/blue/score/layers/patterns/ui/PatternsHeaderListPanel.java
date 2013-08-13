@@ -19,7 +19,6 @@
  */
 package blue.score.layers.patterns.ui;
 
-import blue.BlueSystem;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.score.layers.Layer;
@@ -34,8 +33,6 @@ import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -79,6 +76,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         }
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -113,6 +111,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         menu.add(pushDownAction);        
         
         this.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 PatternsHeaderListPanel.this.requestFocus();
 
@@ -164,6 +163,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         });
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -340,6 +340,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -362,6 +363,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -384,6 +386,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;
@@ -407,6 +410,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;

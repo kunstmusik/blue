@@ -20,6 +20,11 @@
 package blue.soundObject.editor.pianoRoll;
 
 import blue.BlueSystem;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.soundObject.pianoRoll.PianoNote;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.ScoreUtilities;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -29,16 +34,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JComponent;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
-
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.soundObject.pianoRoll.PianoNote;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.ScoreUtilities;
 
 /**
  * @author steven
@@ -73,9 +71,11 @@ public class NoteCanvasMouseListener implements MouseListener,
         this.canvas = canvas;
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         canvas.requestFocus();
         Component comp = canvas.getComponentAt(e.getPoint());
@@ -181,6 +181,7 @@ public class NoteCanvasMouseListener implements MouseListener,
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         if (canvas.marquee.isVisible()) {
             endMarquee();
@@ -199,9 +200,11 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
@@ -210,6 +213,7 @@ public class NoteCanvasMouseListener implements MouseListener,
      * 
      * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
      */
+    @Override
     public void mouseDragged(MouseEvent e) {
 
         if (canvas.marquee.isVisible()) {
@@ -303,6 +307,7 @@ public class NoteCanvasMouseListener implements MouseListener,
      * 
      * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
      */
+    @Override
     public void mouseMoved(MouseEvent e) {
         Component comp = canvas.getComponentAt(e.getPoint());
         if (comp instanceof PianoNoteView) {

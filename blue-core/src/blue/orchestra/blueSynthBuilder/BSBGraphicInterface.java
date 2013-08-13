@@ -195,6 +195,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
         return names;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

@@ -19,10 +19,32 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
+import blue.BlueData;
+import blue.BlueSystem;
+import blue.SoundLayer;
+import blue.SoundLayerListener;
+import blue.components.AlphaMarquee;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.projects.BlueProjectManager;
+import blue.score.TimeState;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
+import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.ModeListener;
+import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.layers.SelectionMarquee;
+import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.core.score.undo.RemoveSoundObjectEdit;
+import blue.undo.BlueUndoManager;
+import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -35,40 +57,6 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JLayeredPane;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
-
-import blue.BlueData;
-import blue.BlueSystem;
-import blue.SoundLayer;
-import blue.SoundLayerListener;
-import blue.components.AlphaMarquee;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.projects.BlueProjectManager;
-import blue.score.TimeState;
-import blue.score.layers.LayerGroupDataEvent;
-import blue.score.layers.LayerGroupListener;
-import blue.ui.core.score.undo.AddSoundObjectEdit;
-import blue.ui.core.score.undo.RemoveSoundObjectEdit;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
-import blue.ui.core.score.ModeListener;
-import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.layers.LayerGroupPanel;
-import blue.ui.core.score.layers.SelectionMarquee;
-import blue.undo.BlueUndoManager;
-import blue.utility.ObjectUtilities;
-import java.awt.Graphics2D;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
 
@@ -134,6 +122,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         heightListener = new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 reset();
             }
@@ -166,6 +155,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 Dimension size = getSize();
                 automationPanel.setSize(size);
@@ -181,6 +171,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
    
         this.addSelectionListener(new SelectionListener() {
 
+            @Override
             public void selectionPerformed(SelectionEvent e) {
                 SoundObjectView sObjView = (SoundObjectView) e.getSelectedItem();
 
@@ -205,6 +196,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         return sObjPanel;
     }
 
+    @Override
     public String getToolTipText(MouseEvent e) {
 
         String tip = null;
@@ -276,6 +268,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         
         actionMap.put("cutSoundObjects", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
                     sObjPopup.copySObj();
@@ -286,6 +279,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("copySoundObjects", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
                     sObjPopup.copySObj();
@@ -295,6 +289,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("deleteSoundObjects", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
                     removeSoundObjects();
@@ -304,6 +299,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("duplicateSoundObjects", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
                     SoundObject[] sObjects = mBuffer.getSoundObjectsAsArray();
@@ -346,6 +342,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("repeatSoundObjects", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
 
@@ -424,6 +421,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("showQuickTimeDialog", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (mBuffer.size() > 0) {
                     qtDialog.show(mBuffer.get(0));
@@ -435,6 +433,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeUp", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 nudgeVertical(-1);
             }
@@ -442,6 +441,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeDown", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 nudgeVertical(1);
             }
@@ -449,6 +449,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeLeft", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 1.0f / timeState.getPixelSecond();  
                 nudgeHorizontal(-timeAmount);
@@ -457,6 +458,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeRight", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 1.0f / timeState.getPixelSecond();  
                 nudgeHorizontal(timeAmount);
@@ -465,6 +467,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeLeft10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 10.0f / timeState.getPixelSecond();
                 nudgeHorizontal(-timeAmount);
@@ -473,6 +476,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("nudgeRight10", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 10.0f / timeState.getPixelSecond();
                 nudgeHorizontal(timeAmount);
@@ -483,6 +487,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("raisePixelSecond", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 timeState.raisePixelSecond();
             }
@@ -490,6 +495,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         actionMap.put("lowerPixelSecond", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 timeState.lowerPixelSecond();
             }
@@ -498,6 +504,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         
         actionMap.put("undo", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 BlueUndoManager.setUndoManager("score");
                 UndoManager undoManager = BlueUndoManager.getUndoManager();
@@ -510,6 +517,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         
         actionMap.put("redo", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 BlueUndoManager.setUndoManager("score");
                 UndoManager undoManager = BlueUndoManager.getUndoManager();
@@ -644,6 +652,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void reset() {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] components = sObjPanel.getComponents();
 
@@ -912,6 +921,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     /** *********************************** */
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         
@@ -1072,6 +1082,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     
 
     /* EVENT LISTENING METHODS */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
 
@@ -1096,10 +1107,12 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     /* SOUND LAYER LISTENER */
+    @Override
     public void soundObjectAdded(SoundLayer source, SoundObject sObj) {
         addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
     }
 
+    @Override
     public void soundObjectRemoved(SoundLayer source, SoundObject sObj) {
         removeSoundObjectView(sObj);
     }

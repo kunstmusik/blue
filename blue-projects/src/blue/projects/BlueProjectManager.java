@@ -42,7 +42,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;

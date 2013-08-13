@@ -434,6 +434,7 @@ public class Track implements Serializable, TableModel {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

@@ -1,8 +1,7 @@
 package blue.soundObject.editor;
 
-import javax.swing.JComponent;
-
 import blue.soundObject.SoundObject;
+import javax.swing.JComponent;
 
 /**
  * Title: blue Description: an object composition environment for csound

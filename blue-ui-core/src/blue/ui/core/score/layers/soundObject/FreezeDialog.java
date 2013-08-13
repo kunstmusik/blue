@@ -19,16 +19,14 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
-
 import blue.BlueSystem;
 import blue.soundObject.FrozenSoundObject;
 import blue.soundObject.SoundObject;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JProgressBar;
 
 public class FreezeDialog extends JDialog {
 
@@ -107,6 +105,7 @@ class FreezeRunner extends Thread {
         this.sObjPopup = sObjPopup;
     }
 
+    @Override
     public void run() {
         for (int i = 0; i < soundObjects.length; i++) {
             if (soundObjects[i] instanceof FrozenSoundObject) {

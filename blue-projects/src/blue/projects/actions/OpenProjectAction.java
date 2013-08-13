@@ -4,9 +4,9 @@
  */
 package blue.projects.actions;
 
-import blue.projects.*;
 import blue.BlueData;
 import blue.BlueSystem;
+import blue.projects.*;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;

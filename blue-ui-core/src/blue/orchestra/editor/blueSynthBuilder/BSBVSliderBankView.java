@@ -19,18 +19,16 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.components.lines.LineBoundaryDialog;
+import blue.orchestra.blueSynthBuilder.BSBVSlider;
+import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.JOptionPane;
-
-import blue.components.lines.LineBoundaryDialog;
-import blue.orchestra.blueSynthBuilder.BSBVSlider;
-import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 
 public class BSBVSliderBankView extends AutomatableBSBObjectView {
 
@@ -228,6 +226,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
         sliderBank.setRandomizable(randomizable);
     }
 
+    @Override
     public void cleanup() {
         for(Component c : getComponents()) {
             ((BSBVSliderView)c).cleanup();
@@ -241,16 +240,20 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
         public VSliderBankLayout() {
         }
 
+        @Override
         public void addLayoutComponent(String name, Component comp) {
         }
 
+        @Override
         public void removeLayoutComponent(Component comp) {
         }
 
+        @Override
         public Dimension preferredLayoutSize(Container parent) {
             return minimumLayoutSize(parent);
         }
 
+        @Override
         public Dimension minimumLayoutSize(Container parent) {
             int count = parent.getComponentCount();
             if (count == 0) {
@@ -278,6 +281,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
             return new Dimension(w, h);
         }
 
+        @Override
         public void layoutContainer(Container parent) {
             int count = parent.getComponentCount();
             if (count == 0) {

@@ -21,8 +21,8 @@
 package blue.utility;
 
 import blue.BlueData;
-import static org.junit.Assert.assertEquals;
 import org.junit.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  *

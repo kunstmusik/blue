@@ -160,6 +160,7 @@ public class Preset implements Serializable, Comparable {
         this.presetName = name;
     }
 
+    @Override
     public String toString() {
         return getPresetName();
     }

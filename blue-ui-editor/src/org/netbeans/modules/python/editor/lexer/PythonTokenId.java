@@ -49,15 +49,14 @@ import org.netbeans.api.lexer.Language;
 import org.netbeans.api.lexer.LanguagePath;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenId;
+import static org.netbeans.modules.python.editor.lexer.PythonLexer.*;
 import org.netbeans.spi.lexer.LanguageEmbedding;
 import org.netbeans.spi.lexer.LanguageHierarchy;
 import org.netbeans.spi.lexer.Lexer;
 import org.netbeans.spi.lexer.LexerInput;
 import org.netbeans.spi.lexer.LexerRestartInfo;
-
 import org.netbeans.spi.lexer.TokenFactory;
 import org.openide.filesystems.FileObject;
-import static org.netbeans.modules.python.editor.lexer.PythonLexer.*;
 
 /**
  * @todo add the rest of the tokens
@@ -119,6 +118,7 @@ public enum PythonTokenId implements TokenId {
         this.primaryCategory = primaryCategory;
     }
 
+    @Override
     public String primaryCategory() {
         return primaryCategory;
     }
@@ -128,10 +128,12 @@ public enum PythonTokenId implements TokenId {
     }
     private static final Language<PythonTokenId> language =
             new LanguageHierarchy<PythonTokenId>() {
+                @Override
                 protected String mimeType() {
                     return PythonTokenId.PYTHON_MIME_TYPE;
                 }
 
+                @Override
                 protected Collection<PythonTokenId> createTokenIds() {
                     return EnumSet.allOf(PythonTokenId.class);
                 }
@@ -143,6 +145,7 @@ public enum PythonTokenId implements TokenId {
                     return cats;
                 }
 
+                @Override
                 protected Lexer<PythonTokenId> createLexer(LexerRestartInfo<PythonTokenId> info) {
                     FileObject fileObject = (FileObject)info.getAttributeValue(FileObject.class);
                     final TokenFactory<PythonTokenId> tokenFactory = info.tokenFactory();
@@ -150,6 +153,7 @@ public enum PythonTokenId implements TokenId {
                     // Lex .rst files just as literal strings
                     if (fileObject != null &&  "rst".equals(fileObject.getExt())) {
                         return new Lexer<PythonTokenId>() {
+                            @Override
                             public Token<PythonTokenId> nextToken() {
                                 if (input.read() == LexerInput.EOF) {
                                     return null;
@@ -160,10 +164,12 @@ public enum PythonTokenId implements TokenId {
                                 return tokenFactory.createToken(PythonTokenId.STRING_LITERAL, input.readLength());
                             }
 
+                            @Override
                             public Object state() {
                                 return null;
                             }
 
+                            @Override
                             public void release() {
                             }
                         };

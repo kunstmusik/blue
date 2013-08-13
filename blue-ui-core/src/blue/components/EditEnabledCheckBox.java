@@ -20,15 +20,13 @@
 
 package blue.components;
 
+import blue.BlueSystem;
+import blue.event.EditModeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventListener;
-
 import javax.swing.JCheckBox;
 import javax.swing.SwingConstants;
-
-import blue.BlueSystem;
-import blue.event.EditModeListener;
 
 /**
  * @author Steven Yi
@@ -64,6 +62,7 @@ public class EditEnabledCheckBox extends JCheckBox implements ActionListener {
 
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         fireEditModeChanged(this.isSelected());
     }

@@ -168,6 +168,7 @@ private void meanTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JComboBox spreadTypeComboBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         alphaTableEditor.setDuration(duration);
         muTableEditor.setDuration(duration);

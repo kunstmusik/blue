@@ -16,6 +16,7 @@ import org.openide.util.Lookup;
 
 public final class AddMarkerAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
 

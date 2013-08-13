@@ -20,14 +20,6 @@
 
 package blue.ui.core.blueLive;
 
-import java.beans.PropertyChangeListener;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
-
 import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
 import blue.blueLive.LiveObjectSet;
@@ -35,6 +27,12 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
 /**
  * 
@@ -76,6 +74,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
         bins.addPropertyChangeListener(this);
     }
     
+    @Override
     public int getRowCount() {
         if (bins == null) {
             return 0;
@@ -83,6 +82,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
         return bins.getRowCount();
     }
 
+    @Override
     public int getColumnCount() {
         if(bins == null) {
             return 0;
@@ -90,18 +90,22 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
         return bins.getColumnCount();
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         return Integer.toString(columnIndex + 1);
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return LiveObject.class;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return false;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (bins == null || rowIndex < 0 || columnIndex < 0) {
             return null;
@@ -110,6 +114,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
         return (LiveObject) bins.getLiveObject(columnIndex, rowIndex);
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if(rowIndex >= 0 && rowIndex < bins.getRowCount() &&
                 columnIndex >= 0 && columnIndex < bins.getColumnCount()) {
@@ -133,6 +138,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
 
     /* TABLE MODEL LISTENER METHODS */
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
             tableListeners = new Vector();
@@ -140,6 +146,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
         tableListeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
             return;

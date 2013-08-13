@@ -57,6 +57,7 @@ public class BSBDropdownItemList extends ArrayList<BSBDropdownItem> {
         return retVal;
     }
 
+    @Override
     public String toString() {
         return "";
     }

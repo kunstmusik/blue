@@ -1,19 +1,18 @@
 package blue.ui.core.soundObject.renderer;
 
 import blue.score.layers.Layer;
+import blue.soundObject.AudioFile;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformCache;
+import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformData;
+import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformListener;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import blue.soundObject.AudioFile;
-import blue.soundObject.SoundObject;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformCache;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformData;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformListener;
 
 public class AudioFileRenderer implements BarRenderer {
 
@@ -34,6 +33,7 @@ public class AudioFileRenderer implements BarRenderer {
 
     protected static AudioWaveformCache waveCache = new AudioWaveformCache();
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
 
@@ -207,6 +207,7 @@ public class AudioFileRenderer implements BarRenderer {
         }
     }
 
+    @Override
     public void cleanup(SoundObjectView sObjView) {
         AudioWaveformData waveData = (AudioWaveformData) sObjView
                 .getClientProperty(AUDIO_WAVEFORM_DATA);
@@ -217,6 +218,7 @@ public class AudioFileRenderer implements BarRenderer {
         sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, null);
     }
 
+    @Override
     public Class getSoundObjectClass() {
         return AudioFile.class;
     }

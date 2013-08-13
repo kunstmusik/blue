@@ -1,11 +1,10 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.orchestra.BlueX7;
+import blue.orchestra.blueX7.Operator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-import blue.orchestra.BlueX7;
-import blue.orchestra.blueX7.Operator;
 
 /**
  * <p>

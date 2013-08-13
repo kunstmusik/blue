@@ -20,6 +20,8 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.components.lines.LineBoundaryDialog;
+import blue.orchestra.blueSynthBuilder.BSBXYController;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -31,13 +33,9 @@ import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
-
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
-import blue.components.lines.LineBoundaryDialog;
-import blue.orchestra.blueSynthBuilder.BSBXYController;
 
 public class BSBXYControllerView extends AutomatableBSBObjectView implements
         PropertyChangeListener {
@@ -58,6 +56,7 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         drawPanel = new DrawPanel(controller);
         drawPanel.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 setValues(e.getX(), e.getY());
             }
@@ -65,6 +64,7 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         });
         drawPanel.addMouseMotionListener(new MouseMotionAdapter() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 setValues(e.getX(), e.getY());
             }
@@ -91,6 +91,7 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         updateSize();
     }
 
+    @Override
     public void cleanup() {
         this.controller.removePropertyChangeListener(this);
     }
@@ -267,6 +268,7 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         controller.setRandomizable(randomizable);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() != controller) {
             return;
@@ -303,6 +305,7 @@ class DrawPanel extends JPanel {
         return (value - min) / (max - min);
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 

@@ -63,6 +63,7 @@ public class Operator implements java.io.Serializable {
         }
     }
 
+    @Override
     public String toString() {
         StrBuilder buffer = new StrBuilder();
         buffer.append("[operator]\n");
@@ -143,6 +144,7 @@ public class Operator implements java.io.Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

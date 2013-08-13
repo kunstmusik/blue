@@ -22,11 +22,10 @@ package blue.ui.core.soundFile;
 
 import java.io.File;
 import java.util.logging.Logger;
+import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
 
 /**
  * Top component which displays something.

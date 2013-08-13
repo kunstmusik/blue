@@ -19,9 +19,8 @@
  */
 package blue.soundObject.editor.jmask;
 
-import javax.swing.SpinnerNumberModel;
-
 import blue.soundObject.jmask.Random;
+import javax.swing.SpinnerNumberModel;
 
 /**
  * 
@@ -39,6 +38,7 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
 
         minSpinner.setModel(new SpinnerNumberModel(random.getMin(),
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0) {
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -56,6 +56,7 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
 
         maxSpinner.setModel(new SpinnerNumberModel(random.getMax(),
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0) {
+            @Override
             public void setValue(Object value) {
                 if ((value == null) || !(value instanceof Number)) {
                     throw new IllegalArgumentException("illegal value");
@@ -165,6 +166,7 @@ public class RandomEditor extends javax.swing.JPanel implements DurationSettable
     private javax.swing.JSpinner minSpinner;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         //ignore
     }

@@ -19,15 +19,13 @@
  */
 package blue.soundObject.editor.pattern;
 
+import blue.soundObject.PatternObject;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JComponent;
-
-import blue.soundObject.PatternObject;
 
 public class PatternTimeBar extends JComponent implements
         PropertyChangeListener {
@@ -40,6 +38,7 @@ public class PatternTimeBar extends JComponent implements
                 PatternsConstants.patternViewHeight));
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -90,6 +89,7 @@ public class PatternTimeBar extends JComponent implements
         this.setPreferredSize(new Dimension(width, height));
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.patternObj) {
             if (evt.getPropertyName().equals("time")) {

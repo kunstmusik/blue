@@ -51,6 +51,7 @@ public class BSBXYController extends AutomatableBSBObject implements
     boolean randomizable = true;
 
     // OVERRIDE to handle parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         String oldName = this.getObjectName();
 
@@ -175,6 +176,7 @@ public class BSBXYController extends AutomatableBSBObject implements
 //        return new BSBXYControllerView(this);
 //    }
 
+    @Override
     public String[] getReplacementKeys() {
         if (this.objectName == null || this.objectName.trim().length() == 0) {
             return new String[] {};

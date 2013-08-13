@@ -85,6 +85,7 @@ public class PythonEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -92,6 +93,7 @@ public class PythonEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public final void editSoundObject(SoundObject sObj) {
         this.pObj = null;
         

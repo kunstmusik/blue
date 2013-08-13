@@ -19,18 +19,6 @@
  */
 package blue.automation;
 
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.InstrumentAssignment;
@@ -49,6 +37,16 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -81,6 +79,7 @@ public class AutomationManager implements ParameterListListener,
     private AutomationManager() {
         parameterActionListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (data == null || selectedSoundLayer == null) {
                     return;
@@ -98,6 +97,7 @@ public class AutomationManager implements ParameterListListener,
 
         renderTimeListener = new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent pce) {
                 if (pce.getSource() == data) {
                     if (pce.getPropertyName().equals("renderStartTime")) {
@@ -411,6 +411,7 @@ public class AutomationManager implements ParameterListListener,
         JMenuItem clearAll = new JMenuItem("Clear All");
         clearAll.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Object retVal = DialogDisplayer.getDefault().notify(
                         new NotifyDescriptor.Confirmation(
@@ -571,11 +572,13 @@ public class AutomationManager implements ParameterListListener,
         return retVal;
     }
 
+    @Override
     public void parameterAdded(Parameter param) {
         allParameters.add(param);
         // dirty = true;
     }
 
+    @Override
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
@@ -604,10 +607,12 @@ public class AutomationManager implements ParameterListListener,
         // dirty = true;
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 
+    @Override
     public void automatableAdded(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
         params.addParameterListListener(this);
@@ -616,6 +621,7 @@ public class AutomationManager implements ParameterListListener,
         // dirty = true;
     }
 
+    @Override
     public void automatableRemoved(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
         params.removeParameterListListener(this);
@@ -648,6 +654,7 @@ public class AutomationManager implements ParameterListListener,
         return null;
     }
 
+    @Override
     public void channelAdded(Channel channel) {
         addListenerToChannel(channel);
         // dirty = true;
@@ -656,6 +663,7 @@ public class AutomationManager implements ParameterListListener,
     /*
      * Remove all parameters, clear them from SoundLayers
      */
+    @Override
     public void channelRemoved(Channel channel) {
         EffectsChain pre = channel.getPreEffects();
         pre.removeAutomatableCollectionListener(this);

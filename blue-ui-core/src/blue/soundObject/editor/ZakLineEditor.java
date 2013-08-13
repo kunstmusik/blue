@@ -28,6 +28,7 @@ public class ZakLineEditor extends LineEditor {
     /**
      * Gets a new LineTable specialized for zak lines
      */
+    @Override
     protected LineListTable getNewLineTable() {
         return new ZakLineListTable();
     }
@@ -35,6 +36,7 @@ public class ZakLineEditor extends LineEditor {
     /**
      * 
      */
+    @Override
     protected LineCanvas getNewLineCanvas() {
         return new LineCanvas();
     }
@@ -42,6 +44,7 @@ public class ZakLineEditor extends LineEditor {
     /**
      * Edits the SoundObject, using zak class references when necessary
      */
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             // this.line = null;

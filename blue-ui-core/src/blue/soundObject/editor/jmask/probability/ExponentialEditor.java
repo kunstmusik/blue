@@ -145,6 +145,7 @@ private void lambdaTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JComboBox lambdaTypeComboBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         lambdaTableEditor.setDuration(duration);
     }

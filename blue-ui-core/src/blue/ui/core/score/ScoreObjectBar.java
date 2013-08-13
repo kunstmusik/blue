@@ -22,7 +22,6 @@ package blue.ui.core.score;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
-import blue.soundObject.PolyObject;
 import blue.ui.components.IconFactory;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
@@ -84,6 +83,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
 
         popupListener = new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     popup.show(e.getComponent(), e.getX(), e.getY());
@@ -216,6 +216,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         scoreBarRefocus((LayerGroupButton) (e.getSource()));
     }
@@ -289,6 +290,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             final String finalName = name;
 
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     LayerGroupButton.this.setText(finalName);
                 }
@@ -320,6 +322,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
             return this.score;
         }
         
+        @Override
         public void removeNotify() {
             super.removeNotify();
             this.removeMouseListener(popupListener);
@@ -328,6 +331,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
     
     class ScoreObjectBarPopup extends JPopupMenu {
         
+        @Override
         public void show(Component invoker, int x, int y) {
             LayerGroupButton b = (LayerGroupButton) invoker;
             Score score = b.getScore();
@@ -368,6 +372,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
         private Action createLayerGroupMenuItem(final NoteProcessorChain npc) {
             Action editProperties = new AbstractAction("Edit NoteProcessors") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                     if (npc != null) {
                         // JOptionPane.showMessageDialog(null, "Not yet

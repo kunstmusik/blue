@@ -19,14 +19,8 @@
  */
 package blue.upgrades;
 
-import blue.BlueData;
-import blue.ProjectProperties;
-import blue.utility.TextUtilities;
 import electric.xml.Attribute;
 import electric.xml.Element;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 

@@ -25,7 +25,6 @@ import blue.score.layers.LayerGroup;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.layers.LayerGroupPanelProvider;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 
 /**
  *

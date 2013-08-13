@@ -3,12 +3,11 @@
  */
 package blue.ui.core.score.undo;
 
+import blue.BlueSystem;
+import blue.soundObject.SoundObject;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-
-import blue.BlueSystem;
-import blue.soundObject.SoundObject;
 
 /**
  * @author steven
@@ -33,6 +32,7 @@ public class AlignEdit extends AbstractUndoableEdit {
         presentationName = BlueSystem.getString("scoreGUI.action.align");
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -40,6 +40,7 @@ public class AlignEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         for (int i = 0; i < soundObjects.length; i++) {
@@ -47,6 +48,7 @@ public class AlignEdit extends AbstractUndoableEdit {
         }
     }
 
+    @Override
     public String getPresentationName() {
         return this.presentationName;
     }

@@ -31,12 +31,10 @@ import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
-import blue.services.render.CsdRenderResult;
 import blue.score.undo.AlignEdit;
 import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
 import blue.settings.UtilitySettings;
-import blue.ui.core.score.undo.MoveSoundObjectsEdit;
-import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
 import blue.soundObject.External;
 import blue.soundObject.FrozenSoundObject;
 import blue.soundObject.GenericScore;
@@ -47,6 +45,8 @@ import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.ui.core.score.undo.MoveSoundObjectsEdit;
+import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.FileUtilities;
@@ -160,6 +160,7 @@ public class SoundObjectPopup extends JPopupMenu {
         auditionSoundObjects = new AbstractAction(
                 "Audition Selected SoundObjects") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 auditionSoundObjects();
             }
@@ -167,18 +168,21 @@ public class SoundObjectPopup extends JPopupMenu {
 
         editMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 editSObj();
             }
         });
         sObjLibMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addToSObjLib();
             }
         });
         convertPolyMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 convertToPolyObject();
             }
@@ -191,18 +195,21 @@ public class SoundObjectPopup extends JPopupMenu {
 //        });
         convertObjectBuilderMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 convertToObjectBuilder();
             }
         });
         replaceOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 replaceSoundObject();
             }
         });
         followTheLeaderMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 followTheLeader();
             }
@@ -210,6 +217,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
         Action reverseAction = new BlueAction("soundObjectPopup.reverse") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 reverseSoundObjects();
 
@@ -218,30 +226,35 @@ public class SoundObjectPopup extends JPopupMenu {
 
         setTimeMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setSubjectiveTimeToObjectiveTime();
             }
         });
         removeMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeSObj();
             }
         });
         freezeMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 freezeUnfreezeSoundObject();
             }
         });
         copyMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copySObj();
             }
         });
         cutMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copySObj();
                 removeSObj();
@@ -249,18 +262,21 @@ public class SoundObjectPopup extends JPopupMenu {
         });
         alignLeftMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 alignLeft();
             }
         });
         alignCenterMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 alignCenter();
             }
         });
         alignRightMenuOpt.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 alignRight();
             }
@@ -276,6 +292,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
         Action exportItem = new AbstractAction(BlueSystem.getString("common.export")) {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (sObjView == null) {
                     return;
@@ -1140,6 +1157,7 @@ public class SoundObjectPopup extends JPopupMenu {
             super("soundObjectPopup.setColor");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
 
             MotionBuffer buffer = MotionBuffer.getInstance();

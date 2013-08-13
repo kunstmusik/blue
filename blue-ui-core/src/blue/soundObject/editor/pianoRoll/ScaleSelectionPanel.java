@@ -19,26 +19,24 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JTextField;
-
 import blue.BlueSystem;
 import blue.soundObject.pianoRoll.Scale;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.Vector;
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -64,6 +62,7 @@ public class ScaleSelectionPanel extends JComponent {
         JButton fileButton = new JButton("...");
         fileButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 int rValue = FileChooserManager.getDefault().showOpenDialog(
@@ -93,6 +92,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         popup.add(new AbstractAction("Reset (12TET)") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setScale(Scale.get12TET());
                 fireChangeEvent();
@@ -101,6 +101,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         fileNameField.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent evt) {
                 if (UiUtilities.isRightMouseButton(evt)) {
 

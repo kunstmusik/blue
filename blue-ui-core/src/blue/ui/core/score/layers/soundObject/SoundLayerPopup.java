@@ -126,6 +126,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         this.add(new BlueAction("soundLayerPopup.selectLayer") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 sCanvas.sMouse.selectLayer(sLayerIndex);
             }
@@ -133,6 +134,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         this.add(new BlueAction("soundLayerPopup.selectAllBefore") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 sCanvas.sMouse.selectAllBefore(xValue);
             }
@@ -140,6 +142,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         this.add(new BlueAction("soundLayerPopup.selectAllAfter") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 sCanvas.sMouse.selectAllAfter(xValue);
             }
@@ -149,6 +152,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         Action importItem = new AbstractAction(BlueSystem.getString("common.import")) {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 int retVal = FileChooserManager.getDefault().showOpenDialog(
@@ -203,6 +207,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         addNewPolyObject.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 int start = xValue;
@@ -224,6 +229,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         pasteSoundObjects.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float start = (float) xValue / timeState.getPixelSecond();
 
@@ -237,6 +243,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
         pasteAsPolyObject.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 float start = (float) xValue / timeState.getPixelSecond();
 
@@ -253,6 +260,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
         this.timeState = timeState;
     }
     
+    @Override
     public void actionPerformed(ActionEvent ae) {
 
         // TODO - refactor out to addSoundObject

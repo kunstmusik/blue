@@ -49,6 +49,7 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
 
           uDOLibraryPanel1.addSelectionListener(new SelectionListener() {
 
+            @Override
             public void selectionPerformed(SelectionEvent e) {
                 Object obj = e.getSelectedItem();
 
@@ -70,6 +71,7 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
 
         opcodeListEditPanel1.addListSelectionListener(new ListSelectionListener() {
 
+            @Override
             public void valueChanged(ListSelectionEvent e) {
 
                 if (e.getValueIsAdjusting() || isChanging) {
@@ -92,6 +94,7 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();

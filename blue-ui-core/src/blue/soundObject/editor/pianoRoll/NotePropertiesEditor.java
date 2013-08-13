@@ -19,18 +19,16 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.gui.LabelledItemPanel;
 import blue.soundObject.pianoRoll.PianoNote;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  * @author steven
@@ -61,14 +59,17 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
         noteTemplateText.getDocument().addDocumentListener(
                 new DocumentListener() {
 
+                    @Override
                     public void insertUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void removeUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void changedUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
@@ -92,6 +93,7 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
         // });
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         isUpdating = true;
 
@@ -132,6 +134,7 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
         isUpdating = false;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         // if(evt.getSource() == note) {
         // if(evt.getPropertyName().equals("start")) {

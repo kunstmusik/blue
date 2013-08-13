@@ -41,6 +41,7 @@ public class NoteList extends ArrayList implements Cloneable {
         this.addAll(notes);
     }
 
+    @Override
     public final String toString() {
         if (this.size() == 0) {
             return "";
@@ -71,6 +72,7 @@ public class NoteList extends ArrayList implements Cloneable {
         return tempScore.toString();
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

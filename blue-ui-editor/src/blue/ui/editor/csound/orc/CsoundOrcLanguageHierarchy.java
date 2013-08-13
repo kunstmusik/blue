@@ -6,9 +6,7 @@ package blue.ui.editor.csound.orc;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.netbeans.spi.lexer.LanguageHierarchy;
 import org.netbeans.spi.lexer.Lexer;
 import org.netbeans.spi.lexer.LexerRestartInfo;
@@ -29,14 +27,17 @@ public class CsoundOrcLanguageHierarchy extends LanguageHierarchy<CsoundOrcToken
         }
     }
 
+    @Override
     protected synchronized Collection<CsoundOrcTokenId> createTokenIds() {
         return tokens;
     }
 
+    @Override
     protected synchronized Lexer<CsoundOrcTokenId> createLexer(LexerRestartInfo<CsoundOrcTokenId> info) {
         return new CsoundOrcHLexer(info);
     }
 
+    @Override
     protected String mimeType() {
         return "text/x-csound-orc";
     }

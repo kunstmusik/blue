@@ -20,7 +20,6 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.event.ActionEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
@@ -38,6 +37,7 @@ public class BSBEditPanelNonEditPopup extends JPopupMenu {
 
         Action randomize = new AbstractAction("Randomize") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 bsbEditPanel.getBSBGraphicInterface().randomize();
             }

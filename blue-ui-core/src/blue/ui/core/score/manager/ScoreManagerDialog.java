@@ -566,6 +566,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
          */
         java.awt.EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 ScoreManagerDialog dialog = new ScoreManagerDialog(
                         new javax.swing.JFrame(), true);

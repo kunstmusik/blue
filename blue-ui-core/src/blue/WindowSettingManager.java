@@ -20,18 +20,16 @@
 
 package blue;
 
-import blue.settings.GeneralSettings;
-import java.awt.Window;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.awt.Window;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * 

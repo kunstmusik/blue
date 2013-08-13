@@ -38,6 +38,7 @@ id = "blue.application.SearchCsoundManualAction")
 @Messages("CTL_SearchCsoundManualAction=Search Csound Manual")
 public final class SearchCsoundManualAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         //GET SEARCH TERM
 

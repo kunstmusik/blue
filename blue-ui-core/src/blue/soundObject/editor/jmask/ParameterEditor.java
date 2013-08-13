@@ -8,26 +8,24 @@ package blue.soundObject.editor.jmask;
 import blue.gui.ListLayoutManager;
 import blue.soundObject.jmask.Accumulatable;
 import blue.soundObject.jmask.Accumulator;
-import blue.soundObject.jmask.Mask;
-import java.awt.Color;
-import java.beans.PropertyChangeEvent;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.border.LineBorder;
-
 import blue.soundObject.jmask.Generator;
 import blue.soundObject.jmask.GeneratorRegistry;
+import blue.soundObject.jmask.Mask;
 import blue.soundObject.jmask.Maskable;
 import blue.soundObject.jmask.Parameter;
 import blue.soundObject.jmask.Quantizable;
 import blue.soundObject.jmask.Quantizer;
 import blue.ui.utilities.UiUtilities;
+import java.awt.Color;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Iterator;
+import java.util.Vector;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.LineBorder;
 
 /**
  * 
@@ -138,11 +136,13 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         this.setVisible(this.parameter.isVisible());
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         this.parameter.addPropertyChangeListener(this);
     }
 
+    @Override
     public void removeNotify() {
         super.removeNotify();
         this.parameter.removePropertyChangeListener(this);
@@ -468,6 +468,7 @@ private void pushDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JMenuItem removeParameter;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("visible")) {
             this.setVisible(this.parameter.isVisible());

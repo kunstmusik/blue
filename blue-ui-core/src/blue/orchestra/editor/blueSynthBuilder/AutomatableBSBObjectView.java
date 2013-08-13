@@ -19,10 +19,9 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.AutomatableBSBObject;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
-import blue.orchestra.blueSynthBuilder.AutomatableBSBObject;
 
 public abstract class AutomatableBSBObjectView extends BSBObjectView {
 

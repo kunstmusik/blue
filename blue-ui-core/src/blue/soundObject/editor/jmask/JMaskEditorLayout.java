@@ -8,16 +8,20 @@ import javax.swing.JViewport;
 
 class JMaskEditorLayout implements LayoutManager {
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
         return minimumLayoutSize(parent);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
         int count = parent.getComponentCount();
         if (count == 0) {
@@ -40,6 +44,7 @@ class JMaskEditorLayout implements LayoutManager {
         return new Dimension(w, h);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
 
         int count = parent.getComponentCount();

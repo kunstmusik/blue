@@ -113,6 +113,7 @@ class PluginObjectInputStream extends ObjectInputStream {
         super(in);
     }
 
+    @Override
     protected Class resolveClass(ObjectStreamClass desc) throws IOException,
             ClassNotFoundException {
         String className = desc.getName();

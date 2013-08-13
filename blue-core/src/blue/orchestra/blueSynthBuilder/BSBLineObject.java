@@ -115,6 +115,7 @@ public class BSBLineObject extends BSBObject {
 //        return new BSBLineObjectView(this);
 //    }
 
+    @Override
     public String[] getReplacementKeys() {
         String[] vals = new String[lines.size()];
         String objName = getObjectName();

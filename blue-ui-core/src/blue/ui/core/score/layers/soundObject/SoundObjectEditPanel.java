@@ -1,14 +1,20 @@
 package blue.ui.core.score.layers.soundObject;
 
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
 import blue.plugin.BluePlugin;
+import blue.soundObject.Instance;
+import blue.soundObject.SoundObject;
+import blue.soundObject.editor.SoundObjectEditor;
+import blue.ui.core.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,14 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.soundObject.Instance;
-import blue.soundObject.SoundObject;
-import blue.soundObject.editor.SoundObjectEditor;
-import blue.ui.core.BluePluginManager;
-import java.util.ArrayList;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
@@ -161,6 +159,7 @@ public final class SoundObjectEditPanel extends JComponent implements
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -172,6 +171,7 @@ public final class SoundObjectEditPanel extends JComponent implements
      * 
      * @see blue.event.SelectionListener#selectionPerformed(blue.event.SelectionEvent)
      */
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         int selectionType = e.getSelectionType();
 

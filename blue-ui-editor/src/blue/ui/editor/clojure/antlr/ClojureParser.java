@@ -1,10 +1,8 @@
 // $ANTLR 3.4 grammar/Clojure.g 2013-01-21 18:43:35
 package blue.ui.editor.clojure.antlr; 
 
-import org.antlr.runtime.*;
-import java.util.Stack;
 import java.util.List;
-import java.util.ArrayList;
+import org.antlr.runtime.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked"})
 public class ClojureParser extends Parser {
@@ -64,7 +62,9 @@ public class ClojureParser extends Parser {
         super(input, state);
     }
 
+    @Override
     public String[] getTokenNames() { return ClojureParser.tokenNames; }
+    @Override
     public String getGrammarFileName() { return "grammar/Clojure.g"; }
 
 

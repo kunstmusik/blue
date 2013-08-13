@@ -31,6 +31,7 @@ class BSBDropdownViewBeanInfo extends SimpleBeanInfo {
      * 
      * @see java.beans.BeanInfo#getPropertyDescriptors()
      */
+    @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
         try {
             PropertyDescriptor objName = new PropertyDescriptor("objectName",

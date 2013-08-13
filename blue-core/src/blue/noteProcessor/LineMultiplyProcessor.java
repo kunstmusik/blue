@@ -80,6 +80,7 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[line multiply]";
     }

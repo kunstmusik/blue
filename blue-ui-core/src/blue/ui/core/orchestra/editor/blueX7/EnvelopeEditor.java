@@ -1,15 +1,13 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.orchestra.blueX7.EnvelopePoint;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-
-import blue.orchestra.blueX7.EnvelopePoint;
 
 /**
  * <p>
@@ -56,6 +54,7 @@ public class EnvelopeEditor extends JComponent {
         return this.points;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         
         super.paintComponent(g);
@@ -114,9 +113,11 @@ class EnvelopeMouseListener implements MouseListener, MouseMotionListener {
         this.env = env;
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         if (env.points != null) {
             int pointX = e.getX();
@@ -153,16 +154,20 @@ class EnvelopeMouseListener implements MouseListener, MouseMotionListener {
         // System.out.println("");
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         p = null;
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         if (p != null) {
             int xMaxWidth = env.getWidth() / 4;
@@ -198,6 +203,7 @@ class EnvelopeMouseListener implements MouseListener, MouseMotionListener {
         }
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
     }
 

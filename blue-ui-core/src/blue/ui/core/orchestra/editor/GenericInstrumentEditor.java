@@ -5,13 +5,6 @@
  */
 package blue.ui.core.orchestra.editor;
 
-import java.util.HashMap;
-
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.undo.UndoManager;
-
-
 import blue.BlueSystem;
 import blue.gui.InfoDialog;
 import blue.orchestra.GenericInstrument;
@@ -21,6 +14,10 @@ import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.TabWatchingUndoableEditGenerator;
+import java.util.HashMap;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -60,6 +57,7 @@ public class GenericInstrumentEditor extends InstrumentEditor {
 
         globalOrcEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (instr != null) {
                             instr.setGlobalOrc(globalOrcEditor.getText());
@@ -69,6 +67,7 @@ public class GenericInstrumentEditor extends InstrumentEditor {
 
         globalScoEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (instr != null) {
                             instr.setGlobalSco(globalScoEditor.getText());
@@ -78,6 +77,7 @@ public class GenericInstrumentEditor extends InstrumentEditor {
 
         codeEditor.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (instr != null) {
                             instr.setText(codeEditor.getText());
@@ -99,6 +99,7 @@ public class GenericInstrumentEditor extends InstrumentEditor {
 
     }
 
+    @Override
     public final void editInstrument(Instrument instr) {
         if (instr == null) {
             this.instr = null;

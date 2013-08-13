@@ -21,13 +21,14 @@
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
+import blue.ui.core.mixer.EffectCategory;
 
 import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author Steven Yi
@@ -44,6 +45,7 @@ public class EffectCategory implements Serializable {
 
     private boolean isRoot = false;
 
+    @Override
     public String toString() {
         return this.getCategoryName();
     }

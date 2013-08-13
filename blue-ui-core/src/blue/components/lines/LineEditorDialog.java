@@ -19,18 +19,16 @@
  */
 package blue.components.lines;
 
+import com.l2fprod.common.swing.BaseDialog;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.util.WeakHashMap;
-
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-
-import com.l2fprod.common.swing.BaseDialog;
 
 public class LineEditorDialog extends BaseDialog {
 

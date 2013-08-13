@@ -23,7 +23,6 @@ import blue.tools.codeRepository.AddToCodeRepositoryDialog;
 import blue.tools.codeRepository.CodeRepositoryManager;
 import electric.xml.ParseException;
 import java.awt.event.ActionEvent;
-import java.lang.ref.WeakReference;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.text.JTextComponent;

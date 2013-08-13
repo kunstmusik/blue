@@ -24,7 +24,6 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import electric.xml.Element;
 import org.junit.*;
 import static org.junit.Assert.*;
 

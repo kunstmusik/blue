@@ -183,6 +183,7 @@ public final class OffsetRange implements Comparable<OffsetRange> {
         return (offset >= getStart()) && (offset <= getEnd());
     }
     
+    @Override
     public int compareTo(OffsetRange o) {
         if (start != o.start) {
             return start - o.start;

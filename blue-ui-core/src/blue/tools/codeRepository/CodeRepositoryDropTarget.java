@@ -33,7 +33,6 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
-
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -62,6 +61,7 @@ public class CodeRepositoryDropTarget implements DropTargetListener {
         return (TreeNode) path.getLastPathComponent();
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) getNodeForEvent(dtde);
 
@@ -72,16 +72,20 @@ public class CodeRepositoryDropTarget implements DropTargetListener {
         }
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         dragEnter(dtde);
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         Point pt = dtde.getLocation();
         DropTargetContext dtc = dtde.getDropTargetContext();

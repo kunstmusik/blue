@@ -45,6 +45,7 @@ class MixerNode {
 
     public ArrayList outChannelNames = null;
 
+    @Override
     public String toString() {
         return str(0);
     }

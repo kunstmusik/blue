@@ -23,7 +23,6 @@ package blue.ui.core.mixer;
 import blue.mixer.*;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -61,6 +60,7 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         this.channels = null;
     }
 
+    @Override
     public void setSelectedItem(Object anItem) {
 
         if (Channel.MASTER.equals(anItem)) {
@@ -82,10 +82,12 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         fireListEvent(lde);
     }
 
+    @Override
     public Object getSelectedItem() {
         return selectedItem;
     }
 
+    @Override
     public int getSize() {
         if (channels == null) {
             return 1;
@@ -94,6 +96,7 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         return channels.size() + 1;
     }
 
+    @Override
     public Object getElementAt(int index) {
         if (index == 0) {
             return Channel.MASTER;
@@ -105,6 +108,7 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         return channels.getChannel(index - 1).getName();
     }
 
+    @Override
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
             listeners = new Vector();
@@ -112,6 +116,7 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         listeners.add(l);
     }
 
+    @Override
     public void removeListDataListener(ListDataListener l) {
         if (listeners == null) {
             return;
@@ -141,6 +146,7 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         }
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         // System.out.println("channelOutComboBoxModel::intervalAdded()");
         ListDataEvent lde = new ListDataEvent(this,
@@ -149,12 +155,14 @@ public class ChannelOutComboBoxModel implements ComboBoxModel, ListDataListener 
         fireListEvent(lde);
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         if (channels.indexByName(selectedItem) < 0) {
             setSelectedItem(Channel.MASTER);
         }
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         System.out.println("channelOutComboBoxModel::contentsChanged()");
     }

@@ -21,6 +21,16 @@ package blue.ui.core.orchestra;
 
 import blue.BlueSystem;
 import blue.InstrumentLibrary;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.orchestra.Instrument;
+import blue.orchestra.InstrumentCategory;
+import blue.ui.core.BluePluginManager;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.ObjectUtilities;
+import electric.xml.Document;
+import electric.xml.Element;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -37,7 +47,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-
+import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -60,18 +70,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.orchestra.Instrument;
-import blue.orchestra.InstrumentCategory;
-import blue.ui.core.BluePluginManager;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
-import electric.xml.Document;
-import electric.xml.Element;
-import java.util.HashMap;
 import org.openide.util.Exceptions;
 
 /**
@@ -114,6 +112,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         libraryTree.setCellRenderer(new DefaultTreeCellRenderer() {
 
+            @Override
             public Component getTreeCellRendererComponent(JTree tree,
                     Object value, boolean sel, boolean expanded, boolean leaf,
                     int row, boolean hasFocus) {
@@ -141,6 +140,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         libraryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 TreePath path = libraryTree.getSelectionPath();
@@ -180,6 +180,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         actionMap.put("cutNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cutNode();
             }
@@ -187,6 +188,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         actionMap.put("copyNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyNode();
             }
@@ -194,6 +196,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         actionMap.put("pasteNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pasteNode();
             }
@@ -201,6 +204,7 @@ public class UserInstrumentLibrary extends JComponent {
 
         actionMap.put("deleteNode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 deleteNode();
             }
@@ -355,36 +359,42 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         addCategoryMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addInstrumentCategory();
             }
         });
         removeCategoryMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeInstrumentCategory();
             }
         });
         removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeInstrument();
             }
         });
         cutMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 cutNode();
             }
         });
         copyMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyNode();
             }
         });
         pasteMenuItem.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pasteNode();
             }
@@ -392,6 +402,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         importItem = new AbstractAction(BlueSystem.getString("common.import")) {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 int retVal = FileChooserManager.getDefault().showOpenDialog(IMPORT_DIALOG,
@@ -428,6 +439,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         exportItem = new AbstractAction(BlueSystem.getString("common.export")) {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (userObj == null || !(userObj instanceof Instrument)) {
                     return;
@@ -662,6 +674,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
                 temp.setText(BlueSystem.getShortClassName(className));
                 temp.addActionListener(new ActionListener() {
 
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         addInstrument(finalInstrument);
                     }

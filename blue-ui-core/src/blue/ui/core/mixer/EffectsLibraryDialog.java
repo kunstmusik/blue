@@ -6,7 +6,16 @@
 
 package blue.ui.core.mixer;
 
+import blue.BlueSystem;
+import blue.WindowSettingManager;
+import blue.WindowSettingsSavable;
 import blue.mixer.*;
+import blue.ui.core.mixer.EffectCategory;
+import blue.ui.core.mixer.EffectsLibrary;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.GUI;
+import blue.utility.ObjectUtilities;
+import electric.xml.Element;
 import java.awt.Component;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
@@ -14,7 +23,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
@@ -26,14 +34,6 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-
-import blue.BlueSystem;
-import blue.WindowSettingManager;
-import blue.WindowSettingsSavable;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.GUI;
-import blue.utility.ObjectUtilities;
-import electric.xml.Element;
 
 /**
  * 
@@ -61,20 +61,24 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
         library.addTreeModelListener(new TreeModelListener() {
 
+            @Override
             public void treeNodesChanged(TreeModelEvent e) {
                 // TODO Auto-generated method stub
 
             }
 
+            @Override
             public void treeNodesInserted(TreeModelEvent e) {
                 // TODO Auto-generated method stub
 
             }
 
+            @Override
             public void treeNodesRemoved(TreeModelEvent e) {
                 effectEditor.setEffect(null);
             }
 
+            @Override
             public void treeStructureChanged(TreeModelEvent e) {
                 // TODO Auto-generated method stub
 
@@ -93,6 +97,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
         libraryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
 
                 if (UiUtilities.isRightMouseButton(e)
@@ -111,6 +116,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
                 }
             }
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
                     Effect effect = getSelectedEffect();
@@ -224,6 +230,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
         EffectsLibraryDialog library = new EffectsLibraryDialog(null, true);
         library.addWindowListener(new WindowAdapter() {
 
+            @Override
             public void windowClosed(WindowEvent e) {
                 System.exit(0);
             }
@@ -237,10 +244,12 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
     private javax.swing.JScrollPane treeScroll;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }
@@ -251,6 +260,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
             Action addGroup = new AbstractAction(BlueSystem
                     .getString("codeRepository.addGroup")) {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -266,6 +276,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
             final Action removeGroup = new AbstractAction(BlueSystem
                     .getString("codeRepository.removeGroup")) {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -279,6 +290,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action addEffect = new AbstractAction("Add Effect") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -291,6 +303,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action cutAction = new AbstractAction(BlueSystem
                     .getString("common.cut")) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -305,6 +318,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action copyAction = new AbstractAction(BlueSystem
                     .getString("common.copy")) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -319,6 +333,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             final Action pasteAction = new AbstractAction(BlueSystem
                     .getString("common.paste")) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
 
                     EffectCategory cat = getSelectedCategory();
@@ -348,6 +363,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action importAction = new AbstractAction("Import from File") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     EffectCategory cat = getSelectedCategory();
                     if (cat == null) {
@@ -376,12 +392,15 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     TreePath path = libraryTree.getSelectionPath();
                     removeGroup.setEnabled(path.getPathCount() != 1);
@@ -399,6 +418,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action removeEffect = new AbstractAction("Remove Effect") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     Effect effect = getSelectedEffect();
                     if (effect == null) {
@@ -411,6 +431,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action cutAction = new AbstractAction(BlueSystem
                     .getString("common.cut")) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     Effect effect = getSelectedEffect();
                     if (effect == null) {
@@ -425,6 +446,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action copyAction = new AbstractAction(BlueSystem
                     .getString("common.copy")) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     Effect effect = getSelectedEffect();
                     if (effect == null) {
@@ -437,6 +459,7 @@ public class EffectsLibraryDialog extends javax.swing.JDialog implements
 
             Action exportAction = new AbstractAction("Export to File") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     Effect effect = getSelectedEffect();
                     if (effect == null) {

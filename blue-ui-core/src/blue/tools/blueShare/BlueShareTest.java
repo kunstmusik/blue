@@ -10,7 +10,6 @@ package blue.tools.blueShare;
  */
 
 import java.util.Vector;
-
 import org.apache.xmlrpc.XmlRpcClient;
 
 public class BlueShareTest {

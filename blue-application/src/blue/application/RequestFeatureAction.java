@@ -15,6 +15,7 @@ public final class RequestFeatureAction implements ActionListener {
 
     static final String URL_RFE = "http://sourceforge.net/tracker/?group_id=74382&atid=540833";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         try {
             URLDisplayer.getDefault().showURL(new URL(URL_RFE));

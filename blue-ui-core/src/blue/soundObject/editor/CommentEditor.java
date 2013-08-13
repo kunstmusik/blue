@@ -1,30 +1,15 @@
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.undo.UndoManager;
-
-import blue.BlueSystem;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
 import blue.soundObject.Comment;
-import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -85,6 +70,7 @@ public class CommentEditor extends SoundObjectEditor {
         undo.setLimit(1000);
     }
 
+    @Override
     public final void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             this.sObj = null;

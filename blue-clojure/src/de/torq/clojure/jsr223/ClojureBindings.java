@@ -1,14 +1,13 @@
 package de.torq.clojure.jsr223;
 
-import javax.script.Bindings;
-import java.util.HashMap;
-import java.util.Map;
-
 import clojure.lang.Associative;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.RT;
-import clojure.lang.Var;
 import clojure.lang.Symbol;
+import clojure.lang.Var;
+import java.util.HashMap;
+import java.util.Map;
+import javax.script.Bindings;
 
 // TODO:
 // - support fully qualified names (as desribed in JSR 223 released version, p. 141)

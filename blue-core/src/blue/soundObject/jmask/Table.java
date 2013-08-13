@@ -251,6 +251,7 @@ public class Table extends AbstractTableModel implements Serializable {
         removePoint(points.indexOf(selectedPoint));
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return Double.class;
     }
@@ -259,6 +260,7 @@ public class Table extends AbstractTableModel implements Serializable {
         return 2;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         if (columnIndex == 0) {
             return "Time";
@@ -280,10 +282,12 @@ public class Table extends AbstractTableModel implements Serializable {
         return new Double(tp.getValue());
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (!(aValue instanceof Double)) {
             return;
@@ -401,10 +405,12 @@ public class Table extends AbstractTableModel implements Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj, false, this.getClass());
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

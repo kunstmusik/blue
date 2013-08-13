@@ -19,9 +19,28 @@
  */
 package blue.ui.core.orchestra;
 
+import blue.Arrangement;
+import blue.ArrangementEvent;
+import blue.ArrangementListener;
 import blue.BlueSystem;
 import blue.CopyBuffer;
 import blue.TransferableInstrument;
+import blue.gui.DragManager;
+import blue.mixer.Channel;
+import blue.mixer.ChannelList;
+import blue.mixer.Mixer;
+import blue.orchestra.BlueSynthBuilder;
+import blue.orchestra.GenericInstrument;
+import blue.orchestra.Instrument;
+import blue.settings.GeneralSettings;
+import blue.ui.core.BluePluginManager;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
+import blue.undo.BlueUndoManager;
+import blue.utility.GenericFileFilter;
+import blue.utility.ObjectUtilities;
+import electric.xml.Document;
+import electric.xml.Element;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -47,7 +66,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
-
+import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -69,34 +89,12 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-
-import blue.Arrangement;
-import blue.ArrangementEvent;
-import blue.ArrangementListener;
-import blue.gui.DragManager;
-import blue.mixer.Channel;
-import blue.mixer.ChannelList;
-import blue.mixer.Mixer;
-import blue.orchestra.BlueSynthBuilder;
-import blue.orchestra.GenericInstrument;
-import blue.orchestra.Instrument;
-import blue.settings.GeneralSettings;
-import blue.ui.core.BluePluginManager;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.UiUtilities;
-import blue.undo.BlueUndoManager;
-import blue.utility.GenericFileFilter;
-import blue.utility.ObjectUtilities;
-import electric.xml.Document;
-import electric.xml.Element;
-import java.util.ArrayList;
-import java.util.HashMap;
-import javax.swing.table.DefaultTableModel;
 
 /**
  * @author steven
@@ -142,6 +140,7 @@ public class ArrangementEditPanel extends JComponent
         addButton.setToolTipText("Add Instrument");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int x = addButton.getWidth();
                 int y = 0;
@@ -156,10 +155,12 @@ public class ArrangementEditPanel extends JComponent
 
         arrangementTable = new JTable() {
 
+            @Override
             public boolean getScrollableTracksViewportHeight() {
                 return getPreferredSize().height < getParent().getHeight();
             }
 
+            @Override
             public String getToolTipText(MouseEvent e) {
                 String tip = null;
                 java.awt.Point p = e.getPoint();
@@ -184,6 +185,7 @@ public class ArrangementEditPanel extends JComponent
 
         arrangementTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (arrangementTable.isEditing()) {
                     return;
@@ -424,6 +426,7 @@ public class ArrangementEditPanel extends JComponent
         reconcileWithArrangement();
     }
 
+    @Override
     public void arrangementChanged(ArrangementEvent arrEvt) {
         switch (arrEvt.getType()) {
             case ArrangementEvent.UPDATE:
@@ -480,6 +483,7 @@ public class ArrangementEditPanel extends JComponent
                     actions, this);
         }
 
+        @Override
         public void dragGestureRecognized(DragGestureEvent dge) {
             int index = table.getSelectedRow();
             if (index < 0) {
@@ -498,6 +502,7 @@ public class ArrangementEditPanel extends JComponent
             DragManager.setDragSource(table);
         }
 
+        @Override
         public void dragDropEnd(DragSourceDropEvent dsde) {
             if (dsde.getDropSuccess()) {
 
@@ -530,6 +535,7 @@ public class ArrangementEditPanel extends JComponent
             target = new DropTarget(targetTable, this);
         }
 
+        @Override
         public void dragEnter(DropTargetDragEvent dtde) {
 
             if (!dtde
@@ -547,10 +553,12 @@ public class ArrangementEditPanel extends JComponent
 
         }
 
+        @Override
         public void dragOver(DropTargetDragEvent dtde) {
             dragEnter(dtde);
         }
 
+        @Override
         public void drop(DropTargetDropEvent dtde) {
             Point pt = dtde.getLocation();
 
@@ -619,24 +627,28 @@ public class ArrangementEditPanel extends JComponent
         public InstrumentTablePopup() {
             removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     removeInstrument();
                 }
             });
             cutMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     cutInstrument();
                 }
             });
             copyMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     copyInstrument();
                 }
             });
             pasteMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     pasteInstrument();
                 }
@@ -645,6 +657,7 @@ public class ArrangementEditPanel extends JComponent
             convertToBSB.setText("Convert to BlueSynthBuilder");
             convertToBSB.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     convertToBSB();
                 }
@@ -654,6 +667,7 @@ public class ArrangementEditPanel extends JComponent
             Action importItem = new AbstractAction(BlueSystem
                     .getString("common.import")) {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
 
                     int retVal = FileChooserManager.getDefault().showOpenDialog(
@@ -703,6 +717,7 @@ public class ArrangementEditPanel extends JComponent
             exportItem = new AbstractAction(BlueSystem
                     .getString("common.export")) {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     int selectedRow = arrangementTable.getSelectedRow();
                     if (selectedRow < 0) {
@@ -768,6 +783,7 @@ public class ArrangementEditPanel extends JComponent
         private void setupPopupListener() {
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     int rowIndex = arrangementTable.getSelectedRow();
 
@@ -791,9 +807,11 @@ public class ArrangementEditPanel extends JComponent
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
 
@@ -829,6 +847,7 @@ public class ArrangementEditPanel extends JComponent
                     temp.setActionCommand(className);
                     temp.addActionListener(new ActionListener() {
 
+                        @Override
                         public void actionPerformed(ActionEvent e) {
                             fireAddInstrument(e.getActionCommand());
                         }
@@ -899,6 +918,7 @@ public class ArrangementEditPanel extends JComponent
             this.type = type;
         }
 
+        @Override
         public void redo() throws CannotRedoException {
             super.redo();
 
@@ -909,6 +929,7 @@ public class ArrangementEditPanel extends JComponent
             }
         }
 
+        @Override
         public void undo() throws CannotUndoException {
             super.undo();
 
@@ -919,6 +940,7 @@ public class ArrangementEditPanel extends JComponent
             }
         }
 
+        @Override
         public String getPresentationName() {
             if (this.type == ADD) {
                 return "Add Instrument";

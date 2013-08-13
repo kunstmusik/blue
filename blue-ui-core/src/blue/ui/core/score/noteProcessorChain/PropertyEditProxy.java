@@ -61,6 +61,7 @@ class PropertyEditProxy {
         setMethod.invoke(obj, args);
     }
 
+    @Override
     public String toString() {
         return getValue().toString();
     }

@@ -308,6 +308,7 @@ public class LayerGroupManagerDialog extends javax.swing.JDialog {
          */
         java.awt.EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 LayerGroupManagerDialog dialog = new LayerGroupManagerDialog(
                         new javax.swing.JFrame(), true);

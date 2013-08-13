@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Vector;
-
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -59,6 +58,7 @@ public class AudioWaveformCacheGenerator extends Thread {
         return ((AudioWaveformData) workQueue.get(0)).pixelSeconds;
     }
 
+    @Override
     public void run() {
         // System.out.println("started");
 
@@ -149,6 +149,7 @@ public class AudioWaveformCacheGenerator extends Thread {
                     if (i % 100 == 0) {
                         SwingUtilities.invokeLater(new Runnable() {
 
+                            @Override
                             public void run() {
                                 audioWaveformCache
                                         .fireAudioWaveformDataGenerated(waveData.fileName);

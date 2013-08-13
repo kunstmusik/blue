@@ -37,6 +37,7 @@ public class BlueSplitPaneUI extends BasicSplitPaneUI {
     /**
      * Creates the default divider.
      */
+    @Override
     public BasicSplitPaneDivider createDefaultDivider() {
         return new BlueSplitPaneDivider(this);
     }

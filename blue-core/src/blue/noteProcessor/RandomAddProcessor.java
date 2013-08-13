@@ -27,6 +27,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
     public RandomAddProcessor() {
     }
 
+    @Override
     public String toString() {
         return "[random add]";
     }

@@ -20,18 +20,6 @@
 
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-
 import blue.BlueSystem;
 import blue.soundObject.CeciliaModule;
 import blue.soundObject.SoundObject;
@@ -49,6 +37,16 @@ import blue.soundObject.editor.ceciliaModule.GrapherEditPanel;
 import blue.soundObject.editor.ceciliaModule.PropertiesPanel;
 import blue.utility.GUI;
 import blue.utility.TextUtilities;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.StringTokenizer;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 /**
  * @author steven
@@ -75,6 +73,7 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
                 .getString("ceciliaModule.loadModule"));
         loadModule.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 loadModule();
 
@@ -179,6 +178,7 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
         return stateData;
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             System.err.println("[CeciliaModuleEditor::editSoundObject()] "

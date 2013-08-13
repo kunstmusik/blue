@@ -78,6 +78,7 @@ public class LinearEditor extends javax.swing.JPanel implements DurationSettable
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         //ignore
     }

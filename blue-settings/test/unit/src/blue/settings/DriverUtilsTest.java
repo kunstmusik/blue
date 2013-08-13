@@ -20,8 +20,8 @@
 package blue.settings;
 
 import java.util.Vector;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

@@ -20,17 +20,6 @@
 
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.JComponent;
-import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-
 import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
@@ -41,7 +30,16 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 
 class MultiLineMouseProcessor extends MouseAdapter {
 
@@ -74,6 +72,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         return (float)timeState.getPixelSecond();
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -130,6 +129,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -180,6 +180,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -433,6 +434,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
 
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -461,6 +463,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
     public void selectAllBefore(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -490,6 +493,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
     public void selectAllAfter(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();

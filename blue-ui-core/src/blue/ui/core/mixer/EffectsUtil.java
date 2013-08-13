@@ -22,18 +22,16 @@ package blue.ui.core.mixer;
 import blue.mixer.*;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
+import blue.utility.GenericFileFilter;
+import electric.xml.Document;
+import electric.xml.Element;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-
-import blue.utility.GenericFileFilter;
-import electric.xml.Document;
-import electric.xml.Element;
 import org.openide.windows.WindowManager;
 
 public class EffectsUtil {

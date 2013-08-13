@@ -19,26 +19,7 @@
  */
 package blue.soundObject.editor;
 
-import blue.soundObject.jmask.Parameter;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.EmptyBorder;
-
-import skt.swing.SwingUtil;
 import blue.BlueSystem;
-import blue.ui.components.IconFactory;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.soundObject.JMask;
@@ -47,11 +28,28 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.jmask.EditorListPanel;
 import blue.soundObject.jmask.Field;
+import blue.soundObject.jmask.Parameter;
+import blue.ui.components.IconFactory;
 import blue.utility.GUI;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
+import skt.swing.SwingUtil;
 
 public class JMaskEditor extends SoundObjectEditor implements ActionListener {
 
@@ -87,6 +85,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
 
         optionsButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updatePopup();
                 popup.show(topPanel, optionsButton.getX(),
@@ -100,6 +99,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
         testButton.setFocusable(false);
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testScore();
             }
@@ -110,6 +110,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
 
         Action testAction = new AbstractAction("test-action") {
 
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 testScore();
             }
@@ -121,6 +122,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             return;
@@ -183,6 +185,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
         }
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         JCheckBoxMenuItem menuItem = (JCheckBoxMenuItem) e.getSource();
         Parameter param = (Parameter) menuItem.getClientProperty("parameter");

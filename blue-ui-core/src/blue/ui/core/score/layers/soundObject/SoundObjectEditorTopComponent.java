@@ -20,9 +20,9 @@
 
 package blue.ui.core.score.layers.soundObject;
 
-import blue.plugin.BluePlugin;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.plugin.BluePlugin;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.SoundObjectEditor;
@@ -176,6 +176,7 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
      *
      * @see blue.event.SelectionListener#selectionPerformed(blue.event.SelectionEvent)
      */
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         if(e == null) {
             editSoundObject(null);

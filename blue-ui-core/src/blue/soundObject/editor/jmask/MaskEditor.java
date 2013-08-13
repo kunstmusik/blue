@@ -219,6 +219,7 @@ private void lowTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//G
     private javax.swing.JSpinner mapSpinner;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         highTableEditor.setDuration(duration);
         lowTableEditor.setDuration(duration);

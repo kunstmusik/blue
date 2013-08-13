@@ -29,16 +29,19 @@ public class ResizeSoundObjectEdit extends AbstractUndoableEdit {
         this.sObj[0] = sObj;
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         sObj[0].setSubjectiveDuration(endingDuration);
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         sObj[0].setSubjectiveDuration(initialDuration);
     }
 
+    @Override
     public String getPresentationName() {
         return BlueSystem.getString("scoreGUI.action.resizeSoundObject");
     }

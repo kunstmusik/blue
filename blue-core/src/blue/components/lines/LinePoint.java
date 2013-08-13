@@ -118,6 +118,7 @@ public class LinePoint implements Serializable, Comparable {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

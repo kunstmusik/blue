@@ -312,10 +312,12 @@ public class ItemList implements Generator, Serializable, TableModel,
         this.listType = listType;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

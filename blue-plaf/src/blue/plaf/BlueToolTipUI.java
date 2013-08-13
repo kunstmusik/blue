@@ -25,7 +25,6 @@ import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JToolTip;
@@ -48,6 +47,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
 
     private JToolTip tip;
 
+    @Override
     public void installUI(JComponent c) {
         super.installUI(c);
 
@@ -60,6 +60,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
         }
     }
 
+    @Override
     public void paint(Graphics g, JComponent c) {
         JToolTip tip = (JToolTip) c;
 
@@ -95,6 +96,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
     // that subclasses that randomly invoke this method will see varying
     // results. If this becomes an issue, MetalToolTipUI should no longer be
     // shared.
+    @Override
     public String getAcceleratorString() {
         if (tip == null || isAcceleratorHidden()) {
             return "";

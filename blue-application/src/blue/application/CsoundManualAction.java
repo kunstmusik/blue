@@ -30,6 +30,7 @@ import org.openide.util.Exceptions;
 
 public final class CsoundManualAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);

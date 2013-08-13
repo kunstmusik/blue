@@ -19,6 +19,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.components.lines.LineList;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -29,11 +30,8 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyEditor;
-
 import javax.swing.JButton;
 import javax.swing.JPanel;
-
-import blue.components.lines.LineList;
 
 /**
  * @author steven
@@ -60,6 +58,7 @@ public class LineListPropertyEditor implements PropertyEditor {
 
         button.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 // selectColor();
                 // JOptionPane.showMessageDialog(null, "test");
@@ -109,6 +108,7 @@ public class LineListPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#getCustomEditor()
      */
+    @Override
     public Component getCustomEditor() {
         return editor;
     }
@@ -118,34 +118,42 @@ public class LineListPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#supportsCustomEditor()
      */
+    @Override
     public boolean supportsCustomEditor() {
         return false;
     }
 
+    @Override
     public Object getValue() {
         return view;
     }
 
+    @Override
     public void setValue(Object value) {
         this.view = (BSBLineObjectView) value;
         this.items = view.getLineList();
     }
 
+    @Override
     public String getAsText() {
         return null;
     }
 
+    @Override
     public String getJavaInitializationString() {
         return null;
     }
 
+    @Override
     public String[] getTags() {
         return null;
     }
 
+    @Override
     public void setAsText(String text) throws IllegalArgumentException {
     }
 
+    @Override
     public void paintValue(Graphics gfx, Rectangle box) {
 
     }
@@ -155,14 +163,17 @@ public class LineListPropertyEditor implements PropertyEditor {
      * 
      * @see java.beans.PropertyEditor#isPaintable()
      */
+    @Override
     public boolean isPaintable() {
         return true;
     }
 
+    @Override
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         listeners.addPropertyChangeListener(listener);
     }
 
+    @Override
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         listeners.removePropertyChangeListener(listener);
     }

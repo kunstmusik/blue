@@ -19,17 +19,15 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.PianoRoll;
+import blue.soundObject.PolyObject;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JComponent;
-
-import blue.soundObject.PianoRoll;
-import blue.soundObject.PolyObject;
 
 /**
  * @author steven
@@ -46,6 +44,7 @@ public final class TimeBar extends JComponent implements PropertyChangeListener 
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -151,6 +150,7 @@ public final class TimeBar extends JComponent implements PropertyChangeListener 
      * 
      * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
 

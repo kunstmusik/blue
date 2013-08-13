@@ -25,7 +25,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeSupport;
 
 /**
  * @author steven

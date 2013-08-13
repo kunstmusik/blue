@@ -7,16 +7,10 @@ package blue.ui.core.render;
  * @author steven yi
  * @version 1.0
  */
-import blue.services.render.CsdRenderResult;
-import blue.CompileData;
-import blue.noteProcessor.TempoMapper;
-import blue.orchestra.blueSynthBuilder.StringChannel;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-
 import blue.Arrangement;
 import blue.BlueConstants;
 import blue.BlueData;
+import blue.CompileData;
 import blue.GlobalOrcSco;
 import blue.InstrumentAssignment;
 import blue.ProjectProperties;
@@ -27,13 +21,15 @@ import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
+import blue.noteProcessor.TempoMapper;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
+import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
 import blue.score.ScoreGenerationException;
 import blue.score.tempo.Tempo;
 import blue.services.render.CSDRenderService;
-import blue.settings.GeneralSettings;
+import blue.services.render.CsdRenderResult;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.GenericScore;
 import blue.soundObject.Note;
@@ -44,6 +40,8 @@ import blue.udo.OpcodeList;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

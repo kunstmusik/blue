@@ -21,7 +21,6 @@ package blue.ui.components;
 
 import java.awt.Component;
 import java.awt.Graphics;
-
 import javax.swing.Icon;
 
 public class IconFactory {
@@ -55,6 +54,7 @@ public class IconFactory {
 
     private static class RightArrowIcon implements Icon {
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             g.translate(x, y);
             g.setColor(c.getForeground());
@@ -67,10 +67,12 @@ public class IconFactory {
 
         }
 
+        @Override
         public int getIconWidth() {
             return 4;
         }
 
+        @Override
         public int getIconHeight() {
             // TODO Auto-generated method stub
             return 8;
@@ -80,6 +82,7 @@ public class IconFactory {
 
     private static class LeftArrowIcon implements Icon {
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             g.translate(x, y);
             g.setColor(c.getForeground());
@@ -92,10 +95,12 @@ public class IconFactory {
 
         }
 
+        @Override
         public int getIconWidth() {
             return 4;
         }
 
+        @Override
         public int getIconHeight() {
             // TODO Auto-generated method stub
             return 8;
@@ -105,6 +110,7 @@ public class IconFactory {
 
     private static class DownArrowIcon implements Icon {
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             g.translate(x, y);
             g.setColor(c.getForeground());
@@ -117,10 +123,12 @@ public class IconFactory {
 
         }
 
+        @Override
         public int getIconWidth() {
             return 8;
         }
 
+        @Override
         public int getIconHeight() {
             // TODO Auto-generated method stub
             return 4;

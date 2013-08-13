@@ -33,18 +33,21 @@ public class ReplaceSoundObjectEdit extends AbstractUndoableEdit {
         this.soundLayerIndex = soundLayerIndex;
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         this.pObj.removeSoundObject(oldSObj);
         this.pObj.addSoundObject(soundLayerIndex, this.newSObj);
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         this.pObj.removeSoundObject(newSObj);
         this.pObj.addSoundObject(soundLayerIndex, this.oldSObj);
     }
 
+    @Override
     public String getPresentationName() {
         return BlueSystem.getString("scoreGUI.action.replaceSoundObject");
     }

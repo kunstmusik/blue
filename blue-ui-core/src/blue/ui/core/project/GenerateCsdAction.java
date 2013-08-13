@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.ui.utilities.FileChooserManager;
@@ -42,6 +41,7 @@ public final class GenerateCsdAction implements ActionListener {
 
     private static String FILE_GEN = "blueMainFrame.generateCSD";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
         int rValue = FileChooserManager.getDefault().showSaveDialog(FILE_GEN,mainWindow);

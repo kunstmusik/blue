@@ -1,24 +1,6 @@
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JToggleButton;
-
 import blue.BlueSystem;
-import blue.ui.components.IconFactory;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
 import blue.soundObject.PianoRoll;
@@ -29,7 +11,23 @@ import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
 import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
 import blue.soundObject.editor.pianoRoll.TimeBar;
 import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
+import blue.ui.components.IconFactory;
 import blue.utility.GUI;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -103,6 +101,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
 
         snapButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 timeProperties.setVisible(!timeProperties.isVisible());
             }
@@ -110,6 +109,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
 
         noteCanvas.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 Dimension d = new Dimension(e.getComponent().getWidth(), 20);
                 timeBar.setSize(d);
@@ -123,6 +123,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         noteScrollPane.getViewport().addComponentListener(
         new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 noteCanvas.recalculateSize();
             }
@@ -178,6 +179,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         scrollbar.setValue((max / 32) * 13);
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
 
         if (sObj == null) {
@@ -207,6 +209,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         centerNoteScrollPane();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.p) {
             if (evt.getPropertyName().equals("scale")) {
@@ -276,6 +279,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         p.setPixelSecond(pixelSecond);
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
         if (command.equals("plusVertical")) {

@@ -5,11 +5,9 @@
  */
 package blue.score.tempo;
 
-import blue.ui.components.IconFactory;
-import blue.score.tempo.Tempo;
 import blue.soundObject.PolyObject;
+import blue.ui.components.IconFactory;
 import java.awt.Dimension;
-import java.util.Iterator;
 import java.util.Vector;
 
 /**

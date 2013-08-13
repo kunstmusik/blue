@@ -170,6 +170,7 @@ public class DurationsSequence extends AbstractSoundObject implements
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public Object clone() {
         DurationsSequence buffer = new DurationsSequence();
         buffer.setText(this.score);

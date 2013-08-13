@@ -20,11 +20,6 @@
 
 package blue.ui.core.orchestra.editor;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JLabel;
-import javax.swing.JTabbedPane;
-
 import blue.BlueSystem;
 import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.Instrument;
@@ -35,6 +30,9 @@ import blue.orchestra.editor.InstrumentEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBCodeEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
+import java.awt.BorderLayout;
+import javax.swing.JLabel;
+import javax.swing.JTabbedPane;
 
 /**
  * @author Steven Yi
@@ -64,6 +62,7 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
 
     }
 
+    @Override
     public void editInstrument(Instrument instr) {
         if (instr == null) {
             this.bsb = null;

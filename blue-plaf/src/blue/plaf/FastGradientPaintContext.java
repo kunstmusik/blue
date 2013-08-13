@@ -207,6 +207,7 @@ class GradientInfo {
 
     boolean isAscending;
 
+    @Override
     public boolean equals(Object o) {
         // Fix for BUG 528602:
         if (!(o instanceof GradientInfo) || (model == null)) {
@@ -221,6 +222,7 @@ class GradientInfo {
         }
     }
 
+    @Override
     public int hashCode() {
         return parallelLength;
     }

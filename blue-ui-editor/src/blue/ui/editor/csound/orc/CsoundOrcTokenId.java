@@ -53,6 +53,7 @@ public enum CsoundOrcTokenId implements TokenId {
         return fixedText;
     }
 
+    @Override
     public String primaryCategory() {
         return primaryCategory;
     }

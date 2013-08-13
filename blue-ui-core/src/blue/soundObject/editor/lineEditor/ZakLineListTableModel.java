@@ -6,12 +6,11 @@
 
 package blue.soundObject.editor.lineEditor;
 
-import javax.swing.JOptionPane;
-
 import blue.BlueSystem;
 import blue.automation.LineColors;
 import blue.components.lines.Line;
 import blue.components.lines.LineListTableModel;
+import javax.swing.JOptionPane;
 
 /**
  * TableModel for zak lines
@@ -27,6 +26,7 @@ public class ZakLineListTableModel extends LineListTableModel {
     /**
      * Adds a Line object, appropriately flagged as a zak line
      */
+    @Override
     public void addLine(int index) {
         if (lines == null) {
             return;
@@ -52,6 +52,7 @@ public class ZakLineListTableModel extends LineListTableModel {
      * Gets value stored in table, difference from base class being the 2nd
      * column is zak channel
      */
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (lines == null) {
             return null;
@@ -70,6 +71,7 @@ public class ZakLineListTableModel extends LineListTableModel {
      * Sets value stored in table, difference from base class being the 2nd
      * column is zak channel
      */
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 1) {
             Line line = lines.getLine(row);
@@ -98,6 +100,7 @@ public class ZakLineListTableModel extends LineListTableModel {
      * Returns name of table column, difference from base class being the 2nd
      * column is zak channel
      */
+    @Override
     public String getColumnName(int column) {
         if (column == 1) {
             return BlueSystem.getString("lineObject.zakChannel");

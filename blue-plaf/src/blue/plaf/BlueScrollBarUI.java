@@ -3,7 +3,6 @@ package blue.plaf;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
@@ -40,6 +39,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
         return new BlueScrollBarUI();
     }
     
+    @Override
     protected void installDefaults() {
         scrollBarWidth = ((Integer) (UIManager.get("ScrollBar.width")))
                 .intValue();
@@ -48,6 +48,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
         // new BlueBumps(10, 10, thumbHighlightColor, thumbShadow, thumbColor);
     }
 
+    @Override
     protected void installListeners() {
         super.installListeners();
         ((ScrollBarListener) propertyChangeListener)
@@ -55,10 +56,12 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
                         .getClientProperty(FREE_STANDING_PROP));
     }
 
+    @Override
     protected PropertyChangeListener createPropertyChangeListener() {
         return new ScrollBarListener();
     }
 
+    @Override
     protected void configureScrollBarColors() {
         super.configureScrollBarColors();
         shadowColor = UIManager.getColor("ScrollBar.shadow");
@@ -70,6 +73,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
 
     }
 
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         if (scrollbar.getOrientation() == JScrollBar.VERTICAL) {
             return new Dimension(scrollBarWidth, scrollBarWidth * 3 + 10);
@@ -82,6 +86,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
     /**
      * Returns the view that represents the decrease view.
      */
+    @Override
     protected JButton createDecreaseButton(int orientation) {
 //        decreaseButton = new BlueScrollButton(orientation, scrollBarWidth,
 //                isFreeStanding);
@@ -92,6 +97,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
     }
 
     /** Returns the view that represents the increase view. */
+    @Override
     protected JButton createIncreaseButton(int orientation) {
 //        increaseButton = new BlueScrollButton(orientation, scrollBarWidth,
 //                isFreeStanding);
@@ -108,6 +114,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
         return jbutton;
     }
 
+    @Override
     protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
 //        g.translate(trackBounds.x, trackBounds.y);
 //
@@ -199,6 +206,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
 //        g.translate(-trackBounds.x, -trackBounds.y);
     }
 
+    @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
         if (!c.isEnabled()) {
             return;
@@ -274,6 +282,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
         g.translate(-thumbBounds.x, -thumbBounds.y);
     }
 
+    @Override
     protected Dimension getMinimumThumbSize() {
         return new Dimension(scrollBarWidth, scrollBarWidth);
     }
@@ -282,6 +291,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
      * This is overridden only to increase the invalid area. This ensures that
      * the "Shadow" below the thumb is invalidated
      */
+    @Override
     protected void setThumbBounds(int x, int y, int width, int height) {
         /*
          * If the thumbs bounds haven't changed, we're done.
@@ -305,6 +315,7 @@ public class BlueScrollBarUI extends BasicScrollBarUI {
     }
 
     class ScrollBarListener extends BasicScrollBarUI.PropertyChangeHandler {
+        @Override
         public void propertyChange(PropertyChangeEvent e) {
             String name = e.getPropertyName();
             if (name.equals(FREE_STANDING_PROP)) {

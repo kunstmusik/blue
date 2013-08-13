@@ -22,7 +22,6 @@ package blue.ui.core.udo;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
 import java.awt.BorderLayout;
-
 import javax.swing.JComponent;
 import javax.swing.JSplitPane;
 import javax.swing.event.ListSelectionEvent;
@@ -48,6 +47,7 @@ public class EmbeddedOpcodeListPanel extends JComponent {
         opcodeListEditPanel
                 .addListSelectionListener(new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
 
                         if (e.getValueIsAdjusting()) {

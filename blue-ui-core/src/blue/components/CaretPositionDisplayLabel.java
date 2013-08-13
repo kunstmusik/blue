@@ -11,6 +11,7 @@ public class CaretPositionDisplayLabel extends JLabel implements CaretListener {
         this.setHorizontalAlignment(SwingConstants.RIGHT);
     }
 
+    @Override
     public void caretUpdate(CaretEvent e) {
         JTextArea jTextArea = (JTextArea) e.getSource();
         String text = jTextArea.getText();

@@ -51,6 +51,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private boolean randomizable = true;
 
     // OVERRIDE to handle parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;

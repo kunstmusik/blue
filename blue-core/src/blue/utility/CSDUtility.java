@@ -20,8 +20,8 @@ import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.Map.Entry;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class CSDUtility {
     public static final int IMPORT_GLOBAL = 0;

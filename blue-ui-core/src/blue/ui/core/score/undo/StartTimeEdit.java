@@ -4,12 +4,11 @@
  */
 package blue.ui.core.score.undo;
 
+import blue.BlueSystem;
+import blue.soundObject.SoundObject;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-
-import blue.BlueSystem;
-import blue.soundObject.SoundObject;
 
 /**
  * @author steven
@@ -29,17 +28,20 @@ public class StartTimeEdit extends AbstractUndoableEdit {
         this.sObj = new SoundObject[] { sObj };
     }
 
+    @Override
     public void redo() throws CannotRedoException {
         super.redo();
         this.sObj[0].setStartTime(newStart);
     }
 
+    @Override
     public void undo() throws CannotUndoException {
         super.undo();
         this.sObj[0].setStartTime(this.initialStart);
 
     }
 
+    @Override
     public String getPresentationName() {
         return BlueSystem.getString("scoreGUI.action.changeStartTime");
     }

@@ -26,6 +26,7 @@ import blue.soundObject.NoteList;
 class sq extends CybilAlgorithm {
 
     // TODO - Need to implement
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
 
         String time = (String) args.get(args.size() - 1);

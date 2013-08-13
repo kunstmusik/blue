@@ -23,6 +23,7 @@ package blue.ui.core.orchestra;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.OrchestraTableModel;
+import blue.orchestra.Instrument;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -32,10 +33,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.TreeMap;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -43,9 +44,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import blue.orchestra.Instrument;
-import javax.swing.JFrame;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -95,6 +93,7 @@ public final class InstrumentLibraryImportDialog extends JDialog {
         border1 = BorderFactory.createLineBorder(Color.white, 1);
         this.setTitle(BlueSystem.getString("instrument.instrumentLibrary"));
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
             public void componentHidden(ComponentEvent e) {
                 dispose();
             }
@@ -108,6 +107,7 @@ public final class InstrumentLibraryImportDialog extends JDialog {
         this.getContentPane().setLayout(borderLayout1);
 
         orchestraTable.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == 127) {
                     removeInstrument();
@@ -118,6 +118,7 @@ public final class InstrumentLibraryImportDialog extends JDialog {
         buttonPanel.setLayout(flowLayout1);
         copyButton.setText(BlueSystem.getString("instrument.copyToLibrary"));
         copyButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 copyInstrument();
             }
@@ -140,6 +141,7 @@ public final class InstrumentLibraryImportDialog extends JDialog {
         orchestraTable.getTableHeader().setReorderingAllowed(false);
         orchestraTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (e.getValueIsAdjusting()) {
                             return;

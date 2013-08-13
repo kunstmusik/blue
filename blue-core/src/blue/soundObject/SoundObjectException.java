@@ -74,6 +74,7 @@ public class SoundObjectException extends ScoreGenerationException {
      * @return Message describing why the noteProcessor couldn't execute. Should
      *         be a readable message, digestable by the user.
      */
+    @Override
     public String getMessage() {
         Object[] mainArgs = new Object[] {
                 ObjectUtilities.getShortClassName(soundObject),

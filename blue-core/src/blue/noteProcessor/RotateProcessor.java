@@ -23,6 +23,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
     public RotateProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[sublist] start: " + start + " end: " + end;
         return "[rotate]";

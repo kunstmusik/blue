@@ -19,16 +19,15 @@
  */
 package blue.ui.core.midi;
 
-import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.util.NbBundle;
+import org.openide.windows.TopComponent;
 
 /**
  * Top component which displays something.
@@ -52,6 +51,7 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
 
         channelSpinner.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent ce) {
                 virtualKeyboardPanel1.setChannel(((Integer) channelSpinner.getValue()) - 1);
             }
@@ -59,6 +59,7 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
 
         octaveSpinner.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent ce) {
                 virtualKeyboardPanel1.setOctave(((Integer) octaveSpinner.getValue()));
             }
@@ -66,6 +67,7 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
 
         velocitySpinner.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent ce) {
                 virtualKeyboardPanel1.setVelocity(((Integer) velocitySpinner.getValue()));
             }

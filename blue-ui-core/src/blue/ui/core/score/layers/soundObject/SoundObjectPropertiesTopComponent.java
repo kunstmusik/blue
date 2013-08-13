@@ -348,6 +348,7 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     }
 
     // SOUND OBJECT LISTENER
+    @Override
     public void soundObjectChanged(SoundObjectEvent event) {
         if (event.getSoundObject() != this.sObj) {
             return;
@@ -375,6 +376,7 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     }
 
     // SELECTION LISTENER
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         if(e == null) {
             setSoundObject(null);

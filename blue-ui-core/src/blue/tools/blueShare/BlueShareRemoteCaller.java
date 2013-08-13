@@ -18,14 +18,6 @@ package blue.tools.blueShare;
  * @version 1.0
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Vector;
-
-import org.apache.xmlrpc.XmlRpcClient;
-import org.apache.xmlrpc.XmlRpcException;
-
 import Silence.XMLSerializer;
 import blue.mixer.Effect;
 import blue.orchestra.Instrument;
@@ -38,6 +30,12 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Vector;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcException;
 
 public class BlueShareRemoteCaller {
     private static XmlRpcClient xrpc;

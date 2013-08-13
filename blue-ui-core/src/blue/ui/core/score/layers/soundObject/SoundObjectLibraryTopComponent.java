@@ -67,6 +67,7 @@ final class SoundObjectLibraryTopComponent extends TopComponent implements Chang
         this.sObjBuffer = SoundObjectBuffer.getInstance();
 
         sObjLibTable.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 int index = sObjLibTable.getSelectedRow();
@@ -83,6 +84,7 @@ final class SoundObjectLibraryTopComponent extends TopComponent implements Chang
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(
                         evt.getPropertyName())) {

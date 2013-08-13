@@ -281,6 +281,7 @@ public class Effect implements Serializable, Automatable {
         this.comments = comments;
     }
 
+    @Override
     public String toString() {
         return getName();
     }

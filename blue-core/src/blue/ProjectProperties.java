@@ -102,6 +102,7 @@ public final class ProjectProperties implements Serializable, Cloneable {
         return ksmps;
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

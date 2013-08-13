@@ -21,17 +21,14 @@ package blue.ui.editor.csound.orc.actions;
 
 import blue.ui.editor.actions.NameValueTextAction;
 import java.awt.event.ActionEvent;
-import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import org.netbeans.editor.BaseAction;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 

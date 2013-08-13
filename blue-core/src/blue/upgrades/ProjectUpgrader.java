@@ -19,7 +19,6 @@
  */
 package blue.upgrades;
 
-import blue.BlueData;
 import electric.xml.Element;
 
 /**

@@ -20,6 +20,9 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
+import blue.soundObject.ceciliaModule.CSlider;
+import blue.soundObject.ceciliaModule.CeciliaObject;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -27,15 +30,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Iterator;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.soundObject.CeciliaModule;
-import blue.soundObject.ceciliaModule.CSlider;
-import blue.soundObject.ceciliaModule.CeciliaObject;
 
 public class SliderPanel extends JComponent implements ChangeListener,
         ActionListener {
@@ -150,6 +148,7 @@ public class SliderPanel extends JComponent implements ChangeListener,
      * 
      * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
      */
+    @Override
     public void stateChanged(ChangeEvent e) {
         if (!updating) {
             FloatSlider fSlider = (FloatSlider) e.getSource();
@@ -224,6 +223,7 @@ public class SliderPanel extends JComponent implements ChangeListener,
         displayLabel.setText(Float.toString(slider.getValue()));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         FloatSlider fSlider = (FloatSlider) e.getSource();
 

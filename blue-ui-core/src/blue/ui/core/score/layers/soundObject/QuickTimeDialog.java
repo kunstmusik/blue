@@ -1,5 +1,10 @@
 package blue.ui.core.score.layers.soundObject;
 
+import blue.BlueSystem;
+import blue.gui.LabelledItemPanel;
+import blue.ui.core.score.undo.ResizeSoundObjectEdit;
+import blue.ui.core.score.undo.StartTimeEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.KeyAdapter;
@@ -7,16 +12,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-
-import blue.BlueSystem;
-import blue.gui.LabelledItemPanel;
-import blue.ui.core.score.undo.ResizeSoundObjectEdit;
-import blue.ui.core.score.undo.StartTimeEdit;
-import blue.undo.BlueUndoManager;
 
 /**
  * Popup for quick entry of start time and duration, used by ScoreTimeCanvas
@@ -52,6 +50,7 @@ public class QuickTimeDialog extends JDialog {
 
         this.addWindowListener(new WindowAdapter() {
 
+            @Override
             public void windowDeactivated(WindowEvent e) {
                 hide();
             }
@@ -59,10 +58,12 @@ public class QuickTimeDialog extends JDialog {
 
         KeyListener k = new KeyAdapter() {
 
+            @Override
             public void keyTyped(KeyEvent e) {
                 // handleKeyTyped(e);
             }
 
+            @Override
             public void keyPressed(KeyEvent e) {
                 handleKeyTyped(e);
             }

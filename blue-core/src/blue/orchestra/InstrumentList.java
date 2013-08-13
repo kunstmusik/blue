@@ -51,6 +51,7 @@ public class InstrumentList extends ArrayList implements ListModel {
         }
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

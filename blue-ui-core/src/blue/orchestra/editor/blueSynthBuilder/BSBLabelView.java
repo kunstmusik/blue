@@ -19,11 +19,9 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JLabel;
-
 import blue.orchestra.blueSynthBuilder.BSBLabel;
+import java.awt.BorderLayout;
+import javax.swing.JLabel;
 
 /**
  * @author steven
@@ -71,5 +69,6 @@ public class BSBLabelView extends BSBObjectView {
      * g.drawString(label.getLabel(), 3,15); }
      */
 
+    @Override
     public void cleanup() {}
 }

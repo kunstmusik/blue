@@ -20,18 +20,16 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
 import java.awt.BorderLayout;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-
-import blue.soundObject.CeciliaModule;
 
 public class GrapherEditPanel extends JComponent {
     GrapherLineController grapherLineController = new GrapherLineController();

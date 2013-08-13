@@ -20,6 +20,13 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.BSBObjectListener;
+import com.l2fprod.common.propertysheet.Property;
+import com.l2fprod.common.propertysheet.PropertySheet;
+import com.l2fprod.common.propertysheet.PropertySheetPanel;
 import java.awt.BorderLayout;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -27,17 +34,7 @@ import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
-
 import javax.swing.JComponent;
-
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectListener;
-
-import com.l2fprod.common.propertysheet.Property;
-import com.l2fprod.common.propertysheet.PropertySheet;
-import com.l2fprod.common.propertysheet.PropertySheetPanel;
 
 /**
  * @author Steven Yi
@@ -58,6 +55,7 @@ public class BSBObjectPropertySheet extends JComponent implements
 
         pl = new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (objectView != null) {
                     Property prop = (Property) evt.getSource();
@@ -88,6 +86,7 @@ public class BSBObjectPropertySheet extends JComponent implements
 
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         if (e.getSelectionType() != SelectionEvent.SELECTION_SINGLE) {
             clear();
@@ -172,6 +171,7 @@ public class BSBObjectPropertySheet extends JComponent implements
         objectView.addBSBObjectListener(this);
     }
 
+    @Override
     public void bsbObjectChanged(BSBObject object) {
         propSheet.readFromObject(BSBObjectEditorFactory.getView(object));
     }

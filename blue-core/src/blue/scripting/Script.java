@@ -116,6 +116,7 @@ public class Script implements Serializable {
         return script;
     }
 
+    @Override
     public String toString() {
         return getName();
     }

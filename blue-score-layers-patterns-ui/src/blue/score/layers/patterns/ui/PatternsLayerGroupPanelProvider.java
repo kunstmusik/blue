@@ -25,7 +25,6 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
 import blue.ui.core.score.layers.LayerGroupPanelProvider;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 
 /**
  *

@@ -177,6 +177,7 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
         return retVal;
     }
 
+    @Override
     public Object clone() {
         PianoNote note = new PianoNote();
 
@@ -223,6 +224,7 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
         return 0;
     }
     
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

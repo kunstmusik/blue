@@ -19,16 +19,14 @@
  */
 package blue.components;
 
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
-
-import blue.utility.GUI;
 
 /**
  * @author steven
@@ -53,6 +51,7 @@ public class DockingSplitPane extends JComponent {
 
         dockPanel.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (window.isShowing()) {
                     window.remove(dockPanel);

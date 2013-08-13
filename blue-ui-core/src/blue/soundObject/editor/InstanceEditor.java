@@ -1,21 +1,19 @@
 package blue.soundObject.editor;
 
 import blue.*;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
 import blue.gui.InfoDialog;
 import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.Exceptions;
 
 /**
@@ -57,6 +55,7 @@ public class InstanceEditor extends SoundObjectEditor {
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -71,6 +70,7 @@ public class InstanceEditor extends SoundObjectEditor {
 
     }
 
+    @Override
     public void editSoundObject(SoundObject sObj) {
         if (sObj == null) {
             instance = null;

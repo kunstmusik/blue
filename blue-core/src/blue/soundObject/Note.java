@@ -190,6 +190,7 @@ public class Note implements Serializable, Comparable {
         setTied(dur < 0.0f);
     }
 
+    @Override
     public String toString() {
         StrBuilder temp = new StrBuilder();
 
@@ -258,6 +259,7 @@ public class Note implements Serializable, Comparable {
         fields[index - 1] = arg;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

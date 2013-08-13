@@ -33,6 +33,7 @@ public class DefaultBluePluginProvider implements BluePluginProvider {
         plugins.add(plugin);
     }
 
+    @Override
     public ArrayList<BluePlugin> getPlugins(Class pluginType) {
         ArrayList<BluePlugin> returnValue = new ArrayList<BluePlugin>();
 
@@ -45,6 +46,7 @@ public class DefaultBluePluginProvider implements BluePluginProvider {
         return returnValue;
     }
 
+    @Override
     public ArrayList<Class> getPluginClasses(Class pluginType) {
         ArrayList<Class> pluginClasses = new ArrayList<Class>();
 

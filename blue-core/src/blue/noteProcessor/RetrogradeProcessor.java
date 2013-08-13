@@ -28,6 +28,7 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
     public RetrogradeProcessor() {
     }
 
+    @Override
     public String toString() {
         return "[retrograde]";
     }

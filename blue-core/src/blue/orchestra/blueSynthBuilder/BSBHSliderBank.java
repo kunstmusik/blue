@@ -63,6 +63,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     private boolean randomizable = true;
 
     // OVERRIDE to handle Parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;
@@ -528,6 +529,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         return gap;
     }
 
+    @Override
     public String[] getReplacementKeys() {
         String objName = getObjectName().trim();
 
