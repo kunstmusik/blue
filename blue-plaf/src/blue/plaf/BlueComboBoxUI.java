@@ -17,8 +17,6 @@ import javax.swing.plaf.metal.MetalComboBoxUI;
 public class BlueComboBoxUI extends MetalComboBoxUI {
 
     boolean oldOpaque = false;
-    ListCellRenderer renderer;
-
 
     public static ComponentUI createUI(JComponent c) {
         return new BlueComboBoxUI();

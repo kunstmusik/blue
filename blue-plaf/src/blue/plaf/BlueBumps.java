@@ -69,11 +69,10 @@ class BlueBumps implements Icon {
             return buffer;
         }
         BumpBuffer result = null;
-
-        Enumeration elements = buffers.elements();
+        Enumeration<BumpBuffer> elements = buffers.elements();
 
         while (elements.hasMoreElements()) {
-            BumpBuffer aBuffer = (BumpBuffer) elements.nextElement();
+            BumpBuffer aBuffer = elements.nextElement();
             if (aBuffer.hasSameConfiguration(gc, aTopColor, aShadowColor,
                     aBackColor)) {
                 result = aBuffer;

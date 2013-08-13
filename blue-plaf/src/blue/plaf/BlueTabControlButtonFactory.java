@@ -205,9 +205,9 @@ public class BlueTabControlButtonFactory {
 
         @Override
         protected void processMouseEvent(MouseEvent me) {
-            if (isEnabled() && me.getID() == me.MOUSE_PRESSED) {
+            if (isEnabled() && me.getID() == MouseEvent.MOUSE_PRESSED) {
                 startTimer();
-            } else if (me.getID() == me.MOUSE_RELEASED) {
+            } else if (me.getID() == MouseEvent.MOUSE_RELEASED) {
                 stopTimer();
             }
             super.processMouseEvent(me);
@@ -216,7 +216,7 @@ public class BlueTabControlButtonFactory {
         @Override
         protected void processFocusEvent(FocusEvent fe) {
             super.processFocusEvent(fe);
-            if (fe.getID() == fe.FOCUS_LOST) {
+            if (fe.getID() == FocusEvent.FOCUS_LOST) {
                 stopTimer();
             }
         }
