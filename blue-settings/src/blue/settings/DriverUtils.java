@@ -908,8 +908,8 @@ public class DriverUtils {
         //        System.out.println(retVal);
                 
                 String[] lines = output.split("\\n");
-                ArrayList<String> ports = new ArrayList<String>();
-                Map<String, Integer> portMap = new HashMap<String, Integer>();
+                ArrayList<String> ports = new ArrayList<>();
+                Map<String, Integer> portMap = new HashMap<>();
                 
                 for(int i = 0; i < lines.length; i += 3) {
                     if(lines[i + 2].contains(portType) && 

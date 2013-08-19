@@ -207,7 +207,7 @@ public class DriverUtilities {
     }
 
     protected static List<DeviceInfo> parseCsoundMidiOutput(String text, boolean isInput) {
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
         boolean collect = false;
         String startToken = "audio buffered in";
         String endToken = "inactive allocs";
@@ -240,7 +240,7 @@ public class DriverUtilities {
     /* AUDIO DEVICE LISTING METHODS */
     // PULSE AUDIO
     protected static List<DeviceInfo> getAudioDevicesPulse(boolean isInput) {
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
         if (isInput) {
             devices.add(new DeviceInfo("PulseAudio", "adc"));
         } else {
@@ -318,7 +318,7 @@ public class DriverUtilities {
      * UTILITY METHODS
      */
     protected static List<DeviceInfo> parseCsoundOutput(String text, boolean isInput) {
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
         boolean collect = false;
         String prepend = isInput ? "adc" : "dac";
         String startToken = "audio buffered in";
@@ -377,7 +377,7 @@ public class DriverUtilities {
             return null;
         }
 
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
 
         String jackCSD = TextUtilities
                 .getTextFromSystemResource(DriverUtilities.class, "tempJack.csd");
@@ -464,7 +464,7 @@ public class DriverUtilities {
     }
 
     protected static List<DeviceInfo> getAudioDevicesJackLsp(boolean isInput) {
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
         ProcessRunner pc = new ProcessRunner();
         String retVal = null;
         String portType = "audio";
@@ -508,8 +508,8 @@ public class DriverUtilities {
         //        System.out.println(retVal);
 
         String[] lines = output.split("\\n");
-        ArrayList<String> ports = new ArrayList<String>();
-        Map<String, Integer> portMap = new HashMap<String, Integer>();
+        ArrayList<String> ports = new ArrayList<>();
+        Map<String, Integer> portMap = new HashMap<>();
 
         for (int i = 0; i < lines.length; i += 3) {
             if (lines[i + 2].contains(portType)
