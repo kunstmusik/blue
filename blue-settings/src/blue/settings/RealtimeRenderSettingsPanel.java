@@ -19,6 +19,9 @@
  */
 package blue.settings;
 
+import blue.services.render.DeviceInfo;
+import blue.services.render.DiskRenderService;
+import blue.services.render.DriverUtilities;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
@@ -27,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
@@ -82,7 +86,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         }
     }
 
-    private Object chooseDriver(Vector vals) throws HeadlessException {
+    private Object chooseDriver(List<DeviceInfo> vals) throws HeadlessException {
         if (vals == null || vals.size() == 0) {
             NotifyDescriptor nd = new NotifyDescriptor(
                     "Could not discover devices for this driver.",
@@ -679,13 +683,18 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 
         String command = csoundExecText.getText();
 
-        Vector vals = DriverUtils.getAudioOutputs(command, driver);
+        RealtimeRenderServiceFactory factory = (RealtimeRenderServiceFactory) 
+                renderServiceComboBox.getSelectedItem();
+        DiskRenderService service = factory.createDiskRenderService();
+        
+        List<DeviceInfo> vals = DriverUtilities.getAudioDevices(command, driver,
+                service, false);
 
         Object val = chooseDriver(vals);
 
         if (val != null) {
-            DriverUtils.CardInfo info = (DriverUtils.CardInfo) val;
-            audioOutText.setText(info.getDacString());
+            DeviceInfo info = (DeviceInfo)val;
+            audioOutText.setText(info.getDeviceId());
             fireUpdate();
         }
     }//GEN-LAST:event_audioOutButtonActionPerformed
@@ -698,14 +707,18 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         }
 
         String command = csoundExecText.getText();
-
-        Vector vals = DriverUtils.getAudioInputs(command, driver);
-
+        RealtimeRenderServiceFactory factory = (RealtimeRenderServiceFactory) 
+                renderServiceComboBox.getSelectedItem();
+        DiskRenderService service = factory.createDiskRenderService();
+        
+        List<DeviceInfo> vals = DriverUtilities.getAudioDevices(command, driver,
+                service, true);       
+        
         Object val = chooseDriver(vals);
 
         if (val != null) {
-            DriverUtils.CardInfo info = (DriverUtils.CardInfo) val;
-            audioInText.setText(info.getAdcString());
+            DeviceInfo info = (DeviceInfo)val;
+            audioInText.setText(info.getDeviceId());
             fireUpdate();
         }
     }//GEN-LAST:event_audioInButtonActionPerformed

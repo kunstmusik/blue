@@ -177,7 +177,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             return;
         }
 
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
         
         shouldStop = false;
 
@@ -228,7 +228,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void renderForBlueLive() throws SoundObjectException {
 
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
         
         CsdRenderResult result = CSDRenderService.getDefault().generateCSDForBlueLive(
                 this.data, true);
