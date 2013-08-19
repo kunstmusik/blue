@@ -21,7 +21,6 @@ package blue.settings;
 
 import blue.services.render.DeviceInfo;
 import blue.services.render.DiskRenderService;
-import blue.services.render.DriverUtilities;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
