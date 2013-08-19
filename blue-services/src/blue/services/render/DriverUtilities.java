@@ -24,6 +24,7 @@ import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,9 @@ import java.util.StringTokenizer;
  * @author stevenyi
  */
 public class DriverUtilities {
+
+    private static MessageFormat ALSA_MIDI_FORMAT = new MessageFormat(
+            "{0} : {1} - {2}");
 
     public static List<DeviceInfo> getAudioDevices(String csoundCommand,
             String driver, DiskRenderService service, boolean isInput) {
@@ -81,8 +85,159 @@ public class DriverUtilities {
         return devices;
     }
 
+    public static List<DeviceInfo> getMidiDevices(String csoundCommand,
+            String driver, DiskRenderService service, boolean isInput) {
+
+        List<DeviceInfo> devices;
+        String driverLow = driver.toLowerCase().trim();
+        
+        if("alsa".equals(driverLow)) {
+            devices = getMidiDevicesAlsa(isInput);
+        } else {
+            devices = getMidiDevicesGeneric(csoundCommand, driver, service,
+                    isInput);
+        }
+
+        return devices;
+    }
+
+    /* MIDI DEVICE LISTING METHODS */
+    protected static List<DeviceInfo> getMidiDevicesAlsa(boolean isInput) {
+
+        List<DeviceInfo> devices = new ArrayList<>();
+
+        String portType = isInput ? "R" : "W";
+
+        File f = new File("/proc/asound/seq/clients");
+        String values;
+
+        try {
+            values = TextUtilities.getTextFromFile(f);
+            String[] lines = values.split("\\r?\\n");
+
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i].trim();
+
+                if (line.startsWith("Client") && line.indexOf(":") >= 0) {
+
+                    String[] parts = line.split("\"");
+                    String clientName = parts[1];
+                    String clientType = parts[2].substring(1);
+                    int clientNum = Integer.parseInt(line.substring(7,
+                            line.indexOf(":")).trim());
+
+                    while (i < lines.length - 2) {
+                        i++;
+
+                        String tempLine = lines[i].trim();
+                        if (tempLine.startsWith("Port")) {
+
+                            String capabilities = tempLine
+                                    .substring(tempLine.lastIndexOf("("));
+
+                            if (capabilities.indexOf(portType) >= 0) {
+
+                                String[] portParts = tempLine.split("\"");
+
+                                int portNum = Integer
+                                        .parseInt(tempLine.substring(5,
+                                        tempLine.indexOf(":"))
+                                        .trim());
+                                String portName = portParts[1];
+
+                                Object[] nameArgs = {clientName, portName,
+                                    clientType};
+
+
+                                String deviceId = String.format("hw:%d,%d",
+                                        clientNum, portNum);
+
+                                devices.add(new DeviceInfo(
+                                        ALSA_MIDI_FORMAT.format(nameArgs), 
+                                        deviceId));
+                            }
+                        } else if (tempLine.startsWith("Client")) {
+                            i--;
+                            break;
+                        }
+                    }
+
+                }
+            }
+        } catch (IOException | NumberFormatException ex) {
+//            ex.printStackTrace();
+            return null;
+        }
+        return devices;
+    }
+
+
+    protected static List<DeviceInfo> getMidiDevicesGeneric(String csoundCommand,
+            String driver, DiskRenderService service, boolean isInput) {
+
+        int csVersion = service.getCsoundVersion(csoundCommand);
+        if (csVersion < 5) {
+            return null;
+        }
+
+        String output = getCsoundMidiOutput(csoundCommand, driver, service, isInput);
+        return parseCsoundMidiOutput(output, isInput);
+    }
+
+
+    protected static String getCsoundMidiOutput(String csoundCommand, String driver,
+            DiskRenderService service, boolean isInput) {
+        String val = TextUtilities
+                .getTextFromSystemResource(DriverUtilities.class, "temp.csd");
+
+        File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
+                null, val);
+
+        String ioFlag = isInput ? "-Q999" : "-M999";
+
+        String args[] = new String[]{
+            csoundCommand,
+            ioFlag, "-+msg_color=false",
+            "-+rtmidi=" + driver, "-m1024", tempFile.getAbsolutePath()
+        };
+
+        return service.execWaitAndCollect(args, null);
+    }
+
+    protected static List<DeviceInfo> parseCsoundMidiOutput(String text, boolean isInput) {
+        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        boolean collect = false;
+        String startToken = "audio buffered in";
+        String endToken = "inactive allocs";
+
+        String lines[] = text.split("\\r?\\n");
+        for (String line : lines) {
+            if (collect) {
+                if (endToken.length() > 0 && line.indexOf(endToken) >= 0) {
+                    collect = false;
+                } else if (line.indexOf(":") >= 0) {
+                    try {
+                        int cardNum = Integer.parseInt(line.substring(0,
+                                line.indexOf(":")).trim());
+                        String desc = line.substring(line.indexOf(":") + 1)
+                                .trim();
+
+                        devices.add(new DeviceInfo(desc, Integer.toString(cardNum)));
+                    } catch (NumberFormatException nfe) {
+                        // pass
+                    }
+                }
+            } else if (line.indexOf(startToken) >= 0) {
+                collect = true;
+            }
+        }
+
+        return devices;
+    }
+    
+    /* AUDIO DEVICE LISTING METHODS */
     // PULSE AUDIO
-    public static List<DeviceInfo> getAudioDevicesPulse(boolean isInput) {
+    protected static List<DeviceInfo> getAudioDevicesPulse(boolean isInput) {
         List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
         if (isInput) {
             devices.add(new DeviceInfo("PulseAudio", "adc"));
@@ -92,9 +247,9 @@ public class DriverUtilities {
         return devices;
     }
 
-    public static List<DeviceInfo> getAudioDevicesAlsa(boolean isInput) {
+    protected static List<DeviceInfo> getAudioDevicesAlsa(boolean isInput) {
 
-        List<DeviceInfo> devices = new ArrayList<DeviceInfo>();
+        List<DeviceInfo> devices = new ArrayList<>();
 
         String searchVal = isInput ? "capture" : "playback";
         String prepend = isInput ? "adc:hw:" : "dac:hw:";
@@ -135,7 +290,7 @@ public class DriverUtilities {
         return devices;
     }
 
-    public static List<DeviceInfo> getAudioDevicesJack(String csoundCommand,
+    protected static List<DeviceInfo> getAudioDevicesJack(String csoundCommand,
             DiskRenderService service, boolean isInput) {
         List<DeviceInfo> retVal = getAudioDevicesJackCsound(csoundCommand,
                 service, isInput);
@@ -145,7 +300,7 @@ public class DriverUtilities {
         return retVal;
     }
 
-    public static List<DeviceInfo> getAudioDevicesGeneric(String csoundCommand,
+    protected static List<DeviceInfo> getAudioDevicesGeneric(String csoundCommand,
             String driver, DiskRenderService service, boolean isInput) {
 
         int csVersion = service.getCsoundVersion(csoundCommand);
@@ -279,7 +434,7 @@ public class DriverUtilities {
         if (csVersion == 5) {
             StringTokenizer st = new StringTokenizer(retVal, "\n");
             String prepend = isInput ? "adc:" : "dac:";
-            
+
             while (st.hasMoreTokens()) {
                 String line = st.nextToken().trim();
 
@@ -299,7 +454,7 @@ public class DriverUtilities {
                 String parts[] = info.toString().split("\\s+");
                 devices.add(new DeviceInfo(
                         info.toString(),
-                        parts[0])); 
+                        parts[0]));
             }
         }
 
@@ -392,7 +547,7 @@ public class DriverUtilities {
         }
     }
 
-    public static String findExecutableInPath(String exe, String[] paths) {
+    protected static String findExecutableInPath(String exe, String[] paths) {
         for (String p : paths) {
             System.out.println(new File(p + File.separator + exe));
             if (new File(p + File.separator + exe).exists()) {
