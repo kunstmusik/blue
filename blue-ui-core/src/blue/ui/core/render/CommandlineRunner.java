@@ -5,7 +5,7 @@ import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
 import blue.services.render.CSDRenderService;
-import blue.services.render.DeviceInfo;
+import blue.services.render.CsdRenderResult;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
@@ -17,7 +17,15 @@ import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
-import java.util.List;
+import java.awt.BorderLayout;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
@@ -243,26 +251,6 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             Note note = (Note) iter.next();
             console.passToStdin(note.toString());
         }
-    }
-
-    @Override
-    public List<DeviceInfo> getAudioInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getAudioOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     class RunProxy implements Runnable {

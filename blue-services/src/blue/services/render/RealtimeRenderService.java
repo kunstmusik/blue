@@ -31,11 +31,4 @@ public interface RealtimeRenderService {
 
     void passToStdin(String text);
 
-    List<DeviceInfo> getAudioInputs(String driver);
-
-    List<DeviceInfo> getAudioOutputs(String driver);
-
-    List<DeviceInfo> getMidiInputs(String driver);
-
-    List<DeviceInfo> getMidiOutputs(String driver);
 }
