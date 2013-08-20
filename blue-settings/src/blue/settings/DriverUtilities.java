@@ -195,7 +195,7 @@ public class DriverUtilities {
         File tempFile = FileUtilities.createTempTextFile("temp", ".csd",
                 null, val);
 
-        String ioFlag = isInput ? "-Q999" : "-M999";
+        String ioFlag = isInput ? "-M999" : "-M999";
 
         String args[] = new String[]{
             csoundCommand,
@@ -209,8 +209,8 @@ public class DriverUtilities {
     protected static List<DeviceInfo> parseCsoundMidiOutput(String text, boolean isInput) {
         List<DeviceInfo> devices = new ArrayList<>();
         boolean collect = false;
-        String startToken = "audio buffered in";
-        String endToken = "inactive allocs";
+        String startToken = "sorting score";
+        String endToken = "***";
 
         String lines[] = text.split("\\r?\\n");
         for (String line : lines) {
@@ -229,7 +229,7 @@ public class DriverUtilities {
                         // pass
                     }
                 }
-            } else if (line.indexOf(startToken) >= 0) {
+            } else if (line.toLowerCase().indexOf(startToken) >= 0) {
                 collect = true;
             }
         }
@@ -536,8 +536,8 @@ public class DriverUtilities {
         }
 
         for (Map.Entry<String, Integer> entry : portMap.entrySet()) {
-            String deviceId = entry.getKey();
-            String displayName = deviceId;
+            String displayName = entry.getKey(); 
+            String deviceId = prepend + displayName;
 
             if (entry.getValue().intValue() == 1) {
                 displayName = displayName + "(1 channel)";
