@@ -89,13 +89,16 @@ public class RandomMultiplyProcessor implements NoteProcessor,
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("pfield")) {
-                mp.setPfield(node.getTextString());
-            } else if (node.getName().equals("min")) {
-                mp.setMin(node.getTextString());
-            } else if (node.getName().equals("max")) {
-                mp.setMax(node.getTextString());
+            switch (node.getName()) {
+                case "pfield":
+                    mp.setPfield(node.getTextString());
+                    break;
+                case "min":
+                    mp.setMin(node.getTextString());
+                    break;
+                case "max":
+                    mp.setMax(node.getTextString());
+                    break;
             }
         }
 

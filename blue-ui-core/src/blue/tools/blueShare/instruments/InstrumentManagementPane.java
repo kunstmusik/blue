@@ -118,16 +118,9 @@ public class InstrumentManagementPane extends JComponent {
         try {
             boolean success = BlueShareRemoteCaller.removeInstrument(username,
                     password, iOption.getInstrumentId());
-        } catch (XmlRpcException xre) {
+        } catch (XmlRpcException | IOException xre) {
             String error = BlueSystem.getString("message.errorLabel") + " "
                     + xre.getLocalizedMessage();
-            JOptionPane.showMessageDialog(null, error, BlueSystem
-                    .getString("message.error"), JOptionPane.ERROR_MESSAGE);
-            iTableModel.setInstrumentOptions(null);
-            return;
-        } catch (IOException ioe) {
-            String error = BlueSystem.getString("message.errorLabel") + " "
-                    + ioe.getLocalizedMessage();
             JOptionPane.showMessageDialog(null, error, BlueSystem
                     .getString("message.error"), JOptionPane.ERROR_MESSAGE);
             iTableModel.setInstrumentOptions(null);

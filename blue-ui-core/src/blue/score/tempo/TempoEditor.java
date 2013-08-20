@@ -578,12 +578,14 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
-        
-        if(prop.equals("enabled")) {
-            repaint();
-        } else if(prop.equals("visible")) {
-            this.setTempoVisible(((Boolean)evt.getNewValue()).booleanValue());
-        } 
+        switch (prop) {
+            case "enabled":
+                repaint();
+                break;
+            case "visible":
+                this.setTempoVisible(((Boolean)evt.getNewValue()).booleanValue()); 
+                break;
+        }
     }
     
     class EditPointsPopup extends JPopupMenu {

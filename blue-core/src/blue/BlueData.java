@@ -415,11 +415,9 @@ public class BlueData implements Serializable {
             tempData = BlueData.loadFromXML(d.getElement("blueData"));
         } else {
             XMLSerializer xmlSer = new XMLSerializer();
-            BufferedReader xmlIn = new BufferedReader(new StringReader(text));
-
-            tempData = (BlueData) xmlSer.read(xmlIn);
-
-            xmlIn.close();
+            try (BufferedReader xmlIn = new BufferedReader(new StringReader(text))) {
+                tempData = (BlueData) xmlSer.read(xmlIn);
+            }
             tempData.upgradeData();
         }
 
@@ -432,7 +430,7 @@ public class BlueData implements Serializable {
 
         BlueData blueData = new BlueData();
         
-        Map<String, Object> objRefMap = new HashMap<String,Object>();
+        Map<String, Object> objRefMap = new HashMap<>();
 
         Elements nodes = data.getElements();
 
@@ -449,63 +447,79 @@ public class BlueData implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("projectProperties")) {
-                blueData.projectProperties = ProjectProperties
-                        .loadFromXML(node);
-            } else if (nodeName.equals("instrumentLibrary")) {
-                instrumentLibraryNode = node;
-            } else if (nodeName.equals("arrangement")) {
-                arrangementNode = node;
-            } else if (nodeName.equals("mixer")) {
-                m = Mixer.loadFromXML(node);
-            } else if (nodeName.equals("tables")) {
-                blueData.tableSet = Tables.loadFromXML(node);
-            } else if (nodeName.equals("soundObjectLibrary")) {
-                blueData.sObjLib = SoundObjectLibrary.loadFromXML(node, objRefMap);
-            } else if (nodeName.equals("globalOrcSco")) {
-                blueData.globalOrcSco = GlobalOrcSco.loadFromXML(node);
-            } else if (nodeName.equals("udo")) {
-                // blueData.setUserDefinedOpcodes(node.getTextString());
-
-                String udoText = node.getTextString();
-
-                if (udoText == null) {
-                    udoText = "";
-                }
-
-                OpcodeList results = UDOUtilities.parseUDOText(udoText);
-
-                blueData.setOpcodeList(results);
-            } else if (nodeName.equals("opcodeList")) {
-                OpcodeList results = OpcodeList.loadFromXML(node);
-
-                blueData.setOpcodeList(results);
-
-            } else if (nodeName.equals("liveData")) {
-                blueData.liveData = LiveData
-                        .loadFromXML(node, objRefMap);
-            } else if (nodeName.equals("score")) {
-                blueData.score = Score.loadFromXML(node, objRefMap);
-            } else if (nodeName.equals("scratchPadData")) {
-                blueData.scratchData = ScratchPadData.loadFromXML(node);
-            } else if (nodeName.equals("noteProcessorChainMap")) {
-                blueData.noteProcessorChainMap = NoteProcessorChainMap
-                        .loadFromXML(node);
-            } else if (nodeName.equals("renderStartTime")) {
-                blueData.setRenderStartTime(Float.parseFloat(node
-                        .getTextString()));
-            } else if (nodeName.equals("renderEndTime")) {
-                blueData.setRenderEndTime(Float
-                        .parseFloat(node.getTextString()));
-            } else if (nodeName.equals("markersList")) {
-                blueData.setMarkersList(MarkersList.loadFromXML(node));
-            } else if (nodeName.equals("loopRendering")) {
-                blueData.setLoopRendering(node.getTextString()
-                        .equalsIgnoreCase("true"));
-            } else if (nodeName.equals("midiInputProcessor")) {
-                blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
-                        node);
+            switch (nodeName) {
+                case "projectProperties":
+                    blueData.projectProperties = ProjectProperties
+                            .loadFromXML(node);
+                    break;
+                case "instrumentLibrary":
+                    instrumentLibraryNode = node;
+                    break;
+                case "arrangement":
+                    arrangementNode = node;
+                    break;
+                case "mixer":
+                    m = Mixer.loadFromXML(node);
+                    break;
+                case "tables":
+                    blueData.tableSet = Tables.loadFromXML(node);
+                    break;
+                case "soundObjectLibrary":
+                    blueData.sObjLib = SoundObjectLibrary.loadFromXML(node, objRefMap);
+                    break;
+                case "globalOrcSco":
+                    blueData.globalOrcSco = GlobalOrcSco.loadFromXML(node);
+                    break;
+                case "udo":
+                    {
+                        // blueData.setUserDefinedOpcodes(node.getTextString());
+                        String udoText = node.getTextString();
+                        if (udoText == null) {
+                            udoText = "";
+                        }
+                        OpcodeList results = UDOUtilities.parseUDOText(udoText);
+                        blueData.setOpcodeList(results);
+                        break;
+                    }
+                case "opcodeList":
+                    {
+                        OpcodeList results = OpcodeList.loadFromXML(node);
+                        blueData.setOpcodeList(results);
+                        break;
+                    }
+                case "liveData":
+                    blueData.liveData = LiveData
+                            .loadFromXML(node, objRefMap);
+                    break;
+                case "score":
+                    blueData.score = Score.loadFromXML(node, objRefMap);
+                    break;
+                case "scratchPadData":
+                    blueData.scratchData = ScratchPadData.loadFromXML(node);
+                    break;
+                case "noteProcessorChainMap":
+                    blueData.noteProcessorChainMap = NoteProcessorChainMap
+                            .loadFromXML(node);
+                    break;
+                case "renderStartTime":
+                    blueData.setRenderStartTime(Float.parseFloat(node
+                            .getTextString()));
+                    break;
+                case "renderEndTime":
+                    blueData.setRenderEndTime(Float
+                            .parseFloat(node.getTextString()));
+                    break;
+                case "markersList":
+                    blueData.setMarkersList(MarkersList.loadFromXML(node));
+                    break;
+                case "loopRendering":
+                    blueData.setLoopRendering(node.getTextString()
+                            .equalsIgnoreCase("true"));
+                    break;
+                case "midiInputProcessor":
+                    blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
+                            node);
+                    break;
             }
 
         }
@@ -533,7 +547,7 @@ public class BlueData implements Serializable {
         // update version
         this.version = BlueConstants.getVersion();
         
-        Map<Object, String> objRefMap = new HashMap<Object, String>();
+        Map<Object, String> objRefMap = new HashMap<>();
         
         Element retVal = new Element("blueData");
         retVal.setAttribute("version", BlueConstants.getVersion());

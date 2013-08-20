@@ -78,7 +78,7 @@ public class CodeRepositoryMenu extends BaseAction implements Presenter.Popup {
 
     protected static void handleOpcodeDocCategory(JMenu menu, TreeNode category) {
 
-        ArrayList<ElementHolder> snippets = new ArrayList<ElementHolder>();
+        ArrayList<ElementHolder> snippets = new ArrayList<>();
         
         for(int i = 0; i < category.getChildCount(); i++) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) category.getChildAt(i);

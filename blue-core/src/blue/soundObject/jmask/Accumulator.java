@@ -72,34 +72,40 @@ public class Accumulator implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "table":
+                    Table t = Table.loadFromXML(node);
+                    String tabInstance = node.getAttributeValue("tableId");
+                    if(tabInstance == null) {
+                        continue;
+                    } else if (tabInstance.equals("highTable")) {
+                        retVal.highTable = t;
+                    } else if (tabInstance.equals("lowTable")) {
+                        retVal.lowTable = t;
+                    }
+                    break;
+                case "highTableEnabled":
+                    retVal.highTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "lowTableEnabled":
+                    retVal.lowTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "mode":
+                    retVal.mode = Integer.parseInt(node.getTextString());
+                    break;
+                case "low":
+                    retVal.low = Double.parseDouble(node.getTextString());
+                    break;
+                case "high":
+                    retVal.high = Double.parseDouble(node.getTextString());
+                    break;
+                case "initialValue":
 
-            if (nodeName.equals("table")) {
-                Table t = Table.loadFromXML(node);
-                String tabInstance = node.getAttributeValue("tableId");
-
-                if(tabInstance == null) {
-                    continue;
-                } else if (tabInstance.equals("highTable")) {
-                    retVal.highTable = t;
-                } else if (tabInstance.equals("lowTable")) {
-                    retVal.lowTable = t;
-                }
-
-            } else if (nodeName.equals("highTableEnabled")) {
-                retVal.highTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("lowTableEnabled")) {
-                retVal.lowTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("mode")) {
-                retVal.mode = Integer.parseInt(node.getTextString());
-            } else if (nodeName.equals("low")) {
-                retVal.low = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("high")) {
-                retVal.high = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("initialValue")) {
-                retVal.initialValue = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("enabled")) {
-                retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
-
+                    retVal.initialValue = Double.parseDouble(node.getTextString());
+                    break;
+                case "enabled":
+                    retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
             }
 
         }

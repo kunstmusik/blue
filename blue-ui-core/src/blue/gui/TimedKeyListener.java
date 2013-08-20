@@ -33,7 +33,7 @@ public class TimedKeyListener
         implements KeyListener,
         ActionListener {
 
-    private final TreeSet<Integer> set = new TreeSet<Integer>();
+    private final TreeSet<Integer> set = new TreeSet<>();
     private final Timer timer;
     private KeyEvent releaseEvent;
     private boolean gameModus = false;

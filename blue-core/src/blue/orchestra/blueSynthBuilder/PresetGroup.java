@@ -33,9 +33,9 @@ public class PresetGroup implements Serializable, Comparable {
 
     private String presetGroupName = "Presets";
 
-    private ArrayList<PresetGroup> subGroups = new ArrayList<PresetGroup>();
+    private ArrayList<PresetGroup> subGroups = new ArrayList<>();
 
-    private ArrayList<Preset> presets = new ArrayList<Preset>();
+    private ArrayList<Preset> presets = new ArrayList<>();
 
     private String currentPresetUniqueId = null;
 
@@ -112,13 +112,15 @@ public class PresetGroup implements Serializable, Comparable {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("presetGroup")) {
-                PresetGroup pGroup = PresetGroup.loadFromXML(node);
-                group.getSubGroups().add(pGroup);
-            } else if (node.getName().equals("preset")) {
-                Preset preset = Preset.loadFromXML(node);
-                group.getPresets().add(preset);
+            switch (node.getName()) {
+                case "presetGroup":
+                    PresetGroup pGroup = PresetGroup.loadFromXML(node);
+                    group.getSubGroups().add(pGroup);
+                    break;
+                case "preset":
+                    Preset preset = Preset.loadFromXML(node);
+                    group.getPresets().add(preset);
+                    break;
             }
         }
 

@@ -35,7 +35,7 @@ import javax.swing.border.EmptyBorder;
 
 public class LabelledPanel extends JComponent {
 
-    ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
+    ArrayList<ActionListener> listeners = new ArrayList<>();
 
     JComponent dockItem = null;
 

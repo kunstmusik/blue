@@ -617,24 +617,22 @@ public class ChannelPanel extends javax.swing.JPanel implements
         }
 
         String prop = evt.getPropertyName();
-
-        if (prop.equals(Channel.NAME)) {
-            channelNameLabel.setText(channel.getName());
-        } else if (prop.equals(Channel.LEVEL)) {
-            updating = true;
-
-            int levelVal = 0;
-
-            if (channel.getLevel() > 0) {
-                levelVal = (int) (channel.getLevel() * 20);
-            } else {
-                levelVal = (int) (channel.getLevel() * 10);
-            }
-
-            levelSlider.setValue(levelVal);
-            levelLabel.setText(channel.getLevel() + " dB");
-
-            updating = false;
+        switch (prop) {
+            case Channel.NAME:
+                channelNameLabel.setText(channel.getName());
+                break;
+            case Channel.LEVEL:
+                updating = true;
+                int levelVal = 0;
+                if (channel.getLevel() > 0) {
+                    levelVal = (int) (channel.getLevel() * 20);
+                } else {
+                    levelVal = (int) (channel.getLevel() * 10);
+                }
+                levelSlider.setValue(levelVal);
+                levelLabel.setText(channel.getLevel() + " dB");
+                updating = false;
+                break;
         }
     }
 

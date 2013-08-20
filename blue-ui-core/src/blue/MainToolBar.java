@@ -380,22 +380,24 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.data) {
             String propertyName = evt.getPropertyName();
-
-            if (propertyName.equals("renderStartTime")) {
-                playStartText.setText(evt.getNewValue().toString());
-            } else if (propertyName.equals("renderLoopTime")) {
-                float floatVal = Float.parseFloat(evt.getNewValue().toString());
-
-                if (floatVal < 0.0f) {
-                    playEndText.setText("");
-                } else {
-                    playEndText.setText(evt.getNewValue().toString());
-                }
-            } else if (propertyName.equals("loopRendering")) {
-                isUpdating = true;
-                Boolean val = (Boolean) evt.getNewValue();
-                loopBox.setSelected(val.booleanValue());
-                isUpdating = false;
+            switch (propertyName) {
+                case "renderStartTime":
+                    playStartText.setText(evt.getNewValue().toString());
+                    break;
+                case "renderLoopTime":
+                    float floatVal = Float.parseFloat(evt.getNewValue().toString());
+                    if (floatVal < 0.0f) {
+                        playEndText.setText("");
+                    } else {
+                        playEndText.setText(evt.getNewValue().toString());
+                    }
+                    break;
+                case "loopRendering":
+                    isUpdating = true;
+                    Boolean val = (Boolean) evt.getNewValue();
+                    loopBox.setSelected(val.booleanValue());
+                    isUpdating = false;
+                    break;
             }
         }
     }

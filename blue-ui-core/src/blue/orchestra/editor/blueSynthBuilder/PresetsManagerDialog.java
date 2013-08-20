@@ -315,18 +315,22 @@ public class PresetsManagerDialog extends JDialog implements
                         try {
                             doc = new Document(f);
                             Element root = doc.getRoot();
-                            if (root.getName().equals("presetGroup")) {
-                                PresetGroup pGroup = PresetGroup
-                                        .loadFromXML(root);
-                                model.addPresetGroup(group, pGroup);
-                            } else if (root.getName().equals("preset")) {
-                                Preset p = Preset.loadFromXML(root);
-                                model.addPreset(group, p);
-                            } else {
-                                JOptionPane.showMessageDialog(
-                                        PresetsManagerDialog.this,
-                                        "Error: File did not contain presets",
-                                        "Error", JOptionPane.ERROR_MESSAGE);
+                            switch (root.getName()) {
+                                case "presetGroup":
+                                    PresetGroup pGroup = PresetGroup
+                                            .loadFromXML(root);
+                                    model.addPresetGroup(group, pGroup);
+                                    break;
+                                case "preset":
+                                    Preset p = Preset.loadFromXML(root);
+                                    model.addPreset(group, p);
+                                    break;
+                                default:
+                                    JOptionPane.showMessageDialog(
+                                            PresetsManagerDialog.this,
+                                            "Error: File did not contain presets",
+                                            "Error", JOptionPane.ERROR_MESSAGE);
+                                    break;
                             }
 
                         } catch (ParseException ex) {

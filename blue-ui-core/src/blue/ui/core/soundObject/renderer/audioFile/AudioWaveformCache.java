@@ -12,7 +12,7 @@ public class AudioWaveformCache {
     public static final AudioWaveformData NOT_YET_CACHED = new AudioWaveformData();
 
     private final HashMap<AudioWaveformData, Integer> refCountCache =
-            new HashMap<AudioWaveformData, Integer>();
+            new HashMap<>();
 
     private Vector listeners = null;
 

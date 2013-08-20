@@ -70,7 +70,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 
     private boolean dragStart = true;
 
-    private transient Vector<SelectionListener> listeners = new Vector<SelectionListener>();
+    private transient Vector<SelectionListener> listeners = new Vector<>();
 
     private ScoreTimeCanvas sCanvas;
 

@@ -46,6 +46,7 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -438,7 +439,7 @@ public class ArrangementEditPanel extends JComponent
     private void reconcileWithArrangement() {
         ChannelList channels = mixer.getChannels();
 
-        ArrayList<String> idList = new ArrayList<String>();
+        ArrayList<String> idList = new ArrayList<>();
 
         for (int i = 0; i < arrangement.size(); i++) {
             String instrId = arrangement.getInstrumentAssignment(i).arrangementId;
@@ -600,7 +601,7 @@ public class ArrangementEditPanel extends JComponent
 
                 dtde.dropComplete(true);
 
-            } catch (Exception e) {
+            } catch (UnsupportedFlavorException | IOException e) {
                 e.printStackTrace();
             }
         }
@@ -823,7 +824,7 @@ public class ArrangementEditPanel extends JComponent
 
     private class AddInstrumentPopup extends JPopupMenu {
 
-        HashMap<String, Class> instrNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> instrNameClassMap = new HashMap<>();
 
         public AddInstrumentPopup() {
             ArrayList<Class> instrumentPlugins =
@@ -878,11 +879,7 @@ public class ArrangementEditPanel extends JComponent
                     Instrument newInstrument = (Instrument) c.newInstance();
                     addInstrument(newInstrument);
                 }
-            } catch (InstantiationException e) {
-                JOptionPane.showMessageDialog(null,
-                        "Error loading Instrument: " + className);
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (    InstantiationException | IllegalAccessException e) {
                 JOptionPane.showMessageDialog(null,
                         "Error loading Instrument: " + className);
                 e.printStackTrace();

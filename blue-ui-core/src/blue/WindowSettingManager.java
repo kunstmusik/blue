@@ -101,10 +101,10 @@ public class WindowSettingManager {
         String settingsFile = userDir + File.separator + SETTINGS_FILE_NAME;
 
         try {
-            FileOutputStream out = new FileOutputStream(settingsFile);
-            doc.write(out);
-            out.flush();
-            out.close();
+            try (FileOutputStream out = new FileOutputStream(settingsFile)) {
+                doc.write(out);
+                out.flush();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -176,19 +176,23 @@ public class WindowSettingManager {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("x")) {
-                int x = Integer.parseInt(node.getTextString());
-                window.setLocation(x, window.getY());
-            } else if (nodeName.equals("y")) {
-                int y = Integer.parseInt(node.getTextString());
-                window.setLocation(window.getX(), y);
-            } else if (nodeName.equals("width")) {
-                int w = Integer.parseInt(node.getTextString());
-                window.setSize(w, window.getHeight());
-            } else if (nodeName.equals("height")) {
-                int h = Integer.parseInt(node.getTextString());
-                window.setSize(window.getWidth(), h);
+            switch (nodeName) {
+                case "x":
+                    int x = Integer.parseInt(node.getTextString());
+                    window.setLocation(x, window.getY());
+                    break;
+                case "y":
+                    int y = Integer.parseInt(node.getTextString());
+                    window.setLocation(window.getX(), y);
+                    break;
+                case "width":
+                    int w = Integer.parseInt(node.getTextString());
+                    window.setSize(w, window.getHeight());
+                    break;
+                case "height":
+                    int h = Integer.parseInt(node.getTextString());
+                    window.setSize(window.getWidth(), h);
+                    break;
             }
         }
     }

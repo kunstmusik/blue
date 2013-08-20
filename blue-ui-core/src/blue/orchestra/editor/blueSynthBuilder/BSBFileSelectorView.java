@@ -27,6 +27,7 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -273,7 +274,7 @@ public class BSBFileSelectorView extends BSBObjectView {
                     }
                 }
                 dtde.rejectDrop();
-            } catch (Exception e) {
+            } catch (UnsupportedFlavorException | IOException e) {
                 e.printStackTrace();
                 dtde.rejectDrop();
             }

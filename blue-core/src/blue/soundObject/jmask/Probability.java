@@ -51,13 +51,15 @@ public class Probability implements Generator, Serializable, Maskable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("selectedIndex")) {
-                retVal.setSelectedIndex(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("probabilityGenerator")) {
-                retVal.generators[generatorIndex] = (ProbabilityGenerator) ObjectUtilities
-                        .loadFromXML(node);
-                generatorIndex++;
+            switch (nodeName) {
+                case "selectedIndex":
+                    retVal.setSelectedIndex(Integer.parseInt(node.getTextString()));
+                    break;
+                case "probabilityGenerator":
+                    retVal.generators[generatorIndex] = (ProbabilityGenerator) ObjectUtilities
+                            .loadFromXML(node);
+                    generatorIndex++;
+                    break;
             }
         }
 

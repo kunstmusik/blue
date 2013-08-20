@@ -111,9 +111,7 @@ public class BSBObjectPropertySheet extends JComponent implements
         try {
             beanInfo = (BeanInfo) Class.forName(className + "BeanInfo")
                     .newInstance();
-        } catch (InstantiationException e2) {
-        } catch (IllegalAccessException e2) {
-        } catch (ClassNotFoundException e2) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e2) {
 
         }
 

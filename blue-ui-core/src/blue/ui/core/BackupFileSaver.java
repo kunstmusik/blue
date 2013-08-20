@@ -70,13 +70,12 @@ public class BackupFileSaver implements Runnable {
                 }
 
                 try {
-                    PrintWriter out = new PrintWriter(new FileWriter(
-                            bdf.getTempFile()));
+                    try (PrintWriter out = new PrintWriter(new FileWriter(
+                                 bdf.getTempFile()))) {
+                        out.print(bdf.getData().saveAsXML().toString());
 
-                    out.print(bdf.getData().saveAsXML().toString());
-
-                    out.flush();
-                    out.close();
+                        out.flush();
+                    }
                 } catch (IOException ioe) {
                     // String errorMessage = BlueSystem
                     // .getString("message.file.couldNotSave")

@@ -68,7 +68,7 @@ public class UDOLibraryPanel extends JComponent {
 
     JTree libraryTree = new JTree();
 
-    ArrayList<SelectionListener> listeners = new ArrayList<SelectionListener>();
+    ArrayList<SelectionListener> listeners = new ArrayList<>();
 
     public UDOLibraryPanel() {
         this.setLayout(new BorderLayout());

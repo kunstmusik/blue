@@ -120,88 +120,123 @@ public final class ProjectProperties implements Serializable, Cloneable {
             Element node = nodes.next();
             String nodeName = node.getName();
             String nodeVal = node.getTextString();
-
-            if (nodeName.equals("title")) {
-                retVal.title = nodeVal;
-            } else if (nodeName.equals("author")) {
-                retVal.author = nodeVal;
-            } else if (nodeName.equals("notes")) {
-                retVal.notes = nodeVal;
-            } else if (nodeName.equals("sampleRate")) {
-                retVal.sampleRate = nodeVal;
-            } else if (nodeName.equals("controlRate")) {
-                kr = nodeVal;
-            } else if (nodeName.equals("ksmps")) {
-                retVal.ksmps = nodeVal;
-            } else if (nodeName.equals("useZeroDbFS")) {
-                retVal.useZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("zeroDbFS")) {
-                retVal.zeroDbFS = nodeVal;
-            } else if (nodeName.equals("channels")) {
-                retVal.channels = nodeVal;
-            } else if (nodeName.equals("commandLine")) {
-                commandLine = nodeVal;
-            } else if (nodeName.equals("diskSampleRate")) {
-                retVal.diskSampleRate = nodeVal;
-            } else if (nodeName.equals("diskKsmps")) {
-                retVal.diskKsmps = nodeVal;
-            } else if (nodeName.equals("diskChannels")) {
-                retVal.diskChannels = nodeVal;
-            } else if (nodeName.equals("diskCommandLine")) {
-                diskCommandLine = nodeVal;
-            } else if (nodeName.equals("diskUseZeroDbFS")) {
-                retVal.diskUseZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("diskZeroDbFS")) {
-                retVal.diskZeroDbFS = nodeVal;
-            } else if (nodeName.equals("useAudioOut")) {
-                retVal.useAudioOut = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("useAudioIn")) {
-                retVal.useAudioIn = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("useMidiIn")) {
-                retVal.useMidiIn = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("useMidiOut")) {
-                retVal.useMidiOut = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("noteAmpsEnabled")) {
-                retVal.noteAmpsEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("outOfRangeEnabled")) {
-                retVal.outOfRangeEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("warningsEnabled")) {
-                retVal.warningsEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("benchmarkEnabled")) {
-                retVal.benchmarkEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("advancedSettings")) {
-                retVal.advancedSettings = nodeVal;
-            } else if (nodeName.equals("completeOverride")) {
-                retVal.completeOverride = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("fileName")) {
-                retVal.fileName = nodeVal;
-            } else if (nodeName.equals("askOnRender")) {
-                retVal.askOnRender = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("diskNoteAmpsEnabled")) {
-                retVal.diskNoteAmpsEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("diskOutOfRangeEnabled")) {
-                retVal.diskOutOfRangeEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("diskWarningsEnabled")) {
-                retVal.diskWarningsEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("diskBenchmarkEnabled")) {
-                retVal.diskBenchmarkEnabled = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("diskAdvancedSettings")) {
-                retVal.diskAdvancedSettings = nodeVal;
-            } else if (nodeName.equals("diskCompleteOverride")) {
-                retVal.diskCompleteOverride = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("diskAlwaysRenderEntireProject")) {
-                retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
-                        .booleanValue();
+            switch (nodeName) {
+                case "title":
+                    retVal.title = nodeVal;
+                    break;
+                case "author":
+                    retVal.author = nodeVal;
+                    break;
+                case "notes":
+                    retVal.notes = nodeVal;
+                    break;
+                case "sampleRate":
+                    retVal.sampleRate = nodeVal;
+                    break;
+                case "controlRate":
+                    kr = nodeVal;
+                    break;
+                case "ksmps":
+                    retVal.ksmps = nodeVal;
+                    break;
+                case "useZeroDbFS":
+                    retVal.useZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "zeroDbFS":
+                    retVal.zeroDbFS = nodeVal;
+                    break;
+                case "channels":
+                    retVal.channels = nodeVal;
+                    break;
+                case "commandLine":
+                    commandLine = nodeVal;
+                    break;
+                case "diskSampleRate":
+                    retVal.diskSampleRate = nodeVal;
+                    break;
+                case "diskKsmps":
+                    retVal.diskKsmps = nodeVal;
+                    break;
+                case "diskChannels":
+                    retVal.diskChannels = nodeVal;
+                    break;
+                case "diskCommandLine":
+                    diskCommandLine = nodeVal;
+                    break;
+                case "diskUseZeroDbFS":
+                    retVal.diskUseZeroDbFS = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "diskZeroDbFS":
+                    retVal.diskZeroDbFS = nodeVal;
+                    break;
+                case "useAudioOut":
+                    retVal.useAudioOut = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "useAudioIn":
+                    retVal.useAudioIn = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "useMidiIn":
+                    retVal.useMidiIn = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "useMidiOut":
+                    retVal.useMidiOut = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "noteAmpsEnabled":
+                    retVal.noteAmpsEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "outOfRangeEnabled":
+                    retVal.outOfRangeEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "warningsEnabled":
+                    retVal.warningsEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "benchmarkEnabled":
+                    retVal.benchmarkEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "advancedSettings":
+                    retVal.advancedSettings = nodeVal;
+                    break;
+                case "completeOverride":
+                    retVal.completeOverride = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "fileName":
+                    retVal.fileName = nodeVal;
+                    break;
+                case "askOnRender":
+                    retVal.askOnRender = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "diskNoteAmpsEnabled":
+                    retVal.diskNoteAmpsEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "diskOutOfRangeEnabled":
+                    retVal.diskOutOfRangeEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "diskWarningsEnabled":
+                    retVal.diskWarningsEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "diskBenchmarkEnabled":
+                    retVal.diskBenchmarkEnabled = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "diskAdvancedSettings":
+                    retVal.diskAdvancedSettings = nodeVal;
+                    break;
+                case "diskCompleteOverride":
+                    retVal.diskCompleteOverride = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "diskAlwaysRenderEntireProject":
+                    retVal.diskAlwaysRenderEntireProject = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
             }
 
         }

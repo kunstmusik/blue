@@ -61,7 +61,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
     private static final String IMPORT_DIALOG = "sObj.import";
 
-    HashMap<String, Class> sObjNameClassMap = new HashMap<String, Class>();
+    HashMap<String, Class> sObjNameClassMap = new HashMap<>();
 
     JMenuItem addNewPolyObject = new JMenuItem();
 
@@ -288,7 +288,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
             BlueUndoManager.setUndoManager("score");
             BlueUndoManager.addEdit(new AddSoundObjectEdit(sCanvas.getPolyObject(), sObj, sLayerIndex));
 
-        } catch (Exception ex) {
+        } catch (InstantiationException | IllegalAccessException ex) {
             Exceptions.printStackTrace(ex);
         }
     }

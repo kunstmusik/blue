@@ -38,7 +38,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class ChannelList implements ListModel, Serializable {
 
-    ArrayList<Channel> channels = new ArrayList<Channel>();
+    ArrayList<Channel> channels = new ArrayList<>();
 
     private transient Vector<ListDataListener> listeners = null;
 
@@ -139,7 +139,7 @@ public class ChannelList implements ListModel, Serializable {
 
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
-            listeners = new Vector<ListDataListener>();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -208,7 +208,7 @@ public class ChannelList implements ListModel, Serializable {
 
     public void addChannelListListener(ChannelListListener listener) {
         if (channelListListeners == null) {
-            channelListListeners = new Vector<ChannelListListener>();
+            channelListListeners = new Vector<>();
         }
 
         channelListListeners.add(listener);
@@ -235,7 +235,7 @@ public class ChannelList implements ListModel, Serializable {
     private void fireChannelRemoved(Channel channel) {
         if (channelListListeners != null) {
             Iterator<ChannelListListener> iter =
-                    new Vector<ChannelListListener>(channelListListeners).iterator();
+                    new Vector<>(channelListListeners).iterator();
 
             while (iter.hasNext()) {
                 ChannelListListener listener = iter.next();

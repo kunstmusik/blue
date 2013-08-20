@@ -71,11 +71,13 @@ public class EffectsChain implements Serializable, ListModel,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("effect")) {
-                chain.addEffect(Effect.loadFromXML(node));
-            } else if (nodeName.equals("send")) {
-                chain.addSend(Send.loadFromXML(node));
+            switch (nodeName) {
+                case "effect":
+                    chain.addEffect(Effect.loadFromXML(node));
+                    break;
+                case "send":
+                    chain.addSend(Send.loadFromXML(node));
+                    break;
             }
         }
 
@@ -159,7 +161,7 @@ public class EffectsChain implements Serializable, ListModel,
     }
 
     public Send[] getSends() {
-        ArrayList<Send> temp = new ArrayList<Send>();
+        ArrayList<Send> temp = new ArrayList<>();
 
         for (int i = 0; i < this.size(); i++) {
             Object obj = this.getElementAt(i);

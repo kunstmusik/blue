@@ -52,7 +52,7 @@ public class PianoRollCanvasHeader extends JComponent implements
     private PianoRoll p;
 
     private HashMap<PianoNoteView, SelectedNoteHighlighter> noteHilightMap =
-            new HashMap<PianoNoteView, SelectedNoteHighlighter>();
+            new HashMap<>();
 
     public PianoRollCanvasHeader() {
         // this.setBackground(Color.darkGray);

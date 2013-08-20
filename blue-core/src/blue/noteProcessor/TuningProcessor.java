@@ -132,27 +132,28 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("baseFrequency")) {
-                baseFreq = Float.parseFloat(node.getTextString());
-            } else if (node.getName().equals("pfield")) {
-                tp.setPfield(node.getTextString());
-            } else if (node.getName().equals("scale")) {
-                Scale scale;
-                
-                if(node.getElements().size() == 0) {
-                    
-                    String scaleDir = BlueSystem.getUserConfigurationDirectory()
-                        + File.separator + "scl";
-                    String scalePath = scaleDir + File.separator + node.getTextString();
-                    File scaleFile = new File(scalePath);
-                    
-                    scale = Scale.loadScale(scaleFile);
-                } else {
-                    scale = Scale.loadFromXML(node);
-                }
-                
-                tp.setScale(scale);
+            switch (node.getName()) {
+                case "baseFrequency":
+                    baseFreq = Float.parseFloat(node.getTextString());
+                    break;
+                case "pfield":
+                    tp.setPfield(node.getTextString());
+                    break;
+                case "scale":
+                    Scale scale;
+                    if(node.getElements().size() == 0) {
+                        
+                        String scaleDir = BlueSystem.getUserConfigurationDirectory()
+                            + File.separator + "scl";
+                        String scalePath = scaleDir + File.separator + node.getTextString();
+                        File scaleFile = new File(scalePath);
+                        
+                        scale = Scale.loadScale(scaleFile);
+                    } else {
+                        scale = Scale.loadFromXML(node);
+                    }
+                    tp.setScale(scale);
+                    break;
             }
         }
         

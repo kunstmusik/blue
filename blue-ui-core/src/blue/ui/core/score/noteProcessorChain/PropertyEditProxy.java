@@ -20,6 +20,7 @@
 
 package blue.ui.core.score.noteProcessorChain;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 class PropertyEditProxy {
@@ -48,7 +49,7 @@ class PropertyEditProxy {
         Object o = null;
         try {
             o = getMethod.invoke(obj, null);
-        } catch (Exception e) {
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }
         return o;

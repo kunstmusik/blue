@@ -59,10 +59,10 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     private transient StrBuilder preGenerationCache = null;
 
-    private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<InstrumentAssignment>();
+    private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<>();
 
     public Arrangement() {
-        arrangement = new ArrayList<InstrumentAssignment>();
+        arrangement = new ArrayList<>();
     }
 
     public int addInstrument(Instrument instrument) {
@@ -318,7 +318,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     public String generateGlobalOrc() {
         StrBuilder retVal = new StrBuilder();
 
-        ArrayList<Instrument> instruments = new ArrayList<Instrument>();
+        ArrayList<Instrument> instruments = new ArrayList<>();
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
                 hasNext();) {
@@ -387,7 +387,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
             ArrayList<Instrument> alwaysOnInstruments) {
         if (preGenerationCache == null) {
             preGenerationCache = new StrBuilder();
-            preGenList = new ArrayList<InstrumentAssignment>();
+            preGenList = new ArrayList<>();
         }
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
@@ -870,7 +870,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector<TableModelListener>();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -902,7 +902,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     public void addArrangementListener(ArrangementListener l) {
         if (arrangementListeners == null) {
-            arrangementListeners = new Vector<ArrangementListener>();
+            arrangementListeners = new Vector<>();
         }
         arrangementListeners.add(l);
     }
@@ -928,7 +928,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     public void addAutomatableCollectionListener(
             AutomatableCollectionListener listener) {
         if (automatableCollectionListeners == null) {
-            automatableCollectionListeners = new Vector<AutomatableCollectionListener>();
+            automatableCollectionListeners = new Vector<>();
         }
         automatableCollectionListeners.add(listener);
     }

@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JColorChooser;
@@ -1024,7 +1025,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
             replaceSoundObject(sObj, fso, false, false);
 
-        } catch (Exception ex) {
+        } catch (IOException | UnsupportedAudioFileException ex) {
             System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.getLocalizedMessage());
             ex.printStackTrace();
         }

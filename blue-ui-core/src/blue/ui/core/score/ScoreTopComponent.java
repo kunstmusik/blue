@@ -319,11 +319,13 @@ public final class ScoreTopComponent extends TopComponent
             @Override
             public void actionPerformed(ActionEvent e) {
                 String command = e.getActionCommand();
-
-                if (command.equals("minusHorizontal")) {
-                    currentTimeState.lowerPixelSecond();
-                } else if (command.equals("plusHorizontal")) {
-                    currentTimeState.raisePixelSecond();
+                switch (command) {
+                    case "minusHorizontal":
+                        currentTimeState.lowerPixelSecond();
+                        break;
+                    case "plusHorizontal":
+                        currentTimeState.raisePixelSecond();
+                        break;
                 }
             }
         };

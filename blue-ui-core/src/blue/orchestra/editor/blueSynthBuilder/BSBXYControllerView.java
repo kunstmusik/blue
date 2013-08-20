@@ -275,19 +275,24 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         }
 
         String prop = evt.getPropertyName();
-
-        if (prop.equals("width") || prop.equals("height")) {
-
-            updateSize();
-            revalidate();
-            repaint();
-
-        } else if (prop.equals("xValue") || prop.equals("yValue")) {
-            drawPanel.repaint();
-            updateLabel();
-        } else if (prop.equals("xMin") || prop.equals("xMax")
-                || prop.equals("yMin") || prop.equals("yMax")) {
-            updateLabel();
+        switch (prop) {
+            case "width":
+            case "height":
+                updateSize();
+                revalidate();
+                repaint();
+                break;
+            case "xValue":
+            case "yValue":
+                drawPanel.repaint();
+                updateLabel();
+                break;
+            case "xMin":
+            case "xMax":
+            case "yMin":
+            case "yMax":
+                updateLabel();
+                break;
         }
     }
 

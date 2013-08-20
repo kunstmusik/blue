@@ -48,13 +48,16 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("label")) {
-                checkBox.setLabel(node.getTextString());
-            } else if (nodeName.equals("selected")) {
-                checkBox.setSelected(node.getTextString().equals("true"));
-            } else if (nodeName.equals("randomizable")) {
-                checkBox.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "label":
+                    checkBox.setLabel(node.getTextString());
+                    break;
+                case "selected":
+                    checkBox.setSelected(node.getTextString().equals("true"));
+                    break;
+                case "randomizable":
+                    checkBox.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
         }
 

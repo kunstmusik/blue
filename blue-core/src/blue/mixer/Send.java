@@ -168,18 +168,22 @@ public class Send implements Serializable, Automatable, ParameterListener {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("sendChannel")) {
-                send.sendChannel = node.getTextString();
-            } else if (nodeName.equals("level")) {
-                send.level = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("enabled")) {
-                send.enabled = Boolean.valueOf(node.getTextString())
-                        .booleanValue();
-            } else if (nodeName.equals("parameter")) {
-                send.levelParameter = Parameter.loadFromXML(node);
-                send.levelParameter.addParameterListener(send);
-                send.params.addParameter(send.levelParameter);
+            switch (nodeName) {
+                case "sendChannel":
+                    send.sendChannel = node.getTextString();
+                    break;
+                case "level":
+                    send.level = Float.parseFloat(node.getTextString());
+                    break;
+                case "enabled":
+                    send.enabled = Boolean.valueOf(node.getTextString())
+                            .booleanValue();
+                    break;
+                case "parameter":
+                    send.levelParameter = Parameter.loadFromXML(node);
+                    send.levelParameter.addParameterListener(send);
+                    send.params.addParameter(send.levelParameter);
+                    break;
             }
         }
 
@@ -215,7 +219,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
         }
 
         for (Iterator<PropertyChangeListener> iter =
-                new Vector<PropertyChangeListener>(listeners).iterator(); iter.hasNext();) {
+                new Vector<>(listeners).iterator(); iter.hasNext();) {
             PropertyChangeListener listener = iter.next();
 
             listener.propertyChange(pce);
@@ -224,7 +228,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector<PropertyChangeListener>();
+            listeners = new Vector<>();
         }
 
         if(!listeners.contains(pcl)) {

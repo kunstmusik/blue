@@ -70,7 +70,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         this.setName("PianoRoll");
         timeBehavior = TIME_BEHAVIOR_SCALE;
         scale = Scale.get12TET();
-        notes = new ArrayList<PianoNote>();
+        notes = new ArrayList<>();
         noteTemplate = "i <INSTR_ID> <START> <DUR> <FREQ>";
         instrumentId = "1";
         pixelSecond = 64;
@@ -216,32 +216,44 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
             Element e = nodes.next();
 
             String nodeName = e.getName();
-
-            if (nodeName.equals("noteTemplate")) {
-                p.setNoteTemplate(e.getTextString());
-            } else if (nodeName.equals("instrumentId")) {
-                p.setInstrumentId(e.getTextString());
-            } else if (nodeName.equals("scale")) {
-                p.setScale(Scale.loadFromXML(e));
-            } else if (nodeName.equals("pixelSecond")) {
-                p.setPixelSecond(Integer.parseInt(e.getTextString()));
-            } else if (nodeName.equals("noteHeight")) {
-                p.setNoteHeight(Integer.parseInt(e.getTextString()));
-            } else if (nodeName.equals("snapEnabled")) {
-                p.setSnapEnabled(Boolean.valueOf(e.getTextString())
-                        .booleanValue());
-            } else if (nodeName.equals("snapValue")) {
-                p.setSnapValue(Float.parseFloat(e.getTextString()));
-            } else if (nodeName.equals("timeDisplay")) {
-                p.setTimeDisplay(Integer.parseInt(e.getTextString()));
-            } else if (nodeName.equals("timeUnit")) {
-                p.setTimeUnit(Integer.parseInt(e.getTextString()));
-            } else if (nodeName.equals("pianoNote")) {
-                p.notes.add(PianoNote.loadFromXML(e));
-            } else if (nodeName.equals("pchGenerationMethod")) {
-                p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
-            } else if (nodeName.equals("transposition")) {
-                p.setTransposition(Integer.parseInt(e.getTextString()));
+            switch (nodeName) {
+                case "noteTemplate":
+                    p.setNoteTemplate(e.getTextString());
+                    break;
+                case "instrumentId":
+                    p.setInstrumentId(e.getTextString());
+                    break;
+                case "scale":
+                    p.setScale(Scale.loadFromXML(e));
+                    break;
+                case "pixelSecond":
+                    p.setPixelSecond(Integer.parseInt(e.getTextString()));
+                    break;
+                case "noteHeight":
+                    p.setNoteHeight(Integer.parseInt(e.getTextString()));
+                    break;
+                case "snapEnabled":
+                    p.setSnapEnabled(Boolean.valueOf(e.getTextString())
+                            .booleanValue());
+                    break;
+                case "snapValue":
+                    p.setSnapValue(Float.parseFloat(e.getTextString()));
+                    break;
+                case "timeDisplay":
+                    p.setTimeDisplay(Integer.parseInt(e.getTextString()));
+                    break;
+                case "timeUnit":
+                    p.setTimeUnit(Integer.parseInt(e.getTextString()));
+                    break;
+                case "pianoNote":
+                    p.notes.add(PianoNote.loadFromXML(e));
+                    break;
+                case "pchGenerationMethod":
+                    p.setPchGenerationMethod(Integer.parseInt(e.getTextString()));
+                    break;
+                case "transposition":
+                    p.setTransposition(Integer.parseInt(e.getTextString()));
+                    break;
             }
         }
 

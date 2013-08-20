@@ -125,11 +125,13 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("duration")) {
-                retVal.setDuration(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("trackList")) {
-                retVal.setTracks(TrackList.loadFromXML(node));
+            switch (nodeName) {
+                case "duration":
+                    retVal.setDuration(XMLUtilities.readFloat(node));
+                    break;
+                case "trackList":
+                    retVal.setTracks(TrackList.loadFromXML(node));
+                    break;
             }
         }
 

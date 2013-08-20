@@ -282,14 +282,19 @@ public class PianoRollEditor extends SoundObjectEditor implements
     @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
-        if (command.equals("plusVertical")) {
-            raiseHeight();
-        } else if (command.equals("minusVertical")) {
-            lowerHeight();
-        } else if (command.equals("plusHorizontal")) {
-            raisePixelSecond();
-        } else if (command.equals("minusHorizontal")) {
-            lowerPixelSecond();
+        switch (command) {
+            case "plusVertical":
+                raiseHeight();
+                break;
+            case "minusVertical":
+                lowerHeight();
+                break;
+            case "plusHorizontal":
+                raisePixelSecond();
+                break;
+            case "minusHorizontal":
+                lowerPixelSecond();
+                break;
         }
     }
 }

@@ -57,23 +57,30 @@ public class Cauchy implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("alpha")) {
-                retVal.alpha = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("mu")) {
-                retVal.mu = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("alphaTableEnabled")) {
-                retVal.alphaTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("muTableEnabled")) {
-                retVal.muTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("alphaTable")) {
-                    retVal.alphaTable = Table.loadFromXML(node);
-                } else if (tableId.equals("muTable")) {
-                    retVal.muTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "alpha":
+                    retVal.alpha = XMLUtilities.readDouble(node);
+                    break;
+                case "mu":
+                    retVal.mu = XMLUtilities.readDouble(node);
+                    break;
+                case "alphaTableEnabled":
+                    retVal.alphaTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "muTableEnabled":
+                    retVal.muTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "alphaTable":
+                            retVal.alphaTable = Table.loadFromXML(node);
+                            break;
+                        case "muTable":
+                            retVal.muTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 

@@ -81,7 +81,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private final QuickTimeDialog qtDialog;
 
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap =
-            new HashMap<SoundObject, SoundObjectView>();
+            new HashMap<>();
 
     int time;
 
@@ -1087,10 +1087,14 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         String prop = evt.getPropertyName();
 
         if (evt.getSource() == timeState) {
-            if (prop.equals("pixelSecond")) {
-                reset();
-            } else if (prop.equals("snapEnabled") || prop.equals("snapValue")) {
-                repaint();
+            switch (prop) {
+                case "pixelSecond":
+                    reset();
+                    break;
+                case "snapEnabled":
+                case "snapValue":
+                    repaint();
+                    break;
             }
         } 
 

@@ -55,15 +55,15 @@ public final class GenerateCsdAction implements ActionListener {
                 temp = new File(temp.getAbsolutePath() + ".csd");
             }
             try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new FileWriter(temp)));
-                final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
-                        data, data.getRenderStartTime(), data.
-                        getRenderEndTime(), false, false);
+                try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                             new FileWriter(temp)))) {
+                    final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
+                            data, data.getRenderStartTime(), data.
+                            getRenderEndTime(), false, false);
 
-                out.print(renderResult.getCsdText());
-                out.flush();
-                out.close();
+                    out.print(renderResult.getCsdText());
+                    out.flush();
+                }
 
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                         "message.generateScore.success") + " " + temp.getName());

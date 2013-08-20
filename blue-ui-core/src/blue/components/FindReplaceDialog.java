@@ -46,7 +46,7 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     JTextComponent textArea = null;
 
     private static WeakHashMap<Component, FindReplaceDialog> map =
-            new WeakHashMap<Component, FindReplaceDialog>();
+            new WeakHashMap<>();
 
     public static void showFindReplace(JTextComponent textComponent) {
         Component root = SwingUtilities.getRoot(textComponent);

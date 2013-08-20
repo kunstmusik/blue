@@ -204,14 +204,14 @@ public class ScannedMatrixEditor extends JComponent {
         if (rValue == JFileChooser.APPROVE_OPTION) {
             try {
                 File temp = fcm.getSelectedFile(FILE_SAVE);
-                PrintWriter out = new PrintWriter(new FileWriter(temp));
-                int val = 0;
-                for (int i = 0; i < matrixGridEditor.matrix.length; i++) {
-                    val = matrixGridEditor.matrix[i] ? 1 : 0;
-                    out.write(val + "\n");
+                try (PrintWriter out = new PrintWriter(new FileWriter(temp))) {
+                    int val = 0;
+                    for (int i = 0; i < matrixGridEditor.matrix.length; i++) {
+                        val = matrixGridEditor.matrix[i] ? 1 : 0;
+                        out.write(val + "\n");
+                    }
+                    out.flush();
                 }
-                out.flush();
-                out.close();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, BlueSystem
                         .getString("message.saveError.message"), BlueSystem

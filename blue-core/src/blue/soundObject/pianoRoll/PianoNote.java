@@ -146,17 +146,22 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("octave")) {
-                note.setOctave(Integer.parseInt(node.getTextString()));
-            } else if (node.getName().equals("scaleDegree")) {
-                note.setScaleDegree(Integer.parseInt(node.getTextString()));
-            } else if (node.getName().equals("start")) {
-                note.setStart(Float.parseFloat(node.getTextString()));
-            } else if (node.getName().equals("duration")) {
-                note.setDuration(Float.parseFloat(node.getTextString()));
-            } else if (node.getName().equals("noteTemplate")) {
-                note.setNoteTemplate(node.getTextString());
+            switch (node.getName()) {
+                case "octave":
+                    note.setOctave(Integer.parseInt(node.getTextString()));
+                    break;
+                case "scaleDegree":
+                    note.setScaleDegree(Integer.parseInt(node.getTextString()));
+                    break;
+                case "start":
+                    note.setStart(Float.parseFloat(node.getTextString()));
+                    break;
+                case "duration":
+                    note.setDuration(Float.parseFloat(node.getTextString()));
+                    break;
+                case "noteTemplate":
+                    note.setNoteTemplate(node.getTextString());
+                    break;
             }
         }
 

@@ -34,7 +34,7 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     private Score score;
     
     private final ArrayList<ListDataListener> listeners = 
-            new ArrayList<ListDataListener>();
+            new ArrayList<>();
 
     public LayerGroupTableModel(Score score) {
         this.score = score;

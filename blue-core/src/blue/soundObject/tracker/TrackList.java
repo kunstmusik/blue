@@ -417,11 +417,13 @@ public class TrackList implements Serializable, TableModel {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("steps")) {
-                trackList.setSteps(XMLUtilities.readInt(node));
-            } else if (nodeName.equals("track")) {
-                trackList.addTrack(Track.loadFromXML(node));
+            switch (nodeName) {
+                case "steps":
+                    trackList.setSteps(XMLUtilities.readInt(node));
+                    break;
+                case "track":
+                    trackList.addTrack(Track.loadFromXML(node));
+                    break;
             }
         }
 

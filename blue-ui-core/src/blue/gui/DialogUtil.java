@@ -34,7 +34,7 @@ public class DialogUtil {
 
     private static int counter = 0;
 
-    private static ArrayList<JDialog> dialogs = new ArrayList<JDialog>();
+    private static ArrayList<JDialog> dialogs = new ArrayList<>();
 
     private static JMenuBar menuBar = null;
 

@@ -45,7 +45,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     
     private static RenderTimeManagerImpl renderManager;
     private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
-    private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<RenderTimeManagerListener>();
+    private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<>();
     protected float renderStart = -1.0f;
     private float timePointer = 0.0f;
     private int timeAdjustCounter = 0;

@@ -47,7 +47,7 @@ public class AlignmentPanel extends JComponent implements ActionListener {
 
     private ArrayList jCompList;
 
-    ArrayList<JButton> buttons = new ArrayList<JButton>();
+    ArrayList<JButton> buttons = new ArrayList<>();
 
     public AlignmentPanel() {
         initCommandNames();

@@ -53,12 +53,12 @@ public class OscilatorPanel extends JComponent {
     public OscilatorPanel() {
         setOscilatorLabel();
 
-        Vector<String> items = new Vector<String>(2);
+        Vector<String> items = new Vector<>(2);
         items.add("Ratio");
         items.add("Fixed (Hz)");
         modeCombo = new JComboBox(items);
 
-        items = new Vector<String>(2);
+        items = new Vector<>(2);
         items.add("Off");
         items.add("On");
         syncCombo = new JComboBox(items);

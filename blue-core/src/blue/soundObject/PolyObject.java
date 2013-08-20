@@ -55,7 +55,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
 
     public static final int DISPLAY_NUMBER = 1;
 
-    protected ArrayList<SoundLayer> soundLayers = new ArrayList<SoundLayer>();
+    protected ArrayList<SoundLayer> soundLayers = new ArrayList<>();
 
     private boolean isRoot;
 
@@ -462,30 +462,34 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("isRoot")) {
-                pObj.setRoot(Boolean.valueOf(node.getTextString()).booleanValue());
-            } else if (nodeName.equals("heightIndex")) {
-                int index = Integer.parseInt(node.getTextString());
-
-                // checking if using old heightIndex values
-                String val = node.getAttributeValue("version");
-
-                if (val == null || val.length() == 0) {
-                    index = index - 1;
-                    index = index < 0 ? 0 : index;
-                }
-
-                heightIndex = index;
-
-            // pObj.setHeightIndex(index);
-            } else if (nodeName.equals("defaultHeightIndex")) {
-                int index = Integer.parseInt(node.getTextString());
-                pObj.setDefaultHeightIndex(index);
-            } else if (nodeName.equals("soundLayer")) {
-                pObj.soundLayers.add(SoundLayer.loadFromXML(node, objRefMap));
-            } else if (nodeName.equals("timeState")) {
-                pObj.timeState = TimeState.loadFromXML(node);
+            switch (nodeName) {
+                case "isRoot":
+                    pObj.setRoot(Boolean.valueOf(node.getTextString()).booleanValue());
+                    break;
+                case "heightIndex":
+                    {
+                        int index = Integer.parseInt(node.getTextString());
+                        // checking if using old heightIndex values
+                        String val = node.getAttributeValue("version");
+                        if (val == null || val.length() == 0) {
+                            index = index - 1;
+                            index = index < 0 ? 0 : index;
+                        }
+                        heightIndex = index;
+                        break;
+                    }
+                case "defaultHeightIndex":
+                    {
+                        int index = Integer.parseInt(node.getTextString());
+                        pObj.setDefaultHeightIndex(index);
+                        break;
+                    }
+                case "soundLayer":
+                    pObj.soundLayers.add(SoundLayer.loadFromXML(node, objRefMap));
+                    break;
+                case "timeState":
+                    pObj.timeState = TimeState.loadFromXML(node);
+                    break;
             }
         }
 
@@ -620,7 +624,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
             soundLayers.add(index, sLayer);
         }
         
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
         layers.add(sLayer);
 
         int insertIndex = soundLayers.indexOf(sLayer);
@@ -635,7 +639,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     @Override
     public void removeLayers(int startIndex, int endIndex) {
         
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
         
         for (int i = endIndex; i >= startIndex; i--) {
             SoundLayer sLayer = (SoundLayer) soundLayers.get(i);
@@ -678,7 +682,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     @Override
     public void addLayerGroupListener(LayerGroupListener l) {
         if (layerGroupListeners == null) {
-            layerGroupListeners = new Vector<LayerGroupListener>();
+            layerGroupListeners = new Vector<>();
         }
 
         layerGroupListeners.add(l);

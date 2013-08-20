@@ -240,9 +240,7 @@ public class BlueSystem {
             try {
                 Document doc = new Document(BlueSystem.class.getResourceAsStream("codeRepository.xml"));
                 doc.write(repository);
-            } catch (ParseException ex) {
-                ExceptionHandler.printStackTrace(ex);
-            } catch (IOException ex) {
+            } catch (    ParseException | IOException ex) {
                 ExceptionHandler.printStackTrace(ex);
             }
         }

@@ -69,7 +69,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     };
 
-    private ArrayList<SoundObject> soundObjects = new ArrayList<SoundObject>();
+    private ArrayList<SoundObject> soundObjects = new ArrayList<>();
 
     private ParameterIdList automationParameters = new ParameterIdList();
 
@@ -287,7 +287,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {
@@ -308,7 +308,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     public void addSoundLayerListener(SoundLayerListener listener) {
         if (layerListeners == null) {
-            layerListeners = new Vector<SoundLayerListener>();
+            layerListeners = new Vector<>();
         }
 
         layerListeners.add(listener);

@@ -34,7 +34,7 @@ import org.openide.util.Exceptions;
 public class BarRendererCache {
     private static BarRendererCache instance = null;
 
-    private Map<Class, BarRenderer> barRenderers = new HashMap<Class, BarRenderer>();
+    private Map<Class, BarRenderer> barRenderers = new HashMap<>();
 
     private BarRendererCache() {}
 
@@ -58,9 +58,7 @@ public class BarRendererCache {
                     try {
                         renderer = (BarRenderer) plugin.getPluginClass().newInstance();
                         barRenderers.put(clazz, renderer);
-                    } catch (InstantiationException ex) {
-                        Exceptions.printStackTrace(ex);
-                    } catch (IllegalAccessException ex) {
+                    } catch (            InstantiationException | IllegalAccessException ex) {
                         Exceptions.printStackTrace(ex);
                     }
                 }

@@ -178,13 +178,12 @@ public class TextUtilities {
     public static String getTextFromFile(File textFile)
             throws FileNotFoundException, IOException {
         StringBuilder buffer = new StringBuilder();
-        BufferedReader br = new BufferedReader(new FileReader(textFile));
-        String line;
-        while ((line = br.readLine()) != null) {
-            buffer.append(line).append("\n");
+        try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                buffer.append(line).append("\n");
+            }
         }
-
-        br.close();
 
         return buffer.toString();
     }
@@ -203,13 +202,12 @@ public class TextUtilities {
     public static ArrayList getLinesFromFile(File textFile, boolean trim)
             throws FileNotFoundException, IOException {
         ArrayList lines = new ArrayList();
-        BufferedReader br = new BufferedReader(new FileReader(textFile));
-        String line;
-        while ((line = br.readLine()) != null) {
-            lines.add(trim ? line.trim() : line);
+        try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(trim ? line.trim() : line);
+            }
         }
-
-        br.close();
 
         return lines;
     }

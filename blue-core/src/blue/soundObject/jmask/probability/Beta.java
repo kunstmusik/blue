@@ -53,23 +53,30 @@ public class Beta implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("a")) {
-                retVal.a = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("b")) {
-                retVal.b = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("aTableEnabled")) {
-                retVal.aTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("bTableEnabled")) {
-                retVal.bTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("aTable")) {
-                    retVal.aTable = Table.loadFromXML(node);
-                } else if (tableId.equals("bTable")) {
-                    retVal.bTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "a":
+                    retVal.a = XMLUtilities.readDouble(node);
+                    break;
+                case "b":
+                    retVal.b = XMLUtilities.readDouble(node);
+                    break;
+                case "aTableEnabled":
+                    retVal.aTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "bTableEnabled":
+                    retVal.bTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "aTable":
+                            retVal.aTable = Table.loadFromXML(node);
+                            break;
+                        case "bTable":
+                            retVal.bTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 

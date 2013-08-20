@@ -138,11 +138,7 @@ class PropertyEditTableModel extends AbstractTableModel {
         } else {
             try {
                 retVal = temp.getReadMethod().invoke(temp, null);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+            } catch (    IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -185,7 +181,7 @@ class PropertyEditTableModel extends AbstractTableModel {
 
                 PropertyDescriptor temp = props[row];
                 temp.getWriteMethod().invoke(temp, args);
-            } catch (Exception e) {
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 // swallow exception: this just won't let the property be set,
                 // and the table will be updated,
                 // the old value

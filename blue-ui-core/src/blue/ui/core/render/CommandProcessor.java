@@ -67,15 +67,17 @@ public class CommandProcessor {
                         mode = COMMAND_SEARCH;
 
                         String commandString = commandArgument.toString();
-
-                        if (command.equals("pre")) {
-                            preBuffer.append(commandString).append("\n");
-                        } else if (command.equals("once")) {
-                            if (!containsString(onceList, commandString)) {
-                                onceList.add(commandString);
-                                buffer.append(commandString).append("\n");
-                            }
+                switch (command) {
+                    case "pre":
+                        preBuffer.append(commandString).append("\n");
+                        break;
+                    case "once":
+                        if (!containsString(onceList, commandString)) {
+                            onceList.add(commandString);
+                            buffer.append(commandString).append("\n");
                         }
+                        break;
+                }
 
                     } else {
                         commandArgument.append(line).append("\n");

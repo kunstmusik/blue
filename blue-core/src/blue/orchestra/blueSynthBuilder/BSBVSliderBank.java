@@ -171,25 +171,32 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("minimum")) {
-                minVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("maximum")) {
-                maxVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("resolution")) {
-                sliderBank
-                        .setResolution(Float.parseFloat(node.getTextString()));
-            } else if (nodeName.equals("sliderHeight")) {
-                sliderBank.setSliderHeight(Integer.parseInt(node
-                        .getTextString()));
-            } else if (nodeName.equals("gap")) {
-                sliderBank.setGap(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("randomizable")) {
-                sliderBank.randomizable = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("bsbObject")) {
-                BSBVSlider vSlider = (BSBVSlider) BSBVSlider.loadFromXML(node);
-                vSlider.addPropertyChangeListener(sliderBank);
-                sliderBank.getSliders().add(vSlider);
+            switch (nodeName) {
+                case "minimum":
+                    minVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "maximum":
+                    maxVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "resolution":
+                    sliderBank
+                            .setResolution(Float.parseFloat(node.getTextString()));
+                    break;
+                case "sliderHeight":
+                    sliderBank.setSliderHeight(Integer.parseInt(node
+                            .getTextString()));
+                    break;
+                case "gap":
+                    sliderBank.setGap(Integer.parseInt(node.getTextString()));
+                    break;
+                case "randomizable":
+                    sliderBank.randomizable = XMLUtilities.readBoolean(node);
+                    break;
+                case "bsbObject":
+                    BSBVSlider vSlider = (BSBVSlider) BSBVSlider.loadFromXML(node);
+                    vSlider.addPropertyChangeListener(sliderBank);
+                    sliderBank.getSliders().add(vSlider);
+                    break;
             }
         }
 

@@ -42,11 +42,13 @@ public class Random implements Generator, Serializable, Quantizable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("min")) {
-                retVal.min = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("max")) {
-                retVal.max = Double.parseDouble(node.getTextString());
+            switch (nodeName) {
+                case "min":
+                    retVal.min = Double.parseDouble(node.getTextString());
+                    break;
+                case "max":
+                    retVal.max = Double.parseDouble(node.getTextString());
+                    break;
             }
         }
 

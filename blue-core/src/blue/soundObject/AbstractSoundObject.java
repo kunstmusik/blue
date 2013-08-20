@@ -73,7 +73,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
 
     public void addSoundObjectListener(SoundObjectListener listener) {
         if (soundObjectListeners == null) {
-            soundObjectListeners = new Vector<SoundObjectListener>();
+            soundObjectListeners = new Vector<>();
         }
         soundObjectListeners.add(listener);
     }

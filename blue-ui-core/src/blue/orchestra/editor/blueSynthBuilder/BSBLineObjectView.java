@@ -131,15 +131,18 @@ public class BSBLineObjectView extends BSBObjectView implements
         }
 
         String prop = evt.getPropertyName();
-
-        if (prop.equals("canvasWidth") || prop.equals("canvasHeight")) {
-            int w = lineObj.getCanvasWidth();
-            int h = lineObj.getCanvasHeight();
-            lineCanvas.setSize(new Dimension(w, h));
-            this.setSize(w, h + lineSelector.getPreferredSize().height);
-            this.revalidate();
-        } else if (prop.equals("presetValue")) {
-            this.repaint();
+        switch (prop) {
+            case "canvasWidth":
+            case "canvasHeight":
+                int w = lineObj.getCanvasWidth();
+                int h = lineObj.getCanvasHeight();
+                lineCanvas.setSize(new Dimension(w, h));
+                this.setSize(w, h + lineSelector.getPreferredSize().height);
+                this.revalidate();
+                break;
+            case "presetValue":
+                this.repaint();
+                break;
         }
 
     }

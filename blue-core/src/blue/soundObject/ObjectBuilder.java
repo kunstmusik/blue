@@ -277,19 +277,25 @@ public class ObjectBuilder extends AbstractSoundObject {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("code")) {
-                bsb.setCode(node.getTextString());
-            } else if (nodeName.equals("commandLine")) {
-                bsb.setCommandLine(node.getTextString());
-            } else if (nodeName.equals("isExternal")) {
-                bsb.setExternal(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("graphicInterface")) {
-                bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
-            } else if (nodeName.equals("presetGroup")) {
-                bsb.setPresetGroup(PresetGroup.loadFromXML(node));
-            } else if (nodeName.equals("syntaxType")) {
-                bsb.setSyntaxType(node.getTextString());
+            switch (nodeName) {
+                case "code":
+                    bsb.setCode(node.getTextString());
+                    break;
+                case "commandLine":
+                    bsb.setCommandLine(node.getTextString());
+                    break;
+                case "isExternal":
+                    bsb.setExternal(XMLUtilities.readBoolean(node));
+                    break;
+                case "graphicInterface":
+                    bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
+                    break;
+                case "presetGroup":
+                    bsb.setPresetGroup(PresetGroup.loadFromXML(node));
+                    break;
+                case "syntaxType":
+                    bsb.setSyntaxType(node.getTextString());
+                    break;
             }
 
         }

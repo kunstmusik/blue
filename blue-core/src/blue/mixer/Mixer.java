@@ -74,22 +74,27 @@ public class Mixer implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("enabled")) {
-                mixer.setEnabled(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("extraRenderTime")) {
-                mixer.setExtraRenderTime(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("channelList")) {
-                String listType = node.getAttributeValue("list");
-
-                if (listType.equals("channels")) {
-                    mixer.setChannels(ChannelList.loadFromXML(node));
-                } else if (listType.equals("subChannels")) {
-                    mixer.setSubChannels(ChannelList.loadFromXML(node));
-                }
-
-            } else if (nodeName.equals("channel")) {
-                mixer.setMaster(Channel.loadFromXML(node));
+            switch (nodeName) {
+                case "enabled":
+                    mixer.setEnabled(XMLUtilities.readBoolean(node));
+                    break;
+                case "extraRenderTime":
+                    mixer.setExtraRenderTime(XMLUtilities.readFloat(node));
+                    break;
+                case "channelList":
+                    String listType = node.getAttributeValue("list");
+                    switch (listType) {
+                        case "channels":
+                            mixer.setChannels(ChannelList.loadFromXML(node));
+                            break;
+                        case "subChannels":
+                            mixer.setSubChannels(ChannelList.loadFromXML(node));
+                            break;
+                    }
+                    break;
+                case "channel":
+                    mixer.setMaster(Channel.loadFromXML(node));
+                    break;
             }
 
         }
@@ -371,7 +376,7 @@ public class Mixer implements Serializable {
      */
     public void addSubChannelDependency(String subChannelName) {
         if (subChannelDependencies == null) {
-            subChannelDependencies = new HashMap<String,String>();
+            subChannelDependencies = new HashMap<>();
         }
         subChannelDependencies.put(subChannelName, subChannelName);
     }
@@ -427,7 +432,7 @@ public class Mixer implements Serializable {
     }
 
     public HashMap<String, Channel> getSubChannelCache() {
-        HashMap<String, Channel> subChannelCache = new HashMap<String, Channel>();
+        HashMap<String, Channel> subChannelCache = new HashMap<>();
 
         for (int i = 0; i < getSubChannels().size(); i++) {
             Channel subChannel = getSubChannel(i);

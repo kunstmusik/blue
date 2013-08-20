@@ -295,26 +295,21 @@ public class BlueX7SysexReader {
         try {
             long len = f.length();
             byte[] bytes = new byte[(int) len];
+            try (FileInputStream fin = new FileInputStream(f)) {
+                int offset = 0;
+                int numRead = 0;
+                while (offset < bytes.length
+                        && (numRead = fin
+                                .read(bytes, offset, bytes.length - offset)) >= 0) {
+                    offset += numRead;
+                }
 
-            FileInputStream fin = new FileInputStream(f);
-
-            // Read in the bytes
-            int offset = 0;
-            int numRead = 0;
-            while (offset < bytes.length
-                    && (numRead = fin
-                            .read(bytes, offset, bytes.length - offset)) >= 0) {
-                offset += numRead;
+                // Ensure all the bytes have been read in
+                if (offset < bytes.length) {
+                    throw new IOException("Could not completely read file "
+                            + f.getName());
+                }
             }
-
-            // Ensure all the bytes have been read in
-            if (offset < bytes.length) {
-                throw new IOException("Could not completely read file "
-                        + f.getName());
-            }
-
-            // Close the input stream and return bytes
-            fin.close();
 
             return bytes;
         } catch (Exception e) {

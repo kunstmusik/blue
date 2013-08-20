@@ -35,9 +35,9 @@ public final class InstrumentEditPanel extends JComponent {
 
     JPanel editPanel = new JPanel();
 
-    HashMap<Class, Class> instrEditorMap = new HashMap<Class, Class>();
+    HashMap<Class, Class> instrEditorMap = new HashMap<>();
 
-    HashMap<Class, InstrumentEditor> editors = new HashMap<Class, InstrumentEditor>();
+    HashMap<Class, InstrumentEditor> editors = new HashMap<>();
 
     CardLayout cardLayout = new CardLayout();
 
@@ -150,9 +150,7 @@ public final class InstrumentEditPanel extends JComponent {
         if(instrEditor == null) {
             try {
                 instrEditor = (InstrumentEditor) instrEditorClass.newInstance();
-            } catch (InstantiationException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (IllegalAccessException ex) {
+            } catch (    InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             }
             editors.put(instrEditorClass, instrEditor);

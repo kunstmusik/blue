@@ -88,13 +88,16 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("pfield")) {
-                rap.setPfield(node.getTextString());
-            } else if (node.getName().equals("min")) {
-                rap.setMin(node.getTextString());
-            } else if (node.getName().equals("max")) {
-                rap.setMax(node.getTextString());
+            switch (node.getName()) {
+                case "pfield":
+                    rap.setPfield(node.getTextString());
+                    break;
+                case "min":
+                    rap.setMin(node.getTextString());
+                    break;
+                case "max":
+                    rap.setMax(node.getTextString());
+                    break;
             }
         }
 

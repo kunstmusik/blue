@@ -104,38 +104,43 @@ public class SerializationCodeWriter extends javax.swing.JFrame {
 
             loadCode.append("} else if(nodeName.equals(\"").append(varName)
                     .append("\")) {\n");
-
-            if (varType.equals("String")) {
-                saveCode.append("retVal.addElement(\"").append(varName).append(
-                        "\").setText(").append(varName).append(");\n");
-                loadCode.append("retVal.").append(varName).append(
-                        " = nodeVal;\n");
-            } else if (varType.equals("boolean")) {
-                saveCode.append(
-                        "retVal.addElement(XMLUtilities.writeBoolean(\"")
-                        .append(varName).append("\", ").append(varName).append(
-                                "));\n");
-                loadCode.append("retVal.").append(varName).append(
-                        " = Boolean.valueOf(nodeVal).booleanValue();\n");
-            } else if (varType.equals("int")) {
-                saveCode.append("retVal.addElement(XMLUtilities.writeInt(\"")
-                        .append(varName).append("\", ").append(varName).append(
-                                "));\n");
-                loadCode.append("retVal.").append(varName).append(
-                        " = Integer.parseInt(nodeVal);\n");
-            } else if (varType.equals("float")) {
-                saveCode.append("retVal.addElement(XMLUtilities.writeFloat(\"")
-                        .append(varName).append("\", ").append(varName).append(
-                                "));\n");
-                loadCode.append("retVal.").append(varName).append(
-                        " = Float.parseFloat(nodeVal);\n");
-            } else if (varType.equals("double")) {
-                saveCode
-                        .append("retVal.addElement(XMLUtilities.writeDouble(\"")
-                        .append(varName).append("\", ").append(varName).append(
-                                "));\n");
-                loadCode.append("retVal.").append(varName).append(
-                        " = Double.parseDouble(nodeVal);\n");
+            switch (varType) {
+                case "String":
+                    saveCode.append("retVal.addElement(\"").append(varName).append(
+                            "\").setText(").append(varName).append(");\n");
+                    loadCode.append("retVal.").append(varName).append(
+                            " = nodeVal;\n");
+                    break;
+                case "boolean":
+                    saveCode.append(
+                            "retVal.addElement(XMLUtilities.writeBoolean(\"")
+                            .append(varName).append("\", ").append(varName).append(
+                                    "));\n");
+                    loadCode.append("retVal.").append(varName).append(
+                            " = Boolean.valueOf(nodeVal).booleanValue();\n");
+                    break;
+                case "int":
+                    saveCode.append("retVal.addElement(XMLUtilities.writeInt(\"")
+                            .append(varName).append("\", ").append(varName).append(
+                                    "));\n");
+                    loadCode.append("retVal.").append(varName).append(
+                            " = Integer.parseInt(nodeVal);\n");
+                    break;
+                case "float":
+                    saveCode.append("retVal.addElement(XMLUtilities.writeFloat(\"")
+                            .append(varName).append("\", ").append(varName).append(
+                                    "));\n");
+                    loadCode.append("retVal.").append(varName).append(
+                            " = Float.parseFloat(nodeVal);\n");
+                    break;
+                case "double":
+                    saveCode
+                            .append("retVal.addElement(XMLUtilities.writeDouble(\"")
+                            .append(varName).append("\", ").append(varName).append(
+                                    "));\n");
+                    loadCode.append("retVal.").append(varName).append(
+                            " = Double.parseDouble(nodeVal);\n");
+                    break;
             }
 
         }

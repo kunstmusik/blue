@@ -26,6 +26,7 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
@@ -123,7 +124,7 @@ public class BlueShare {
             if (serverObj != null) {
                 retVal = serverObj.toString();
             }
-        } catch (Exception e) {
+        } catch (ParseException | HeadlessException e) {
             e.printStackTrace();
         }
 

@@ -34,7 +34,7 @@ import java.util.ArrayList;
 
 public class ParameterHelper {
     public static ArrayList<Parameter> getAllParameters(Arrangement arr, Mixer mixer) {
-        ArrayList<Parameter> params = new ArrayList<Parameter>();
+        ArrayList<Parameter> params = new ArrayList<>();
 
         for (int i = 0; i < arr.size(); i++) {
             InstrumentAssignment ia = arr.getInstrumentAssignment(i);

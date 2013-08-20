@@ -321,7 +321,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
         ActionListener insertChainListener;
 
-        HashMap<String, Class> npNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> npNameClassMap = new HashMap<>();
 
         private JMenuItem saveChain;
 
@@ -519,7 +519,7 @@ public class NoteProcessorChainEditor extends JComponent {
                 Class npClass = npNameClassMap.get(ae.getActionCommand());
                 Object tempNP = npClass.newInstance();
                 npcEditor.addNoteProcessor((NoteProcessor) tempNP);
-            } catch (Exception ex) {
+            } catch (InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }

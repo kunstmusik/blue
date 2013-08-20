@@ -63,7 +63,7 @@ public class SoundObjectLibraryUtils {
 
             ArrayList<SoundObject> soundObjects = layer.getSoundObjects();
         
-            ArrayList<SoundObject> instances = new ArrayList<SoundObject>();
+            ArrayList<SoundObject> instances = new ArrayList<>();
             
             for (SoundObject tempObject : soundObjects) {
                 if(tempObject instanceof Instance) {

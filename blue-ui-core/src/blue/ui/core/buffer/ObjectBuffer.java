@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class ObjectBuffer {
     private static ObjectBuffer instance = null;
     
-    private HashMap<Class,Object> buffer = new HashMap<Class,Object>();
+    private HashMap<Class,Object> buffer = new HashMap<>();
     
     private ObjectBuffer() {}
     

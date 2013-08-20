@@ -579,12 +579,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.sLayer) {
             String propName = evt.getPropertyName();
-
-            if (propName.equals("heightIndex")) {
-                revalidate();
-            } else if (propName.equals("name")) {
-                nameText.setText(sLayer.getName());
-                nameLabel.setText(sLayer.getName());
+            switch (propName) {
+                case "heightIndex":
+                    revalidate();
+                    break;
+                case "name":
+                    nameText.setText(sLayer.getName());
+                    nameLabel.setText(sLayer.getName());
+                    break;
             }
         }
     }

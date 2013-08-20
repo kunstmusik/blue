@@ -67,26 +67,28 @@ public class ItemList implements Generator, Serializable, TableModel,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "listType":
+                    retVal.setListType(Integer.parseInt(node.getTextString()));
+                    break;
+                case "listItems":
+                    Elements items = node.getElements();
+                    while (items.hasMoreElements()) {
+                        Element itemNode = items.next();
+                        String itemNodeName = itemNode.getName();
 
-            if (nodeName.equals("listType")) {
-                retVal.setListType(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("listItems")) {
-                Elements items = node.getElements();
-
-                while (items.hasMoreElements()) {
-                    Element itemNode = items.next();
-                    String itemNodeName = itemNode.getName();
-
-                    if (itemNodeName.equals("item")) {
-                        retVal.listItems.add(Double.valueOf(itemNode.
-                                getTextString()));
+                        if (itemNodeName.equals("item")) {
+                            retVal.listItems.add(Double.valueOf(itemNode.
+                                    getTextString()));
+                        }
                     }
-                }
-
-            } else if (nodeName.equals("index")) {
-                retVal.index = Integer.parseInt(node.getTextString());
-            } else if (nodeName.equals("direction")) {
-                retVal.direction = Integer.parseInt(node.getTextString());
+                    break;
+                case "index":
+                    retVal.index = Integer.parseInt(node.getTextString());
+                    break;
+                case "direction":
+                    retVal.direction = Integer.parseInt(node.getTextString());
+                    break;
             }
 
         }
@@ -206,7 +208,7 @@ public class ItemList implements Generator, Serializable, TableModel,
     /* Table Model Code */
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector<WeakReference<TableModelListener>>();
+            listeners = new Vector<>();
         }
 
         for(WeakReference<TableModelListener> ref : listeners) {
@@ -215,7 +217,7 @@ public class ItemList implements Generator, Serializable, TableModel,
             }
         }
 
-        listeners.add(new WeakReference<TableModelListener>(l));
+        listeners.add(new WeakReference<>(l));
         
     }
 

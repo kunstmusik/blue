@@ -44,8 +44,8 @@ public final class RealtimeRenderManager {
 
     private boolean looping = false;
     private static RealtimeRenderManager instance = null;
-    private ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
-    private ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<PlayModeListener>();
+    private ArrayList<PlayModeListener> listeners = new ArrayList<>();
+    private ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<>();
     private RealtimeRenderServiceFactory currentRenderServiceFactory = null;
     private RealtimeRenderService currentRenderService = null;
     private RealtimeRenderService currentBlueLiveRenderService = null;

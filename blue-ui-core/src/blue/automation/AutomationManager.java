@@ -68,7 +68,7 @@ public class AutomationManager implements ParameterListListener,
     /**
      * cache of all parameters in project
      */
-    private ArrayList<Parameter> allParameters = new ArrayList<Parameter>();
+    private ArrayList<Parameter> allParameters = new ArrayList<>();
     BlueData data = null;
     Score score = null;
     ActionListener parameterActionListener;
@@ -668,7 +668,7 @@ public class AutomationManager implements ParameterListListener,
         EffectsChain pre = channel.getPreEffects();
         pre.removeAutomatableCollectionListener(this);
 
-        ArrayList<String> removedParamIds = new ArrayList<String>();
+        ArrayList<String> removedParamIds = new ArrayList<>();
 
         for (int i = 0; i < pre.size(); i++) {
             ParameterList parameterList = ((Automatable) pre.getElementAt(i)).getParameterList();

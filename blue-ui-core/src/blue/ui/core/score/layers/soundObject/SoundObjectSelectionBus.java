@@ -29,7 +29,7 @@ import java.util.Vector;
  * @author steven
  */
 public class SoundObjectSelectionBus implements SelectionListener {
-    Vector<SelectionListener> listeners = new Vector<SelectionListener>();
+    Vector<SelectionListener> listeners = new Vector<>();
 
     private static SoundObjectSelectionBus instance = null;
 

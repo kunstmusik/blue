@@ -80,7 +80,7 @@ import org.openide.util.ImageUtilities;
 public class FileTree extends JComponent {
     private static final Comparator c = new AlphabeticalFileComparator();
 
-    private ArrayList<FileTreeListener> listeners = new ArrayList<FileTreeListener>();
+    private ArrayList<FileTreeListener> listeners = new ArrayList<>();
     
     JList directoryList = new JList();
 
@@ -228,7 +228,7 @@ public class FileTree extends JComponent {
         // populate the selected dir and all its parents
         flcRenderer.setSelectedDir(dir);
 
-        Vector<File> parentList = new Vector<File>();
+        Vector<File> parentList = new Vector<>();
 
         File tempDir = dir;
         parentList.add(dir);
@@ -245,7 +245,7 @@ public class FileTree extends JComponent {
         File[] files = dir.listFiles();
         Arrays.sort(files, c);
 
-        Vector<File> v = new Vector<File>();
+        Vector<File> v = new Vector<>();
         String fileName;
 
         v.add(dir);

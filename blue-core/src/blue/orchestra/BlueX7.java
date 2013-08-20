@@ -293,15 +293,14 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         StrBuilder buffer = new StrBuilder();
 
         try {
-            // System.out.println("algText: dx7" + algNum + ".orc");
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    this.getClass().getClassLoader().getResourceAsStream(
-                            "blue/resources/blueX7/dx7" + algNum + ".orc")));
-            String line;
-            while ((line = br.readLine()) != null) {
-                buffer.append(line).append("\n");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                         this.getClass().getClassLoader().getResourceAsStream(
+                                 "blue/resources/blueX7/dx7" + algNum + ".orc")))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    buffer.append(line).append("\n");
+                }
             }
-            br.close();
 
         } catch (IOException ioe) {
             System.err.println("[error] BlueX7::generateInstrument");

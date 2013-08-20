@@ -85,20 +85,26 @@ public class Oscillator implements Generator, Serializable, Maskable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("oscillatorType")) {
-                retVal.oscillatorType = Integer.parseInt(node.getTextString());
-            } else if (nodeName.equals("phaseInit")) {
-                retVal.phaseInit = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("frequency")) {
-                retVal.setFrequency(Double.parseDouble(node.getTextString()));
-            } else if (nodeName.equals("freqTableEnabled")) {
-                retVal.setFreqTableEnabled(Boolean
-                        .valueOf(node.getTextString()).booleanValue());
-            } else if (nodeName.equals("table")) {
-                retVal.setFreqTable(Table.loadFromXML(node));
-            } else if (nodeName.equals("exponent")) {
-                retVal.exponent = Double.parseDouble(node.getTextString());
+            switch (nodeName) {
+                case "oscillatorType":
+                    retVal.oscillatorType = Integer.parseInt(node.getTextString());
+                    break;
+                case "phaseInit":
+                    retVal.phaseInit = Double.parseDouble(node.getTextString());
+                    break;
+                case "frequency":
+                    retVal.setFrequency(Double.parseDouble(node.getTextString()));
+                    break;
+                case "freqTableEnabled":
+                    retVal.setFreqTableEnabled(Boolean
+                            .valueOf(node.getTextString()).booleanValue());
+                    break;
+                case "table":
+                    retVal.setFreqTable(Table.loadFromXML(node));
+                    break;
+                case "exponent":
+                    retVal.exponent = Double.parseDouble(node.getTextString());
+                    break;
             }
 
         }

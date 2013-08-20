@@ -125,12 +125,12 @@ public class MatrixGridEditor extends JComponent {
     public void loadMatrix(File matrixFile) {
         ArrayList temp = new ArrayList();
         try {
-            BufferedReader br = new BufferedReader(new FileReader(matrixFile));
-            String line;
-            while ((line = br.readLine()) != null) {
-                temp.add(line.trim());
+            try (BufferedReader br = new BufferedReader(new FileReader(matrixFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    temp.add(line.trim());
+                }
             }
-            br.close();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, BlueSystem
                     .getString("scanned.errorImportingMatrix")

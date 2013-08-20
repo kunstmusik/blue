@@ -129,13 +129,16 @@ public class Tempo implements Serializable {
         while(nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-            
-            if (nodeName.equals("enabled")) {
-                retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("visible")) {
-                retVal.visible = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("line")) {
-                retVal.line = Line.loadFromXML(node);
+            switch (nodeName) {
+                case "enabled":
+                    retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "visible":
+                    retVal.visible = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "line":
+                    retVal.line = Line.loadFromXML(node);
+                    break;
             }
         }
         

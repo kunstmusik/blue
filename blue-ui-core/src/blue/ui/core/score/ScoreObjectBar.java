@@ -54,7 +54,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
 
     private final JPopupMenu popup = new ScoreObjectBarPopup();
 
-    WeakHashMap<Score, ScoreBarState> scoreBarList = new WeakHashMap<Score,ScoreBarState>();
+    WeakHashMap<Score, ScoreBarState> scoreBarList = new WeakHashMap<>();
     
     ScoreBarState currentScoreBarState = null;
     
@@ -393,7 +393,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
     
     static class ScoreBarState {
         public Score score;
-        public ArrayList<LayerGroupButton> layerGroupButtons = new ArrayList<LayerGroupButton>();
+        public ArrayList<LayerGroupButton> layerGroupButtons = new ArrayList<>();
         
         public LayerGroupButton getCurrentLayerGroupButton() {
             return layerGroupButtons.get(layerGroupButtons.size() - 1);

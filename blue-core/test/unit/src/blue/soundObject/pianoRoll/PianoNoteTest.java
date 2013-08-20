@@ -60,7 +60,7 @@ public class PianoNoteTest {
     @Test
     public void testCompareTo() {
         
-        ArrayList<PianoNote> list = new ArrayList<PianoNote>();
+        ArrayList<PianoNote> list = new ArrayList<>();
         
         PianoNote note0 = new PianoNote();
         note0.octave = 6;

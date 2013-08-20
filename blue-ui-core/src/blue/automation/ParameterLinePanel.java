@@ -100,7 +100,7 @@ public class ParameterLinePanel extends JComponent implements
 
     AlphaMarquee marquee;
 
-    ArrayList<float[]> selectionList = new ArrayList<float[]>();
+    ArrayList<float[]> selectionList = new ArrayList<>();
 
     float mouseDownInitialTime = -1.0f;
 
@@ -564,7 +564,7 @@ public class ParameterLinePanel extends JComponent implements
     }
     
     private void processLineForSelectionDrag(Line line) {
-        ArrayList<LinePoint> points = new ArrayList<LinePoint>();
+        ArrayList<LinePoint> points = new ArrayList<>();
 
         for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
 
@@ -614,7 +614,7 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
         
-        ArrayList<LinePoint> points = new ArrayList<LinePoint>();
+        ArrayList<LinePoint> points = new ArrayList<>();
 
         for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
 
@@ -1564,12 +1564,12 @@ public class ParameterLinePanel extends JComponent implements
                                     .getSelectedFile(FILE_BPF_EXPORT);
 
                             try {
-                                PrintWriter out = new PrintWriter(
-                                        new FileWriter(f));
-                                out.print(line.exportBPF());
+                                try (PrintWriter out = new PrintWriter(
+                                             new FileWriter(f))) {
+                                    out.print(line.exportBPF());
 
-                                out.flush();
-                                out.close();
+                                    out.flush();
+                                }
 
                                 JOptionPane.showMessageDialog(SwingUtilities
                                         .getRoot(ParameterLinePanel.this),

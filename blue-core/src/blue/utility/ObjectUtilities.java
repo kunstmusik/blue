@@ -23,6 +23,7 @@ package blue.utility;
 import blue.BlueSystem;
 import electric.xml.Element;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -43,9 +44,7 @@ public class ObjectUtilities {
                     byteArrayInputStream);
             Object myClone = objectInputStream.readObject();
             return myClone;
-        } catch (IOException x) {
-            x.printStackTrace();
-        } catch (ClassNotFoundException x) {
+        } catch (IOException | ClassNotFoundException x) {
             x.printStackTrace();
         }
         return null;
@@ -64,7 +63,7 @@ public class ObjectUtilities {
                             + methods[i].invoke(obj, null));
                 }
 
-            } catch (Exception e) {
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }

@@ -44,7 +44,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
     ProcessConsole console = new ProcessConsole();
     RunProxy runProxy;
-    ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
+    ArrayList<PlayModeListener> listeners = new ArrayList<>();
     private BlueData data = null;
     private boolean shouldStop = false;
     JCheckBox disableMessagesBox = null;

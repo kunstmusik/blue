@@ -40,7 +40,7 @@ public class ParameterIdList implements Serializable {
         }
     };
 
-    private ArrayList<String> parameters = new ArrayList<String>();
+    private ArrayList<String> parameters = new ArrayList<>();
 
     private int selectedIndex = -1;
 

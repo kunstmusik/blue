@@ -59,7 +59,7 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     private PianoRollCanvas canvas;
 
-    private ArrayList<SelectionListener> listeners = new ArrayList<SelectionListener>();
+    private ArrayList<SelectionListener> listeners = new ArrayList<>();
 
     private Point start = null;
 

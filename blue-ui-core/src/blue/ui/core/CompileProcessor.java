@@ -24,11 +24,13 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.projects.BlueProjectManager;
 import blue.projects.actions.OpenProjectAction;
+import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,7 +54,7 @@ public class CompileProcessor extends OptionProcessor {
 
     @Override
     protected Set<Option> getOptions() {
-        Set<Option> options = new HashSet<Option>();
+        Set<Option> options = new HashSet<>();
         
         c.shortDescription(o, "Bundle.properties", "option.compile.description");
         o.shortDescription(o, "Bundle.properties", "option.output.description");
@@ -116,7 +118,7 @@ public class CompileProcessor extends OptionProcessor {
                     + BlueSystem.getString("blue.compiledTo") + " "
                     + outFileName);
 
-        } catch (Exception e) {
+        } catch (IOException | ScoreGenerationException | CommandException e) {
             if (out != null) {
                 out.close();
             }

@@ -173,7 +173,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector<TableModelListener>();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }

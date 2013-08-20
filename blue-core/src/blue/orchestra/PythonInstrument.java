@@ -144,15 +144,19 @@ public class PythonInstrument extends AbstractInstrument implements
         while (elements.hasMoreElements()) {
             Element node = elements.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("globalOrc")) {
-                instr.setGlobalOrc(node.getTextString());
-            } else if (nodeName.equals("globalSco")) {
-                instr.setGlobalSco(node.getTextString());
-            } else if (nodeName.equals("instrumentText")) {
-                instr.setText(node.getTextString());
-            } else if (nodeName.equals("opcodeList")) {
-                instr.opcodeList = OpcodeList.loadFromXML(node);
+            switch (nodeName) {
+                case "globalOrc":
+                    instr.setGlobalOrc(node.getTextString());
+                    break;
+                case "globalSco":
+                    instr.setGlobalSco(node.getTextString());
+                    break;
+                case "instrumentText":
+                    instr.setText(node.getTextString());
+                    break;
+                case "opcodeList":
+                    instr.opcodeList = OpcodeList.loadFromXML(node);
+                    break;
             }
         }
 

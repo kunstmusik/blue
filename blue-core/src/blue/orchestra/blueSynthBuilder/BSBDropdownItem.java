@@ -53,11 +53,13 @@ public class BSBDropdownItem implements Serializable {
         while (nodes.hasMoreElements()) {
             Element elem = nodes.next();
             String name = elem.getName();
-
-            if (name.equals("name")) {
-                item.setName(elem.getTextString());
-            } else if (name.equals("value")) {
-                item.setValue(elem.getTextString());
+            switch (name) {
+                case "name":
+                    item.setName(elem.getTextString());
+                    break;
+                case "value":
+                    item.setValue(elem.getTextString());
+                    break;
             }
         }
 

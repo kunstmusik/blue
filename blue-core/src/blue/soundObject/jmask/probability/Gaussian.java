@@ -56,23 +56,30 @@ public class Gaussian implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("sigma")) {
-                retVal.sigma = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("mu")) {
-                retVal.mu  = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("sigmaTableEnabled")) {
-                retVal.sigmaTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("muTableEnabled")) {
-                retVal.muTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("sigmaTable")) {
-                    retVal.sigmaTable = Table.loadFromXML(node);
-                } else if (tableId.equals("muTable")) {
-                    retVal.muTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "sigma":
+                    retVal.sigma = XMLUtilities.readDouble(node);
+                    break;
+                case "mu":
+                    retVal.mu  = XMLUtilities.readDouble(node);
+                    break;
+                case "sigmaTableEnabled":
+                    retVal.sigmaTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "muTableEnabled":
+                    retVal.muTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "sigmaTable":
+                            retVal.sigmaTable = Table.loadFromXML(node);
+                            break;
+                        case "muTable":
+                            retVal.muTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 

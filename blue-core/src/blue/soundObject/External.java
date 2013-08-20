@@ -260,13 +260,16 @@ public class External extends AbstractSoundObject implements Serializable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("text")) {
-                external.setText(node.getTextString());
-            } else if (nodeName.equals("commandLine")) {
-                external.setCommandLine(node.getTextString());
-            } else if (nodeName.equals("syntaxType")) {
-                external.setSyntaxType(node.getTextString());
+            switch (nodeName) {
+                case "text":
+                    external.setText(node.getTextString());
+                    break;
+                case "commandLine":
+                    external.setCommandLine(node.getTextString());
+                    break;
+                case "syntaxType":
+                    external.setSyntaxType(node.getTextString());
+                    break;
             }
         }
 

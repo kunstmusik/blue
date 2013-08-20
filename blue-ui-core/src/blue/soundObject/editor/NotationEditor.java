@@ -180,10 +180,12 @@ class NotationOptionsMenu extends JPopupMenu implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
-        if (command == "Bass Clef") {
+        switch (command) {
+            case "Bass Clef":
+                break;
+            case "Treble Clef":
 
-        } else if (command == "Treble Clef") {
-
+                break;
         }
     }
 

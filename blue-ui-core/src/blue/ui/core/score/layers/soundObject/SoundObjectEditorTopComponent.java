@@ -60,9 +60,9 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
 
     SoundObject currentSoundObject;
 
-    HashMap<Class, Class> sObjEditorMap = new HashMap<Class, Class>();
+    HashMap<Class, Class> sObjEditorMap = new HashMap<>();
 
-    HashMap<Class, SoundObjectEditor> editors = new HashMap<Class, SoundObjectEditor>();
+    HashMap<Class, SoundObjectEditor> editors = new HashMap<>();
 
     JPanel emptyPanel = new JPanel();
     
@@ -259,9 +259,7 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
         if(sObjEditor == null) {
             try {
                 sObjEditor = (SoundObjectEditor) sObjEditClass.newInstance();
-            } catch (InstantiationException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (IllegalAccessException ex) {
+            } catch (    InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             }
             editors.put(sObjEditClass, sObjEditor);

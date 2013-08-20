@@ -652,7 +652,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
     }
 
     private JMenu getAddInstrumentMenu() {
-        HashMap<String, Class> instrNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> instrNameClassMap = new HashMap<>();
 
         ArrayList<Class> instrumentPlugins =
                     BluePluginManager.getInstance().getInstrumentClasses();
@@ -681,7 +681,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
                 });
                 instrumentMenu.add(temp);
 
-            } catch (Exception e) {
+            } catch (InstantiationException | IllegalAccessException e) {
                 Exceptions.printStackTrace(e);
             }
 

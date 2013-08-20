@@ -33,6 +33,7 @@ import electric.xml.ParseException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
@@ -226,7 +227,7 @@ public class BlueShareRemoteCaller {
                         result));
                 instrument = (Instrument) xmlSer.read(reader);
                 return instrument;
-            } catch (Exception e) {
+            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }

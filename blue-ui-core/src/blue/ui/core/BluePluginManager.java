@@ -47,7 +47,7 @@ public class BluePluginManager {
 
   
     public ArrayList<BluePlugin> getPlugins(Class pluginType) {
-        ArrayList<BluePlugin> returnValue = new ArrayList<BluePlugin>();
+        ArrayList<BluePlugin> returnValue = new ArrayList<>();
 
         Lookup lkp = Lookups.forPath("blue/pluginProviders");
     
@@ -60,7 +60,7 @@ public class BluePluginManager {
 
     protected ArrayList<Class> getPluginClasses(Class pluginType) {
         
-        ArrayList<Class> pluginClasses = new ArrayList<Class>();
+        ArrayList<Class> pluginClasses = new ArrayList<>();
 
         for(BluePlugin plugin : getPlugins(pluginType) ) {
             
@@ -71,7 +71,7 @@ public class BluePluginManager {
     }
     
     public ArrayList<Class> getLiveSoundObjectClasses() {
-        ArrayList<Class> sObjects = new ArrayList<Class>();
+        ArrayList<Class> sObjects = new ArrayList<>();
 
         for (BluePlugin plugin : getPlugins(SoundObject.class)) {
             if(Boolean.TRUE.equals(

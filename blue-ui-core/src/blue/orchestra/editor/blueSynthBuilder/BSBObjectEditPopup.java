@@ -58,18 +58,22 @@ public class BSBObjectEditPopup extends JPopupMenu implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Cut")) {
-            if (bsbEditPanel != null) {
-                bsbEditPanel.cut();
-            }
-        } else if (e.getActionCommand().equals("Copy")) {
-            if (bsbEditPanel != null) {
-                bsbEditPanel.copy();
-            }
-        } else if (e.getActionCommand().equals("Remove")) {
-            if (bsbEditPanel != null) {
-                bsbEditPanel.removeSelectedBSBObjects();
-            }
+        switch (e.getActionCommand()) {
+            case "Cut":
+                if (bsbEditPanel != null) {
+                    bsbEditPanel.cut();
+                }
+                break;
+            case "Copy":
+                if (bsbEditPanel != null) {
+                    bsbEditPanel.copy();
+                }
+                break;
+            case "Remove":
+                if (bsbEditPanel != null) {
+                    bsbEditPanel.removeSelectedBSBObjects();
+                }
+                break;
         }
     }
 

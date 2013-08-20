@@ -115,63 +115,59 @@ public class AudioWaveformCacheGenerator extends Thread {
             AudioFormat format = aFormat.getFormat();
 
             int numChannels = format.getChannels();
+            try (AudioInputStream audioInputStream = AudioSystem
+                         .getAudioInputStream(new BufferedInputStream(
+                                 new FileInputStream(f)))) {
+                int sr = (int) format.getSampleRate();
 
-            AudioInputStream audioInputStream = AudioSystem
-                    .getAudioInputStream(new BufferedInputStream(
-                            new FileInputStream(f)));
+                int numBytesPerSample = audioInputStream.getFormat()
+                        .getSampleSizeInBits() / 8;
 
-            int sr = (int) format.getSampleRate();
+                int numFramesToRead = sr / waveData.pixelSeconds;
 
-            int numBytesPerSample = audioInputStream.getFormat()
-                    .getSampleSizeInBits() / 8;
+                boolean bigEndian = format.isBigEndian();
 
-            int numFramesToRead = sr / waveData.pixelSeconds;
+                int len = format.getFrameSize() * numFramesToRead;
+                byte[] dataBuffer = new byte[len];
 
-            boolean bigEndian = format.isBigEndian();
+                int maxWidth = (aFormat.getFrameLength() / numFramesToRead) + 1;
 
-            int len = format.getFrameSize() * numFramesToRead;
-            byte[] dataBuffer = new byte[len];
+                waveData.data = new double[numChannels][maxWidth * 2];
 
-            int maxWidth = (aFormat.getFrameLength() / numFramesToRead) + 1;
+                for (int i = 0; i < maxWidth && running; i++) {
 
-            waveData.data = new double[numChannels][maxWidth * 2];
+                    int numRead = audioInputStream.read(dataBuffer, 0, len);
 
-            for (int i = 0; i < maxWidth && running; i++) {
+                    if (numRead <= 0) {
+                        waveData.percentLoadingComplete = 1.0;
+                        break;
+                    } else {
+                        waveData.percentLoadingComplete = i / maxWidth;
 
-                int numRead = audioInputStream.read(dataBuffer, 0, len);
+                        if (i % 100 == 0) {
+                            SwingUtilities.invokeLater(new Runnable() {
 
-                if (numRead <= 0) {
-                    waveData.percentLoadingComplete = 1.0;
-                    break;
-                } else {
-                    waveData.percentLoadingComplete = i / maxWidth;
+                                @Override
+                                public void run() {
+                                    audioWaveformCache
+                                            .fireAudioWaveformDataGenerated(waveData.fileName);
+                                }
 
-                    if (i % 100 == 0) {
-                        SwingUtilities.invokeLater(new Runnable() {
+                            });
+                        }
 
-                            @Override
-                            public void run() {
-                                audioWaveformCache
-                                        .fireAudioWaveformDataGenerated(waveData.fileName);
-                            }
-
-                        });
                     }
+
+                    prepareSamples(waveData, dataBuffer, i, numChannels,
+                            numBytesPerSample, bigEndian);
 
                 }
 
-                prepareSamples(waveData, dataBuffer, i, numChannels,
-                        numBytesPerSample, bigEndian);
+                waveData.percentLoadingComplete = 1.0;
 
             }
 
-            waveData.percentLoadingComplete = 1.0;
-            audioInputStream.close();
-
-        } catch (UnsupportedAudioFileException e) {
-            waveData.data = null;
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (UnsupportedAudioFileException | IOException e) {
             waveData.data = null;
             e.printStackTrace();
         }

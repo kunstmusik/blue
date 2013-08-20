@@ -35,7 +35,7 @@ public class UpgradeManager {
 
     Logger logger = Logger.getLogger("UpgradeManager");
     
-    private ArrayList<ProjectUpgrader> upgraders = new ArrayList<ProjectUpgrader>();
+    private ArrayList<ProjectUpgrader> upgraders = new ArrayList<>();
     private static UpgradeManager instance = null;
 
     public static UpgradeManager getInstance() {

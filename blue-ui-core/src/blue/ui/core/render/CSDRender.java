@@ -110,7 +110,7 @@ public class CSDRender extends CSDRenderService {
 
         int nchnls = getNchnls(data, true);
 
-        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<Instrument>();
+        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
         arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
 
@@ -310,7 +310,7 @@ public class CSDRender extends CSDRenderService {
 
         int nchnls = getNchnls(data, isRealTime);
 
-        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<Instrument>();
+        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
         arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
 
@@ -391,7 +391,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private ArrayList<StringChannel> getStringChannels(Arrangement arrangement) {
-        ArrayList<StringChannel> params = new ArrayList<StringChannel>();
+        ArrayList<StringChannel> params = new ArrayList<>();
         StringChannelNameManager scnm = new StringChannelNameManager();
 
         for (int i = 0; i < arrangement.size(); i++) {

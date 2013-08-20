@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -23,6 +24,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import org.apache.xmlrpc.XmlRpcException;
 
 /**
  * <p>
@@ -233,7 +235,7 @@ public class InstrumentExportPane extends JComponent {
             BlueShareRemoteCaller.submitInstrument(username, password,
                     categoryId, name, instrumentType, description,
                     instrumentText);
-        } catch (Exception e) {
+        } catch (IOException | XmlRpcException e) {
             JOptionPane.showMessageDialog(null, BlueSystem
                     .getString("blueShare.errorSubmittingInstrument")
                     + "\n\n" + e.getLocalizedMessage(), BlueSystem

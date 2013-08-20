@@ -154,7 +154,7 @@ public class ScaleSelectionPanel extends JComponent {
     // change listener methods
     public void addChangeListener(ChangeListener cl) {
         if (changeListeners == null) {
-            changeListeners = new Vector<ChangeListener>();
+            changeListeners = new Vector<>();
         }
         changeListeners.add(cl);
     }

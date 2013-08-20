@@ -42,7 +42,7 @@ public class Score implements Serializable {
 
     Tempo tempo = null;
     TimeState timeState = null;
-    ArrayList<LayerGroup> layerGroups = new ArrayList<LayerGroup>();
+    ArrayList<LayerGroup> layerGroups = new ArrayList<>();
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private transient ArrayList<ScoreListener> scoreListeners = null;
@@ -151,23 +151,24 @@ public class Score implements Serializable {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if ("tempo".equals(node.getName())) {
-                score.tempo = Tempo.loadFromXML(node);
-            } else if("timeState".equals(node.getName())) {
-                score.timeState = TimeState.loadFromXML(node);
-            } else if("noteProcessorChain".equals(node.getName())) {
-                score.npc = NoteProcessorChain.loadFromXML(node);
-            } else {
-
-                LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
-
-                if (layerGroup == null) {
-                    throw new RuntimeException(
-                            "Unable to load Score LayerGroup of type: " + node.getName());
-                }
-
-                score.layerGroups.add(layerGroup);
+            switch (node.getName()) {
+                case "tempo":
+                    score.tempo = Tempo.loadFromXML(node);
+                    break;
+                case "timeState":
+                    score.timeState = TimeState.loadFromXML(node);
+                    break;
+                case "noteProcessorChain":
+                    score.npc = NoteProcessorChain.loadFromXML(node);
+                    break;
+                default:
+                    LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
+                    if (layerGroup == null) {
+                        throw new RuntimeException(
+                                "Unable to load Score LayerGroup of type: " + node.getName());
+                    }
+                    score.layerGroups.add(layerGroup);
+                    break;
             }
         }
         
@@ -215,7 +216,7 @@ public class Score implements Serializable {
     
     public void addScoreListener(ScoreListener listener) {
         if(scoreListeners == null) {
-            scoreListeners = new ArrayList<ScoreListener>();
+            scoreListeners = new ArrayList<>();
         }
         
         scoreListeners.add(listener);

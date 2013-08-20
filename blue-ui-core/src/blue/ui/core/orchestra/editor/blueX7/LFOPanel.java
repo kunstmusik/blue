@@ -59,7 +59,7 @@ public class LFOPanel extends JComponent {
         this.add(pmd);
         this.add(amd);
 
-        Vector<String> items = new Vector<String>();
+        Vector<String> items = new Vector<>();
         items.add("Triangle");
         items.add("Saw Down");
         items.add("Saw Up");

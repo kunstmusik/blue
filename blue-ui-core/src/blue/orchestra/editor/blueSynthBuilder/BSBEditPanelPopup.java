@@ -82,11 +82,7 @@ public class BSBEditPanelPopup extends JPopupMenu implements ActionListener {
             bsbObj.setX(itemX);
             bsbObj.setY(itemY);
             bsbEditPanel.addBSBObject(bsbObj);
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        } catch (ClassNotFoundException e1) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e1) {
             e1.printStackTrace();
         }
 

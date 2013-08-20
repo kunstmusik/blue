@@ -249,18 +249,20 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
             Element node = nodes.next();
 
             String nodeName = node.getName();
-
-            if (nodeName.equals("beats")) {
-                pattern.setBeats(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("subDivisions")) {
-                pattern.setSubDivisions(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("patterns")) {
-                Elements patternNodes = node.getElements();
-
-                while (patternNodes.hasMoreElements()) {
-                    Pattern p = Pattern.loadFromXML(patternNodes.next());
-                    pattern.addPattern(p);
-                }
+            switch (nodeName) {
+                case "beats":
+                    pattern.setBeats(Integer.parseInt(node.getTextString()));
+                    break;
+                case "subDivisions":
+                    pattern.setSubDivisions(Integer.parseInt(node.getTextString()));
+                    break;
+                case "patterns":
+                    Elements patternNodes = node.getElements();
+                    while (patternNodes.hasMoreElements()) {
+                        Pattern p = Pattern.loadFromXML(patternNodes.next());
+                        pattern.addPattern(p);
+                    }
+                    break;
             }
 
         }

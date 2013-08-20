@@ -127,16 +127,20 @@ public class Parameter implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("generator")) {
-                parameter.generator = (Generator) ObjectUtilities
-                        .loadFromXML(node);
-            } else if (nodeName.equals("mask")) {
-                parameter.mask = Mask.loadFromXML(node);
-            } else if (nodeName.equals("quantizer")) {
-                parameter.quantizer = Quantizer.loadFromXML(node);
-            } else if (nodeName.equals("accumulator")) {
-                parameter.accumulator = Accumulator.loadFromXML(node);
+            switch (nodeName) {
+                case "generator":
+                    parameter.generator = (Generator) ObjectUtilities
+                            .loadFromXML(node);
+                    break;
+                case "mask":
+                    parameter.mask = Mask.loadFromXML(node);
+                    break;
+                case "quantizer":
+                    parameter.quantizer = Quantizer.loadFromXML(node);
+                    break;
+                case "accumulator":
+                    parameter.accumulator = Accumulator.loadFromXML(node);
+                    break;
             }
         }
 

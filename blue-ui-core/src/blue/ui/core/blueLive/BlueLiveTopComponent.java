@@ -1241,7 +1241,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     class AddMenu extends JMenu implements ActionListener {
 
-        HashMap<String, Class> sObjNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> sObjNameClassMap = new HashMap<>();
 
         public AddMenu() {
 
@@ -1273,17 +1273,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                 SoundObject sObj = (SoundObject) c.newInstance();
                 addSoundObject(mouseColumn, mouseRow, sObj);
-            } catch (ClassNotFoundException cnfe) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
-            } catch (IllegalAccessException iae) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
-            } catch (InstantiationException ie) {
+            } catch (    ClassNotFoundException | IllegalAccessException | InstantiationException cnfe) {
                 JOptionPane.showMessageDialog(
                         null,
                         BlueSystem.getString(

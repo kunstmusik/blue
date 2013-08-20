@@ -41,9 +41,7 @@ public class BSBCloneTest extends TestCase {
 
             try {
                 bsbObj = (BSBObject) class1.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (    InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
 
@@ -71,9 +69,7 @@ public class BSBCloneTest extends TestCase {
 
             try {
                 bsbObj = (BSBObject) class1.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (    InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
 
@@ -124,9 +120,7 @@ public class BSBCloneTest extends TestCase {
 
             try {
                 bsbObj = (BSBObject) class1.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (    InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
 
@@ -142,10 +136,7 @@ public class BSBCloneTest extends TestCase {
             try {
                 m = class1.getMethod("loadFromXML",
                         new Class[] { Element.class });
-            } catch (SecurityException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            } catch (NoSuchMethodException e1) {
+            } catch (    SecurityException | NoSuchMethodException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
@@ -159,13 +150,7 @@ public class BSBCloneTest extends TestCase {
 
             try {
                 bsbObj2 = (BSBObject) m.invoke(bsbObj, new Object[] { elem1 });
-            } catch (IllegalArgumentException e2) {
-                // TODO Auto-generated catch block
-                e2.printStackTrace();
-            } catch (IllegalAccessException e2) {
-                // TODO Auto-generated catch block
-                e2.printStackTrace();
-            } catch (InvocationTargetException e2) {
+            } catch (    IllegalArgumentException | IllegalAccessException | InvocationTargetException e2) {
                 // TODO Auto-generated catch block
                 e2.printStackTrace();
             }

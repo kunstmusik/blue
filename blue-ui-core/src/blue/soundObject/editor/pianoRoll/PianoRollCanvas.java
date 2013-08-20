@@ -437,20 +437,23 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         if (evt.getSource() == this.p) {
 
             String propertyName = evt.getPropertyName();
-
-            if (propertyName.equals("scale")
-                    || propertyName.equals("pchGenerationMethod")) {
-                recalculateSize();
-                revalidate();
-                repaint();
-            } else if (propertyName.equals("snapEnabled")
-                    || propertyName.equals("snapValue")) {
-                repaint();
-            } else if (propertyName.equals("timeValue")) {
-
-            } else if (propertyName.equals("pixelSecond")
-                    || propertyName.equals("noteHeight")) {
-                editPianoRoll(this.p);
+            switch (propertyName) {
+                case "scale":
+                case "pchGenerationMethod":
+                    recalculateSize();
+                    revalidate();
+                    repaint();
+                    break;
+                case "snapEnabled":
+                case "snapValue":
+                    repaint();
+                    break;
+                case "timeValue":
+                    break;
+                case "pixelSecond":
+                case "noteHeight":
+                    editPianoRoll(this.p);
+                    break;
             }
 
         }
