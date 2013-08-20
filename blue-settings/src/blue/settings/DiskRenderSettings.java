@@ -274,7 +274,7 @@ public class DiskRenderSettings implements Serializable {
         Collection<? extends DiskRenderServiceFactory> services = Lookup.getDefault().lookupAll(
                                                                DiskRenderServiceFactory.class);
 
-        ArrayList<DiskRenderServiceFactory> results = new ArrayList<DiskRenderServiceFactory>();
+        ArrayList<DiskRenderServiceFactory> results = new ArrayList<>();
         
         for (DiskRenderServiceFactory factory : services) {
            if(factory.isAvailable()) {

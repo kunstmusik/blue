@@ -385,12 +385,8 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
     }
 }
 
-class AlphabeticalFileComparator implements Comparator {
-    @Override
-    public int compare(Object a, Object b) {
-        File aa = (File) a;
-        File bb = (File) b;
-
-        return aa.getName().compareTo(bb.getName());
+class AlphabeticalFileComparator implements Comparator<File> {
+    public int compare(File a, File b) {
+        return a.getName().compareTo(b.getName());
     }
 }

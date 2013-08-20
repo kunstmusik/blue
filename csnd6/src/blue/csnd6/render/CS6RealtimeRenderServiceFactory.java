@@ -19,6 +19,7 @@
  */
 package blue.csnd6.render;
 
+import blue.services.render.DiskRenderService;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import org.openide.util.lookup.ServiceProvider;
@@ -49,5 +50,10 @@ public class CS6RealtimeRenderServiceFactory implements RealtimeRenderServiceFac
     @Override
     public boolean isAvailable() {
         return API6Utilities.isCsoundAPIAvailable();
+    }
+
+    @Override
+    public DiskRenderService createDiskRenderService() {
+        return new CS6DiskRendererService();
     }
 }

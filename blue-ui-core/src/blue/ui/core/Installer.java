@@ -197,6 +197,9 @@ public class Installer extends ModuleInstall {
                 tempFileCleaner);
         MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
 
+        RealtimeRenderManager.getInstance().stopAuditioning();
+        RealtimeRenderManager.getInstance().shutdown();
+
         logger.info("blue-ui-core Installer uninstalled");
     }
 

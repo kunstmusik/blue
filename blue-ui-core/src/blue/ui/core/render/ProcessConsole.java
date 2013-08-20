@@ -443,6 +443,24 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
         return getCollectedOutput();
     }
 
+    @Override
+    public int getCsoundVersion(String csoundCommand) {
+        // Csound version 6.00.1 (double samples) Aug 18 2013
+        String val = execWaitAndCollect(new String[]{csoundCommand}, null);
+        String lines[] = val.split("\\r?\\n");
+        for (String line : lines) {
+            if (line.trim().startsWith("Csound version")) {
+                String parts[] = line.split("\\s+");
+                try {
+                    return Integer.parseInt("" + parts[2].charAt(0));
+                } catch (NumberFormatException nfe) {
+                    return -1;
+                }
+            }
+        }
+        return -1;
+    }
+
     public class OutputThread extends Thread {
 
         BufferedReader reader = null;

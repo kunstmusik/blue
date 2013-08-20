@@ -19,7 +19,10 @@
  */
 package blue.settings;
 
-import java.util.Vector;
+import blue.services.render.DeviceInfo;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -27,7 +30,7 @@ import org.junit.Test;
  *
  * @author stevenyi
  */
-public class DriverUtilsTest {
+public class DriverUtilitiesTest {
     
     private static String TEST_JACK_LSP_OUTPUT = "system:capture_1\n"
             + "    properties: output,can-monitor,physical,terminal,\n"
@@ -120,29 +123,29 @@ public class DriverUtilsTest {
             + "    properties: input,physical,terminal,\n"
             + "    8 bit raw midi";
     
-    public DriverUtilsTest() {
+    public DriverUtilitiesTest() {
     }
 
     @Test
     public void testParseJackLspOutput() {
-        Vector v = new Vector();
-        DriverUtils.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
-                "audio", "input", v);
+        List<DeviceInfo> v = new ArrayList<>();
+        DriverUtilities.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
+                "audio", "input", "adc:", v);
         
         assertEquals(1, v.size());
-        DriverUtils.JackCardInfo info = (DriverUtils.JackCardInfo) v.get(0);
-        assertEquals("system:playback_", info.deviceName);
-        assertEquals("system:playback_ (10 channels)", info.description);
+        DeviceInfo info = v.get(0);
+        assertEquals("adc:system:playback_", info.getDeviceId());
+        assertEquals("system:playback_ (10 channels)", info.toString());
         
         
-        v.removeAllElements();
-        DriverUtils.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
-                "audio", "output", v);
+        v.clear();
+        DriverUtilities.parseJackLspOutput(TEST_JACK_LSP_OUTPUT,
+                "audio", "output", "dac:", v);
         
         assertEquals(1, v.size());
-        info = (DriverUtils.JackCardInfo) v.get(0);
-        assertEquals("system:capture_", info.deviceName);
-        assertEquals("system:capture_ (12 channels)", info.description);
+        info = v.get(0);
+        assertEquals("dac:system:capture_", info.getDeviceId());
+        assertEquals("system:capture_ (12 channels)", info.toString());
     }
 
 //    @Test
