@@ -43,5 +43,7 @@ public interface DiskRenderService {
     public boolean isRunning();
 
     public void stop();
+
+    public int getCsoundVersion(String csoundCommand);
     
 }

@@ -371,7 +371,7 @@ public class RealtimeRenderSettings implements Serializable {
         Collection<? extends RealtimeRenderServiceFactory> services = Lookup.getDefault().lookupAll(
                 RealtimeRenderServiceFactory.class);
 
-        ArrayList<RealtimeRenderServiceFactory> results = new ArrayList<RealtimeRenderServiceFactory>();
+        ArrayList<RealtimeRenderServiceFactory> results = new ArrayList<>();
 
         for (RealtimeRenderServiceFactory factory : services) {
             if (factory.isAvailable()) {

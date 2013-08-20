@@ -31,7 +31,8 @@ public class Csound6APIWarmupTask implements Runnable {
 
         if (API6Utilities.isCsoundAPIAvailable()) {
 
-            csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+            csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER | 
+                    csnd6.CSOUNDINIT_NO_ATEXIT);
 
             Csound csound = new Csound();
             File f, f2;

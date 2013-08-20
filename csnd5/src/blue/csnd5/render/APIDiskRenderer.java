@@ -360,4 +360,9 @@ public class APIDiskRenderer implements DiskRenderService {
 
 
     }
+
+    @Override
+    public int getCsoundVersion(String csoundCommand) {
+        return 5;
+    }
 }

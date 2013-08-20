@@ -14,6 +14,7 @@ import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
+import blue.services.render.DeviceInfo;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.JCheckBox;
@@ -175,7 +177,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             return;
         }
 
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
         
         shouldStop = false;
 
@@ -226,7 +228,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
     @Override
     public void renderForBlueLive() throws SoundObjectException {
 
-        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
+//        csnd6.csoundInitialize(csnd6.CSOUNDINIT_NO_SIGNAL_HANDLER);
         
         CsdRenderResult result = CSDRenderService.getDefault().generateCSDForBlueLive(
                 this.data, true);
@@ -362,6 +364,26 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             notifyPlayModeListeners(playMode);
         }
 
+    }
+
+    @Override
+    public List<DeviceInfo> getAudioInputs(String driver) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<DeviceInfo> getAudioOutputs(String driver) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<DeviceInfo> getMidiInputs(String driver) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<DeviceInfo> getMidiOutputs(String driver) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     static class APIRunnerThread implements Runnable {

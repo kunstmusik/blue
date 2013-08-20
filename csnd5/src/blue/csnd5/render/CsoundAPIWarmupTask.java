@@ -29,7 +29,8 @@ public class CsoundAPIWarmupTask implements Runnable {
         Logger.getLogger("CsoundAPIWarmupTask").log(Level.INFO, "Warming up Csound 5 API");
         
         if(APIUtilities.isCsoundAPIAvailable()) {
-            csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
+            csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER | 
+                    csnd.CSOUNDINIT_NO_ATEXIT);
             Csound csound = new Csound();
             File f, f2;
             try {

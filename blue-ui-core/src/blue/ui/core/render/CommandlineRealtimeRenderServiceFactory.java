@@ -19,6 +19,7 @@
  */
 package blue.ui.core.render;
 
+import blue.services.render.DiskRenderService;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import org.openide.util.lookup.ServiceProvider;
@@ -48,6 +49,11 @@ public class CommandlineRealtimeRenderServiceFactory implements RealtimeRenderSe
     @Override
     public boolean isAvailable() {
         return true;
+    }
+
+    @Override
+    public DiskRenderService createDiskRenderService() {
+        return new ProcessConsole();
     }
 }
 

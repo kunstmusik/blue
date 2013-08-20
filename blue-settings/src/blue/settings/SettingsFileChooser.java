@@ -33,7 +33,7 @@ public class SettingsFileChooser {
     public static JFileChooser getFileChooser() {
         if(fChooserRef == null || fChooserRef.get() == null) {
             JFileChooser jfc = new JFileChooser();
-            fChooserRef = new WeakReference<JFileChooser>(jfc);
+            fChooserRef = new WeakReference<>(jfc);
         }
         return fChooserRef.get();
     }
