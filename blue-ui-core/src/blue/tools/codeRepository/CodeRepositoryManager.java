@@ -54,13 +54,14 @@ public class CodeRepositoryManager {
         CodeRepositoryTreeNode returnNode = new CodeRepositoryTreeNode();
         ElementHolder tempElem = new ElementHolder();
         returnNode.setUserObject(tempElem);
+        Elements children;
         switch (node.getName()) {
             case "customAccelerators":
                 tempElem.title = BlueSystem.getString("codeRepository.title");
                 tempElem.isGroup = true;
                 tempElem.isRoot = true;
                 returnNode.setAllowsChildren(true);
-                Elements children = node.getElements();
+                children = node.getElements();
                 while (children.hasMoreElements()) {
                     returnNode.add(getTreeNode(children.next(), getLeafNodes));
                 }
@@ -70,7 +71,7 @@ public class CodeRepositoryManager {
                 tempElem.isGroup = true;
                 returnNode.setAllowsChildren(true);
                 if (getLeafNodes) {
-                    Elements children = node.getElements();
+                    children = node.getElements();
                     while (children.hasMoreElements()) {
                         returnNode.add(getTreeNode(children.next(), getLeafNodes));
                     }
