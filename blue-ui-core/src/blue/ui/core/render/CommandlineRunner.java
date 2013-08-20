@@ -51,22 +51,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     JPanel errorPanel = null;
 
     public CommandlineRunner() {
-
         console.addPlayModeListener(this);
-
-//        AuditionManager audition = AuditionManager.getInstance();
-//        audition.addPlayModeListener(new PlayModeListener() {
-//
-//            public void playModeChanged(int playMode) {
-//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-//                    if (isRunning()) {
-//                        stop();
-//                    }
-//                }
-//
-//            }
-//
-//        });
     }
 
     @Override
