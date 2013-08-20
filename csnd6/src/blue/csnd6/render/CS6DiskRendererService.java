@@ -340,4 +340,9 @@ public class CS6DiskRendererService implements DiskRenderService {
 
 
     }
+
+    @Override
+    public int getCsoundVersion(String csoundCommand) {
+        return 6;
+    }
 }

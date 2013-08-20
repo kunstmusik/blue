@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.1<
+[release 2013.08.19]
+
+FIXES
+
+* Updated Audio I/O and Midi I/O Device detection in Realtime Render Settings
+Panel to work with both Csound 5 and Csound 6
+
+
 >Notes for 2.5.0<
 [released 2013.08.12]
 

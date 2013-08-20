@@ -159,7 +159,7 @@ public class TextUtilities {
     public static String removeAll(String inputString, String removeString) {
 
         // Internal Variables
-        StringBuffer updateString = new StringBuffer();
+        StringBuilder updateString = new StringBuilder();
         String tmpString;
 
         for (int a = 0; a < inputString.length(); a++) {
@@ -177,7 +177,7 @@ public class TextUtilities {
 
     public static String getTextFromFile(File textFile)
             throws FileNotFoundException, IOException {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         BufferedReader br = new BufferedReader(new FileReader(textFile));
         String line;
         while ((line = br.readLine()) != null) {
@@ -220,7 +220,7 @@ public class TextUtilities {
                     ClassLoader.getSystemResourceAsStream(resource)));
 
             String buffer;
-            StringBuffer text = new StringBuffer();
+            StringBuilder text = new StringBuilder();
             while ((buffer = br.readLine()) != null) {
                 text.append(buffer).append("\n");
             }

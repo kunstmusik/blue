@@ -17,43 +17,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.csnd5.render;
-
-import blue.services.render.DiskRenderService;
-import blue.services.render.RealtimeRenderService;
-import blue.services.render.RealtimeRenderServiceFactory;
-import org.openide.util.lookup.ServiceProvider;
+package blue.services.render;
 
 /**
  *
  * @author stevenyi
  */
+public class DeviceInfo {
 
-@ServiceProvider (service = RealtimeRenderServiceFactory.class, position = 200)
-public class CS5RealtimeRenderServiceFactory implements RealtimeRenderServiceFactory {
+    private final String displayName;
+    private final String deviceId;
 
-    @Override
-    public Class getRenderServiceClass() {
-        return APIRunner.class;
+    public DeviceInfo(String displayName, String deviceId) {
+        this.displayName = displayName;
+        this.deviceId = deviceId;
     }
 
     @Override
-    public RealtimeRenderService createInstance() {
-        return new APIRunner();
-    }
-
-    @Override 
     public String toString() {
-        return "Csound 5 API";
+        return displayName;
     }
 
-    @Override
-    public boolean isAvailable() {
-        return APIUtilities.isCsoundAPIAvailable();
-    }
-
-    @Override
-    public DiskRenderService createDiskRenderService() {
-        return new APIDiskRenderer();
+    public String getDeviceId() {
+        return deviceId;
     }
 }

@@ -35,6 +35,9 @@ public interface RealtimeRenderServiceFactory {
     /** Creates an instance of a RealtimeRenderService */
     public RealtimeRenderService createInstance();
 
+    /** Used when getting driver settings */
+    public DiskRenderService createDiskRenderService();
+    
     /** 
      * reports if this service is available.  For example, if the the user does
      * not have the Csound 6 API available, then the CS6 factory would report

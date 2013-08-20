@@ -52,11 +52,15 @@ public final class RealtimeRenderManager {
     private PlayModeListener realtimeListener;
     private PlayModeListener blueLiveListener;
     private boolean auditioning = false;
+    private boolean shuttingDown = false;
 
     private RealtimeRenderManager() {
         realtimeListener = new PlayModeListener() {
             @Override
             public void playModeChanged(int playMode) {
+                if(shuttingDown) {
+                    return;
+                }
                 if(playMode == PlayModeListener.PLAY_MODE_STOP) {
                     auditioning = false;
                 }
@@ -68,6 +72,9 @@ public final class RealtimeRenderManager {
         blueLiveListener = new PlayModeListener() {
             @Override
             public void playModeChanged(int playMode) {
+                if(shuttingDown) {
+                    return;
+                }
                 for (PlayModeListener listener : blueLiveListeners) {
                     listener.playModeChanged(playMode);
                 }
@@ -268,5 +275,11 @@ public final class RealtimeRenderManager {
         if (isBlueLiveRendering()) {
             currentBlueLiveRenderService.passToStdin(score);
         }
+    }
+
+    public void shutdown() {
+        shuttingDown = true;
+        stopRendering();
+        stopBlueLiveRendering();
     }
 }
