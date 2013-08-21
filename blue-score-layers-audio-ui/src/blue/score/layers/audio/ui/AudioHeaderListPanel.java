@@ -21,12 +21,10 @@ package blue.score.layers.audio.ui;
 
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
-import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -60,11 +58,14 @@ public class AudioHeaderListPanel extends JPanel implements
 
     JPopupMenu menu;
 
+    AudioHeaderListLayout layout = new AudioHeaderListLayout();
+
 
     public AudioHeaderListPanel(AudioLayerGroup audioLayerGroup) {
         this.layerGroup = audioLayerGroup;
         this.layerGroup.addLayerGroupListener(this);
-        this.setLayout(new LinearLayout());
+        this.setLayout(layout);
+        layout.setAudioLayerGroup(audioLayerGroup);
 
         for (int i = 0; i < audioLayerGroup.getSize(); i++) {
             this.add(new AudioHeaderLayerPanel(
@@ -204,7 +205,7 @@ public class AudioHeaderListPanel extends JPanel implements
 
         int w = getParent().getWidth();
 
-        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        int h = layerGroup.getTotalHeight();
 
         this.setSize(w, h);
     }
@@ -323,6 +324,13 @@ public class AudioHeaderListPanel extends JPanel implements
 //            selection.clear();
 //        }
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return layout.preferredLayoutSize(getParent()); 
+    }
+
+    
     
     /* Keyboard Actions */
 

@@ -20,6 +20,7 @@
 package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
@@ -34,6 +35,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import javax.swing.JPanel;
 
 /**
@@ -46,6 +48,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private AudioLayerGroup layerGroup;
     private final TimeState timeState;
+
+    private PropertyChangeListener heightListener;
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
         this.layerGroup = layerGroup;
@@ -72,6 +76,14 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         this.addMouseMotionListener(listener);
 
         new AudioLayersDropTargetListener(this);
+
+        heightListener = new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                checkSize();
+            }
+        };
     }
 
     @Override
@@ -83,6 +95,14 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
+        
+        if(event.getType() == LayerGroupDataEvent.DATA_ADDED) {
+            ArrayList<Layer> layers = event.getLayers();
+        } else if (event.getType() == LayerGroupDataEvent.DATA_REMOVED) {
+            ArrayList<Layer> layers = event.getLayers();
+        }
+
+        
         checkSize();
         repaint();
     }

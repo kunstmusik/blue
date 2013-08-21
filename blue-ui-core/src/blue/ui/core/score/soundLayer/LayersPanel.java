@@ -284,6 +284,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         this.add(panel, index);
         
         checkSize();
+        revalidate();
     }
 
     public void layersRemoved(LayerGroupDataEvent e) {
@@ -297,6 +298,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         checkSize();
 
         selection.setAnchor(-1);
+        revalidate();
     }
 
     public void contentsChanged(LayerGroupDataEvent e) {

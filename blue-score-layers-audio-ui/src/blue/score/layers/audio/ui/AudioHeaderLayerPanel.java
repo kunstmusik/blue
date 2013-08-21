@@ -54,9 +54,9 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
      */
     public AudioHeaderLayerPanel(AudioLayer layer) {
         initComponents();
-        Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
-        this.setSize(d);
-        this.setPreferredSize(d);
+//        Dimension d = new Dimension(100,
+//                (layer.getHeightIndex() + 1) * Layer.LAYER_HEIGHT);
+//        this.setPreferredSize(d);
 
 //        
 //        addMouseListener(new MouseAdapter() {
