@@ -21,6 +21,7 @@ package blue.score.layers.audio.ui;
 
 import blue.score.layers.Layer;
 import blue.score.layers.audio.core.AudioLayer;
+import blue.ui.components.IconFactory;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -96,6 +97,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         nameText = new javax.swing.JTextField();
         muteToggleButton = new javax.swing.JToggleButton();
         soloToggleButton = new javax.swing.JToggleButton();
+        otherMenuButton = new javax.swing.JButton();
 
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
 
@@ -155,6 +157,21 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
             }
         });
         add(soloToggleButton);
+
+        otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
+        otherMenuButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.otherMenuButton.toolTipText")); // NOI18N
+        otherMenuButton.setFocusPainted(false);
+        otherMenuButton.setFocusable(false);
+        otherMenuButton.setMargin(new java.awt.Insets(5, 0, 4, 0));
+        otherMenuButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        otherMenuButton.setPreferredSize(new java.awt.Dimension(16, 17));
+        otherMenuButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                otherMenuButtonActionPerformed(evt);
+            }
+        });
+        add(otherMenuButton);
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
@@ -186,6 +203,10 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         patternLayer.setSolo(soloToggleButton.isSelected());
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
+    private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_otherMenuButtonActionPerformed
+
     public void editName() {
         if (patternLayer == null) {
             return;
@@ -201,6 +222,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     private javax.swing.JToggleButton muteToggleButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;
+    private javax.swing.JButton otherMenuButton;
     private javax.swing.JToggleButton soloToggleButton;
     // End of variables declaration//GEN-END:variables
 

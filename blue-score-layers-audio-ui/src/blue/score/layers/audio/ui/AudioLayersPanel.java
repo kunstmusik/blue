@@ -20,12 +20,14 @@
 package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseWheelEvent;
@@ -52,8 +54,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         layerGroup.addLayerGroupListener(this);
         timeState.addPropertyChangeListener(this);
 
-//        final Dimension d = checkSize();
-//        this.setSize(d);
+        final Dimension d = checkSize();
+        this.setSize(d);
         this.setBackground(Color.BLACK);
 
         this.addMouseWheelListener(new MouseWheelListener() {
@@ -79,25 +81,24 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
-//        checkSize();
+        checkSize();
         repaint();
     }
 
-//    protected Dimension checkSize() {
-//        int w = (layerGroup.getMaxAudio() + 16) * 
-//                layerGroup.getAudioBeatsLength() * 
-//                timeState.getPixelSecond();
-//        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
-//        final Dimension d = new Dimension(w, h);
-//        this.setPreferredSize(d);
-//        return d;
-//    }
+    protected Dimension checkSize() {
+        int h = layerGroup.getTotalHeight();
+        int tempTime = (int) (layerGroup.getMaxTime() / 60) + 2;
+        int width = tempTime * timeState.getPixelSecond() * 60;
+        final Dimension d = new Dimension(width, h);
+        this.setPreferredSize(d);
+        return d;
+    }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == timeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
-//                checkSize();
+                checkSize();
             }
         }
     }

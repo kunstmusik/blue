@@ -61,16 +61,14 @@ public class AudioHeaderListPanel extends JPanel implements
     JPopupMenu menu;
 
 
-    public AudioHeaderListPanel(AudioLayerGroup patternsLayerGroup) {
-        this.layerGroup = patternsLayerGroup;
+    public AudioHeaderListPanel(AudioLayerGroup audioLayerGroup) {
+        this.layerGroup = audioLayerGroup;
         this.layerGroup.addLayerGroupListener(this);
         this.setLayout(new LinearLayout());
-        this.setPreferredSize(new Dimension(30,
-                22 * patternsLayerGroup.getSize()));
 
-        for (int i = 0; i < patternsLayerGroup.getSize(); i++) {
+        for (int i = 0; i < audioLayerGroup.getSize(); i++) {
             this.add(new AudioHeaderLayerPanel(
-                        (AudioLayer) patternsLayerGroup.getLayerAt(i)));
+                        (AudioLayer) audioLayerGroup.getLayerAt(i)));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -214,7 +212,7 @@ public class AudioHeaderListPanel extends JPanel implements
     @Override
     public void addNotify() {
         super.addNotify();
-        
+        checkSize(); 
 //        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
     }
     

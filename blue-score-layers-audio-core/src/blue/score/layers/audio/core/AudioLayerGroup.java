@@ -42,7 +42,7 @@ public class AudioLayerGroup implements LayerGroup {
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<AudioLayer> audioLayers = new ArrayList<AudioLayer>();
     private String name = "Audio Layer Group";
-    
+
     @Override
     public String getName() {
         return name;
@@ -52,7 +52,6 @@ public class AudioLayerGroup implements LayerGroup {
     public void setName(String name) {
         this.name = name;
     }
-
 
     @Override
     public boolean hasSoloLayers() {
@@ -70,9 +69,7 @@ public class AudioLayerGroup implements LayerGroup {
         NoteList noteList = new NoteList();
 
         if (processWithSolo) {
-
         } else {
-
         }
 
         return noteList;
@@ -191,7 +188,7 @@ public class AudioLayerGroup implements LayerGroup {
     @Override
     public void onLoadComplete() {
         for (AudioLayer layer : audioLayers) {
-         //
+            //
         }
     }
 
@@ -226,4 +223,15 @@ public class AudioLayerGroup implements LayerGroup {
         return null;
     }
 
+    public int getTotalHeight() {
+        int runningHeight = 0;
+        for (AudioLayer layer : audioLayers) {
+            runningHeight += (layer.getHeightIndex() + 1);
+        }
+        return runningHeight * Layer.LAYER_HEIGHT;
+    }
+
+    public int getMaxTime() {
+        return 0;
+    }
 }
