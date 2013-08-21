@@ -29,6 +29,9 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.BorderFactory;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
@@ -36,14 +39,16 @@ import javax.swing.border.Border;
  *
  * @author stevenyi
  */
-public class AudioHeaderLayerPanel extends javax.swing.JPanel 
+public class AudioHeaderLayerPanel extends javax.swing.JPanel
         implements PropertyChangeListener {
-    
-    private final AudioLayer patternLayer;
 
-    private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
+    private static AudioLayerPanelMenu OTHER_MENU = null;
+    private final AudioLayer audioLayer;
+    private static final Border border = BorderFactory.createBevelBorder(
+            BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+
     /**
      * Creates new form AudioHeaderLayerPanel
      */
@@ -52,7 +57,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
         this.setSize(d);
         this.setPreferredSize(d);
-        
+
 //        
 //        addMouseListener(new MouseAdapter() {
 //
@@ -67,22 +72,22 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 //            
 //            
 //        });
-        
-        
+
+
         setBorder(border);
-        
-        this.patternLayer = layer;
-        
-        nameLabel.setText(patternLayer.getName());
-        muteToggleButton.setSelected(patternLayer.isMuted());
-        soloToggleButton.setSelected(patternLayer.isSolo());
-        
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
-        this.patternLayer.addPropertyChangeListener(this);
+
+        this.audioLayer = layer;
+
+        nameLabel.setText(audioLayer.getName());
+        muteToggleButton.setSelected(audioLayer.isMuted());
+        soloToggleButton.setSelected(audioLayer.isSolo());
+
+        muteToggleButton.putClientProperty(
+                "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty(
+                "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
     }
 
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -175,12 +180,12 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
-         if (patternLayer == null) {
+        if (audioLayer == null) {
             return;
         }
 
-        patternLayer.setName(nameText.getText());
-        nameLabel.setText(patternLayer.getName());
+        audioLayer.setName(nameText.getText());
+        nameLabel.setText(audioLayer.getName());
 
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "label");
     }//GEN-LAST:event_nameTextActionPerformed
@@ -196,27 +201,32 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_nameTextKeyPressed
 
     private void muteToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_muteToggleButtonActionPerformed
-        patternLayer.setMuted(muteToggleButton.isSelected());
+        audioLayer.setMuted(muteToggleButton.isSelected());
     }//GEN-LAST:event_muteToggleButtonActionPerformed
 
     private void soloToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_soloToggleButtonActionPerformed
-        patternLayer.setSolo(soloToggleButton.isSelected());
+        audioLayer.setSolo(soloToggleButton.isSelected());
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
     private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
-        // TODO add your handling code here:
+
+        if (OTHER_MENU == null) {
+            OTHER_MENU = new AudioLayerPanelMenu();
+        }
+        OTHER_MENU.setAudioLayer(this.audioLayer);
+        OTHER_MENU.show(otherMenuButton, 0, otherMenuButton.getHeight());
+
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
     public void editName() {
-        if (patternLayer == null) {
+        if (audioLayer == null) {
             return;
         }
 
-        nameText.setText(patternLayer.getName());
+        nameText.setText(audioLayer.getName());
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "textField");
         nameText.requestFocusInWindow();
     }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
     private javax.swing.JToggleButton muteToggleButton;
@@ -229,31 +239,86 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     @Override
     public void removeNotify() {
         super.removeNotify();
-        if(this.patternLayer != null) {
-            this.patternLayer.removePropertyChangeListener(this);
+        if (this.audioLayer != null) {
+            this.audioLayer.removePropertyChangeListener(this);
         }
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
-        if(this.patternLayer != null) {
-            this.patternLayer.addPropertyChangeListener(this);
+        if (this.audioLayer != null) {
+            this.audioLayer.addPropertyChangeListener(this);
         }
     }
-        
+
     public void setSelected(boolean val) {
         setBorder(val ? selectionBorder : border);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if(evt.getSource() == this.patternLayer) {
+        if (evt.getSource() == this.audioLayer) {
             String propName = evt.getPropertyName();
 
-            if (propName.equals("name")) {
-                nameText.setText(patternLayer.getName());
-                nameLabel.setText(patternLayer.getName());
+            switch (propName) {
+                case "heightIndex":
+                    revalidate();
+                    break;
+                case "name":
+                    nameText.setText(audioLayer.getName());
+                    nameLabel.setText(audioLayer.getName());
+                    break;
+            }
+        }
+    }
+
+    static class AudioLayerPanelMenu extends JPopupMenu {
+
+        AudioLayer audioLayer = null;
+        JMenuItem[] heightItems = new JMenuItem[9];
+
+        public AudioLayerPanelMenu() {
+            super();
+
+            JMenu layerHeightMenu = new JMenu("Layer Height");
+
+            ActionListener al = new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent ae) {
+                    if (audioLayer == null) {
+                        return;
+                    }
+
+                    int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
+
+                    audioLayer.setHeightIndex(heightIndex);
+                }
+            };
+
+            for (int i = 0; i < heightItems.length; i++) {
+                heightItems[i] = new JMenuItem(Integer.toString(i + 1));
+                heightItems[i].addActionListener(al);
+
+                layerHeightMenu.add(heightItems[i]);
+            }
+            this.add(layerHeightMenu);
+        }
+
+        public void setAudioLayer(AudioLayer sLayer) {
+            this.audioLayer = sLayer;
+            setupHeightMenu();
+        }
+
+        private void setupHeightMenu() {
+            if (audioLayer == null) {
+                return;
+            }
+
+            int index = audioLayer.getHeightIndex();
+
+            for (int i = 0; i < heightItems.length; i++) {
+                heightItems[i].setEnabled(i != index);
             }
         }
     }
