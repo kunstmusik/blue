@@ -22,9 +22,11 @@ package blue.settings;
 import blue.services.render.DiskRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
@@ -590,8 +592,12 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         url = url.replace(" ", "%20");
         
         try {
-            URLDisplayer.getDefault().showURL(new URL(url));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                URLDisplayer.getDefault().showURL(new URL(url));
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
