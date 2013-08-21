@@ -73,7 +73,7 @@ public class PatternLayer implements Layer {
     @Override
     public void setName(String name) {
         String oldName = this.name;
-        this.name = name;
+        this.name = (name == null) ? "" : name;
         
         if(!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
