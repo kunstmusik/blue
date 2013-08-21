@@ -269,7 +269,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
                     LayerGroup group = score.getLayerGroup(i);
                     NoteProcessorChain npc = group.getNoteProcessorChain();
                     
-                    if(npc.size() > 0) {
+                    if(npc != null && npc.size() > 0) {
                         name += " [*]";
                         break;
                     }
@@ -348,9 +348,13 @@ public final class ScoreObjectBar extends JComponent implements ActionListener {
                 for(int i = 0; i < score.getLayerGroupCount(); i++) {
                     LayerGroup group = score.getLayerGroup(i);
                     NoteProcessorChain npc = group.getNoteProcessorChain();
+                   
+                    if(npc == null) {
+                        continue;
+                    }
                     
                     String name = "";
-                    if(npc.size() > 0) {
+                    if(npc != null && npc.size() > 0) {
                         name += "*";
                     }
                     name += (i + 1) + ") " + group.getName();
