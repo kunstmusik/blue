@@ -88,7 +88,11 @@ public class AudioLayerGroup implements LayerGroup {
             String nodeName = node.getName();
 
             if ("audioLayers".equals(nodeName)) {
-                layerGroup.audioLayers.add(AudioLayer.loadFromXML(node));
+                Elements aLayerNodes = node.getElements();
+                while(aLayerNodes.hasMoreElements()) {
+                    layerGroup.audioLayers.add(
+                            AudioLayer.loadFromXML(aLayerNodes.next()));
+                }
             }
         }
 
