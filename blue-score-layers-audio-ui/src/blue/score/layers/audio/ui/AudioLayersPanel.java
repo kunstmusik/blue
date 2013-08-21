@@ -20,9 +20,9 @@
 package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
+import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -105,71 +105,25 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void paintComponent(Graphics g) {
-//        Rectangle bounds = g.getClipBounds();
-//
-//        if (bounds == null) {
-//            bounds = getBounds();
-//        }
-//
-//        g.setColor(Color.BLACK);
-//        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-//
-//        int width = getWidth();
-//        int height = getHeight();
-//        int bottom = (height - 1);
-//        int maxX = (int) bounds.getMaxX();
-//        int maxY = (int) bounds.getMaxY();
-//        int x = 0;
-//        int pixelSecond = timeState.getPixelSecond();
-//
-//        int patternBeatsLength = layerGroup.getAudioBeatsLength();
-//        int patternWidth = patternBeatsLength * pixelSecond;
-//        int startLayerIndex = (bounds.y / Layer.LAYER_HEIGHT);
-//        int startAudioIndex = (int) (bounds.x / (float) (patternBeatsLength * pixelSecond));
-//
-//        //Draw lines and pattern states
-//
-//        g.setColor(Color.DARK_GRAY);
-//
-//        for (int i = startLayerIndex; i < layerGroup.getSize(); i++) {
-//            int y = i * Layer.LAYER_HEIGHT;
-//
-//            if (y > maxY) {
-//                break;
-//            }
-//
-//            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
-//            AudioData data = layer.getAudioData();
-//
-//            g.setColor(PATTERN_COLOR);
-//
-//            x = (startAudioIndex * patternBeatsLength) * pixelSecond;
-//            for (int j = startAudioIndex; x < maxX; j++) {
-//                x = (j * patternBeatsLength) * pixelSecond;
-//                if (data.isAudioSet(j)) {
-//                    //System.out.println("pattern set: " + j);
-//                    g.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);
-//                }
-//            }
-//
-//            g.setColor(Color.DARK_GRAY);
-//            g.drawLine(bounds.x, y, maxX, y);
-//
-//        }
-//
-//        g.setColor(Color.DARK_GRAY);
-//
-//        if (bottom < maxY) {
-//            g.drawLine(bounds.x, bottom, maxX, bottom);
-//        }
-//
-//        x = (startAudioIndex * patternBeatsLength) * pixelSecond;
-//
-//        for (int i = startAudioIndex; x < maxX; i++) {
-//            x = (i * patternBeatsLength) * pixelSecond;
-//            g.drawLine(x, bounds.y, x, maxY);
-//        }
+        super.paintComponent(g);
+        
+        int width = this.getWidth();
 
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, width, this.getHeight());
+
+        int y = 0;
+        g.setColor(Color.DARK_GRAY);
+        g.drawLine(0, 0, width, 0);
+
+        for (int i = 0; i < layerGroup.getSize(); i++) {
+            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            y += layer.getSoundLayerHeight();
+            
+            g.drawLine(0, y, width, y);
+        }
+        
+        g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
     }
 
     @Override
