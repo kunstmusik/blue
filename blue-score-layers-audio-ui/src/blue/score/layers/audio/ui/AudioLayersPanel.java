@@ -70,6 +70,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
                 new AudioLayerPanelMouseListener(this, layerGroup, timeState);
         this.addMouseListener(listener);
         this.addMouseMotionListener(listener);
+
+        new AudioLayersDropTargetListener(this);
     }
 
     @Override
