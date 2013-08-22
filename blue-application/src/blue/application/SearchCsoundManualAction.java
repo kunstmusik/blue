@@ -19,13 +19,15 @@
  */
 package blue.application;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.*;
+import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 
@@ -59,8 +61,12 @@ public final class SearchCsoundManualAction implements ActionListener {
         url = url.replace(" ", "%20");
 
         try {
-            HtmlBrowser.URLDisplayer.getDefault().showURL(new URL(url));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                URLDisplayer.getDefault().showURL(new URL(url));
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
 

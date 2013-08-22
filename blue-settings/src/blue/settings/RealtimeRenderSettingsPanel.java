@@ -24,10 +24,12 @@ import blue.services.render.DiskRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.Desktop;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Vector;
@@ -842,13 +844,15 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
 
-        String url = "file://" + manualDir.getAbsolutePath() + "/CommandFlags.html";
-
-        url = url.replace(" ", "%20");
-
+                File index = new File(manualDir, "CommandFlags.html");
+        
         try {
-            URLDisplayer.getDefault().showURL(new URL(url));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(index.toURI());
+            } else {
+                URLDisplayer.getDefault().showURL(index.toURL());
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }//GEN-LAST:event_jButton6ActionPerformed

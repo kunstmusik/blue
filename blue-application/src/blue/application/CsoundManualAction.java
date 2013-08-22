@@ -19,10 +19,14 @@
  */
 package blue.application;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.modules.InstalledFileLocator;
@@ -33,14 +37,15 @@ public final class CsoundManualAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
+        File index = new File(manualDir, "index.html");
         
-        String url = "file://" + manualDir.getAbsolutePath() + "/index.html";
-        
-        url = url.replace(" ", "%20");
-
         try {
-            URLDisplayer.getDefault().showURL(new URL(url));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(index.toURI());
+            } else {
+                URLDisplayer.getDefault().showURL(index.toURL());
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }
