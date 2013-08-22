@@ -48,7 +48,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private AudioLayerGroup layerGroup;
     private final TimeState timeState;
-
     private PropertyChangeListener heightListener;
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
@@ -63,7 +62,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         this.setBackground(Color.BLACK);
 
         this.addMouseWheelListener(new MouseWheelListener() {
-
             @Override
             public void mouseWheelMoved(MouseWheelEvent mwe) {
                 mwe.getComponent().getParent().dispatchEvent(mwe);
@@ -78,12 +76,18 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         new AudioLayersDropTargetListener(this);
 
         heightListener = new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 checkSize();
             }
         };
+
+
+        for (int i = 0; i < layerGroup.getSize(); i++) {
+            ((AudioLayer) layerGroup.getLayerAt(i)).
+                    addPropertyChangeListener(heightListener);
+        }
+
     }
 
     @Override
@@ -91,18 +95,28 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         super.removeNotify();
         layerGroup.removeLayerGroupListener(this);
         timeState.removePropertyChangeListener(this);
+
+        for (int i = 0; i < layerGroup.getSize(); i++) {
+            ((AudioLayer) layerGroup.getLayerAt(i)).
+                    removePropertyChangeListener(heightListener);
+        }
     }
 
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
-        
-        if(event.getType() == LayerGroupDataEvent.DATA_ADDED) {
-            ArrayList<Layer> layers = event.getLayers();
+        ArrayList<Layer> layers = event.getLayers();
+
+        if (event.getType() == LayerGroupDataEvent.DATA_ADDED) {
+            for (Layer layer : layers) {
+                ((AudioLayer) layer).addPropertyChangeListener(heightListener);
+            }
+
         } else if (event.getType() == LayerGroupDataEvent.DATA_REMOVED) {
-            ArrayList<Layer> layers = event.getLayers();
+            for (Layer layer : layers) {
+                ((AudioLayer) layer).removePropertyChangeListener(heightListener);
+            }
         }
 
-        
         checkSize();
         repaint();
     }
@@ -128,7 +142,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+
         int width = this.getWidth();
 
         g.setColor(Color.BLACK);
@@ -141,10 +155,10 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         for (int i = 0; i < layerGroup.getSize(); i++) {
             AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
             y += layer.getSoundLayerHeight();
-            
+
             g.drawLine(0, y, width, y);
         }
-        
+
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
     }
 
