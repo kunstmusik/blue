@@ -31,7 +31,6 @@ public final class BlueChatAction implements ActionListener {
         
         String url = "http://webchat.freenode.net/?channels=%23csound%2C%23bluecsound";
 
-
         try {
             if (Desktop.isDesktopSupported()) {
                 Desktop.getDesktop().browse(new URI(url));

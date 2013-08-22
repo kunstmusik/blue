@@ -38,15 +38,13 @@ public final class CsoundManualFramesAction implements ActionListener {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
         
-        String url = "file://" + manualDir.getAbsolutePath() + "/indexframes.html";
+                File index = new File(manualDir, "indexframes.html");
         
-        url = url.replace(" ", "%20");
-
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(url));
+                Desktop.getDesktop().browse(index.toURI());
             } else {
-                URLDisplayer.getDefault().showURL(new URL(url));
+                URLDisplayer.getDefault().showURL(index.toURL());
             }
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);

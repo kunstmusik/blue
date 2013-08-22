@@ -62,6 +62,7 @@ public final class BlueManualAction implements ActionListener {
             File f = new File(path + File.separator + "pythonLib");
             if (f.isDirectory()) {
                 path = path.substring(0, path.lastIndexOf(File.separator));
+                path = path.replaceAll("\\\\", "/");
                 String retVal =  "file://" + path + "/manual/html/index.html";
                 retVal = retVal.replaceAll(" ", "%20");
                 return retVal;

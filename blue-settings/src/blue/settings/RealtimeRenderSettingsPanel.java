@@ -844,15 +844,13 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
 
-        String url = "file://" + manualDir.getAbsolutePath() + "/CommandFlags.html";
-
-        url = url.replace(" ", "%20");
-
+                File index = new File(manualDir, "CommandFlags.html");
+        
         try {
             if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(url));
+                Desktop.getDesktop().browse(index.toURI());
             } else {
-                URLDisplayer.getDefault().showURL(new URL(url));
+                URLDisplayer.getDefault().showURL(index.toURL());
             }
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
