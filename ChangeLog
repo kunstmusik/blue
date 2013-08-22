@@ -12,6 +12,16 @@ information.
 
 [CHANGE LOG]
 
+
+>Notes for 2.5.2<
+[release 2013.08.22]
+
+FIXES
+
+* Fixed issue when opening HTML documents that they were using an internal web
+browser instead of the default system browser
+ 
+
 >Notes for 2.5.1<
 [release 2013.08.19]
 
