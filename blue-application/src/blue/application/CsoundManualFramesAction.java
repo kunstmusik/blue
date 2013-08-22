@@ -19,10 +19,13 @@
  */
 package blue.application;
 
+import blue.settings.GeneralSettings;
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.modules.InstalledFileLocator;
@@ -30,19 +33,20 @@ import org.openide.util.Exceptions;
 
 public final class CsoundManualFramesAction implements ActionListener {
 
-    @Override
     public void actionPerformed(ActionEvent e) {
         
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
         
-        String url = "file://" + manualDir.getAbsolutePath() + "/indexframes.html";
+                File index = new File(manualDir, "indexframes.html");
         
-        url = url.replace(" ", "%20");
-
         try {
-            URLDisplayer.getDefault().showURL(new URL(url));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(index.toURI());
+            } else {
+                URLDisplayer.getDefault().showURL(index.toURL());
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }

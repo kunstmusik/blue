@@ -19,10 +19,11 @@
  */
 package blue.application;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.util.Exceptions;
@@ -31,9 +32,14 @@ public final class BlueManualAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        String url = getPath();
         try {
-            URLDisplayer.getDefault().showURL(new URL(getPath()));
-        } catch (MalformedURLException ex) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(new URI(url));
+            } else {
+                URLDisplayer.getDefault().showURL(new URL(url));
+            }
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }
@@ -57,6 +63,7 @@ public final class BlueManualAction implements ActionListener {
             File f = new File(path + File.separator + "pythonLib");
             if (f.isDirectory()) {
                 path = path.substring(0, path.lastIndexOf(File.separator));
+                path = path.replaceAll("\\\\", "/");
                 String retVal =  "file://" + path + "/manual/html/index.html";
                 retVal = retVal.replaceAll(" ", "%20");
                 return retVal;
