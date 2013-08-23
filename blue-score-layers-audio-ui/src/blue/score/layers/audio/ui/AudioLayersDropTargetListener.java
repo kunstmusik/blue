@@ -20,11 +20,9 @@
 
 package blue.score.layers.audio.ui;
 
-import blue.BlueSystem;
-import blue.score.TimeState;
-import blue.soundObject.AudioFile;
-import blue.soundObject.PolyObject;
-import blue.utility.SoundFileUtilities;
+import blue.score.layers.audio.core.AudioClip;
+import blue.score.layers.audio.core.AudioLayer;
+import blue.score.layers.audio.core.AudioLayerGroup;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -39,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  * @author Steven Yi
@@ -48,20 +45,12 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
     DropTarget target;
 
-    private AudioLayersPanel sTimeCanvas;
+    private AudioLayersPanel audioLayersPanel;
     
-    TimeState timeState;
-
     public AudioLayersDropTargetListener(AudioLayersPanel sTimeCanvas) {
-        this.sTimeCanvas = sTimeCanvas;
+        this.audioLayersPanel = sTimeCanvas;
         target = new DropTarget(sTimeCanvas, this);
     }
-
-    public void setTimeState(TimeState timeState) {
-        this.timeState = timeState;
-    }
-    
-    
 
     /*
      * (non-Javadoc)
@@ -146,22 +135,21 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 Point p = dtde.getLocation();
 
-//                int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
-//
-//                AudioFile af = new AudioFile();
-//                af.setName(sObjName);
-//                af.setSoundFileName(BlueSystem.getRelativePath(s));
-//
-//                PolyObject pObj = sTimeCanvas.getPolyObject();
-//
-//                float startTime = (float) p.x / timeState.getPixelSecond();
-//                float dur = SoundFileUtilities.getDurationInSeconds(s);
-//
-//                af.setStartTime(startTime);
-//                af.setSubjectiveDuration(dur);
-//
-//                pObj.addSoundObject(index, af);
-//
+                AudioLayerGroup audioLayerGroup = audioLayersPanel.getAudioLayerGroup();
+                int index = audioLayerGroup.getLayerNumForY(p.y);
+
+                AudioClip af = new AudioClip();
+                af.setName(sObjName);
+                af.setAudioFile(new File(s));
+
+                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+
+                af.setStart(startTime);
+                af.setDuration(af.getAudioDuration());
+
+                AudioLayer layer = (AudioLayer) audioLayerGroup.getLayerAt(index);
+                layer.add(af);
+
                 dtde.dropComplete(true);
                 return;
             } else if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -201,21 +189,20 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
 
                 Point p = dtde.getLocation();
 
-//                int index = sTimeCanvas.pObj.getLayerNumForY(p.y);
+                AudioLayerGroup audioLayerGroup = audioLayersPanel.getAudioLayerGroup();
+                int index = audioLayerGroup.getLayerNumForY(p.y);
 
-//                AudioFile af = new AudioFile();
-//                af.setName(sObjName);
-//                af.setSoundFileName(str);
-//
-//                PolyObject pObj = sTimeCanvas.getPolyObject();
-//
-//                float startTime = (float) p.x / timeState.getPixelSecond();
-//                float dur = SoundFileUtilities.getDurationInSeconds(str);
-//
-//                af.setStartTime(startTime);
-//                af.setSubjectiveDuration(dur);
-//
-//                pObj.addSoundObject(index, af);
+                AudioClip af = new AudioClip();
+                af.setName(sObjName);
+                af.setAudioFile(f);
+
+                float startTime = (float) p.x / audioLayersPanel.getTimeState().getPixelSecond();
+
+                af.setStart(startTime);
+                af.setDuration(af.getAudioDuration());
+
+                AudioLayer layer = (AudioLayer) audioLayerGroup.getLayerAt(index);
+                layer.add(af);
 
                 dtde.dropComplete(true);
                 return;
@@ -224,10 +211,10 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
         } catch (UnsupportedFlavorException | IOException e) {
             e.printStackTrace();
             dtde.rejectDrop();
-        }
-
+        } 
     }
 
+    
     /*
      * (non-Javadoc)
      * 

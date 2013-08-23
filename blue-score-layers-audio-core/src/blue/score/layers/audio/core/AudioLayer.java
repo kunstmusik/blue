@@ -25,8 +25,10 @@ import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
+import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -35,7 +37,7 @@ import java.util.Vector;
  * @author stevenyi
  *
  */
-public class AudioLayer implements Layer {
+public class AudioLayer extends ArrayList<AudioClip> implements Layer {
 
     private String name = "";
     private boolean muted = false;
@@ -46,9 +48,28 @@ public class AudioLayer implements Layer {
     public static int HEIGHT_MAX_INDEX = 9;
     
     private transient Vector<PropertyChangeListener> propListeners = null;
+    private transient Vector<AudioLayerListener> layerListeners = null;
 
     public AudioLayer(){
         
+    }
+
+    @Override
+    public boolean add(AudioClip e) {
+        boolean retVal = super.add(e);
+        fireAudioClipAdded(e);
+        return retVal;     
+    }
+
+    
+    @Override
+    public boolean remove(Object o) {
+        if(!(o instanceof AudioClip)) {
+            return false;
+        }
+        boolean retVal = super.remove(o);
+        fireAudioClipRemoved((AudioClip)o);
+        return retVal;
     }
     
     @Override
@@ -101,7 +122,7 @@ public class AudioLayer implements Layer {
         firePropertyChangeEvent(pce);
     }
 
-    public int getSoundLayerHeight() {
+    public int getAudioLayerHeight() {
         return (heightIndex + 1) * LAYER_HEIGHT;
     }
 
@@ -113,6 +134,11 @@ public class AudioLayer implements Layer {
         retVal.setAttribute("solo", Boolean.toString(isSolo()));
         retVal.setAttribute("heightIndex", Integer.toString(this
                 .getHeightIndex()));
+      
+        for (AudioClip clip : this) {
+            retVal.addElement(clip.saveAsXML());
+        }
+        
         
         return retVal;
     }
@@ -130,6 +156,12 @@ public class AudioLayer implements Layer {
         if (heightIndexStr != null) {
             layer.setHeightIndex(Integer.parseInt(heightIndexStr));
         }
+
+        Elements nodes = data.getElements();
+
+        while(nodes.hasMoreElements()) {
+            layer.add(AudioClip.loadFromXML(nodes.next()));
+        }
         
         return layer;
     }
@@ -140,10 +172,10 @@ public class AudioLayer implements Layer {
             propListeners = null;
         }
 
-//        if (layerListeners != null) {
-//            layerListeners.clear();
-//            layerListeners = null;
-//        }
+        if (layerListeners != null) {
+            layerListeners.clear();
+            layerListeners = null;
+        }
     }
 
     NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) throws SoundObjectException {
@@ -186,5 +218,45 @@ public class AudioLayer implements Layer {
             return;
         }
         propListeners.remove(pcl);
+    }
+
+    /* Audio Layer Listener Code */
+
+    protected void fireAudioClipAdded(AudioClip clip) {
+        if(layerListeners == null) {
+            return;
+        }
+        for (AudioLayerListener listener : layerListeners) {
+            listener.audioClipAdded(clip);
+        }
+    } 
+
+
+    protected void fireAudioClipRemoved(AudioClip clip) {
+        if(layerListeners == null) {
+            return;
+        }
+        for (AudioLayerListener listener : layerListeners) {
+            listener.audioClipRemoved(clip);
+        }
+    } 
+    
+    public void addAudioLayerListener(AudioLayerListener listener) {
+        if (layerListeners == null) {
+            layerListeners = new Vector<>();
+        }
+
+        if (layerListeners.contains(listener)) {
+            return;
+        }
+
+        layerListeners.add(listener);
+    }
+
+    public void removeAudioLayerListener(AudioLayerListener listener) {
+        if (layerListeners == null) {
+            return;
+        }
+        layerListeners.remove(listener);
     }
 }

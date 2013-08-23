@@ -97,6 +97,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel2 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
         nameText = new javax.swing.JTextField();
@@ -104,7 +105,9 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         soloToggleButton = new javax.swing.JToggleButton();
         otherMenuButton = new javax.swing.JButton();
 
-        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.LINE_AXIS));
+        setLayout(new java.awt.BorderLayout());
+
+        jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2, javax.swing.BoxLayout.LINE_AXIS));
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 3, 0, 3));
         jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
@@ -135,7 +138,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel1.add(nameText, "textField");
 
-        add(jPanel1);
+        jPanel2.add(jPanel1);
 
         muteToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         muteToggleButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.muteToggleButton.text")); // NOI18N
@@ -148,7 +151,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 muteToggleButtonActionPerformed(evt);
             }
         });
-        add(muteToggleButton);
+        jPanel2.add(muteToggleButton);
 
         soloToggleButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         soloToggleButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.soloToggleButton.text")); // NOI18N
@@ -161,7 +164,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 soloToggleButtonActionPerformed(evt);
             }
         });
-        add(soloToggleButton);
+        jPanel2.add(soloToggleButton);
 
         otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
@@ -176,7 +179,9 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
                 otherMenuButtonActionPerformed(evt);
             }
         });
-        add(otherMenuButton);
+        jPanel2.add(otherMenuButton);
+
+        add(jPanel2, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
@@ -229,6 +234,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JToggleButton muteToggleButton;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameText;

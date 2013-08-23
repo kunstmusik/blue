@@ -20,6 +20,7 @@
 package blue.score.layers.audio.core;
 
 import blue.CompileData;
+import blue.SoundLayer;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
 import blue.score.layers.Layer;
@@ -237,5 +238,21 @@ public class AudioLayerGroup implements LayerGroup {
 
     public int getMaxTime() {
         return 0;
+    }
+
+
+   public int getLayerNumForY(int y) {
+        int runningY = 0;
+
+        for (int i = 0; i < audioLayers.size(); i++) {
+            AudioLayer layer = (AudioLayer) audioLayers.get(i);
+            runningY += layer.getAudioLayerHeight();
+
+            if (runningY > y) {
+                return i;
+            }
+        }
+
+        return audioLayers.size() - 1;
     }
 }
