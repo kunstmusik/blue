@@ -35,6 +35,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
@@ -42,6 +43,8 @@ import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import javax.swing.JPanel;
 
 /**
@@ -52,8 +55,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         PropertyChangeListener, LayerGroupPanel, AudioLayerListener {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
-
-    
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private AudioLayerGroup layerGroup;
     private final TimeState timeState;
@@ -64,6 +65,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     AffineTransform reverseTransform = new AffineTransform();
     double srcPts[] = new double[4];
     double destPts[] = new double[4];
+    Set<AudioClip> selectedClips = new HashSet<>();
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
         this.layerGroup = layerGroup;
@@ -89,7 +91,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         });
 
         AudioLayerPanelMouseListener listener =
-                new AudioLayerPanelMouseListener(this, layerGroup, timeState);
+                new AudioLayerPanelMouseListener(this, layerGroup, timeState, selectedClips);
         this.addMouseListener(listener);
         this.addMouseMotionListener(listener);
 
@@ -130,6 +132,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             layer.removePropertyChangeListener(heightListener);
             layer.removeAudioLayerListener(this);
         }
+
+        selectedClips.clear();
     }
 
     @Override
@@ -186,6 +190,39 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
+        selectedClips.clear();
+        if (marquee.intersects(this)) {
+
+            Rectangle rect = marquee.getTranslatedRect(this);
+            int top = rect.y;
+            int bottom = top + rect.height;
+
+            double start = rect.x / (double)timeState.getPixelSecond();
+            double end = (rect.x + rect.width) / (double)timeState.getPixelSecond();
+            
+            int y = 0;
+
+            for(int i = 0; i < layerGroup.getSize(); i++) {
+                AudioLayer layer = (AudioLayer)layerGroup.getLayerAt(i);
+                int layerHeight = layer.getAudioLayerHeight();
+
+                if(y <= bottom && (y + layerHeight) >= top ) {
+                   
+                    for (AudioClip clip : layer) {
+                        if(clip.getStart() <= end && 
+                                (clip.getStart() + clip.getDuration()) >= start) {
+                            selectedClips.add(clip);
+                        } 
+                    }
+                }
+                
+                y += layerHeight;
+            }
+        }
+        //TODO - this could be smarter by calculating affected area and repainting
+        // only the union of all changed clips
+        repaint();
+
         // ignore as this panel does not handle this event
     }
 
@@ -252,22 +289,34 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
             int layerHeight = layer.getAudioLayerHeight() - 2;
 
+            Color bg, border, text;
+            
             for (AudioClip clip : layer) {
 
+                if(selectedClips.contains(clip)) {
+                   bg = Color.WHITE;
+                   border = Color.DARK_GRAY;
+                   text = Color.BLACK; 
+                } else {
+                   bg = Color.DARK_GRAY;
+                   border = Color.BLACK;
+                   text = Color.WHITE;
+                }
+                
                 srcPts[0] = clip.getStart();
                 srcPts[2] = clip.getDuration();
                 transform.transform(srcPts, 0, destPts, 0, 2);
-                
+
                 rect.setRect(destPts[0], y + 1, destPts[2], layerHeight);
 
-                g2d.setColor(Color.DARK_GRAY);
+                g2d.setColor(bg);
                 g2d.fill(rect);
 
-                g2d.setColor(Color.BLACK);
+                g2d.setColor(border);
                 g2d.draw(rect);
 
-                g2d.setColor(Color.WHITE);
-                g2d.drawString(clip.getName(), (int)destPts[0] + 5, 15 + y);
+                g2d.setColor(text);
+                g2d.drawString(clip.getName(), (int) destPts[0] + 5, 15 + y);
             }
 
 

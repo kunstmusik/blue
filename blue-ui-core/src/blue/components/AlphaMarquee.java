@@ -86,4 +86,9 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
         g.setColor(Color.white);
         g.drawRect(0, 0, this.getWidth() - 1, this.getHeight() - 1);
     }
+
+    @Override
+    public Rectangle getTranslatedRect(JComponent comp) {
+        return SwingUtilities.convertRectangle(getParent(), this.getBounds(), comp);
+    }
 }

@@ -20,10 +20,12 @@
 package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
+import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  *
@@ -39,18 +41,22 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
     int startIndex = -1;
     int lastIndex = -1;
     AudioLayer currentAudioLayer = null;
+    private final Set<AudioClip> selectedClips;
 
     public AudioLayerPanelMouseListener(AudioLayersPanel panel, 
             AudioLayerGroup layerGroup, 
-            TimeState timeState) {
+            TimeState timeState,
+            Set<AudioClip> selectedClips) {
         this.panel = panel;
         this.layerGroup = layerGroup;
         this.timeState = timeState;
+        this.selectedClips = selectedClips;
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        e.consume();
+        
+        //e.consume();
         
         panel.requestFocus();
         int x = e.getX();
@@ -60,12 +66,12 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        e.consume();
+        //e.consume();
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        e.consume();
+        //e.consume();
         
     }
 }
