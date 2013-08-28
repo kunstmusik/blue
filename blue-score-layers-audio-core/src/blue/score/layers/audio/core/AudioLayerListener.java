@@ -24,6 +24,6 @@ package blue.score.layers.audio.core;
  * @author stevenyi
  */
 public interface AudioLayerListener {
-    public void audioClipAdded(AudioClip clip);
-    public void audioClipRemoved(AudioClip clip);
+    public void audioClipAdded(AudioLayer source, AudioClip clip);
+    public void audioClipRemoved(AudioLayer source, AudioClip clip);
 }

@@ -205,7 +205,6 @@ class ScoreMouseProcessor extends MouseAdapter {
             } else {
                 clearBuffer(e);
                 shouldConsume = false;
-                //startMarquee(e.getPoint());
             }
         }
         

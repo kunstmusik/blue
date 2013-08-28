@@ -227,7 +227,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements Layer {
             return;
         }
         for (AudioLayerListener listener : layerListeners) {
-            listener.audioClipAdded(clip);
+            listener.audioClipAdded(this, clip);
         }
     } 
 
@@ -237,7 +237,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements Layer {
             return;
         }
         for (AudioLayerListener listener : layerListeners) {
-            listener.audioClipRemoved(clip);
+            listener.audioClipRemoved(this, clip);
         }
     } 
     

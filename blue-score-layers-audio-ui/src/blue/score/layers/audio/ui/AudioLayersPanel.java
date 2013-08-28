@@ -29,8 +29,8 @@ import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.score.layers.audio.core.AudioLayerListener;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
-import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -39,11 +39,12 @@ import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.JPanel;
 
@@ -66,8 +67,10 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     double srcPts[] = new double[4];
     double destPts[] = new double[4];
     Set<AudioClip> selectedClips = new HashSet<>();
+    Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
+        this.setLayout(null);
         this.layerGroup = layerGroup;
         this.timeState = timeState;
 
@@ -91,7 +94,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         });
 
         AudioLayerPanelMouseListener listener =
-                new AudioLayerPanelMouseListener(this, layerGroup, timeState, selectedClips);
+                new AudioLayerPanelMouseListener(this, layerGroup, timeState,
+                selectedClips);
         this.addMouseListener(listener);
         this.addMouseMotionListener(listener);
 
@@ -104,11 +108,18 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             }
         };
 
-
+        int y = 0;
         for (int i = 0; i < layerGroup.getSize(); i++) {
             AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            int height = layer.getAudioLayerHeight();
             layer.addPropertyChangeListener(heightListener);
             layer.addAudioLayerListener(this);
+
+
+            for (AudioClip clip : layer) {
+                addClipPanel(clip, timeState, y, height);
+            }
+            y += height;
         }
 
     }
@@ -134,6 +145,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         }
 
         selectedClips.clear();
+        clipPanelMap.clear();
     }
 
     @Override
@@ -144,15 +156,25 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             for (Layer layer : layers) {
                 ((AudioLayer) layer).addPropertyChangeListener(heightListener);
                 ((AudioLayer) layer).addAudioLayerListener(this);
+
+                for (AudioClip clip : (AudioLayer) layer) {
+                    addClipPanel(clip, timeState, 0, 0);
+                }
+
             }
 
         } else if (event.getType() == LayerGroupDataEvent.DATA_REMOVED) {
             for (Layer layer : layers) {
                 ((AudioLayer) layer).removePropertyChangeListener(heightListener);
                 ((AudioLayer) layer).removeAudioLayerListener(this);
+
+                for (AudioClip clip : (AudioLayer) layer) {
+                    removeClipPanel(clip);
+                }
             }
         }
 
+        updateAudioClipYandHeight();
         checkSize();
         repaint();
     }
@@ -184,7 +206,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         super.paintComponent(g);
 
         paintAudioLayersBackground(g);
-        paintAudioClips(g);
+        //paintAudioClips(g);
 
     }
 
@@ -197,25 +219,32 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             int top = rect.y;
             int bottom = top + rect.height;
 
-            double start = rect.x / (double)timeState.getPixelSecond();
-            double end = (rect.x + rect.width) / (double)timeState.getPixelSecond();
-            
+            double start = rect.x / (double) timeState.getPixelSecond();
+            double end = (rect.x + rect.width) / (double) timeState.getPixelSecond();
+
             int y = 0;
 
-            for(int i = 0; i < layerGroup.getSize(); i++) {
-                AudioLayer layer = (AudioLayer)layerGroup.getLayerAt(i);
+            for (int i = 0; i < layerGroup.getSize(); i++) {
+                AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
                 int layerHeight = layer.getAudioLayerHeight();
 
-                if(y <= bottom && (y + layerHeight) >= top ) {
-                   
+                if (y <= bottom && (y + layerHeight) >= top) {
+
                     for (AudioClip clip : layer) {
-                        if(clip.getStart() <= end && 
-                                (clip.getStart() + clip.getDuration()) >= start) {
+                        if (clip.getStart() <= end
+                                && (clip.getStart() + clip.getDuration()) >= start) {
                             selectedClips.add(clip);
-                        } 
+                            clipPanelMap.get(clip).setSelected(true);
+                        } else {
+                            clipPanelMap.get(clip).setSelected(false);
+                        }
+                    }
+                } else {
+                    for (AudioClip clip : layer) {
+                        clipPanelMap.get(clip).setSelected(false);
                     }
                 }
-                
+
                 y += layerHeight;
             }
         }
@@ -271,72 +300,136 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
     }
 
-    private void paintAudioClips(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setComposite(AlphaComposite.Src);
-        g2d.setFont(renderFont);
-
-//        AffineTransform originalTransform = g2d.getTransform();
-//        originalTransform
-//        g2d.transform(transform);
-
-        Rectangle2D rect = new Rectangle2D.Double();
-
+//    private void paintAudioClips(Graphics g) {
+//        Graphics2D g2d = (Graphics2D) g;
+//        g2d.setComposite(AlphaComposite.Src);
+//        g2d.setFont(renderFont);
+//
+////        AffineTransform originalTransform = g2d.getTransform();
+////        originalTransform
+////        g2d.transform(transform);
+//
+//        Rectangle2D rect = new Rectangle2D.Double();
+//        
+//        int y = 0;
+//        
+//        
+//        for (int i = 0; i < layerGroup.getSize(); i++) {
+//            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+//            int layerHeight = layer.getAudioLayerHeight() - 2;
+//            
+//            Color bg, border, text;
+//            
+//            for (AudioClip clip : layer) {
+//                
+//                if (selectedClips.contains(clip)) {
+//                    bg = Color.WHITE;
+//                    border = Color.DARK_GRAY;
+//                    text = Color.BLACK;                    
+//                } else {
+//                    bg = Color.DARK_GRAY;
+//                    border = Color.BLACK;
+//                    text = Color.WHITE;
+//                }
+//                
+//                srcPts[0] = clip.getStart();
+//                srcPts[2] = clip.getDuration();
+//                transform.transform(srcPts, 0, destPts, 0, 2);
+//                
+//                rect.setRect(destPts[0], y + 1, destPts[2], layerHeight);
+//                
+//                g2d.setColor(bg);
+//                g2d.fill(rect);
+//                
+//                g2d.setColor(border);
+//                g2d.draw(rect);
+//                
+//                g2d.setColor(text);
+//                g2d.drawString(clip.getName(), (int) destPts[0] + 5, 15 + y);
+//            }
+//            
+//            
+//            y += layer.getAudioLayerHeight();
+//        }
+//
+////        g2d.setTransform(originalTransform);
+//    }
+    protected Rectangle getAudioLayerRect(AudioLayer layer) {
         int y = 0;
+        AudioLayer temp;
 
+        for (int i = 0; i < layerGroup.getSize(); i++) {
+            temp = (AudioLayer) layerGroup.getLayerAt(i);
+            if (layer == temp) {
+                return new Rectangle(0, y, 0, temp.getAudioLayerHeight());
+            }
+            y += temp.getAudioLayerHeight();
+        }
+        return null;
+    }
+
+    @Override
+    public void audioClipAdded(AudioLayer source, AudioClip clip) {
+        Rectangle rect = getAudioLayerRect(source);
+        addClipPanel(clip, timeState, rect.y, rect.height);
+    }
+
+    @Override
+    public void audioClipRemoved(AudioLayer source, AudioClip clip) {
+        removeClipPanel(clip);
+    }
+
+    private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
+        AudioClipPanel panel = new AudioClipPanel(clip, timeState);
+        panel.setBounds(panel.getX(), y, panel.getWidth(), height);
+        add(panel);
+        clipPanelMap.put(clip, panel);
+    }
+
+    private void removeClipPanel(AudioClip clip) {
+        AudioClipPanel panel = clipPanelMap.get(clip);
+        remove(panel);
+        clipPanelMap.remove(clip);
+    }
+
+    private void updateAudioClipYandHeight() {
+        int y = 0;
+        int height = 0;
 
         for (int i = 0; i < layerGroup.getSize(); i++) {
             AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
-            int layerHeight = layer.getAudioLayerHeight() - 2;
+            height = layer.getAudioLayerHeight();
 
-            Color bg, border, text;
-            
             for (AudioClip clip : layer) {
-
-                if(selectedClips.contains(clip)) {
-                   bg = Color.WHITE;
-                   border = Color.DARK_GRAY;
-                   text = Color.BLACK; 
-                } else {
-                   bg = Color.DARK_GRAY;
-                   border = Color.BLACK;
-                   text = Color.WHITE;
-                }
-                
-                srcPts[0] = clip.getStart();
-                srcPts[2] = clip.getDuration();
-                transform.transform(srcPts, 0, destPts, 0, 2);
-
-                rect.setRect(destPts[0], y + 1, destPts[2], layerHeight);
-
-                g2d.setColor(bg);
-                g2d.fill(rect);
-
-                g2d.setColor(border);
-                g2d.draw(rect);
-
-                g2d.setColor(text);
-                g2d.drawString(clip.getName(), (int) destPts[0] + 5, 15 + y);
+                AudioClipPanel panel = clipPanelMap.get(clip);
+                panel.setBounds(new Rectangle(panel.getX(), y, panel.getWidth(),
+                        height));
             }
-
-
-            y += layer.getAudioLayerHeight();
+            y += height;
         }
-
-//        g2d.setTransform(originalTransform);
     }
 
-    @Override
-    public void audioClipAdded(AudioClip clip) {
-        //TODO - this is inefficient, should calculate are to repaint instead of
-        // entire panel
-        repaint();
+    protected void setSelectedAudioClip(AudioClipPanel panel) {
+        selectedClips.clear();
+        for (int i = 0; i < getComponentCount(); i++) {
+            Component c = getComponent(i);
+
+            if(c == panel) {
+                selectedClips.add(panel.getAudioClip());
+                panel.setSelected(true);
+            } else if(c instanceof AudioClipPanel) {
+                ((AudioClipPanel)c).setSelected(false);
+            }
+        }
     }
 
-    @Override
-    public void audioClipRemoved(AudioClip clip) {
-        //TODO - this is inefficient, should calculate are to repaint instead of
-        // entire panel
-        repaint();
+    protected void toggleSelectedAudioClip(AudioClipPanel panel) {
+        if(panel.isSelected()) {
+            selectedClips.remove(panel.getAudioClip());
+        } else {
+            selectedClips.add(panel.getAudioClip());
+        } 
+        panel.setSelected(!panel.isSelected());
     }
+    
 }

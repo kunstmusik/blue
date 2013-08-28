@@ -23,9 +23,13 @@ import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.ui.utilities.UiUtilities;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -42,6 +46,7 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
     int lastIndex = -1;
     AudioLayer currentAudioLayer = null;
     private final Set<AudioClip> selectedClips;
+    boolean activated = false;
 
     public AudioLayerPanelMouseListener(AudioLayersPanel panel, 
             AudioLayerGroup layerGroup, 
@@ -55,23 +60,44 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
+
+        Point p = e.getPoint();
+
+        Component c = panel.getComponentAt(p);
+
+        if(c == null || !(c instanceof AudioClipPanel)) {
+            return;
+        }
         
-        //e.consume();
+        activated = true;
+        e.consume();
         
         panel.requestFocus();
-        int x = e.getX();
-        int y = e.getY();
+        AudioClipPanel clipPanel = (AudioClipPanel)c;
 
+        if(UiUtilities.isRightMouseButton(e)){
+            
+        } else if (SwingUtilities.isLeftMouseButton(e)) {
+            if(e.isShiftDown()) {
+                panel.toggleSelectedAudioClip(clipPanel);
+            } else {
+                panel.setSelectedAudioClip(clipPanel);
+            }    
+        }
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        //e.consume();
+        if(activated == true) {
+            e.consume();
+        }
+        activated = false;
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        //e.consume();
-        
+        if(activated == true) {
+            e.consume();
+        }
     }
 }

@@ -22,9 +22,13 @@ package blue.score.layers.audio.core;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -44,6 +48,7 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
     double audioDuration = 0.0;
     double start = 0.0;
     double duration = 0.0;
+    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
     }
@@ -56,8 +61,8 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
 
             numChannels = format.getChannels();
             audioStart = 0.0;
-            audioDuration = aFormat.getByteLength() / 
-                    (format.getSampleRate() * (format.getSampleSizeInBits() / 8) * format
+            audioDuration = aFormat.getByteLength()
+                    / (format.getSampleRate() * (format.getSampleSizeInBits() / 8) * format
                     .getChannels());
 
         } catch (UnsupportedAudioFileException ex) {
@@ -73,6 +78,7 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
     }
 
     public void setAudioFile(File audioFile) {
+        File old = this.audioFile;
         this.audioFile = audioFile;
         readAudioFileProperties();
         duration = audioDuration;
@@ -84,7 +90,13 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
     }
 
     public void setAudioStart(double start) {
+        if(this.start == start) {
+            return;
+        }
+        double old = this.audioStart;
         this.audioStart = start;
+
+        firePropertyChangeEvent("audioStart", old, start);
     }
 
     public double getAudioDuration() {
@@ -100,7 +112,11 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
     }
 
     public void setStart(double start) {
+        if(this.start == start) return;
+        double old = this.start;
         this.start = start;
+
+        firePropertyChangeEvent("start", old, start);
     }
 
     public double getDuration() {
@@ -108,17 +124,20 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
     }
 
     public void setDuration(double duration) {
+        if(this.duration == duration) return;
+        double old = this.duration;
         this.duration = duration;
+        firePropertyChangeEvent("start", old, start);
     }
 
     @Override
     public int compareTo(AudioClip o) {
         double diff = o.start - this.start;
-        if(diff != 0) {
-            return (int)diff;
+        if (diff != 0) {
+            return (int) diff;
         }
 
-        return (int)(o.duration - this.duration);
+        return (int) (o.duration - this.duration);
     }
 
     public String getName() {
@@ -133,11 +152,10 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
         return numChannels;
     }
 
-
     //XML Methods 
     public Element saveAsXML() {
         Element root = new Element("audioClip");
-        
+
         root.addElement("name").setText(name);
         root.addElement("audioFile").setText(audioFile.getAbsolutePath());
         root.addElement(XMLUtilities.writeInt("numChannels", numChannels));
@@ -154,11 +172,11 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
 
         Elements nodes = data.getElements();
 
-        while(nodes.hasMoreElements()) {
+        while (nodes.hasMoreElements()) {
             final Element node = nodes.next();
             final String nodeText = node.getTextString();
 
-            switch(node.getName()) {
+            switch (node.getName()) {
                 case "name":
                     clip.name = nodeText;
                     break;
@@ -184,5 +202,37 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
         }
 
         return clip;
+    }
+
+    private void firePropertyChangeEvent(String param, Object oldValue, Object newValue) {
+        if (propListeners == null) {
+            return;
+        }
+
+        PropertyChangeEvent pce = new PropertyChangeEvent(this, param,
+                oldValue, newValue);
+
+        for (PropertyChangeListener listener : propListeners) {
+           listener.propertyChange(pce);
+        }
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            propListeners = new ArrayList<PropertyChangeListener>();
+        }
+
+        if (propListeners.contains(pcl)) {
+            return;
+        }
+
+        propListeners.add(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            return;
+        }
+        propListeners.remove(pcl);
     }
 }
