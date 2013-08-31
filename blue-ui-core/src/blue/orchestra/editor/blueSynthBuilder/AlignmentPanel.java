@@ -45,7 +45,7 @@ public class AlignmentPanel extends JComponent implements ActionListener {
 
     String[] commandNames = null;
 
-    private ArrayList jCompList;
+    private ArrayList<JComponent> jCompList;
 
     ArrayList<JButton> buttons = new ArrayList<>();
 
@@ -128,7 +128,7 @@ public class AlignmentPanel extends JComponent implements ActionListener {
         return icon;
     }
 
-    public void setJComponentArrayList(ArrayList jCompList) {
+    public void setJComponentArrayList(ArrayList<JComponent> jCompList) {
         this.jCompList = jCompList;
     }
 

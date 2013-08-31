@@ -421,10 +421,7 @@ public class AutomationManager implements ParameterListListener,
 
                     ParameterIdList idList = selectedSoundLayer.getAutomationParameters();
 
-                    Iterator iter = new ArrayList(idList.getParameters()).iterator();
-
-                    while (iter.hasNext()) {
-                        String paramId = (String) iter.next();
+                    for(String paramId : idList.getParameters()) {
                         Parameter param = getParameter(paramId);
 
                         param.setAutomationEnabled(false);
@@ -626,7 +623,7 @@ public class AutomationManager implements ParameterListListener,
         ParameterList params = automatable.getParameterList();
         params.removeParameterListListener(this);
 
-        ArrayList removedParamIds = new ArrayList();
+        ArrayList<String> removedParamIds = new ArrayList<>();
 
         allParameters.removeAll(params.getParameters());
 
@@ -711,7 +708,7 @@ public class AutomationManager implements ParameterListListener,
     }
 
     private void removeParameters(ArrayList<String> paramIds) {
-        if (paramIds == null || paramIds.size() == 0) {
+        if (paramIds == null || paramIds.isEmpty()) {
             return;
         }
 
