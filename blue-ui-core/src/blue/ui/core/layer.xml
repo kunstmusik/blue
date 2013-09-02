@@ -10,13 +10,8 @@
         </folder>
         <folder name="score">
             <folder name="layers">
-                <folder name="panelProviders">
-                    <file name="blue-ui-core-score-layers-soundObject-PolyObjectPanelProvider.instance">
-                        <attr name="position" intvalue="100"/>
-                    </file>
-                </folder>
-                <folder name="headerPanelProviders">
-                    <file name="blue-ui-core-score-layers-soundObject-PolyObjectHeaderPanelProvider.instance">
+                <folder name="uiProviders">
+                    <file name="blue-ui-core-score-layers-soundObject-PolyObjectUIProvider.instance">
                         <attr name="position" intvalue="100"/>
                     </file>
                 </folder>

@@ -23,21 +23,36 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
-import blue.ui.core.score.layers.LayerGroupHeaderPanelProvider;
+import blue.ui.core.score.layers.LayerGroupUIProvider;
 import javax.swing.JComponent;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternsLayerGroupHeaderPanelProvider 
-        implements LayerGroupHeaderPanelProvider {
+public class PatternsLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+            TimeState timeState, BlueData data) {
+        
+        if (layerGroup instanceof PatternsLayerGroup) {
+            return new PatternsLayerPanel((PatternsLayerGroup) layerGroup,
+                    timeState);
+        }
+        return null;
+    }
+
+        @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
           if(layerGroup instanceof PatternsLayerGroup) {
             return new PatternsHeaderListPanel((PatternsLayerGroup)layerGroup);
         } 
+        return null;
+    }
+
+    @Override
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
         return null;
     }
 }

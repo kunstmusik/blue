@@ -23,22 +23,37 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.audio.core.AudioLayerGroup;
-import blue.ui.core.score.layers.LayerGroupHeaderPanelProvider;
+import blue.ui.core.score.layers.LayerGroupUIProvider;
 import javax.swing.JComponent;
 
 /**
  *
  * @author stevenyi
  */
-public class AudioLayerGroupHeaderPanelProvider
-        implements LayerGroupHeaderPanelProvider {
+public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+            TimeState timeState, BlueData data) {
+        
+        if (layerGroup instanceof AudioLayerGroup) {
+            return new AudioLayersPanel((AudioLayerGroup) layerGroup,
+                    timeState);
+        }
+        return null;
+    }
+
+        @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup,
             TimeState timeState, BlueData data) {
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioHeaderListPanel((AudioLayerGroup) layerGroup);
         }
+        return null;
+    }
+
+    @Override
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
         return null;
     }
 }

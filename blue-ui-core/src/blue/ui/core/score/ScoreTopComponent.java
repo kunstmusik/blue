@@ -38,8 +38,7 @@ import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
-import blue.ui.core.score.layers.LayerGroupHeaderPanelProviderManager;
-import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
+import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.soundObject.MotionBuffer;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
@@ -60,6 +59,8 @@ import javax.swing.border.LineBorder;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
@@ -70,6 +71,9 @@ public final class ScoreTopComponent extends TopComponent
         implements ScoreListener, RenderTimeManagerListener,
         PropertyChangeListener, ScoreBarListener {
 
+    private final InstanceContent content = new InstanceContent();
+
+    
     private static ScoreTopComponent instance;
     private static final int SPACER = 36;
     /**
@@ -106,7 +110,6 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseListener listener = new ScoreMouseListener(this);
     TimeState currentTimeState = null;
 
-
     RenderTimeManager renderTimeManager = 
                 Lookup.getDefault().lookup(RenderTimeManager.class);
 
@@ -124,6 +127,9 @@ public final class ScoreTopComponent extends TopComponent
 
     private ScoreTopComponent() {
         initComponents();
+
+        associateLookup(new AbstractLookup(content));
+        
         setName(NbBundle.getMessage(ScoreTopComponent.class,
                 "CTL_ScoreTopComponent"));
         setToolTipText(NbBundle.getMessage(ScoreTopComponent.class,
@@ -239,9 +245,9 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     private void addPanelsForLayerGroup(int index, LayerGroup layerGroup, TimeState timeState) {
-        final JComponent comp = LayerGroupPanelProviderManager.getInstance().getLayerGroupPanel(
+        final JComponent comp = LayerGroupUIProviderManager.getInstance().getLayerGroupPanel(
                 layerGroup, timeState, data);
-        final JComponent comp2 = LayerGroupHeaderPanelProviderManager.getInstance().getLayerGroupHeaderPanel(
+        final JComponent comp2 = LayerGroupUIProviderManager.getInstance().getLayerGroupHeaderPanel(
                 layerGroup, timeState, data);
 
         if (comp != null && comp2 != null) {

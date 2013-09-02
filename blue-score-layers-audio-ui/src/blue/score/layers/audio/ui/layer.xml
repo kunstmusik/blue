@@ -5,13 +5,8 @@
     <folder name="blue">
         <folder name="score">
             <folder name="layers">
-                <folder name="panelProviders">
-                    <file name="blue-score-layers-audio-ui-AudioLayerGroupPanelProvider.instance">
-                        <attr name="position" intvalue="200"/>
-                    </file>
-                </folder>
-                <folder name="headerPanelProviders">
-                    <file name="blue-score-layers-audio-ui-AudioLayerGroupHeaderPanelProvider.instance">
+                <folder name="uiProviders">
+                    <file name="blue-score-layers-audio-ui-AudioLayerGroupUIProvider.instance">
                         <attr name="position" intvalue="200"/>
                     </file>
                 </folder>

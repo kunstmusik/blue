@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2012
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,34 +17,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.score.layers.audio.ui;
+package blue.ui.core.score.layers;
 
 import blue.BlueData;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
-import blue.score.layers.audio.core.AudioLayerGroup;
-import blue.ui.core.score.layers.LayerGroupPanelProvider;
 import javax.swing.JComponent;
 
 /**
  *
  * @author stevenyi
  */
-public class AudioLayerGroupPanelProvider implements LayerGroupPanelProvider {
+public interface LayerGroupUIProvider {
 
-    @Override
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
-            TimeState timeState, BlueData data) {
-        
-        if (layerGroup instanceof AudioLayerGroup) {
-            return new AudioLayersPanel((AudioLayerGroup) layerGroup,
-                    timeState);
-        }
-        return null;
-    }
+    
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data);
 
-    @Override
-    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
-        return null;
-    }
+
+    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, 
+                TimeState timeState, 
+                BlueData data);
+    
+    /**
+     * Returns a JComponent for editing the properties of this LayerGroup. This
+     * can return a cached JComponent as only one properties panel will be 
+     * displayed at any one time.
+     * 
+     * @param layerGroup
+     * @return 
+     */
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup);
 }

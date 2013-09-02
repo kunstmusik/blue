@@ -23,7 +23,7 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.soundObject.PolyObject;
-import blue.ui.core.score.layers.LayerGroupHeaderPanelProvider;
+import blue.ui.core.score.layers.LayerGroupUIProvider;
 import blue.ui.core.score.soundLayer.SoundLayerListPanel;
 import javax.swing.JComponent;
 
@@ -31,7 +31,21 @@ import javax.swing.JComponent;
  *
  * @author stevenyi
  */
-public class PolyObjectHeaderPanelProvider implements LayerGroupHeaderPanelProvider {
+public class PolyObjectUIProvider implements LayerGroupUIProvider {
+
+    PolyObjectPropertiesPanel propsPanel = null;
+    
+    @Override
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+            TimeState timeState, BlueData data) {
+        
+        if (layerGroup instanceof PolyObject) {
+            ScoreTimeCanvas sTimeCanvas = new ScoreTimeCanvas(data);
+            sTimeCanvas.setPolyObject((PolyObject) layerGroup, timeState);
+            return sTimeCanvas;
+        }
+        return null;
+    }
 
     @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
@@ -46,5 +60,17 @@ public class PolyObjectHeaderPanelProvider implements LayerGroupHeaderPanelProvi
         
         return returnValue;
     }
-    
+
+    @Override
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+        if (!(layerGroup instanceof PolyObject)) {
+            return null;
+        }
+        
+        if(propsPanel == null) {
+             propsPanel = new PolyObjectPropertiesPanel();
+        }
+        propsPanel.setPolyObject((PolyObject)layerGroup);
+        return propsPanel;
+    }
 }

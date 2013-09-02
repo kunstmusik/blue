@@ -31,23 +31,23 @@ import org.openide.util.lookup.Lookups;
  *
  * @author stevenyi
  */
-public class LayerGroupPanelProviderManager extends ArrayList<LayerGroupPanelProvider> {
+public class LayerGroupUIProviderManager extends ArrayList<LayerGroupUIProvider> {
       
-    private static LayerGroupPanelProviderManager instance = null;
+    private static LayerGroupUIProviderManager instance = null;
     
-    public static LayerGroupPanelProviderManager getInstance() {
+    public static LayerGroupUIProviderManager getInstance() {
         if (instance == null) {
-            instance = new LayerGroupPanelProviderManager();
+            instance = new LayerGroupUIProviderManager();
         }
         return instance;
     }
 
     public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
         
-        Lookup lkp = Lookups.forPath("blue/score/layers/panelProviders");
+        Lookup lkp = Lookups.forPath("blue/score/layers/uiProviders");
         
-        for(LayerGroupPanelProvider provider : lkp.lookupAll(
-                LayerGroupPanelProvider.class)) {
+        for(LayerGroupUIProvider provider : lkp.lookupAll(
+                LayerGroupUIProvider.class)) {
             JComponent comp = provider.getLayerGroupPanel(layerGroup, timeState, data);
             
             if(comp != null) {
@@ -60,10 +60,10 @@ public class LayerGroupPanelProviderManager extends ArrayList<LayerGroupPanelPro
     
     public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
         
-        Lookup lkp = Lookups.forPath("blue/score/layers/panelProviders");
+        Lookup lkp = Lookups.forPath("blue/score/layers/uiProviders");
         
-        for(LayerGroupPanelProvider provider : lkp.lookupAll(
-                LayerGroupPanelProvider.class)) {
+        for(LayerGroupUIProvider provider : lkp.lookupAll(
+                LayerGroupUIProvider.class)) {
             JComponent comp = provider.getLayerGroupPropertiesPanel(layerGroup);
             
             if(comp != null) {
@@ -73,5 +73,20 @@ public class LayerGroupPanelProviderManager extends ArrayList<LayerGroupPanelPro
         
         return null;
     }
-    
+   
+    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
+        
+        Lookup lkp = Lookups.forPath("blue/score/layers/uiProviders");
+        
+        for(LayerGroupUIProvider provider : lkp.lookupAll(
+                LayerGroupUIProvider.class)) {
+            JComponent comp = provider.getLayerGroupHeaderPanel(layerGroup, timeState, data);
+            
+            if(comp != null) {
+                return comp;
+            }
+        }
+        
+        return null;
+    }
 }

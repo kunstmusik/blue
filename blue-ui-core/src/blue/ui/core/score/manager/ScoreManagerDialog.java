@@ -24,7 +24,7 @@ import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
-import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
+import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -453,8 +453,8 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             
             propertiesScrollPane.setViewportView(null);
             
-            LayerGroupPanelProviderManager manager = 
-                    LayerGroupPanelProviderManager.getInstance();
+            LayerGroupUIProviderManager manager = 
+                    LayerGroupUIProviderManager.getInstance();
             
             JComponent comp = manager.getLayerGroupPropertiesPanel(layerGroup);
             
