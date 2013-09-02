@@ -68,10 +68,9 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
             return;
         }
 
-        ArrayList sliders = sliderBank.getSliders();
+        ArrayList<BSBHSlider> sliders = sliderBank.getSliders();
 
-        for (Iterator iter = sliders.iterator(); iter.hasNext();) {
-            BSBHSlider vSlider = (BSBHSlider) iter.next();
+        for (BSBHSlider vSlider : sliders) {
             this.add(new BSBHSliderView(vSlider));
         }
 

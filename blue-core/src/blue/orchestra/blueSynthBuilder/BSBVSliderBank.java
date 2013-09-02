@@ -54,7 +54,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
     float resolution = 0.1f;
 
-    private final ArrayList sliders = new ArrayList();
+    private final ArrayList<BSBVSlider> sliders = new ArrayList<>();
 
     int sliderHeight = 150;
 
@@ -69,7 +69,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         }
 
         if (unm != null) {
-            if (objectName != null && objectName.length() != 0) {
+            if (!objectName.isEmpty()) {
                 Object[] vals = new Object[2];
                 vals[0] = objectName;
 
@@ -97,7 +97,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             Object[] vals2 = new Object[2];
             vals2[0] = objectName;
 
-            if (objectName == null || objectName.length() == 0) {
+            if (!objectName.isEmpty()) {
                 for (int i = 0; i < sliders.size(); i++) {
                     vals[1] = new Integer(i);
 
@@ -154,7 +154,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         sliders.add(slider);
     }
 
-    public ArrayList getSliders() {
+    public ArrayList<BSBVSlider> getSliders() {
         return sliders;
     }
 
@@ -229,8 +229,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 randomizable));
 
-        for (Iterator iter = sliders.iterator(); iter.hasNext();) {
-            BSBVSlider vSlider = (BSBVSlider) iter.next();
+        for (BSBVSlider vSlider : sliders) {;
             retVal.addElement(vSlider.saveAsXML());
         }
 
@@ -349,11 +348,11 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                     return;
                 }
 
-                BSBVSlider lastSlider = (BSBVSlider) sliders
+                BSBVSlider lastSlider = sliders
                         .get(sliders.size() - 1);
 
                 for (int i = 0; i < diff; i++) {
-                    BSBVSlider copy = (BSBVSlider) lastSlider.clone();
+                    BSBVSlider copy =  (BSBVSlider)lastSlider.clone();
                     sliders.add(copy);
                     copy.addPropertyChangeListener(this);
 
@@ -386,7 +385,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 }
             } else {
                 for (int i = 0; i < -diff; i++) {
-                    BSBVSlider slider = (BSBVSlider) sliders
+                    BSBVSlider slider = sliders
                             .get(sliders.size() - 1);
 
                     sliders.remove(slider);
@@ -418,7 +417,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         vals[0] = objectName;
 
         for (int i = 0; i < sliders.size(); i++) {
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
 
             vals[1] = new Integer(i);
             String key = KEY_FMT.format(vals);
@@ -501,7 +500,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                 buffer.append(":");
             }
 
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
 
             buffer.append(Float.toString(slider.getValue()));
         }
@@ -520,7 +519,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         int size = sliders.size() < vals.length ? sliders.size() : vals.length;
 
         for (int i = 0; i < size; i++) {
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
             slider.setValue(Float.parseFloat(vals[i]));
         }
 
@@ -588,8 +587,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             ClassNotFoundException {
         stream.defaultReadObject();
 
-        for (Iterator iter = sliders.iterator(); iter.hasNext();) {
-            BSBVSlider slider = (BSBVSlider) iter.next();
+        for (BSBVSlider slider : sliders) { 
             slider.addPropertyChangeListener(this);
         }
     }
@@ -645,7 +643,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             }
             
             if(!param.isAutomationEnabled()) {
-                BSBVSlider slider = (BSBVSlider) sliders.get(i);
+                BSBVSlider slider = sliders.get(i);
                 param.setValue(slider.getValue());
             }
 
@@ -657,7 +655,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         }
 
         for (int i = 0; i < sliders.size(); i++) {
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            BSBVSlider slider = sliders.get(i);
 
             vals[1] = new Integer(i);
             String key = KEY_FMT.format(vals);
@@ -694,7 +692,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         int sliderIndex = Integer.parseInt(strIndex);
 
         float val = param.getLine().getValue(time);
-        BSBVSlider slider = (BSBVSlider) sliders.get(sliderIndex);
+        BSBVSlider slider = sliders.get(sliderIndex);
 
         slider.updateValue(val);
     }
@@ -734,8 +732,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
     public void randomize() {
         if (randomizable) {
-            for (int i = 0; i < sliders.size(); i++) {
-                BSBVSlider slider = (BSBVSlider) sliders.get(i);
+            for (BSBVSlider slider : sliders) {
                 slider.randomize();
             }
         }
@@ -744,8 +741,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
 
-        for (int i = 0; i < sliders.size(); i++) {
-            BSBVSlider slider = (BSBVSlider) sliders.get(i);
+        for (BSBVSlider slider : sliders) {
             slider.setRandomizable(randomizable);
         }
 
