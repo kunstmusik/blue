@@ -29,7 +29,12 @@ import blue.ui.core.soundObject.renderer.BarRenderer;
 import blue.ui.core.soundObject.renderer.BarRendererCache;
 import java.awt.BorderLayout;
 import java.awt.Graphics;
+import java.util.Collection;
 import javax.swing.JComponent;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
+import org.openide.util.Utilities;
 
 /**
  * Title: blue (Object Composition Environment)
@@ -46,7 +51,7 @@ import javax.swing.JComponent;
  */
 
 public final class SoundObjectView extends JComponent implements Comparable,
-        SoundObjectListener {
+        SoundObjectListener, LookupListener {
 
     private SoundObject sObj;
 
@@ -55,11 +60,12 @@ public final class SoundObjectView extends JComponent implements Comparable,
     private TimeState timeState;
 
     BarRenderer renderer = null;
+    
+    Lookup.Result<SoundObject> result = null;
 
     public SoundObjectView(SoundObject sObj, TimeState timeState) {
         this.sObj = sObj;
         this.timeState = timeState;
-
 
         renderer = BarRendererCache.getInstance().getBarRenderer(this.sObj.getClass());
 
@@ -121,16 +127,6 @@ public final class SoundObjectView extends JComponent implements Comparable,
         return sObj;
     }
 
-    public void select() {
-        selected = true;
-        repaint();
-    }
-
-    public void deselect() {
-        selected = false;
-        repaint();
-    }
-
     public boolean isSelected() {
         return selected;
     }
@@ -185,4 +181,33 @@ public final class SoundObjectView extends JComponent implements Comparable,
     public BarRenderer getRenderer() {
         return renderer;
     }
+
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
+        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result.addLookupListener(this);
+        resultChanged(null);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify(); 
+        result.removeLookupListener(this);
+    }
+
+    @Override
+    public void resultChanged(LookupEvent ev) {
+        Collection<? extends SoundObject> soundObjects = result.allInstances();
+        boolean newSelected = soundObjects.contains(this.sObj);
+       
+        if(newSelected != selected) {
+            selected = newSelected;
+            repaint();
+        }
+        
+    }
+
+
+    
 }

@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
 import blue.ui.core.score.layers.LayerGroupUIProvider;
 import javax.swing.JComponent;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -34,7 +35,7 @@ public class PatternsLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
-            TimeState timeState, BlueData data) {
+            TimeState timeState, BlueData data, InstanceContent ic) {
         
         if (layerGroup instanceof PatternsLayerGroup) {
             return new PatternsLayerPanel((PatternsLayerGroup) layerGroup,
@@ -44,9 +45,9 @@ public class PatternsLayerGroupUIProvider implements LayerGroupUIProvider {
     }
 
         @Override
-    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
+    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data, InstanceContent ic) {
           if(layerGroup instanceof PatternsLayerGroup) {
-            return new PatternsHeaderListPanel((PatternsLayerGroup)layerGroup);
+            return new PatternsHeaderListPanel((PatternsLayerGroup)layerGroup, ic);
         } 
         return null;
     }

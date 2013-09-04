@@ -20,7 +20,6 @@
 package blue.score.layers.patterns.ui;
 
 import blue.BlueSystem;
-import blue.event.SelectionEvent;
 import blue.plugin.BluePlugin;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
@@ -29,7 +28,6 @@ import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
 import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
-import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.utility.ObjectUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -39,11 +37,13 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -54,17 +54,20 @@ public class PatternLayerPanel extends javax.swing.JPanel
     
     private final PatternLayer patternLayer;
 
+    private InstanceContent content;
+
     private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
     /**
      * Creates new form PatternLayerPanel
      */
-    public PatternLayerPanel(PatternLayer layer) {
+    public PatternLayerPanel(PatternLayer layer, InstanceContent ic) {
         initComponents();
         Dimension d = new Dimension(100, Layer.LAYER_HEIGHT);
         this.setSize(d);
         this.setPreferredSize(d);
+        this.content = ic;
         
 //        
 //        addMouseListener(new MouseAdapter() {
@@ -131,8 +134,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }
 
     protected void editSoundObject() {
-        SelectionEvent se = new SelectionEvent(patternLayer.getSoundObject(), SelectionEvent.SELECTION_SINGLE);
-        SoundObjectSelectionBus.getInstance().selectionPerformed(se);
+        content.set(Collections.singleton(patternLayer.getSoundObject()), null);
 
         SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
 

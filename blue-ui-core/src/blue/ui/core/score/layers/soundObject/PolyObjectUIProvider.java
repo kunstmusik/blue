@@ -26,6 +26,7 @@ import blue.soundObject.PolyObject;
 import blue.ui.core.score.layers.LayerGroupUIProvider;
 import blue.ui.core.score.soundLayer.SoundLayerListPanel;
 import javax.swing.JComponent;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -37,10 +38,10 @@ public class PolyObjectUIProvider implements LayerGroupUIProvider {
     
     @Override
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
-            TimeState timeState, BlueData data) {
+            TimeState timeState, BlueData data, InstanceContent ic) {
         
         if (layerGroup instanceof PolyObject) {
-            ScoreTimeCanvas sTimeCanvas = new ScoreTimeCanvas(data);
+            ScoreTimeCanvas sTimeCanvas = new ScoreTimeCanvas(data, ic);
             sTimeCanvas.setPolyObject((PolyObject) layerGroup, timeState);
             return sTimeCanvas;
         }
@@ -48,7 +49,8 @@ public class PolyObjectUIProvider implements LayerGroupUIProvider {
     }
 
     @Override
-    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
+    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, 
+            TimeState timeState, BlueData data, InstanceContent ic) {
         JComponent returnValue = null;
         
         if(layerGroup instanceof PolyObject) {

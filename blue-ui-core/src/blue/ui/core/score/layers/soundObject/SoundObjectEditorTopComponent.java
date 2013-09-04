@@ -21,24 +21,29 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.plugin.BluePlugin;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.SoundObjectEditor;
 import blue.ui.core.BluePluginManager;
+import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
@@ -46,7 +51,8 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
-final public class SoundObjectEditorTopComponent extends TopComponent implements SelectionListener {
+final public class SoundObjectEditorTopComponent extends TopComponent 
+        implements LookupListener {
 
     private static SoundObjectEditorTopComponent instance;
     /** path to the icon used by the component and its open action */
@@ -65,6 +71,8 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
     HashMap<Class, SoundObjectEditor> editors = new HashMap<>();
 
     JPanel emptyPanel = new JPanel();
+
+    Lookup.Result<SoundObject> result = null;
     
     private SoundObjectEditorTopComponent() {
         initComponents();
@@ -85,10 +93,7 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
         }
 
         setEditingLibraryObject(null);
-
-        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
-
-        selectionPerformed(SoundObjectSelectionBus.getInstance().getLastSelectionEvent());
+        setActivatedNodes(null);
     }
 
     /** This method is called from within the constructor to
@@ -143,13 +148,15 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result.addLookupListener (this);
+        resultChanged(null);
     }
-
+    
     @Override
     public void componentClosed() {
-        // TODO add custom code on component closing
-    }
+        result.removeLookupListener(this);
+    }    
 
     /** replaces this in object stream */
     @Override
@@ -171,35 +178,21 @@ final public class SoundObjectEditorTopComponent extends TopComponent implements
         }
     }
 
-      /*
-     * (non-Javadoc)
-     *
-     * @see blue.event.SelectionListener#selectionPerformed(blue.event.SelectionEvent)
-     */
+
     @Override
-    public void selectionPerformed(SelectionEvent e) {
-        if(e == null) {
-            editSoundObject(null);
+    public void resultChanged(LookupEvent ev) {
+
+        if(!(TopComponent.getRegistry().getActivated() instanceof SoundObjectProvider)) {
             return;
         }
-
-        int selectionType = e.getSelectionType();
-
-//        System.err.println("SoundObject selected: " + e.getSelectedItem());
-
-        if (selectionType == SelectionEvent.SELECTION_SINGLE) {
-            SoundObject sObj = (SoundObject) e.getSelectedItem();
-            editSoundObject(sObj);
-
-            if(sObj instanceof Instance) {
-                setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
-            } else {
-                setEditingLibraryObject(e.getSelectionSubType());
-            }
+        
+        Collection<? extends SoundObject> soundObjects = result.allInstances();
+        if(soundObjects.size() == 1) {
+            editSoundObject(soundObjects.iterator().next());
+            //FIXME - setEditingLibraryObject(...)
         } else {
-            editSoundObject(null);
+            editSoundObject(null);    
         }
-
     }
 
     public void setEditingLibraryObject(Object objectType) {

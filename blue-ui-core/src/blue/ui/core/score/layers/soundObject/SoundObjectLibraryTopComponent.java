@@ -26,11 +26,13 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
@@ -38,6 +40,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
@@ -45,9 +49,13 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
-final class SoundObjectLibraryTopComponent extends TopComponent implements ChangeListener {
+final class SoundObjectLibraryTopComponent extends TopComponent 
+        implements ChangeListener, SoundObjectProvider {
 
     private static SoundObjectLibraryTopComponent instance;
+
+    private final InstanceContent content = new InstanceContent();
+    
     /**
      * path to the icon used by the component and its open action
      */
@@ -58,6 +66,9 @@ final class SoundObjectLibraryTopComponent extends TopComponent implements Chang
 
     private SoundObjectLibraryTopComponent() {
         initComponents();
+
+        associateLookup(new AbstractLookup(content));
+        
         setName(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "CTL_SoundObjectLibraryTopComponent"));
         setToolTipText(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
@@ -110,20 +121,14 @@ final class SoundObjectLibraryTopComponent extends TopComponent implements Chang
      */
     protected void fireSoundObjectSelected(SoundObject sObj) {
 
-        SelectionEvent selectionEvent = new SelectionEvent(sObj,
-                SelectionEvent.SELECTION_SINGLE,
-                SelectionEvent.SELECTION_LIBRARY);
-
-        SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
+        content.set(Collections.singleton(sObj), null);
+        
     }
 
     protected void fireSoundObjectRemoved(SoundObject sObj) {
 
-        SelectionEvent selectionEvent = new SelectionEvent(sObj,
-                SelectionEvent.SELECTION_REMOVE,
-                SelectionEvent.SELECTION_LIBRARY);
-
-        SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
+        content.set(Collections.singleton(sObj), null);
+        
     }
 
     public void setSoundObjectLibrary(SoundObjectLibrary sObjLib) {

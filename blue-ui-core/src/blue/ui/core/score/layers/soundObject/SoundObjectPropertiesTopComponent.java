@@ -28,12 +28,18 @@ import blue.score.undo.StartTimeEdit;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
+import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
@@ -41,7 +47,7 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
-final class SoundObjectPropertiesTopComponent extends TopComponent implements SoundObjectListener, SelectionListener {
+final class SoundObjectPropertiesTopComponent extends TopComponent implements SoundObjectListener, SelectionListener, LookupListener {
 
     private SoundObject sObj = null;
 
@@ -55,17 +61,14 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
     private static final String PREFERRED_ID = "SoundObjectPropertiesTopComponent";
 
+    Lookup.Result<SoundObject> result = null;
+
     private SoundObjectPropertiesTopComponent() {
         initComponents();
         setName(NbBundle.getMessage(SoundObjectPropertiesTopComponent.class, "CTL_SoundObjectPropertiesTopComponent"));
         setToolTipText(NbBundle.getMessage(SoundObjectPropertiesTopComponent.class, "HINT_SoundObjectPropertiesTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-
-        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
-
-        selectionPerformed(SoundObjectSelectionBus.getInstance().getLastSelectionEvent());
-        
         nameText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
@@ -757,13 +760,15 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result.addLookupListener (this);
+        resultChanged(null);
     }
-
+    
     @Override
     public void componentClosed() {
-        // TODO add custom code on component closing
-    }
+        result.removeLookupListener(this);
+    }    
 
     @Override
     protected void componentActivated() {
@@ -786,6 +791,21 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     @Override
     protected String preferredID() {
         return PREFERRED_ID;
+    }
+
+    @Override
+    public void resultChanged(LookupEvent ev) {
+
+        if(!(TopComponent.getRegistry().getActivated() instanceof SoundObjectProvider)) {
+            return;
+        }
+        
+        Collection<? extends SoundObject> soundObjects = result.allInstances();
+        if(soundObjects.size() == 1) {
+              setSoundObject(soundObjects.iterator().next());
+        } else {
+            setSoundObject(null);
+        }
     }
 
     final static class ResolvableHelper implements Serializable {

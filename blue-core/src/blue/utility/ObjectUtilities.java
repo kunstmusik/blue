@@ -60,7 +60,7 @@ public class ObjectUtilities {
                 if (methods[i].getName().startsWith("get")
                         || methods[i].getName().startsWith("is")) {
                     System.out.println(methods[i].getName() + " : "
-                            + methods[i].invoke(obj, null));
+                            + methods[i].invoke(obj));
                 }
 
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

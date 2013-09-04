@@ -24,8 +24,6 @@ import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
 import blue.components.AlphaMarquee;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
@@ -56,14 +54,19 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
+import org.openide.util.Lookup;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
@@ -73,55 +76,38 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
-
     private final SoundLayerPopup sLayerPopup = new SoundLayerPopup();
-
     private final SoundObjectPopup sObjPopup;
-
     private final QuickTimeDialog qtDialog;
-
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap =
             new HashMap<>();
-
     int time;
-
     PolyObject pObj;
-    
     TimeState timeState = null;
-
     public final SoundObjectBuffer buffer;
-
     AlphaMarquee marquee = new AlphaMarquee();
-
-    MotionBuffer mBuffer = MotionBuffer.getInstance();
-
+//    MotionBuffer mBuffer = MotionBuffer.getInstance();
     Point start = new Point(0, 0);
-
     Point end;
-
     ScoreMouseProcessor sMouse;
-
     MultiLineMouseProcessor multiLineMouse;
-
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
-
     JPanel sObjPanel = new JPanel();
-
     private final PropertyChangeListener heightListener;
     private final BlueData data;
-    
-    public ScoreTimeCanvas(BlueData blueData) {
-        
+    private final InstanceContent content;
+
+    public ScoreTimeCanvas(BlueData blueData, InstanceContent ic) {
+        this.content = ic;
         //setAutoscrolls(true);
-        
+
         qtDialog = new QuickTimeDialog(this);
-        sObjPopup = new SoundObjectPopup(this);
+        sObjPopup = new SoundObjectPopup(this, ic);
 
         this.buffer = SoundObjectBuffer.getInstance();
         this.data = blueData;
 
         heightListener = new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 reset();
@@ -132,18 +118,18 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         time = 3;
 
-        sMouse = new ScoreMouseProcessor(this);
+        sMouse = new ScoreMouseProcessor(this, ic);
         multiLineMouse = new MultiLineMouseProcessor(this);
-        
+
         addMouseListener(sMouse);
         addMouseMotionListener(sMouse);
         addMouseListener(multiLineMouse);
         addMouseMotionListener(multiLineMouse);
-        
+
         ModeManager.getInstance().addModeListener(this);
-        
-        sMouse.addSelectionListener(mBuffer);
-        multiLineMouse.addSelectionListener(mBuffer);
+
+//        sMouse.addSelectionListener(mBuffer);
+//        multiLineMouse.addSelectionListener(mBuffer);
 
         initActions();
 
@@ -154,7 +140,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         this.add(marquee, JLayeredPane.DRAG_LAYER);
 
         this.addComponentListener(new ComponentAdapter() {
-
             @Override
             public void componentResized(ComponentEvent e) {
                 Dimension size = getSize();
@@ -168,28 +153,29 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         ToolTipManager.sharedInstance().registerComponent(this);
 
         this.setFocusable(true);
-   
-        this.addSelectionListener(new SelectionListener() {
 
-            @Override
-            public void selectionPerformed(SelectionEvent e) {
-                SoundObjectView sObjView = (SoundObjectView) e.getSelectedItem();
+//        this.addSelectionListener(new SelectionListener() {
+//
+//            @Override
+//            public void selectionPerformed(SelectionEvent e) {
+//                SoundObjectView sObjView = (SoundObjectView) e.getSelectedItem();
+//
+//                Object item;
+//                if (sObjView == null) {
+//                    item = null;
+//                } else {
+//                    item = sObjView.getSoundObject();
+//                }
+//
+//                SelectionEvent selectionEvent = new SelectionEvent(item, e.getSelectionType());
+//                SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
+//            }
+//        });
 
-                Object item;
-                if (sObjView == null) {
-                    item = null;
-                } else {
-                    item = sObjView.getSoundObject();
-                }
 
-                SelectionEvent selectionEvent = new SelectionEvent(item, e.getSelectionType());
-                SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
-            }
-        });
-        
-        
-        this.addMouseWheelListener(new ScoreMouseWheelListener(data.getScore().getTimeState()));
-        
+        this.addMouseWheelListener(new ScoreMouseWheelListener(
+                data.getScore().getTimeState()));
+
     }
 
     public JPanel getSoundObjectPanel() {
@@ -222,22 +208,27 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private void initActions() {
         InputMap inputMap = this.getInputMap(WHEN_FOCUSED);
         ActionMap actionMap = this.getActionMap();
-        
+
         final int osCtrlKey = BlueSystem.getMenuShortcutKey();
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, osCtrlKey), "cutSoundObjects");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, osCtrlKey),
+                "cutSoundObjects");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, osCtrlKey), "copySoundObjects");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, osCtrlKey),
+                "copySoundObjects");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteSoundObjects");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0),
                 "deleteSoundObjects");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, osCtrlKey), "showQuickTimeDialog");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, osCtrlKey),
+                "showQuickTimeDialog");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, osCtrlKey), "duplicateSoundObjects");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, osCtrlKey), "repeatSoundObjects");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, osCtrlKey),
+                "duplicateSoundObjects");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_R, osCtrlKey),
+                "repeatSoundObjects");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "nudgeUp");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "nudgeDown");
@@ -253,24 +244,29 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT,
                 KeyEvent.SHIFT_DOWN_MASK), "nudgeRight10");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, osCtrlKey), "raisePixelSecond");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, osCtrlKey), "lowerPixelSecond");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, osCtrlKey),
+                "raisePixelSecond");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, osCtrlKey),
+                "lowerPixelSecond");
 
         // Extra set of shortcuts in case the others interfere with window
         // manager
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, osCtrlKey), "raisePixelSecond");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, osCtrlKey), "lowerPixelSecond");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, osCtrlKey),
+                "raisePixelSecond");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, osCtrlKey),
+                "lowerPixelSecond");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, osCtrlKey), "undo");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, osCtrlKey
                 | KeyEvent.SHIFT_DOWN_MASK), "redo");
-        
-        actionMap.put("cutSoundObjects", new AbstractAction() {
 
+        actionMap.put("cutSoundObjects", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
+                Collection<? extends SoundObject> soundObjects = 
+                        Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                if (!soundObjects.isEmpty()) {
                     sObjPopup.copySObj();
                     sObjPopup.removeSObj();
                 }
@@ -278,38 +274,43 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("copySoundObjects", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
+
+                Collection<? extends SoundObject> soundObjects = 
+                        Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                if (!soundObjects.isEmpty()) {
                     sObjPopup.copySObj();
                 }
             }
         });
 
         actionMap.put("deleteSoundObjects", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
+                Collection<? extends SoundObject> soundObjects = 
+                        Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                if (!soundObjects.isEmpty()) {
                     removeSoundObjects();
                 }
             }
         });
 
         actionMap.put("duplicateSoundObjects", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
-                    SoundObject[] sObjects = mBuffer.getSoundObjectsAsArray();
+
+                Collection<? extends SoundObject> soundObjects = 
+                        Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                if (!soundObjects.isEmpty()) {
 
                     AddSoundObjectEdit top = null;
 
-                    for (int i = 0; i < sObjects.length; i++) {
-                        SoundObject sObj = sObjects[i];
-                        SoundObject temp = (SoundObject) ObjectUtilities.clone(sObj);
-                        temp.setStartTime(temp.getStartTime() + temp.getSubjectiveDuration());
+                    for (SoundObject sObj : soundObjects) {
+                        SoundObject temp = (SoundObject) ObjectUtilities.clone(
+                                sObj);
+                        temp.setStartTime(
+                                temp.getStartTime() + temp.getSubjectiveDuration());
 
                         int index = getPolyObject().getSoundLayerIndex(sObj);
 
@@ -321,9 +322,11 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                             return;
                         }
 
-                        ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(temp);
+                        ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(
+                                temp);
 
-                        AddSoundObjectEdit edit = new AddSoundObjectEdit(getPolyObject(), temp,
+                        AddSoundObjectEdit edit = new AddSoundObjectEdit(
+                                getPolyObject(), temp,
                                 index);
 
                         if (top == null) {
@@ -341,12 +344,15 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("repeatSoundObjects", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
+                Collection<? extends SoundObject> soundObjects = 
+                        Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                
+                if (soundObjects.size() > 0) {
 
-                    Object retVal = JOptionPane.showInputDialog(SwingUtilities.getRoot(ScoreTimeCanvas.this),
+                    Object retVal = JOptionPane.showInputDialog(
+                            SwingUtilities.getRoot(ScoreTimeCanvas.this),
                             "Enter number of times to repeat:", new Integer(1));
 
                     if (retVal == null) {
@@ -358,30 +364,29 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     try {
                         count = Integer.parseInt((String) retVal);
                     } catch (Exception exception) {
-                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(ScoreTimeCanvas.this),
+                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(
+                                ScoreTimeCanvas.this),
                                 "Entry must be an integer value.", "Error",
                                 JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
                     if (count < 1) {
-                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(ScoreTimeCanvas.this),
+                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(
+                                ScoreTimeCanvas.this),
                                 "Value must be greater than 0.", "Error",
                                 JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
-                    SoundObject[] sObjects = mBuffer.getSoundObjectsAsArray();
-
                     AddSoundObjectEdit top = null;
 
-                    for (int i = 0; i < sObjects.length; i++) {
-                        SoundObject sObj = sObjects[i];
-
+                    for (SoundObject sObj : soundObjects) { 
                         float start = sObj.getStartTime();
 
                         for (int j = 0; j < count; j++) {
-                            SoundObject temp = (SoundObject) ObjectUtilities.clone(sObj);
+                            SoundObject temp = (SoundObject) ObjectUtilities.clone(
+                                    sObj);
 
                             start += sObj.getSubjectiveDuration();
 
@@ -391,14 +396,16 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
                             if (index < 0) {
                                 JOptionPane.showMessageDialog(
-                                        SwingUtilities.getRoot(ScoreTimeCanvas.this),
+                                        SwingUtilities.getRoot(
+                                        ScoreTimeCanvas.this),
                                         "Could not find SoundLayer for SoundObject",
                                         "Error",
                                         JOptionPane.ERROR_MESSAGE);
                                 return;
                             }
 
-                            ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(temp);
+                            ((SoundLayer) getPolyObject().getLayerAt(index)).addSoundObject(
+                                    temp);
 
                             AddSoundObjectEdit edit = new AddSoundObjectEdit(
                                     getPolyObject(), temp, index);
@@ -420,11 +427,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("showQuickTimeDialog", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mBuffer.size() > 0) {
-                    qtDialog.show(mBuffer.get(0));
+                Collection<? extends SoundObject> soundObjects = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+                
+                if (soundObjects.size() > 0) {
+                    //FIXME
+                    //qtDialog.show(soundObjects.iterator().next());
                 }
             }
         });
@@ -432,7 +441,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         // NUDGE ACTIONS
 
         actionMap.put("nudgeUp", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 nudgeVertical(-1);
@@ -440,7 +448,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("nudgeDown", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 nudgeVertical(1);
@@ -448,25 +455,22 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("nudgeLeft", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                float timeAmount = 1.0f / timeState.getPixelSecond();  
+                float timeAmount = 1.0f / timeState.getPixelSecond();
                 nudgeHorizontal(-timeAmount);
             }
         });
 
         actionMap.put("nudgeRight", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                float timeAmount = 1.0f / timeState.getPixelSecond();  
+                float timeAmount = 1.0f / timeState.getPixelSecond();
                 nudgeHorizontal(timeAmount);
             }
         });
 
         actionMap.put("nudgeLeft10", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 10.0f / timeState.getPixelSecond();
@@ -475,7 +479,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("nudgeRight10", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 float timeAmount = 10.0f / timeState.getPixelSecond();
@@ -486,7 +489,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         // ZOOM ACTIONS
 
         actionMap.put("raisePixelSecond", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 timeState.raisePixelSecond();
@@ -494,16 +496,14 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("lowerPixelSecond", new AbstractAction() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 timeState.lowerPixelSecond();
             }
         });
 
-        
-        actionMap.put("undo", new AbstractAction() {
 
+        actionMap.put("undo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 BlueUndoManager.setUndoManager("score");
@@ -512,11 +512,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     undoManager.undo();
                 }
             }
-            
         });
-        
-        actionMap.put("redo", new AbstractAction() {
 
+        actionMap.put("redo", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 BlueUndoManager.setUndoManager("score");
@@ -525,133 +523,127 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     undoManager.redo();
                 }
             }
-            
         });
-        
+
     }
-    
+
     public void setSelectionDragRegions() {
-        SoundObjectView[] sObjViews = mBuffer.motionBuffer;
-        if(sObjViews == null) {
-            return;
-        }
-        
-        for (int i = 0; i < sObjViews.length; i++) {
-            SoundObjectView sObjView = sObjViews[i];
-            int layerNum = pObj.getLayerNumForY(sObjView.getY());
-            
-            automationPanel.addSelectionDragRegion(sObjView.getStartTime(), 
-                    sObjView.getStartTime() + sObjView.getSubjectiveDuration(), layerNum);
-        }
+//        SoundObjectView[] sObjViews = mBuffer.motionBuffer;
+//        if(sObjViews == null) {
+//            return;
+//        }
+//        
+//        for (int i = 0; i < sObjViews.length; i++) {
+//            SoundObjectView sObjView = sObjViews[i];
+//            int layerNum = pObj.getLayerNumForY(sObjView.getY());
+//            
+//            automationPanel.addSelectionDragRegion(sObjView.getStartTime(), 
+//                    sObjView.getStartTime() + sObjView.getSubjectiveDuration(), layerNum);
+//        }
     }
-    
 
     // TODO - Respect snap values, Make Undoable
     private void nudgeHorizontal(float timeValue) {
-
-        if (mBuffer.size() == 0) {
-            return;
-        }
-
-        mBuffer.motionBufferObjects();
-        
-        setSelectionDragRegions();
-
-        if (timeValue < 0) {
-            if(mBuffer.initialStartTimes[0] == 0) {
-                return;
-            }
-            if (timeValue < -mBuffer.initialStartTimes[0]) {
-                timeValue = -mBuffer.initialStartTimes[0];
-            }
-        }
-
-        for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-
-            float newStart = mBuffer.initialStartTimes[i] + timeValue;
-
-            SoundObject sObj = mBuffer.motionBuffer[i].getSoundObject();
-
-            sObj.setStartTime(newStart);
-        }
-        
-        automationPanel.setMultiLineTranslation(timeValue);
-        automationPanel.commitMultiLineDrag();
-
-        mBuffer.motionBufferObjects();
-
+//        if (mBuffer.size() == 0) {
+//            return;
+//        }
+//
+//        mBuffer.motionBufferObjects();
+//        
+//        setSelectionDragRegions();
+//
+//        if (timeValue < 0) {
+//            if(mBuffer.initialStartTimes[0] == 0) {
+//                return;
+//            }
+//            if (timeValue < -mBuffer.initialStartTimes[0]) {
+//                timeValue = -mBuffer.initialStartTimes[0];
+//            }
+//        }
+//
+//        for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+//
+//            float newStart = mBuffer.initialStartTimes[i] + timeValue;
+//
+//            SoundObject sObj = mBuffer.motionBuffer[i].getSoundObject();
+//
+//            sObj.setStartTime(newStart);
+//        }
+//        
+//        automationPanel.setMultiLineTranslation(timeValue);
+//        automationPanel.commitMultiLineDrag();
+//
+//        mBuffer.motionBufferObjects();
     }
-    
+
     private void nudgeVertical(int amount) {
-        if (mBuffer.size() == 0) {
-            return;
-        }
-        
-        mBuffer.motionBufferObjects();
-
-        
-        if (amount < 0) { // MOVE UP
-            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                if (mBuffer.motionBuffer[i].getY() == 0) {
-                    return;
-                }
-            }
-
-            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                SoundObjectView sObjView = mBuffer.motionBuffer[i];
-
-                SoundObject sObj = sObjView.getSoundObject();
-
-                mBuffer.remove(sObjView);
-
-                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-                int newIndex = currentIndex - 1;
-
-                getPolyObject().removeSoundObject(sObj);
-                getPolyObject().addSoundObject(newIndex, sObj);
-
-                sObjView = soundObjectToViewMap.get(sObj);
-                sObjView.select();
-                mBuffer.add(sObjView);
-            }
-
-        } else if (amount > 0) { // MOVE DOWN
-
-            int maxY = getPolyObject().getYForLayerNum(getPolyObject().getSize() - 1);
-
-            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                if (mBuffer.motionBuffer[i].getY() == maxY) {
-                    return;
-                }
-            }
-
-            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-                SoundObjectView sObjView = mBuffer.motionBuffer[i];
-
-                mBuffer.remove(sObjView);
-
-                SoundObject sObj = sObjView.getSoundObject();
-
-                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-                int newIndex = currentIndex + 1;
-
-                getPolyObject().removeSoundObject(sObj);
-                getPolyObject().addSoundObject(newIndex, sObj);
-
-                sObjView = soundObjectToViewMap.get(sObj);
-                sObjView.select();
-                mBuffer.add(sObjView);
-            }
-
-        }
-
-        mBuffer.motionBufferObjects();
-        
+//        if (mBuffer.size() == 0) {
+//            return;
+//        }
+//        
+//        mBuffer.motionBufferObjects();
+//
+//        
+//        if (amount < 0) { // MOVE UP
+//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+//                if (mBuffer.motionBuffer[i].getY() == 0) {
+//                    return;
+//                }
+//            }
+//
+//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+//                SoundObjectView sObjView = mBuffer.motionBuffer[i];
+//
+//                SoundObject sObj = sObjView.getSoundObject();
+//
+//                mBuffer.remove(sObjView);
+//
+//                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
+//                int newIndex = currentIndex - 1;
+//
+//                getPolyObject().removeSoundObject(sObj);
+//                getPolyObject().addSoundObject(newIndex, sObj);
+//
+//                sObjView = soundObjectToViewMap.get(sObj);
+////                sObjView.select();
+//                mBuffer.add(sObjView);
+//            }
+//
+//        } else if (amount > 0) { // MOVE DOWN
+//
+//            int maxY = getPolyObject().getYForLayerNum(getPolyObject().getSize() - 1);
+//
+//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+//                if (mBuffer.motionBuffer[i].getY() == maxY) {
+//                    return;
+//                }
+//            }
+//
+//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
+//                SoundObjectView sObjView = mBuffer.motionBuffer[i];
+//
+//                mBuffer.remove(sObjView);
+//
+//                SoundObject sObj = sObjView.getSoundObject();
+//
+//                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
+//                int newIndex = currentIndex + 1;
+//
+//                getPolyObject().removeSoundObject(sObj);
+//                getPolyObject().addSoundObject(newIndex, sObj);
+//
+//                sObjView = soundObjectToViewMap.get(sObj);
+//                sObjView.select();
+//                mBuffer.add(sObjView);
+//            }
+//
+//        }
+//
+//        mBuffer.motionBufferObjects();
     }
 
     public void reset() {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 Component[] components = sObjPanel.getComponents();
@@ -662,15 +654,18 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     if (c instanceof SoundObjectView) {
                         SoundObjectView sObjView = (SoundObjectView) c;
 
-                        int index = getPolyObject().getSoundLayerIndex(sObjView.getSoundObject());
+                        int index = getPolyObject().getSoundLayerIndex(
+                                sObjView.getSoundObject());
 
                         if (index < 0) {
                             sObjView.cleanup();
                             sObjPanel.remove(c);
-                            soundObjectToViewMap.remove(sObjView.getSoundObject());
+                            soundObjectToViewMap.remove(
+                                    sObjView.getSoundObject());
                         } else {
                             int newY = getPolyObject().getYForLayerNum(index);
-                            int newHeight = getPolyObject().getSoundLayerHeight(index);
+                            int newHeight = getPolyObject().getSoundLayerHeight(
+                                    index);
 
                             sObjView.updateView(newY, newHeight);
                         }
@@ -708,7 +703,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             if (c instanceof SoundObjectView) {
                 SoundObjectView sObjView = (SoundObjectView) c;
                 sObjView.cleanup();
-            }            
+            }
         }
 
         sObjPanel.removeAll();
@@ -732,7 +727,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.pObj = pObj;
         this.timeState = timeState;
-        
+
         sMouse.setTimeState(timeState);
         multiLineMouse.setTimeState(timeState);
 
@@ -741,11 +736,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             pObj.addLayerGroupListener(this);
         }
 
-        this.mBuffer.setPolyObject(pObj);
         this.automationPanel.setPolyObject(pObj, timeState);
 
-        sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
+        content.set(Collections.emptyList(), null);
 
         // TODO - REFACTOR THIS OUT TO POLY OBJECT CONTROLLER
 
@@ -772,22 +765,19 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     "ScoreTimeCanvas: setPObj found size == 0");
         }
 
-       
+
         this.checkSize(true);
         this.revalidate();
         this.repaint();
     }
 
-    
-    
     /**
      * checkSize is called when dragging an object
      */
-    
     public void checkSize() {
         checkSize(false);
     }
-    
+
     public void checkSize(boolean setSize) {
         if (getPolyObject() == null || timeState == null) {
             return;
@@ -811,34 +801,37 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 ////            }
 //
 //        }
-       
+
         if (width == this.getWidth() && height == this.getHeight()) {
 //        if (width == this.getWidth()) {
             return;
         }
 
         Dimension d = new Dimension(width, height);
-        
-        if(setSize) {
+
+        if (setSize) {
             this.setSize(d);
         }
 
         this.setPreferredSize(d);
-        
-      
+
+
 
 //        this.setPreferredSize(d);
 //        this.setMaximumSize(d);
-        
+
         //revalidate();
     }
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
         SoundObjectView temp = new SoundObjectView(sObj, timeState);
         sObjPanel.add(temp);
-        temp.setLocation((int) (sObj.getStartTime() * timeState.getPixelSecond()),
+        temp.setLocation(
+                (int) (sObj.getStartTime() * timeState.getPixelSecond()),
                 getPolyObject().getYForLayerNum(soundLayerIndex));
-        temp.setSize((int) (sObj.getSubjectiveDuration() * timeState.getPixelSecond()), getPolyObject().getSoundLayerHeight(soundLayerIndex));
+        temp.setSize(
+                (int) (sObj.getSubjectiveDuration() * timeState.getPixelSecond()),
+                getPolyObject().getSoundLayerHeight(soundLayerIndex));
 
         // add to map of soundObjects and views
         // so that you can retrieve a view from a given soundObject
@@ -860,32 +853,37 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public void updateSoundObjectViewLayerIndex(SoundObject sObj,
             int soundLayerIndex) {
         SoundObjectView sObjView = this.soundObjectToViewMap.get(sObj);
-        sObjView.setLocation(sObjView.getX(), getPolyObject().getYForLayerNum(soundLayerIndex));
+        sObjView.setLocation(sObjView.getX(), getPolyObject().getYForLayerNum(
+                soundLayerIndex));
     }
 
     public SoundObjectView getViewForSoundObject(SoundObject sObj) {
         return this.soundObjectToViewMap.get(sObj);
     }
 
-    /** ******************* */
+    /**
+     * *******************
+     */
     public void removeSoundObjects() {
-        int size = mBuffer.size();
+//        int size = mBuffer.size();
         SoundObjectView sObjView;
         RemoveSoundObjectEdit firstEdit = null;
         RemoveSoundObjectEdit lastEdit = null;
         RemoveSoundObjectEdit temp;
 
-        for (int i = 0; i < size; i++) {
-            sObjView = mBuffer.get(i);
-            SoundObject sObj = sObjView.getSoundObject();
+        Collection<? extends SoundObject> selectedObjects =
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
+        for (SoundObject sObj : selectedObjects) {
             int sLayerIndex = getPolyObject().removeSoundObject(sObj);
 
             if (firstEdit == null) {
-                firstEdit = new RemoveSoundObjectEdit(getPolyObject(), sObj, sLayerIndex);
+                firstEdit = new RemoveSoundObjectEdit(getPolyObject(), sObj,
+                        sLayerIndex);
                 lastEdit = firstEdit;
             } else {
-                temp = new RemoveSoundObjectEdit(getPolyObject(), sObj, sLayerIndex);
+                temp = new RemoveSoundObjectEdit(getPolyObject(), sObj,
+                        sLayerIndex);
                 lastEdit.setNextEdit(temp);
                 lastEdit = temp;
             }
@@ -896,8 +894,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             BlueUndoManager.addEdit(firstEdit);
         }
 
-        sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
+        content.set(Collections.emptyList(), null);
 
         repaint();
     }
@@ -905,32 +902,37 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     /* TODO - Remove this method and implement by events */
     public void updateSoundObjectsLayerMap() {
         int startIndex, endIndex;
-        SoundObject sObj;
-        for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-            sObj = mBuffer.motionBuffer[i].getSoundObject();
 
-            startIndex = getPolyObject().getLayerNumForY(mBuffer.sObjYValues[i]);
-            endIndex = getPolyObject().getLayerNumForY(mBuffer.motionBuffer[i].getY());
-
-            if (startIndex != endIndex) {
-                getPolyObject().removeSoundObject(sObj);
-                getPolyObject().addSoundObject(endIndex, sObj);
-            }
+        Collection<? extends SoundObject> selectedObjects =
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        
+        for(SoundObject sObj : selectedObjects) {
+//FIXME
+//            startIndex = getPolyObject().getLayerNumForY(mBuffer.sObjYValues[i]);
+//            endIndex = getPolyObject().getLayerNumForY(
+//                    mBuffer.motionBuffer[i].getY());
+//
+//            if (startIndex != endIndex) {
+//                getPolyObject().removeSoundObject(sObj);
+//                getPolyObject().addSoundObject(endIndex, sObj);
+//            }
 
         }
     }
 
-    /** *********************************** */
+    /**
+     * ***********************************
+     */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        
+
         int width = this.getWidth();
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, width, this.getHeight());
 
-        if(getPolyObject() == null || timeState == null) {
+        if (getPolyObject() == null || timeState == null) {
             return;
         }
 
@@ -941,11 +943,11 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         for (int i = 0; i < getPolyObject().getSize(); i++) {
             SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(i);
             y += layer.getSoundLayerHeight();
-            
-            
+
+
             g.drawLine(0, y, width, y);
         }
-        
+
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
 
         if (timeState.isSnapEnabled()) {
@@ -960,62 +962,39 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             float snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
             float time;
-            for(int i = 0; x < width; i++) {
-                 x = (int)((i * snapValue) * pixelSecond);
-                 g.drawLine(x, 0, x, height);
+            for (int i = 0; x < width; i++) {
+                x = (int) ((i * snapValue) * pixelSecond);
+                g.drawLine(x, 0, x, height);
             }
-            
+
         }
     }
-    
+
     @Override
     public void paintNavigatorView(Graphics2D g2d) {
         Component[] components = getSoundObjectPanel().getComponents();
-        
+
         for (Component c : components) {
             SoundObjectView component = (SoundObjectView) c;
             Rectangle r = component.getBounds();
-            
+
             g2d.setColor(component.getSoundObject().getBackgroundColor());
             g2d.fillRect(r.x, r.y, r.width, r.height);
         }
     }
 
-//    public void paintPreview(Graphics g) {
-//        synchronized (getTreeLock()) {
-//
-//            Component[] components = getSoundObjectPanel().getComponents();
-//
-//            g.setColor(Color.WHITE);
-//
-//            Rectangle bounds = g.getClipBounds();
-//
-//            for (int i = 0; i < components.length; i++) {
-//                SoundObjectView component = (SoundObjectView) components[i];
-//                Rectangle r = component.getBounds();
-//
-//                g.translate(r.x, r.y);
-//                g.setClip(0, 0, r.width, r.height);
-//
-//                component.getRenderer().render(g, component,
-//                        timeState.getPixelSecond());
-//
-//                g.translate(-r.x, -r.y);
-//
-//            }
-//
-//            g.setClip(bounds);
-//        }
-//    }
-
     public void update() {
         repaint();
     }
-    /** ************************************************************** */
+    /**
+     * **************************************************************
+     */
     // code for scrollable interface
-    /** ************************************************************** */
+    /**
+     * **************************************************************
+     */
     int maxUnitIncrement = 200;
-    
+
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
@@ -1073,13 +1052,11 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     /**
-     * 
+     *
      */
     public PolyObject getPolyObject() {
         return this.pObj;
     }
-
-    
 
     /* EVENT LISTENING METHODS */
     @Override
@@ -1096,19 +1073,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     repaint();
                     break;
             }
-        } 
+        }
 
     }
 
-    /**
-     * Adds a selection listener to the ScoreMouseProcessor
-     * 
-     * @param listener
-     */
-    public void addSelectionListener(SelectionListener listener) {
-        sMouse.addSelectionListener(listener);
-        multiLineMouse.addSelectionListener(listener);
-    }
 
     /* SOUND LAYER LISTENER */
     @Override
@@ -1144,22 +1112,22 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     /* LAYER GROUP LISTENER */
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
-        if(event.getType() == LayerGroupDataEvent.DATA_ADDED) {
-            SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(event.getStartIndex());
+        if (event.getType() == LayerGroupDataEvent.DATA_ADDED) {
+            SoundLayer layer = (SoundLayer) getPolyObject().getLayerAt(
+                    event.getStartIndex());
             layer.addPropertyChangeListener(heightListener);
             layer.addSoundLayerListener(this);
         }
-        
+
         reset();
     }
-    
+
     @Override
     public void modeChanged(int mode) {
         marquee.setVisible(false);
     }
-    
+
     /* Cleanup code on Remove */
-    
     @Override
     public void removeNotify() {
         this.data.removePropertyChangeListener(this);
@@ -1175,9 +1143,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
 
             if (marquee.intersects((JComponent) comps[i])) {
-                SelectionEvent selectionEvent = new SelectionEvent(comps[i],
-                        SelectionEvent.SELECTION_ADD);
-                sMouse.fireSelectionEvent(selectionEvent);
+                content.add(((SoundObjectView) comps[i]).getSoundObject());
             }
 
         }

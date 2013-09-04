@@ -12,6 +12,8 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import org.openide.util.Utilities;
 
 public final class AuditionSelectedSoundObjectsAction implements ActionListener {
 
@@ -29,13 +31,15 @@ public final class AuditionSelectedSoundObjectsAction implements ActionListener 
             return;
         }
 
-        SoundObject[] soundObjects = ScoreTopComponent.getDefault().getSoundObjectsAsArray();
+        Collection<? extends SoundObject> soundObjects = 
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
-        if (soundObjects.length == 0) {
+        if (soundObjects.isEmpty()) {
             return;
         }
 
-        RealtimeRenderManager.getInstance().auditionSoundObjects(data, soundObjects);
+        RealtimeRenderManager.getInstance().auditionSoundObjects(data, 
+                soundObjects.toArray(new SoundObject[0]));
 
     }
 }

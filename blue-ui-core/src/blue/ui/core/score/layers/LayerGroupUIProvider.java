@@ -23,6 +23,7 @@ import blue.BlueData;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import javax.swing.JComponent;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -31,12 +32,16 @@ import javax.swing.JComponent;
 public interface LayerGroupUIProvider {
 
     
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data);
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup, 
+            TimeState timeState, 
+            BlueData data, 
+            InstanceContent ic);
 
 
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, 
                 TimeState timeState, 
-                BlueData data);
+                BlueData data,
+                InstanceContent ic);
     
     /**
      * Returns a JComponent for editing the properties of this LayerGroup. This

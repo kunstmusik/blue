@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import java.util.ArrayList;
 import javax.swing.JComponent;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.util.lookup.Lookups;
 
 /**
@@ -42,13 +43,16 @@ public class LayerGroupUIProviderManager extends ArrayList<LayerGroupUIProvider>
         return instance;
     }
 
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
+    public JComponent getLayerGroupPanel(LayerGroup layerGroup, 
+            TimeState timeState, 
+            BlueData data, 
+            InstanceContent ic) {
         
         Lookup lkp = Lookups.forPath("blue/score/layers/uiProviders");
         
         for(LayerGroupUIProvider provider : lkp.lookupAll(
                 LayerGroupUIProvider.class)) {
-            JComponent comp = provider.getLayerGroupPanel(layerGroup, timeState, data);
+            JComponent comp = provider.getLayerGroupPanel(layerGroup, timeState, data, ic);
             
             if(comp != null) {
                 return comp;
@@ -74,13 +78,16 @@ public class LayerGroupUIProviderManager extends ArrayList<LayerGroupUIProvider>
         return null;
     }
    
-    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, TimeState timeState, BlueData data) {
+    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, 
+            TimeState timeState, 
+            BlueData data, 
+            InstanceContent ic) {
         
         Lookup lkp = Lookups.forPath("blue/score/layers/uiProviders");
         
         for(LayerGroupUIProvider provider : lkp.lookupAll(
                 LayerGroupUIProvider.class)) {
-            JComponent comp = provider.getLayerGroupHeaderPanel(layerGroup, timeState, data);
+            JComponent comp = provider.getLayerGroupHeaderPanel(layerGroup, timeState, data, ic);
             
             if(comp != null) {
                 return comp;

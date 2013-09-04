@@ -24,15 +24,14 @@ import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
 import blue.blueLive.LiveObjectSet;
 import blue.blueLive.LiveObjectSetList;
-import blue.event.SelectionEvent;
 import blue.midi.*;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.core.BluePluginManager;
+import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
-import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
@@ -41,6 +40,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.logging.Logger;
 import javax.sound.midi.MidiMessage;
@@ -56,6 +56,8 @@ import javax.swing.text.Document;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import skt.swing.SwingUtil;
@@ -65,9 +67,13 @@ import skt.swing.SwingUtil;
  */
 @ConvertAsProperties(dtd = "-//blue.ui.core.blueLive//BlueLive//EN",
 autostore = false)
-public final class BlueLiveTopComponent extends TopComponent {
+public final class BlueLiveTopComponent extends TopComponent 
+        implements SoundObjectProvider {
 
     private static BlueLiveTopComponent instance;
+
+    private final InstanceContent content = new InstanceContent();
+    
     /**
      * path to the icon used by the component and its open action
      */
@@ -92,6 +98,9 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     public BlueLiveTopComponent() {
         initComponents();
+
+        associateLookup(new AbstractLookup(content));
+        
         setName(NbBundle.getMessage(BlueLiveTopComponent.class,
                 "CTL_BlueLiveTopComponent"));
         setToolTipText(NbBundle.getMessage(BlueLiveTopComponent.class,
@@ -131,12 +140,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                                     @Override
                                     public void run() {
-                                        SelectionEvent se = new SelectionEvent(
-                                                lObj.getSoundObject(),
-                                                SelectionEvent.SELECTION_SINGLE,
-                                                SelectionEvent.SELECTION_BLUE_LIVE);
-                                        SoundObjectSelectionBus.getInstance().
-                                                selectionPerformed(se);
+                                        content.set(Collections.singleton(lObj.getSoundObject()), null);
                                     }
                                 });
                             } else {
@@ -144,12 +148,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                                     @Override
                                     public void run() {
-                                        SelectionEvent se = new SelectionEvent(
-                                                null,
-                                                SelectionEvent.SELECTION_CLEAR,
-                                                SelectionEvent.SELECTION_BLUE_LIVE);
-                                        SoundObjectSelectionBus.getInstance().
-                                                selectionPerformed(se);
+                                        content.set(Collections.emptyList(), null);
                                     }
                                 });
                             }
@@ -429,7 +428,6 @@ public final class BlueLiveTopComponent extends TopComponent {
             // csoundCommand.setText(data.getLiveData().getCommandLine());
             // liveSpace.setLiveObjects(data.getLiveData().getLiveSoundObjects());
 
-            // sObjEditPanel.editSoundObject(null);
 
             repeatSpinner.setValue(liveData.getRepeat());
             tempoSpinner.setValue(liveData.getTempo());
@@ -1351,9 +1349,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                     if (lObj != null) {
                         model.setValueAt(null, mouseRow, mouseColumn);
-                        SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                new SelectionEvent(null,
-                                SelectionEvent.SELECTION_CLEAR));
+                        content.set(Collections.emptyList(), null);
                     }
                 }
             });
@@ -1372,9 +1368,7 @@ public final class BlueLiveTopComponent extends TopComponent {
                         buffer.setBufferedObject(copy, 0, 0);
 
                         model.setValueAt(null, mouseRow, mouseColumn);
-                        SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                new SelectionEvent(null,
-                                SelectionEvent.SELECTION_CLEAR));
+                        content.set(Collections.emptyList(), null);
                     }
 
                 }

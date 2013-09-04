@@ -39,7 +39,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
-import blue.ui.core.score.layers.soundObject.MotionBuffer;
+import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
 import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.tempo.TempoEditor;
@@ -69,10 +69,9 @@ import org.openide.windows.WindowManager;
  */
 public final class ScoreTopComponent extends TopComponent
         implements ScoreListener, RenderTimeManagerListener,
-        PropertyChangeListener, ScoreBarListener {
+        PropertyChangeListener, ScoreBarListener, SoundObjectProvider {
 
     private final InstanceContent content = new InstanceContent();
-
     
     private static ScoreTopComponent instance;
     private static final int SPACER = 36;
@@ -167,10 +166,6 @@ public final class ScoreTopComponent extends TopComponent
         scorePanel.addMouseMotionListener(listener);
     }
 
-    public SoundObject[] getSoundObjectsAsArray() {
-        return MotionBuffer.getInstance().getSoundObjectsAsArray();
-    }
-
     protected void checkSize() {
         if (!checkingSize) {
             checkingSize = true;
@@ -246,9 +241,9 @@ public final class ScoreTopComponent extends TopComponent
 
     private void addPanelsForLayerGroup(int index, LayerGroup layerGroup, TimeState timeState) {
         final JComponent comp = LayerGroupUIProviderManager.getInstance().getLayerGroupPanel(
-                layerGroup, timeState, data);
+                layerGroup, timeState, data, content);
         final JComponent comp2 = LayerGroupUIProviderManager.getInstance().getLayerGroupHeaderPanel(
-                layerGroup, timeState, data);
+                layerGroup, timeState, data, content);
 
         if (comp != null && comp2 != null) {
 

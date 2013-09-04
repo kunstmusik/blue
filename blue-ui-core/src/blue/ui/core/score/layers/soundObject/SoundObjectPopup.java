@@ -26,7 +26,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.actions.BlueAction;
-import blue.event.SelectionEvent;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
@@ -62,6 +61,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.AbstractAction;
@@ -74,64 +75,45 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.InstanceContent;
 
 /*
  *
  * Popup used when rt-mouse click on a soundObject
  *
  */
-
 // TODO - Redo using Actions
 public class SoundObjectPopup extends JPopupMenu {
 
     private static final String EXPORT_DIALOG = "sObj.export";
-
     private static final String SHOW_SOBJ_PROPS = "Show Sound Object Properties";
-
     private static final String HIDE_SOBJ_PROPS = "Hide Sound Object Properties";
-
     Action auditionSoundObjects;
-
     JMenuItem editMenuOpt = new JMenuItem();
-
     JMenuItem sObjLibMenuOpt = new JMenuItem();
-
     JMenuItem convertPolyMenuOpt = new JMenuItem();
-
 //    JMenuItem convertGenericMenuOpt = new JMenuItem();
-
     JMenuItem convertObjectBuilderMenuOpt = new JMenuItem();
-
     JMenuItem replaceOpt = new JMenuItem();
-
     JMenuItem followTheLeaderMenuOpt = new JMenuItem();
-
     JMenuItem setTimeMenuOpt = new JMenuItem();
-
     JMenuItem cutMenuOpt = new JMenuItem();
-
     JMenuItem copyMenuOpt = new JMenuItem();
-
     JMenuItem removeMenuOpt = new JMenuItem();
-
     JMenuItem freezeMenuOpt = new JMenuItem();
-
     JMenuItem alignLeftMenuOpt = new JMenuItem();
-
     JMenuItem alignRightMenuOpt = new JMenuItem();
-
     JMenuItem alignCenterMenuOpt = new JMenuItem();
-
 //    JMenuItem showSObjProperties = new JMenuItem();
-
     SoundObjectView sObjView;
-
     ScoreTimeCanvas sCanvas;
-    
     TimeState timeState = null;
+    private final InstanceContent content;
 
-    public SoundObjectPopup(final ScoreTimeCanvas sCanvas) {
+    public SoundObjectPopup(final ScoreTimeCanvas sCanvas, InstanceContent ic) {
         this.sCanvas = sCanvas;
+        this.content = ic;
 
         BlueSystem.setMenuText(editMenuOpt, "soundObjectPopup.edit");
         BlueSystem.setMenuText(sObjLibMenuOpt, "soundObjectPopup.sObjLib");
@@ -160,7 +142,6 @@ public class SoundObjectPopup extends JPopupMenu {
 
         auditionSoundObjects = new AbstractAction(
                 "Audition Selected SoundObjects") {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 auditionSoundObjects();
@@ -168,21 +149,18 @@ public class SoundObjectPopup extends JPopupMenu {
         };
 
         editMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 editSObj();
             }
         });
         sObjLibMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 addToSObjLib();
             }
         });
         convertPolyMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 convertToPolyObject();
@@ -195,21 +173,18 @@ public class SoundObjectPopup extends JPopupMenu {
 //            }
 //        });
         convertObjectBuilderMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 convertToObjectBuilder();
             }
         });
         replaceOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 replaceSoundObject();
             }
         });
         followTheLeaderMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 followTheLeader();
@@ -217,7 +192,6 @@ public class SoundObjectPopup extends JPopupMenu {
         });
 
         Action reverseAction = new BlueAction("soundObjectPopup.reverse") {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 reverseSoundObjects();
@@ -226,35 +200,30 @@ public class SoundObjectPopup extends JPopupMenu {
         };
 
         setTimeMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 setSubjectiveTimeToObjectiveTime();
             }
         });
         removeMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 removeSObj();
             }
         });
         freezeMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 freezeUnfreezeSoundObject();
             }
         });
         copyMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 copySObj();
             }
         });
         cutMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 copySObj();
@@ -262,21 +231,18 @@ public class SoundObjectPopup extends JPopupMenu {
             }
         });
         alignLeftMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 alignLeft();
             }
         });
         alignCenterMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 alignCenter();
             }
         });
         alignRightMenuOpt.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 alignRight();
@@ -291,8 +257,8 @@ public class SoundObjectPopup extends JPopupMenu {
 
         Action setColorAction = new SetColorAction();
 
-        Action exportItem = new AbstractAction(BlueSystem.getString("common.export")) {
-
+        Action exportItem = new AbstractAction(BlueSystem.getString(
+                "common.export")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (sObjView == null) {
@@ -304,10 +270,12 @@ public class SoundObjectPopup extends JPopupMenu {
 
                 if (retVal == JFileChooser.APPROVE_OPTION) {
 
-                    File f = FileChooserManager.getDefault().getSelectedFile(EXPORT_DIALOG);
+                    File f = FileChooserManager.getDefault().getSelectedFile(
+                            EXPORT_DIALOG);
 
                     if (f.exists()) {
-                        int overWrite = JOptionPane.showConfirmDialog(SwingUtilities.getRoot(sCanvas),
+                        int overWrite = JOptionPane.showConfirmDialog(
+                                SwingUtilities.getRoot(sCanvas),
                                 "Please confirm you would like to overwrite this file.");
 
                         if (overWrite != JOptionPane.OK_OPTION) {
@@ -317,7 +285,8 @@ public class SoundObjectPopup extends JPopupMenu {
 
                     SoundObject sObj = sObjView.getSoundObject();
 
-                    if ((sObj instanceof Instance) || ((sObj instanceof PolyObject) && containsInstance((PolyObject) sObj))) {
+                    if ((sObj instanceof Instance) || ((sObj instanceof PolyObject) && containsInstance(
+                            (PolyObject) sObj))) {
                         JOptionPane.showMessageDialog(
                                 SwingUtilities.getRoot(sCanvas),
                                 "Error: Export of Instance or " + "PolyObjects containing Instance " + "is not allowed.",
@@ -343,44 +312,46 @@ public class SoundObjectPopup extends JPopupMenu {
             }
         };
 
-        Action shiftAction = new AbstractAction(BlueSystem.getString("scoreGUI.action.shift")) {
-
+        Action shiftAction = new AbstractAction(BlueSystem.getString(
+                "scoreGUI.action.shift")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (sCanvas.mBuffer.size() <= 0) {
-                    return;
-                }
 
-                String value = JOptionPane.showInputDialog(null, BlueSystem
-                        .getString("scoreGUI.action.shift.message"));
-
-                sCanvas.mBuffer.motionBufferObjects();
-                SoundObjectView[] views = sCanvas.mBuffer.motionBuffer;
-
-                try {
-                    float val = Float.parseFloat(value);
-
-                    for (int i = 0; i < views.length; i++) {
-                        if ((views[i].getStartTime() + val) < 0) {
-                            JOptionPane.showMessageDialog(null, BlueSystem
-                                    .getString("scoreGUI.action.shift.error"));
-                            return;
-                        }
-                    }
-
-                    for (int i = 0; i < views.length; i++) {
-                        SoundObject sObj = views[i].getSoundObject();
-
-                        views[i].setStartTime(sObj.getStartTime() + val);
-                    }
-
-                } catch (NumberFormatException nfe) {
-                    System.err.println(nfe.getMessage());
-                }
+// FIXME
+                
+//                if (sCanvas.mBuffer.size() <= 0) {
+//                    return;
+//                }
+//
+//                String value = JOptionPane.showInputDialog(null, BlueSystem
+//                        .getString("scoreGUI.action.shift.message"));
+//
+//                sCanvas.mBuffer.motionBufferObjects();
+//                SoundObjectView[] views = sCanvas.mBuffer.motionBuffer;
+//
+//                try {
+//                    float val = Float.parseFloat(value);
+//
+//                    for (int i = 0; i < views.length; i++) {
+//                        if ((views[i].getStartTime() + val) < 0) {
+//                            JOptionPane.showMessageDialog(null, BlueSystem
+//                                    .getString("scoreGUI.action.shift.error"));
+//                            return;
+//                        }
+//                    }
+//
+//                    for (int i = 0; i < views.length; i++) {
+//                        SoundObject sObj = views[i].getSoundObject();
+//
+//                        views[i].setStartTime(sObj.getStartTime() + val);
+//                    }
+//
+//                } catch (NumberFormatException nfe) {
+//                    System.err.println(nfe.getMessage());
+//                }
             }
-            
         };
-     
+
         JMenu align = new JMenu();
         BlueSystem.setMenuText(align, "soundObjectPopup.align");
 
@@ -430,7 +401,7 @@ public class SoundObjectPopup extends JPopupMenu {
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
-    
+
     protected boolean containsInstance(PolyObject pObj) {
         ArrayList soundObjects = pObj.getSoundObjects(true);
 
@@ -452,42 +423,44 @@ public class SoundObjectPopup extends JPopupMenu {
      * Aligns selected soundObjects to the left
      */
     protected void alignLeft() {
-        SoundObject[] soundObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
+        Collection<? extends SoundObject> soundObjects = 
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
-        if (soundObjects.length < 2) {
+        if (soundObjects.size() < 2) {
             return;
         }
 
-        float initialStartTimes[] = new float[sCanvas.mBuffer.size()];
-        float endingStartTimes[] = new float[sCanvas.mBuffer.size()];
-
-        float farLeft = soundObjects[0].getStartTime();
-        initialStartTimes[0] = farLeft;
-
-        float tempStart;
-        for (int i = 1; i < soundObjects.length; i++) {
-            SoundObject sObj = soundObjects[i];
-            tempStart = sObj.getStartTime();
-
-            initialStartTimes[i] = tempStart;
-
-            if (tempStart < farLeft) {
-                farLeft = tempStart;
-            }
-        }
-        for (int i = 0; i < soundObjects.length; i++) {
-            SoundObject sObj = soundObjects[i];
-            sObj.setStartTime(farLeft);
-            endingStartTimes[i] = farLeft;
-        }
-
-        BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-                endingStartTimes);
-
-        edit.setPresentationName("Align Left");
-
-        BlueUndoManager.addEdit(edit);
+        // FIXME
+//        float initialStartTimes[] = new float[sCanvas.mBuffer.size()];
+//        float endingStartTimes[] = new float[sCanvas.mBuffer.size()];
+//
+//        float farLeft = soundObjects[0].getStartTime();
+//        initialStartTimes[0] = farLeft;
+//
+//        float tempStart;
+//        for (int i = 1; i < soundObjects.length; i++) {
+//            SoundObject sObj = soundObjects[i];
+//            tempStart = sObj.getStartTime();
+//
+//            initialStartTimes[i] = tempStart;
+//
+//            if (tempStart < farLeft) {
+//                farLeft = tempStart;
+//            }
+//        }
+//        for (int i = 0; i < soundObjects.length; i++) {
+//            SoundObject sObj = soundObjects[i];
+//            sObj.setStartTime(farLeft);
+//            endingStartTimes[i] = farLeft;
+//        }
+//
+//        BlueUndoManager.setUndoManager("score");
+//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
+//                endingStartTimes);
+//
+//        edit.setPresentationName("Align Left");
+//
+//        BlueUndoManager.addEdit(edit);
 
     }
 
@@ -495,55 +468,56 @@ public class SoundObjectPopup extends JPopupMenu {
      * Aligns selected soundObjects to the center
      */
     protected void alignCenter() {
-        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
-        if (soundObjects.length < 2) {
-            return;
-        }
-
-        float initialStartTimes[] = new float[soundObjects.length];
-        float endingStartTimes[] = new float[soundObjects.length];
-
-        float farLeft = soundObjects[0].getStartTime();
-        initialStartTimes[0] = farLeft;
-
-        float tempStart;
-        for (int i = 1; i < soundObjects.length; i++) {
-            tempStart = soundObjects[i].getStartTime();
-
-            initialStartTimes[i] = tempStart;
-
-            if (tempStart < farLeft) {
-                farLeft = tempStart;
-            }
-        }
-
-        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
-        float endTime;
-
-        for (int i = 1; i < soundObjects.length; i++) {
-            endTime = soundObjects[i].getStartTime() + soundObjects[i].getSubjectiveDuration();
-
-            if (endTime > farRight) {
-                farRight = endTime;
-            }
-        }
-
-        float centerTime = ((farRight - farLeft) / 2) + farLeft;
-
-        float newEndTime;
-        for (int i = 0; i < soundObjects.length; i++) {
-            newEndTime = centerTime - (soundObjects[i].getSubjectiveDuration() / 2);
-            soundObjects[i].setStartTime(newEndTime);
-            endingStartTimes[i] = newEndTime;
-        }
-
-        BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-                endingStartTimes);
-
-        edit.setPresentationName("Align Center");
-
-        BlueUndoManager.addEdit(edit);
+        // FIXME
+//        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
+//        if (soundObjects.length < 2) {
+//            return;
+//        }
+//
+//        float initialStartTimes[] = new float[soundObjects.length];
+//        float endingStartTimes[] = new float[soundObjects.length];
+//
+//        float farLeft = soundObjects[0].getStartTime();
+//        initialStartTimes[0] = farLeft;
+//
+//        float tempStart;
+//        for (int i = 1; i < soundObjects.length; i++) {
+//            tempStart = soundObjects[i].getStartTime();
+//
+//            initialStartTimes[i] = tempStart;
+//
+//            if (tempStart < farLeft) {
+//                farLeft = tempStart;
+//            }
+//        }
+//
+//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
+//        float endTime;
+//
+//        for (int i = 1; i < soundObjects.length; i++) {
+//            endTime = soundObjects[i].getStartTime() + soundObjects[i].getSubjectiveDuration();
+//
+//            if (endTime > farRight) {
+//                farRight = endTime;
+//            }
+//        }
+//
+//        float centerTime = ((farRight - farLeft) / 2) + farLeft;
+//
+//        float newEndTime;
+//        for (int i = 0; i < soundObjects.length; i++) {
+//            newEndTime = centerTime - (soundObjects[i].getSubjectiveDuration() / 2);
+//            soundObjects[i].setStartTime(newEndTime);
+//            endingStartTimes[i] = newEndTime;
+//        }
+//
+//        BlueUndoManager.setUndoManager("score");
+//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
+//                endingStartTimes);
+//
+//        edit.setPresentationName("Align Center");
+//
+//        BlueUndoManager.addEdit(edit);
 
     }
 
@@ -551,70 +525,73 @@ public class SoundObjectPopup extends JPopupMenu {
      * Aligns selected soundObjects to the right
      */
     protected void alignRight() {
-        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
-        if (soundObjects.length < 2) {
-            return;
-        }
-
-        float initialStartTimes[] = new float[soundObjects.length];
-        float endingStartTimes[] = new float[soundObjects.length];
-
-        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
-        initialStartTimes[0] = farRight;
-
-        float startTime;
-        float endTime;
-
-        for (int i = 1; i < soundObjects.length; i++) {
-
-            startTime = soundObjects[i].getStartTime();
-            endTime = startTime + soundObjects[i].getSubjectiveDuration();
-
-            initialStartTimes[i] = startTime;
-
-            if (endTime > farRight) {
-                farRight = endTime;
-            }
-        }
-
-        float newStart;
-        for (int i = 0; i < soundObjects.length; i++) {
-            newStart = farRight - soundObjects[i].getSubjectiveDuration();
-            soundObjects[i].setStartTime(newStart);
-            endingStartTimes[i] = newStart;
-        }
-
-        BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-                endingStartTimes);
-
-        edit.setPresentationName("Align Right");
-
-        BlueUndoManager.addEdit(edit);
+        // FIXME
+//        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
+//        if (soundObjects.length < 2) {
+//            return;
+//        }
+//
+//        float initialStartTimes[] = new float[soundObjects.length];
+//        float endingStartTimes[] = new float[soundObjects.length];
+//
+//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
+//        initialStartTimes[0] = farRight;
+//
+//        float startTime;
+//        float endTime;
+//
+//        for (int i = 1; i < soundObjects.length; i++) {
+//
+//            startTime = soundObjects[i].getStartTime();
+//            endTime = startTime + soundObjects[i].getSubjectiveDuration();
+//
+//            initialStartTimes[i] = startTime;
+//
+//            if (endTime > farRight) {
+//                farRight = endTime;
+//            }
+//        }
+//
+//        float newStart;
+//        for (int i = 0; i < soundObjects.length; i++) {
+//            newStart = farRight - soundObjects[i].getSubjectiveDuration();
+//            soundObjects[i].setStartTime(newStart);
+//            endingStartTimes[i] = newStart;
+//        }
+//
+//        BlueUndoManager.setUndoManager("score");
+//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
+//                endingStartTimes);
+//
+//        edit.setPresentationName("Align Right");
+//
+//        BlueUndoManager.addEdit(edit);
 
     }
 
     public void copySObj() {
-        sCanvas.buffer.copySoundObjects(sCanvas.mBuffer);
+        //FIXME
+//        sCanvas.buffer.copySoundObjects(sCanvas.mBuffer);
     }
 
     private void editSObj() {
         if (sObjView.getSoundObject() instanceof PolyObject) {
+            //FIXME
 //                sCanvas.sGUI.polyObjectBar.addPolyObject((PolyObject) sObjView
 //                        .getSoundObject());
-            }
+        }
     }
 
     private void addToSObjLib() {
         SoundObject sObj = (SoundObject) sObjView.getSoundObject().clone();
 
-        if(sObj instanceof Instance) {
+        if (sObj instanceof Instance) {
             return;
         }
-        
+
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         data.getSoundObjectLibrary().addSoundObject(sObj);
-       
+
         Instance i = new Instance(sObj);
 
         replaceSoundObject(sObjView.getSoundObject(), i, true, false);
@@ -675,88 +652,87 @@ public class SoundObjectPopup extends JPopupMenu {
 //                SelectionEvent.SELECTION_CLEAR));
 //
 //    }
-
     private void convertToPolyObject() {
-        int retVal = JOptionPane.showConfirmDialog(null,
-                "This operation can not be undone.\nAre you sure?");
-
-        if (retVal != JOptionPane.OK_OPTION) {
-            return;
-        }
-
-        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-
-        PolyObject temp = sCanvas.mBuffer.getBufferedPolyObject();
-
-        removeSObj();
-
-        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
-        temp.setStartTime(startTime);
-
-        sCanvas.getPolyObject().addSoundObject(index, temp);
-        sCanvas.sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
+        // FIXME
+//        int retVal = JOptionPane.showConfirmDialog(null,
+//                "This operation can not be undone.\nAre you sure?");
+//
+//        if (retVal != JOptionPane.OK_OPTION) {
+//            return;
+//        }
+//
+//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
+//
+//        PolyObject temp = sCanvas.mBuffer.getBufferedPolyObject();
+//
+//        removeSObj();
+//
+//        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
+//        temp.setStartTime(startTime);
+//
+//        sCanvas.getPolyObject().addSoundObject(index, temp);
+//        content.set(Collections.emptyList(), null);
     }
 
     private void convertToObjectBuilder() {
-        SoundObject temp = sCanvas.mBuffer.getBufferedSoundObject();
-
-        if (temp == null || !(temp instanceof PythonObject || temp instanceof External)) {
-            return;
-        }
-
-        int retVal = JOptionPane.showConfirmDialog(null,
-                "This operation can not be undone.\nAre you sure?");
-
-        if (retVal != JOptionPane.OK_OPTION) {
-            return;
-        }
-
-        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-
-        ObjectBuilder objBuilder = new ObjectBuilder();
-
-        if (temp instanceof PythonObject) {
-            PythonObject tempPython = (PythonObject) temp;
-            objBuilder.setName(tempPython.getName());
-            objBuilder.setNoteProcessorChain(tempPython.getNoteProcessorChain());
-            objBuilder.setTimeBehavior(tempPython.getTimeBehavior());
-            objBuilder.setStartTime(tempPython.getStartTime());
-            objBuilder.setSubjectiveDuration(tempPython.getSubjectiveDuration());
-            objBuilder.setCode(tempPython.getText());
-            objBuilder.setBackgroundColor(tempPython.getBackgroundColor());
-
-        } else if (temp instanceof External) {
-            External tempExt = (External) temp;
-            objBuilder.setName(tempExt.getName());
-            objBuilder.setNoteProcessorChain(tempExt.getNoteProcessorChain());
-            objBuilder.setTimeBehavior(tempExt.getTimeBehavior());
-            objBuilder.setStartTime(tempExt.getStartTime());
-            objBuilder.setSubjectiveDuration(tempExt.getSubjectiveDuration());
-            objBuilder.setCode(tempExt.getText());
-            objBuilder.setCommandLine(tempExt.getCommandLine());
-            objBuilder.setExternal(true);
-            objBuilder.setBackgroundColor(tempExt.getBackgroundColor());
-        } else {
-            return;
-        }
-
-        removeSObj();
-        sCanvas.getPolyObject().addSoundObject(index, objBuilder);
-        sCanvas.sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
+        // FIXME
+//        SoundObject temp = sCanvas.mBuffer.getBufferedSoundObject();
+//
+//        if (temp == null || !(temp instanceof PythonObject || temp instanceof External)) {
+//            return;
+//        }
+//
+//        int retVal = JOptionPane.showConfirmDialog(null,
+//                "This operation can not be undone.\nAre you sure?");
+//
+//        if (retVal != JOptionPane.OK_OPTION) {
+//            return;
+//        }
+//
+//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
+//
+//        ObjectBuilder objBuilder = new ObjectBuilder();
+//
+//        if (temp instanceof PythonObject) {
+//            PythonObject tempPython = (PythonObject) temp;
+//            objBuilder.setName(tempPython.getName());
+//            objBuilder.setNoteProcessorChain(tempPython.getNoteProcessorChain());
+//            objBuilder.setTimeBehavior(tempPython.getTimeBehavior());
+//            objBuilder.setStartTime(tempPython.getStartTime());
+//            objBuilder.setSubjectiveDuration(tempPython.getSubjectiveDuration());
+//            objBuilder.setCode(tempPython.getText());
+//            objBuilder.setBackgroundColor(tempPython.getBackgroundColor());
+//
+//        } else if (temp instanceof External) {
+//            External tempExt = (External) temp;
+//            objBuilder.setName(tempExt.getName());
+//            objBuilder.setNoteProcessorChain(tempExt.getNoteProcessorChain());
+//            objBuilder.setTimeBehavior(tempExt.getTimeBehavior());
+//            objBuilder.setStartTime(tempExt.getStartTime());
+//            objBuilder.setSubjectiveDuration(tempExt.getSubjectiveDuration());
+//            objBuilder.setCode(tempExt.getText());
+//            objBuilder.setCommandLine(tempExt.getCommandLine());
+//            objBuilder.setExternal(true);
+//            objBuilder.setBackgroundColor(tempExt.getBackgroundColor());
+//        } else {
+//            return;
+//        }
+//
+//        removeSObj();
+//        sCanvas.getPolyObject().addSoundObject(index, objBuilder);
+//        content.set(Collections.emptyList(), null);
     }
 
     private void replaceSoundObject() {
-
-        SoundObject[] sObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
-
-        for (int i = 0; i < sObjects.length; i++) {
-
-            SoundObject temp = sCanvas.buffer.getBufferedSoundObject();
-
-            replaceSoundObject(sObjects[i], temp, true, true);
-        }
+//FIXME
+//        SoundObject[] sObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
+//
+//        for (int i = 0; i < sObjects.length; i++) {
+//
+//            SoundObject temp = sCanvas.buffer.getBufferedSoundObject();
+//
+//            replaceSoundObject(sObjects[i], temp, true, true);
+//        }
     }
 
     private void replaceSoundObject(SoundObject oldSoundObject,
@@ -770,7 +746,8 @@ public class SoundObjectPopup extends JPopupMenu {
         newSoundObject.setStartTime(oldSoundObject.getStartTime());
 
         if (scaleDuration) {
-            newSoundObject.setSubjectiveDuration(oldSoundObject.getSubjectiveDuration());
+            newSoundObject.setSubjectiveDuration(
+                    oldSoundObject.getSubjectiveDuration());
         }
 
         sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
@@ -780,13 +757,13 @@ public class SoundObjectPopup extends JPopupMenu {
 
         sCanvas.getPolyObject().addSoundObject(index, newSoundObject);
 
-        sCanvas.sMouse.fireSelectionEvent(new SelectionEvent(null,
-                SelectionEvent.SELECTION_CLEAR));
-
+        content.set(Collections.emptyList(), null);
+        
         if (recordEdit) {
 
             BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(sCanvas.getPolyObject(), oldSoundObject,
+            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(
+                    sCanvas.getPolyObject(), oldSoundObject,
                     newSoundObject, index));
         }
     }
@@ -808,103 +785,104 @@ public class SoundObjectPopup extends JPopupMenu {
      * sets selected soundObjects to follow on after the other
      */
     private void followTheLeader() {
-        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
-
-        float initialStartTimes[] = new float[sObjViews.length - 1];
-        float endingStartTimes[] = new float[sObjViews.length - 1];
-        SoundObject soundObjects[] = new SoundObject[sObjViews.length - 1];
-
-        float runningTotal;
-        runningTotal = sObjViews[0].getStartTime() + sObjViews[0].getSubjectiveDuration();
-        for (int i = 1; i < sObjViews.length; i++) {
-            initialStartTimes[i - 1] = sObjViews[i].getStartTime();
-            soundObjects[i - 1] = sObjViews[i].getSoundObject();
-            endingStartTimes[i - 1] = runningTotal;
-
-            sObjViews[i].setStartTime(runningTotal);
-            runningTotal += sObjViews[i].getSoundObject().getSubjectiveDuration();
-        }
-
-        BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-                endingStartTimes);
-
-        edit.setPresentationName("Follow the Leader");
-
-        BlueUndoManager.addEdit(edit);
+        //FIXME
+//        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
+//
+//        float initialStartTimes[] = new float[sObjViews.length - 1];
+//        float endingStartTimes[] = new float[sObjViews.length - 1];
+//        SoundObject soundObjects[] = new SoundObject[sObjViews.length - 1];
+//
+//        float runningTotal;
+//        runningTotal = sObjViews[0].getStartTime() + sObjViews[0].getSubjectiveDuration();
+//        for (int i = 1; i < sObjViews.length; i++) {
+//            initialStartTimes[i - 1] = sObjViews[i].getStartTime();
+//            soundObjects[i - 1] = sObjViews[i].getSoundObject();
+//            endingStartTimes[i - 1] = runningTotal;
+//
+//            sObjViews[i].setStartTime(runningTotal);
+//            runningTotal += sObjViews[i].getSoundObject().getSubjectiveDuration();
+//        }
+//
+//        BlueUndoManager.setUndoManager("score");
+//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
+//                endingStartTimes);
+//
+//        edit.setPresentationName("Follow the Leader");
+//
+//        BlueUndoManager.addEdit(edit);
 
     }
 
     private void reverseSoundObjects() {
-
-        if (sCanvas.mBuffer.size() < 2) {
-            return;
-        }
-
-        sCanvas.mBuffer.motionBufferObjects();
-
-        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
-
-        float start = Float.MAX_VALUE;
-        float end = Float.MIN_VALUE;
-
-        for (int i = 0; i < sObjViews.length; i++) {
-            SoundObject sObj = sObjViews[i].getSoundObject();
-
-            float tempStart = sObj.getStartTime();
-            float tempEnd = tempStart + sObj.getSubjectiveDuration();
-
-            if (tempStart < start) {
-                start = tempStart;
-            }
-
-            if (tempEnd > end) {
-                end = tempEnd;
-            }
-        }
-
-        for (int i = 0; i < sObjViews.length; i++) {
-            SoundObject sObj = sObjViews[i].getSoundObject();
-
-            float tempStart = sObj.getStartTime();
-            float tempEnd = tempStart + sObj.getSubjectiveDuration();
-
-            float newStart = start + (end - tempEnd);
-
-            sObj.setStartTime(newStart);
-
-        }
-
-        BlueUndoManager.setUndoManager("score");
-
-        MoveSoundObjectsEdit edit = sCanvas.mBuffer.getMoveEdit(sCanvas.getPolyObject());
-
-        edit.setPresentationName(BlueSystem.getString("soundObjectPopup.reverse.text"));
-
-        BlueUndoManager.addEdit(edit);
+        //FIXME
+//        if (sCanvas.mBuffer.size() < 2) {
+//            return;
+//        }
+//
+//        sCanvas.mBuffer.motionBufferObjects();
+//
+//        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
+//
+//        float start = Float.MAX_VALUE;
+//        float end = Float.MIN_VALUE;
+//
+//        for (int i = 0; i < sObjViews.length; i++) {
+//            SoundObject sObj = sObjViews[i].getSoundObject();
+//
+//            float tempStart = sObj.getStartTime();
+//            float tempEnd = tempStart + sObj.getSubjectiveDuration();
+//
+//            if (tempStart < start) {
+//                start = tempStart;
+//            }
+//
+//            if (tempEnd > end) {
+//                end = tempEnd;
+//            }
+//        }
+//
+//        for (int i = 0; i < sObjViews.length; i++) {
+//            SoundObject sObj = sObjViews[i].getSoundObject();
+//
+//            float tempStart = sObj.getStartTime();
+//            float tempEnd = tempStart + sObj.getSubjectiveDuration();
+//
+//            float newStart = start + (end - tempEnd);
+//
+//            sObj.setStartTime(newStart);
+//
+//        }
+//
+//        BlueUndoManager.setUndoManager("score");
+//
+//        MoveSoundObjectsEdit edit = sCanvas.mBuffer.getMoveEdit(
+//                sCanvas.getPolyObject());
+//
+//        edit.setPresentationName(BlueSystem.getString(
+//                "soundObjectPopup.reverse.text"));
+//
+//        BlueUndoManager.addEdit(edit);
 
     }
 
     protected void auditionSoundObjects() {
         BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
-        SoundObject[] soundObjects = sCanvas.mBuffer.getSoundObjectsAsArray();
 
-        RealtimeRenderManager.getInstance().auditionSoundObjects(data, soundObjects);
+        Collection<? extends SoundObject> soundObjects = 
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+
+        RealtimeRenderManager.getInstance().auditionSoundObjects(data,
+                soundObjects.toArray(new SoundObject[0]));
     }
 
     /**
      * Freezes or Unfreezes the soundObject
      */
     protected void freezeUnfreezeSoundObject() {
+        Collection<? extends SoundObject> soundObjects = 
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
-        SoundObject[] soundObjects = new SoundObject[sCanvas.mBuffer.size()];
-
-        for (int i = 0; i < sCanvas.mBuffer.size(); i++) {
-            SoundObjectView sObjView = sCanvas.mBuffer.get(i);
-            soundObjects[i] = sObjView.getSoundObject();
-        }
-
-        FreezeDialog.freezeSoundObjects(soundObjects, this);
+        FreezeDialog.freezeSoundObjects(soundObjects.toArray(new SoundObject[0]), this);
 
     }
 
@@ -924,7 +902,7 @@ public class SoundObjectPopup extends JPopupMenu {
         BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
         PolyObject tempPObj = new PolyObject(true);
-        SoundLayer sLayer = (SoundLayer)tempPObj.newLayerAt(-1);
+        SoundLayer sLayer = (SoundLayer) tempPObj.newLayerAt(-1);
 
         SoundObject tempSObj = (SoundObject) sObj.clone();
         tempData.setRenderStartTime(tempSObj.getStartTime());
@@ -947,7 +925,8 @@ public class SoundObjectPopup extends JPopupMenu {
         CsdRenderResult result;
 
         try {
-            result = CSDRenderService.getDefault().generateCSD(tempData, tempSObj.getStartTime(), renderEndTime, false);
+            result = CSDRenderService.getDefault().generateCSD(tempData,
+                    tempSObj.getStartTime(), renderEndTime, false);
             tempCSD = result.getCsdText();
         } catch (Exception e) {
             ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
@@ -983,9 +962,9 @@ public class SoundObjectPopup extends JPopupMenu {
             args2[args.length + 1] = temp.getAbsolutePath();
 
             String csoundOutput = DiskRenderManager.getInstance()
-                .execWaitAndCollect(args, projectDir);
+                    .execWaitAndCollect(args, projectDir);
 
-           // FIXME - remove commented out code 
+            // FIXME - remove commented out code 
 //            if (APIUtilities.isCsoundAPIAvailable() &&
 //                    GeneralSettings.getInstance().isUsingCsoundAPI()) {
 //
@@ -1015,18 +994,21 @@ public class SoundObjectPopup extends JPopupMenu {
             fso.setFrozenWaveFileName(tempFileName);
             fso.setName("F: " + sObj.getName());
 
-            float soundFileDuration = SoundFileUtilities.getDurationInSeconds(fullTempFileName);
+            float soundFileDuration = SoundFileUtilities.getDurationInSeconds(
+                    fullTempFileName);
 
             fso.setSubjectiveDuration(soundFileDuration);
 
-            int numChannels = SoundFileUtilities.getNumberOfChannels(fullTempFileName);
+            int numChannels = SoundFileUtilities.getNumberOfChannels(
+                    fullTempFileName);
 
             fso.setNumChannels(numChannels);
 
             replaceSoundObject(sObj, fso, false, false);
 
         } catch (IOException | UnsupportedAudioFileException ex) {
-            System.err.println("[" + BlueSystem.getString("message.error") + "] " + ex.getLocalizedMessage());
+            System.err.println(
+                    "[" + BlueSystem.getString("message.error") + "] " + ex.getLocalizedMessage());
             ex.printStackTrace();
         }
 
@@ -1047,7 +1029,7 @@ public class SoundObjectPopup extends JPopupMenu {
                     }
                 } catch (NumberFormatException nfe) {
                     // just continue on
-                    }
+                }
             }
         }
 
@@ -1075,7 +1057,8 @@ public class SoundObjectPopup extends JPopupMenu {
 
         String waveFileName = fso.getFrozenWaveFileName();
 
-        int refCount = freezeReferenceCount(sCanvas.getPolyObject(), waveFileName);
+        int refCount = freezeReferenceCount(sCanvas.getPolyObject(),
+                waveFileName);
 
         System.out.println("Reference Count: " + refCount);
 
@@ -1133,7 +1116,9 @@ public class SoundObjectPopup extends JPopupMenu {
         int index = this.getComponentIndex(editMenuOpt) + 1;
         this.getComponent(index).setVisible(editMenuOpt.isVisible());
 
-        int size = sCanvas.mBuffer.size();
+        Collection<? extends SoundObject> soundObjects = 
+                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        int size = soundObjects.size();
 
         freezeMenuOpt.setEnabled(size > 0);
         followTheLeaderMenuOpt.setEnabled(size > 1);
@@ -1169,7 +1154,8 @@ public class SoundObjectPopup extends JPopupMenu {
 
             SoundObject[] sObjects = buffer.getSoundObjectsAsArray();
 
-            Color retVal = JColorChooser.showDialog(SwingUtilities.getRoot((JComponent) e.getSource()), "Choose Color",
+            Color retVal = JColorChooser.showDialog(SwingUtilities.getRoot(
+                    (JComponent) e.getSource()), "Choose Color",
                     sObjects[0].getBackgroundColor());
 
             if (retVal != null) {
@@ -1182,4 +1168,3 @@ public class SoundObjectPopup extends JPopupMenu {
         }
     }
 }
-

@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-public final class MotionBuffer extends ArrayList<SoundObjectView> implements SelectionListener {
+public final class MotionBuffer extends ArrayList<SoundObjectView> {
 
     PolyObject pObj;
 
@@ -49,32 +49,6 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
         return instance;
     }
 
-    @Override
-    public void selectionPerformed(SelectionEvent e) {
-        Object selectedItem = e.getSelectedItem();
-
-        switch (e.getSelectionType()) {
-            case SelectionEvent.SELECTION_CLEAR:
-                this.clearBuffer();
-                break;
-            case SelectionEvent.SELECTION_SINGLE:
-                if (this.contains(selectedItem)) {
-                    return;
-                }
-                this.clearBuffer();
-                this.addBufferedObject((SoundObjectView) selectedItem);
-                break;
-            case SelectionEvent.SELECTION_ADD:
-                this.addBufferedObject((SoundObjectView) e.getSelectedItem());
-                break;
-            case SelectionEvent.SELECTION_REMOVE:
-                ((SoundObjectView) selectedItem).deselect();
-                this.remove(selectedItem);
-                break;
-        }
-
-    }
-
     public void setPolyObject(PolyObject pObj) {
         this.pObj = pObj;
     }
@@ -89,16 +63,16 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> implements Se
     private void addBufferedObject(SoundObjectView sObj) {
         if (!this.contains(sObj)) {
             this.add(sObj);
-            sObj.select();
+//            sObj.select();
         }
     }
 
     private void clearBuffer() {
-        SoundObjectView temp;
-        for (int i = 0; i < this.size(); i++) {
-            temp = (SoundObjectView) this.get(i);
-            temp.deselect();
-        }
+//        SoundObjectView temp;
+//        for (int i = 0; i < this.size(); i++) {
+//            temp = (SoundObjectView) this.get(i);
+//            temp.deselect();
+//        }
         this.clear();
         motionBuffer = null;
         sObjYValues = null;

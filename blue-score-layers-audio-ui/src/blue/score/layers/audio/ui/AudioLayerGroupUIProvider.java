@@ -25,6 +25,7 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.ui.core.score.layers.LayerGroupUIProvider;
 import javax.swing.JComponent;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -34,7 +35,7 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
     public JComponent getLayerGroupPanel(LayerGroup layerGroup,
-            TimeState timeState, BlueData data) {
+            TimeState timeState, BlueData data, InstanceContent ic) {
         
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioLayersPanel((AudioLayerGroup) layerGroup,
@@ -45,7 +46,7 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
         @Override
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup,
-            TimeState timeState, BlueData data) {
+            TimeState timeState, BlueData data, InstanceContent ic) {
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioHeaderListPanel((AudioLayerGroup) layerGroup);
         }

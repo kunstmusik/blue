@@ -118,7 +118,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
                             l1, l2);
                     
                     sCanvas.start = e.getPoint();
-                    sCanvas.mBuffer.motionBufferObjects();
+//                    sCanvas.mBuffer.motionBufferObjects();
                     return;
                 }
                
@@ -221,14 +221,15 @@ class MultiLineMouseProcessor extends MouseAdapter {
                        
                     }
 
-                    if (sCanvas.mBuffer.size() != 0 && !isPopupOpen) {
-                        if(mouseTranslateTime + sCanvas.mBuffer.initialStartTimes[0] < 0) {
-                            return; 
-                        }
-                        
-                        
-                        moveSoundObjectsByTime(mouseTranslateTime);                    
-                    }
+                    // FIXME
+//                    if (sCanvas.mBuffer.size() != 0 && !isPopupOpen) {
+//                        if(mouseTranslateTime + sCanvas.mBuffer.initialStartTimes[0] < 0) {
+//                            return; 
+//                        }
+//                        
+//                        
+//                        moveSoundObjectsByTime(mouseTranslateTime);                    
+//                    }
 
                     
                     float diff = marquee.endTime - marquee.startTime;
@@ -309,16 +310,17 @@ class MultiLineMouseProcessor extends MouseAdapter {
         
         float newStart;
 
-        for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-            newStart = sCanvas.mBuffer.initialStartTimes[i] + transTime;
-          
-            SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
-
-            SoundObject sObj = sObjView.getSoundObject();
-
-            sObj.setStartTime(newStart);
-
-        }
+        //FIXME
+//        for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
+//            newStart = sCanvas.mBuffer.initialStartTimes[i] + transTime;
+//          
+//            SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
+//
+//            SoundObject sObj = sObjView.getSoundObject();
+//
+//            sObj.setStartTime(newStart);
+//
+//        }
 
     }
 

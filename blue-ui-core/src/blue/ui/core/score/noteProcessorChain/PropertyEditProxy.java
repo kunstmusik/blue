@@ -48,7 +48,7 @@ class PropertyEditProxy {
     public Object getValue() {
         Object o = null;
         try {
-            o = getMethod.invoke(obj, null);
+            o = getMethod.invoke(obj);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }

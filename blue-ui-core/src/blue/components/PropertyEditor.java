@@ -137,7 +137,7 @@ class PropertyEditTableModel extends AbstractTableModel {
             retVal = temp.getName();
         } else {
             try {
-                retVal = temp.getReadMethod().invoke(temp, null);
+                retVal = temp.getReadMethod().invoke(temp);
             } catch (    IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
