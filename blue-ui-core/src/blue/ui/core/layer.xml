@@ -53,13 +53,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="delegate" newvalue="blue.ui.core.project.AuditionSelectedSoundObjectsAction"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_AuditionSelectedSoundObjectsAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
             <file name="blue-ui-core-project-GenerateCsdAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="delegate" newvalue="blue.ui.core.project.GenerateCsdAction"/>
@@ -294,10 +287,6 @@
                 <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <file name="blue-ui-core-project-AuditionSelectedSoundObjectsAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance"/>
-                <attr name="position" intvalue="150"/>
-            </file>
             <file name="blue-ui-core-project-ToggleLoopRenderingAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="450"/>
@@ -531,10 +520,6 @@
         </file>
         <file name="DS-G.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-GenerateCsdToScreenAction.instance"/>
-        </file>
-
-        <file name="DS-A.shadow">
-            <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AuditionSelectedSoundObjectsAction.instance"/>
         </file>
         <file name="D-M.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-AddMarkerAction.instance"/>

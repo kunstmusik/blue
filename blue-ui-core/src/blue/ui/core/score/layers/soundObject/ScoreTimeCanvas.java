@@ -32,6 +32,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
@@ -57,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
 import org.openide.util.Lookup;
@@ -1043,7 +1045,11 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
      */
     protected void showSoundObjectPopup(SoundObjectView sObjView, int x, int y) {
         sObjPopup.setTimeState(timeState);
-        sObjPopup.show(sObjView, this, x, y);
+        //sObjPopup.show(sObjView, this, x, y);
+        List<? extends Action> list = Utilities.actionsForPath("blue/score/actions");
+        final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(new Action[0]), 
+                ScoreTopComponent.findInstance().getLookup());
+        menu.show(sObjView.getParent(), x, y);
     }
 
     protected void showSoundLayerPopup(int soundLayerIndex, int x, int y) {

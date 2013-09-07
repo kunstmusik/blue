@@ -127,7 +127,7 @@ final class SoundObjectLibraryTopComponent extends TopComponent
 
     protected void fireSoundObjectRemoved(SoundObject sObj) {
 
-        content.set(Collections.singleton(sObj), null);
+        content.set(Collections.emptyList(), null);
         
     }
 

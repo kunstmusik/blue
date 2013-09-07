@@ -154,12 +154,12 @@ public class SoundObjectPopup extends JPopupMenu {
                 editSObj();
             }
         });
-        sObjLibMenuOpt.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addToSObjLib();
-            }
-        });
+//        sObjLibMenuOpt.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                addToSObjLib();
+//            }
+//        });
         convertPolyMenuOpt.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -361,8 +361,8 @@ public class SoundObjectPopup extends JPopupMenu {
         this.add(editMenuOpt);
         this.addSeparator();
 
-        this.add(sObjLibMenuOpt);
-        this.addSeparator();
+//        this.add(sObjLibMenuOpt);
+//        this.addSeparator();
 
         this.add(freezeMenuOpt);
         this.addSeparator();
@@ -582,20 +582,20 @@ public class SoundObjectPopup extends JPopupMenu {
         }
     }
 
-    private void addToSObjLib() {
-        SoundObject sObj = (SoundObject) sObjView.getSoundObject().clone();
-
-        if (sObj instanceof Instance) {
-            return;
-        }
-
-        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-        data.getSoundObjectLibrary().addSoundObject(sObj);
-
-        Instance i = new Instance(sObj);
-
-        replaceSoundObject(sObjView.getSoundObject(), i, true, false);
-    }
+//    private void addToSObjLib() {
+//        SoundObject sObj = (SoundObject) sObjView.getSoundObject().clone();
+//
+//        if (sObj instanceof Instance) {
+//            return;
+//        }
+//
+//        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+//        data.getSoundObjectLibrary().addSoundObject(sObj);
+//
+//        Instance i = new Instance(sObj);
+//
+//        replaceSoundObject(sObjView.getSoundObject(), i, true, false);
+//    }
 
     public void removeSObj() {
         sCanvas.removeSoundObjects();
