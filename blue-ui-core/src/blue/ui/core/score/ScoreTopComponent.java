@@ -38,6 +38,7 @@ import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
+import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.manager.LayerGroupManagerDialog;
@@ -937,4 +938,17 @@ public final class ScoreTopComponent extends TopComponent
             return ScoreTopComponent.getDefault();
         }
     }
+
+
+    public LayerGroupPanel getLayerGroupPanelAtPoint(MouseEvent e) {
+        LayerGroupPanel retVal = null;
+
+        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), layerPanel);
+
+        Component c = layerPanel.getComponentAt(p);
+        if(c instanceof LayerGroupPanel) {
+            retVal = (LayerGroupPanel) c;
+        }  
+        return retVal;
+    }  
 }
