@@ -415,7 +415,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             Component c = getComponent(i);
 
             if (c == panel) {
-                selectedClips.add(panel.getAudioClip());
+                selectedClips.add(panel.getScoreObject());
                 panel.setSelected(true);
             } else if (c instanceof AudioClipPanel) {
                 ((AudioClipPanel) c).setSelected(false);
@@ -425,9 +425,9 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     protected void toggleSelectedAudioClip(AudioClipPanel panel) {
         if (panel.isSelected()) {
-            selectedClips.remove(panel.getAudioClip());
+            selectedClips.remove(panel.getScoreObject());
         } else {
-            selectedClips.add(panel.getAudioClip());
+            selectedClips.add(panel.getScoreObject());
         }
         panel.setSelected(!panel.isSelected());
     }
