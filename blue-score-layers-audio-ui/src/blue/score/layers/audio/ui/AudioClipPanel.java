@@ -131,8 +131,8 @@ public class AudioClipPanel extends JPanel implements PropertyChangeListener {
 
     protected void reset() {
         int pixelSecond = timeState.getPixelSecond();
-        double x = audioClip.getStart() * pixelSecond;
-        double width = (audioClip.getStart() + audioClip.getDuration()) * pixelSecond;
+        double x = audioClip.getStartTime() * pixelSecond;
+        double width = (audioClip.getStartTime() + audioClip.getSubjectiveDuration()) * pixelSecond;
         setBounds((int) x, getY(), (int) width, getHeight());
     }
 

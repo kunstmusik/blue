@@ -26,11 +26,18 @@ package blue.score;
  * @author stevenyi
  */
 public interface ScoreObject {
-    double getStartTime();
-    void setStartTime(double startTime);
-    double getDuration();
-    void setDuration(double duration);
-    boolean isLayerTransferrable();
+    //FIXME -  change this to use double
+    public float getStartTime();
+
+    //FIXME -  change this to use double
+    public void setStartTime(float startTime);
+    
+    //FIXME -  change this to use double
+    public float getSubjectiveDuration();
+
+    //FIXME -  change this to use double
+    public void setSubjectiveDuration(float duration);
+//    boolean isLayerTransferrable();
 
     // maybe use interface of Resizable?
 //    boolean isLeftResizable()

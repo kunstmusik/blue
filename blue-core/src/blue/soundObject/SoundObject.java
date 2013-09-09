@@ -22,6 +22,7 @@ package blue.soundObject;
 
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.score.ScoreObject;
 import electric.xml.Element;
 import java.awt.Color;
 import java.util.Map;
@@ -49,7 +50,7 @@ import java.util.Map;
  * 
  * 
  */
-public interface SoundObject {
+public interface SoundObject extends ScoreObject {
 
     /**
      * SoundObject does not support applying time behaviors and is assumed to
@@ -134,11 +135,13 @@ public interface SoundObject {
     /**
      * Sets the start time of the SoundObject.
      */
+    @Override
     public void setStartTime(float startTime);
 
     /**
      * Gets the start time of the SoundObject.
      */
+    @Override
     public float getStartTime();
 
     /**
@@ -147,6 +150,7 @@ public interface SoundObject {
      * The subjective duration of the soundObject is the amount of time a
      * SoundObject is assigned to last, irregardless of its contents.
      */
+    @Override
     public void setSubjectiveDuration(float subjectDuration);
 
     /**
@@ -155,6 +159,7 @@ public interface SoundObject {
      * The subjective duration of the soundObject is the amount of time a
      * SoundObject is assigned to last, irregardless of its contents.
      */
+    @Override
     public float getSubjectiveDuration();
 
     /**

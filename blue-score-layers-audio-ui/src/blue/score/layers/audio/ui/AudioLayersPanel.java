@@ -231,8 +231,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
                 if (y <= bottom && (y + layerHeight) >= top) {
 
                     for (AudioClip clip : layer) {
-                        if (clip.getStart() <= end
-                                && (clip.getStart() + clip.getDuration()) >= start) {
+                        if (clip.getStartTime() <= end
+                                && (clip.getStartTime() + clip.getSubjectiveDuration()) >= start) {
                             selectedClips.add(clip);
                             clipPanelMap.get(clip).setSelected(true);
                         } else {
@@ -414,22 +414,21 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         for (int i = 0; i < getComponentCount(); i++) {
             Component c = getComponent(i);
 
-            if(c == panel) {
+            if (c == panel) {
                 selectedClips.add(panel.getAudioClip());
                 panel.setSelected(true);
-            } else if(c instanceof AudioClipPanel) {
-                ((AudioClipPanel)c).setSelected(false);
+            } else if (c instanceof AudioClipPanel) {
+                ((AudioClipPanel) c).setSelected(false);
             }
         }
     }
 
     protected void toggleSelectedAudioClip(AudioClipPanel panel) {
-        if(panel.isSelected()) {
+        if (panel.isSelected()) {
             selectedClips.remove(panel.getAudioClip());
         } else {
             selectedClips.add(panel.getAudioClip());
-        } 
+        }
         panel.setSelected(!panel.isSelected());
     }
-    
 }

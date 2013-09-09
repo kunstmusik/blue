@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.core;
 
+import blue.score.ScoreObject;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -39,15 +40,14 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class AudioClip implements Serializable, Comparable<AudioClip> {
+public class AudioClip implements ScoreObject, Serializable, Comparable<AudioClip> {
 
     String name = "";
     File audioFile = null;
     int numChannels = 0;
-    double audioStart = 0.0;
-    double audioDuration = 0.0;
-    double start = 0.0;
-    double duration = 0.0;
+    float audioDuration = 0.0f;
+    float start = 0.0f;
+    float duration = 0.0f;
     transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
@@ -60,14 +60,11 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
             AudioFormat format = aFormat.getFormat();
 
             numChannels = format.getChannels();
-            audioStart = 0.0;
             audioDuration = aFormat.getByteLength()
                     / (format.getSampleRate() * (format.getSampleSizeInBits() / 8) * format
                     .getChannels());
 
-        } catch (UnsupportedAudioFileException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IOException ex) {
+        } catch (UnsupportedAudioFileException | IOException ex) {
             Exceptions.printStackTrace(ex);
         }
     }
@@ -82,57 +79,46 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
         this.audioFile = audioFile;
         readAudioFileProperties();
         duration = audioDuration;
-        audioStart = 0.0;
     }
 
-    public double getAudioStart() {
-        return audioStart;
-    }
-
-    public void setAudioStart(double start) {
-        if(this.start == start) {
-            return;
-        }
-        double old = this.audioStart;
-        this.audioStart = start;
-
-        firePropertyChangeEvent("audioStart", old, start);
-    }
-
-    public double getAudioDuration() {
+    public float getAudioDuration() {
         return audioDuration;
     }
 
-    public void setAudioDuration(double originalDuration) {
+    public void setAudioDuration(float originalDuration) {
         this.audioDuration = originalDuration;
     }
 
-    public double getStart() {
+    @Override
+    public float getStartTime() {
         return start;
     }
 
-    public void setStart(double start) {
+    @Override
+    public void setStartTime(float start) {
         if(this.start == start) return;
-        double old = this.start;
+        float old = this.start;
         this.start = start;
 
-        firePropertyChangeEvent("start", old, start);
+        firePropertyChangeEvent("startTime", old, start);
     }
 
-    public double getDuration() {
+    @Override
+    public float getSubjectiveDuration() {
         return duration;
     }
 
-    public void setDuration(double duration) {
+    @Override
+    public void setSubjectiveDuration(float duration) {
         if(this.duration == duration) return;
-        double old = this.duration;
+        float old = this.duration;
         this.duration = duration;
-        firePropertyChangeEvent("start", old, start);
+        firePropertyChangeEvent("subjectiveDuration", old, start);
     }
 
     @Override
     public int compareTo(AudioClip o) {
-        double diff = o.start - this.start;
+        float diff = o.start - this.start;
         if (diff != 0) {
             return (int) diff;
         }
@@ -159,10 +145,9 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
         root.addElement("name").setText(name);
         root.addElement("audioFile").setText(audioFile.getAbsolutePath());
         root.addElement(XMLUtilities.writeInt("numChannels", numChannels));
-        root.addElement(XMLUtilities.writeDouble("audioStart", audioStart));
-        root.addElement(XMLUtilities.writeDouble("audioDuration", audioDuration));
-        root.addElement(XMLUtilities.writeDouble("start", start));
-        root.addElement(XMLUtilities.writeDouble("duration", duration));
+        root.addElement(XMLUtilities.writeFloat("audioDuration", audioDuration));
+        root.addElement(XMLUtilities.writeFloat("start", start));
+        root.addElement(XMLUtilities.writeFloat("duration", duration));
 
         return root;
     }
@@ -186,17 +171,14 @@ public class AudioClip implements Serializable, Comparable<AudioClip> {
                 case "numChannels":
                     clip.numChannels = XMLUtilities.readInt(node);
                     break;
-                case "audioStart":
-                    clip.audioStart = XMLUtilities.readDouble(node);
-                    break;
                 case "audioDuration":
-                    clip.audioDuration = XMLUtilities.readDouble(node);
+                    clip.audioDuration = XMLUtilities.readFloat(node);
                     break;
                 case "start":
-                    clip.start = XMLUtilities.readDouble(node);
+                    clip.start = XMLUtilities.readFloat(node);
                     break;
                 case "duration":
-                    clip.duration = XMLUtilities.readDouble(node);
+                    clip.duration = XMLUtilities.readFloat(node);
                     break;
             }
         }
