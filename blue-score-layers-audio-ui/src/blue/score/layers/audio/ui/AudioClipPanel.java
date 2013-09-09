@@ -19,8 +19,10 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
+import blue.ui.core.score.ScoreObjectView;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
@@ -32,7 +34,8 @@ import javax.swing.JPanel;
  *
  * @author stevenyi
  */
-public class AudioClipPanel extends JPanel implements PropertyChangeListener {
+public class AudioClipPanel extends JPanel 
+        implements PropertyChangeListener, ScoreObjectView<AudioClip> {
 
     private final AudioClip audioClip;
     private final TimeState timeState;
@@ -136,7 +139,8 @@ public class AudioClipPanel extends JPanel implements PropertyChangeListener {
         setBounds((int) x, getY(), (int) width, getHeight());
     }
 
-    public AudioClip getAudioClip() {
+    @Override
+    public AudioClip getScoreObject() {
         return audioClip;
     }
 }

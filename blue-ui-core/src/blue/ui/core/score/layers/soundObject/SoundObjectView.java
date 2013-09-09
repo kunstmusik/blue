@@ -17,14 +17,15 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score.layers.soundObject;
 
+import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
+import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.soundObject.renderer.BarRenderer;
 import blue.ui.core.soundObject.renderer.BarRendererCache;
 import java.awt.BorderLayout;
@@ -45,29 +46,25 @@ import org.openide.util.Utilities;
  * <p>
  * Company: steven yi music
  * <p>
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public final class SoundObjectView extends JComponent implements Comparable,
-        SoundObjectListener, LookupListener {
+        SoundObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
     private SoundObject sObj;
-
     boolean selected = false;
-
     private TimeState timeState;
-
     BarRenderer renderer = null;
-    
     Lookup.Result<SoundObject> result = null;
 
     public SoundObjectView(SoundObject sObj, TimeState timeState) {
         this.sObj = sObj;
         this.timeState = timeState;
 
-        renderer = BarRendererCache.getInstance().getBarRenderer(this.sObj.getClass());
+        renderer = BarRendererCache.getInstance().getBarRenderer(
+                this.sObj.getClass());
 
         this.sObj.addSoundObjectListener(this);
 
@@ -79,7 +76,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     void cleanup() {
-        if(this.sObj != null) {
+        if (this.sObj != null) {
             this.sObj.removeSoundObjectListener(this);
 
             renderer.cleanup(this);
@@ -87,7 +84,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
             this.sObj = null;
         }
     }
-    
+
     private void init() {
         this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
                 .getPixelSecond()), Layer.LAYER_HEIGHT);
@@ -100,13 +97,16 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     public void updateView(int newY, int newHeight) {
-        this.setLocation((int) (this.getStartTime() * timeState.getPixelSecond()),
+        this.setLocation(
+                (int) (this.getStartTime() * timeState.getPixelSecond()),
                 newY);
         this.setSize((int) (this.getSubjectiveDuration() * timeState
                 .getPixelSecond()), newHeight);
     }
 
-    /** *************************** */
+    /**
+     * ***************************
+     */
     public void setStartTime(float yo) {
         sObj.setStartTime(yo);
     }
@@ -133,7 +133,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
 
     @Override
     public void paintComponent(Graphics graphics) {
-        if(renderer != null && timeState != null) {
+        if (renderer != null && timeState != null) {
             renderer.render(graphics, this, timeState.getPixelSecond());
         }
     }
@@ -164,7 +164,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
                 repaint();
                 break;
             case SoundObjectEvent.START_TIME:
-                // fall through
+            // fall through
             case SoundObjectEvent.DURATION:
                 updateView();
                 break;
@@ -184,7 +184,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
+        super.addNotify();
         result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
         result.addLookupListener(this);
         resultChanged(null);
@@ -192,7 +192,7 @@ public final class SoundObjectView extends JComponent implements Comparable,
 
     @Override
     public void removeNotify() {
-        super.removeNotify(); 
+        super.removeNotify();
         result.removeLookupListener(this);
     }
 
@@ -200,14 +200,16 @@ public final class SoundObjectView extends JComponent implements Comparable,
     public void resultChanged(LookupEvent ev) {
         Collection<? extends SoundObject> soundObjects = result.allInstances();
         boolean newSelected = soundObjects.contains(this.sObj);
-       
-        if(newSelected != selected) {
+
+        if (newSelected != selected) {
             selected = newSelected;
             repaint();
         }
-        
+
     }
 
-
-    
+    @Override
+    public SoundObject getScoreObject() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
