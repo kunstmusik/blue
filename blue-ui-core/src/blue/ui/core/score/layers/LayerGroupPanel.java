@@ -19,7 +19,9 @@
  */
 package blue.ui.core.score.layers;
 
+import blue.ui.core.score.ScoreObjectView;
 import java.awt.Graphics2D;
+import java.awt.Point;
 
 /**
  *
@@ -29,4 +31,6 @@ public interface LayerGroupPanel {
     public void marqueeSelectionPerformed(SelectionMarquee marquee);
     
     public void paintNavigatorView(Graphics2D g2d);
+
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p);
 }

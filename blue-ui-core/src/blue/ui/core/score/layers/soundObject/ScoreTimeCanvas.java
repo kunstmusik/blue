@@ -32,6 +32,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -61,7 +62,6 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
-import org.openide.util.Lookup;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
 
@@ -1153,5 +1153,19 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
 
         }
+    }
+
+    @Override
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
+        Point temp = new Point();
+        for(SoundObjectView view : soundObjectToViewMap.values()) {
+            temp.x = p.x - view.getX();
+            temp.y = p.y - view.getY();
+            if(view.contains(temp)) {
+                return view; 
+            }
+        }
+
+        return null;
     }
 }

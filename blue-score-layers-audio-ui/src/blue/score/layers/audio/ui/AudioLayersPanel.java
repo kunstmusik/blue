@@ -27,6 +27,7 @@ import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import blue.score.layers.audio.core.AudioLayerListener;
+import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
@@ -35,6 +36,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -430,5 +432,19 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             selectedClips.add(panel.getScoreObject());
         }
         panel.setSelected(!panel.isSelected());
+    }
+
+    @Override
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
+        Point temp = new Point();
+        for(AudioClipPanel panel : clipPanelMap.values()) {
+            temp.x = p.x - panel.getX();
+            temp.y = p.y - panel.getY();
+            if(panel.contains(temp)) {
+                return panel; 
+            }
+        }
+
+        return null;
     }
 }

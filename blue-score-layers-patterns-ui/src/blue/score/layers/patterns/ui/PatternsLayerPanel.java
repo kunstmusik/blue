@@ -26,12 +26,14 @@ import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternData;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
+import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -204,5 +206,11 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
                 }
             }
         }
+    }
+
+    @Override
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
+        throw new UnsupportedOperationException(
+                "Error: getScoreObjectViewAtPoint should not be called for PatternsLayerPanel"); 
     }
 }
