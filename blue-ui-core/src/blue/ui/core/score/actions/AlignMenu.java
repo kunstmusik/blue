@@ -37,7 +37,7 @@ import org.openide.util.actions.Presenter;
         category = "Blue",
         id = "blue.ui.core.score.actions.AlignMenu")
 @ActionRegistration(
-        displayName = "#CTL_AlignMenu")
+        displayName = "#CTL_AlignMenu", lazy = true)
 @Messages("CTL_AlignMenu=&Align")
 @ActionReference(path = "blue/score/actions", position = 100)
 public final class AlignMenu extends AbstractAction implements Presenter.Popup {

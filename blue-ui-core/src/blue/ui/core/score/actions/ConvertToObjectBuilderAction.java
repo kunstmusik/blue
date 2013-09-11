@@ -39,7 +39,7 @@ import org.openide.util.NbBundle.Messages;
         category = "Blue",
         id = "blue.ui.core.score.actions.ConvertToObjectBuilderAction")
 @ActionRegistration(
-        displayName = "#CTL_ConvertToObjectBuilderAction")
+        displayName = "#CTL_ConvertToObjectBuilderAction", lazy = true)
 @Messages("CTL_ConvertToObjectBuilderAction=Convert to ObjectBuilder")
 @ActionReference(path = "blue/score/actions", position = 50)
 public final class ConvertToObjectBuilderAction extends AbstractAction

@@ -39,7 +39,7 @@ import org.openide.util.NbBundle.Messages;
         category = "Blue",
         id = "blue.ui.core.score.actions.AddToSoundObjectLibraryAction")
 @ActionRegistration(
-        displayName = "#CTL_AddToSoundObjectLibraryAction")
+        displayName = "#CTL_AddToSoundObjectLibraryAction", lazy = true)
 @Messages("CTL_AddToSoundObjectLibraryAction=Add to SoundObject &Library")
 @ActionReference(path = "blue/score/actions", position = 20, separatorAfter = 25)
 public final class AddToSoundObjectLibraryAction extends AbstractAction
