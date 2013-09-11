@@ -50,7 +50,7 @@ import org.openide.util.Utilities;
  * @author steven yi
  * @version 1.0
  */
-public final class SoundObjectView extends JComponent implements Comparable,
+public final class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
         SoundObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
     private SoundObject sObj;
@@ -139,11 +139,10 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     @Override
-    public int compareTo(Object sObjView) {
-        SoundObjectView a = (SoundObjectView) sObjView;
+    public int compareTo(SoundObjectView sObjView) {
 
         int x1 = this.getX();
-        int x2 = a.getX();
+        int x2 = sObjView.getX();
 
         if (x1 > x2) {
             return 1;

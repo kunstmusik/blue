@@ -29,7 +29,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 /**
  * @author steven
  */
-public class PresetGroup implements Serializable, Comparable {
+public class PresetGroup implements Serializable, Comparable<PresetGroup> {
 
     private String presetGroupName = "Presets";
 
@@ -49,19 +49,19 @@ public class PresetGroup implements Serializable, Comparable {
         this.presetGroupName = presetGroupName;
     }
 
-    public ArrayList getPresets() {
+    public ArrayList<Preset> getPresets() {
         return presets;
     }
 
-    public void setPresets(ArrayList presets) {
+    public void setPresets(ArrayList<Preset> presets) {
         this.presets = presets;
     }
 
-    public ArrayList getSubGroups() {
+    public ArrayList<PresetGroup> getSubGroups() {
         return subGroups;
     }
 
-    public void setSubGroups(ArrayList subGroups) {
+    public void setSubGroups(ArrayList<PresetGroup> subGroups) {
         this.subGroups = subGroups;
     }
 
@@ -156,11 +156,9 @@ public class PresetGroup implements Serializable, Comparable {
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object arg0) {
-        PresetGroup b = (PresetGroup) arg0;
-
+    @Override
+    public int compareTo(PresetGroup b) {
         return this.getPresetGroupName().compareTo(b.getPresetGroupName());
-
     }
 
     /**

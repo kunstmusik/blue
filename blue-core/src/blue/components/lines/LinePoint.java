@@ -31,7 +31,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 /**
  * @author Steven Yi
  */
-public class LinePoint implements Serializable, Comparable {
+public class LinePoint implements Serializable, Comparable<LinePoint> {
     private float y;
 
     private float x;
@@ -60,9 +60,8 @@ public class LinePoint implements Serializable, Comparable {
         return retVal;
     }
 
-    public int compareTo(Object o) {
+    public int compareTo(LinePoint b) {
         LinePoint a = this;
-        LinePoint b = (LinePoint) o;
 
         float val = a.getX() - b.getX();
 

@@ -36,7 +36,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
-public class Note implements Serializable, Comparable {
+public class Note implements Serializable, Comparable<Note> {
 
     private String[] fields;
 
@@ -264,11 +264,10 @@ public class Note implements Serializable, Comparable {
         return ObjectUtilities.clone(this);
     }
 
-    public int compareTo(Object pObj) {
-        Note a = (Note) pObj;
+    public int compareTo(Note b) {
 
         float t1 = this.getStartTime();
-        float t2 = a.getStartTime();
+        float t2 = b.getStartTime();
 
         if (t1 > t2) {
             return 1;

@@ -55,7 +55,7 @@ import org.openide.windows.WindowManager;
  * @author Michael Bechard
  */
 public class ChannelPanel extends javax.swing.JPanel implements
-        PropertyChangeListener, Comparable {
+        PropertyChangeListener, Comparable<ChannelPanel> {
 
     boolean subChannel = false;
 
@@ -637,9 +637,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
     }
 
     @Override
-    public int compareTo(Object o) {
-        ChannelPanel chanB = (ChannelPanel) o;
-
+    public int compareTo(ChannelPanel chanB) {
         try {
             int a = Integer.parseInt(this.channel.getName());
             int b = Integer.parseInt(chanB.getChannel().getName());

@@ -34,7 +34,7 @@ public class LineEditorDialog extends BaseDialog {
 
     private static LineEditorDialog lineEditorDialog = null;
 
-    private static WeakHashMap map = new WeakHashMap();
+    private static WeakHashMap<Component,LineEditorDialog> map = new WeakHashMap<>();
 
     JTable lineTable = new JTable();
 
@@ -84,7 +84,7 @@ public class LineEditorDialog extends BaseDialog {
             map.put(root, dialog);
         }
 
-        return (LineEditorDialog) map.get(root);
+        return map.get(root);
     }
 
     public void setLine(Line line) {

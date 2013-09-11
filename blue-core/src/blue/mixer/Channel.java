@@ -45,7 +45,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Steven Yi
  */
 
-public class Channel implements Serializable, Comparable, ParameterListener {
+public class Channel implements Serializable, Comparable<Channel>, ParameterListener {
 
     public static final String MASTER = "Master";
 
@@ -322,9 +322,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
         }
     }
 
-    public int compareTo(Object o) {
-        Channel chanB = (Channel) o;
-
+    public int compareTo(Channel chanB) {
         try {
             int a = Integer.parseInt(this.getName());
             int b = Integer.parseInt(chanB.getName());

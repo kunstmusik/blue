@@ -29,7 +29,7 @@ import java.io.Serializable;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class CGraphPoint implements Serializable, Comparable {
+public class CGraphPoint implements Serializable, Comparable<CGraphPoint> {
 
     public float time = 0.0f;
 
@@ -59,9 +59,8 @@ public class CGraphPoint implements Serializable, Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
+    public int compareTo(CGraphPoint b) {
         CGraphPoint a = this;
-        CGraphPoint b = (CGraphPoint) o;
 
         float val = a.time - b.time;
 
