@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * 
@@ -40,9 +41,9 @@ public class WindowSettingManager {
 
     private static final String SETTINGS_FILE_NAME = "windowSettings.xml";
 
-    private HashMap windows = new HashMap();
+    private HashMap<String,Window> windows = new HashMap<>();
 
-    private HashMap settings = new HashMap();
+    private HashMap<String,Element> settings = new HashMap<>();
 
     private WindowSettingManager() {
         load();
@@ -91,8 +92,7 @@ public class WindowSettingManager {
 
         Element root = doc.setRoot("windowSettings");
 
-        for (Iterator it = settings.values().iterator(); it.hasNext();) {
-            Element node = (Element) it.next();
+        for (Element node : settings.values()) {
             root.addElement(node);
         }
 
@@ -117,9 +117,9 @@ public class WindowSettingManager {
      * have had previous states saved, so that their settings are not lost.
      */
     private void updateSettings() {
-        for (Iterator it = windows.keySet().iterator(); it.hasNext();) {
-            String key = (String) it.next();
-            Window w = (Window) windows.get(key);
+        for (Map.Entry<String,Window> entry : windows.entrySet()) {
+            String key = entry.getKey();
+            Window w = entry.getValue();
 
             Element node;
 
@@ -153,7 +153,7 @@ public class WindowSettingManager {
         if (settings.containsKey(windowName)) {
             if (window instanceof WindowSettingsSavable) {
                 WindowSettingsSavable savable = (WindowSettingsSavable) window;
-                savable.loadWindowSettings((Element) settings.get(windowName));
+                savable.loadWindowSettings(settings.get(windowName));
             }
         }
 

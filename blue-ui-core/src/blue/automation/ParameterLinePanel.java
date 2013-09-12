@@ -584,8 +584,8 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        for (Iterator iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = (LinePoint) iterator.next();
+        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
+            LinePoint lp = iterator.next();
 
             lp.setLocation(lp.getX() + transTime, lp.getY());
             line.addLinePoint(lp);
@@ -616,9 +616,9 @@ public class ParameterLinePanel extends JComponent implements
         
         ArrayList<LinePoint> points = new ArrayList<>();
 
-        for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
+        for (Iterator<LinePoint> iter = line.getPointsIterator(); iter.hasNext();) {
 
-            LinePoint lp = (LinePoint) iter.next();
+            LinePoint lp = iter.next();
 
             if (line.isFirstLinePoint(lp)) {
                 continue;

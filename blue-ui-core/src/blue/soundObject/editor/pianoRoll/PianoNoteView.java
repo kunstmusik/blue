@@ -38,7 +38,7 @@ import javax.swing.border.Border;
  */
 
 public class PianoNoteView extends JPanel implements PropertyChangeListener,
-        Comparable {
+        Comparable<PianoNoteView> {
     private static final int OCTAVES = 16;
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
@@ -192,9 +192,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
     }
 
     @Override
-    public int compareTo(Object pianoNoteView) {
-        PianoNoteView a = (PianoNoteView) pianoNoteView;
-
+    public int compareTo(PianoNoteView a) {
         int x1 = this.getX();
         int x2 = a.getX();
 

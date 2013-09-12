@@ -325,8 +325,8 @@ public class BlueData implements Serializable {
 
     // ADDED IN 0.91.5 FOR CONVERTING REPETITION OBJECTS TO GENERIC SCORE
     private void convertRepetitionObjects(PolyObject pObj) {
-        ArrayList soundObjects;
-        Object tempSObj;
+        List<SoundObject> soundObjects;
+        SoundObject tempSObj;
         SoundLayer sLayer;
         RepetitionObject repObj;
         GenericScore genScore;
@@ -337,7 +337,7 @@ public class BlueData implements Serializable {
             sLayer = (SoundLayer) pObj.getLayerAt(i);
 
             soundObjects = sLayer.getSoundObjects();
-            Iterator it = soundObjects.iterator();
+            Iterator<SoundObject> it = soundObjects.iterator();
 
             while (it.hasNext()) {
                 tempSObj = it.next();

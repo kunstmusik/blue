@@ -34,6 +34,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -93,7 +94,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
     JLabel nameText = new JLabel();
 
-    ArrayList sObjects;
+    List<SoundObject> sObjects;
 
     JButton testButton = new JButton();
 
@@ -169,7 +170,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
                         int index = sObjTable.getSelectedRow();
                         if (index != -1) {
-                            populate((SoundObject) (sObjects.get(index)));
+                            populate(sObjects.get(index));
                         }
 
                     }
@@ -273,12 +274,12 @@ public class PolyObjectEditor extends SoundObjectEditor {
     /** Table Model used for Sound Object Table */
     static class SoundObjectTableModel extends AbstractTableModel {
 
-        ArrayList sObjects;
+        List<SoundObject> sObjects;
 
         public SoundObjectTableModel() {
         }
 
-        public void setSoundObjects(ArrayList sObjects) {
+        public void setSoundObjects(List<SoundObject> sObjects) {
             if (this.sObjects != null) {
                 fireTableRowsDeleted(0, sObjects.size());
             }
@@ -312,7 +313,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
             if (sObjects == null) {
                 return null;
             }
-            SoundObject temp = (SoundObject) sObjects.get(parm1);
+            SoundObject temp = sObjects.get(parm1);
             if (parm2 == 0) {
                 return temp.getName();
             } else if (parm2 == 1) {

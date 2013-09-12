@@ -28,6 +28,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -61,7 +62,7 @@ public class SoundObjectLibraryUtils {
         for (int i = 0; i < polyObject.getSize(); i++) {
             SoundLayer layer = (SoundLayer) polyObject.getLayerAt(i);
 
-            ArrayList<SoundObject> soundObjects = layer.getSoundObjects();
+            List<SoundObject> soundObjects = layer.getSoundObjects();
         
             ArrayList<SoundObject> instances = new ArrayList<>();
             

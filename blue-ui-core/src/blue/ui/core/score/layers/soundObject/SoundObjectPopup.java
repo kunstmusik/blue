@@ -30,7 +30,6 @@ import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
 import blue.projects.BlueProjectManager;
 import blue.score.TimeState;
-import blue.score.undo.AlignEdit;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.settings.UtilitySettings;
@@ -38,13 +37,11 @@ import blue.soundObject.External;
 import blue.soundObject.FrozenSoundObject;
 import blue.soundObject.GenericScore;
 import blue.soundObject.Instance;
-import blue.soundObject.ObjectBuilder;
 import blue.soundObject.PolyObject;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.render.RealtimeRenderManager;
-import blue.ui.core.score.undo.MoveSoundObjectsEdit;
 import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
@@ -60,10 +57,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -403,7 +400,7 @@ public class SoundObjectPopup extends JPopupMenu {
     }
 
     protected boolean containsInstance(PolyObject pObj) {
-        ArrayList soundObjects = pObj.getSoundObjects(true);
+        List soundObjects = pObj.getSoundObjects(true);
 
         for (Iterator iter = soundObjects.iterator(); iter.hasNext();) {
             SoundObject sObj = (SoundObject) iter.next();
@@ -1074,10 +1071,10 @@ public class SoundObjectPopup extends JPopupMenu {
     private int freezeReferenceCount(PolyObject pObj, String waveFileName) {
         int retVal = 0;
 
-        ArrayList sObjects = pObj.getSoundObjects(true);
+        List<SoundObject> sObjects = pObj.getSoundObjects(true);
 
-        for (Iterator iter = sObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+        for (Iterator<SoundObject> iter = sObjects.iterator(); iter.hasNext();) {
+            SoundObject sObj = iter.next();
 
             if (sObj instanceof PolyObject) {
                 retVal += freezeReferenceCount((PolyObject) sObj,

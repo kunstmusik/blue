@@ -745,8 +745,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         // TODO - REFACTOR THIS OUT TO POLY OBJECT CONTROLLER
 
         SoundLayer tempLayer;
-        SoundObject tempSObj;
-        ArrayList sObjects;
+        List<SoundObject> sObjects;
 
         int size = pObj.getSize();
 
@@ -757,8 +756,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                 tempLayer.addSoundLayerListener(this);
 
                 sObjects = tempLayer.getSoundObjects();
-                for (int j = 0; j < sObjects.size(); j++) {
-                    tempSObj = (SoundObject) sObjects.get(j);
+                for (SoundObject tempSObj : sObjects) {
                     addSoundObjectView(i, tempSObj);
                 }
             }

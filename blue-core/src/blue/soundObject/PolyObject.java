@@ -35,6 +35,7 @@ import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -88,8 +89,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      * 
      * @return
      */
-    public final ArrayList getSoundObjects(boolean grabMutedSoundObjects) {
-        ArrayList sObjects = new ArrayList();
+    public final List<SoundObject> getSoundObjects(boolean grabMutedSoundObjects) {
+        List<SoundObject> sObjects = new ArrayList<>();
         SoundLayer sLayer;
         for (int i = 0; i < soundLayers.size(); i++) {
             sLayer = (SoundLayer) soundLayers.get(i);
@@ -98,7 +99,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
                 continue;
             }
 
-            ArrayList temp = sLayer.getSoundObjects();
+            List<SoundObject> temp = sLayer.getSoundObjects();
 
             sObjects.addAll(temp);
         }
@@ -169,25 +170,25 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      * SoundObjects
      */
     public final void normalizeSoundObjects() {
-        ArrayList sObjects = this.getSoundObjects(true);
+        List<SoundObject> sObjects = this.getSoundObjects(true);
         int size = sObjects.size();
 
         if (size == 0) {
             return;
         }
 
-        float min = ((SoundObject) (sObjects.get(0))).getStartTime();
+        float min = sObjects.get(0).getStartTime();
         SoundObject temp;
 
         for (int i = 1; i < size; i++) {
-            temp = (SoundObject) (sObjects.get(i));
+            temp = sObjects.get(i);
             if (temp.getStartTime() < min) {
                 min = temp.getStartTime();
             }
         }
 
         for (int i = 0; i < size; i++) {
-            temp = (SoundObject) (sObjects.get(i));
+            temp = sObjects.get(i);
             temp.setStartTime(temp.getStartTime() - min);
         }
 
@@ -723,11 +724,9 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
      */
     public boolean isScoreGenerationEmpty() {
 
-        ArrayList sObjects = getSoundObjects(false);
+        List<SoundObject> sObjects = getSoundObjects(false);
 
-        for (Iterator iter = sObjects.iterator(); iter.hasNext();) {
-            SoundObject element = (SoundObject) iter.next();
-
+        for (SoundObject element : sObjects) {
             if (element instanceof Comment) {
                 continue;
             } else if (element instanceof PolyObject) {
@@ -746,11 +745,9 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
 
     public boolean isAdjustedTimeCalculateable() {
-        ArrayList sObjects = getSoundObjects(false);
+        List<SoundObject> sObjects = getSoundObjects(false);
 
-        for (Iterator iter = sObjects.iterator(); iter.hasNext();) {
-            SoundObject element = (SoundObject) iter.next();
-
+        for (SoundObject element : sObjects) { 
             if (element.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_NONE) {
                 return false;
             }
@@ -769,15 +766,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
 
     public void onLoadComplete() {
-        ArrayList sObjects;
+        List<SoundObject> sObjects;
         SoundObject sObj;
 
-        for (int i = 0; i < soundLayers.size(); i++) {
-            SoundLayer sLayer = (SoundLayer) soundLayers.get(i);
+        for (SoundLayer sLayer : soundLayers) { 
             sObjects = sLayer.getSoundObjects();
 
             for (int j = 0; j < sObjects.size(); j++) {
-                sObj = (SoundObject) sObjects.get(j);
+                sObj = sObjects.get(j);
                 if (sObj instanceof PolyObject) {
                     ((PolyObject) sObj).onLoadComplete();
                 } else if (sObj instanceof OnLoadProcessable) {

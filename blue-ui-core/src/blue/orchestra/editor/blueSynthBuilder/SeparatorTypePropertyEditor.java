@@ -29,11 +29,11 @@ import javax.swing.JComboBox;
 
 public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
 
-    private JComboBox options;
+    private JComboBox<String> options;
 
     public SeparatorTypePropertyEditor() {
         super();
-        options = new JComboBox(BSBLineObject.SEPARATOR_TYPES);
+        options = new JComboBox<String>(BSBLineObject.SEPARATOR_TYPES);
         options.addActionListener(new ActionListener() {
 
             @Override

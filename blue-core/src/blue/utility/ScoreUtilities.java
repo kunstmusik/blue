@@ -27,6 +27,7 @@ import blue.soundObject.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class ScoreUtilities {
@@ -290,15 +291,10 @@ public class ScoreUtilities {
      * @return
      */
     public static float getProcessingStartTime(PolyObject pObj) {
-        ArrayList sObjects = pObj.getSoundObjects(false);
-        Collections.sort(sObjects, new Comparator() {
-            public int compare(Object arg0, Object arg1) {
-                SoundObject s1 = (SoundObject) arg0;
-                SoundObject s2 = (SoundObject) arg1;
-                float val = s1.getStartTime() - s2.getStartTime();
-
-                return (int) val;
-                // return s2.getStartTime();
+        List<SoundObject> sObjects = pObj.getSoundObjects(false);
+        Collections.sort(sObjects, new Comparator<SoundObject>() {
+            public int compare(SoundObject s1, SoundObject s2) {
+                return (int)(s1.getStartTime() - s2.getStartTime());
             }
         });
 
@@ -485,14 +481,14 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTime(ArrayList sObjects) {
+    public static float getMaxTime(List<SoundObject> sObjects) {
         float max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
-            sObj = (SoundObject) (sObjects.get(i));
+            sObj = sObjects.get(i);
             float val = sObj.getStartTime() + sObj.getSubjectiveDuration();
             if (val > max) {
                 max = val;
@@ -501,14 +497,14 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTimeWithEmptyCheck(ArrayList sObjects) {
+    public static float getMaxTimeWithEmptyCheck(List<SoundObject> sObjects) {
         float max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
-            sObj = (SoundObject) (sObjects.get(i));
+            sObj = sObjects.get(i);
 
             if (sObj instanceof Comment) {
                 continue;

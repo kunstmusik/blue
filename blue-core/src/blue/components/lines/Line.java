@@ -334,7 +334,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
         fireTableDataChanged();
     }
     
-    public Iterator getPointsIterator() {
+    public Iterator<LinePoint> getPointsIterator() {
         return points.iterator();
     }
     
