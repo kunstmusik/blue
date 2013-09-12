@@ -44,8 +44,9 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -98,7 +99,7 @@ public class TracksEditor extends JPanel {
 
     private final JScrollPane trackEditorScrollPane;
 
-    private final ArrayList noteCopyBuffer = new ArrayList();
+    private final List<TrackerNote> noteCopyBuffer = new ArrayList<>();
 
     private Action[] keyboardNoteActions = null;
 
@@ -521,7 +522,7 @@ public class TracksEditor extends JPanel {
 
     class TrackerNamePanel extends JComponent {
 
-        Vector listeners = null;
+        List<ChangeListener> listeners = null;
 
         ChangeEvent ce = null;
 
@@ -818,7 +819,8 @@ public class TracksEditor extends JPanel {
 
         public void addChangeListener(ChangeListener cl) {
             if (listeners == null) {
-                listeners = new Vector();
+                listeners = Collections.synchronizedList(
+                        new ArrayList<ChangeListener>());
             }
 
             listeners.add(cl);
@@ -833,11 +835,11 @@ public class TracksEditor extends JPanel {
                 new ChangeEvent(this);
             }
 
-            for (Iterator it = listeners.iterator(); it.hasNext();) {
-                ChangeListener listener = (ChangeListener) it.next();
-                listener.stateChanged(ce);
+            synchronized(listeners) {
+                for(ChangeListener cl : listeners) {
+                    cl.stateChanged(ce);
+                }
             }
-
         }
 
     }
@@ -1105,7 +1107,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add(ObjectUtilities.clone(note));
+                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
                 note.clear();
             }
 
@@ -1144,7 +1146,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add(ObjectUtilities.clone(note));
+                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
             }
         }
     }
@@ -1179,7 +1181,7 @@ public class TracksEditor extends JPanel {
                 return;
             }
 
-            TrackerNote firstNote = (TrackerNote) noteCopyBuffer.get(0);
+            TrackerNote firstNote = noteCopyBuffer.get(0);
 
             if (selectedTrack.getNumColumns() != firstNote.getNumFields()) {
                 JOptionPane
@@ -1191,7 +1193,7 @@ public class TracksEditor extends JPanel {
             }
 
             for (int i = 0; i < noteCopyBuffer.size(); i++) {
-                TrackerNote bufferNote = (TrackerNote) noteCopyBuffer.get(i);
+                TrackerNote bufferNote = noteCopyBuffer.get(i);
                 TrackerNote temp = selectedTrack
                         .getTrackerNote(i + selectedRow);
                 temp.copyValues(bufferNote);

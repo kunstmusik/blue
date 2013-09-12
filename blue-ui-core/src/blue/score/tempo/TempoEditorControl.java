@@ -8,7 +8,6 @@ package blue.score.tempo;
 import blue.soundObject.PolyObject;
 import blue.ui.components.IconFactory;
 import java.awt.Dimension;
-import java.util.Vector;
 
 /**
  *
@@ -16,8 +15,6 @@ import java.util.Vector;
  */
 public class TempoEditorControl extends javax.swing.JPanel {
 
-    Vector listeners = null;
-    
     boolean closed = true;
     private Tempo tempo;
     private PolyObject pObj;

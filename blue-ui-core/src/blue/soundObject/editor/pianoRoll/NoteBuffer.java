@@ -105,8 +105,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
         startX = null;
         startLayer = null;
 
-        for (int i = 0; i < this.size(); i++) {
-            PianoNoteView noteView = (PianoNoteView) this.get(i);
+        for (PianoNoteView noteView : this) {
             noteView.updateNoteStartFromLocation();
         }
 
@@ -147,9 +146,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
     }
 
     private void clearBuffer() {
-        PianoNoteView temp;
-        for (int i = 0; i < this.size(); i++) {
-            temp = (PianoNoteView) this.get(i);
+        for (PianoNoteView temp : this) {
             temp.setSelected(false);
         }
         this.clear();
@@ -203,7 +200,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
     }
 
     public void endResize() {
-        PianoNoteView temp = (PianoNoteView) this.get(0);
+        PianoNoteView temp = this.get(0);
         temp.updateNoteDurFromWidth();
     }
 

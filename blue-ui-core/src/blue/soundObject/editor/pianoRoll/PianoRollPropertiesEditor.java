@@ -268,8 +268,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         String noteTemplate = p.getNoteTemplate();
 
-        for (Iterator iter = p.getNotes().iterator(); iter.hasNext();) {
-            PianoNote note = (PianoNote) iter.next();
+        for (PianoNote note : p.getNotes()) {
             note.setNoteTemplate(noteTemplate);
         }
     }
@@ -281,8 +280,8 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         String noteTemplate = p.getNoteTemplate();
 
-        for (Iterator iter = noteBuffer.iterator(); iter.hasNext();) {
-            PianoNote note = ((PianoNoteView) iter.next()).getPianoNote();
+        for (PianoNoteView pianoNoteView : noteBuffer) {
+            PianoNote note = pianoNoteView.getPianoNote();
             note.setNoteTemplate(noteTemplate);
         }
     }

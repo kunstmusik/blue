@@ -374,8 +374,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         this.add(marquee, JLayeredPane.DRAG_LAYER);
         marquee.setVisible(false);
 
-        for (Iterator iter = p.getNotes().iterator(); iter.hasNext();) {
-            PianoNote note = (PianoNote) iter.next();
+        for (PianoNote note : p.getNotes()) {
             addNoteView(note);
         }
 
