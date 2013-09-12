@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.mixer.Channel;
@@ -29,7 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
@@ -43,13 +45,9 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         PropertyChangeListener {
 
     BSBSubChannelDropdown dropdown = null;
-
     SubChannelComboBoxModel model;
-
     JComboBox comboBox;
-
     ActionListener updateIndexListener;
-
     boolean updating = false;
 
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropdown2) {
@@ -69,7 +67,6 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         this.setSize(comboBox.getPreferredSize());
 
         comboBox.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!updating) {
@@ -77,7 +74,6 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
                             .getSelectedItem());
                 }
             }
-
         });
 
         revalidate();
@@ -103,14 +99,13 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
             }
         }
     }
-
 }
 
 class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
-    Vector listeners = new Vector();
 
+    List<ListDataListener> listeners = Collections.synchronizedList(
+            new ArrayList<ListDataListener>());
     Mixer mixer;
-
     Object selected = null;
 
     public SubChannelComboBoxModel() {
@@ -196,7 +191,6 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
 
     @Override
     public void channelAdded(Channel channel) {
-
     }
 
     @Override
@@ -209,10 +203,10 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
     }
 
     private void fireListDataEvent(ListDataEvent lde) {
-        for (Iterator iter = new Vector(listeners).iterator(); iter.hasNext();) {
-            ListDataListener ldl = (ListDataListener) iter.next();
-            ldl.contentsChanged(lde);
+        synchronized (listeners) {
+            for (ListDataListener ldl : listeners) {
+                ldl.contentsChanged(lde);
+            }
         }
     }
-
 }
