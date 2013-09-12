@@ -148,7 +148,7 @@ public class AutomationManager implements ParameterListListener,
                     PolyObject pObj = (PolyObject) layerGroup;
 
                     for (int j = 0; j < pObj.getSize(); j++) {
-                        SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
+                        SoundLayer layer = pObj.getLayerAt(j);
 
                         if (layer == soundLayer) {
                             continue;
@@ -586,7 +586,7 @@ public class AutomationManager implements ParameterListListener,
                 PolyObject pObj = (PolyObject) layerGroup;
 
                 for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(i);
+                    SoundLayer layer = pObj.getLayerAt(i);
 
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
@@ -719,7 +719,7 @@ public class AutomationManager implements ParameterListListener,
                 PolyObject pObj = (PolyObject) layerGroup;
         
                    for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
+                    SoundLayer layer = pObj.getLayerAt(j);
 
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 

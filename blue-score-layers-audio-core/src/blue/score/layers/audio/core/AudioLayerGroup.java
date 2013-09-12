@@ -38,7 +38,7 @@ import java.util.Vector;
  *
  * @author stevenyi
  */
-public class AudioLayerGroup implements LayerGroup {
+public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<AudioLayer> audioLayers = new ArrayList<AudioLayer>();
@@ -115,7 +115,7 @@ public class AudioLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Layer newLayerAt(int index) {
+    public AudioLayer newLayerAt(int index) {
 
         AudioLayer audioLayer = new AudioLayer();
 
@@ -186,15 +186,15 @@ public class AudioLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Layer getLayerAt(int index) {
+    public AudioLayer getLayerAt(int index) {
         return audioLayers.get(index);
     }
 
     @Override
     public void onLoadComplete() {
-        for (AudioLayer layer : audioLayers) {
+//        for (AudioLayer layer : audioLayers) {
             //
-        }
+//        }
     }
 
     @Override

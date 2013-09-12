@@ -82,7 +82,7 @@ public class AutomationLayerPanel extends JComponent implements
         }
 
         for (int i = 0; i < pObj.getSize(); i++) {
-            SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
+            SoundLayer sLayer = pObj.getLayerAt(i);
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
             paramPanel.setTimeState(timeState);
@@ -208,7 +208,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
+        SoundLayer sLayer = pObj.getLayerAt(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
         paramPanel.setTimeState(timeState);

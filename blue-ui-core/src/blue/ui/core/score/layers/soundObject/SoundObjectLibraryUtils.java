@@ -60,7 +60,7 @@ public class SoundObjectLibraryUtils {
 
     protected static void removeSoundObjectInstances(PolyObject polyObject, SoundObject sObj) {
         for (int i = 0; i < polyObject.getSize(); i++) {
-            SoundLayer layer = (SoundLayer) polyObject.getLayerAt(i);
+            SoundLayer layer = polyObject.getLayerAt(i);
 
             List<SoundObject> soundObjects = layer.getSoundObjects();
         

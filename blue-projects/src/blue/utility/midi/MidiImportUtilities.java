@@ -127,7 +127,7 @@ public class MidiImportUtilities {
 
             genSco.setName("Track " + i);
 
-            SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
+            SoundLayer sLayer = pObj.newLayerAt(-1);
             sLayer.addSoundObject(genSco);
         }
 

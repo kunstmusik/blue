@@ -229,7 +229,7 @@ public class CSDUtility {
 
         PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
         
-        SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
+        SoundLayer sLayer = pObj.newLayerAt(-1);
         sLayer.addSoundObject(genScore);
 
     }
@@ -290,7 +290,7 @@ public class CSDUtility {
             }
 
             PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
-            sLayer = (SoundLayer)pObj.newLayerAt(-1);
+            sLayer = pObj.newLayerAt(-1);
 
             String score = buffer.toString();
             NoteList notes;

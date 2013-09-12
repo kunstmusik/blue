@@ -49,12 +49,12 @@ public class SoundObjectLibraryUtilsTest {
         PolyObject polyObj = new PolyObject(true);
         score.addLayerGroup(polyObj);
         SoundObjectLibrary library = data.getSoundObjectLibrary();
-        SoundLayer layer = (SoundLayer)polyObj.newLayerAt(0);
+        SoundLayer layer = polyObj.newLayerAt(0);
         
         SoundObject sObj = new GenericScore();
         SoundObject sObj2 = new GenericScore();
         PolyObject pObjInner = new PolyObject(true);
-        SoundLayer layerInner = (SoundLayer) pObjInner.newLayerAt(0);
+        SoundLayer layerInner = pObjInner.newLayerAt(0);
         layerInner.addSoundObject(new Instance(sObj));
         
         layer.addSoundObject(new Instance(sObj));

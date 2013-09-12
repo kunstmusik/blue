@@ -899,7 +899,7 @@ public class SoundObjectPopup extends JPopupMenu {
         BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
         PolyObject tempPObj = new PolyObject(true);
-        SoundLayer sLayer = (SoundLayer) tempPObj.newLayerAt(-1);
+        SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
         SoundObject tempSObj = (SoundObject) sObj.clone();
         tempData.setRenderStartTime(tempSObj.getStartTime());

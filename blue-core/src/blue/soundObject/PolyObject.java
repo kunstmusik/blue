@@ -47,7 +47,7 @@ import java.util.Vector;
  * @created November 11, 2001
  * @version 1.0
  */
-public class PolyObject extends AbstractSoundObject implements LayerGroup,
+public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundLayer>,
         Serializable, Cloneable, GenericViewable {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
@@ -496,7 +496,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
 
         if (heightIndex >= 0) {
             for (int i = 0; i < pObj.getSize(); i++) {
-                SoundLayer layer = (SoundLayer) pObj.getLayerAt(i);
+                SoundLayer layer = pObj.getLayerAt(i);
                 layer.setHeightIndex(heightIndex);
             }
 
@@ -604,7 +604,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     /* LAYER GROUP INTERFACE */
     
     @Override
-    public Layer getLayerAt(int index) {
+    public SoundLayer getLayerAt(int index) {
         return soundLayers.get(index);
     }
 
@@ -614,7 +614,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup,
     }
     
     @Override
-    public Layer newLayerAt(int index) {
+    public SoundLayer newLayerAt(int index) {
         
         SoundLayer sLayer = new SoundLayer();
         sLayer.setHeightIndex(getDefaultHeightIndex());

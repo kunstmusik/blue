@@ -342,7 +342,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                 return;
             }
 
-            ((SoundLayer) pObj.getLayerAt(index)).addSoundObject(temp);
+            pObj.getLayerAt(index).addSoundObject(temp);
 
             AddSoundObjectEdit edit = new AddSoundObjectEdit(pObj, temp, index);
 

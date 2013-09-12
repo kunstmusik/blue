@@ -80,7 +80,7 @@ public class PatternsHeaderListPanel extends JPanel implements
 
         for (int i = 0; i < patternsLayerGroup.getSize(); i++) {
             this.add(new PatternLayerPanel(
-                        (PatternLayer) patternsLayerGroup.getLayerAt(i), ic));
+                        patternsLayerGroup.getLayerAt(i), ic));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -256,7 +256,7 @@ public class PatternsHeaderListPanel extends JPanel implements
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        PatternLayer sLayer = (PatternLayer)layerGroup.getLayerAt(index);
+        PatternLayer sLayer = layerGroup.getLayerAt(index);
 
         PatternLayerPanel panel = new PatternLayerPanel(sLayer, content);
         
@@ -323,7 +323,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         
         if(!allEvents.isEmpty()) {
             for(int i = 0; i < layerGroup.getSize(); i++) {
-                PatternLayer pLayer = (PatternLayer) layerGroup.getLayerAt(i);
+                PatternLayer pLayer = layerGroup.getLayerAt(i);
                 if(allEvents.contains(pLayer.getSoundObject())) {
                     found = true;
                     break;

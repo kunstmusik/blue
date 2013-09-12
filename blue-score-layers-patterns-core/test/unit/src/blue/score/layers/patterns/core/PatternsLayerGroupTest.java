@@ -48,7 +48,7 @@ public class PatternsLayerGroupTest {
         
         int patternBeatsLength = 4;
         instance.newLayerAt(-1);
-        PatternLayer patternLayer = (PatternLayer)instance.getLayerAt(0);
+        PatternLayer patternLayer = instance.getLayerAt(0);
         GenericScore score = new GenericScore();
         score.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         score.setText("i1 0 .25 1 2\ni1 1 .25 1 2");

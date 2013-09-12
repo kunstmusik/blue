@@ -144,7 +144,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
                 break;
             }
 
-            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.getLayerAt(i);
             PatternData data = layer.getPatternData();
 
             g.setColor(PATTERN_COLOR);
@@ -193,7 +193,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         for (int i = 0; i < layerGroup.getSize(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
             int x = 0; 
-            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.getLayerAt(i);
             PatternData data = layer.getPatternData();
 
             g2d.setColor(PATTERN_COLOR);

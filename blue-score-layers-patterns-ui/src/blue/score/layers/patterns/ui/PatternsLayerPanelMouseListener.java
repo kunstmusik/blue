@@ -67,7 +67,7 @@ public class PatternsLayerPanelMouseListener extends MouseAdapter {
         }
         
         int layerIndex = y / Layer.LAYER_HEIGHT;
-        PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(layerIndex);
+        PatternLayer layer = layerGroup.getLayerAt(layerIndex);
         
         int patternIndex = (int)(x / (float)(layerGroup.getPatternBeatsLength() * timeState.getPixelSecond()));
         

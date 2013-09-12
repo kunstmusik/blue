@@ -112,7 +112,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
         int y = 0;
         for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            AudioLayer layer = layerGroup.getLayerAt(i);
             int height = layer.getAudioLayerHeight();
             layer.addPropertyChangeListener(heightListener);
             layer.addAudioLayerListener(this);
@@ -141,7 +141,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         timeState.removePropertyChangeListener(this);
 
         for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            AudioLayer layer = layerGroup.getLayerAt(i);
             layer.removePropertyChangeListener(heightListener);
             layer.removeAudioLayerListener(this);
         }
@@ -227,7 +227,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             int y = 0;
 
             for (int i = 0; i < layerGroup.getSize(); i++) {
-                AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+                AudioLayer layer = layerGroup.getLayerAt(i);
                 int layerHeight = layer.getAudioLayerHeight();
 
                 if (y <= bottom && (y + layerHeight) >= top) {
@@ -293,7 +293,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         g.drawLine(0, 0, width, 0);
 
         for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            AudioLayer layer = layerGroup.getLayerAt(i);
             y += layer.getAudioLayerHeight();
 
             g.drawLine(0, y, width, y);
@@ -361,7 +361,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         AudioLayer temp;
 
         for (int i = 0; i < layerGroup.getSize(); i++) {
-            temp = (AudioLayer) layerGroup.getLayerAt(i);
+            temp = layerGroup.getLayerAt(i);
             if (layer == temp) {
                 return new Rectangle(0, y, 0, temp.getAudioLayerHeight());
             }
@@ -399,7 +399,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         int height = 0;
 
         for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
+            AudioLayer layer = layerGroup.getLayerAt(i);
             height = layer.getAudioLayerHeight();
 
             for (AudioClip clip : layer) {

@@ -334,7 +334,7 @@ public class BlueData implements Serializable {
         final int size = pObj.getSize();
 
         for (int i = 0; i < size; i++) {
-            sLayer = (SoundLayer) pObj.getLayerAt(i);
+            sLayer = pObj.getLayerAt(i);
 
             soundObjects = sLayer.getSoundObjects();
             Iterator<SoundObject> it = soundObjects.iterator();

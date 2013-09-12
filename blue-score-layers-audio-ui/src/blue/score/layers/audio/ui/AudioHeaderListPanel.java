@@ -69,7 +69,7 @@ public class AudioHeaderListPanel extends JPanel implements
 
         for (int i = 0; i < audioLayerGroup.getSize(); i++) {
             this.add(new AudioHeaderLayerPanel(
-                        (AudioLayer) audioLayerGroup.getLayerAt(i)));
+                        audioLayerGroup.getLayerAt(i)));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -244,7 +244,7 @@ public class AudioHeaderListPanel extends JPanel implements
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        AudioLayer sLayer = (AudioLayer)layerGroup.getLayerAt(index);
+        AudioLayer sLayer = layerGroup.getLayerAt(index);
 
         AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer);
         

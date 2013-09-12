@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author stevenyi
  */
-public interface LayerGroup extends Serializable {
+public interface LayerGroup<T extends Layer> extends Serializable {
     
     public String getName();
     
@@ -76,7 +76,7 @@ public interface LayerGroup extends Serializable {
      * 
      * @param index 
      */
-    public Layer newLayerAt(int index);
+    public T newLayerAt(int index);
     
     /**
      * Removes Layer from startIndex to endIndex.
@@ -113,7 +113,7 @@ public interface LayerGroup extends Serializable {
      * @param index
      * @return 
      */
-    public Layer getLayerAt(int index);
+    public T getLayerAt(int index);
     
     /* LIFECYCLE EVENT CODE */
     

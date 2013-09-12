@@ -203,7 +203,7 @@ public final class RealtimeRenderManager {
         BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
         PolyObject tempPObj = new PolyObject(true);
-        SoundLayer sLayer = (SoundLayer)tempPObj.newLayerAt(-1);
+        SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
         float minTime = Float.MAX_VALUE;
         float maxTime = Float.MIN_VALUE;

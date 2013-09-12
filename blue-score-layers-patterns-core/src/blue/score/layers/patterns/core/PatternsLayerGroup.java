@@ -39,7 +39,7 @@ import java.util.Vector;
  *
  * @author stevenyi
  */
-public class PatternsLayerGroup implements LayerGroup {
+public class PatternsLayerGroup implements LayerGroup<PatternLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
@@ -213,7 +213,7 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Layer newLayerAt(int index) {
+    public PatternLayer newLayerAt(int index) {
 
         PatternLayer patternLayer = new PatternLayer();
 
@@ -284,7 +284,7 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Layer getLayerAt(int index) {
+    public PatternLayer getLayerAt(int index) {
         return patternLayers.get(index);
     }
 
