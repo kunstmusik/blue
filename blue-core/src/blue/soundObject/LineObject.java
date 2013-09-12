@@ -61,7 +61,7 @@ public class LineObject extends AbstractLineObject implements Serializable {
             Element node = lines.next();
             if (node.getName().equals("line")) {
                 Line l = Line.loadFromXML(node);
-                lObj.getLines().addLine(l);
+                lObj.getLines().add(l);
 
                 if (l.getColor() == null) {
                     l.setColor(LineColors.getColor(counter));

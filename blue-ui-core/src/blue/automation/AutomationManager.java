@@ -713,7 +713,7 @@ public class AutomationManager implements ParameterListListener,
         }
 
           for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+            LayerGroup<? extends Layer> layerGroup = score.getLayerGroup(i);
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

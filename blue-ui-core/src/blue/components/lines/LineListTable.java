@@ -76,7 +76,7 @@ public class LineListTable extends JComponent {
                                 event = new SelectionEvent(null,
                                         SelectionEvent.SELECTION_REMOVE);
                             } else {
-                                Line line = lineList.getLine(row);
+                                Line line = lineList.get(row);
 
                                 event = new SelectionEvent(line,
                                         SelectionEvent.SELECTION_SINGLE);

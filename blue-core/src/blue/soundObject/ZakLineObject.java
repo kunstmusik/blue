@@ -53,7 +53,7 @@ public class ZakLineObject extends AbstractLineObject implements Serializable {
             Element node = lines.next();
             if (node.getName().equals("zakline")) {
                 Line l = Line.loadFromXML(node);
-                lObj.getLines().addLine(l);
+                lObj.getLines().add(l);
             }
         }
 

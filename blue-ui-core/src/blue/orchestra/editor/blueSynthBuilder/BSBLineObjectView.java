@@ -88,7 +88,7 @@ public class BSBLineObjectView extends BSBObjectView implements
         lineSelector.setLineList(lines);
 
         if (lines.size() > 0) {
-            lineCanvas.setSelectedLine(lines.getLine(0));
+            lineCanvas.setSelectedLine(lines.get(0));
         }
     }
 

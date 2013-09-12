@@ -130,7 +130,7 @@ public class BSBLineObject extends BSBObject {
         String objName = getObjectName();
 
         for (int i = 0; i < lines.size(); i++) {
-            Line l = lines.getLine(i);
+            Line l = lines.get(i);
             vals[i] = objName + "_" + l.getVarName();
         }
 

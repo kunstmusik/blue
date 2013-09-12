@@ -640,8 +640,8 @@ public class ParameterLinePanel extends JComponent implements
         float newRange = newSelectionEndTime - newSelectionStartTime;
                 
 
-        for (Iterator iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = (LinePoint) iterator.next();
+        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
+            LinePoint lp = iterator.next();
 
             float newX = (lp.getX() - oldStart);
             newX = (newX / oldRange) * newRange;

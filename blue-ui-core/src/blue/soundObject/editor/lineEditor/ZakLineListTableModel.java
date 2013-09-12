@@ -39,7 +39,7 @@ public class ZakLineListTableModel extends LineListTableModel {
         line.setColor(LineColors.getColor(lines.size()));
 
         if (index < 0 || index == lines.size() - 1) {
-            lines.addLine(line);
+            lines.add(line);
             int row = lines.size() - 1;
             fireTableRowsInserted(row, row);
         } else {
@@ -59,7 +59,7 @@ public class ZakLineListTableModel extends LineListTableModel {
         }
 
         if (columnIndex == 1) {
-            Line line = lines.getLine(rowIndex);
+            Line line = lines.get(rowIndex);
             Integer tempChannel = new Integer(line.getChannel());
             return tempChannel.toString();
         } else {
@@ -74,7 +74,7 @@ public class ZakLineListTableModel extends LineListTableModel {
     @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 1) {
-            Line line = lines.getLine(row);
+            Line line = lines.get(row);
             String strChannel = (String) value;
             try {
                 int tempChannel = Integer.parseInt(strChannel);

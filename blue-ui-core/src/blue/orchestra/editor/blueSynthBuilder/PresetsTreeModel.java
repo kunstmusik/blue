@@ -22,8 +22,10 @@ package blue.orchestra.editor.blueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -38,7 +40,8 @@ public class PresetsTreeModel implements Serializable, TreeModel {
 
     PresetGroup rootGroup;
 
-    transient Vector listeners = new Vector();
+    transient List<TreeModelListener> listeners = 
+            Collections.synchronizedList(new ArrayList<TreeModelListener>());
 
     public PresetsTreeModel(PresetGroup rootGroup) {
         this.rootGroup = rootGroup;
@@ -247,26 +250,34 @@ public class PresetsTreeModel implements Serializable, TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesChanged(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesChanged(e);
+            }
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesInserted(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesInserted(e);
+            }
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesRemoved(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesRemoved(e);
+            }
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeStructureChanged(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeStructureChanged(e);
+            }
         }
     }
 

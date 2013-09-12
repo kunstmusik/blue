@@ -51,7 +51,7 @@ public class LineListTableModel extends AbstractTableModel {
         line.setColor(LineColors.getColor(lines.size()));
 
         if (index < 0 || index == lines.size() - 1) {
-            lines.addLine(line);
+            lines.add(line);
             int row = lines.size() - 1;
             fireTableRowsInserted(row, row);
         } else {
@@ -69,7 +69,7 @@ public class LineListTableModel extends AbstractTableModel {
             boolean found = true;
 
             for (int j = 0; j < lines.size() && found; j++) {
-                Line l = lines.getLine(j);
+                Line l = lines.get(j);
 
                 if ((!l.isZak()) && l.getVarName().equals(lineName)) {
                     found = false;
@@ -108,7 +108,7 @@ public class LineListTableModel extends AbstractTableModel {
             return null;
         }
 
-        Line line = lines.getLine(rowIndex);
+        Line line = lines.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -149,7 +149,7 @@ public class LineListTableModel extends AbstractTableModel {
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        Line line = lines.getLine(row);
+        Line line = lines.get(row);
         float fval;
         String retVal;
 
