@@ -35,19 +35,16 @@ import javax.swing.table.TableCellEditor;
 public class ColorCellEditor implements TableCellEditor {
 
     protected transient List<CellEditorListener> listeners = null;
-
     private ColorSelectionPanel panel = new ColorSelectionPanel();
 
     public ColorCellEditor() {
         panel.addPropertyChangeListener(new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("colorSelectionValue")) {
                     fireEditingStopped();
                 }
             }
-
         });
     }
 
@@ -81,7 +78,7 @@ public class ColorCellEditor implements TableCellEditor {
     public void addCellEditorListener(CellEditorListener l) {
         if (listeners == null) {
             listeners = Collections.synchronizedList(
-                    new ArrayList<CellEditorListener>());        
+                    new ArrayList<CellEditorListener>());
         }
         listeners.add(l);
     }
@@ -100,9 +97,11 @@ public class ColorCellEditor implements TableCellEditor {
         }
 
         ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = listeners.get(i);
-            listener.editingCanceled(ce);
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i--) {
+                CellEditorListener listener = listeners.get(i);
+                listener.editingCanceled(ce);
+            }
         }
     }
 
@@ -112,9 +111,11 @@ public class ColorCellEditor implements TableCellEditor {
         }
 
         ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = listeners.get(i);
-            listener.editingStopped(ce);
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i--) {
+                CellEditorListener listener = listeners.get(i);
+                listener.editingStopped(ce);
+            }
         }
     }
 
