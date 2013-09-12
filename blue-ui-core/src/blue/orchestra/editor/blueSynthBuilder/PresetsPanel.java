@@ -55,7 +55,7 @@ public class PresetsPanel extends javax.swing.JPanel {
 
     ActionListener addFolderListener;
 
-    ArrayList listeners = new ArrayList();
+    ArrayList<PresetListener> listeners = new ArrayList<>();
 
     private PresetGroup presetGroup;
 
@@ -351,8 +351,7 @@ public class PresetsPanel extends javax.swing.JPanel {
         this.presetGroup.setCurrentPresetModified(false);
         updateCurrentPresetUI();
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            PresetListener listener = (PresetListener) iter.next();
+        for (PresetListener listener : listeners) {
             listener.presetSelected(preset);
         }
     }

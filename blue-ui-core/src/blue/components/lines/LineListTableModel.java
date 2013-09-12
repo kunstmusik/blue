@@ -132,7 +132,7 @@ public class LineListTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Class getColumnClass(int c) {
+    public Class<? extends Object> getColumnClass(int c) {
         switch (c) {
             case 0:
                 return Color.class;

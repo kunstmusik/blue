@@ -736,10 +736,10 @@ public class AutomationManager implements ParameterListListener,
     }
 
     protected void updateValuesFromAutomations() {
-        Iterator iter = new ArrayList(allParameters).iterator();
+        Iterator<Parameter> iter = allParameters.iterator();
 
         while (iter.hasNext()) {
-            Parameter param = (Parameter) iter.next();
+            Parameter param = iter.next();
             if (param.isAutomationEnabled()) {
                 param.fireUpdateFromTimeChange();
             }

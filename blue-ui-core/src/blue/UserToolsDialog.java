@@ -204,13 +204,13 @@ public final class UserToolsDialog extends JDialog {
 }
 
 final class UserToolsTableModel extends AbstractTableModel {
-    private ArrayList userTools;
+    private ArrayList<UserTool> userTools;
 
     public UserToolsTableModel() {
         super();
     }
 
-    public void setUserTools(ArrayList userTools) {
+    public void setUserTools(ArrayList<UserTool> userTools) {
         this.userTools = userTools;
         fireTableDataChanged();
     }
@@ -233,7 +233,7 @@ final class UserToolsTableModel extends AbstractTableModel {
 
     public void pushUpUserTool(int index) {
         if (index > 0) {
-            Object a = userTools.remove(index - 1);
+            UserTool a = userTools.remove(index - 1);
             userTools.add(index, a);
             this.fireTableRowsUpdated(index - 1, index);
         }
@@ -241,7 +241,7 @@ final class UserToolsTableModel extends AbstractTableModel {
 
     public void pushDownUserTool(int index) {
         if (index < userTools.size() - 1) {
-            Object a = userTools.remove(index + 1);
+            UserTool a = userTools.remove(index + 1);
             userTools.add(index, a);
             this.fireTableRowsUpdated(index, index + 1);
         }
@@ -264,7 +264,7 @@ final class UserToolsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        UserTool tool = (UserTool) userTools.get(row);
+        UserTool tool = userTools.get(row);
 
         if (col == 0) {
             return tool.name;
@@ -298,7 +298,7 @@ final class UserToolsTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int row, int col) {
         try {
             String val = (String) value;
-            UserTool tool = (UserTool) userTools.get(row);
+            UserTool tool = userTools.get(row);
 
             if (col == 0) {
                 tool.name = val;

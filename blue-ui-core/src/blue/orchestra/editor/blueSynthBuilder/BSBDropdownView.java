@@ -21,6 +21,7 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
+import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -43,7 +44,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
 
     DropdownComboBoxModel model = new DropdownComboBoxModel();
 
-    JComboBox comboBox;
+    JComboBox<BSBDropdownItem> comboBox;
 
     ActionListener updateIndexListener;
 
@@ -88,7 +89,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
             this.remove(comboBox);
         }
 
-        comboBox = new JComboBox(model);
+        comboBox = new JComboBox<>(model);
 
         this.add(comboBox);
 
@@ -163,7 +164,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
     }
 
 }
-class DropdownComboBoxModel implements ComboBoxModel {
+class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
     EventListenerList listeners = new EventListenerList();
 
     BSBDropdown dropdown;
@@ -174,7 +175,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * @see javax.swing.ComboBoxModel#getSelectedItem()
      */
     @Override
-    public Object getSelectedItem() {
+    public BSBDropdownItem getSelectedItem() {
         if (dropdown == null || dropdown.getDropdownItems().size() == 0) {
             return null;
         }
@@ -261,7 +262,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
      * @see javax.swing.ListModel#getElementAt(int)
      */
     @Override
-    public Object getElementAt(int index) {
+    public BSBDropdownItem getElementAt(int index) {
         if (dropdown == null) {
             return null;
         }
@@ -276,6 +277,7 @@ class DropdownComboBoxModel implements ComboBoxModel {
     @Override
     public void addListDataListener(ListDataListener l) {
         listeners.add(ListDataListener.class, l);
+
     }
 
     /*
