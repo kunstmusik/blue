@@ -641,9 +641,7 @@ public class AutomationManager implements ParameterListListener,
             return null;
         }
 
-        for (Iterator iter = allParameters.iterator(); iter.hasNext();) {
-            Parameter param = (Parameter) iter.next();
-
+        for (Parameter param : allParameters) {
             if (param.getUniqueId().equals(paramId)) {
                 return param;
             }
@@ -713,7 +711,7 @@ public class AutomationManager implements ParameterListListener,
         }
 
           for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup<? extends Layer> layerGroup = score.getLayerGroup(i);
+            LayerGroup layerGroup = score.getLayerGroup(i);
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

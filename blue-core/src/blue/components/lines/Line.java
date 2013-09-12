@@ -50,7 +50,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * 
  * @author Steven
  */
-public class Line implements TableModel, Serializable, ChangeListener {
+public class Line implements TableModel, Serializable, ChangeListener, Iterable<LinePoint> {
     String varName = "";
 
     float max = 1.0f;
@@ -333,8 +333,9 @@ public class Line implements TableModel, Serializable, ChangeListener {
         
         fireTableDataChanged();
     }
-    
-    public Iterator<LinePoint> getPointsIterator() {
+   
+    @Override
+    public Iterator<LinePoint> iterator() {
         return points.iterator();
     }
     

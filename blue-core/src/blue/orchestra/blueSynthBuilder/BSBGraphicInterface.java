@@ -36,7 +36,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author steven
  * 
  */
-public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
+public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
 
     ArrayList<BSBObject> interfaceItems = new ArrayList<>();
 

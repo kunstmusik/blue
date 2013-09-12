@@ -321,8 +321,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         clearBSBObjects();
 
         if (bsbInterface != null) {
-            for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-                BSBObject bsbObj = (BSBObject) iter.next();
+            for (BSBObject bsbObj : bsbInterface) {
                 addBSBObject(bsbObj, false);
             }
         }

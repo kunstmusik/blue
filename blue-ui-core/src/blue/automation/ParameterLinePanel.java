@@ -566,9 +566,9 @@ public class ParameterLinePanel extends JComponent implements
     private void processLineForSelectionDrag(Line line) {
         ArrayList<LinePoint> points = new ArrayList<>();
 
-        for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
+        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
 
-            LinePoint lp = (LinePoint) iter.next();
+            LinePoint lp = iter.next();
 
             if (line.isFirstLinePoint(lp)) {
                 continue;
@@ -616,7 +616,7 @@ public class ParameterLinePanel extends JComponent implements
         
         ArrayList<LinePoint> points = new ArrayList<>();
 
-        for (Iterator<LinePoint> iter = line.getPointsIterator(); iter.hasNext();) {
+        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
 
             LinePoint lp = iter.next();
 
