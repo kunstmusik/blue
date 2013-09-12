@@ -208,7 +208,7 @@ public class Knob extends JComponent {
     }
 
     @Override
-    public boolean isFocusTraversable() {
+    public boolean isFocusable() {
         return true;
     }
 

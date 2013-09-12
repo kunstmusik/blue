@@ -186,7 +186,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
 
             // Don't want the button to participate in focus traversable.
             @Override
-            public boolean isFocusTraversable() {
+            public boolean isFocusable() {
                 return false;
             }
         };
@@ -273,7 +273,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
 
             // Don't want the button to participate in focus traversable.
             @Override
-            public boolean isFocusTraversable() {
+            public boolean isFocusable() {
                 return false;
             }
         };
