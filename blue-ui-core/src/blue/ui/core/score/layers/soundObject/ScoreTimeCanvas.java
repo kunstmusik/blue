@@ -123,8 +123,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         sMouse = new ScoreMouseProcessor(this, ic);
         multiLineMouse = new MultiLineMouseProcessor(this);
 
-        addMouseListener(sMouse);
-        addMouseMotionListener(sMouse);
+//        addMouseListener(sMouse);
+ //       addMouseMotionListener(sMouse);
         addMouseListener(multiLineMouse);
         addMouseMotionListener(multiLineMouse);
 

@@ -73,7 +73,6 @@ public final class ScoreTopComponent extends TopComponent
         PropertyChangeListener, ScoreBarListener, SoundObjectProvider {
 
     private final InstanceContent content = new InstanceContent();
-    
     private static ScoreTopComponent instance;
     private static final int SPACER = 36;
     /**
@@ -109,10 +108,8 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseWheelListener mouseWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this);
     TimeState currentTimeState = null;
-
-    RenderTimeManager renderTimeManager = 
-                Lookup.getDefault().lookup(RenderTimeManager.class);
-
+    RenderTimeManager renderTimeManager =
+            Lookup.getDefault().lookup(RenderTimeManager.class);
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -129,7 +126,7 @@ public final class ScoreTopComponent extends TopComponent
         initComponents();
 
         associateLookup(new AbstractLookup(content));
-        
+
         setName(NbBundle.getMessage(ScoreTopComponent.class,
                 "CTL_ScoreTopComponent"));
         setToolTipText(NbBundle.getMessage(ScoreTopComponent.class,
@@ -139,7 +136,8 @@ public final class ScoreTopComponent extends TopComponent
 
         scoreObjectBar.setScoreBarListener(this);
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(
@@ -151,12 +149,12 @@ public final class ScoreTopComponent extends TopComponent
 
         scrollPane.getVerticalScrollBar().addAdjustmentListener(
                 new AdjustmentListener() {
-                    @Override
-                    public void adjustmentValueChanged(AdjustmentEvent ae) {
-                        syncPosition.setLocation(0, ae.getValue());
-                        layerHeaderViewPort.setViewPosition(syncPosition);
-                    }
-                });
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent ae) {
+                syncPosition.setLocation(0, ae.getValue());
+                layerHeaderViewPort.setViewPosition(syncPosition);
+            }
+        });
 
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
@@ -930,6 +928,19 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
 
+    public JLayeredPane getScorePanel() {
+        return scorePanel;
+    }
+
+    public AlphaMarquee getMarquee() {
+        return marquee;
+    }
+
+    public JPanel getLayerPanel() {
+        return layerPanel;
+    }
+
+
     final static class ResolvableHelper implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -939,16 +950,28 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
 
-
     public LayerGroupPanel getLayerGroupPanelAtPoint(MouseEvent e) {
         LayerGroupPanel retVal = null;
 
-        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), layerPanel);
+        Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
+                layerPanel);
 
         Component c = layerPanel.getComponentAt(p);
-        if(c instanceof LayerGroupPanel) {
+        if (c instanceof LayerGroupPanel) {
             retVal = (LayerGroupPanel) c;
-        }  
+        }
         return retVal;
-    }  
+    }
+
+    public ScoreObjectView getScoreObjectViewAtPoint(MouseEvent e) {
+        LayerGroupPanel retVal = getLayerGroupPanelAtPoint(e);
+
+        if (retVal == null) {
+            return null;
+        }
+
+        return retVal.getScoreObjectViewAtPoint(
+                SwingUtilities.convertPoint(e.getComponent(),
+                e.getPoint(), (JComponent) retVal));
+    }
 }
