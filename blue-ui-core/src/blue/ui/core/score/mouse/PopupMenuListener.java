@@ -49,8 +49,8 @@ public class PopupMenuListener extends BlueMouseAdapter {
     protected static void showPopup(Component comp, MouseEvent e) {
         Collection<? extends SoundObject> soundObjects =
                 Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
-        if (comp instanceof SoundObjectView) {
-            if (soundObjects.contains(((SoundObjectView) comp).getSoundObject())) {
+        if (currentScoreObjectView != null) {
+//            if (soundObjects.contains(((SoundObjectView) comp).getSoundObject())) {
 //                sCanvas.showSoundObjectPopup((SoundObjectView) comp, e.getX(),
 //                        e.getY());
 
@@ -60,7 +60,11 @@ public class PopupMenuListener extends BlueMouseAdapter {
                         new Action[0]),
                         ScoreTopComponent.findInstance().getLookup());
                 menu.show(comp.getParent(), e.getX(), e.getY());
-            }
+//            }
+
+        } else if(currentLayerGroupPanel != null) {
+
+            
 //        } else if (e.getY() < sCanvas.pObj.getTotalHeight()) {
 //            sCanvas.showSoundLayerPopup(getSoundLayerIndex(e.getY()), e.getX(),
 //                    e.getY());

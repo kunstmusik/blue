@@ -46,7 +46,7 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseDragged(MouseEvent e) {
 
         Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
                 e.getPoint(),
@@ -57,7 +57,7 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mouseReleased(MouseEvent e) {
         scoreTC.getMarquee().setVisible(false);
 
         Component[] comps = scoreTC.getLayerPanel().getComponents();

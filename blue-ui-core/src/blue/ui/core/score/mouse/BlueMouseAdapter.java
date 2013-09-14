@@ -40,5 +40,5 @@ public class BlueMouseAdapter extends MouseAdapter {
     
     public static LayerGroupPanel currentLayerGroupPanel = null;
     public static ScoreObjectView currentScoreObjectView = null;
-    protected static ScoreTopComponent scoreTC = ScoreTopComponent.findInstance();
+    public static ScoreTopComponent scoreTC = null;
 }

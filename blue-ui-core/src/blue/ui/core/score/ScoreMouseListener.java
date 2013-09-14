@@ -24,14 +24,12 @@ import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
 import blue.ui.core.score.mouse.MarqueeSelectionListener;
 import blue.ui.core.score.mouse.PopupMenuListener;
-import blue.ui.utilities.UiUtilities;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -40,22 +38,22 @@ import javax.swing.SwingUtilities;
  */
 public class ScoreMouseListener extends MouseAdapter {
 
+    private static final int EDGE = 5;
     private final Cursor LEFT_RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.W_RESIZE_CURSOR);
     private final Cursor RIGHT_RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
     private final Cursor NORMAL_CURSOR = Cursor
             .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
-
     private MouseAdapter[] mouseListeners = {
         new PopupMenuListener(), new MarqueeSelectionListener()
     };
 
     public ScoreMouseListener(ScoreTopComponent tc) {
         this.scoreTC = tc;
+        BlueMouseAdapter.scoreTC = tc;
     }
 
     @Override
@@ -64,8 +62,8 @@ public class ScoreMouseListener extends MouseAdapter {
 
         if (e.isConsumed()) {
             return;
-        } 
-        
+        }
+
         LayerGroupPanel lGroupPanel = scoreTC.getLayerGroupPanelAtPoint(e);
         ScoreObjectView scoreObjView = null;
 
@@ -77,31 +75,15 @@ public class ScoreMouseListener extends MouseAdapter {
 
         BlueMouseAdapter.currentLayerGroupPanel = lGroupPanel;
         BlueMouseAdapter.currentScoreObjectView = scoreObjView;
-    
+
         MouseAdapter current = null;
-        
-        for(int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
+
+        for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
             current = mouseListeners[i];
             current.mousePressed(e);
         }
 
         currentGestureListener = e.isConsumed() ? current : null;
-        
-        
-//        if (UiUtilities.isRightMouseButton(e)) {
-//            ScorePopup.showPopup(e.getComponent(), e);
-//
-//        } else {
-//
-//            
-//            
-//            Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
-//                    e.getPoint(),
-//                    scoreTC.scorePanel);
-//
-//            scoreTC.marquee.setStart(point);
-//            scoreTC.marquee.setVisible(true);
-//        }
 
     }
 
@@ -111,11 +93,6 @@ public class ScoreMouseListener extends MouseAdapter {
             return;
         }
         currentGestureListener.mouseDragged(e);
-//        Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
-//                e.getPoint(),
-//                scoreTC.scorePanel);
-//
-//        scoreTC.marquee.setDragPoint(point);
     }
 
     @Override
@@ -126,17 +103,6 @@ public class ScoreMouseListener extends MouseAdapter {
 
         currentGestureListener.mouseReleased(e);
         currentGestureListener = null;
-        
-        
-//        scoreTC.marquee.setVisible(false);
-//
-//        Component[] comps = scoreTC.layerPanel.getComponents();
-//
-//        for (Component c : comps) {
-//            if (c instanceof LayerGroupPanel) {
-//                ((LayerGroupPanel) c).marqueeSelectionPerformed(scoreTC.marquee);
-//            }
-//        }
     }
 
     @Override
@@ -144,6 +110,32 @@ public class ScoreMouseListener extends MouseAdapter {
 //        if (!isScoreMode()) {
 //            return;
 //        }
+
+        ScoreObjectView sObjView = scoreTC.getScoreObjectViewAtPoint(e);
+        final JLayeredPane scorePanel = scoreTC.getScorePanel();
+
+        if (sObjView != null) {
+
+            Point p = SwingUtilities.convertPoint(e.getComponent(),
+                    e.getPoint(),
+                    (JComponent) sObjView);
+            JComponent comp = (JComponent) sObjView;
+
+            if (p.x > 0 && p.x < EDGE) {
+                scorePanel.setCursor(RIGHT_RESIZE_CURSOR);
+//                dragMode = RESIZE_RIGHT;
+            } else if (p.x > comp.getWidth() - EDGE && p.x <= comp.getWidth()) {
+                scorePanel.setCursor(LEFT_RESIZE_CURSOR);
+//                dragMode = RESIZE_LEFT;
+            } else {
+                scorePanel.setCursor(NORMAL_CURSOR);
+//                dragMode = MOVE;
+            }
+        } else {
+            scorePanel.setCursor(NORMAL_CURSOR);
+        }
+
+
 //        System.out.println(e.getComponent().getComponentAt(e.getPoint()));   
 //        Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
 //                e.getPoint());
