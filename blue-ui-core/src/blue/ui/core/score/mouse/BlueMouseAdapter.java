@@ -23,6 +23,7 @@ import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.event.MouseAdapter;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  * Base class for Score mouse adapters. Uses static members for 
@@ -41,4 +42,5 @@ public class BlueMouseAdapter extends MouseAdapter {
     public static LayerGroupPanel currentLayerGroupPanel = null;
     public static ScoreObjectView currentScoreObjectView = null;
     public static ScoreTopComponent scoreTC = null;
+    public static InstanceContent content;
 }

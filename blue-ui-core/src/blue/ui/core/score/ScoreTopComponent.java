@@ -106,7 +106,7 @@ public final class ScoreTopComponent extends TopComponent
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
-    ScoreMouseListener listener = new ScoreMouseListener(this);
+    ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager =
             Lookup.getDefault().lookup(RenderTimeManager.class);

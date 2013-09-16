@@ -24,6 +24,7 @@ import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
 import blue.ui.core.score.mouse.MarqueeSelectionListener;
 import blue.ui.core.score.mouse.PopupMenuListener;
+import blue.ui.core.score.mouse.ScoreObjectSelectionListener;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
@@ -31,6 +32,7 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -48,12 +50,14 @@ public class ScoreMouseListener extends MouseAdapter {
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
     private MouseAdapter[] mouseListeners = {
-        new PopupMenuListener(), new MarqueeSelectionListener()
+        new PopupMenuListener(), new ScoreObjectSelectionListener(),
+        new MarqueeSelectionListener()
     };
 
-    public ScoreMouseListener(ScoreTopComponent tc) {
+    public ScoreMouseListener(ScoreTopComponent tc, InstanceContent content) {
         this.scoreTC = tc;
         BlueMouseAdapter.scoreTC = tc;
+        BlueMouseAdapter.content = content;
     }
 
     @Override
@@ -135,24 +139,5 @@ public class ScoreMouseListener extends MouseAdapter {
             scorePanel.setCursor(NORMAL_CURSOR);
         }
 
-
-//        System.out.println(e.getComponent().getComponentAt(e.getPoint()));   
-//        Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
-//                e.getPoint());
-//        if (comp instanceof SoundObjectView) {
-//            if (e.getX() > (comp.getX() + comp.getWidth() - EDGE)) {
-//                sCanvas.setCursor(RIGHT_RESIZE_CURSOR);
-//                dragMode = RESIZE_RIGHT;
-//            } else if (e.getX() < (comp.getX() + EDGE)) {
-//                sCanvas.setCursor(LEFT_RESIZE_CURSOR);
-//                dragMode = RESIZE_LEFT;
-//            } else {
-//                sCanvas.setCursor(NORMAL_CURSOR);
-//                dragMode = MOVE;
-//            }
-//        } else {
-//            sCanvas.setCursor(NORMAL_CURSOR);
-//            dragMode = MOVE;
-//        }
     }
 }

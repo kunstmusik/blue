@@ -23,6 +23,7 @@ import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
@@ -32,17 +33,25 @@ import javax.swing.SwingUtilities;
  */
 public class MarqueeSelectionListener extends BlueMouseAdapter {
 
+    boolean addMode = false; 
+
     @Override
     public void mousePressed(MouseEvent e) {
-        if (currentLayerGroupPanel != null) {
-            e.consume();
-            Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
-                    e.getPoint(),
-                    scoreTC.getScorePanel());
+        e.consume();
 
-            scoreTC.getMarquee().setStart(point);
-            scoreTC.getMarquee().setVisible(true);
+        addMode = e.isShiftDown();
+        
+        if(!addMode) {
+            content.set(Collections.emptyList(), null);
         }
+        
+
+        Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
+                e.getPoint(),
+                scoreTC.getScorePanel());
+
+        scoreTC.getMarquee().setStart(point);
+        scoreTC.getMarquee().setVisible(true);
     }
 
     @Override
