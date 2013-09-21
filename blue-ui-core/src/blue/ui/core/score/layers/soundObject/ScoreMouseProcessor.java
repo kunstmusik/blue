@@ -32,79 +32,65 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreObjectBar;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * ScoreMouseProcessor handles mouse actions for ScoreTimeCanvas
- * 
+ *
  * TODO - clean up, looking at
  * blue.soundObject.editor.pianoRoll.NoteCanvasMouseListener
- * 
+ *
  */
-
 class ScoreMouseProcessor extends MouseAdapter {
 
     private static final int EDGE = 5;
-
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
-
     private final Cursor LEFT_RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.W_RESIZE_CURSOR);
-    
     private final Cursor RIGHT_RESIZE_CURSOR = Cursor
             .getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
-
     private final Cursor NORMAL_CURSOR = Cursor
             .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-
     private static final int MOVE = 0;
-
     private static final int RESIZE_RIGHT = 1;
-    
     private static final int RESIZE_LEFT = 2;
-
     private int dragMode = MOVE;
-
     private boolean dragStart = true;
-
     private transient Vector<SelectionListener> listeners = new Vector<SelectionListener>();
-
     private ScoreTimeCanvas sCanvas;
-
     private boolean justSelected = false;
-
     boolean isPopupOpen = false;
-
     private Rectangle scrollRect = new Rectangle(0, 0, 1, 1);
-
     private float initialDuration;
-    
     private float initialEndTime;
-    
     TimeState timeState = null;
 
     public ScoreMouseProcessor(ScoreTimeCanvas sCanvas) {
         this.sCanvas = sCanvas;
     }
-    
+
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
 
     public void mousePressed(MouseEvent e) {
-        
-        if(!isScoreMode()) {
+
+        if (!isScoreMode()) {
             return;
         }
-        
+
         dragStart = true;
-        
+
         boolean shouldConsume = true;
 
         sCanvas.requestFocus();
@@ -124,14 +110,16 @@ class ScoreMouseProcessor extends MouseAdapter {
                     setBufferedSoundObject(sObjView, e);
                     this.justSelected = false;
                     this.initialDuration = sObjView.getSubjectiveDuration();
-                    sCanvas.automationPanel.initiateScoreScale(sObjView.getStartTime(), 
-                            sObjView.getStartTime() + sObjView.getSubjectiveDuration(), 
+                    sCanvas.automationPanel.initiateScoreScale(
+                            sObjView.getStartTime(),
+                            sObjView.getStartTime() + sObjView.getSubjectiveDuration(),
                             getSoundLayerIndex(sObjView.getY()));
                 } else if (dragMode == RESIZE_LEFT) {
                     setBufferedSoundObject(sObjView, e);
                     this.justSelected = false;
-                    this.initialEndTime = sObjView.getStartTime() + sObjView.getSubjectiveDuration();                
-                    sCanvas.automationPanel.initiateScoreScale(sObjView.getStartTime(), 
+                    this.initialEndTime = sObjView.getStartTime() + sObjView.getSubjectiveDuration();
+                    sCanvas.automationPanel.initiateScoreScale(
+                            sObjView.getStartTime(),
                             sObjView.getStartTime() + sObjView.getSubjectiveDuration(),
                             getSoundLayerIndex(sObjView.getY()));
                 } else {
@@ -143,20 +131,20 @@ class ScoreMouseProcessor extends MouseAdapter {
                         }
                     } else if (sCanvas.mBuffer.contains(sObjView)) {
                         if (e.getClickCount() >= 2) {
-                            if((sObjView.getSoundObject() instanceof PolyObject)) {
-                                 PolyObject pObj = (PolyObject) (sObjView
-                                    .getSoundObject());
+                            if ((sObjView.getSoundObject() instanceof PolyObject)) {
+                                PolyObject pObj = (PolyObject) (sObjView
+                                        .getSoundObject());
                                 editPolyObject(pObj);
                             } else {
-                                if(sCanvas.mBuffer.size() == 1) {
+                                if (sCanvas.mBuffer.size() == 1) {
                                     SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
-                                    
+
                                     if (!editor.isOpened()) {
                                         editor.open();
-                                    } 
-                                    
+                                    }
+
                                     editor.requestActive();
-                                    
+
                                 }
                             }
                         } else {
@@ -184,17 +172,19 @@ class ScoreMouseProcessor extends MouseAdapter {
                 float start = getTimeForX(e.getX());
 
                 if (timeState.isSnapEnabled()) {
-                    start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
+                    start = ScoreUtilities.getSnapValueStart(start,
+                            timeState.getSnapValue());
                 }
 
                 pasteSoundObject(soundLayerIndex, start);
                 this.justSelected = true;
-            } else if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY){
+            } else if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                 int soundLayerIndex = getSoundLayerIndex(e.getY());
                 float start = getTimeForX(e.getX());
 
                 if (timeState.isSnapEnabled()) {
-                    start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
+                    start = ScoreUtilities.getSnapValueStart(start,
+                            timeState.getSnapValue());
                 }
 
                 pasteSoundObjects(soundLayerIndex, start);
@@ -210,20 +200,20 @@ class ScoreMouseProcessor extends MouseAdapter {
                 //startMarquee(e.getPoint());
             }
         }
-        
-        if(shouldConsume) {
+
+        if (shouldConsume) {
             e.consume();
         }
     }
 
     public void mouseReleased(MouseEvent e) {
-        
-        if(!isScoreMode()) {
+
+        if (!isScoreMode()) {
             return;
         }
-        
+
         boolean shouldConsume = true;
-        
+
         if (SwingUtilities.isLeftMouseButton(e)) {
             if (sCanvas.mBuffer.motionBuffer != null) {
                 if (dragMode == MOVE && !this.justSelected) {
@@ -233,7 +223,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                     sCanvas.updateSoundObjectsLayerMap();
 
                     sCanvas.automationPanel.commitMultiLineDrag();
-                    
+
                     BlueUndoManager.setUndoManager("score");
 
                     BlueUndoManager.addEdit(moveEdit);
@@ -246,7 +236,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                     BlueUndoManager.addEdit(new ResizeSoundObjectEdit(sObjView
                             .getSoundObject(), initialDuration, sObjView
                             .getSubjectiveDuration()));
-                    
+
                     sCanvas.automationPanel.endScoreScale();
                 } else if (dragMode == RESIZE_LEFT) {
 //                    TODO: FIX THIS
@@ -268,25 +258,25 @@ class ScoreMouseProcessor extends MouseAdapter {
 //            }
             // clearMarquee();
             sCanvas.repaint();
-            
-            if(shouldConsume) {
+
+            if (shouldConsume) {
                 e.consume();
             }
         }
     }
 
     public void mouseDragged(MouseEvent e) {
-        
-        if(!isScoreMode()) {
+
+        if (!isScoreMode()) {
             return;
         }
-        
+
         boolean shouldConsume = true;
-        
+
         if (sCanvas.mBuffer.size() != 0 && !isPopupOpen && !justSelected) {
             if (dragMode == MOVE) {
                 if (dragStart && SwingUtilities.isLeftMouseButton(e)) {
-                    if((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                    if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
                         duplicateSoundObjectsInPlace();
                     } else {
                         sCanvas.setSelectionDragRegions();
@@ -303,10 +293,11 @@ class ScoreMouseProcessor extends MouseAdapter {
                 SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[0];
                 sCanvas.automationPanel.setScoreScaleEnd(
                         sObjView.getStartTime() + sObjView.getSubjectiveDuration());
-            } else if (dragMode == RESIZE_LEFT && !isPopupOpen && !justSelected) { 
+            } else if (dragMode == RESIZE_LEFT && !isPopupOpen && !justSelected) {
                 resizeSoundObjectLeft(e);
                 SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[0];
-                sCanvas.automationPanel.setScoreScaleStart(sObjView.getStartTime());
+                sCanvas.automationPanel.setScoreScaleStart(
+                        sObjView.getStartTime());
             }
         } else if (SwingUtilities.isLeftMouseButton(e) && !justSelected) {
             // updateMarquee(e);
@@ -317,8 +308,8 @@ class ScoreMouseProcessor extends MouseAdapter {
         sCanvas.checkSize();
 
         dragStart = false;
-        
-        if(shouldConsume) {
+
+        if (shouldConsume) {
             e.consume();
         }
     }
@@ -358,11 +349,11 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     public void mouseMoved(MouseEvent e) {
-        
-        if(!isScoreMode()) {
+
+        if (!isScoreMode()) {
             return;
         }
-        
+
         Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
                 e.getPoint());
         if (comp instanceof SoundObjectView) {
@@ -385,10 +376,8 @@ class ScoreMouseProcessor extends MouseAdapter {
     private boolean isScoreMode() {
         return ModeManager.getInstance().getMode() == ModeManager.MODE_SCORE;
     }
-    
-    
-    // MOUSE PRESSED CODE
 
+    // MOUSE PRESSED CODE
     private void clearBuffer(MouseEvent e) {
         fireSelectionEvent(new SelectionEvent(null,
                 SelectionEvent.SELECTION_CLEAR));
@@ -436,7 +425,7 @@ class ScoreMouseProcessor extends MouseAdapter {
     private void editPolyObject(PolyObject pObj) {
         fireSelectionEvent(new SelectionEvent(null,
                 SelectionEvent.SELECTION_CLEAR));
-        
+
         ScoreTopComponent.findInstance().editLayerGroup(pObj);
 //        ScoreObjectBar.getInstance().addLayerGroup(pObj);
 
@@ -473,17 +462,17 @@ class ScoreMouseProcessor extends MouseAdapter {
 
             if (sObj instanceof Instance) {
                 Instance instance = (Instance) sObj;
-                
+
                 BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-                
+
                 SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
-                
-                if(!sObjLib.contains(instance.getSoundObject())) {
+
+                if (!sObjLib.contains(instance.getSoundObject())) {
                     SoundObject clone = (SoundObject) instance.getSoundObject().clone();
                     instance.setSoundObject(clone);
                     sObjLib.addSoundObject(clone);
                 }
-         
+
             }
 
             sObj.setStartTime(startTime);
@@ -518,7 +507,12 @@ class ScoreMouseProcessor extends MouseAdapter {
             return;
         }
 
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+
+        SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
         AddSoundObjectEdit undoEdit = null;
+
+        Set<Instance> instanceSoundObjects = new HashSet<Instance>();
 
         for (int i = 0; i < sObjBuffer.size(); i++) {
             SoundObject sObj = (SoundObject) sObjBuffer.getSoundObject(i)
@@ -528,17 +522,15 @@ class ScoreMouseProcessor extends MouseAdapter {
                     + layerTranslation;
 
             if (sObj instanceof Instance) {
-                Instance instance = (Instance) sObj;
-
-                BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-                
-                SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
-                
-                if(!sObjLib.contains(instance.getSoundObject())) {
-                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
-                    instance.setSoundObject(clone);
-                    sObjLib.addSoundObject(clone);
-                }
+                instanceSoundObjects.add((Instance) sObj);
+//                if (!sObjLib.contains(instance.getSoundObject())) {
+//                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+//                    instance.setSoundObject(clone);
+//                    sObjLib.addSoundObject(clone);
+//                }
+            } else if (sObj instanceof PolyObject) {
+                PolyObject pObj = (PolyObject) sObj;
+                getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);
@@ -554,6 +546,8 @@ class ScoreMouseProcessor extends MouseAdapter {
                 undoEdit.addSubEdit(tempEdit);
             }
         }
+
+        checkAndAddInstanceSoundObjects(sObjLib, instanceSoundObjects);
 
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(undoEdit);
@@ -597,25 +591,25 @@ class ScoreMouseProcessor extends MouseAdapter {
         } else if ((yTranslation + maxLayer) >= sCanvas.pObj.getSize()) {
             yTranslation = sCanvas.pObj.getSize() - maxLayer - 1;
         }
-        
-        float timeAdjust = (float)xTrans / timeState.getPixelSecond();
-        
+
+        float timeAdjust = (float) xTrans / timeState.getPixelSecond();
+
         float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
 
-        if(timeAdjust < -initialStartTime) {
+        if (timeAdjust < -initialStartTime) {
             timeAdjust = -initialStartTime;
         }
-        
+
         if (timeState.isSnapEnabled()) {
-            
-            
+
+
             float tempStart = initialStartTime + timeAdjust;
             float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
                     timeState.getSnapValue());
-                    
-            
+
+
             timeAdjust = snappedStart - initialStartTime;
-            
+
         }
 
 
@@ -624,7 +618,7 @@ class ScoreMouseProcessor extends MouseAdapter {
         sCanvas.automationPanel.setMultiLineTranslation(timeAdjust);
 
         for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-            
+
 
             int originalLayer = sCanvas.pObj
                     .getLayerNumForY(sCanvas.mBuffer.sObjYValues[i]);
@@ -633,9 +627,9 @@ class ScoreMouseProcessor extends MouseAdapter {
 
             SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
             SoundObject sObj = sObjView.getSoundObject();
-            
-            float newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;    
-            
+
+            float newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;
+
             sObjView.setLocation(sObjView.getX(), newY);
 
             sObjView.setSize(sObjView.getWidth(), sCanvas.pObj
@@ -654,56 +648,59 @@ class ScoreMouseProcessor extends MouseAdapter {
         newWidth += (xVal - sCanvas.start.x);
 
         float newDuration;
-        
+
         SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
-        
+
         if (timeState.isSnapEnabled()) {
             final float snapValue = timeState.getSnapValue();
-            
+
             float endTime = ScoreUtilities.getSnapValueMove(
                     xVal / (float) timeState.getPixelSecond(), snapValue);
-            
-            float minTime = ScoreUtilities.getSnapValueMove(sObj.getStartTime() + snapValue / 2, snapValue);
+
+            float minTime = ScoreUtilities.getSnapValueMove(
+                    sObj.getStartTime() + snapValue / 2, snapValue);
 
             endTime = (endTime < minTime) ? minTime : endTime;
-            
+
             newDuration = endTime - sObj.getStartTime();
-            
+
         } else {
             if (newWidth < EDGE) {
                 newWidth = EDGE;
             }
-            
+
             newDuration = (float) newWidth / timeState.getPixelSecond();
         }
 
         sObj.setSubjectiveDuration(newDuration);
     }
-    
+
     private void resizeSoundObjectLeft(MouseEvent e) {
 //        int newWidth = sCanvas.mBuffer.resizeWidth;
         int newX = e.getX();
-        int endX = (int)(initialEndTime * timeState.getPixelSecond());
-        
+        int endX = (int) (initialEndTime * timeState.getPixelSecond());
+
 //        newWidth += (xVal - sCanvas.start.x);
 
         float newStart;
-        
+
         SoundObject sObj = sCanvas.mBuffer.motionBuffer[0].getSoundObject();
 
-        
+
         if (timeState.isSnapEnabled()) {
             float snapValue = timeState.getSnapValue();
             float endTime = sObj.getStartTime() + sObj.getSubjectiveDuration();
 
-            newStart = ScoreUtilities.getSnapValueMove(newX / (float)timeState.getPixelSecond(), 
+            newStart = ScoreUtilities.getSnapValueMove(
+                    newX / (float) timeState.getPixelSecond(),
                     snapValue);
             newStart = (newStart < 0.0f) ? 0.0f : newStart;
-            
-            if(newStart > endTime) {
-                newStart = ScoreUtilities.getSnapValueMove(endTime - snapValue / 2, snapValue);
+
+            if (newStart > endTime) {
+                newStart = ScoreUtilities.getSnapValueMove(
+                        endTime - snapValue / 2, snapValue);
             }
-            
+
         } else {
             if (newX < 0) {
                 newX = 0;
@@ -715,7 +712,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 
             newStart = (float) newX / timeState.getPixelSecond();
         }
-          
+
 
         float newDuration = initialEndTime - newStart;
 
@@ -725,7 +722,6 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     // MOUSE RELEASED CODE
-
     private void checkScroll(MouseEvent e) {
 
         Point temp = SwingUtilities.convertPoint(sCanvas, e.getPoint(), sCanvas
@@ -733,7 +729,8 @@ class ScoreMouseProcessor extends MouseAdapter {
 
         scrollRect.setLocation(temp);
 
-        ((JViewport) sCanvas.getParent().getParent().getParent()).scrollRectToVisible(scrollRect);
+        ((JViewport) sCanvas.getParent().getParent().getParent()).scrollRectToVisible(
+                scrollRect);
 
     }
 
@@ -773,7 +770,6 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     // UTILITY METHODS
-
     public int getLayerMin(SoundObjectBuffer objBuffer) {
         int min = Integer.MAX_VALUE;
 
@@ -822,7 +818,6 @@ class ScoreMouseProcessor extends MouseAdapter {
         final int index = soundLayerIndex;
 
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -850,7 +845,6 @@ class ScoreMouseProcessor extends MouseAdapter {
 
     public void selectAllBefore(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -879,7 +873,6 @@ class ScoreMouseProcessor extends MouseAdapter {
 
     public void selectAllAfter(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -907,13 +900,12 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     // SELECTION EVENT CODE
-
     public void fireSelectionEvent(SelectionEvent se) {
-        if(listeners != null && listeners.size() > 0) {
+        if (listeners != null && listeners.size() > 0) {
             for (Iterator<SelectionListener> iter = listeners.iterator(); iter.hasNext();) {
                 SelectionListener listener = iter.next();
 
-                if(listener != null) {
+                if (listener != null) {
                     listener.selectionPerformed(se);
                 }
             }
@@ -928,4 +920,66 @@ class ScoreMouseProcessor extends MouseAdapter {
         listeners.remove(sl);
     }
 
+    private void checkAndAddInstancesInPolyObject(PolyObject pObj, SoundObjectLibrary sObjLib) {
+        SoundLayer layer;
+        ArrayList<SoundObject> sObjects;
+
+        for (int i = 0; i < pObj.getSize(); i++) {
+            layer = (SoundLayer) pObj.getLayerAt(i);
+            sObjects = layer.getSoundObjects();
+
+            for (SoundObject sObj : sObjects) {
+                if (sObj instanceof Instance) {
+                    Instance instance = (Instance) sObj;
+
+                    if (!sObjLib.contains(instance.getSoundObject())) {
+                        SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+                        instance.setSoundObject(clone);
+                        sObjLib.addSoundObject(clone);
+                    }
+                }
+            }
+        }
+    }
+
+    private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects, PolyObject pObj) {
+        SoundLayer layer;
+        ArrayList<SoundObject> sObjects;
+
+        for (int i = 0; i < pObj.getSize(); i++) {
+            layer = (SoundLayer) pObj.getLayerAt(i);
+            sObjects = layer.getSoundObjects();
+
+            for (SoundObject sObj : sObjects) {
+                if (sObj instanceof Instance) {
+                    Instance instance = (Instance) sObj;
+                    instanceSoundObjects.add(instance);
+                } else if (sObj instanceof PolyObject) {
+                    getInstancesFromPolyObject(instanceSoundObjects,
+                            (PolyObject) sObj);
+                }
+            }
+        }
+    }
+
+    private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib, Set<Instance> instanceSoundObjects) {
+        Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<SoundObject,SoundObject>();
+
+        for (Instance instance : instanceSoundObjects) {
+            final SoundObject instanceSObj = instance.getSoundObject();
+            if(!sObjLib.contains(instanceSObj)) {
+                SoundObject copy;
+
+                if(originalToCopyMap.containsKey(instanceSObj)) {
+                    copy = originalToCopyMap.get(instanceSObj);
+                } else {
+                    copy = (SoundObject) instance.getSoundObject().clone();
+                    sObjLib.addSoundObject(copy);
+                    originalToCopyMap.put(instanceSObj, copy);
+                }
+
+                instance.setSoundObject(copy);
+            }
+        }
+    }
 }

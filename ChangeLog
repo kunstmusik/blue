@@ -20,7 +20,16 @@ NEW
 * Under Project menu, added option to "Generate Realtime CSD to Screen" that 
   shows what the CSD contains for realtime rendering; user can modify shortcuts
   under program options to add a keyboard shortcut  
- 
+
+FIX
+
+* Pasting PolyObjects that contain Instance SoundObjects where the source object
+  was removed from the SoundObject Library would cause orphan Instance objects
+  to be pasted in; redid paste logic so that SoundObjects pointed to from 
+  pasted Instances, including those within PolyObjects, are re-added to the 
+  SoundObject Library 
+
+
 >Notes for 2.5.2<
 [release 2013.08.22]
 
