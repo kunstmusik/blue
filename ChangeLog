@@ -12,7 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.3<
+[release 2013.xx.xx]
 
+NEW
+
+* Under Project menu, added option to "Generate Realtime CSD to Screen" that 
+  shows what the CSD contains for realtime rendering; user can modify shortcuts
+  under program options to add a keyboard shortcut  
+ 
 >Notes for 2.5.2<
 [release 2013.08.22]
 
