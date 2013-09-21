@@ -37,7 +37,6 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
             return;
         }
 
-        e.consume();
         ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
         Collection<? extends ScoreObject> selectedScoreObjects =
                 Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
@@ -48,9 +47,11 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
             } else {
                 content.add(scoreObj);
             }
+            e.consume();
         } else {
             if (!selectedScoreObjects.contains(scoreObj)) {
                 content.set(Collections.singleton(scoreObj), null);
+                e.consume();
             }
         }
 

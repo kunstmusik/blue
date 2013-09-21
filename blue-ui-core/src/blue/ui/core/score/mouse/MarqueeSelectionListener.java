@@ -37,6 +37,11 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
+
+        if(currentScoreObjectView != null) {
+            return;
+        }
+        
         e.consume();
 
         addMode = e.isShiftDown();

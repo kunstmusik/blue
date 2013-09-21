@@ -23,6 +23,7 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
 import blue.ui.core.score.mouse.MarqueeSelectionListener;
+import blue.ui.core.score.mouse.MoveScoreObjectsListener;
 import blue.ui.core.score.mouse.PopupMenuListener;
 import blue.ui.core.score.mouse.ScoreObjectSelectionListener;
 import java.awt.Cursor;
@@ -51,6 +52,7 @@ public class ScoreMouseListener extends MouseAdapter {
     private MouseAdapter currentGestureListener = null;
     private MouseAdapter[] mouseListeners = {
         new PopupMenuListener(), new ScoreObjectSelectionListener(),
+        new MoveScoreObjectsListener(),
         new MarqueeSelectionListener()
     };
 

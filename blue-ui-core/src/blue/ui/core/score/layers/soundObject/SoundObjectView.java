@@ -26,6 +26,7 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectEvent;
 import blue.soundObject.SoundObjectListener;
 import blue.ui.core.score.ScoreObjectView;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.soundObject.renderer.BarRenderer;
 import blue.ui.core.soundObject.renderer.BarRendererCache;
 import java.awt.BorderLayout;
@@ -184,7 +185,7 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     @Override
     public void addNotify() {
         super.addNotify();
-        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result = ScoreTopComponent.findInstance().getLookup().lookupResult(SoundObject.class);
         result.addLookupListener(this);
         resultChanged(null);
     }
@@ -193,6 +194,7 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     public void removeNotify() {
         super.removeNotify();
         result.removeLookupListener(this);
+        result = null;
     }
 
     @Override
