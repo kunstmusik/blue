@@ -16,8 +16,6 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
-import blue.ui.core.score.undo.MoveSoundObjectsEdit;
-import blue.ui.core.score.undo.ResizeSoundObjectEdit;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
@@ -31,6 +29,11 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.JOptionPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
@@ -274,7 +277,6 @@ class ScoreMouseProcessor extends MouseAdapter {
     @Override
     // FIXME
     public void mouseDragged(MouseEvent e) {
-
 //        if (!isScoreMode()) {
 //            return;
 //        }
@@ -516,7 +518,12 @@ class ScoreMouseProcessor extends MouseAdapter {
             return;
         }
 
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+
+        SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
         AddSoundObjectEdit undoEdit = null;
+
+        Set<Instance> instanceSoundObjects = new HashSet<Instance>();
 
         for (int i = 0; i < sObjBuffer.size(); i++) {
             SoundObject sObj = (SoundObject) sObjBuffer.getSoundObject(i)
@@ -526,17 +533,15 @@ class ScoreMouseProcessor extends MouseAdapter {
                     + layerTranslation;
 
             if (sObj instanceof Instance) {
-                Instance instance = (Instance) sObj;
-
-                BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-
-                SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
-
-                if (!sObjLib.contains(instance.getSoundObject())) {
-                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
-                    instance.setSoundObject(clone);
-                    sObjLib.addSoundObject(clone);
-                }
+                instanceSoundObjects.add((Instance) sObj);
+//                if (!sObjLib.contains(instance.getSoundObject())) {
+//                    SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+//                    instance.setSoundObject(clone);
+//                    sObjLib.addSoundObject(clone);
+//                }
+            } else if (sObj instanceof PolyObject) {
+                PolyObject pObj = (PolyObject) sObj;
+                getInstancesFromPolyObject(instanceSoundObjects, pObj);
             }
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);
@@ -552,6 +557,8 @@ class ScoreMouseProcessor extends MouseAdapter {
                 undoEdit.addSubEdit(tempEdit);
             }
         }
+
+        checkAndAddInstanceSoundObjects(sObjLib, instanceSoundObjects);
 
         BlueUndoManager.setUndoManager("score");
         BlueUndoManager.addEdit(undoEdit);
@@ -643,7 +650,6 @@ class ScoreMouseProcessor extends MouseAdapter {
 //            sObj.setStartTime(newStart);
 //
 //        }
-
     }
 
     private void resizeSoundObject(MouseEvent e) {
@@ -898,5 +904,46 @@ class ScoreMouseProcessor extends MouseAdapter {
                 content.set(selected, null);
             }
         });
+    }
+
+    private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects, PolyObject pObj) {
+        SoundLayer layer;
+        List<SoundObject> sObjects;
+
+        for (int i = 0; i < pObj.getSize(); i++) {
+            layer = pObj.getLayerAt(i);
+            sObjects = layer.getSoundObjects();
+
+            for (SoundObject sObj : sObjects) {
+                if (sObj instanceof Instance) {
+                    Instance instance = (Instance) sObj;
+                    instanceSoundObjects.add(instance);
+                } else if (sObj instanceof PolyObject) {
+                    getInstancesFromPolyObject(instanceSoundObjects,
+                            (PolyObject) sObj);
+                }
+            }
+        }
+    }
+
+    private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib, Set<Instance> instanceSoundObjects) {
+        Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<SoundObject,SoundObject>();
+
+        for (Instance instance : instanceSoundObjects) {
+            final SoundObject instanceSObj = instance.getSoundObject();
+            if(!sObjLib.contains(instanceSObj)) {
+                SoundObject copy;
+
+                if(originalToCopyMap.containsKey(instanceSObj)) {
+                    copy = originalToCopyMap.get(instanceSObj);
+                } else {
+                    copy = (SoundObject) instance.getSoundObject().clone();
+                    sObjLib.addSoundObject(copy);
+                    originalToCopyMap.put(instanceSObj, copy);
+                }
+
+                instance.setSoundObject(copy);
+            }
+        }
     }
 }
