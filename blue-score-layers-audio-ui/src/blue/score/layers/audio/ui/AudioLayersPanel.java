@@ -30,6 +30,7 @@ import blue.score.layers.audio.core.AudioLayerListener;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -48,7 +49,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.openide.util.lookup.InstanceContent;
 
 /**
  *
@@ -68,13 +71,14 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     AffineTransform reverseTransform = new AffineTransform();
     double srcPts[] = new double[4];
     double destPts[] = new double[4];
-    Set<AudioClip> selectedClips = new HashSet<>();
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
+    private final InstanceContent content;
 
-    public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState) {
+    public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState, InstanceContent content) {
         this.setLayout(null);
         this.layerGroup = layerGroup;
         this.timeState = timeState;
+        this.content = content;
 
         transform.setToIdentity();
         transform.setToScale(timeState.getPixelSecond(), 1.0);
@@ -95,11 +99,11 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             }
         });
 
-        AudioLayerPanelMouseListener listener =
-                new AudioLayerPanelMouseListener(this, layerGroup, timeState,
-                selectedClips);
-        this.addMouseListener(listener);
-        this.addMouseMotionListener(listener);
+//        AudioLayerPanelMouseListener listener =
+//                new AudioLayerPanelMouseListener(this, layerGroup, timeState,
+//                selectedClips);
+//        this.addMouseListener(listener);
+//        this.addMouseMotionListener(listener);
 
         new AudioLayersDropTargetListener(this);
 
@@ -146,7 +150,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             layer.removeAudioLayerListener(this);
         }
 
-        selectedClips.clear();
         clipPanelMap.clear();
     }
 
@@ -214,47 +217,57 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void marqueeSelectionPerformed(SelectionMarquee marquee) {
-        selectedClips.clear();
-        if (marquee.intersects(this)) {
-
-            Rectangle rect = marquee.getTranslatedRect(this);
-            int top = rect.y;
-            int bottom = top + rect.height;
-
-            double start = rect.x / (double) timeState.getPixelSecond();
-            double end = (rect.x + rect.width) / (double) timeState.getPixelSecond();
-
-            int y = 0;
-
-            for (int i = 0; i < layerGroup.getSize(); i++) {
-                AudioLayer layer = layerGroup.getLayerAt(i);
-                int layerHeight = layer.getAudioLayerHeight();
-
-                if (y <= bottom && (y + layerHeight) >= top) {
-
-                    for (AudioClip clip : layer) {
-                        if (clip.getStartTime() <= end
-                                && (clip.getStartTime() + clip.getSubjectiveDuration()) >= start) {
-                            selectedClips.add(clip);
-                            clipPanelMap.get(clip).setSelected(true);
-                        } else {
-                            clipPanelMap.get(clip).setSelected(false);
-                        }
-                    }
-                } else {
-                    for (AudioClip clip : layer) {
-                        clipPanelMap.get(clip).setSelected(false);
-                    }
-                }
-
-                y += layerHeight;
+        Component[] comps = getComponents();
+        for (int i = 0; i < comps.length; i++) {
+            if (!(comps[i] instanceof AudioClipPanel)) {
+                continue;
             }
-        }
-        //TODO - this could be smarter by calculating affected area and repainting
-        // only the union of all changed clips
-        repaint();
 
-        // ignore as this panel does not handle this event
+            if (marquee.intersects((JComponent) comps[i])) {
+                content.add(((AudioClipPanel) comps[i]).getScoreObject());
+            }
+
+        }
+//        if (marquee.intersects(this)) {
+//
+//            Rectangle rect = marquee.getTranslatedRect(this);
+//            int top = rect.y;
+//            int bottom = top + rect.height;
+//
+//            double start = rect.x / (double) timeState.getPixelSecond();
+//            double end = (rect.x + rect.width) / (double) timeState.getPixelSecond();
+//
+//            int y = 0;
+//
+//            for (int i = 0; i < layerGroup.getSize(); i++) {
+//                AudioLayer layer = layerGroup.getLayerAt(i);
+//                int layerHeight = layer.getAudioLayerHeight();
+//
+//                if (y <= bottom && (y + layerHeight) >= top) {
+//
+//                    for (AudioClip clip : layer) {
+//                        if (clip.getStartTime() <= end
+//                                && (clip.getStartTime() + clip.getSubjectiveDuration()) >= start) {
+//                            selectedClips.add(clip);
+//                            clipPanelMap.get(clip).setSelected(true);
+//                        } else {
+//                            clipPanelMap.get(clip).setSelected(false);
+//                        }
+//                    }
+//                } else {
+//                    for (AudioClip clip : layer) {
+//                        clipPanelMap.get(clip).setSelected(false);
+//                    }
+//                }
+//
+//                y += layerHeight;
+//            }
+//        }
+//        //TODO - this could be smarter by calculating affected area and repainting
+//        // only the union of all changed clips
+//        repaint();
+//
+//        // ignore as this panel does not handle this event
     }
 
     @Override
@@ -392,6 +405,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         AudioClipPanel panel = clipPanelMap.get(clip);
         remove(panel);
         clipPanelMap.remove(clip);
+
+        //TODO - need to see if this is where clip should be removed from selected
     }
 
     private void updateAudioClipYandHeight() {
@@ -411,28 +426,28 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         }
     }
 
-    protected void setSelectedAudioClip(AudioClipPanel panel) {
-        selectedClips.clear();
-        for (int i = 0; i < getComponentCount(); i++) {
-            Component c = getComponent(i);
-
-            if (c == panel) {
-                selectedClips.add(panel.getScoreObject());
-                panel.setSelected(true);
-            } else if (c instanceof AudioClipPanel) {
-                ((AudioClipPanel) c).setSelected(false);
-            }
-        }
-    }
-
-    protected void toggleSelectedAudioClip(AudioClipPanel panel) {
-        if (panel.isSelected()) {
-            selectedClips.remove(panel.getScoreObject());
-        } else {
-            selectedClips.add(panel.getScoreObject());
-        }
-        panel.setSelected(!panel.isSelected());
-    }
+//    protected void setSelectedAudioClip(AudioClipPanel panel) {
+//        selectedClips.clear();
+//        for (int i = 0; i < getComponentCount(); i++) {
+//            Component c = getComponent(i);
+//
+//            if (c == panel) {
+//                selectedClips.add(panel.getScoreObject());
+//                panel.setSelected(true);
+//            } else if (c instanceof AudioClipPanel) {
+//                ((AudioClipPanel) c).setSelected(false);
+//            }
+//        }
+//    }
+//
+//    protected void toggleSelectedAudioClip(AudioClipPanel panel) {
+//        if (panel.isSelected()) {
+//            selectedClips.remove(panel.getScoreObject());
+//        } else {
+//            selectedClips.add(panel.getScoreObject());
+//        }
+//        panel.setSelected(!panel.isSelected());
+//    }
 
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {

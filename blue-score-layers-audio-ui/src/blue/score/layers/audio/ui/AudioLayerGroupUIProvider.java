@@ -39,7 +39,7 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
         
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioLayersPanel((AudioLayerGroup) layerGroup,
-                    timeState);
+                    timeState, ic);
         }
         return null;
     }

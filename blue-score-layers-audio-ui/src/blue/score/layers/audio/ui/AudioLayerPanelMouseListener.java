@@ -78,11 +78,11 @@ public class AudioLayerPanelMouseListener extends MouseAdapter {
         if(UiUtilities.isRightMouseButton(e)){
             
         } else if (SwingUtilities.isLeftMouseButton(e)) {
-            if(e.isShiftDown()) {
-                panel.toggleSelectedAudioClip(clipPanel);
-            } else {
-                panel.setSelectedAudioClip(clipPanel);
-            }    
+//            if(e.isShiftDown()) {
+//                panel.toggleSelectedAudioClip(clipPanel);
+//            } else {
+//                panel.setSelectedAudioClip(clipPanel);
+//            }    
         }
     }
 

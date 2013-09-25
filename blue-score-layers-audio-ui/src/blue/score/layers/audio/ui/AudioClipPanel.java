@@ -19,35 +19,40 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
+import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreObjectView;
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
 
 /**
  *
  * @author stevenyi
  */
 public class AudioClipPanel extends JPanel 
-        implements PropertyChangeListener, ScoreObjectView<AudioClip> {
+        implements PropertyChangeListener, ScoreObjectView<AudioClip>, LookupListener {
 
     private final AudioClip audioClip;
     private final TimeState timeState;
     boolean selected = false;
     static Color selectedBg = new Color(255, 255, 255, 128);
 
+
+    Lookup.Result<AudioClip> result = null;
     public AudioClipPanel(AudioClip audioClip, TimeState timeState) {
         this.audioClip = audioClip;
         this.timeState = timeState;
 
-        audioClip.addPropertyChangeListener(this);
-        timeState.addPropertyChangeListener(this);
 
         setOpaque(true);
         setBackground(Color.DARK_GRAY);
@@ -58,9 +63,23 @@ public class AudioClipPanel extends JPanel
     }
 
     @Override
+    public void addNotify() {
+        super.addNotify();
+
+        audioClip.addPropertyChangeListener(this);
+        timeState.addPropertyChangeListener(this);
+
+        result = ScoreTopComponent.findInstance().getLookup().lookupResult(AudioClip.class);
+        result.addLookupListener(this);
+    }
+    
+    @Override
     public void removeNotify() {
         audioClip.removePropertyChangeListener(this);
         timeState.removePropertyChangeListener(this);
+        result.removeLookupListener(this);
+        result = null;
+        
         super.removeNotify();
     }
 
@@ -124,7 +143,7 @@ public class AudioClipPanel extends JPanel
             }
         } else if (evt.getSource() == this.audioClip) {
             switch (evt.getPropertyName()) {
-                case "start":
+                case "startTime":
                 case "duration":
                     reset();
                     break;
@@ -142,5 +161,13 @@ public class AudioClipPanel extends JPanel
     @Override
     public AudioClip getScoreObject() {
         return audioClip;
+    }
+
+    @Override
+    public void resultChanged(LookupEvent ev) {
+        Collection<? extends AudioClip> soundObjects = result.allInstances();
+        boolean newSelected = soundObjects.contains(this.audioClip);
+
+        setSelected(newSelected);
     }
 }

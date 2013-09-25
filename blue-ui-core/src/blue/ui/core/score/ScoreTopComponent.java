@@ -974,4 +974,8 @@ public final class ScoreTopComponent extends TopComponent
                 SwingUtilities.convertPoint(e.getComponent(),
                 e.getPoint(), (JComponent) retVal));
     }
+
+    public TimeState getTimeState() {
+        return this.currentTimeState;
+    }
 }

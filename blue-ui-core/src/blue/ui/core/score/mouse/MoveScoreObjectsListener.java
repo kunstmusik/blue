@@ -20,11 +20,11 @@
 package blue.ui.core.score.mouse;
 
 import blue.score.ScoreObject;
+import blue.score.TimeState;
+import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
 
@@ -36,8 +36,12 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
     Point startPoint;
 
-    Collection<? extends ScoreObject> selectedScoreObjects = null;
-    Map<ScoreObject, Float> startTimes = new HashMap<>();
+    //Collection<? extends ScoreObject> selectedScoreObjects = null;
+    //Map<ScoreObject, Float> startTimes = new HashMap<>();
+    
+    ScoreObject[] selectedScoreObjects = null;
+    float[] startTimes = null;
+    float minDiffTime = Float.MIN_VALUE;
     
     @Override
     public void mousePressed(MouseEvent e) {
@@ -60,17 +64,54 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         e.consume();
 
         startPoint = e.getPoint();
-        selectedScoreObjects = temp;
+        selectedScoreObjects = temp.toArray(new ScoreObject[0]);
+        startTimes = new float[selectedScoreObjects.length];
 
-        for (ScoreObject tempObj : temp) {
-           startTimes.put(tempObj, tempObj.getStartTime());
+        minDiffTime = Float.MAX_VALUE;
+        
+        for (int i = 0; i < selectedScoreObjects.length; i++) {
+            startTimes[i] = selectedScoreObjects[i].getStartTime();
+            if(startTimes[i] < minDiffTime) {
+                minDiffTime = startTimes[i];
+            }
+            System.out.println(i + ") " + startTimes[i]);
         }
+        minDiffTime = -minDiffTime;
+        
+//        for (ScoreObject tempObj : temp) {
+//           startTimes.put(tempObj, tempObj.getStartTime());
+//        }
         
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
         e.consume();
+
+        float diffTime = e.getX() - startPoint.x;
+        TimeState timeState = scoreTC.getTimeState();
+        diffTime = diffTime / timeState.getPixelSecond();
+
+        if(diffTime < minDiffTime) {
+            diffTime = minDiffTime;
+        }
+        
+        if (timeState.isSnapEnabled()) {
+
+            float tempStart = -minDiffTime + diffTime;
+            float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
+                    timeState.getSnapValue());
+
+            diffTime = snappedStart + minDiffTime;
+
+        }
+
+
+        for(int i = 0; i < selectedScoreObjects.length; i++) {
+            selectedScoreObjects[i].setStartTime(startTimes[i] + diffTime);
+        }
+        
+        System.out.println("Diff Time: " + diffTime);
     }
 
     @Override
@@ -78,8 +119,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         e.consume();
         selectedScoreObjects = null;
-        startTimes.clear();
-        
+        startTimes = null;
     }
 
 
