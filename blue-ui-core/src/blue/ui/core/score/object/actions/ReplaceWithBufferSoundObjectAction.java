@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.actions;
+package blue.ui.core.score.object.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,17 +28,15 @@ import org.openide.util.NbBundle.Messages;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.CopyAction")
+        id = "blue.ui.core.score.actions.ReplaceWithBufferSoundObjectAction")
 @ActionRegistration(
-        displayName = "#CTL_CopyAction")
-@Messages("CTL_CopyAction=&Copy")
-@ActionReference(path = "blue/score/actions", position = 210, separatorAfter = 215)
-public final class CopyAction implements ActionListener {
+        displayName = "#CTL_ReplaceWithBufferSoundObjectAction")
+@Messages("CTL_ReplaceWithBufferSoundObjectAction=Repl&ace with SoundObject in Buffer")
+@ActionReference(path = "blue/score/actions", position = 60)
+public final class ReplaceWithBufferSoundObjectAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-// FIXME - this should check if SoundObject or ScoreObject
-        // need to create a generic scoreObject buffer
-//        sCanvas.buffer.copySoundObjects(sCanvas.mBuffer);
+        // TODO implement action body
     }
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.actions;
+package blue.ui.core.score.object.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

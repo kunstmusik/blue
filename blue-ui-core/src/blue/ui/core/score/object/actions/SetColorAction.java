@@ -17,10 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.actions;
+package blue.ui.core.score.object.actions;
 
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.soundObject.MotionBuffer;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JColorChooser;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -28,16 +34,33 @@ import org.openide.util.NbBundle.Messages;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.RemoveAction")
+        id = "blue.ui.core.score.actions.SetColorAction")
 @ActionRegistration(
-        displayName = "#CTL_RemoveAction")
-@Messages("CTL_RemoveAction=&Remove ScoreObjects")
-@ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305)
-public final class RemoveAction implements ActionListener {
+        displayName = "#CTL_SetColorAction")
+@Messages("CTL_SetColorAction=Set Color")
+@ActionReference(path = "blue/score/actions", position = 400, separatorAfter = 405)
+public final class SetColorAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // FIXME
-        //sCanvas.removeSoundObjects();
+//        MotionBuffer buffer = MotionBuffer.getInstance();
+//
+//        if (buffer.size() == 0) {
+//            return;
+//        }
+//
+//        SoundObject[] sObjects = buffer.getSoundObjectsAsArray();
+//
+//        Color retVal = JColorChooser.showDialog(SwingUtilities.getRoot(
+//                (JComponent) e.getSource()), "Choose Color",
+//                sObjects[0].getBackgroundColor());
+//
+//        if (retVal != null) {
+//            for (int i = 0; i < sObjects.length; i++) {
+//                SoundObject sObj = sObjects[i];
+//                sObj.setBackgroundColor(retVal);
+//            }
+//        }
+
     }
 }

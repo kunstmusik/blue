@@ -17,16 +17,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.actions;
+package blue.ui.core.score.object.actions;
 
-import blue.BlueData;
-import blue.projects.BlueProjectManager;
-import blue.soundObject.Instance;
+import blue.soundObject.External;
+import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -37,48 +38,60 @@ import org.openide.util.NbBundle.Messages;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.AddToSoundObjectLibraryAction")
+        id = "blue.ui.core.score.actions.ConvertToPolyObjectAction")
 @ActionRegistration(
-        displayName = "#CTL_AddToSoundObjectLibraryAction", lazy = true)
-@Messages("CTL_AddToSoundObjectLibraryAction=Add to SoundObject &Library")
-@ActionReference(path = "blue/score/actions", position = 20, separatorAfter = 25)
-public final class AddToSoundObjectLibraryAction extends AbstractAction
+        displayName = "#CTL_ConvertToPolyObjectAction", lazy = true)
+@Messages("CTL_ConvertToPolyObjectAction=Convert to &PolyObject")
+@ActionReference(path = "blue/score/actions", position = 40)
+public final class ConvertToPolyObjectAction extends AbstractAction
         implements ContextAwareAction {
 
     private final Collection<? extends SoundObject> soundObjects;
 
-    public AddToSoundObjectLibraryAction() {
+    public ConvertToPolyObjectAction() {
         this(null);
     }
 
-    public AddToSoundObjectLibraryAction(Collection<? extends SoundObject> soundObjects) {
-        super(NbBundle.getMessage(AlignRightAction.class, "CTL_AddToSoundObjectLibraryAction"));
+    public ConvertToPolyObjectAction(Collection<? extends SoundObject> soundObjects) {
+        super(NbBundle.getMessage(AlignRightAction.class,
+                "CTL_ConvertToPolyObjectAction"));
         this.soundObjects = soundObjects;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        SoundObject sObj = (SoundObject) soundObjects.iterator().next().clone();
-
-        if (sObj instanceof Instance) {
-            return;
-        }
-
-//        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-//        data.getSoundObjectLibrary().addSoundObject(sObj);
+        //        int retVal = JOptionPane.showConfirmDialog(null,
+//                "This operation can not be undone.\nAre you sure?");
 //
-//        Instance i = new Instance(sObj);
+//        if (retVal != JOptionPane.OK_OPTION) {
+//            return;
+//        }
 //
-//        replaceSoundObject(sObjView.getSoundObject(), i, true, false);
+//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
+//
+//        PolyObject temp = sCanvas.mBuffer.getBufferedPolyObject();
+//
+//        removeSObj();
+//
+//        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
+//        temp.setStartTime(startTime);
+//
+//        sCanvas.getPolyObject().addSoundObject(index, temp);
+//        content.set(Collections.emptyList(), null);
     }
 
     @Override
     public boolean isEnabled() {
-        return soundObjects.size() == 1;
+        if (soundObjects.size() != 1) {
+            return false;
+        }
+        SoundObject sObj = soundObjects.iterator().next();
+        return (sObj instanceof PythonObject || sObj instanceof External);
     }
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AddToSoundObjectLibraryAction(actionContext.lookupAll(SoundObject.class));
+        return new AlignRightAction(actionContext.lookupAll(SoundObject.class));
     }
+
 }

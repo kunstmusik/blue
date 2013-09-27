@@ -17,16 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.actions;
+package blue.ui.core.score.object.actions;
 
 import blue.soundObject.SoundObject;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -34,27 +31,27 @@ import org.openide.util.NbBundle.Messages;
 
 //@ActionID(
 //        category = "Blue",
-//        id = "blue.ui.core.score.actions.AlignRightAction")
+//        id = "blue.ui.core.score.actions.AlignCenterAction")
 //@ActionRegistration(
-//        displayName = "#CTL_AlignRightAction")
-@Messages("CTL_AlignRightAction=Align Right")
-//@ActionReference(path = "blue/score/actions/Align", position = 110)
-public final class AlignRightAction extends AbstractAction implements ContextAwareAction {
+//        displayName = "#CTL_AlignCenterAction")
+@Messages("CTL_AlignCenterAction=Align Center")
+//@ActionReference(path = "blue/score/actions", position = 110)
+public final class AlignCenterAction extends AbstractAction implements ContextAwareAction {
 
     private final Collection<? extends SoundObject> soundObjects;
 
-    public AlignRightAction() {
+    public AlignCenterAction() {
         this(null);
     }
 
-    public AlignRightAction(Collection<? extends SoundObject> soundObjects) {
-        super(NbBundle.getMessage(AlignRightAction.class, "CTL_AlignRightAction"));
+    public AlignCenterAction(Collection<? extends SoundObject> soundObjects) {
+        super(NbBundle.getMessage(AlignCenterAction.class, "CTL_AlignCenterAction"));
         this.soundObjects = soundObjects;
     }
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-       //        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
+//        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
 //        if (soundObjects.length < 2) {
 //            return;
 //        }
@@ -62,38 +59,47 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 //        float initialStartTimes[] = new float[soundObjects.length];
 //        float endingStartTimes[] = new float[soundObjects.length];
 //
-//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
-//        initialStartTimes[0] = farRight;
+//        float farLeft = soundObjects[0].getStartTime();
+//        initialStartTimes[0] = farLeft;
 //
-//        float startTime;
+//        float tempStart;
+//        for (int i = 1; i < soundObjects.length; i++) {
+//            tempStart = soundObjects[i].getStartTime();
+//
+//            initialStartTimes[i] = tempStart;
+//
+//            if (tempStart < farLeft) {
+//                farLeft = tempStart;
+//            }
+//        }
+//
+//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
 //        float endTime;
 //
 //        for (int i = 1; i < soundObjects.length; i++) {
-//
-//            startTime = soundObjects[i].getStartTime();
-//            endTime = startTime + soundObjects[i].getSubjectiveDuration();
-//
-//            initialStartTimes[i] = startTime;
+//            endTime = soundObjects[i].getStartTime() + soundObjects[i].getSubjectiveDuration();
 //
 //            if (endTime > farRight) {
 //                farRight = endTime;
 //            }
 //        }
 //
-//        float newStart;
+//        float centerTime = ((farRight - farLeft) / 2) + farLeft;
+//
+//        float newEndTime;
 //        for (int i = 0; i < soundObjects.length; i++) {
-//            newStart = farRight - soundObjects[i].getSubjectiveDuration();
-//            soundObjects[i].setStartTime(newStart);
-//            endingStartTimes[i] = newStart;
+//            newEndTime = centerTime - (soundObjects[i].getSubjectiveDuration() / 2);
+//            soundObjects[i].setStartTime(newEndTime);
+//            endingStartTimes[i] = newEndTime;
 //        }
 //
 //        BlueUndoManager.setUndoManager("score");
 //        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
 //                endingStartTimes);
 //
-//        edit.setPresentationName("Align Right");
+//        edit.setPresentationName("Align Center");
 //
-//        BlueUndoManager.addEdit(edit); 
+//        BlueUndoManager.addEdit(edit)
     }
 
     @Override
@@ -105,6 +111,6 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AlignRightAction(actionContext.lookupAll(SoundObject.class));
+        return new AlignCenterAction(actionContext.lookupAll(SoundObject.class));
     }
 }
