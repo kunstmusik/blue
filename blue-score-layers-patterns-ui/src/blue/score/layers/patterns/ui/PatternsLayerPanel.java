@@ -39,6 +39,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.Action;
 import javax.swing.JPanel;
 
 /**
@@ -213,4 +214,11 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         throw new UnsupportedOperationException(
                 "Error: getScoreObjectViewAtPoint should not be called for PatternsLayerPanel"); 
     }
+
+    @Override
+    public Action[] getLayerActions() {
+        throw new UnsupportedOperationException(
+                "Error: getLayerActions should not be called for PatternsLayerPanel");
+    }
+
 }

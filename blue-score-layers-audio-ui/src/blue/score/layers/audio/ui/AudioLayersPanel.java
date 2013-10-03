@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.openide.util.lookup.InstanceContent;
@@ -460,6 +461,11 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             }
         }
 
+        return null;
+    }
+
+    @Override
+    public Action[] getLayerActions() {
         return null;
     }
 }

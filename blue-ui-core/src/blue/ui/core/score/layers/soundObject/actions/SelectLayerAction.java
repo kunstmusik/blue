@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2013
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,23 +17,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.score.layers;
+package blue.ui.core.score.layers.soundObject.actions;
 
-import blue.ui.core.score.ScoreObjectView;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import javax.swing.Action;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle.Messages;
 
-/**
- *
- * @author stevenyi
- */
-public interface LayerGroupPanel {
-    public void marqueeSelectionPerformed(SelectionMarquee marquee);
-    
-    public void paintNavigatorView(Graphics2D g2d);
+@ActionID(
+        category = "Blue",
+        id = "blue.ui.core.score.layers.soundObject.actions.SelectLayerAction")
+@ActionRegistration(
+        displayName = "#CTL_SelectLayerAction")
+@Messages("CTL_SelectLayerAction=Select Layer")
+@ActionReference(path = "blue/score/layers/soundObject/actions", 
+        position = 80)
+public final class SelectLayerAction implements ActionListener {
 
-    public ScoreObjectView getScoreObjectViewAtPoint(Point p);
-
-    public Action[] getLayerActions();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        // TODO implement action body
+    }
 }

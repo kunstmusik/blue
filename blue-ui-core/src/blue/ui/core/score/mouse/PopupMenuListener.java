@@ -21,9 +21,9 @@ package blue.ui.core.score.mouse;
 
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
@@ -64,6 +64,18 @@ public class PopupMenuListener extends BlueMouseAdapter {
 
         } else if(currentLayerGroupPanel != null) {
 
+            Action[] actions = currentLayerGroupPanel.getLayerActions();
+
+            if(actions != null && actions.length > 0) {
+                Point p = e.getPoint();
+                content.add(currentLayerGroupPanel);
+                content.add(p);
+                final JPopupMenu menu = Utilities.actionsToPopup(actions, 
+                        ScoreTopComponent.findInstance().getLookup());
+                menu.show(comp.getParent(), e.getX(), e.getY());
+                content.remove(p);
+                content.remove(currentLayerGroupPanel);
+            }
             
 //        } else if (e.getY() < sCanvas.pObj.getTotalHeight()) {
 //            sCanvas.showSoundLayerPopup(getSoundLayerIndex(e.getY()), e.getX(),
