@@ -19,11 +19,19 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.BlueSystem;
+import blue.score.ScoreObject;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.undo.MoveSoundObjectsEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -37,53 +45,50 @@ public final class ReverseAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //FIXME
-//        if (sCanvas.mBuffer.size() < 2) {
-//            return;
-//        }
-//
-//        sCanvas.mBuffer.motionBufferObjects();
-//
-//        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
-//
-//        float start = Float.MAX_VALUE;
-//        float end = Float.MIN_VALUE;
-//
-//        for (int i = 0; i < sObjViews.length; i++) {
-//            SoundObject sObj = sObjViews[i].getSoundObject();
-//
-//            float tempStart = sObj.getStartTime();
-//            float tempEnd = tempStart + sObj.getSubjectiveDuration();
-//
-//            if (tempStart < start) {
-//                start = tempStart;
-//            }
-//
-//            if (tempEnd > end) {
-//                end = tempEnd;
-//            }
-//        }
-//
-//        for (int i = 0; i < sObjViews.length; i++) {
-//            SoundObject sObj = sObjViews[i].getSoundObject();
-//
-//            float tempStart = sObj.getStartTime();
-//            float tempEnd = tempStart + sObj.getSubjectiveDuration();
-//
-//            float newStart = start + (end - tempEnd);
-//
-//            sObj.setStartTime(newStart);
-//
-//        }
-//
-//        BlueUndoManager.setUndoManager("score");
-//
+
+        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
+        Collection<? extends ScoreObject> selected = lkp.lookupAll(
+                ScoreObject.class);
+
+        if (selected.size() < 2) {
+            return;
+        }
+
+        float start = Float.MAX_VALUE;
+        float end = Float.MIN_VALUE;
+
+        for (ScoreObject scoreObject : selected) {
+            float tempStart = scoreObject.getStartTime();
+            float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+
+            if (tempStart < start) {
+                start = tempStart;
+            }
+
+            if (tempEnd > end) {
+                end = tempEnd;
+            }
+        }
+
+        for (ScoreObject scoreObject : selected) {
+            float tempStart = scoreObject.getStartTime();
+            float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+
+            float newStart = start + (end - tempEnd);
+
+            scoreObject.setStartTime(newStart);
+        }
+
+        BlueUndoManager.setUndoManager("score");
+
+// FIXME - need to do undoable edit here!
+
 //        MoveSoundObjectsEdit edit = sCanvas.mBuffer.getMoveEdit(
 //                sCanvas.getPolyObject());
 //
 //        edit.setPresentationName(BlueSystem.getString(
 //                "soundObjectPopup.reverse.text"));
-//
+
 //        BlueUndoManager.addEdit(edit);
     }
 }
