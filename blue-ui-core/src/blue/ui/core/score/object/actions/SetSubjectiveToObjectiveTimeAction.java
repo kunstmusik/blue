@@ -20,13 +20,17 @@
 package blue.ui.core.score.object.actions;
 
 import blue.BlueSystem;
+import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -40,16 +44,30 @@ public final class SetSubjectiveToObjectiveTimeAction implements ActionListener 
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // TODO implement action bo
-//        SoundObject sObj = this.sObjView.getSoundObject();
-//        if (sObj.getObjectiveDuration() <= 0) {
-//            JOptionPane.showMessageDialog(
-//                    null,
-//                    BlueSystem.getString("soundObjectPopup.setTime.error.text"),
-//                    BlueSystem.getString("soundObjectPopup.setTime.error.title"),
-//                    JOptionPane.ERROR_MESSAGE);
-//            return;
-//        }
-//        this.sObjView.setSubjectiveTime(sObj.getObjectiveDuration());
+
+        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
+        Collection<? extends ScoreObject> selected = lkp.lookupAll(
+                ScoreObject.class);
+        Collection<? extends SoundObject> sObjects = lkp.lookupAll(
+                SoundObject.class);
+
+
+        if (sObjects.size() > 0 && selected.size() == sObjects.size()) {
+            for (SoundObject soundObject : sObjects) {
+
+                if (soundObject.getObjectiveDuration() <= 0) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            BlueSystem.getString(
+                            "soundObjectPopup.setTime.error.text"),
+                            BlueSystem.getString(
+                            "soundObjectPopup.setTime.error.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                soundObject.setSubjectiveDuration(soundObject.getObjectiveDuration());
+            }
+        }
+
     }
 }
