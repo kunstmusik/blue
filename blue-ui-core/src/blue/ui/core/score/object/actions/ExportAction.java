@@ -19,9 +19,11 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.FileChooserManager;
 import electric.xml.Element;
 import java.awt.event.ActionEvent;
@@ -30,13 +32,18 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
@@ -47,53 +54,79 @@ import org.openide.util.NbBundle.Messages;
 @ActionReference(path = "blue/score/actions", position = 500)
 public final class ExportAction implements ActionListener {
 
+    private static final String EXPORT_DIALOG = "sObj.export";
+    
     @Override
     public void actionPerformed(ActionEvent e) {
 
-//        int retVal = FileChooserManager.getDefault().showSaveDialog(
-//                EXPORT_DIALOG, SwingUtilities.getRoot(sCanvas));
-//
-//        if (retVal == JFileChooser.APPROVE_OPTION) {
-//
-//            File f = FileChooserManager.getDefault().getSelectedFile(
-//                    EXPORT_DIALOG);
-//
-//            if (f.exists()) {
-//                int overWrite = JOptionPane.showConfirmDialog(
-//                        SwingUtilities.getRoot(sCanvas),
-//                        "Please confirm you would like to overwrite this file.");
-//
-//                if (overWrite != JOptionPane.OK_OPTION) {
-//                    return;
-//                }
-//            }
-//
-//            SoundObject sObj = sObjView.getSoundObject();
-//
-//            if ((sObj instanceof Instance) || ((sObj instanceof PolyObject) && containsInstance(
-//                    (PolyObject) sObj))) {
-//                JOptionPane.showMessageDialog(
-//                        SwingUtilities.getRoot(sCanvas),
-//                        "Error: Export of Instance or " + "PolyObjects containing Instance " + "is not allowed.",
-//                        "Error", JOptionPane.ERROR_MESSAGE);
-//                return;
-//            }
-//
-//            Element node = sObj.saveAsXML(null);
-//
-//            PrintWriter out;
-//
-//            try {
-//                out = new PrintWriter(new FileWriter(f));
-//                out.print(node.toString());
-//
-//                out.flush();
-//                out.close();
-//            } catch (IOException ex) {
-//                ex.printStackTrace();
-//            }
-//
-//        }
+        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
+        Collection<? extends ScoreObject> selected = lkp.lookupAll(
+                ScoreObject.class);
+        Collection<? extends SoundObject> sObjects = lkp.lookupAll(SoundObject.class);
+
+        if (selected.size() == 1 && sObjects.size() == 1) {
+
+            int retVal = FileChooserManager.getDefault().showSaveDialog(
+                    EXPORT_DIALOG, WindowManager.getDefault().getMainWindow());
+
+            if (retVal == JFileChooser.APPROVE_OPTION) {
+
+                File f = FileChooserManager.getDefault().getSelectedFile(
+                        EXPORT_DIALOG);
+
+                if (f.exists()) {
+                    int overWrite = JOptionPane.showConfirmDialog(
+                            SwingUtilities.getRoot(WindowManager.getDefault().getMainWindow()),
+                            "Please confirm you would like to overwrite this file.");
+
+                    if (overWrite != JOptionPane.OK_OPTION) {
+                        return;
+                    }
+                }
+
+                SoundObject sObj = sObjects.iterator().next();
+                if ((sObj instanceof Instance) || 
+                        ((sObj instanceof PolyObject) && containsInstance(
+                        (PolyObject) sObj))) {
+                    JOptionPane.showMessageDialog(
+                            WindowManager.getDefault().getMainWindow(),
+                            "Error: Export of Instance or " + "PolyObjects containing Instance " + "is not allowed.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                Element node = sObj.saveAsXML(null);
+
+                PrintWriter out;
+
+                try {
+                    out = new PrintWriter(new FileWriter(f));
+                    out.print(node.toString());
+
+                    out.flush();
+                    out.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    protected boolean containsInstance(PolyObject pObj) {
+        List<SoundObject> soundObjects = pObj.getSoundObjects(true);
+
+        for (Iterator<SoundObject> iter = soundObjects.iterator(); iter.hasNext();) {
+            SoundObject sObj = iter.next();
+
+            if (sObj instanceof PolyObject) {
+                if (containsInstance((PolyObject) sObj)) {
+                    return true;
+                }
+            } else if (sObj instanceof Instance) {
+                return true;
+            }
+        }
+        return false;
     }
 }
-
