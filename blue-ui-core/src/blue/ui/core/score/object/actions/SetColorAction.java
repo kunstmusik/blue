@@ -19,18 +19,22 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.layers.soundObject.MotionBuffer;
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
@@ -43,24 +47,25 @@ public final class SetColorAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-//        MotionBuffer buffer = MotionBuffer.getInstance();
-//
-//        if (buffer.size() == 0) {
-//            return;
-//        }
-//
-//        SoundObject[] sObjects = buffer.getSoundObjectsAsArray();
-//
-//        Color retVal = JColorChooser.showDialog(SwingUtilities.getRoot(
-//                (JComponent) e.getSource()), "Choose Color",
-//                sObjects[0].getBackgroundColor());
-//
-//        if (retVal != null) {
-//            for (int i = 0; i < sObjects.length; i++) {
-//                SoundObject sObj = sObjects[i];
-//                sObj.setBackgroundColor(retVal);
-//            }
-//        }
 
+
+        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
+        Collection<? extends ScoreObject> selected = lkp.lookupAll(
+                ScoreObject.class);
+        Collection<? extends SoundObject> sObjects = lkp.lookupAll(SoundObject.class);
+
+
+        if (sObjects.size() > 0 && selected.size() == sObjects.size()) {
+
+            Color retVal = JColorChooser.showDialog(
+                    WindowManager.getDefault().getMainWindow(), "Choose Color",
+                    sObjects.iterator().next().getBackgroundColor());
+
+            if (retVal != null) {
+                for (SoundObject sObj : sObjects) {
+                    sObj.setBackgroundColor(retVal);
+                }
+            }
+        }
     }
 }
