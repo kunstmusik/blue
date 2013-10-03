@@ -74,7 +74,6 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
             if(startTimes[i] < minDiffTime) {
                 minDiffTime = startTimes[i];
             }
-            System.out.println(i + ") " + startTimes[i]);
         }
         minDiffTime = -minDiffTime;
         
@@ -110,8 +109,6 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         for(int i = 0; i < selectedScoreObjects.length; i++) {
             selectedScoreObjects[i].setStartTime(startTimes[i] + diffTime);
         }
-        
-        System.out.println("Diff Time: " + diffTime);
     }
 
     @Override
