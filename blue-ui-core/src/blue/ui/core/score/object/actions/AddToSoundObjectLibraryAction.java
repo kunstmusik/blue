@@ -21,10 +21,17 @@ package blue.ui.core.score.object.actions;
 
 import blue.BlueData;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
@@ -39,23 +46,31 @@ import org.openide.util.NbBundle.Messages;
         category = "Blue",
         id = "blue.ui.core.score.actions.AddToSoundObjectLibraryAction")
 @ActionRegistration(
-        displayName = "#CTL_AddToSoundObjectLibraryAction", lazy = true)
+        displayName = "#CTL_AddToSoundObjectLibraryAction")
 @Messages("CTL_AddToSoundObjectLibraryAction=Add to SoundObject &Library")
 @ActionReference(path = "blue/score/actions", position = 20, separatorAfter = 25)
 public final class AddToSoundObjectLibraryAction extends AbstractAction
         implements ContextAwareAction {
 
+    private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
+    private final LayerGroupPanel panel;
 
     public AddToSoundObjectLibraryAction() {
-        this(null);
+        this(null, null, null);
     }
 
-    public AddToSoundObjectLibraryAction(Collection<? extends SoundObject> soundObjects) {
-        super(NbBundle.getMessage(AlignRightAction.class, "CTL_AddToSoundObjectLibraryAction"));
+    public AddToSoundObjectLibraryAction(
+            Collection<? extends ScoreObject> scoreObjects,
+            Collection<? extends SoundObject> soundObjects,
+            LayerGroupPanel panel) {
+        super(NbBundle.getMessage(AlignRightAction.class,
+                "CTL_AddToSoundObjectLibraryAction"));
+        this.scoreObjects = scoreObjects;
         this.soundObjects = soundObjects;
+        this.panel = panel;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         SoundObject sObj = (SoundObject) soundObjects.iterator().next().clone();
@@ -64,21 +79,61 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
             return;
         }
 
-//        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-//        data.getSoundObjectLibrary().addSoundObject(sObj);
-//
-//        Instance i = new Instance(sObj);
-//
-//        replaceSoundObject(sObjView.getSoundObject(), i, true, false);
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+        data.getSoundObjectLibrary().addSoundObject(sObj);
+
+        Instance i = new Instance(sObj);
+
+        replaceSoundObject(soundObjects.iterator().next(), i, true, false);
     }
 
     @Override
     public boolean isEnabled() {
-        return soundObjects.size() == 1;
+        return (scoreObjects.size() == soundObjects.size())
+                && (soundObjects.size() == 1)
+                && !(soundObjects.iterator().next() instanceof Instance)
+                && (panel instanceof ScoreTimeCanvas);
     }
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AddToSoundObjectLibraryAction(actionContext.lookupAll(SoundObject.class));
+        return new AddToSoundObjectLibraryAction(
+                actionContext.lookupAll(ScoreObject.class),
+                actionContext.lookupAll(SoundObject.class),
+                actionContext.lookup(LayerGroupPanel.class));
+    }
+
+    private void replaceSoundObject(SoundObject oldSoundObject,
+            SoundObject newSoundObject, boolean scaleDuration,
+            boolean recordEdit) {
+
+        ScoreTimeCanvas sCanvas = (ScoreTimeCanvas) panel;
+
+        SoundObjectView sObjView = sCanvas.getViewForSoundObject(oldSoundObject);
+
+        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
+
+        newSoundObject.setStartTime(oldSoundObject.getStartTime());
+
+        if (scaleDuration) {
+            newSoundObject.setSubjectiveDuration(
+                    oldSoundObject.getSubjectiveDuration());
+        }
+
+        sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
+        sCanvas.getPolyObject().addSoundObject(index, newSoundObject);
+
+
+        // FIXME - this resets the list of selected items, need to figure this out
+        //content.set(Collections.emptyList(), null);
+
+        if (recordEdit) {
+
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(
+                    sCanvas.getPolyObject(), oldSoundObject,
+                    newSoundObject, index));
+        }
+
     }
 }
