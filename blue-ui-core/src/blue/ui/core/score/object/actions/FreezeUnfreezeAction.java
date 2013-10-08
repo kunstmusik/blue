@@ -39,7 +39,7 @@ import org.openide.windows.WindowManager;
         category = "Blue",
         id = "blue.ui.core.score.actions.FreezeUnfreezeAction")
 @ActionRegistration(
-        displayName = "#CTL_FreezeUnfreezeAction", lazy = true)
+        displayName = "#CTL_FreezeUnfreezeAction")
 @Messages("CTL_FreezeUnfreezeAction=Freeze/Unfreeze ScoreObjects")
 @ActionReference(path = "blue/score/actions", position = 30, separatorAfter = 35)
 public final class FreezeUnfreezeAction extends AbstractAction

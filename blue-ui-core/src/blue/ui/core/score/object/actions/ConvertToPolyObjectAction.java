@@ -40,7 +40,7 @@ import org.openide.util.NbBundle.Messages;
         category = "Blue",
         id = "blue.ui.core.score.actions.ConvertToPolyObjectAction")
 @ActionRegistration(
-        displayName = "#CTL_ConvertToPolyObjectAction", lazy = true)
+        displayName = "#CTL_ConvertToPolyObjectAction")
 @Messages("CTL_ConvertToPolyObjectAction=Convert to &PolyObject")
 @ActionReference(path = "blue/score/actions", position = 40)
 public final class ConvertToPolyObjectAction extends AbstractAction
