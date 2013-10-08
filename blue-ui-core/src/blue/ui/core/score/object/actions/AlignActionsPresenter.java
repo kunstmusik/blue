@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -28,34 +29,34 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.AlignMenu")
+        id = "blue.ui.core.score.object.actions.AlignActionsPresenter")
 @ActionRegistration(
-        displayName = "#CTL_AlignMenu", lazy = true)
-@Messages("CTL_AlignMenu=&Align")
-@ActionReference(path = "blue/score/actions", position = 100)
-public final class AlignMenu extends AbstractAction implements Presenter.Popup {
+        displayName = "#CTL_AlignActionsPresenter")
+@Messages("CTL_AlignActionsPresenter=&Align")
+@ActionReference(path = "blue/score/actions", position = 95)
+public final class AlignActionsPresenter extends AbstractAction implements ContextAwareAction, Presenter.Popup {
 
     Action[] actions = {new AlignLeftAction(), new AlignCenterAction(),
         new AlignRightAction()};
 
     @Override
     public JMenuItem getPopupPresenter() {
-        JMenu menu = new JMenu(NbBundle.getMessage(AlignMenu.class,
-                "CTL_AlignMenu"));
+        JMenu menu = new JMenu(NbBundle.getMessage(AlignActionsPresenter.class,
+                "CTL_AlignActionsPresenter"));
         org.openide.awt.Mnemonics.setLocalizedText(menu, menu.getText());
 
         for (Action action : actions) {
             Action temp = action;
             if (action instanceof ContextAwareAction) {
                 temp = ((ContextAwareAction) action).createContextAwareInstance(
-                        Utilities.actionsGlobalContext());
+                        ScoreTopComponent.getDefault().getLookup());
             }
             menu.add(new JMenuItem(temp));
         }
@@ -65,5 +66,10 @@ public final class AlignMenu extends AbstractAction implements Presenter.Popup {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return this;
     }
 }

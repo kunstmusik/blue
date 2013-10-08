@@ -19,14 +19,13 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
+import blue.ui.core.score.undo.AlignEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -41,19 +40,56 @@ import org.openide.util.NbBundle.Messages;
 //@ActionReference(path = "blue/score/actions/Align", position = 110)
 public final class AlignRightAction extends AbstractAction implements ContextAwareAction {
 
-    private final Collection<? extends SoundObject> soundObjects;
+    private final Collection<? extends ScoreObject> selected;
 
     public AlignRightAction() {
         this(null);
     }
 
-    public AlignRightAction(Collection<? extends SoundObject> soundObjects) {
+    public AlignRightAction(Collection<? extends ScoreObject> soundObjects) {
         super(NbBundle.getMessage(AlignRightAction.class, "CTL_AlignRightAction"));
-        this.soundObjects = soundObjects;
+        this.selected = soundObjects;
     }
 
     @Override
     public void actionPerformed(ActionEvent ev) {
+if (selected.size() < 2) {
+            return;
+        }
+
+
+        float initialStartTimes[] = new float[selected.size()];
+        float endingStartTimes[] = new float[selected.size()];
+
+        float farRight = Float.MIN_VALUE;
+        int i = 0;
+
+        for (ScoreObject scoreObj : selected) {
+            initialStartTimes[i] = scoreObj.getStartTime();
+
+            float end = initialStartTimes[i] + scoreObj.getSubjectiveDuration();
+            
+            if(end > farRight ) {
+                farRight = end;
+            } 
+            i++;
+        }
+
+        i = 0;
+
+        for (ScoreObject scoreObj : selected) {
+            float newTime = farRight - scoreObj.getSubjectiveDuration();
+            scoreObj.setStartTime(newTime);
+            endingStartTimes[i] = newTime;
+        }
+
+        BlueUndoManager.setUndoManager("score");
+        AlignEdit edit = new AlignEdit(selected.toArray(new ScoreObject[0]), initialStartTimes,
+                endingStartTimes);
+
+        edit.setPresentationName("Align Right");
+
+        BlueUndoManager.addEdit(edit);
        //        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
 //        if (soundObjects.length < 2) {
 //            return;
@@ -98,13 +134,13 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
     @Override
     public boolean isEnabled() {
-        return soundObjects.size() > 1;
+        return selected.size() > 1;
     }
 
     
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AlignRightAction(actionContext.lookupAll(SoundObject.class));
+        return new AlignRightAction(actionContext.lookupAll(ScoreObject.class));
     }
 }

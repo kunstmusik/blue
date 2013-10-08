@@ -19,7 +19,9 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
+import blue.ui.core.score.undo.AlignEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
@@ -38,79 +40,74 @@ import org.openide.util.NbBundle.Messages;
 //@ActionReference(path = "blue/score/actions", position = 110)
 public final class AlignCenterAction extends AbstractAction implements ContextAwareAction {
 
-    private final Collection<? extends SoundObject> soundObjects;
+    private final Collection<? extends ScoreObject> selected;
 
     public AlignCenterAction() {
         this(null);
     }
 
-    public AlignCenterAction(Collection<? extends SoundObject> soundObjects) {
-        super(NbBundle.getMessage(AlignCenterAction.class, "CTL_AlignCenterAction"));
-        this.soundObjects = soundObjects;
+    public AlignCenterAction(Collection<? extends ScoreObject> soundObjects) {
+        super(NbBundle.getMessage(AlignCenterAction.class,
+                "CTL_AlignCenterAction"));
+        this.selected = soundObjects;
     }
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-//        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
-//        if (soundObjects.length < 2) {
-//            return;
-//        }
-//
-//        float initialStartTimes[] = new float[soundObjects.length];
-//        float endingStartTimes[] = new float[soundObjects.length];
-//
-//        float farLeft = soundObjects[0].getStartTime();
-//        initialStartTimes[0] = farLeft;
-//
-//        float tempStart;
-//        for (int i = 1; i < soundObjects.length; i++) {
-//            tempStart = soundObjects[i].getStartTime();
-//
-//            initialStartTimes[i] = tempStart;
-//
-//            if (tempStart < farLeft) {
-//                farLeft = tempStart;
-//            }
-//        }
-//
-//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
-//        float endTime;
-//
-//        for (int i = 1; i < soundObjects.length; i++) {
-//            endTime = soundObjects[i].getStartTime() + soundObjects[i].getSubjectiveDuration();
-//
-//            if (endTime > farRight) {
-//                farRight = endTime;
-//            }
-//        }
-//
-//        float centerTime = ((farRight - farLeft) / 2) + farLeft;
-//
-//        float newEndTime;
-//        for (int i = 0; i < soundObjects.length; i++) {
-//            newEndTime = centerTime - (soundObjects[i].getSubjectiveDuration() / 2);
-//            soundObjects[i].setStartTime(newEndTime);
-//            endingStartTimes[i] = newEndTime;
-//        }
-//
-//        BlueUndoManager.setUndoManager("score");
-//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-//                endingStartTimes);
-//
-//        edit.setPresentationName("Align Center");
-//
-//        BlueUndoManager.addEdit(edit)
+
+        if (selected.size() < 2) {
+            return;
+        }
+
+        float initialStartTimes[] = new float[selected.size()];
+        float endingStartTimes[] = new float[selected.size()];
+
+        float farLeft = Float.MAX_VALUE;
+        float farRight = Float.MIN_VALUE;
+        float end;
+        int i = 0;
+
+        for (ScoreObject scoreObj : selected) {
+            initialStartTimes[i] = scoreObj.getStartTime();
+            end = initialStartTimes[i] + scoreObj.getSubjectiveDuration();
+
+            if(initialStartTimes[i] < farLeft) {
+                farLeft = initialStartTimes[i];
+            } 
+            if(end > farRight) {
+                farRight = end;
+            }
+
+            i++;
+        }
+
+        float centerTime = ((farRight - farLeft) / 2) + farLeft;
+
+        float newEndTime;
+        i = 0;
+
+        for (ScoreObject scoreObj : selected) {
+            newEndTime = centerTime - (scoreObj.getSubjectiveDuration() / 2);
+            scoreObj.setStartTime(newEndTime);
+            endingStartTimes[i] = newEndTime;
+        }
+
+        BlueUndoManager.setUndoManager("score");
+        AlignEdit edit = new AlignEdit(selected.toArray(new ScoreObject[0]), initialStartTimes,
+                endingStartTimes);
+
+        edit.setPresentationName("Align Center");
+
+        BlueUndoManager.addEdit(edit);
     }
 
     @Override
     public boolean isEnabled() {
-        return soundObjects.size() > 1;
+        return selected.size() > 1;
     }
-
-    
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AlignCenterAction(actionContext.lookupAll(SoundObject.class));
+        return new AlignCenterAction(actionContext.lookupAll(ScoreObject.class));
     }
 }

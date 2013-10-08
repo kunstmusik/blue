@@ -50,18 +50,12 @@ public class PopupMenuListener extends BlueMouseAdapter {
         Collection<? extends SoundObject> soundObjects =
                 Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
         if (currentScoreObjectView != null) {
-//            if (soundObjects.contains(((SoundObjectView) comp).getSoundObject())) {
-//                sCanvas.showSoundObjectPopup((SoundObjectView) comp, e.getX(),
-//                        e.getY());
-
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
                         ScoreTopComponent.findInstance().getLookup());
                 menu.show(comp.getParent(), e.getX(), e.getY());
-//            }
-
         } else if(currentLayerGroupPanel != null) {
 
             Action[] actions = currentLayerGroupPanel.getLayerActions();
