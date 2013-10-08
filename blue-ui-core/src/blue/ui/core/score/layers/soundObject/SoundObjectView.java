@@ -19,7 +19,6 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
-import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
@@ -36,7 +35,6 @@ import javax.swing.JComponent;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
-import org.openide.util.Utilities;
 
 /**
  * Title: blue (Object Composition Environment)
@@ -185,7 +183,8 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     @Override
     public void addNotify() {
         super.addNotify();
-        result = ScoreTopComponent.findInstance().getLookup().lookupResult(SoundObject.class);
+        result = ScoreTopComponent.findInstance().getLookup().lookupResult(
+                SoundObject.class);
         result.addLookupListener(this);
         resultChanged(null);
     }
@@ -199,14 +198,15 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
 
     @Override
     public void resultChanged(LookupEvent ev) {
-        Collection<? extends SoundObject> soundObjects = result.allInstances();
-        boolean newSelected = soundObjects.contains(this.sObj);
+        if (result != null) {
+            Collection<? extends SoundObject> soundObjects = result.allInstances();
+            boolean newSelected = soundObjects.contains(this.sObj);
 
-        if (newSelected != selected) {
-            selected = newSelected;
-            repaint();
+            if (newSelected != selected) {
+                selected = newSelected;
+                repaint();
+            }
         }
-
     }
 
     @Override
