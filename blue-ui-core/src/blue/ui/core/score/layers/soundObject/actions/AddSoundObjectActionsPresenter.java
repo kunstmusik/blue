@@ -78,7 +78,10 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
 
             String sObjName = e.getActionCommand();
             Class c = sObjNameClassMap.get(sObjName);
-
+            if (c == null) {
+                return;
+            }
+            
             SoundObject sObj = (SoundObject) c.newInstance();
             TimeState timeState = sTimeCanvas.getPolyObject().getTimeState();
 
