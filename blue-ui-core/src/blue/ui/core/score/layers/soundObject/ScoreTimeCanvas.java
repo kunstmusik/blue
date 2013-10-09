@@ -74,7 +74,7 @@ import org.openide.util.lookup.InstanceContent;
  */
 public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         implements PropertyChangeListener, LayerGroupListener, SoundLayerListener,
-        LayerGroupPanel, ModeListener {
+        LayerGroupPanel<PolyObject>, ModeListener {
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
@@ -1179,5 +1179,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         List<? extends Action> list = Utilities.actionsForPath(
                 "blue/score/layers/soundObject/actions");
         return list.toArray(new Action[0]);
+    }
+
+    @Override
+    public PolyObject getLayerGroup() {
+        return pObj;    
     }
 }

@@ -19,11 +19,17 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
+import blue.score.ScoreObject;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -34,10 +40,29 @@ import org.openide.util.NbBundle.Messages;
 @Messages("CTL_SelectAllAfterAction=Select All After")
 @ActionReference(path = "blue/score/layers/soundObject/actions", 
         position = 100, separatorAfter = 105)
-public final class SelectAllAfterAction implements ActionListener {
+public final class SelectAllAfterAction extends AbstractAction 
+        implements ContextAwareAction {
 
+    private final Collection<? extends ScoreObject> selected;
+
+    public SelectAllAfterAction() {
+        this(null);
+    }
+    
+    private SelectAllAfterAction(Collection<? extends ScoreObject> selected) {
+        super(NbBundle.getMessage(SelectAllAfterAction.class,
+                "CTL_SelectAllAfterAction"));
+        this.selected = selected;
+    }
+
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         // TODO implement action body
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new SelectAllAfterAction(actionContext.lookupAll(ScoreObject.class));
     }
 }

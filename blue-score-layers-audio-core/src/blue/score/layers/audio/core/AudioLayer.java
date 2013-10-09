@@ -20,8 +20,8 @@
 package blue.score.layers.audio.core;
 
 import blue.CompileData;
-import blue.score.layers.Layer;
 import static blue.score.layers.Layer.LAYER_HEIGHT;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
@@ -37,7 +37,7 @@ import java.util.Vector;
  * @author stevenyi
  *
  */
-public class AudioLayer extends ArrayList<AudioClip> implements Layer {
+public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer<AudioClip> {
 
     private String name = "";
     private boolean muted = false;
@@ -258,5 +258,10 @@ public class AudioLayer extends ArrayList<AudioClip> implements Layer {
             return;
         }
         layerListeners.remove(listener);
+    }
+
+    @Override
+    public int getLayerHeight() {
+        return LAYER_HEIGHT * (heightIndex + 1);    
     }
 }

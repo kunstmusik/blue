@@ -31,7 +31,7 @@ package blue;
 import blue.automation.ParameterIdList;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.score.layers.Layer;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.utility.ObjectUtilities;
@@ -42,7 +42,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-public final class SoundLayer implements java.io.Serializable, Layer {
+public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<SoundObject> {
 
     private transient Vector<PropertyChangeListener> propListeners = null;
 
@@ -420,5 +420,15 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         
 
         return notes;
+    }
+
+    @Override
+    public int getLayerHeight() {
+        return LAYER_HEIGHT * (heightIndex + 1);    
+    }
+
+    @Override
+    public Iterator<SoundObject> iterator() {
+        return soundObjects.iterator();
     }
 }

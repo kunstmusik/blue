@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.UiUtilities;
@@ -47,9 +48,10 @@ public class PopupMenuListener extends BlueMouseAdapter {
 
 
     protected static void showPopup(Component comp, MouseEvent e) {
-        Collection<? extends SoundObject> soundObjects =
-                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        Collection<? extends ScoreObject> soundObjects =
+                Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
         if (currentScoreObjectView != null) {
+            if(soundObjects.size() > 0) {
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
 
@@ -59,6 +61,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
                         ScoreTopComponent.findInstance().getLookup());
                 content.remove(currentLayerGroupPanel);
                 menu.show(comp.getParent(), e.getX(), e.getY());
+            }
         } else if(currentLayerGroupPanel != null) {
 
             Action[] actions = currentLayerGroupPanel.getLayerActions();
@@ -67,9 +70,11 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 Point p = e.getPoint();
                 content.add(currentLayerGroupPanel);
                 content.add(p);
+                content.add(content);
                 final JPopupMenu menu = Utilities.actionsToPopup(actions, 
                         ScoreTopComponent.findInstance().getLookup());
                 menu.show(comp.getParent(), e.getX(), e.getY());
+                content.remove(content);
                 content.remove(p);
                 content.remove(currentLayerGroupPanel);
             }

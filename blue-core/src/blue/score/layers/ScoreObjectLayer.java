@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2013
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,11 @@
  */
 package blue.score.layers;
 
-import java.io.Serializable;
+import blue.score.ScoreObject;
 
 /**
  *
  * @author stevenyi
  */
-public interface Layer extends Serializable {
-    public static final int LAYER_HEIGHT = 22;
-    
-    public String getName();
-    public void setName(String name);
-    public int getLayerHeight();
+public interface ScoreObjectLayer<T extends ScoreObject> extends Layer, Iterable<T> {
 }

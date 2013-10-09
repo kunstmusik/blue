@@ -21,6 +21,7 @@ package blue.score.layers.patterns.core;
 
 import blue.CompileData;
 import blue.score.layers.Layer;
+import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
@@ -214,5 +215,11 @@ public class PatternLayer implements Layer {
             return;
         }
         propListeners.remove(pcl);
+    }
+
+
+    @Override
+    public int getLayerHeight() {
+        return LAYER_HEIGHT;    
     }
 }

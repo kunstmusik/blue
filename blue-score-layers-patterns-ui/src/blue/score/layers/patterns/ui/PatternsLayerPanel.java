@@ -47,7 +47,7 @@ import javax.swing.JPanel;
  * @author stevenyi
  */
 public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
-        PropertyChangeListener, LayerGroupPanel {
+        PropertyChangeListener, LayerGroupPanel<PatternsLayerGroup> {
 
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private PatternsLayerGroup layerGroup;
@@ -219,6 +219,11 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
     public Action[] getLayerActions() {
         throw new UnsupportedOperationException(
                 "Error: getLayerActions should not be called for PatternsLayerPanel");
+    }
+
+    @Override
+    public PatternsLayerGroup getLayerGroup() {
+        return layerGroup;
     }
 
 }

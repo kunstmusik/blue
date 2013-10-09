@@ -59,7 +59,7 @@ import org.openide.util.lookup.InstanceContent;
  * @author stevenyi
  */
 public class AudioLayersPanel extends JPanel implements LayerGroupListener,
-        PropertyChangeListener, LayerGroupPanel, AudioLayerListener {
+        PropertyChangeListener, LayerGroupPanel<AudioLayerGroup>, AudioLayerListener {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
@@ -467,5 +467,10 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     @Override
     public Action[] getLayerActions() {
         return null;
+    }
+
+    @Override
+    public AudioLayerGroup getLayerGroup() {
+        return layerGroup;
     }
 }
