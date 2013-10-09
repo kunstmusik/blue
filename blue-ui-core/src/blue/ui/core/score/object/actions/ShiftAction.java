@@ -19,11 +19,19 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.BlueSystem;
+import blue.score.ScoreObject;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -33,41 +41,53 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_ShiftAction")
 @Messages("CTL_ShiftAction=Shift")
 @ActionReference(path = "blue/score/actions", position = 100)
-public final class ShiftAction implements ActionListener {
+public final class ShiftAction extends AbstractAction implements ContextAwareAction {
+
+    private final Collection<? extends ScoreObject> selected;
+
+    public ShiftAction() {
+        this(null);
+    }
+
+    public ShiftAction(Collection<? extends ScoreObject> selected) {
+        super(NbBundle.getMessage(ShiftAction.class,
+                "CTL_ShiftAction"));
+        this.selected = selected;
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // FIXME
-                
-//                if (sCanvas.mBuffer.size() <= 0) {
-//                    return;
-//                }
-//
-//                String value = JOptionPane.showInputDialog(null, BlueSystem
-//                        .getString("scoreGUI.action.shift.message"));
-//
-//                sCanvas.mBuffer.motionBufferObjects();
-//                SoundObjectView[] views = sCanvas.mBuffer.motionBuffer;
-//
-//                try {
-//                    float val = Float.parseFloat(value);
-//
-//                    for (int i = 0; i < views.length; i++) {
-//                        if ((views[i].getStartTime() + val) < 0) {
-//                            JOptionPane.showMessageDialog(null, BlueSystem
-//                                    .getString("scoreGUI.action.shift.error"));
-//                            return;
-//                        }
-//                    }
-//
-//                    for (int i = 0; i < views.length; i++) {
-//                        SoundObject sObj = views[i].getSoundObject();
-//
-//                        views[i].setStartTime(sObj.getStartTime() + val);
-//                    }
-//
-//                } catch (NumberFormatException nfe) {
-//                    System.err.println(nfe.getMessage());
-//                
+
+        if (selected == null || selected.size() <= 0) {
+            return;
+        }
+
+        String value = JOptionPane.showInputDialog(null, BlueSystem
+                .getString("scoreGUI.action.shift.message"));
+
+        try {
+            float val = Float.parseFloat(value);
+
+            for (ScoreObject scoreObj : selected) {
+                if ((scoreObj.getStartTime() + val) < 0) {
+                    JOptionPane.showMessageDialog(null, BlueSystem
+                            .getString("scoreGUI.action.shift.error"));
+                    return;
+                }
+            }
+
+            for (ScoreObject scoreObj : selected) {
+                scoreObj.setStartTime(scoreObj.getStartTime() + val);
+            }
+
+        } catch (NumberFormatException nfe) {
+            System.err.println(nfe.getMessage());
+
+        }
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new ShiftAction(actionContext.lookupAll(ScoreObject.class));
     }
 }
