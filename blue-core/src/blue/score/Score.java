@@ -32,13 +32,14 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  *
  * @author stevenyi
  */
-public class Score implements Serializable {
+public class Score implements Serializable, Iterable<LayerGroup> {
 
     Tempo tempo = null;
     TimeState timeState = null;
@@ -256,6 +257,11 @@ public class Score implements Serializable {
                 layerGroups.subList(start, end + 2));
 
         fireScoreDataEvent(sde);
+    }
+
+    @Override
+    public Iterator<LayerGroup> iterator() {
+        return layerGroups.iterator();
     }
     
 }
