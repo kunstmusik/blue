@@ -47,7 +47,7 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
         super.redo();
 
         SoundLayer sLayer = pObj.get(soundLayerIndex);
-        sLayer.addSoundObject(sObj);
+        sLayer.add(sObj);
 
         if (nextEdit != null) {
             nextEdit.redo();

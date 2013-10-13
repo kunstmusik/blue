@@ -62,11 +62,9 @@ public class SoundObjectLibraryUtils {
         for (int i = 0; i < polyObject.size(); i++) {
             SoundLayer layer = polyObject.get(i);
 
-            List<SoundObject> soundObjects = layer.getSoundObjects();
-        
             ArrayList<SoundObject> instances = new ArrayList<>();
             
-            for (SoundObject tempObject : soundObjects) {
+            for (SoundObject tempObject : layer) {
                 if(tempObject instanceof Instance) {
                     Instance instance = (Instance)tempObject;
                     if(instance.getSoundObject() == sObj) {
@@ -78,7 +76,7 @@ public class SoundObjectLibraryUtils {
             }
 
             for (SoundObject tempObject : instances) {
-                layer.removeSoundObject(tempObject);
+                layer.remove(tempObject);
             }
          }
     }

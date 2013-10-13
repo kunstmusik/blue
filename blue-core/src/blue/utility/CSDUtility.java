@@ -230,7 +230,7 @@ public class CSDUtility {
         PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
         
         SoundLayer sLayer = pObj.newLayerAt(-1);
-        sLayer.addSoundObject(genScore);
+        sLayer.add(genScore);
 
     }
 
@@ -311,7 +311,7 @@ public class CSDUtility {
 
             genScore.setStartTime(minStart + section.sectionStartTime);
 
-            sLayer.addSoundObject(genScore);
+            sLayer.add(genScore);
 
         }
     }

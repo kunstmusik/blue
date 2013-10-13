@@ -42,7 +42,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<SoundObject> {
+public final class SoundLayer extends ArrayList<SoundObject> 
+        implements ScoreObjectLayer<SoundObject> {
 
     private transient Vector<PropertyChangeListener> propListeners = null;
 
@@ -68,8 +69,6 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
         }
 
     };
-
-    private ArrayList<SoundObject> soundObjects = new ArrayList<>();
 
     private ParameterIdList automationParameters = new ParameterIdList();
 
@@ -126,22 +125,20 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
         return automationParameters;
     }
 
-    public void addSoundObject(SoundObject sObj) {
-        soundObjects.add(sObj);
+    @Override
+    public boolean add(SoundObject sObj) {
+        super.add(sObj);
         fireSoundObjectAdded(sObj);
+        return true;
     }
 
-    public void removeSoundObject(SoundObject sObj) {
-        soundObjects.remove((soundObjects.indexOf(sObj)));
-        fireSoundObjectRemoved(sObj);
-    }
-
-    public List<SoundObject> getSoundObjects() {
-        return soundObjects;
-    }
-
-    public boolean contains(SoundObject sObj) {
-        return soundObjects.contains(sObj);
+    @Override
+    public boolean remove(Object sObj) {
+        if(super.remove(sObj)) {
+            fireSoundObjectRemoved((SoundObject)sObj);
+            return true;
+        }
+       return false; 
     }
 
     /**
@@ -149,7 +146,7 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
      */
 
     public float getMaxTime() {
-        return ScoreUtilities.getMaxTime(soundObjects);
+        return ScoreUtilities.getMaxTime(this);
     }
 
     public static SoundLayer loadFromXML(Element data,
@@ -179,7 +176,7 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
         while (sObjects.hasMoreElements()) {
             Object obj = ObjectUtilities.loadFromXML(sObjects.next(),
                     objRefMap);
-            sLayer.addSoundObject((SoundObject) obj);
+            sLayer.add((SoundObject) obj);
         }
 
         Elements parameters = data.getElements("parameterId");
@@ -202,8 +199,7 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
 
         retVal.addElement(npc.saveAsXML());
 
-        for (Iterator iter = soundObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+        for (SoundObject sObj : this) {
             retVal.addElement(sObj.saveAsXML(objRefMap));
         }
 
@@ -224,9 +220,8 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
         sLayer.setName(this.getName());
         sLayer.setNoteProcessorChain((NoteProcessorChain) this.npc.clone());
 
-        for (Iterator iter = this.soundObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
-            sLayer.addSoundObject((SoundObject) sObj.clone());
+        for (SoundObject sObj : this) {
+            sLayer.add((SoundObject) sObj.clone());
         }
 
         for (Iterator iter = this.automationParameters.iterator(); iter
@@ -369,10 +364,9 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
         
         NoteList notes = new NoteList();
         
-        Collections.sort(soundObjects, sObjComparator);
+        Collections.sort(this, sObjComparator);
 
-
-        for (SoundObject sObj : soundObjects) {
+        for (SoundObject sObj : this) {
             try {
             
                 float sObjStart = sObj.getStartTime();
@@ -425,10 +419,5 @@ public final class SoundLayer implements java.io.Serializable, ScoreObjectLayer<
     @Override
     public int getLayerHeight() {
         return LAYER_HEIGHT * (heightIndex + 1);    
-    }
-
-    @Override
-    public Iterator<SoundObject> iterator() {
-        return soundObjects.iterator();
     }
 }

@@ -20,10 +20,11 @@
 package blue.score.layers;
 
 import blue.score.ScoreObject;
+import java.util.List;
 
 /**
  *
  * @author stevenyi
  */
-public interface ScoreObjectLayer<T extends ScoreObject> extends Layer, Iterable<T> {
+public interface ScoreObjectLayer<T extends ScoreObject> extends Layer, List<T> {
 }

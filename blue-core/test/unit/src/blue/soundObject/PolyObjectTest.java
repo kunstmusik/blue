@@ -30,7 +30,7 @@ public class PolyObjectTest extends TestCase {
 
         SoundLayer sLayer = new SoundLayer();
         SoundLayer sLayer2 = new SoundLayer();
-        sLayer.addSoundObject(pObj2);
+        sLayer.add(pObj2);
         pObj2.add(sLayer2);
 
         Comment comment = new Comment();
@@ -42,24 +42,24 @@ public class PolyObjectTest extends TestCase {
 
         assertTrue(pObj.isScoreGenerationEmpty());
 
-        sLayer.addSoundObject(comment);
+        sLayer.add(comment);
         assertTrue(pObj.isScoreGenerationEmpty());
         assertTrue(pObj2.isScoreGenerationEmpty());
 
 
-        sLayer.removeSoundObject(comment);
-        sLayer2.addSoundObject(comment);
+        sLayer.remove(comment);
+        sLayer2.add(comment);
         assertTrue(pObj.isScoreGenerationEmpty());
         assertTrue(pObj2.isScoreGenerationEmpty());
 
-        sLayer.addSoundObject(genScore);
+        sLayer.add(genScore);
 
         assertFalse(pObj.isScoreGenerationEmpty());
         assertTrue(pObj2.isScoreGenerationEmpty());
 
 
-        sLayer.removeSoundObject(genScore);
-        sLayer2.addSoundObject(genScore);
+        sLayer.remove(genScore);
+        sLayer2.add(genScore);
         assertFalse(pObj.isScoreGenerationEmpty());
         assertFalse(pObj2.isScoreGenerationEmpty());
     }
@@ -77,7 +77,7 @@ public class PolyObjectTest extends TestCase {
         pObj.setStartTime(1.0f);
         pObj.setSubjectiveDuration(2.0f);
 
-        sLayer.addSoundObject(genScore);
+        sLayer.add(genScore);
 
         assertEquals(1.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
         assertEquals(2.0f, pObj.getAdjustedRenderStart(2.0f), .0001f);
@@ -106,7 +106,7 @@ public class PolyObjectTest extends TestCase {
         pObj.setStartTime(1.0f);
         pObj.setSubjectiveDuration(2.0f);
 
-        sLayer.addSoundObject(genScore);
+        sLayer.add(genScore);
 
         assertEquals(1.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
         assertEquals(2.0f, pObj.getAdjustedRenderEnd(2.0f), .0001f);

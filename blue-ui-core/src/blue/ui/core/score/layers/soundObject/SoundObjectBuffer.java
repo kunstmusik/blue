@@ -123,7 +123,7 @@ public final class SoundObjectBuffer {
 
         for (int i = 0; i < size; i++) {
             sLayer = temp.newLayerAt(-1);
-            sLayer.addSoundObject((SoundObject) this.getSoundObject(i).clone());
+            sLayer.add((SoundObject) this.getSoundObject(i).clone());
         }
 
         temp.normalizeSoundObjects();

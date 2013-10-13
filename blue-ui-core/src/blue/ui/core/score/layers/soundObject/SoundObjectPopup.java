@@ -913,7 +913,7 @@ public class SoundObjectPopup extends JPopupMenu {
 
         tempData.setRenderEndTime(renderEndTime);
 
-        sLayer.addSoundObject(tempSObj);
+        sLayer.add(tempSObj);
 
         tempData.getScore().clearLayerGroups();
         tempData.getScore().addLayerGroup(tempPObj);

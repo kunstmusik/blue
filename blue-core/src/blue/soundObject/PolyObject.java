@@ -94,16 +94,14 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, La
                 continue;
             }
 
-            List<SoundObject> temp = sLayer.getSoundObjects();
-
-            sObjects.addAll(temp);
+            sObjects.addAll(sLayer);
         }
         return sObjects;
     }
 
     public final void addSoundObject(int layerIndex, SoundObject sObj) {
-        SoundLayer temp = (SoundLayer) this.get(layerIndex);
-        temp.addSoundObject(sObj);
+        SoundLayer temp = this.get(layerIndex);
+        temp.add(sObj);
     }
 
     /**
@@ -118,7 +116,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, La
         for (int i = 0; i < this.size(); i++) {
             SoundLayer tempLayer = (SoundLayer) this.get(i);
             if (tempLayer.contains(sObj)) {
-                tempLayer.removeSoundObject(sObj);
+                tempLayer.remove(sObj);
                 return i;
             }
         }
@@ -743,14 +741,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, La
     }
 
     public void onLoadComplete() {
-        List<SoundObject> sObjects;
         SoundObject sObj;
 
         for (SoundLayer sLayer : this) {
-            sObjects = sLayer.getSoundObjects();
 
-            for (int j = 0; j < sObjects.size(); j++) {
-                sObj = sObjects.get(j);
+            for (int j = 0; j < sLayer.size(); j++) {
+                sObj = sLayer.get(j);
                 if (sObj instanceof PolyObject) {
                     ((PolyObject) sObj).onLoadComplete();
                 } else if (sObj instanceof OnLoadProcessable) {

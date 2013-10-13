@@ -191,7 +191,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> {
             for (Iterator iterator = sObjects.iterator(); iterator.hasNext();) {
                 SoundObject sObj = (SoundObject) iterator.next();
 
-                sLayer.addSoundObject((SoundObject) sObj.clone());
+                sLayer.add((SoundObject) sObj.clone());
             }
 
         }

@@ -325,22 +325,12 @@ public class BlueData implements Serializable {
 
     // ADDED IN 0.91.5 FOR CONVERTING REPETITION OBJECTS TO GENERIC SCORE
     private void convertRepetitionObjects(PolyObject pObj) {
-        List<SoundObject> soundObjects;
-        SoundObject tempSObj;
-        SoundLayer sLayer;
         RepetitionObject repObj;
         GenericScore genScore;
 
-        final int size = pObj.size();
+        for (SoundLayer sLayer : pObj) {
 
-        for (int i = 0; i < size; i++) {
-            sLayer = pObj.get(i);
-
-            soundObjects = sLayer.getSoundObjects();
-            Iterator<SoundObject> it = soundObjects.iterator();
-
-            while (it.hasNext()) {
-                tempSObj = it.next();
+            for(SoundObject tempSObj : sLayer) { 
                 if (tempSObj instanceof PolyObject) {
                     convertRepetitionObjects((PolyObject) tempSObj);
                 } else if (tempSObj instanceof RepetitionObject) {
@@ -353,7 +343,7 @@ public class BlueData implements Serializable {
                             .getSubjectiveDuration());
                     genScore.setName(repObj.getName());
 
-                    soundObjects.set(soundObjects.indexOf(repObj), genScore);
+                    sLayer.set(sLayer.indexOf(repObj), genScore);
                 }
             }
         }

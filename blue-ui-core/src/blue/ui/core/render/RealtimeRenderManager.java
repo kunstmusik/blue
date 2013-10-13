@@ -221,7 +221,7 @@ public final class RealtimeRenderManager {
                 maxTime = endTime;
             }
 
-            sLayer.addSoundObject((SoundObject) sObj.clone());
+            sLayer.add((SoundObject) sObj.clone());
         }
 
         tempData.getScore().clearLayerGroups();

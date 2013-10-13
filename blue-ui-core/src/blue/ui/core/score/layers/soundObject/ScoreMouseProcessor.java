@@ -344,7 +344,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                 return;
             }
 
-            pObj.get(index).addSoundObject(temp);
+            pObj.get(index).add(temp);
 
             AddSoundObjectEdit edit = new AddSoundObjectEdit(pObj, temp, index);
 
@@ -907,14 +907,8 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects, PolyObject pObj) {
-        SoundLayer layer;
-        List<SoundObject> sObjects;
-
-        for (int i = 0; i < pObj.size(); i++) {
-            layer = pObj.get(i);
-            sObjects = layer.getSoundObjects();
-
-            for (SoundObject sObj : sObjects) {
+        for (SoundLayer layer : pObj) {
+            for (SoundObject sObj : layer) {
                 if (sObj instanceof Instance) {
                     Instance instance = (Instance) sObj;
                     instanceSoundObjects.add(instance);
