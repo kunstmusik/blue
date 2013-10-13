@@ -147,7 +147,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setStartTime(startTime);
                 af.setSubjectiveDuration(af.getAudioDuration());
 
-                AudioLayer layer = audioLayerGroup.getLayerAt(index);
+                AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
 
                 dtde.dropComplete(true);
@@ -201,7 +201,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 af.setStartTime(startTime);
                 af.setSubjectiveDuration(af.getAudioDuration());
 
-                AudioLayer layer = audioLayerGroup.getLayerAt(index);
+                AudioLayer layer = audioLayerGroup.get(index);
                 layer.add(af);
 
                 dtde.dropComplete(true);

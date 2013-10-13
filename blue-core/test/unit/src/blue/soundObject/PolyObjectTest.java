@@ -31,14 +31,14 @@ public class PolyObjectTest extends TestCase {
         SoundLayer sLayer = new SoundLayer();
         SoundLayer sLayer2 = new SoundLayer();
         sLayer.addSoundObject(pObj2);
-        pObj2.soundLayers.add(sLayer2);
+        pObj2.add(sLayer2);
 
         Comment comment = new Comment();
         GenericScore genScore = new GenericScore();
 
         assertTrue(pObj.isScoreGenerationEmpty());
 
-        pObj.soundLayers.add(sLayer);
+        pObj.add(sLayer);
 
         assertTrue(pObj.isScoreGenerationEmpty());
 
@@ -72,7 +72,7 @@ public class PolyObjectTest extends TestCase {
         genScore.setStartTime(0.0f);
         genScore.setSubjectiveDuration(2.0f);
 
-        pObj.soundLayers.add(sLayer);
+        pObj.add(sLayer);
         pObj.setRoot(true);
         pObj.setStartTime(1.0f);
         pObj.setSubjectiveDuration(2.0f);
@@ -101,7 +101,7 @@ public class PolyObjectTest extends TestCase {
         genScore.setStartTime(0.0f);
         genScore.setSubjectiveDuration(2.0f);
 
-        pObj.soundLayers.add(sLayer);
+        pObj.add(sLayer);
         pObj.setRoot(true);
         pObj.setStartTime(1.0f);
         pObj.setSubjectiveDuration(2.0f);

@@ -52,7 +52,7 @@ class lo extends CybilAlgorithm {
 
                     double val = Math.pow(diff, x) * start;
 
-                    Note currentNote = notes.getNote(cybilNoteList.index);
+                    Note currentNote = notes.get(cybilNoteList.index);
 
                     String strVal = Double.toString(val);
                     currentNote.setPField(strVal, cybilNoteList.pfield);

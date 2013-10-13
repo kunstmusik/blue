@@ -82,7 +82,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
             throw new SoundObjectException(this, e);
         }
         if (tempNote != null) {
-            n.addNote(tempNote);
+            n.add(tempNote);
         }
 
         return n;

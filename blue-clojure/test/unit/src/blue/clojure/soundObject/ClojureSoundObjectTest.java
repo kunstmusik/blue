@@ -48,7 +48,7 @@ public class ClojureSoundObjectTest {
         instance.setClojureCode("(def score \"i1 0 2 3 5\")");
         NoteList result = instance.generateForCSD(compileData, startTime,
                 endTime);
-        assertEquals(result.getNote(0).getPField(5), "5");
+        assertEquals(result.get(0).getPField(5), "5");
     }
 
     /**

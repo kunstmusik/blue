@@ -37,11 +37,11 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
         in.sort();
         Note temp;
         int size = in.size();
-        temp = in.getNote(in.size() - 1);
+        temp = in.get(in.size() - 1);
         float totalTime = temp.getStartTime() + temp.getSubjectiveDuration();
 
         for (int i = 0; i < size; i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             // System.out.println("obj: " + temp.getObjectiveDuration() + "
             // subj: " + temp.getSubjectiveDuration());
             temp.setStartTime(totalTime
@@ -54,7 +54,7 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " " + i + " 6." + i
+                n.add(Note.createNote("i1 " + i + " " + i + " 6." + i
                         + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block

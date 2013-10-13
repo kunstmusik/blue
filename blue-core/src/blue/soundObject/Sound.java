@@ -82,7 +82,7 @@ public class Sound extends AbstractSoundObject implements Serializable,
         }
 
         if (tempNote != null) {
-            n.addNote(tempNote);
+            n.add(tempNote);
         }
 
         return n;

@@ -91,8 +91,8 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
 
                     int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
 
-                    for (int i = 0; i < pObj.getSize(); i++) {
-                        SoundLayer temp = pObj.getLayerAt(i);
+                    for (int i = 0; i < pObj.size(); i++) {
+                        SoundLayer temp = pObj.get(i);
                         temp.setHeightIndex(heightIndex);
                     }
                 }

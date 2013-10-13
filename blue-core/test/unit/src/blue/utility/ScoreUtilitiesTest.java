@@ -26,7 +26,7 @@ import junit.framework.TestCase;
 public class ScoreUtilitiesTest extends TestCase {
 
     /*
-     * Test method for 'blue.utility.ScoreUtilities.getNotes(String)'
+     * Test method for 'blue.utility.ScoreUtilities.gets(String)'
      */
     public void testGetNotes() {
         StringBuilder testScore = new StringBuilder();
@@ -66,9 +66,9 @@ public class ScoreUtilitiesTest extends TestCase {
 
         assertNotNull(nl);
         assertEquals(3, nl.size());
-        assertEquals(12, nl.getNote(0).getPCount());
-        assertEquals(12, nl.getNote(2).getPCount());
-        assertEquals("\"test\"", nl.getNote(2).getPField(6));
+        assertEquals(12, nl.get(0).getPCount());
+        assertEquals(12, nl.get(2).getPCount());
+        assertEquals("\"test\"", nl.get(2).getPField(6));
 
 //        System.out.println(nl.toString());
     }
@@ -90,8 +90,8 @@ public class ScoreUtilitiesTest extends TestCase {
 
         assertNotNull(nl);
         assertEquals(3, nl.size());
-        assertEquals(6, nl.getNote(1).getPCount());
-        assertEquals(6, nl.getNote(2).getPCount());
+        assertEquals(6, nl.get(1).getPCount());
+        assertEquals(6, nl.get(2).getPCount());
 
     }
 }

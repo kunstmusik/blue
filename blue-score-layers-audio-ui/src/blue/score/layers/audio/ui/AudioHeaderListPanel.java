@@ -67,9 +67,8 @@ public class AudioHeaderListPanel extends JPanel implements
         this.setLayout(layout);
         layout.setAudioLayerGroup(audioLayerGroup);
 
-        for (int i = 0; i < audioLayerGroup.getSize(); i++) {
-            this.add(new AudioHeaderLayerPanel(
-                        audioLayerGroup.getLayerAt(i)));
+        for (AudioLayer layer : layerGroup) {
+            this.add(new AudioHeaderLayerPanel(layer));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -93,9 +92,9 @@ public class AudioHeaderListPanel extends JPanel implements
                     return;
                 }
                         
-                layerRemoveAction.setEnabled(layerGroup.getSize() >= 2);
+                layerRemoveAction.setEnabled(layerGroup.size() >= 2);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
-                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.getSize() - 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.size() - 1);
                 
                 super.show(invoker, x, y);
             }
@@ -244,7 +243,7 @@ public class AudioHeaderListPanel extends JPanel implements
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        AudioLayer sLayer = layerGroup.getLayerAt(index);
+        AudioLayer sLayer = layerGroup.get(index);
 
         AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer);
         
@@ -461,7 +460,7 @@ public class AudioHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || end >= layerGroup.getSize() - 1) {
+            if (end < 0 || end >= layerGroup.size() - 1) {
                 return;
             }
 
@@ -504,7 +503,7 @@ public class AudioHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || layerGroup.getSize() < 2) {
+            if (end < 0 || layerGroup.size() < 2) {
                 return;
             }
 

@@ -34,7 +34,7 @@ class pa extends CybilFunction {
         float[] val = new float[1];
 
         int currentNoteIndex = cybilNoteList.index;
-        Note note = cybilNoteList.notes.getNote(currentNoteIndex);
+        Note note = cybilNoteList.notes.get(currentNoteIndex);
 
         val[0] = Float.parseFloat(note.getPField(index));
 

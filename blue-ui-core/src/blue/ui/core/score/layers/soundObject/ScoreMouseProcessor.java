@@ -344,7 +344,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                 return;
             }
 
-            pObj.getLayerAt(index).addSoundObject(temp);
+            pObj.get(index).addSoundObject(temp);
 
             AddSoundObjectEdit edit = new AddSoundObjectEdit(pObj, temp, index);
 
@@ -460,7 +460,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 
     public void pasteSoundObject(int soundLayerIndex, float startTime) {
         PolyObject pObj = sCanvas.getPolyObject();
-        int size = pObj.getSize();
+        int size = pObj.size();
 
         if (soundLayerIndex >= size) {
             return;
@@ -498,7 +498,7 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     public void pasteSoundObjects(int soundLayerIndex, float startTime) {
-        int size = sCanvas.getPolyObject().getSize();
+        int size = sCanvas.getPolyObject().size();
 
         SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
 
@@ -910,8 +910,8 @@ class ScoreMouseProcessor extends MouseAdapter {
         SoundLayer layer;
         List<SoundObject> sObjects;
 
-        for (int i = 0; i < pObj.getSize(); i++) {
-            layer = pObj.getLayerAt(i);
+        for (int i = 0; i < pObj.size(); i++) {
+            layer = pObj.get(i);
             sObjects = layer.getSoundObjects();
 
             for (SoundObject sObj : sObjects) {

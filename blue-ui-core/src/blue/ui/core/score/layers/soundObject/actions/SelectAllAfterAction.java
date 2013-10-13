@@ -86,10 +86,8 @@ public final class SelectAllAfterAction extends AbstractAction
                 / ScoreTopComponent.findInstance().getTimeState().getPixelSecond();
         ArrayList<ScoreObject> newSelected = new ArrayList<>();
 
-        for (LayerGroup layerGroup : score) {
-            for (int i = 0; i < layerGroup.getSize(); i++) {
-                Layer layer = layerGroup.getLayerAt(i);
-
+        for (LayerGroup<Layer> layerGroup : score) {
+            for (Layer layer : layerGroup) {
                 if (layer instanceof ScoreObjectLayer) {
                     ScoreObjectLayer<ScoreObject> sLayer = (ScoreObjectLayer) layer;
 

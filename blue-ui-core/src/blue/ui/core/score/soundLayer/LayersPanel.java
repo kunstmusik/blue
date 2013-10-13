@@ -78,9 +78,9 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
                     return;
                 }
                         
-                layerRemoveAction.setEnabled(pObj.getSize() >= 2);
+                layerRemoveAction.setEnabled(pObj.size() >= 2);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
-                pushDownAction.setEnabled(selection.getEndIndex() < pObj.getSize() - 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < pObj.size() - 1);
                 
                 super.show(invoker, x, y);
             }
@@ -204,9 +204,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             return;
         }
 
-        for (int i = 0; i < pObj.getSize(); i++) {
-            SoundLayer sLayer = pObj.getLayerAt(i);
-
+        for (SoundLayer sLayer : pObj) {
             SoundLayerPanel panel = new SoundLayerPanel(sLayer, npcMap, pObj.isRoot());
             this.add(panel);
         }
@@ -223,7 +221,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
         int h = pObj.getTotalHeight();
 
-        this.setSize(w, h * pObj.getSize());
+        this.setSize(w, h * pObj.size());
     }
 
     /* SELECTION */
@@ -278,7 +276,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        SoundLayer sLayer = pObj.getLayerAt(index);
+        SoundLayer sLayer = pObj.get(index);
 
         SoundLayerPanel panel = new SoundLayerPanel(sLayer, npcMap, pObj.isRoot());
         this.add(panel, index);
@@ -458,7 +456,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || end >= pObj.getSize() - 1) {
+            if (end < 0 || end >= pObj.size() - 1) {
                 return;
             }
 
@@ -501,7 +499,7 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || pObj.getSize() < 2) {
+            if (end < 0 || pObj.size() < 2) {
                 return;
             }
 

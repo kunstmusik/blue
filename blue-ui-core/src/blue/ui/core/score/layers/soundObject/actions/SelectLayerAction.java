@@ -69,7 +69,7 @@ public final class SelectLayerAction extends AbstractAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        LayerGroup layerGroup = lgPanel.getLayerGroup();
+        LayerGroup<Layer> layerGroup = lgPanel.getLayerGroup();
         JComponent comp = ((JComponent)lgPanel);
 
         if(p.y < 0 || p.y > comp.getHeight()) {
@@ -80,8 +80,7 @@ public final class SelectLayerAction extends AbstractAction
         int runningY = 0;
 
         Layer layer = null;
-        for(int i = 0; i < layerGroup.getSize(); i++) {
-            Layer temp = layerGroup.getLayerAt(i);
+        for(Layer temp : layerGroup) {
             if(y < runningY + temp.getLayerHeight()) {
                 layer = temp;
                 break;

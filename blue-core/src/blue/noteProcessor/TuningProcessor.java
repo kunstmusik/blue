@@ -53,7 +53,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         int pcount = 0;
         float freq = 0f;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             // verify pfield
             pcount = temp.getPCount();
@@ -207,7 +207,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 30; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " " + i + " 6." + i
+                n.add(Note.createNote("i1 " + i + " " + i + " 6." + i
                         + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block

@@ -186,7 +186,7 @@ public final class MotionBuffer extends ArrayList<SoundObjectView> {
             ArrayList sObjects = (ArrayList) entry.getValue();
 
             int layerNum = key.intValue() - keyMin;
-            SoundLayer sLayer = temp.getLayerAt(layerNum);
+            SoundLayer sLayer = temp.get(layerNum);
 
             for (Iterator iterator = sObjects.iterator(); iterator.hasNext();) {
                 SoundObject sObj = (SoundObject) iterator.next();

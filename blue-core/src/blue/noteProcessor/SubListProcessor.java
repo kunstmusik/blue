@@ -54,7 +54,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
         }
         for (int i = 0; i < in.size(); i++) {
             if (i >= (start - 1) && i <= (end - 1)) {
-                tempList.addNote(in.getNote(i));
+                tempList.add(in.get(i));
             }
         }
         in.clear();
@@ -69,7 +69,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 " + i + " 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 " + i + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

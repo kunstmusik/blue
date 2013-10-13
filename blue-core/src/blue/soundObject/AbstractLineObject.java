@@ -83,7 +83,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
             buffer.append(lineNum);
 
             try {
-                notes.addNote(Note.createNote(buffer.toString()));
+                notes.add(Note.createNote(buffer.toString()));
             } catch (NoteParseException e) {
                 throw new SoundObjectException(this, e);
             }

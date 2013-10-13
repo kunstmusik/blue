@@ -56,7 +56,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
         String tempPField;
         int pcount = 0;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             // validate necessary pfields are there
             pcount = temp.getPCount();
@@ -82,7 +82,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

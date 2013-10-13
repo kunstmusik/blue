@@ -166,7 +166,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
                 throw new SoundObjectException(this, e);
             }
 
-            nl.addNote(note);
+            nl.add(note);
         }
 
         try {

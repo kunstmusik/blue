@@ -302,7 +302,7 @@ public class CSDUtility {
             }
 
             notes.sort();
-            float minStart = notes.getNote(0).getStartTime();
+            float minStart = notes.get(0).getStartTime();
 
             ScoreUtilities.normalizeNoteList(notes);
 

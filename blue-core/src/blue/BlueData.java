@@ -331,10 +331,10 @@ public class BlueData implements Serializable {
         RepetitionObject repObj;
         GenericScore genScore;
 
-        final int size = pObj.getSize();
+        final int size = pObj.size();
 
         for (int i = 0; i < size; i++) {
-            sLayer = pObj.getLayerAt(i);
+            sLayer = pObj.get(i);
 
             soundObjects = sLayer.getSoundObjects();
             Iterator<SoundObject> it = soundObjects.iterator();

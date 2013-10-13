@@ -101,7 +101,7 @@ public class DurationsSequence extends AbstractSoundObject implements
                     }
 
                     try {
-                        notes.addNote(Note.createNote(noteText));
+                        notes.add(Note.createNote(noteText));
                     } catch (NoteParseException e) {
                         throw new RuntimeException(new SoundObjectException(this, e));
                     }

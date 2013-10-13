@@ -53,9 +53,9 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
             soundObjects[i].setStartTime(this.endingStartTimes[i]);
 
             if (startIndex[i] != endIndex[i]) {
-                pObj.getLayerAt(startIndex[i])
+                pObj.get(startIndex[i])
                         .removeSoundObject(soundObjects[i]);
-                pObj.getLayerAt(endIndex[i])
+                pObj.get(endIndex[i])
                         .addSoundObject(soundObjects[i]);
             }
         }
@@ -68,9 +68,9 @@ public class MoveSoundObjectsEdit extends AbstractUndoableEdit {
             soundObjects[i].setStartTime(this.initalStartTimes[i]);
 
             if (startIndex[i] != endIndex[i]) {
-                pObj.getLayerAt(endIndex[i])
+                pObj.get(endIndex[i])
                         .removeSoundObject(soundObjects[i]);
-                pObj.getLayerAt(startIndex[i])
+                pObj.get(startIndex[i])
                         .addSoundObject(soundObjects[i]);
             }
         }

@@ -78,7 +78,6 @@ public class AutomationManager implements ParameterListListener,
 
     private AutomationManager() {
         parameterActionListener = new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (data == null || selectedSoundLayer == null) {
@@ -96,7 +95,6 @@ public class AutomationManager implements ParameterListListener,
         };
 
         renderTimeListener = new PropertyChangeListener() {
-
             @Override
             public void propertyChange(PropertyChangeEvent pce) {
                 if (pce.getSource() == data) {
@@ -147,12 +145,11 @@ public class AutomationManager implements ParameterListListener,
 
                     PolyObject pObj = (PolyObject) layerGroup;
 
-                    for (int j = 0; j < pObj.getSize(); j++) {
-                        SoundLayer layer = pObj.getLayerAt(j);
-
+                    for (SoundLayer layer : pObj) {
                         if (layer == soundLayer) {
                             continue;
                         }
+
                         ParameterIdList automationParameters = layer.getAutomationParameters();
 
                         if (automationParameters.contains(uniqueId)) {
@@ -410,7 +407,6 @@ public class AutomationManager implements ParameterListListener,
 
         JMenuItem clearAll = new JMenuItem("Clear All");
         clearAll.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 Object retVal = DialogDisplayer.getDefault().notify(
@@ -421,7 +417,7 @@ public class AutomationManager implements ParameterListListener,
 
                     ParameterIdList idList = selectedSoundLayer.getAutomationParameters();
 
-                    for(String paramId : idList.getParameters()) {
+                    for (String paramId : idList.getParameters()) {
                         Parameter param = getParameter(paramId);
 
                         param.setAutomationEnabled(false);
@@ -585,9 +581,7 @@ public class AutomationManager implements ParameterListListener,
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
 
-                for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = pObj.getLayerAt(i);
-
+                for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
                     String paramId = param.getUniqueId();
@@ -710,15 +704,13 @@ public class AutomationManager implements ParameterListListener,
             return;
         }
 
-          for (int i = 0; i < score.getLayerGroupCount(); i++) {
+        for (int i = 0; i < score.getLayerGroupCount(); i++) {
             LayerGroup layerGroup = score.getLayerGroup(i);
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
-        
-                   for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = pObj.getLayerAt(j);
 
+                for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
                     for (int k = automationParameters.size() - 1; k >= 0; k--) {
@@ -730,7 +722,7 @@ public class AutomationManager implements ParameterListListener,
                     }
                 }
             }
-          }
+        }
     }
 
     protected void updateValuesFromAutomations() {

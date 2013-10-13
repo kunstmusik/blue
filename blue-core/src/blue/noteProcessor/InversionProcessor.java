@@ -48,7 +48,7 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 float fieldVal = Float.parseFloat(temp.getPField(pfield));
                 float addVal = -1 * (fieldVal - this.value);
@@ -70,7 +70,7 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

@@ -27,6 +27,7 @@ import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
+import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -42,32 +43,27 @@ import java.util.Vector;
 /**
  * Title: blue (Object Composition Environment) Description: Copyright:
  * Copyright (c) steven yi Company: steven yi music
- * 
+ *
  * @author steven yi
  * @created November 11, 2001
  * @version 1.0
  */
-public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundLayer>,
+public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, LayerGroup<SoundLayer>,
         Serializable, Cloneable, GenericViewable {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
-
     public static final int DISPLAY_TIME = 0;
-
     public static final int DISPLAY_NUMBER = 1;
-
-    protected ArrayList<SoundLayer> soundLayers = new ArrayList<>();
-
     private boolean isRoot;
-
+    protected float subjectiveDuration = 2.0f;
+    protected float startTime = 0.0f;
+    protected String name = "";
+    protected Color backgroundColor = Color.DARK_GRAY;
+    transient Vector<SoundObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
-
     private int timeBehavior;
-
     float repeatPoint = -1.0f;
-
     private int defaultHeightIndex = 0;
-    
     private TimeState timeState = new TimeState();
 
     public PolyObject() {
@@ -82,19 +78,18 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         this.isRoot = isRoot;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
-   
+
     /**
      * Returns all soundObjects for this polyObject. Does not enter into
      * polyObjects to get their soundObjects
-     * 
+     *
      * @return
      */
     public final List<SoundObject> getSoundObjects(boolean grabMutedSoundObjects) {
         List<SoundObject> sObjects = new ArrayList<>();
-        SoundLayer sLayer;
-        for (int i = 0; i < soundLayers.size(); i++) {
-            sLayer = (SoundLayer) soundLayers.get(i);
 
+        for (SoundLayer sLayer : this) {
+            
             if (!grabMutedSoundObjects && sLayer.isMuted()) {
                 continue;
             }
@@ -107,21 +102,21 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     public final void addSoundObject(int layerIndex, SoundObject sObj) {
-        SoundLayer temp = (SoundLayer) soundLayers.get(layerIndex);
+        SoundLayer temp = (SoundLayer) this.get(layerIndex);
         temp.addSoundObject(sObj);
     }
 
     /**
-     * 
+     *
      * Removes a soundObject and returns what soundLayerIndex it was on (return
      * value used for undoable edit)
-     * 
+     *
      * @param sObj
      * @return
      */
     public final int removeSoundObject(SoundObject sObj) {
-        for (int i = 0; i < soundLayers.size(); i++) {
-            SoundLayer tempLayer = (SoundLayer) soundLayers.get(i);
+        for (int i = 0; i < this.size(); i++) {
+            SoundLayer tempLayer = (SoundLayer) this.get(i);
             if (tempLayer.contains(sObj)) {
                 tempLayer.removeSoundObject(sObj);
                 return i;
@@ -159,11 +154,10 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
-    
-    
 
-
-    /** ************************************************* */
+    /**
+     * *************************************************
+     */
     /**
      * Shifts soundObjects so first object starts at 0.0f Called by
      * SoundObjectBuffer when creating a new PolyObject from a group of
@@ -200,17 +194,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     /**
      * called by ScoreTimeCanvas, returns the maxTime of the polyobject calls
      * getMaxTime on each soundLayer
-     * 
+     *
      * @return The maxTime value
      */
     public final float getMaxTime() {
-        SoundLayer tempSLayer;
-        int size = soundLayers.size();
         float max = 0.0f;
         float temp;
 
-        for (int i = 0; i < size; i++) {
-            tempSLayer = ((SoundLayer) soundLayers.get(i));
+        for (SoundLayer tempSLayer : this) {
             temp = tempSLayer.getMaxTime();
             if (temp > max) {
                 max = temp;
@@ -230,7 +221,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
         float adjustedStart = renderStart - this.getStartTime();
 
-        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(getSoundObjects(
+        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+                getSoundObjects(
                 false));
 
         float multiplier = getSubjectiveDuration() / internalDur;
@@ -253,7 +245,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
         float adjustedEnd = renderEnd - this.getStartTime();
 
-        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(getSoundObjects(
+        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+                getSoundObjects(
                 false));
 
         float multiplier = getSubjectiveDuration() / internalDur;
@@ -263,42 +256,44 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     /* CSD GENERATION CODE */
-    
     @Override
     public boolean hasSoloLayers() {
-        for(SoundLayer layer : soundLayers) {
-            if(layer.isSolo()) {
+        for (SoundLayer layer : this) {
+            if (layer.isSolo()) {
                 return true;
             }
         }
         return false;
     }
-    
+
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
+    public NoteList generateForCSD(CompileData compileData, float startTime,
             float endTime) throws SoundObjectException {
-         
+
         boolean soloFound = false;
-        for(SoundLayer soundLayer : soundLayers) {
+        for (SoundLayer soundLayer : this) {
             if (soundLayer.isSolo()) {
-              soloFound = true; break;
+                soloFound = true;
+                break;
             }
         }
-        
+
         return generateForCSD(compileData, startTime, endTime, soloFound);
     }
-    
+
     @Override
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws SoundObjectException {
-        
+
         NoteList noteList = new NoteList();
-        
-        if(processWithSolo) {
-            for(SoundLayer soundLayer : soundLayers) {
+
+        if (processWithSolo) {
+            for (SoundLayer soundLayer : this) {
                 if (soundLayer.isSolo()) {
                     if (!soundLayer.isMuted()) {
                         try {
-                            noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                            noteList.merge(
+                                    soundLayer.generateForCSD(compileData,
+                                    startTime, endTime));
                         } catch (SoundLayerException ex) {
                             throw new SoundObjectException(this, ex);
                         }
@@ -306,10 +301,11 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
                 }
             }
         } else {
-            for(SoundLayer soundLayer : soundLayers) {
+            for (SoundLayer soundLayer : this) {
                 if (!soundLayer.isMuted()) {
                     try {
-                        noteList.merge(soundLayer.generateForCSD(compileData, startTime, endTime));
+                        noteList.merge(soundLayer.generateForCSD(compileData,
+                                startTime, endTime));
                     } catch (SoundLayerException ex) {
                         throw new SoundObjectException(this, ex);
                     }
@@ -320,13 +316,13 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         noteList = processNotes(compileData, noteList, startTime, endTime);
 
         return noteList;
-        
+
     }
-   
+
     private NoteList processNotes(CompileData compileData, NoteList nl, float start, float endTime) throws SoundObjectException {
-        
+
         NoteList retVal = null;
-        
+
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
         } catch (NoteProcessorException e) {
@@ -350,10 +346,10 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
             Note tempNote;
 
             for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.getNote(i);
+                tempNote = nl.get(i);
 
                 if (tempNote.getStartTime() >= 0) {
-                    buffer.addNote(tempNote);
+                    buffer.add(tempNote);
                 }
             }
             retVal = buffer;
@@ -366,10 +362,10 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
             Note tempNote;
 
             for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.getNote(i);
+                tempNote = retVal.get(i);
 
                 if (tempNote.getStartTime() <= endTime) {
-                    buffer.addNote(tempNote);
+                    buffer.add(tempNote);
                 }
             }
             retVal = buffer;
@@ -390,11 +386,10 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         pObj.setRepeatPoint(this.getRepeatPoint());
         pObj.setNoteProcessorChain((NoteProcessorChain) this.
                 getNoteProcessorChain().clone());
-        pObj.setTimeState((TimeState)timeState.clone());
+        pObj.setTimeState((TimeState) timeState.clone());
 
-        for (Iterator iter = this.soundLayers.iterator(); iter.hasNext();) {
-            SoundLayer sLayer = (SoundLayer) iter.next();
-            pObj.soundLayers.add((SoundLayer) sLayer.clone());
+        for (SoundLayer sLayer : this) {
+            pObj.add((SoundLayer) sLayer.clone());
         }
 
         return pObj;
@@ -422,8 +417,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     public int getSoundLayerIndex(SoundObject sObj) {
-        for (int i = 0; i < soundLayers.size(); i++) {
-            SoundLayer tempLayer = (SoundLayer) soundLayers.get(i);
+        for (int i = 0; i < this.size(); i++) {
+            SoundLayer tempLayer = (SoundLayer) this.get(i);
             if (tempLayer.contains(sObj)) {
                 return i;
             }
@@ -443,8 +438,6 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         isRoot = val;
     }
 
-    
-
     /*
      * (non-Javadoc)
      * 
@@ -459,34 +452,33 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         Elements nodes = data.getElements();
 
         int heightIndex = -1;
-        
+
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
                 case "isRoot":
-                    pObj.setRoot(Boolean.valueOf(node.getTextString()).booleanValue());
+                    pObj.setRoot(
+                            Boolean.valueOf(node.getTextString()).booleanValue());
                     break;
-                case "heightIndex":
-                    {
-                        int index = Integer.parseInt(node.getTextString());
-                        // checking if using old heightIndex values
-                        String val = node.getAttributeValue("version");
-                        if (val == null || val.length() == 0) {
-                            index = index - 1;
-                            index = index < 0 ? 0 : index;
-                        }
-                        heightIndex = index;
-                        break;
+                case "heightIndex": {
+                    int index = Integer.parseInt(node.getTextString());
+                    // checking if using old heightIndex values
+                    String val = node.getAttributeValue("version");
+                    if (val == null || val.length() == 0) {
+                        index = index - 1;
+                        index = index < 0 ? 0 : index;
                     }
-                case "defaultHeightIndex":
-                    {
-                        int index = Integer.parseInt(node.getTextString());
-                        pObj.setDefaultHeightIndex(index);
-                        break;
-                    }
+                    heightIndex = index;
+                    break;
+                }
+                case "defaultHeightIndex": {
+                    int index = Integer.parseInt(node.getTextString());
+                    pObj.setDefaultHeightIndex(index);
+                    break;
+                }
                 case "soundLayer":
-                    pObj.soundLayers.add(SoundLayer.loadFromXML(node, objRefMap));
+                    pObj.add(SoundLayer.loadFromXML(node, objRefMap));
                     break;
                 case "timeState":
                     pObj.timeState = TimeState.loadFromXML(node);
@@ -495,8 +487,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         }
 
         if (heightIndex >= 0) {
-            for (int i = 0; i < pObj.getSize(); i++) {
-                SoundLayer layer = pObj.getLayerAt(i);
+            for (int i = 0; i < pObj.size(); i++) {
+                SoundLayer layer = pObj.get(i);
                 layer.setHeightIndex(heightIndex);
             }
 
@@ -507,22 +499,21 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
     }
 
-    /** 
-     * Introduced blue 2.3.0, used to check if previous timeState values are 
+    /**
+     * Introduced blue 2.3.0, used to check if previous timeState values are
      * found, signal to create a timeState value instead
-     * 
+     *
      * @param node
-     * @return 
+     * @return
      */
-    
     private static boolean isTimeStateValueFound(String nodeName) {
-         return nodeName.equals("pixelSecond") ||
-                 nodeName.equals("snapEnabled") || 
-                 nodeName.equals("snapValue") ||
-                 nodeName.equals("timeDisplay") ||
-                 nodeName.equals("timeUnit");
+        return nodeName.equals("pixelSecond")
+                || nodeName.equals("snapEnabled")
+                || nodeName.equals("snapValue")
+                || nodeName.equals("timeDisplay")
+                || nodeName.equals("timeUnit");
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -535,13 +526,12 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
         retVal.addElement(XMLUtilities.writeInt("defaultHeightIndex",
                 defaultHeightIndex));
-        
-        if(timeState != null) {
+
+        if (timeState != null) {
             retVal.addElement(timeState.saveAsXML());
         }
-        
-        for (Iterator iter = soundLayers.iterator(); iter.hasNext();) {
-            SoundLayer sLayer = (SoundLayer) iter.next();
+
+        for (SoundLayer sLayer : this) {
             retVal.addElement(sLayer.saveAsXML(objRefMap));
         }
 
@@ -549,14 +539,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     public int getLayerNum(SoundLayer layer) {
-        return soundLayers.indexOf(layer);
+        return this.indexOf(layer);
     }
 
     public int getLayerNumForY(int y) {
         int runningY = 0;
 
-        for (int i = 0; i < soundLayers.size(); i++) {
-            SoundLayer layer = (SoundLayer) soundLayers.get(i);
+        for (int i = 0; i < this.size(); i++) {
+            SoundLayer layer = this.get(i);
             runningY += layer.getSoundLayerHeight();
 
             if (runningY > y) {
@@ -564,21 +554,21 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
             }
         }
 
-        return soundLayers.size() - 1;
+        return this.size() - 1;
     }
 
     public int getYForLayerNum(int layerNum) {
         int runningY = 0;
         int max = layerNum;
 
-        int lastIndex = soundLayers.size() - 1;
+        int lastIndex = this.size() - 1;
 
         if (max > lastIndex) {
             max = lastIndex;
         }
 
         for (int i = 0; i < max; i++) {
-            SoundLayer layer = (SoundLayer) soundLayers.get(i);
+            SoundLayer layer = this.get(i);
             runningY += layer.getSoundLayerHeight();
         }
 
@@ -586,15 +576,13 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     public int getSoundLayerHeight(int layerNum) {
-        SoundLayer layer = (SoundLayer) soundLayers.get(layerNum);
-        return layer.getSoundLayerHeight();
+        return this.get(layerNum).getSoundLayerHeight();
     }
 
     public int getTotalHeight() {
         int runningHeight = 0;
 
-        for (int i = 0; i < soundLayers.size(); i++) {
-            SoundLayer layer = (SoundLayer) soundLayers.get(i);
+        for (SoundLayer layer : this) {
             runningHeight += layer.getSoundLayerHeight();
         }
 
@@ -602,51 +590,40 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     }
 
     /* LAYER GROUP INTERFACE */
-    
-    @Override
-    public SoundLayer getLayerAt(int index) {
-        return soundLayers.get(index);
-    }
-
-    @Override
-    public int getSize() {
-        return soundLayers.size();
-    }
-    
     @Override
     public SoundLayer newLayerAt(int index) {
-        
+
         SoundLayer sLayer = new SoundLayer();
         sLayer.setHeightIndex(getDefaultHeightIndex());
-        
-        if(index < 0 || index >= soundLayers.size()) {
-            soundLayers.add(sLayer);
+
+        if (index < 0 || index >= this.size()) {
+            this.add(sLayer);
         } else {
-            soundLayers.add(index, sLayer);
+            this.add(index, sLayer);
         }
-        
+
         ArrayList<Layer> layers = new ArrayList<>();
         layers.add(sLayer);
 
-        int insertIndex = soundLayers.indexOf(sLayer);
+        int insertIndex = this.indexOf(sLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 
         fireLayerGroupDataEvent(lde);
-        
+
         return sLayer;
     }
-    
+
     @Override
     public void removeLayers(int startIndex, int endIndex) {
-        
+
         ArrayList<Layer> layers = new ArrayList<>();
-        
+
         for (int i = endIndex; i >= startIndex; i--) {
-            SoundLayer sLayer = (SoundLayer) soundLayers.get(i);
+            SoundLayer sLayer = this.get(i);
             sLayer.clearListeners();
 
-            soundLayers.remove(i);
+            this.remove(i);
 
             layers.add(sLayer);
         }
@@ -657,11 +634,11 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         fireLayerGroupDataEvent(lde);
 
     }
-    
+
     @Override
     public void pushUpLayers(int startIndex, int endIndex) {
-        SoundLayer a = soundLayers.remove(startIndex - 1);
-        soundLayers.add(endIndex, a);
+        SoundLayer a = this.remove(startIndex - 1);
+        this.add(endIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, startIndex - 1, endIndex);
@@ -671,8 +648,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
     @Override
     public void pushDownLayers(int startIndex, int endIndex) {
-        SoundLayer a = soundLayers.remove(endIndex + 1);
-        soundLayers.add(startIndex, a);
+        SoundLayer a = this.remove(endIndex + 1);
+        this.add(startIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, -startIndex, -(endIndex + 1));
@@ -701,14 +678,14 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
             return;
         }
 
-        for(LayerGroupListener listener : layerGroupListeners) {
+        for (LayerGroupListener listener : layerGroupListeners) {
             listener.layerGroupChanged(lde);
         }
     }
 
-    
-    /****/
-
+    /**
+     * *
+     */
     public int getDefaultHeightIndex() {
         return defaultHeightIndex;
     }
@@ -719,7 +696,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
 
     /**
      * Returns if this PolyObject has any score generating SoundObjects
-     * 
+     *
      * @return
      */
     public boolean isScoreGenerationEmpty() {
@@ -747,7 +724,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
     public boolean isAdjustedTimeCalculateable() {
         List<SoundObject> sObjects = getSoundObjects(false);
 
-        for (SoundObject element : sObjects) { 
+        for (SoundObject element : sObjects) {
             if (element.getTimeBehavior() == SoundObject.TIME_BEHAVIOR_NONE) {
                 return false;
             }
@@ -769,7 +746,7 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         List<SoundObject> sObjects;
         SoundObject sObj;
 
-        for (SoundLayer sLayer : soundLayers) { 
+        for (SoundLayer sLayer : this) {
             sObjects = sLayer.getSoundObjects();
 
             for (int j = 0; j < sObjects.size(); j++) {
@@ -782,7 +759,8 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
                         try {
                             olp.processOnLoad();
                         } catch (SoundObjectException soe) {
-                            throw new RuntimeException(new SoundObjectException(this,
+                            throw new RuntimeException(new SoundObjectException(
+                                    this,
                                     "Error during on load processing:", soe));
                         }
                     }
@@ -791,4 +769,80 @@ public class PolyObject extends AbstractSoundObject implements LayerGroup<SoundL
         }
     }
 
+    // methods from AbstractSoundObject
+    public void setName(String name) {
+        this.name = name;
+
+        SoundObjectEvent event = new SoundObjectEvent(this,
+                SoundObjectEvent.NAME);
+
+        fireSoundObjectEvent(event);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setStartTime(float startTime) {
+        this.startTime = startTime;
+
+        SoundObjectEvent event = new SoundObjectEvent(this,
+                SoundObjectEvent.START_TIME);
+
+        fireSoundObjectEvent(event);
+    }
+
+    public float getStartTime() {
+        return startTime;
+    }
+
+    public void setSubjectiveDuration(float subjectiveDuration) {
+        this.subjectiveDuration = subjectiveDuration;
+
+        SoundObjectEvent event = new SoundObjectEvent(this,
+                SoundObjectEvent.DURATION);
+
+        fireSoundObjectEvent(event);
+    }
+
+    public float getSubjectiveDuration() {
+        return subjectiveDuration;
+    }
+
+    public void addSoundObjectListener(SoundObjectListener listener) {
+        if (soundObjectListeners == null) {
+            soundObjectListeners = new Vector<>();
+        }
+        soundObjectListeners.add(listener);
+    }
+
+    public void removeSoundObjectListener(SoundObjectListener listener) {
+        if (soundObjectListeners == null) {
+            return;
+        }
+        soundObjectListeners.remove(listener);
+    }
+
+    public void fireSoundObjectEvent(SoundObjectEvent sObjEvent) {
+        if (soundObjectListeners == null) {
+            return;
+        }
+
+        for (SoundObjectListener listener : soundObjectListeners) {
+            listener.soundObjectChanged(sObjEvent);
+        }
+    }
+
+    public Color getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(Color backgroundColor) {
+        this.backgroundColor = backgroundColor;
+
+        SoundObjectEvent event = new SoundObjectEvent(this,
+                SoundObjectEvent.COLOR);
+
+        fireSoundObjectEvent(event);
+    }
 }

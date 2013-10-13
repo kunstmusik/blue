@@ -95,7 +95,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         int w = (layerGroup.getMaxPattern() + 16) * 
                 layerGroup.getPatternBeatsLength() * 
                 timeState.getPixelSecond();
-        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        int h = layerGroup.size() * Layer.LAYER_HEIGHT;
         final Dimension d = new Dimension(w, h);
         this.setPreferredSize(d);
         return d;
@@ -138,14 +138,14 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
         g.setColor(Color.DARK_GRAY);
 
-        for (int i = startLayerIndex; i < layerGroup.getSize(); i++) {
+        for (int i = startLayerIndex; i < layerGroup.size(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
 
             if (y > maxY) {
                 break;
             }
 
-            PatternLayer layer = layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.get(i);
             PatternData data = layer.getPatternData();
 
             g.setColor(PATTERN_COLOR);
@@ -191,10 +191,10 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         int patternBeatsLength = layerGroup.getPatternBeatsLength();
         int patternWidth = patternBeatsLength * pixelSecond;
         
-        for (int i = 0; i < layerGroup.getSize(); i++) {
+        for (int i = 0; i < layerGroup.size(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
             int x = 0; 
-            PatternLayer layer = layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.get(i);
             PatternData data = layer.getPatternData();
 
             g2d.setColor(PATTERN_COLOR);

@@ -116,8 +116,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         };
 
         int y = 0;
-        for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = layerGroup.getLayerAt(i);
+        for (AudioLayer layer : layerGroup) {
             int height = layer.getAudioLayerHeight();
             layer.addPropertyChangeListener(heightListener);
             layer.addAudioLayerListener(this);
@@ -145,8 +144,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         layerGroup.removeLayerGroupListener(this);
         timeState.removePropertyChangeListener(this);
 
-        for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = layerGroup.getLayerAt(i);
+        for (AudioLayer layer : layerGroup) {
             layer.removePropertyChangeListener(heightListener);
             layer.removeAudioLayerListener(this);
         }
@@ -306,8 +304,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         g.setColor(Color.DARK_GRAY);
         g.drawLine(0, 0, width, 0);
 
-        for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = layerGroup.getLayerAt(i);
+        for (AudioLayer layer : layerGroup) {
             y += layer.getAudioLayerHeight();
 
             g.drawLine(0, y, width, y);
@@ -372,10 +369,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 //    }
     protected Rectangle getAudioLayerRect(AudioLayer layer) {
         int y = 0;
-        AudioLayer temp;
 
-        for (int i = 0; i < layerGroup.getSize(); i++) {
-            temp = layerGroup.getLayerAt(i);
+        for (AudioLayer temp : layerGroup) {
             if (layer == temp) {
                 return new Rectangle(0, y, 0, temp.getAudioLayerHeight());
             }
@@ -414,8 +409,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         int y = 0;
         int height = 0;
 
-        for (int i = 0; i < layerGroup.getSize(); i++) {
-            AudioLayer layer = layerGroup.getLayerAt(i);
+        for (AudioLayer layer : layerGroup) {
             height = layer.getAudioLayerHeight();
 
             for (AudioClip clip : layer) {

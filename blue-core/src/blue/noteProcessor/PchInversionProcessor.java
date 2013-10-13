@@ -50,7 +50,7 @@ public class PchInversionProcessor implements NoteProcessor,
         Note temp;
         String val;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             try {
                 val = temp.getPField(pfield).trim();
@@ -85,7 +85,7 @@ public class PchInversionProcessor implements NoteProcessor,
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " 2 6.0" + i + " 4"));
+                n.add(Note.createNote("i1 " + i + " 2 6.0" + i + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

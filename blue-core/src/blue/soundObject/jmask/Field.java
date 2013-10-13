@@ -144,7 +144,7 @@ public class Field implements Serializable, ListModel {
 
             xt += p2;
 
-            nl.addNote(n);
+            nl.add(n);
         }
 
         return nl;

@@ -261,7 +261,7 @@ public class CSDRender extends CSDRenderService {
             try {
                 Note renderEndNote = Note.createNote(
                         "i" + instrId + " " + endStartTime + " 0.1");
-                generatedNotes.addNote(renderEndNote);
+                generatedNotes.add(renderEndNote);
             } catch (NoteParseException e1) {
             }
         }
@@ -325,7 +325,7 @@ public class CSDRender extends CSDRenderService {
 
             try {
                 Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
-                generatedNotes.addNote(n);
+                generatedNotes.add(n);
             } catch (NoteParseException ex) {
                 ex.printStackTrace();
             }
@@ -345,7 +345,7 @@ public class CSDRender extends CSDRenderService {
 
             try {
                 Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
-                generatedNotes.addNote(n);
+                generatedNotes.add(n);
             } catch (NoteParseException ex) {
                 ex.printStackTrace();
             }
@@ -364,7 +364,7 @@ public class CSDRender extends CSDRenderService {
 
             try {
                 Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
-                generatedNotes.addNote(n);
+                generatedNotes.add(n);
             } catch (NoteParseException ex) {
                 ex.printStackTrace();
             }

@@ -115,7 +115,7 @@ public class MidiImportUtilities {
 
             if (trSettings.isTrim()) {
                 // Assumes NoteList is already sorted
-                float start = nl.getNote(0).getStartTime();
+                float start = nl.get(0).getStartTime();
                 genSco.setStartTime(start);
                 ScoreUtilities.normalizeNoteList(nl);
             } else {
@@ -180,7 +180,7 @@ public class MidiImportUtilities {
                                     template, instrId, start, duration,
                                     noteNum, velocity);
 
-                            nl.addNote(Note.createNote(note));
+                            nl.add(Note.createNote(note));
 
                             n.clear();
                         }
@@ -199,7 +199,7 @@ public class MidiImportUtilities {
                                 template, instrId, start, duration, noteNum,
                                 velocity);
 
-                        nl.addNote(Note.createNote(note));
+                        nl.add(Note.createNote(note));
 
                         n.clear();
 

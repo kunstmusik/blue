@@ -104,7 +104,7 @@ public class BlueProjectManager {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
                 
-                if(pObj.getSize() == 0) {
+                if(pObj.size() == 0) {
                     pObj.newLayerAt(-1);
                 }
             }

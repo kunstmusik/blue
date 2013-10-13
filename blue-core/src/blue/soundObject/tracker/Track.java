@@ -297,7 +297,7 @@ public class Track implements Serializable, TableModel {
 
                 Note note = Note.createNote(noteStr);
 
-                retVal.addNote(note);
+                retVal.add(note);
 
             }
 

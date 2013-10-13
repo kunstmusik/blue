@@ -63,7 +63,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
         float fieldVal = 0f;
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 fieldVal = Float.parseFloat(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
@@ -125,7 +125,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

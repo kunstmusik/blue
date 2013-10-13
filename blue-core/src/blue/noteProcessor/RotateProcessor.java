@@ -44,7 +44,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
 
         in.sort();
 
-        Note lastNote = in.getNote(in.size() - 1);
+        Note lastNote = in.get(in.size() - 1);
 
         float startTime = lastNote.getStartTime()
                 + lastNote.getSubjectiveDuration();
@@ -65,7 +65,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
         index = in.size() - index;
 
         while (index < in.size()) {
-            Note n = in.getNote(index);
+            Note n = in.get(index);
             n.setStartTime(n.getStartTime() + startTime);
             index++;
         }
@@ -79,7 +79,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 5 " + i + " 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 5 " + i + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

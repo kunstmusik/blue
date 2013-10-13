@@ -109,8 +109,7 @@ public class PolyObjectPropertiesPanel extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         if(this.pObj != null) {
-            for(int i = 0; i < pObj.getSize(); i++) {
-                SoundLayer layer = pObj.getLayerAt(i);
+            for(SoundLayer layer : pObj) {
                 layer.setHeightIndex(pObj.getDefaultHeightIndex());
             }
         }

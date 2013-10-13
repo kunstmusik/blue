@@ -38,10 +38,9 @@ import java.util.Vector;
  *
  * @author stevenyi
  */
-public class AudioLayerGroup implements LayerGroup<AudioLayer> {
+public class AudioLayerGroup extends ArrayList<AudioLayer> implements LayerGroup<AudioLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
-    private ArrayList<AudioLayer> audioLayers = new ArrayList<AudioLayer>();
     private String name = "Audio Layer Group";
 
     @Override
@@ -56,7 +55,7 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
     @Override
     public boolean hasSoloLayers() {
-        for (AudioLayer layer : audioLayers) {
+        for (AudioLayer layer : this) {
             if (layer.isSolo()) {
                 return true;
             }
@@ -91,7 +90,7 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
             if ("audioLayers".equals(nodeName)) {
                 Elements aLayerNodes = node.getElements();
                 while(aLayerNodes.hasMoreElements()) {
-                    layerGroup.audioLayers.add(
+                    layerGroup.add(
                             AudioLayer.loadFromXML(aLayerNodes.next()));
                 }
             }
@@ -107,7 +106,7 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
         Element audioLayersNode = root.addElement("audioLayers");
 
-        for (AudioLayer layer : audioLayers) {
+        for (AudioLayer layer : this) {
             audioLayersNode.addElement(layer.saveAsXML());
         }
 
@@ -119,16 +118,16 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
         AudioLayer audioLayer = new AudioLayer();
 
-        if (index < 0 || index >= audioLayers.size()) {
-            audioLayers.add(audioLayer);
+        if (index < 0 || index >= this.size()) {
+            this.add(audioLayer);
         } else {
-            audioLayers.add(index, audioLayer);
+            this.add(index, audioLayer);
         }
 
         ArrayList<Layer> layers = new ArrayList<Layer>();
         layers.add(audioLayer);
 
-        int insertIndex = audioLayers.indexOf(audioLayer);
+        int insertIndex = this.indexOf(audioLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 
@@ -143,10 +142,10 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
         ArrayList<Layer> layers = new ArrayList<Layer>();
 
         for (int i = endIndex; i >= startIndex; i--) {
-            AudioLayer audioLayer = audioLayers.get(i);
+            AudioLayer audioLayer = this.get(i);
             audioLayer.clearListeners();
 
-            audioLayers.remove(i);
+            this.remove(i);
 
             layers.add(audioLayer);
         }
@@ -160,8 +159,8 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
     @Override
     public void pushUpLayers(int startIndex, int endIndex) {
-        AudioLayer a = audioLayers.remove(startIndex - 1);
-        audioLayers.add(endIndex, a);
+        AudioLayer a = this.remove(startIndex - 1);
+        this.add(endIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, startIndex - 1, endIndex);
@@ -171,23 +170,13 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
     @Override
     public void pushDownLayers(int startIndex, int endIndex) {
-        AudioLayer a = audioLayers.remove(endIndex + 1);
-        audioLayers.add(startIndex, a);
+        AudioLayer a = this.remove(endIndex + 1);
+        this.add(startIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, -startIndex, -(endIndex + 1));
 
         fireLayerGroupDataEvent(lde);
-    }
-
-    @Override
-    public int getSize() {
-        return audioLayers.size();
-    }
-
-    @Override
-    public AudioLayer getLayerAt(int index) {
-        return audioLayers.get(index);
     }
 
     @Override
@@ -230,7 +219,7 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
 
     public int getTotalHeight() {
         int runningHeight = 0;
-        for (AudioLayer layer : audioLayers) {
+        for (AudioLayer layer : this) {
             runningHeight += (layer.getHeightIndex() + 1);
         }
         return runningHeight * Layer.LAYER_HEIGHT;
@@ -244,8 +233,8 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
    public int getLayerNumForY(int y) {
         int runningY = 0;
 
-        for (int i = 0; i < audioLayers.size(); i++) {
-            AudioLayer layer = (AudioLayer) audioLayers.get(i);
+        for (int i = 0; i < this.size(); i++) {
+            AudioLayer layer = (AudioLayer) this.get(i);
             runningY += layer.getAudioLayerHeight();
 
             if (runningY > y) {
@@ -253,6 +242,6 @@ public class AudioLayerGroup implements LayerGroup<AudioLayer> {
             }
         }
 
-        return audioLayers.size() - 1;
+        return this.size() - 1;
     }
 }

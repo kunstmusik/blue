@@ -65,11 +65,11 @@ public class RepetitionObject extends AbstractSoundObject implements
 
         float remainingDur = subjDur - startVal;
 
-        for (int i = 0; i < tempNL.size(); i++) {
-            tempNote = (Note) tempNL.getNote(i).clone();
-            if (tempNote.getStartTime() + tempNote.getSubjectiveDuration() <= remainingDur) {
+        for (Note n : tempNL) {
+            if (n.getStartTime() + n.getSubjectiveDuration() <= remainingDur) {
+                tempNote = (Note) n.clone();
                 tempNote.setStartTime(tempNote.getStartTime() + startVal);
-                nl.addNote(tempNote);
+                nl.add(tempNote);
             }
         }
 

@@ -76,11 +76,10 @@ public class PatternsHeaderListPanel extends JPanel implements
         this.layerGroup.addLayerGroupListener(this);
         this.setLayout(new LinearLayout());
         this.setPreferredSize(new Dimension(30,
-                22 * patternsLayerGroup.getSize()));
+                22 * patternsLayerGroup.size()));
 
-        for (int i = 0; i < patternsLayerGroup.getSize(); i++) {
-            this.add(new PatternLayerPanel(
-                        patternsLayerGroup.getLayerAt(i), ic));
+        for (PatternLayer layer : patternsLayerGroup) {
+            this.add(new PatternLayerPanel(layer, ic));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -104,9 +103,9 @@ public class PatternsHeaderListPanel extends JPanel implements
                     return;
                 }
                         
-                layerRemoveAction.setEnabled(layerGroup.getSize() >= 2);
+                layerRemoveAction.setEnabled(layerGroup.size() >= 2);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
-                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.getSize() - 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.size() - 1);
                 
                 super.show(invoker, x, y);
             }
@@ -215,7 +214,7 @@ public class PatternsHeaderListPanel extends JPanel implements
 
         int w = getParent().getWidth();
 
-        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        int h = layerGroup.size() * Layer.LAYER_HEIGHT;
 
         this.setSize(w, h);
     }
@@ -256,7 +255,7 @@ public class PatternsHeaderListPanel extends JPanel implements
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        PatternLayer sLayer = layerGroup.getLayerAt(index);
+        PatternLayer sLayer = layerGroup.get(index);
 
         PatternLayerPanel panel = new PatternLayerPanel(sLayer, content);
         
@@ -322,8 +321,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         boolean found = false;
         
         if(!allEvents.isEmpty()) {
-            for(int i = 0; i < layerGroup.getSize(); i++) {
-                PatternLayer pLayer = layerGroup.getLayerAt(i);
+            for(PatternLayer pLayer : layerGroup) {
                 if(allEvents.contains(pLayer.getSoundObject())) {
                     found = true;
                     break;
@@ -461,7 +459,7 @@ public class PatternsHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || end >= layerGroup.getSize() - 1) {
+            if (end < 0 || end >= layerGroup.size() - 1) {
                 return;
             }
 
@@ -504,7 +502,7 @@ public class PatternsHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || layerGroup.getSize() < 2) {
+            if (end < 0 || layerGroup.size() < 2) {
                 return;
             }
 

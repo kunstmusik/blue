@@ -38,7 +38,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
         float newStart, newEnd;
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 newStart = tm.beatsToSeconds(temp.getStartTime());
                 newEnd = tm.beatsToSeconds(temp.getStartTime()
@@ -82,7 +82,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " 1 3 4"));
+                n.add(Note.createNote("i1 " + i + " 1 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
