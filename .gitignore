@@ -2,6 +2,7 @@
 build
 dist
 /nbproject/private
+rebel.xml
 */nbproject/private
 */nbproject/sqe.properties
 */nbproject/findbugs.settings
