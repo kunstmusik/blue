@@ -31,7 +31,6 @@ import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
@@ -41,6 +40,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
@@ -55,20 +55,23 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
     private final LayerGroupPanel panel;
+    private final InstanceContent ic;
 
     public AddToSoundObjectLibraryAction() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     public AddToSoundObjectLibraryAction(
             Collection<? extends ScoreObject> scoreObjects,
             Collection<? extends SoundObject> soundObjects,
-            LayerGroupPanel panel) {
+            LayerGroupPanel panel,
+            InstanceContent ic) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_AddToSoundObjectLibraryAction"));
         this.scoreObjects = scoreObjects;
         this.soundObjects = soundObjects;
         this.panel = panel;
+        this.ic = ic;
     }
 
     @Override
@@ -100,7 +103,8 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         return new AddToSoundObjectLibraryAction(
                 actionContext.lookupAll(ScoreObject.class),
                 actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(LayerGroupPanel.class));
+                actionContext.lookup(LayerGroupPanel.class),
+                actionContext.lookup(InstanceContent.class));
     }
 
     private void replaceSoundObject(SoundObject oldSoundObject,
@@ -123,9 +127,8 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
         sCanvas.getPolyObject().addSoundObject(index, newSoundObject);
 
-
-        // FIXME - this resets the list of selected items, need to figure this out
-        //content.set(Collections.emptyList(), null);
+        // remove old soundObject from selected objects
+        ic.remove(oldSoundObject);
 
         if (recordEdit) {
 
