@@ -19,11 +19,17 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.score.ScoreObject;
 import blue.soundObject.External;
+import blue.soundObject.ObjectBuilder;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -34,27 +40,40 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
         id = "blue.ui.core.score.actions.ConvertToObjectBuilderAction")
 @ActionRegistration(
-        displayName = "#CTL_ConvertToObjectBuilderAction", lazy = true)
+        displayName = "#CTL_ConvertToObjectBuilderAction")
 @Messages("CTL_ConvertToObjectBuilderAction=Convert to ObjectBuilder")
 @ActionReference(path = "blue/score/actions", position = 50)
 public final class ConvertToObjectBuilderAction extends AbstractAction
         implements ContextAwareAction {
 
     private final Collection<? extends SoundObject> soundObjects;
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final LayerGroupPanel lGroupPanel;
+    private final Point p;
+    private final InstanceContent ic;
 
     public ConvertToObjectBuilderAction() {
-        this(null);
+        this(null, null, null, null, null);
     }
 
-    public ConvertToObjectBuilderAction(Collection<? extends SoundObject> soundObjects) {
+    public ConvertToObjectBuilderAction(Collection<? extends SoundObject> soundObjects,
+            Collection<? extends ScoreObject> scoreObjects,
+            LayerGroupPanel lGroupPanel,
+            Point p,
+            InstanceContent ic) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_ConvertToObjectBuilderAction"));
         this.soundObjects = soundObjects;
+        this.scoreObjects = scoreObjects;
+        this.lGroupPanel = lGroupPanel;
+        this.p = p;
+        this.ic = ic;
     }
 
     @Override
@@ -67,44 +86,50 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
         if (retVal != JOptionPane.OK_OPTION) {
             return;
         }
-//
-//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-//
-//        ObjectBuilder objBuilder = new ObjectBuilder();
-//
-//        if (temp instanceof PythonObject) {
-//            PythonObject tempPython = (PythonObject) temp;
-//            objBuilder.setName(tempPython.getName());
-//            objBuilder.setNoteProcessorChain(tempPython.getNoteProcessorChain());
-//            objBuilder.setTimeBehavior(tempPython.getTimeBehavior());
-//            objBuilder.setStartTime(tempPython.getStartTime());
-//            objBuilder.setSubjectiveDuration(tempPython.getSubjectiveDuration());
-//            objBuilder.setCode(tempPython.getText());
-//            objBuilder.setBackgroundColor(tempPython.getBackgroundColor());
-//
-//        } else if (temp instanceof External) {
-//            External tempExt = (External) temp;
-//            objBuilder.setName(tempExt.getName());
-//            objBuilder.setNoteProcessorChain(tempExt.getNoteProcessorChain());
-//            objBuilder.setTimeBehavior(tempExt.getTimeBehavior());
-//            objBuilder.setStartTime(tempExt.getStartTime());
-//            objBuilder.setSubjectiveDuration(tempExt.getSubjectiveDuration());
-//            objBuilder.setCode(tempExt.getText());
-//            objBuilder.setCommandLine(tempExt.getCommandLine());
-//            objBuilder.setExternal(true);
-//            objBuilder.setBackgroundColor(tempExt.getBackgroundColor());
-//        } else {
-//            return;
-//        }
-//
-//        removeSObj();
-//        sCanvas.getPolyObject().addSoundObject(index, objBuilder);
-//        content.set(Collections.emptyList(), null);
+
+        ScoreTimeCanvas sCanvas = (ScoreTimeCanvas)lGroupPanel;
+        int index = sCanvas.getPolyObject().getLayerNumForScoreObject(temp);
+
+        ObjectBuilder objBuilder = new ObjectBuilder();
+
+        if (temp instanceof PythonObject) {
+            PythonObject tempPython = (PythonObject) temp;
+            objBuilder.setName(tempPython.getName());
+            objBuilder.setNoteProcessorChain(tempPython.getNoteProcessorChain());
+            objBuilder.setTimeBehavior(tempPython.getTimeBehavior());
+            objBuilder.setStartTime(tempPython.getStartTime());
+            objBuilder.setSubjectiveDuration(tempPython.getSubjectiveDuration());
+            objBuilder.setCode(tempPython.getText());
+            objBuilder.setBackgroundColor(tempPython.getBackgroundColor());
+
+        } else if (temp instanceof External) {
+            External tempExt = (External) temp;
+            objBuilder.setName(tempExt.getName());
+            objBuilder.setNoteProcessorChain(tempExt.getNoteProcessorChain());
+            objBuilder.setTimeBehavior(tempExt.getTimeBehavior());
+            objBuilder.setStartTime(tempExt.getStartTime());
+            objBuilder.setSubjectiveDuration(tempExt.getSubjectiveDuration());
+            objBuilder.setCode(tempExt.getText());
+            objBuilder.setCommandLine(tempExt.getCommandLine());
+            objBuilder.setExternal(true);
+            objBuilder.setBackgroundColor(tempExt.getBackgroundColor());
+        } else {
+            return;
+        }
+
+
+        sCanvas.getPolyObject().removeSoundObject(temp);
+        sCanvas.getPolyObject().addSoundObject(index, objBuilder);
+
+        ic.remove(temp);   
+        ic.add(objBuilder);
     }
 
     @Override
     public boolean isEnabled() {
-        if (soundObjects.size() != 1) {
+        if (scoreObjects.size() != soundObjects.size() || 
+                soundObjects.size() != 1 ||
+                !(lGroupPanel instanceof ScoreTimeCanvas)) {
             return false;
         }
         SoundObject sObj = soundObjects.iterator().next();
@@ -113,6 +138,11 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AlignRightAction(actionContext.lookupAll(SoundObject.class));
+        return new ConvertToObjectBuilderAction(
+                actionContext.lookupAll(SoundObject.class),
+                actionContext.lookupAll(ScoreObject.class),
+                actionContext.lookup(LayerGroupPanel.class),
+                actionContext.lookup(Point.class),
+                actionContext.lookup(InstanceContent.class));
     }
 }
