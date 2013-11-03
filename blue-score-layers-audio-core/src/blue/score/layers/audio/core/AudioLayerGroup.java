@@ -20,13 +20,13 @@
 package blue.score.layers.audio.core;
 
 import blue.CompileData;
-import blue.SoundLayer;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
+import blue.score.ScoreObject;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
+import blue.score.layers.ScoreObjectLayerGroup;
 import blue.soundObject.*;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -38,7 +38,7 @@ import java.util.Vector;
  *
  * @author stevenyi
  */
-public class AudioLayerGroup extends ArrayList<AudioLayer> implements LayerGroup<AudioLayer> {
+public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjectLayerGroup<AudioLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private String name = "Audio Layer Group";
@@ -243,5 +243,15 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements LayerGroup
         }
 
         return this.size() - 1;
+    }
+
+    @Override
+    public int getLayerNumForScoreObject(ScoreObject scoreObj) {
+        for(int i = 0; i < this.size(); i++) {
+            if(get(i).contains(scoreObj)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

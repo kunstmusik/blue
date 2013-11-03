@@ -22,12 +22,12 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
-import blue.utility.ObjectUtilities;
+import blue.score.layers.ScoreObjectLayerGroup;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -35,7 +35,6 @@ import electric.xml.Elements;
 import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -48,7 +47,8 @@ import java.util.Vector;
  * @created November 11, 2001
  * @version 1.0
  */
-public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, LayerGroup<SoundLayer>,
+public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, 
+        ScoreObjectLayerGroup<SoundLayer>,
         Serializable, Cloneable, GenericViewable {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
@@ -840,5 +840,15 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, La
                 SoundObjectEvent.COLOR);
 
         fireSoundObjectEvent(event);
+    }
+
+    @Override
+    public int getLayerNumForScoreObject(ScoreObject scoreObj) {
+        for(int i = 0; i < this.size(); i++) {
+            if(get(i).contains(scoreObj)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

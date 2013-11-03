@@ -55,10 +55,16 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
 
+                Point p = e.getPoint();
+
                 content.add(currentLayerGroupPanel);
+                content.add(p);
+                content.add(content);
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
                         ScoreTopComponent.findInstance().getLookup());
+                content.remove(content);
+                content.remove(p);
                 content.remove(currentLayerGroupPanel);
                 menu.show(comp.getParent(), e.getX(), e.getY());
             }
