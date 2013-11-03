@@ -55,24 +55,24 @@ public class SoundObjectLibraryUtilsTest {
         SoundObject sObj2 = new GenericScore();
         PolyObject pObjInner = new PolyObject(true);
         SoundLayer layerInner = pObjInner.newLayerAt(0);
-        layerInner.addSoundObject(new Instance(sObj));
+        layerInner.add(new Instance(sObj));
         
-        layer.addSoundObject(new Instance(sObj));
-        layer.addSoundObject(new Instance(sObj));
-        layer.addSoundObject(new Instance(sObj));
-        layer.addSoundObject(sObj2); 
-        layer.addSoundObject(pObjInner); 
+        layer.add(new Instance(sObj));
+        layer.add(new Instance(sObj));
+        layer.add(new Instance(sObj));
+        layer.add(sObj2); 
+        layer.add(pObjInner); 
         
         library.add(sObj);
        
-        assertEquals(5, layer.getSoundObjects().size());
+        assertEquals(5, layer.size());
         assertEquals(1, library.size());
-        assertEquals(1, layerInner.getSoundObjects().size());
+        assertEquals(1, layerInner.size());
         
         SoundObjectLibraryUtils.removeLibrarySoundObject(data, sObj);
 
-        assertEquals(2, layer.getSoundObjects().size());
+        assertEquals(2, layer.size());
         assertEquals(0, library.size());
-        assertEquals(0, layerInner.getSoundObjects().size());
+        assertEquals(0, layerInner.size());
     }
 }
