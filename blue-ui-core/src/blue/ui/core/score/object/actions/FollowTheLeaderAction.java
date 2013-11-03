@@ -19,11 +19,23 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.score.ScoreObject;
+import blue.ui.core.score.undo.AlignEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -33,34 +45,78 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_FollowTheLeaderAction")
 @Messages("CTL_FollowTheLeaderAction=&Follow the Leader")
 @ActionReference(path = "blue/score/actions", position = 70)
-public final class FollowTheLeaderAction implements ActionListener {
+public final class FollowTheLeaderAction extends AbstractAction implements ContextAwareAction {
+
+    private final Collection<? extends ScoreObject> selected;
+
+    public FollowTheLeaderAction() {
+        this(null);    
+    }
+
+    private FollowTheLeaderAction(Collection<? extends ScoreObject> selected) {
+        super(NbBundle.getMessage(FollowTheLeaderAction.class,
+                "CTL_FollowTheLeaderAction"));
+        this.selected = selected;
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         //FIXME
-//        SoundObjectView[] sObjViews = sCanvas.mBuffer.motionBuffer;
-//
-//        float initialStartTimes[] = new float[sObjViews.length - 1];
-//        float endingStartTimes[] = new float[sObjViews.length - 1];
-//        SoundObject soundObjects[] = new SoundObject[sObjViews.length - 1];
-//
-//        float runningTotal;
-//        runningTotal = sObjViews[0].getStartTime() + sObjViews[0].getSubjectiveDuration();
-//        for (int i = 1; i < sObjViews.length; i++) {
-//            initialStartTimes[i - 1] = sObjViews[i].getStartTime();
-//            soundObjects[i - 1] = sObjViews[i].getSoundObject();
-//            endingStartTimes[i - 1] = runningTotal;
-//
-//            sObjViews[i].setStartTime(runningTotal);
-//            runningTotal += sObjViews[i].getSoundObject().getSubjectiveDuration();
-//        }
-//
-//        BlueUndoManager.setUndoManager("score");
-//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-//                endingStartTimes);
-//
-//        edit.setPresentationName("Follow the Leader");
-//
-//        BlueUndoManager.addEdit(edit);
+
+        List<ScoreObject> scoreObjs = new ArrayList<>(selected);
+        Collections.sort(scoreObjs, new Comparator<ScoreObject>() {
+
+            @Override
+            public int compare(ScoreObject o1, ScoreObject o2) {
+                float diff = o1.getStartTime() - o2.getStartTime();
+                if(diff > 0) {
+                    return 1;
+                } else if(diff < 0) {
+                    return -1;
+                }
+                return 0;
+            }
+        });
+
+//        List<Float> initialStartTimes = new ArrayList<>();
+ //       List<Float> endStartTimes = new ArrayList<>();
+        float[] initialStartTimes = new float[scoreObjs.size()];
+        float[] endStartTimes = new float[scoreObjs.size()];
+        
+        for(int i = 0; i < scoreObjs.size(); i ++) {
+            initialStartTimes[i] = scoreObjs.get(i).getStartTime();
+        }
+
+        ScoreObject initial = scoreObjs.get(0);
+        float runningTotal = initial.getStartTime() + initial.getSubjectiveDuration();
+        endStartTimes[0] = initial.getStartTime();
+
+        for(int i = 1 ; i < scoreObjs.size(); i++) {
+            ScoreObject current = scoreObjs.get(i);
+            endStartTimes[i] = runningTotal;
+            current.setStartTime(runningTotal);
+            runningTotal += current.getSubjectiveDuration();
+        }
+
+        BlueUndoManager.setUndoManager("score");
+        AlignEdit edit = new AlignEdit(scoreObjs.toArray(new ScoreObject[0]), 
+               initialStartTimes,
+                endStartTimes);
+
+        edit.setPresentationName("Follow the Leader");
+
+        BlueUndoManager.addEdit(edit);
+    }
+
+
+    
+    @Override
+    public boolean isEnabled() {
+        return selected.size() > 1;
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new FollowTheLeaderAction(actionContext.lookupAll(ScoreObject.class));
     }
 }
