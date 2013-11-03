@@ -50,7 +50,7 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
     private final Collection<? extends ScoreObject> selected;
 
     public FollowTheLeaderAction() {
-        this(null);    
+        this(null);
     }
 
     private FollowTheLeaderAction(Collection<? extends ScoreObject> selected) {
@@ -61,29 +61,24 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //FIXME
-
         List<ScoreObject> scoreObjs = new ArrayList<>(selected);
         Collections.sort(scoreObjs, new Comparator<ScoreObject>() {
-
             @Override
             public int compare(ScoreObject o1, ScoreObject o2) {
                 float diff = o1.getStartTime() - o2.getStartTime();
-                if(diff > 0) {
+                if (diff > 0) {
                     return 1;
-                } else if(diff < 0) {
+                } else if (diff < 0) {
                     return -1;
                 }
                 return 0;
             }
         });
 
-//        List<Float> initialStartTimes = new ArrayList<>();
- //       List<Float> endStartTimes = new ArrayList<>();
         float[] initialStartTimes = new float[scoreObjs.size()];
         float[] endStartTimes = new float[scoreObjs.size()];
-        
-        for(int i = 0; i < scoreObjs.size(); i ++) {
+
+        for (int i = 0; i < scoreObjs.size(); i++) {
             initialStartTimes[i] = scoreObjs.get(i).getStartTime();
         }
 
@@ -91,7 +86,7 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
         float runningTotal = initial.getStartTime() + initial.getSubjectiveDuration();
         endStartTimes[0] = initial.getStartTime();
 
-        for(int i = 1 ; i < scoreObjs.size(); i++) {
+        for (int i = 1; i < scoreObjs.size(); i++) {
             ScoreObject current = scoreObjs.get(i);
             endStartTimes[i] = runningTotal;
             current.setStartTime(runningTotal);
@@ -99,8 +94,8 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
         }
 
         BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(scoreObjs.toArray(new ScoreObject[0]), 
-               initialStartTimes,
+        AlignEdit edit = new AlignEdit(scoreObjs.toArray(new ScoreObject[0]),
+                initialStartTimes,
                 endStartTimes);
 
         edit.setPresentationName("Follow the Leader");
@@ -108,8 +103,6 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
         BlueUndoManager.addEdit(edit);
     }
 
-
-    
     @Override
     public boolean isEnabled() {
         return selected.size() > 1;
@@ -117,6 +110,7 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new FollowTheLeaderAction(actionContext.lookupAll(ScoreObject.class));
+        return new FollowTheLeaderAction(actionContext.lookupAll(
+                ScoreObject.class));
     }
 }
