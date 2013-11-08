@@ -47,11 +47,13 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
 
 /**
@@ -443,15 +445,14 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 //        }
 //        panel.setSelected(!panel.isSelected());
 //    }
-
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
         Point temp = new Point();
-        for(AudioClipPanel panel : clipPanelMap.values()) {
+        for (AudioClipPanel panel : clipPanelMap.values()) {
             temp.x = p.x - panel.getX();
             temp.y = p.y - panel.getY();
-            if(panel.contains(temp)) {
-                return panel; 
+            if (panel.contains(temp)) {
+                return panel;
             }
         }
 
@@ -460,7 +461,9 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public Action[] getLayerActions() {
-        return null;
+        List<? extends Action> list = Utilities.actionsForPath(
+                "blue/score/layers/audio/actions");
+        return list.toArray(new Action[0]);
     }
 
     @Override

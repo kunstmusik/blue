@@ -36,6 +36,7 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
@@ -49,8 +50,9 @@ import org.openide.util.lookup.InstanceContent;
 @ActionRegistration(
         displayName = "#CTL_SelectAllBeforeAction")
 @Messages("CTL_SelectAllBeforeAction=Select All Before")
-@ActionReference(path = "blue/score/layers/soundObject/actions",
-        position = 90)
+@ActionReferences({
+@ActionReference(path = "blue/score/layers/soundObject/actions", position = 90),
+@ActionReference(path = "blue/score/layers/audio/actions", position = 90)})
 public final class SelectAllBeforeAction extends AbstractAction implements
         ContextAwareAction {
 
