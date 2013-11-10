@@ -21,6 +21,11 @@ NEW
 
 * Added link to Csound FLOSS Manual from Help Menu
 
+* Examples: 
+ 
+  * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
+	  Example of using nGen from Blue (contributed by Menno Knevel)
+
 
 >Notes for 2.5.3<
 [release 2013.09.21]

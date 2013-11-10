@@ -1,0 +1,374 @@
+<blueData version='2.5.3'>
+  <projectProperties>
+    <title>nGen - first example ex1.orc and ex1a.gen</title>
+    <author>Mikel Kühn</author>
+    <notes>you must have nGen installed in your executable path 
+OSX and linux only</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>128</ksmps>
+    <channels>2</channels>
+    <useZeroDbFS>false</useZeroDbFS>
+    <zeroDbFS>1</zeroDbFS>
+    <diskSampleRate>44100</diskSampleRate>
+    <diskKsmps>1</diskKsmps>
+    <diskChannels>2</diskChannels>
+    <diskUseZeroDbFS>false</diskUseZeroDbFS>
+    <diskZeroDbFS>1</diskZeroDbFS>
+    <useAudioOut>true</useAudioOut>
+    <useAudioIn>false</useAudioIn>
+    <useMidiIn>false</useMidiIn>
+    <useMidiOut>false</useMidiOut>
+    <noteAmpsEnabled>true</noteAmpsEnabled>
+    <outOfRangeEnabled>true</outOfRangeEnabled>
+    <warningsEnabled>true</warningsEnabled>
+    <benchmarkEnabled>true</benchmarkEnabled>
+    <advancedSettings></advancedSettings>
+    <completeOverride>false</completeOverride>
+    <fileName></fileName>
+    <askOnRender>false</askOnRender>
+    <diskNoteAmpsEnabled>true</diskNoteAmpsEnabled>
+    <diskOutOfRangeEnabled>true</diskOutOfRangeEnabled>
+    <diskWarningsEnabled>true</diskWarningsEnabled>
+    <diskBenchmarkEnabled>true</diskBenchmarkEnabled>
+    <diskAdvancedSettings>csound</diskAdvancedSettings>
+    <diskCompleteOverride>true</diskCompleteOverride>
+    <diskAlwaysRenderEntireProject>false</diskAlwaysRenderEntireProject>
+  </projectProperties>
+  <arrangement>
+    <instrumentAssignment arrangementId='1' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>FM - ex1</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>iamp	=	p4			;The maximum amplitude allowed
+icps	=	p5
+iratio	=	p6			;BIG envelope
+ipos	=	p7			;spatial placement
+ienv	=	p8			;envelope function
+iwet	=	p9			;amount of wet signal (rev)
+
+kenv	oscili	1, 1/p3, ienv		;envelope
+;kpos	randi	.5, ischng		;gen amp points/sec
+;kpos	=	kpos+.5			;scale to 0 to 1
+
+kindx	oscili	1, 1/p3, ienv		;index envelope (not scaled)
+asnd	foscili	iamp, icps, 1, iratio, kindx*4, 1
+
+;THIS ADDS POWER PANNING
+kppan	=	ipos*1.570796325  ; half of PI (radians of 90o angle)
+kpleft	=	cos(kppan)        ; half sign &quot;down&quot;
+kpright	=	sin(kppan)        ; half sign &quot;up&quot;
+
+ax	=	asnd*kenv
+
+;Now to filter out yucky DC offsets caused by &quot;foscili&quot;
+al	buthp	ax*kpleft,  20
+ar	buthp	ax*kpright, 20
+
+gal	=	gal + al*iwet
+gar	=	gar + ar*iwet
+
+outs	al*(1-iwet), ar*(1-iwet)</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+    <instrumentAssignment arrangementId='2' isEnabled='true'>
+      <instrument type='blue.orchestra.GenericInstrument'>
+        <name>reverb</name>
+        <comment></comment>
+        <globalOrc></globalOrc>
+        <globalSco></globalSco>
+        <instrumentText>a1	reverb2	gal, 3, .8
+a2	reverb2 gar, 3, .8
+outs	(a1+a2*.5)*.75, (a2+a1*.5)*.75
+
+gal	=	0
+gar	=	0</instrumentText>
+        <opcodeList/>
+      </instrument>
+    </instrumentAssignment>
+  </arrangement>
+  <mixer>
+    <enabled>false</enabled>
+    <extraRenderTime>0.0</extraRenderTime>
+    <channelList list='channels'>
+      <channel>
+        <name>1</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1033661506' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+      <channel>
+        <name>2</name>
+        <outChannel>Master</outChannel>
+        <level>0.0</level>
+        <muted>false</muted>
+        <solo>false</solo>
+        <effectsChain bin='pre'/>
+        <effectsChain bin='post'/>
+        <parameter uniqueId='1033661504' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+          <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+            <linePoint x='0.0' y='0.0'/>
+          </line>
+        </parameter>
+      </channel>
+    </channelList>
+    <channelList list='subChannels'/>
+    <channel>
+      <name>Master</name>
+      <outChannel>Master</outChannel>
+      <level>0.0</level>
+      <muted>false</muted>
+      <solo>false</solo>
+      <effectsChain bin='pre'/>
+      <effectsChain bin='post'/>
+      <parameter uniqueId='-1935210509' name='Volume' label='dB' min='-96.0' max='12.0' resolution='-1.0' automationEnabled='false' value='0.0'>
+        <line name='' version='2' max='12.0' min='-96.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+          <linePoint x='0.0' y='0.0'/>
+        </line>
+      </parameter>
+    </channel>
+  </mixer>
+  <tables>; The following lines (preceded w/ &gt;) will be copied directly to the score 
+;(output) file and will be stripped of the &quot;&gt;&quot;
+f1 0 8192 10 1	                    ;sine wave function
+f2 0 1025  -5 4 1025 .01           ;index envelope
+f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
+f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
+f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)</tables>
+  <soundObjectLibrary/>
+  <globalOrcSco>
+    <globalOrc>gal	init	0
+gar	init	0</globalOrc>
+    <globalSco></globalSco>
+  </globalOrcSco>
+  <opcodeList/>
+  <liveData>
+    <commandLine>csound -Wdo devaudio -L stdin</commandLine>
+    <commandLineEnabled>true</commandLineEnabled>
+    <commandLineOverride>true</commandLineOverride>
+    <liveObjectBins columns='1' rows='8'>
+      <bin>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+        <null/>
+      </bin>
+    </liveObjectBins>
+    <liveObjectSetList/>
+    <repeat>4</repeat>
+    <tempo>60</tempo>
+  </liveData>
+  <score>
+    <tempo>
+      <enabled>false</enabled>
+      <visible>false</visible>
+      <line name='' version='2' max='240.0' min='30.0' resolution='-1.0' color='-8355712' rightBound='false' endPointsLinked='false'>
+        <linePoint x='0.0' y='60.0'/>
+      </line>
+    </tempo>
+    <timeState>
+      <pixelSecond>34</pixelSecond>
+      <snapEnabled>false</snapEnabled>
+      <snapValue>1.0</snapValue>
+      <timeDisplay>0</timeDisplay>
+      <timeUnit>5</timeUnit>
+    </timeState>
+    <noteProcessorChain/>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>root</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>1</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='FM' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.External'>
+          <subjectiveDuration>15.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>External</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <text>/* EX1A.GEN: Basic Input 
+An example of an nGen Input File (use this with the &quot;ex1.orc&quot; file)
+Compiled by Mikel Kuehn, 3/01 */
+
+
+
+/* Orchestra Parameters:
+p4 = amplitude (0-32767)
+p5 = Herz
+p6 = C:M ratio
+p7 = Spatial position 0-1 */
+
+/* The line below defines the macro &quot;X&quot; (body is within #s). It will
+later be called through &quot;$X&quot;  */
+#define X #ds2:e3:g#     ;a macro
+
+te(60)   ;&quot;quarter-note&quot; = 60b.p.m. (the default)
+
+; Instrument 1 has 9 p-fields, starts at time 0 and lasts for 15 beats.
+i1 = 9 0 15 { 
+
+  /* p2 uses the RH input mode to specify reciprocal duration codes (rhythms).
+  The /s are used to separate values but are optional.  I could have listed 
+  all of this data in one huge chunk but, instead, I have separated each 
+  measure by a line and have been careful to comment. The xs are used to 
+  repeat the previous value (slashes may also occur more than once denoting a 
+  repeat -- as in the SCORE input language). (This example was taken from the 
+  piano part from my composition *Between the Lynes* (c) 1994 by Mikel Kuehn.)
+  */
+  p2 rh 16x4/4/12x2/24x2/4/12x2/24x2 ;measure 1
+      24//12/24//20x5/4              ;measure 2
+      16/8./10./20//4/20///10        ;measure 3
+      24///8/8./16/2                 ;measure 4
+
+  p3 4      ;each duration is 4x its &quot;intervalic duration&quot;
+  p4 10000  ;amp
+
+  /* I have used the NO input mode to specify specific pitches.  Rests are 
+  indicated by R and will constitute a period of silence attached to the 
+  corresponding start times in P2.  Formatting is similar to P2.   */
+  p5(hz) no ef5/r/d6:f/rx4/en5/rx5/df6               ;m1
+          c2/r/r/c2:b:af3/r//bf4:a5/r/e3:g/ef2/r     ;m2
+          d3:cs4:gf5:f6/r//$X/r///fs1:fn2/b2:gs3/r   ;m3
+          c5/r/d2:cs6/r//bf4:a5/r                    ;m4
+
+  /* p6 is the carrier to modulator ratio.  Here we list some &quot;set&quot; values to 
+  choose from at random.  */
+  p6 se(15 1. [1, 2, 1.5, 3, 1.414])       
+
+  ;Spatial placement: 50% in the middle and 50% between L and R.
+  p7(re2) ra(15 .5 .5 .5 [0 1])  ;spatial placement (1 = right)
+  p8 10  ;envelope function #
+  p9 .1 ;reverb amount
+}
+
+
+</text>
+          <commandLine>ngen $infile $outfile</commandLine>
+          <syntaxType>Python</syntaxType>
+        </soundObject>
+      </soundLayer>
+      <soundLayer name='reverb' muted='false' solo='false' heightIndex='1'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.External'>
+          <subjectiveDuration>20.0</subjectiveDuration>
+          <startTime>0.0</startTime>
+          <name>External</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <timeBehavior>0</timeBehavior>
+          <noteProcessorChain/>
+          <text>&gt;i2 0 20</text>
+          <commandLine>ngen $infile $outfile</commandLine>
+          <syntaxType>Python</syntaxType>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+    <soundObject type='blue.soundObject.PolyObject'>
+      <subjectiveDuration>2.0</subjectiveDuration>
+      <startTime>0.0</startTime>
+      <name>SoundObject Layer Group</name>
+      <backgroundColor>-10066279</backgroundColor>
+      <timeBehavior>0</timeBehavior>
+      <noteProcessorChain/>
+      <isRoot>true</isRoot>
+      <defaultHeightIndex>0</defaultHeightIndex>
+      <timeState>
+        <pixelSecond>64</pixelSecond>
+        <snapEnabled>false</snapEnabled>
+        <snapValue>1.0</snapValue>
+        <timeDisplay>0</timeDisplay>
+        <timeUnit>5</timeUnit>
+      </timeState>
+      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
+        <noteProcessorChain/>
+        <soundObject type='blue.soundObject.Comment'>
+          <subjectiveDuration>5.7352943</subjectiveDuration>
+          <startTime>0.82352936</startTime>
+          <name>Comment</name>
+          <backgroundColor>-12566464</backgroundColor>
+          <commentText>Download nGen 2.1.1 from http://mikelkuehn.com/index.php/ng
+OSX and Linux 32 or 64 bit only
+
+Only the first orc is used here, with ex1b.gen
+
+Big difference compared to using nGen in the command line is that the f statements are not stripped in Blue so i had to manually put them in the Tables Tab.
+So:
+; The following lines (preceded w/ &gt;) will be copied directly to the score 
+;(output) file and will be stripped of the &quot;&gt;&quot;
+&gt;f1 0 8192 10 1	                    ;sine wave function
+&gt;f2 0 1025  -5 4 1025 .01           ;index envelope
+&gt;f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
+&gt;f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
+&gt;f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)
+become:
+f1 0 8192 10 1	                    ;sine wave function
+f2 0 1025  -5 4 1025 .01           ;index envelope
+f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
+f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
+f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)
+and are to be put in the Tables Tab (or can be transformed to ftgens and be put inside instrument 1).</commentText>
+        </soundObject>
+      </soundLayer>
+    </soundObject>
+  </score>
+  <scratchPadData>
+    <isWordWrapEnabled>true</isWordWrapEnabled>
+    <scratchText/>
+  </scratchPadData>
+  <noteProcessorChainMap/>
+  <renderStartTime>0.0</renderStartTime>
+  <renderEndTime>20.029411</renderEndTime>
+  <markersList/>
+  <loopRendering>false</loopRendering>
+  <midiInputProcessor>
+    <keyMapping>PCH</keyMapping>
+    <velMapping>MIDI</velMapping>
+    <pitchConstant/>
+    <ampConstant/>
+    <scale>
+      <scaleName>12TET</scaleName>
+      <baseFrequency>261.62558</baseFrequency>
+      <octave>2.0</octave>
+      <ratios>
+        <ratio>1.0</ratio>
+        <ratio>1.0594631</ratio>
+        <ratio>1.122462</ratio>
+        <ratio>1.1892071</ratio>
+        <ratio>1.2599211</ratio>
+        <ratio>1.3348398</ratio>
+        <ratio>1.4142135</ratio>
+        <ratio>1.4983071</ratio>
+        <ratio>1.587401</ratio>
+        <ratio>1.6817929</ratio>
+        <ratio>1.7817974</ratio>
+        <ratio>1.8877486</ratio>
+      </ratios>
+    </scale>
+  </midiInputProcessor>
+</blueData>
