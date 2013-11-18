@@ -1,10 +1,15 @@
-<blueData version='2.3.3'>
+<blueData version='2.5.3'>
   <projectProperties>
     <title>Athena CL Integration - Example 1</title>
     <author>Menno Knevel</author>
-    <notes>This example calls the athenaPipe.py file to process the AthenaCL scripts with AthenaCL.  This requires that you have Python installed as well as AthenaCL installed into site-packages for your Python runtime.</notes>
-    <sampleRate>44100</sampleRate>
-    <ksmps>20</ksmps>
+    <notes>Please note:
+
+- The athenaPipe.py file is called to process the AthenaCL scripts with AthenaCL.  This requires that you have Python installed AND AthenaCL into site-packages or dist-packages for your Python runtime.
+
+- athenaPipe.py is be found in /blue/examples/soundObjects but may be copied elsewhere. The commandline in the External soundObject must be : python /path/to/athenaPipe.py $infile
+</notes>
+    <sampleRate>48000</sampleRate>
+    <ksmps>128</ksmps>
     <channels>2</channels>
     <useZeroDbFS>true</useZeroDbFS>
     <zeroDbFS>1</zeroDbFS>

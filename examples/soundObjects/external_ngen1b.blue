@@ -1,7 +1,7 @@
 <blueData version='2.5.3'>
   <projectProperties>
     <title>nGen - first example ex1.orc and ex1b.gen</title>
-    <author>Mikel Kühn</author>
+    <author>Mikel Kühn, adapted for Blue by Menno Knevel</author>
     <notes>you must have nGen installed in your executable path 
 OSX and linux only</notes>
     <sampleRate>48000</sampleRate>
@@ -320,8 +320,9 @@ OSX and Linux 32 or 64 bit only
 
 Only the first orc is used here, with ex1b.gen
 
-Big difference compared to using nGen in the command line is that the f statements are not stripped using Blue so i had to manually put them in the Tables Tab.
+Big difference compared to using nGen with the command line is that the f statements are not stripped in Blue so you have to manually put them in the Tables Tab.
 So:
+
 ; The following lines (preceded w/ &gt;) will be copied directly to the score 
 ;(output) file and will be stripped of the &quot;&gt;&quot;
 &gt;f1 0 8192 10 1	                    ;sine wave function
@@ -329,13 +330,14 @@ So:
 &gt;f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
 &gt;f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
 &gt;f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)
-become:
-f1 0 8192 10 1	                    ;sine wave function
+
+are to be put in the Tables Tab (or can be transformed to ftgens and be put inside instrument 1):
+
+f1 0 8192 10 1	                   ;sine wave function
 f2 0 1025  -5 4 1025 .01           ;index envelope
 f10 0 4097 5 .001 197 1 3997 .001  ;envelope (sharp attack)
 f11 0 4097 7 0 100 1 3897 1 100 0  ;(quick ramp)
-f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)
-and are to be put in the Tables Tab (or can be transformed to ftgens and be put inside instrument 1).</commentText>
+f12 0 4097 5 .001 2048 1 2049 .001 ;(quick ramp)</commentText>
         </soundObject>
       </soundLayer>
     </soundObject>
