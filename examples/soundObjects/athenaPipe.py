@@ -7,7 +7,7 @@ def process(infile):
 	cmd = []	
 
 	for line in fin:
-		cmd.append(line)
+		cmd.append(line.split('#')[0].strip())
 
 	a = NamedTemporaryFile()	
 	foutName = a.name
