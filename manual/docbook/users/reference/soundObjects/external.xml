@@ -74,8 +74,8 @@ name.</para>
 
 <listitem>
 
-    <para>Homepage: http://mustec.bgsu.edu/~mkuehn/ngen/ Author: Mikel Kuehn
-    </para>
+    <para>Homepage: http://mikelkuehn.com/index.php/ng 
+    Author: Mikel Kuehn</para>
     
     <para>Comandline to use:</para>
     
@@ -85,7 +85,21 @@ name.</para>
 
 </varlistentry>
 
+
+<varlistentry>
+<term>AthenaCL</term>
+<listitem>
+    <para>Homepage: http://www.flexatone.org/athena.html 
+    Author: Christopher Ariza</para>
+    <para>Comandline to use:</para>
+    <programlisting>python athenaPipe.py $infile</programlisting>
+</listitem>
+</varlistentry>
+
 </variablelist>
+
+<para>Examples of the External SoundObject, as well as athenaPipe.py, can be 
+  found in the blue/examples/soundObjects folder.</para>  
 
 </simplesect>
 
