@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+
+>Notes for 2.5.4<
+[release 2013.11.28]
+
+FIX
+
+* issue with BlueLive toolbar not showing if hidden when Blue closed in previous
+  run 
+
 >Notes for 2.5.3<
 [release 2013.09.21]
 
