@@ -135,7 +135,8 @@
   <target name="replaceWindowsLauncherIcon" if="isWindows" description="Replace the icon for the Windows launcher exe">
     <echo message="Replacing icon of Windows launcher executable."/>
     <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
-      <arg line="build\launcher\bin\${app.name}.exe ${app.name}.ico"/>
+      <arg value="${build.launcher.dir}\bin\${app.name}.exe"/>
+      <arg value="${app.name}.ico"/>
     </exec>
     <!--<exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
       <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
@@ -158,7 +159,21 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-    <exec executable="xsltproc" dir="${blue.manual.dir}/html">
+     <condition property="xsltCmd" value="c:\bin\xsltproc.exe">
+      <os family="windows"/>
+    </condition>
+
+    <condition property="xsltCmd" 
+               value="xsltproc">
+      <os family="mac" />      
+    </condition>
+    
+    <condition property="xsltCmd" 
+               value="xsltproc">
+      <os family="unix" />
+    </condition>
+    
+    <exec executable="${xsltCmd}" dir="${blue.manual.dir}/html" resolveexecutable="true">
       <arg value="--nonet" />
       <arg value="${basedir}/manual/stylesheets/customXHTMLchunk.xsl" />
       <arg value="${basedir}/manual/docbook/index.xml" />
@@ -174,7 +189,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-    <condition property="fopCommand" value="fop.bat">
+    <condition property="fopCommand" value="c:\Users\steven\work\fop-1.1\fop.bat">
       <os family="windows"/>
     </condition>
 
