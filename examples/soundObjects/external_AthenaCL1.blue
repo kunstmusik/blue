@@ -187,15 +187,15 @@ blueMixerOut asig, asig
           <backgroundColor>-12566464</backgroundColor>
           <timeBehavior>0</timeBehavior>
           <noteProcessorChain/>
-          <text>emo ce
-tmo lg
-tin a 1 4     
-tie t 0, 40
-tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc                                                  
-tie x0 waveSine, event, (constant, 20), 0, (constant, 5), (waveSine, event, (constant, 60), 0.25, (constant, 5), (constant, 10))
-tie x1 ws, e, 30, 0, 0.3, 1
-tie x2 ws, t, .1, 0, 100, 8000
-tie x3 ru, 0, 200</text>
+          <text>emo ce                                                              #emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
+tmo lg                                                              #tmo lg is used here. LineGroove performs each set of a Path as a simple monophonic line. Otherwise, this Object is the same as the next one, External2.
+tin a 1 4                                                           #create texture with the name a. Set p1 to instr. 1 and create 4 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3) : pitch, amplitude, cut off frequency for filter and resonance of filter.                                                    
+tie t 0, 40                                                         #influences the speed (time range)
+tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc                     #a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.                                                 
+tie x0 waveSine, event, (constant, 20), 0, (constant, 5), (waveSine, event, (constant, 60), 0.25, (constant, 5), (constant, 10))        #p4 (=x0) = pitch, a sinusoid oscillation between 5 and 10.
+tie x1 ws, e, 30, 0, 0.3, 1                                         #p5 (=x1) = amplitude. Here a wave sine between 0.3 and 1. (In this instr. 0dbfs = 1)
+tie x2 ws, t, .1, 0, 100, 8000                                      #p6 (=x2) = cutoff frequency of filter, a sinusoid oscillation between 100 and 80000 at the rate given in either time per period. 
+tie x3 ru, 0, 200                                                   #p7 (=x3) = resonance of filter, random uniform between 0 and 200.</text>
           <commandLine>python athenaPipe.py $infile</commandLine>
           <syntaxType>Python</syntaxType>
         </soundObject>
@@ -206,95 +206,17 @@ tie x3 ru, 0, 200</text>
           <backgroundColor>-12566464</backgroundColor>
           <timeBehavior>0</timeBehavior>
           <noteProcessorChain/>
-          <text>emo ce
-tmo if
-tin a 1 4     
-tie t 0, 40
-tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc                                                  
-tie x0 waveSine, event, (constant, 20), 0, (constant, 5), (waveSine, event, (constant, 60), 0.25, (constant, 5), (constant, 10))
-tie x1 ws, e, 30, 0, 0.3, 1
-tie x2 ws, t, .1, 0, 100, 8000
-tie x3 ru, 0, 200</text>
+          <text>emo ce                                              
+tmo if                                              #tmo if is used here. InterpolateFill interpolates parameters between events generated under a non-linear monophonic context. Otherwise this Object is the same as the previous one, External1
+tin a 1 4                                           #make a new texture with the name a. Set p1 to instr. 1 and create 4 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3) : pitch, amplitude, cut off frequency for filter and resonance of filter.
+tie t 0, 40                                         #influences the speed (time range)
+tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc     #a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.                                                  
+tie x0 waveSine, event, (constant, 20), 0, (constant, 5), (waveSine, event, (constant, 60), 0.25, (constant, 5), (constant, 10))        #p4 (=x0) = pitch. Here a sinusoid oscillation between 5 and 10 at the rate given in either time or events per period.
+tie x1 ws, e, 30, 0, 0.3, 1                         #p5 (=x1) = amplitude. Here in the form of a wave sine between 0.3 and 1. (In this instr. 0dbfs = 1)
+tie x2 ws, t, .1, 0, 100, 8000                      #p6 (=x2) = cutoff frequency of filter. Here a sinusoid oscillation between 100 and 80000 at the rate given in either time per period.
+tie x3 ru, 0, 200                                   #p7 (=x3) = resonance of filter, random uniform between 0 and 200.</text>
           <commandLine>python athenaPipe.py $infile</commandLine>
           <syntaxType>Python</syntaxType>
-        </soundObject>
-      </soundLayer>
-    </soundObject>
-    <soundObject type='blue.soundObject.PolyObject'>
-      <subjectiveDuration>2.0</subjectiveDuration>
-      <startTime>0.0</startTime>
-      <name>SoundObject Layer Group</name>
-      <backgroundColor>-10066279</backgroundColor>
-      <timeBehavior>0</timeBehavior>
-      <noteProcessorChain/>
-      <isRoot>true</isRoot>
-      <defaultHeightIndex>0</defaultHeightIndex>
-      <timeState>
-        <pixelSecond>64</pixelSecond>
-        <snapEnabled>false</snapEnabled>
-        <snapValue>1.0</snapValue>
-        <timeDisplay>0</timeDisplay>
-        <timeUnit>5</timeUnit>
-      </timeState>
-      <soundLayer name='' muted='false' solo='false' heightIndex='0'>
-        <noteProcessorChain/>
-        <soundObject type='blue.soundObject.Comment'>
-          <subjectiveDuration>5.7352943</subjectiveDuration>
-          <startTime>0.82352936</startTime>
-          <name>Comment</name>
-          <backgroundColor>-12566464</backgroundColor>
-          <commentText>emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
-
-tmo lg is used here. LineGroove performs each set of a Path as a simple monophonic line.
-Otherwise this Object is the same as the next one, Exrenal2.
-
-tin a 1 4 : make a new texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3)
-    and assign these 4 extra parameters values meaningful for this instrument: pitch, amplitude, cut off frequency for filter and resonance of filter.
-
-tie t 0, 40 : influences the speed (time range)
-
-tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc:  a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
-
-p4 (=x0) = pitch.
-tie x0 waveSine, event, (constant, 20), 0, (constant, 5), (waveSine, event, (constant, 60), 0.25, (constant, 5), (constant, 10)). Here a sinusoid oscillation between 5 and 10 at the rate given in either time or events per period.
-
-p5 (=x1) = amplitude.
-tie x1 ws, e, 30, 0, 0.3, 1 Here in the form of a wave sine between 0.3 and 1. (In this instr. 0dbfs = 1)
-
-p6 (=x2) = cutoff frequency of filter.
-tie x2 ws, t, .1, 0, 100, 8000. Here a sinusoid oscillation between 100 and 80000 at the rate given in either time per period.
-
-p7 (=x3) = resonance of filter.
-tie x3 ru, 0, 200. Here random uniform between 0 and 200.
-</commentText>
-        </soundObject>
-        <soundObject type='blue.soundObject.Comment'>
-          <subjectiveDuration>5.7352943</subjectiveDuration>
-          <startTime>22.941177</startTime>
-          <name>Comment</name>
-          <backgroundColor>-12566464</backgroundColor>
-          <commentText>emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
-
-tmo if is used here. InterpolateFill interpolates parameters between events generated under a non-linear monophonic context.
-Otherwise this Object is the same as the previous one, External1
-
-tin a 1 4 means: make a new texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3)
-
-tin a 1 4 : make a new texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6, p7 (=X0, X1, X2, X3)
-    and assign these 4 extra parameters values meaningful for this instrument: pitch, amplitude, cut off frequency for filter and resonance of filter.
-
-tie t 0, 40 : influences the speed (time range)
-
-tie r l, ((3,1,1),(8,1,0),(8,1,1),(16,1,1)), oc:  a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
-
-p4 (=x0) = pitch. Here a sinusoid oscillation between 5 and 10 at the rate given in either time or events per period.
-
-p5 (=x1) = amplitude. Here in the form of a wave sine between 0.3 and 1. (In this instr. 0dbfs = 1)
-
-p6 (=x2) = cutoff frequency of filter. Here a sinusoid oscillation between 100 and 80000 at the rate given in either time per period.
-
-p7 (=x3) = resonance of filter. Here random uniform between 0 and 200.
-</commentText>
         </soundObject>
       </soundLayer>
     </soundObject>
@@ -304,7 +226,7 @@ p7 (=x3) = resonance of filter. Here random uniform between 0 and 200.
     <scratchText/>
   </scratchPadData>
   <noteProcessorChainMap/>
-  <renderStartTime>0.0</renderStartTime>
+  <renderStartTime>0.61764705</renderStartTime>
   <renderEndTime>44.32353</renderEndTime>
   <markersList/>
   <loopRendering>false</loopRendering>
