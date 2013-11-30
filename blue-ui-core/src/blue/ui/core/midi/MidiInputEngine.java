@@ -47,9 +47,6 @@ public final class MidiInputEngine implements Receiver {
     private MidiInputProcessor processor = null;
 
     public static MidiInputEngine getInstance() {
-        if (toolbar == null) {
-            toolbar = BlueLiveToolBar.getInstance();
-        }
         return instance;
     }
 
@@ -113,6 +110,9 @@ public final class MidiInputEngine implements Receiver {
             }
 
             System.err.println(score);
+            if (toolbar == null) {
+                toolbar = BlueLiveToolBar.getInstance();
+            }
             toolbar.sendEvents(score);
         }
 

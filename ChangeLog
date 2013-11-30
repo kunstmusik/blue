@@ -12,6 +12,23 @@ information.
 
 [CHANGE LOG]
 
+
+>Notes for 2.5.4<
+[release 2013.11.28]
+
+UPDATED
+
+* Updated to Netbeans RCP 7.4
+
+FIX
+
+* issue with BlueLive toolbar not showing if hidden when Blue closed in previous
+  run 
+
+* Show error message balloon if unable to run Commandline Runner for better 
+  information for the user
+
+
 >Notes for 2.5.3<
 [release 2013.09.21]
 
