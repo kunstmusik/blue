@@ -4,6 +4,7 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
+import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.services.render.RealtimeRenderService;
@@ -27,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.openide.awt.NotificationDisplayer;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -105,16 +107,13 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             // + " " + command);
             //
             // }
-
             String globalSco = data.getGlobalOrcSco().getGlobalSco();
             globalSco = TextUtilities.stripMultiLineComments(globalSco);
             globalSco = TextUtilities.stripSingleLineComments(globalSco);
 
 //            System.out.println(tempoMapper);
-
             // FIXME
 //            timeManager.setRootPolyObject(data.getPolyObject());
-
             float startTime = data.getRenderStartTime();
             float endTime = data.getRenderEndTime();
 
@@ -140,11 +139,12 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
                     .getRenderStartTime());
         } catch (SoundObjectException soe) {
             throw soe;
-        } catch (Exception ex) {
-            StatusDisplayer.getDefault().setStatusText(
-                    "[" + BlueSystem.getString("message.error")
-                    + "] "
-                    + BlueSystem.getString("message.generateScore.error"));
+        } catch (ScoreGenerationException ex) {
+            NotificationDisplayer.getDefault().notify("Error", 
+                        NotificationDisplayer.Priority.HIGH.getIcon(), 
+                        BlueSystem.getString("message.generateScore.error") + "\n" +
+                        ex.getLocalizedMessage(),
+                        null);
             System.err.println("[" + BlueSystem.getString("message.error")
                     + "] " + ex.getLocalizedMessage());
         }
@@ -197,7 +197,6 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
 //        AuditionManager audition = AuditionManager.getInstance();
 //        audition.stop();
-
         runProxy = new RunProxy(command, currentWorkingDirectory, renderStart);
         Thread t = new Thread(runProxy);
         t.setPriority(Thread.MAX_PRIORITY);
@@ -265,6 +264,10 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
                 console.execWait(command, currentWorkingDirectory);
             } catch (IOException ioe) {
                 stop();
+                NotificationDisplayer.getDefault().notify("Error", 
+                        NotificationDisplayer.Priority.HIGH.getIcon(), 
+                        ioe.getLocalizedMessage(),
+                        null);
                 System.err.println("[error] - " + ioe.getLocalizedMessage());
             }
         }
@@ -290,19 +293,18 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
                         errorPanel = new JPanel(new BorderLayout());
                         errorPanel
                                 .add(
-                                new JLabel(
-                                "<html>There was an error in "
-                                + "running Csound.<br>"
-                                + "Please view the Csound Output Dialog for "
-                                + "more information.<br><br></html>"),
-                                BorderLayout.CENTER);
+                                        new JLabel(
+                                                "<html>There was an error in "
+                                                + "running Csound.<br>"
+                                                + "Please view the Csound Output Dialog for "
+                                                + "more information.<br><br></html>"),
+                                        BorderLayout.CENTER);
                         disableMessagesBox = new JCheckBox(
                                 "Disable Error Message Dialog");
                         errorPanel.add(disableMessagesBox, BorderLayout.SOUTH);
                     }
 
                     disableMessagesBox.setSelected(false);
-
 
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
