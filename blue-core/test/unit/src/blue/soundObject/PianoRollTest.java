@@ -37,7 +37,7 @@ public class PianoRollTest {
         PianoRoll instance = new PianoRoll();
         PianoRoll p2 = (PianoRoll) instance.clone();
         
-        assertTrue(EqualsBuilder.reflectionEquals(instance, p2, null));
+        assertTrue(EqualsBuilder.reflectionEquals(instance, p2, (String)null));
     }
 
     

@@ -63,7 +63,7 @@ public class ClojureSoundObjectTest {
 
         Element result = instance.saveAsXML(objRefMap);
         ClojureObject instance2 = (ClojureObject)ClojureObject.loadFromXML(result, null);
-        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, null));
+        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, (String)null));
     }
 
 }
