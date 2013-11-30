@@ -114,6 +114,7 @@
                 <attr name="position" intvalue="1080"/>
             </file>
         </folder>
+        <file name="Source_hidden"/>
         <folder name="View">
             <file name="Separator1.instance_hidden"/>
             <file name="org-netbeans-core-actions-HTMLViewAction.instance_hidden"/>
