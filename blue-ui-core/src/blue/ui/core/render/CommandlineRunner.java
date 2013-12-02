@@ -263,6 +263,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
                 }
                 console.execWait(command, currentWorkingDirectory);
             } catch (IOException ioe) {
+                shouldStop = true;
                 stop();
                 NotificationDisplayer.getDefault().notify("Error", 
                         NotificationDisplayer.Priority.HIGH.getIcon(), 
