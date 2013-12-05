@@ -27,6 +27,14 @@ NEW
 	  Example of using nGen from Blue (contributed by Menno Knevel)
 
 
+>Notes for 2.5.5<
+[release 2013.12.05]
+
+FIX
+
+* Bug #88: fixed Csound Crash when rendering to disk with Csound 6 API
+
+
 >Notes for 2.5.4<
 [release 2013.11.28]
 
