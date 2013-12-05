@@ -34,7 +34,9 @@ public class CS6DiskRendererService implements DiskRenderService {
     Vector listeners = new Vector();
     RenderTimeManager renderTimeManager = null;
     private volatile boolean keepRunning = false;
-    private static CS6DiskRendererService instance = null;
+    // NOTE: Must store at class level to prevent pre-mature garbage collection
+    // and crashing!
+    BlueCallbackWrapper blueCallbackWrapper; 
 
     public CS6DiskRendererService() {
     }
@@ -65,7 +67,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
         //csnd.csoundInitialize(null, null, csnd.CSOUNDINIT_NO_SIGNAL_HANDLER);
         Csound csound = new Csound();
-        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
+        blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
         final InputOutput ioProvider = IOProvider.getDefault().
                 getIO("Csound", false);
@@ -178,7 +180,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         initialize();
 
         Csound csound = new Csound();
-        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
+        blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
 
         StrBuilder buffer = new StrBuilder();
@@ -287,7 +289,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         initialize();
 
         Csound csound = new Csound();
-        BlueCallbackWrapper blueCallbackWrapper = new BlueCallbackWrapper(csound);
+        blueCallbackWrapper = new BlueCallbackWrapper(csound);
         blueCallbackWrapper.SetMessageCallback();
         final InputOutput ioProvider = IOProvider.getDefault().
                 getIO("Csound (Disk)", false);
