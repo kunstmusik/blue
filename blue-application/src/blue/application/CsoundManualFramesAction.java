@@ -19,7 +19,6 @@
  */
 package blue.application;
 
-import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -31,18 +30,14 @@ public final class CsoundManualFramesAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
-        
-                File index = new File(manualDir, "indexframes.html");
-        
+
+        File index = new File(manualDir, "indexframes.html");
+
         try {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(index.toURI());
-            } else {
-                URLDisplayer.getDefault().showURL(index.toURL());
-            }
+            URLDisplayer.getDefault().showURL(index.toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

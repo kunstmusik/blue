@@ -19,10 +19,8 @@
  */
 package blue.application;
 
-import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.URI;
 import java.net.URL;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -32,7 +30,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(category = "SearchCsoundManualAction",
-id = "blue.application.SearchCsoundManualAction")
+        id = "blue.application.SearchCsoundManualAction")
 @ActionRegistration(displayName = "#CTL_SearchCsoundManualAction")
 @ActionReferences({
     @ActionReference(path = "Menu/Help", position = 1079)
@@ -50,23 +48,18 @@ public final class SearchCsoundManualAction implements ActionListener {
         if (DialogDisplayer.getDefault().notify(descriptor) != NotifyDescriptor.OK_OPTION) {
             return;
         }
-        
+
         String searchTerm = descriptor.getInputText();
 
         //CREATE SEARCH
-
         String url = String.format(
                 "http://www.google.com/search?q=%s&sitesearch=csounds.com/manual/html",
                 searchTerm);
-        
+
         url = url.replace(" ", "%20");
 
         try {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(url));
-            } else {
-                URLDisplayer.getDefault().showURL(new URL(url));
-            }
+            URLDisplayer.getDefault().showURL(new URL(url));
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

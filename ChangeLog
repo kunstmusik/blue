@@ -26,6 +26,11 @@ NEW
   * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
 	  Example of using nGen from Blue (contributed by Menno Knevel)
 
+UPDATED
+
+* restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
+  cluster removed dependency on debugger module
+
 
 >Notes for 2.5.5<
 [release 2013.12.05]

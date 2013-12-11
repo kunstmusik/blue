@@ -19,15 +19,9 @@
  */
 package blue.application;
 
-import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
@@ -39,13 +33,9 @@ public final class CsoundManualAction implements ActionListener {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
         File index = new File(manualDir, "index.html");
-        
+
         try {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(index.toURI());
-            } else {
-                URLDisplayer.getDefault().showURL(index.toURL());
-            }
+            URLDisplayer.getDefault().showURL(index.toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
