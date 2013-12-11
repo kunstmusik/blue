@@ -271,15 +271,21 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     }
 
     public List<LayerGroup> getLayersForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
-        List<LayerGroup> retVal = new ArrayList<LayerGroup>();
+        List<LayerGroup> retVal = new ArrayList<>();
 
         for (LayerGroup<Layer> layerGroup : layerGroups) {
             for (Layer layer : layerGroup) {
+                boolean found = false;
                 if (layer instanceof ScoreObjectLayer) {
                     ScoreObjectLayer scoreLayer = (ScoreObjectLayer) layer;
                     if (!Collections.disjoint(scoreLayer, scoreObjects)) {
                         retVal.add(layerGroup);
+                        found = true;
                     }
+                }
+
+                if(found) {
+                    break;
                 }
             }
         }

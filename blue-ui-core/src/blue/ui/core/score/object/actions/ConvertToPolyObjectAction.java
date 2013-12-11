@@ -39,6 +39,9 @@ import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import static org.openide.NotifyDescriptor.ERROR_MESSAGE;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -86,9 +89,17 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         List<LayerGroup> layerGroups = score.getLayersForScoreObjects(
                 scoreObjects);
 
-        if (layerGroups.size() != 1
-                || !(layerGroups.get(0) instanceof PolyObject)) {
-            // notify of error
+        if (layerGroups.size() != 1) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+            "Blue does not currently support converting SoundObjects into a "
+                    + "PolyObject across PolyObjects", ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(descriptor);
+            return;
+        }
+        if(!(layerGroups.get(0) instanceof PolyObject)) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+            "This operation only works with SoundObjects", ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(descriptor);
             return;
         }
 
@@ -105,7 +116,8 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         PolyObject temp = convertToPolyObject(pObj, soundObjects);
         removeSoundObjects(soundObjects, pObj);
 
-//        int index = pObj.getLayerNumForY(p.y - )
+        int index = pObj.getLayerNumForY(p.y);
+        pObj.addSoundObject(index, temp);
 
 //        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
 //
@@ -117,7 +129,10 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 //        temp.setStartTime(startTime);
 //
 //        sCanvas.getPolyObject().addSoundObject(index, temp);
-        content.set(Collections.emptyList(), null);
+        for(SoundObject sObj : soundObjects) {
+            content.remove(sObj);
+        }
+        content.add(temp);
     }
 
     @Override
@@ -170,20 +185,33 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 
         // int layerHeight = pObj.getSoundLayerHeight();
 
-        TreeMap<Integer, ArrayList<SoundObject>> sObjMap = new TreeMap();
+        TreeMap<Integer, ArrayList<SoundObject>> sObjMap = new TreeMap<>();
 
+        float start = Float.POSITIVE_INFINITY;
+        float end = Float.NEGATIVE_INFINITY;
+        
         for (SoundObject sObj : selected) {
 
             int layerNum = pObj.getLayerNumForScoreObject(sObj);
             Integer key = new Integer(layerNum);
+            float sObjStart = sObj.getStartTime();
+            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
 
             if (!sObjMap.containsKey(key)) {
                 sObjMap.put(key, new ArrayList<SoundObject>());
             }
 
-            ArrayList<SoundObject> list = (ArrayList) sObjMap.get(key);
+            ArrayList<SoundObject> list = sObjMap.get(key);
 
             list.add(sObj);
+
+            if(sObjStart < start) {
+                start = sObjStart;
+            }
+            if(sObjEnd > end) {
+                end = sObjEnd;
+            }
+
         }
 
         int keyMin = ((Integer) sObjMap.firstKey()).intValue();
@@ -210,6 +238,8 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         }
 
         temp.normalizeSoundObjects();
+        temp.setStartTime(start);
+        temp.setSubjectiveDuration(end - start);
         return temp;
     }
 }
