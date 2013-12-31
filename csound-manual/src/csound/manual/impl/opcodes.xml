@@ -462,8 +462,8 @@
       </opcode>
       <opcode>
         <name>loopseg</name>
-        <signature>ksig 	loopseg	 kfreq, ktrig, iphase, ktime0, kvalue0 [, ktime1] [, kvalue1] \
-      [, ktime2] [, kvalue2] [...]</signature>
+        <signature>ksig 	loopseg	 kfreq, ktrig, iphase, kvalue0, ktime0 [, kvalue1] [, ktime1] \
+[, kvalue2] [, ktime2][...]</signature>
       </opcode>
       <opcode>
         <name>loopsegp</name>
@@ -472,8 +472,8 @@
       </opcode>
       <opcode>
         <name>looptseg</name>
-        <signature>ksig 	looptseg	 kfreq, ktrig, ktime0, kvalue0, ktype0, [, ktime1] [, kvalue1] [,ktype1] \
-      [, ktime2] [, kvalue2] [,ktype2] [...][, ktimeN] [, kvalueN]</signature>
+        <signature>ksig 	looptseg	 kfreq, ktrig, iphase, kvalue0, ktype0, ktime0, [, kvalue1] [,ktype1] [, ktime1] \
+      [, kvalue2] [,ktype2] [, ktime2] [...] [, kvalueN] [,ktypeN] [, ktimeN]</signature>
       </opcode>
       <opcode>
         <name>loopxseg</name>
@@ -482,12 +482,12 @@
       </opcode>
       <opcode>
         <name>lpshold</name>
-        <signature>ksig 	lpshold	 kfreq, ktrig, iphase, ktime0, kvalue0  [, ktime1] [, kvalue1] [, ktime2] [, kvalue2] [...]</signature>
+        <signature>ksig 	lpshold	 kfreq, ktrig, iphase, ktime0, kvalue0  [, kvalue1] [, ktime1] [, kvalue2] [, ktime2] [...]</signature>
       </opcode>
       <opcode>
         <name>lpsholdp</name>
-        <signature>ksig 	lpsholdp	  kphase, ktrig, ktime0, kvalue0  [, ktime1] [, kvalue1] \
-      [, ktime2] [, kvalue2] [...]</signature>
+        <signature>ksig 	lpsholdp	  kphase, kvalue0, ktime0  [, kvalue1] [, ktime1] \
+      [, kvalue2] [, ktime2] [...]</signature>
       </opcode>
       <opcode>
         <name>rspline</name>
@@ -1592,6 +1592,10 @@
         <signature>fin	 ifilename, iskipframes, iformat, ain1 [, ain2] [, ain3] [,...]</signature>
       </opcode>
       <opcode>
+        <name>fin</name>
+        <signature>fin	 ifilename, iskipframes, iformat, arr[]</signature>
+      </opcode>
+      <opcode>
         <name>fini</name>
         <signature>fini	 ifilename, iskipframes, iformat, in1 [, in2] [, in3] [, ...]</signature>
       </opcode>
@@ -1606,6 +1610,10 @@
       <opcode>
         <name>fout</name>
         <signature>fout	 ifilename, iformat, aout1 [, aout2, aout3,...,aoutN]</signature>
+      </opcode>
+      <opcode>
+        <name>fout</name>
+        <signature>fout	 ifilename, iformat, array[]</signature>
       </opcode>
       <opcode>
         <name>fouti</name>
@@ -1626,6 +1634,14 @@
       <opcode>
         <name>fprints</name>
         <signature>fprints	 &quot;filename&quot;, &quot;string&quot; [, ival1] [, ival2] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>readf</name>
+        <signature>Sres, kline 	readf	 ifilname</signature>
+      </opcode>
+      <opcode>
+        <name>readfi</name>
+        <signature>Sres, iline 	readfi	 ifilname</signature>
       </opcode>
       <opcode>
         <name>readk</name>
@@ -1652,12 +1668,26 @@
       </opcode>
       <opcode>
         <name>diskin2</name>
+        <signature>ar1[] 	diskin2	 ifilcod, kpitch[, iskiptim \
+      [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>diskin2</name>
         <signature>a1[, a2[, ... aN]] 	diskin2	 ifilcod, kpitch[, iskiptim \
+      [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
+      </opcode>
+      <opcode>
+        <name>diskin2</name>
+        <signature>ar1[] 	diskin2	 ifilcod, kpitch[, iskiptim \
       [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
       </opcode>
       <opcode>
         <name>in</name>
         <signature>ar1 	in</signature>
+      </opcode>
+      <opcode>
+        <name>in</name>
+        <signature>aarray 	in</signature>
       </opcode>
       <opcode>
         <name>in32</name>
@@ -1727,7 +1757,11 @@
       </opcode>
       <opcode>
         <name>out</name>
-        <signature>out	 asig</signature>
+        <signature>out	 asig1[, asig2,....]</signature>
+      </opcode>
+      <opcode>
+        <name>out</name>
+        <signature>out	 aarray</signature>
       </opcode>
       <opcode>
         <name>out32</name>
@@ -2201,7 +2235,12 @@
       <opcode>
         <name>bformdec1</name>
         <signature>ao1, ao2, ao3, ao4, ao5, ao6, ao7, ao8 	bformdec1	 isetup, aw, ax, ay, az \
-      [, ar, as, at, au, av [, abk, al, am, an, ao, ap, aq]]]</signature>
+      [, ar, as, at, au, av [, abk, al, am, an, ao, ap,
+    aq]]]</signature>
+      </opcode>
+      <opcode>
+        <name>bformdec1</name>
+        <signature>aout[] 	bformdec1	 isetup, abform[]</signature>
       </opcode>
       <opcode>
         <name>bformenc</name>
@@ -2229,6 +2268,10 @@
         <name>bformenc1</name>
         <signature>aw, ax, ay, az, ar, as, at, au, av, ak, al, am, an, ao, ap, aq 	bformenc1	 \
       asig, kalpha, kbeta</signature>
+      </opcode>
+      <opcode>
+        <name>bformenc1</name>
+        <signature>aarray[] 	bformenc1	 asig, kalpha, kbeta</signature>
       </opcode>
       <opcode>
         <name>hrtfearly</name>
@@ -2313,6 +2356,11 @@
     kelev] [, kspread] [, ilayout]</signature>
       </opcode>
       <opcode>
+        <name>vbap</name>
+        <signature>array[] 	vbap	 asig, kazim [,
+    kelev] [, kspread] [, ilayout]</signature>
+      </opcode>
+      <opcode>
         <name>vbap16</name>
         <signature>ar1, ..., ar16 	vbap16	 asig, kazim [, kelev] [, kspread]</signature>
       </opcode>
@@ -2344,12 +2392,31 @@
         <signature>k1[, k2...] 	vbapg	 kazim [,kelev] [, kspread] [, ilayout]</signature>
       </opcode>
       <opcode>
+        <name>vbapg</name>
+        <signature>karray[] 	vbapg	 kazim [,kelev] [, kspread] [, ilayout]</signature>
+      </opcode>
+      <opcode>
+        <name>vbapgmove</name>
+        <signature>kr1[, kr2...] 	vbapgmove	 idur, ispread, ifldnum, ifld1 \
+      [, ifld2] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>vbapgmove</name>
+        <signature>karray[] 	vbapgmove	 idur, ispread, ifldnum, ifld1 \
+      [, ifld2] [...]</signature>
+      </opcode>
+      <opcode>
         <name>vbaplsinit</name>
         <signature>vbaplsinit	 idim, ilsnum [, idir1] [, idir2] [...] [, idir32]</signature>
       </opcode>
       <opcode>
         <name>vbapmove</name>
         <signature>ar1[, ar2...] 	vbapmove	 asig, idur, ispread, ifldnum, ifld1 \
+      [, ifld2] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>vbapmove</name>
+        <signature>aarray[] 	vbapmove	 asig, idur, ispread, ifldnum, ifld1 \
       [, ifld2] [...]</signature>
       </opcode>
       <opcode>
@@ -2365,7 +2432,7 @@
     <opcodeGroup name="Reverberation">
       <opcode>
         <name>alpass</name>
-        <signature>ares 	alpass	 asig, krvt, ilpt [, iskip] [, insmps]</signature>
+        <signature>ares 	alpass	 asig, xrvt, ilpt [, iskip] [, insmps]</signature>
       </opcode>
       <opcode>
         <name>babo</name>
@@ -2587,6 +2654,18 @@
           <signature>ares 	areson	 asig, kcf, kbw [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
+          <name>areson</name>
+          <signature>ares 	areson	 asig, acf, kbw [, iscl] [, iskip]</signature>
+        </opcode>
+        <opcode>
+          <name>areson</name>
+          <signature>ares 	areson	 asig, kcf, abw [, iscl] [, iskip]</signature>
+        </opcode>
+        <opcode>
+          <name>areson</name>
+          <signature>ares 	areson	 asig, acf, abw [, iscl] [, iskip]</signature>
+        </opcode>
+        <opcode>
           <name>bqrez</name>
           <signature>ares 	bqrez	 asig, xfco, xres [, imode] [, iskip]</signature>
         </opcode>
@@ -2600,15 +2679,27 @@
         </opcode>
         <opcode>
           <name>lowresx</name>
-          <signature>ares 	lowresx	 asig, kcutoff, kresonance [, inumlayer] [, iskip]</signature>
+          <signature>ares 	lowresx	 asig, xcutoff, xresonance [, inumlayer] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>lpf18</name>
-          <signature>ares 	lpf18	 asig, kfco, kres, kdist [, iskip]</signature>
+          <signature>ares 	lpf18	 asig, xfco, xres, xdist [, iskip]</signature>
         </opcode>
         <opcode>
           <name>moogladder</name>
           <signature>asig 	moogladder	 ain, kcf, kres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder</name>
+          <signature>asig 	moogladder	 ain, acf, kres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder</name>
+          <signature>asig 	moogladder	 ain, kcf, ares[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder</name>
+          <signature>asig 	moogladder	 ain, acf, ares[, istor]</signature>
         </opcode>
         <opcode>
           <name>moogvcf</name>
@@ -2620,15 +2711,15 @@
         </opcode>
         <opcode>
           <name>reson</name>
-          <signature>ares 	reson	 asig, kcf, kbw [, iscl] [, iskip]</signature>
+          <signature>ares 	reson	 asig, xcf, xbw [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>resonr</name>
-          <signature>ares 	resonr	 asig, kcf, kbw [, iscl] [, iskip]</signature>
+          <signature>ares 	resonr	 asig, xcf, xbw [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>resonx</name>
-          <signature>ares 	resonx	 asig, kcf, kbw [, inumlayer] [, iscl] [, iskip]</signature>
+          <signature>ares 	resonx	 asig, xcf, xbw [, inumlayer] [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>resony</name>
@@ -2636,7 +2727,7 @@
         </opcode>
         <opcode>
           <name>resonz</name>
-          <signature>ares 	resonz	 asig, kcf, kbw [, iscl] [, iskip]</signature>
+          <signature>ares 	resonz	 asig, xcf, xbw [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>rezzy</name>
@@ -2644,7 +2735,7 @@
         </opcode>
         <opcode>
           <name>statevar</name>
-          <signature>ahp,alp,abp,abr 	statevar	 ain, kcf, kq [, iosamps, istor]</signature>
+          <signature>ahp,alp,abp,abr 	statevar	 ain, xcf, xq [, iosamps, istor]</signature>
         </opcode>
         <opcode>
           <name>svfilter</name>
@@ -2697,16 +2788,6 @@
           <signature>kres 	tonek	 ksig, khp [, iskip]</signature>
         </opcode>
       </opcodeGroup>
-      <opcodeGroup name="Low Pass">
-        <opcode>
-          <name>median</name>
-          <signature>ares 	median	 asig, ksize, imaxsize [, iskip]</signature>
-        </opcode>
-        <opcode>
-          <name>mediank</name>
-          <signature>kres 	mediank	 kin, ksize, imaxsize [, iskip]</signature>
-        </opcode>
-      </opcodeGroup>
       <opcode>
         <name>atone</name>
         <signature>ares 	atone	 asig, khp [, iskip]</signature>
@@ -2714,6 +2795,10 @@
       <opcode>
         <name>atonex</name>
         <signature>ares 	atonex	 asig, khp [, inumlayer] [, iskip]</signature>
+      </opcode>
+      <opcode>
+        <name>atonex</name>
+        <signature>ares 	atonex	 asig, ahp [, inumlayer] [, iskip]</signature>
       </opcode>
       <opcode>
         <name>biquad</name>
@@ -2736,24 +2821,40 @@
         <signature>ares 	buthp	 asig, kfreq [, iskip]</signature>
       </opcode>
       <opcode>
+        <name>buthp</name>
+        <signature>ares 	buthp	 asig, afreq [, iskip]</signature>
+      </opcode>
+      <opcode>
         <name>butlp</name>
         <signature>ares 	butlp	 asig, kfreq [, iskip]</signature>
       </opcode>
       <opcode>
+        <name>butlp</name>
+        <signature>ares 	butlp	 asig, afreq [, iskip]</signature>
+      </opcode>
+      <opcode>
         <name>butterbp</name>
-        <signature>ares 	butterbp	 asig, kfreq, kband [, iskip]</signature>
+        <signature>ares 	butterbp	 asig, xfreq, xband [, iskip]</signature>
       </opcode>
       <opcode>
         <name>butterbr</name>
-        <signature>ares 	butterbr	 asig, kfreq, kband [, iskip]</signature>
+        <signature>ares 	butterbr	 asig, xfreq, xband [, iskip]</signature>
       </opcode>
       <opcode>
         <name>butterhp</name>
         <signature>ares 	butterhp	 asig, kfreq [, iskip]</signature>
       </opcode>
       <opcode>
+        <name>butterhp</name>
+        <signature>ares 	butterhp	 asig, afreq [, iskip]</signature>
+      </opcode>
+      <opcode>
         <name>butterlp</name>
         <signature>ares 	butterlp	 asig, kfreq [, iskip]</signature>
+      </opcode>
+      <opcode>
+        <name>butterlp</name>
+        <signature>ares 	butterlp	 asig, afreq [, iskip]</signature>
       </opcode>
       <opcode>
         <name>clfilt</name>
@@ -2764,8 +2865,16 @@
         <signature>ashifted 	doppler	 asource, ksourceposition, kmicposition [, isoundspeed, ifiltercutoff]</signature>
       </opcode>
       <opcode>
+        <name>median</name>
+        <signature>ares 	median	 asig, ksize, imaxsize [, iskip]</signature>
+      </opcode>
+      <opcode>
+        <name>mediank</name>
+        <signature>kres 	mediank	 kin, ksize, imaxsize [, iskip]</signature>
+      </opcode>
+      <opcode>
         <name>mode</name>
-        <signature>aout 	mode	 ain, kfreq, kQ [, iskip]</signature>
+        <signature>aout 	mode	 ain, xfreq, xQ [, iskip]</signature>
       </opcode>
       <opcode>
         <name>tone</name>
@@ -2774,6 +2883,10 @@
       <opcode>
         <name>tonex</name>
         <signature>ares 	tonex	  asig, khp [, inumlayer] [, iskip]</signature>
+      </opcode>
+      <opcode>
+        <name>tonex</name>
+        <signature>ares 	tonex	  asig, ahp [, inumlayer] [, iskip]</signature>
       </opcode>
     </opcodeGroup>
     <opcodeGroup name="Specialized Filters">
@@ -2799,7 +2912,7 @@
       </opcode>
       <opcode>
         <name>fofilter</name>
-        <signature>asig 	fofilter	 ain, kcf, kris, kdec[, istor]</signature>
+        <signature>asig 	fofilter	 ain, xcf, xris, xdec[, istor]</signature>
       </opcode>
       <opcode>
         <name>hilbert</name>
@@ -3161,6 +3274,10 @@
         <signature>kres 	active	 kinsnum [,iopt]</signature>
       </opcode>
       <opcode>
+        <name>cpumeter</name>
+        <signature>ktot[,kcpu1, kcpu2,...]	cpumeter	 ifreq</signature>
+      </opcode>
+      <opcode>
         <name>cpuprc</name>
         <signature>cpuprc	 insnum, ipercent</signature>
       </opcode>
@@ -3259,6 +3376,22 @@
         <signature> ivar1, ... 	passign	 [istart]</signature>
       </opcode>
       <opcode>
+        <name>+=</name>
+        <signature>ares 	+=	 xarg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>ires 	+=	 iarg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>kres 	+=	 karg</signature>
+      </opcode>
+      <opcode>
+        <name>+=</name>
+        <signature>table [ kval] 	+=	 karg</signature>
+      </opcode>
+      <opcode>
         <name>pset</name>
         <signature>pset	 icon1 [, icon2] [...]</signature>
       </opcode>
@@ -3317,6 +3450,10 @@
         <signature>ktrig  	metro	  kfreq [, initphase]</signature>
       </opcode>
       <opcode>
+        <name>midifilestatus</name>
+        <signature>ksig  	midifilestatus</signature>
+      </opcode>
+      <opcode>
         <name>miditempo</name>
         <signature>ksig  	miditempo</signature>
       </opcode>
@@ -3361,6 +3498,10 @@
       <opcode>
         <name>ptrack</name>
         <signature>kcps, kamp 	ptrack	 asig, ihopsize[,ipeaks]</signature>
+      </opcode>
+      <opcode>
+        <name>readscratch</name>
+        <signature>ival 	readscratch	[index]</signature>
       </opcode>
       <opcode>
         <name>rewindscore</name>
@@ -3434,6 +3575,10 @@
       <opcode>
         <name>wiisend</name>
         <signature>kres 	wiisend	 kcontrol, kvalue[, knum]</signature>
+      </opcode>
+      <opcode>
+        <name>writescratch</name>
+        <signature>writescratch	ival[, index]</signature>
       </opcode>
       <opcode>
         <name>xyin</name>
@@ -3534,20 +3679,26 @@
         <signature>kres 	times</signature>
       </opcode>
     </opcodeGroup>
-    <opcodeGroup name=" Compilation">
+    <opcodeGroup name="Compilation">
       <opcode>
         <name>compileorc</name>
-        <signature>compileorc	 Sfilename</signature>
+        <signature>ires 	compileorc	 Sfilename</signature>
       </opcode>
       <opcode>
         <name>compilestr</name>
-        <signature>compilestr	 Sorch</signature>
+        <signature>ires 	compilestr	 Sorch</signature>
       </opcode>
-    </opcodeGroup>
-    <opcodeGroup name="Realtime Performance Monitor">
       <opcode>
-        <name>cpumeter</name>
-        <signature>ktot[,kcpu1, kcpu2,...]	cpumeter	 ifreq</signature>
+        <name>evalstr</name>
+        <signature>ires 	evalstr	 Scode </signature>
+      </opcode>
+      <opcode>
+        <name>evalstr</name>
+        <signature>kres 	evalstr	 Scode, ktrig </signature>
+      </opcode>
+      <opcode>
+        <name>return</name>
+        <signature>return	 ival </signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
@@ -4008,6 +4159,14 @@
         <signature>tablecopy	 kdft, ksft</signature>
       </opcode>
       <opcode>
+        <name>tablefilter</name>
+        <signature>knumpassed 	tablefilter	 kouttable, kintatble, kmode, kparam</signature>
+      </opcode>
+      <opcode>
+        <name>tablefilteri</name>
+        <signature>inumpassed 	tablefilteri	 iouttable, iintatble, imode, iparam</signature>
+      </opcode>
+      <opcode>
         <name>tablegpw</name>
         <signature>tablegpw	 kfn</signature>
       </opcode>
@@ -4086,16 +4245,6 @@
       <opcode>
         <name>tabrec</name>
         <signature>tabrec	   ktrig_start, ktrig_stop, knumtics, kfn, kin1 [,kin2,...,kinN]</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name="Models and Emulations">
-      <opcode>
-        <name>tablefilter</name>
-        <signature>knumpassed 	tablefilter	 kouttable, kintatble, kmode, kparam</signature>
-      </opcode>
-      <opcode>
-        <name>tablefilteri</name>
-        <signature>inumpassed 	tablefilteri	 iouttable, iintatble, imode, iparam</signature>
       </opcode>
     </opcodeGroup>
     <opcode>
@@ -4513,6 +4662,14 @@
         <signature>powoftwo	(x)  (init-rate or control-rate args only)</signature>
       </opcode>
       <opcode>
+        <name>qinf</name>
+        <signature>qinf	(x) (no rate restriction)</signature>
+      </opcode>
+      <opcode>
+        <name>qnan</name>
+        <signature>qnan	(x) (no rate restriction)</signature>
+      </opcode>
+      <opcode>
         <name>round</name>
         <signature>round	(x) (init-, control-, or audio-rate arg allowed)</signature>
       </opcode>
@@ -4553,6 +4710,10 @@
       <opcode>
         <name>tan</name>
         <signature>tan	(x) (no rate restriction)</signature>
+      </opcode>
+      <opcode>
+        <name>tanh</name>
+        <signature>tanh	(x) (no rate restriction)</signature>
       </opcode>
       <opcode>
         <name>taninv</name>
@@ -4659,47 +4820,6 @@
     </opcodeGroup>
     <opcodeGroup name="Vectors">
     </opcodeGroup>
-    <opcodeGroup name=" Vectors">
-      <opcode>
-        <name>copya2ftab</name>
-        <signature>copya2ftab	 tab, kftbl</signature>
-      </opcode>
-      <opcode>
-        <name>copyf2array</name>
-        <signature>copyf2array	 tab, kftbl</signature>
-      </opcode>
-      <opcode>
-        <name>maxarray</name>
-        <signature>kmax 	maxarray	 karray</signature>
-      </opcode>
-      <opcode>
-        <name>minarray</name>
-        <signature>kmin 	minarray	 karray</signature>
-      </opcode>
-      <opcode>
-        <name>scalearray</name>
-        <signature>scalearray	 tarray, kmin, kmax[, kleft, kright]</signature>
-      </opcode>
-      <opcode>
-        <name>sumarray</name>
-        <signature>ksum 	sumarray	 karray</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name="Trigonometric
-  Functions">
-      <opcode>
-        <name>tanh</name>
-        <signature>tanh	(x) (no rate restriction)</signature>
-      </opcode>
-    </opcodeGroup>
-    <opcode>
-      <name>qinf</name>
-      <signature>qinf	(x) (no rate restriction)</signature>
-    </opcode>
-    <opcode>
-      <name>qnan</name>
-      <signature>qnan	(x) (no rate restriction)</signature>
-    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Pitch Converters">
     <opcodeGroup name="Functions">
@@ -5559,6 +5679,11 @@
         <signature>kfr, kamp 	pvspitch	 fsig, kthresh</signature>
       </opcode>
       <opcode>
+        <name>pvstanal</name>
+        <signature>fsig 	pvstanal	 ktimescal, kamp, kpitch, ktab, [kdetect, kwrap, ioffset,ifftsize, ihop, idbthresh]
+      </signature>
+      </opcode>
+      <opcode>
         <name>pvstencil</name>
         <signature>fsig 	pvstencil	 fsigin, kgain, klevel, iftable</signature>
       </opcode>
@@ -5681,6 +5806,22 @@
       <opcode>
         <name>lorisread</name>
         <signature>lorisread	 ktimpnt, ifilcod, istoreidx, kfreqenv, kampenv, kbwenv[, ifadetime]</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name="Other">
+      <opcode>
+        <name>centroid</name>
+        <signature>kcent 	centroid	 asig, ktrig, ifftsize</signature>
+      </opcode>
+      <opcode>
+        <name>mincer</name>
+        <signature>asig 	mincer	 atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
+      </signature>
+      </opcode>
+      <opcode>
+        <name>temposcal</name>
+        <signature>asig 	temposcal	 ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh]
+      </signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
@@ -6675,81 +6816,30 @@ inum_parm, kupdate</signature>
   </opcodeGroup>
   <opcodeGroup name="Utilities">
   </opcodeGroup>
-  <opcodeGroup name="">
+  <opcodeGroup name="Array Opcodes">
     <opcode>
-      <name>centroid</name>
-      <signature>kcent 	centroid	 asig, ktrig, ifftsize</signature>
+      <name>copya2ftab</name>
+      <signature>copya2ftab	 tab, kftbl</signature>
     </opcode>
     <opcode>
-      <name>readscratch</name>
-      <signature>ival 	readscratch	[index]</signature>
+      <name>copyf2array</name>
+      <signature>copyf2array	 tab, kftbl</signature>
     </opcode>
     <opcode>
-      <name>writescratch</name>
-      <signature>writescratch	ival[, index]</signature>
+      <name>maxarray</name>
+      <signature>kmax 	maxarray	 karray</signature>
     </opcode>
-  </opcodeGroup>
-  <opcodeGroup name="Compilation Opcodes">
-    <opcodeGroup name=" evaluation">
-      <opcode>
-        <name>evalstr</name>
-        <signature>ires 	evalstr	 Scode </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" instantiation">
-      <opcode>
-        <name>return</name>
-        <signature>return	 ival </signature>
-      </opcode>
-    </opcodeGroup>
-  </opcodeGroup>
-  <opcodeGroup name="Faust Opcodes">
-    <opcodeGroup name=" instantiation">
-      <opcode>
-        <name>ihandle,a1[,a2,...] faustaudio</name>
-        <signature>ihandle,a1[,a2,...] faustaudio	 ifac[,ain1,...] </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" compilation">
-      <opcode>
-        <name>ihandle faustcompile</name>
-        <signature>ihandle faustcompile	 Scode, Sargs </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" control">
-      <opcode>
-        <name>faustctl</name>
-        <signature>faustctl	 idsp,Scontrol,kval </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" instantiaion">
-      <opcode>
-        <name>ihandle,a1[,a2,...] faustgen</name>
-        <signature>ihandle,a1[,a2,...] faustgen	 SCode[,ain1,...] </signature>
-      </opcode>
-    </opcodeGroup>
-  </opcodeGroup>
-  <opcodeGroup name="Spectral processing">
-    <opcodeGroup name=" mincer">
-      <opcode>
-        <name>mincer</name>
-        <signature>asig 	mincer	 atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
-      </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" pvstanal">
-      <opcode>
-        <name>pvstanal</name>
-        <signature>fsig 	pvstanal	 ktimescal, kamp, kpitch, ktab, [kdetect, kwrap, ioffset,ifftsize, ihop, idbthresh]
-      </signature>
-      </opcode>
-    </opcodeGroup>
-    <opcodeGroup name=" temposcal">
-      <opcode>
-        <name>temposcal</name>
-        <signature>asig 	temposcal	 ktimescal, kamp, kpitch, ktab, klock [,ifftsize, idecim, ithresh]
-      </signature>
-      </opcode>
-    </opcodeGroup>
+    <opcode>
+      <name>minarray</name>
+      <signature>kmin 	minarray	 karray</signature>
+    </opcode>
+    <opcode>
+      <name>scalearray</name>
+      <signature>scalearray	 tarray, kmin, kmax[, kleft, kright]</signature>
+    </opcode>
+    <opcode>
+      <name>sumarray</name>
+      <signature>ksum 	sumarray	 karray</signature>
+    </opcode>
   </opcodeGroup>
 </CsoundOpcodes>
