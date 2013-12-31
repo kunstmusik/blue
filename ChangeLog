@@ -13,6 +13,15 @@ information.
 [CHANGE LOG]
 
 
+>Notes for 2.5.6<
+[release 2013.12.18]
+
+FIX
+
+* Bug #90: code for Freezing SoundObjects did not properly create commandline
+  arguments to run
+
+ 
 >Notes for 2.5.5<
 [release 2013.12.05]
 
