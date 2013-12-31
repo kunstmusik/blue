@@ -958,14 +958,14 @@ public class SoundObjectPopup extends JPopupMenu {
             File temp = FileUtilities.createTempTextFile("tempCsd", ".csd",
                     projectDir, tempCSD);
 
-            String[] args = new String[]{command, temp.getAbsolutePath()};
+            String[] args = command.split("\\s+");
             String[] args2 = new String[args.length + 2];
             System.arraycopy(args, 0, args2, 0, args.length);
             args2[args.length] = fullTempFileName;
             args2[args.length + 1] = temp.getAbsolutePath();
 
             String csoundOutput = DiskRenderManager.getInstance()
-                .execWaitAndCollect(args, projectDir);
+                .execWaitAndCollect(args2, projectDir);
 
            // FIXME - remove commented out code 
 //            if (APIUtilities.isCsoundAPIAvailable() &&
