@@ -12,6 +12,14 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.7<
+[release 2014.xx.xx]
+
+UPDATED
+
+* Updated opcode definitions with latest from Csound Manual (includes things
+  like pvstanal, array opcode section, etc.)
+
 
 >Notes for 2.5.6<
 [release 2013.12.18]
