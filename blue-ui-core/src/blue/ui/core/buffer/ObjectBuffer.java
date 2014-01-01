@@ -20,6 +20,7 @@
 package blue.ui.core.buffer;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -28,7 +29,7 @@ import java.util.HashMap;
 public class ObjectBuffer {
     private static ObjectBuffer instance = null;
     
-    private HashMap<Class,Object> buffer = new HashMap<>();
+    private final Map<Class,Object> buffer = new HashMap<>();
     
     private ObjectBuffer() {}
     

@@ -31,4 +31,7 @@ public interface Layer extends Serializable {
     public String getName();
     public void setName(String name);
     public int getLayerHeight();
+    
+    //public boolean accepts(Object object);
+    //public boolean contains(Object object);
 }
