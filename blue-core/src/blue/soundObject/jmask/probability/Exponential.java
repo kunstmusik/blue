@@ -152,14 +152,6 @@ public class Exponential implements ProbabilityGenerator {
         this.lambdaTable = lambdaTable;
     }
 
-    public boolean isLabmdaTableEnabled() {
-        return lambdaTableEnabled;
-    }
-
-    public void setLabmdaTableEnabled(boolean labmdaTableEnabled) {
-        this.lambdaTableEnabled = labmdaTableEnabled;
-    }
-
     public boolean isLambdaTableEnabled() {
         return lambdaTableEnabled;
     }
