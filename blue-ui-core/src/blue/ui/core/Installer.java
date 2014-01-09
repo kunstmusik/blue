@@ -37,6 +37,8 @@ import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.render.RealtimeRenderManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Locale;
+import java.util.Locale;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.openide.modules.InstalledFileLocator;
@@ -65,7 +67,7 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-
+        Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         System.setProperty("jffi.unsafe.disabled", "true");
         
 //        System.setProperty("netbeans.winsys.no_toolbars", "true");

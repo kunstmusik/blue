@@ -25,3 +25,4 @@ manual/docbook/index.xml
 tempCsd*.csd
 jython/release/modules/ext/cachedir/*
 jython/release/*.pyc
+/csound-manual/categories.pyc
