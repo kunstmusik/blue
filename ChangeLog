@@ -13,19 +13,23 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.5.7<
-[release 2014.xx.xx]
+[release 2014.01.09]
 
+UPDATED
+
+* RFE #150: Jmask: Updated UI, moved bar from left hand side to top top for 
+  parameters, added ability to set the name for the parameter by double clicking 
+  the bar, added default values for p1, p2, and p3 as "Instrument ID", "Start", 
+  and "Duration"
+
+* Updated opcode definitions with latest from Csound Manual (includes things
+  like pvstanal, array opcode section, etc.)
 
 FIX
 
 * Bug #89: Commandline Runner when rendering to disk was adding "-L stdin", 
   causing the Blue render to hang on Windows; now removed for all platforms as
   input is unnecessary when rendering to disk 
-
-UPDATED
-
-* Updated opcode definitions with latest from Csound Manual (includes things
-  like pvstanal, array opcode section, etc.)
 
 
 >Notes for 2.5.6<
