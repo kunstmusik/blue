@@ -15,6 +15,13 @@ information.
 >Notes for 2.5.7<
 [release 2014.xx.xx]
 
+
+FIX
+
+* Bug #89: Commandline Runner when rendering to disk was adding "-L stdin", 
+  causing the Blue render to hang on Windows; now removed for all platforms as
+  input is unnecessary when rendering to disk 
+
 UPDATED
 
 * Updated opcode definitions with latest from Csound Manual (includes things
