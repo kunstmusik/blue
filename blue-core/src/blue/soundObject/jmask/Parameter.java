@@ -44,6 +44,8 @@ public class Parameter implements Serializable {
     
     private transient PropertyChangeSupport propSupport = null;
 
+    private String name = "";
+
     public static Parameter create(Generator generator) {
         Parameter param = new Parameter();
         param.setGenerator(generator);
@@ -113,6 +115,14 @@ public class Parameter implements Serializable {
         this.accumulator = accumulator;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String fieldName) {
+        this.name = fieldName;
+    }
+    
     public static Parameter loadFromXML(Element data) throws Exception {
         Parameter parameter = new Parameter();
 
@@ -120,6 +130,11 @@ public class Parameter implements Serializable {
             boolean visible = Boolean.valueOf(
                     data.getAttributeValue("visible")).booleanValue();
             parameter.setVisible(visible);
+        }
+
+        if(data.getAttributeValue("name") != null) {
+            parameter.setName(data.getAttributeValue("name"));
+            
         }
         
         Elements nodes = data.getElements();
@@ -150,6 +165,7 @@ public class Parameter implements Serializable {
     public Element saveAsXML() {
         Element retVal = new Element("parameter");
         retVal.setAttribute("visible", Boolean.toString(visible));
+        retVal.setAttribute("name", getName());
 
         retVal.addElement(generator.saveAsXML());
 

@@ -27,3 +27,4 @@ tempCsd*.csd
 jython/release/modules/ext/cachedir/*
 jython/release/*.pyc
 */nbproject/genfiles.properties
+/csound-manual/categories.pyc

@@ -38,7 +38,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Field implements Serializable, ListModel {
 
-    ArrayList parameters = new ArrayList();
+    ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
     private transient Vector listListeners = null;
 
@@ -51,6 +51,10 @@ public class Field implements Serializable, ListModel {
             parameters.add(Parameter.create(new Constant()));
             parameters.add(Parameter.create(new Constant()));
             parameters.add(Parameter.create(new Constant()));
+
+            parameters.get(0).setName("Instrument ID");
+            parameters.get(1).setName("Start");
+            parameters.get(2).setName("Duration");
         }
     }
 
@@ -72,23 +76,23 @@ public class Field implements Serializable, ListModel {
     }
 
     public void pushUp(int index) {
-        if(index > 0 && index < parameters.size()) {
-            Object val = parameters.remove(index);
+        if (index > 0 && index < parameters.size()) {
+            Parameter val = parameters.remove(index);
             parameters.add(index - 1, val);
-            
-             ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, index - 1, index);
+
+            ListDataEvent lde = new ListDataEvent(this,
+                    ListDataEvent.CONTENTS_CHANGED, index - 1, index);
             fireContentsChangedEvent(lde);
         }
     }
 
     public void pushDown(int index) {
-        if(index >= 0 && index < parameters.size() - 1) {
-            Object val = parameters.remove(index + 1);
+        if (index >= 0 && index < parameters.size() - 1) {
+            Parameter val = parameters.remove(index + 1);
             parameters.add(index, val);
-            
-             ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, index, index + 1);
+
+            ListDataEvent lde = new ListDataEvent(this,
+                    ListDataEvent.CONTENTS_CHANGED, index, index + 1);
             fireContentsChangedEvent(lde);
         }
     }
@@ -128,7 +132,7 @@ public class Field implements Serializable, ListModel {
             for (int i = 3; i < numFields + 1; i++) {
                 double val = getParameter(i - 1).getValue(xt);
 
-                if(i == 3 && val < 0) {
+                if (i == 3 && val < 0) {
                     n.setPField(NumberUtilities.formatDouble(-val), i);
                     n.setTied(true);
                 } else {
@@ -151,7 +155,6 @@ public class Field implements Serializable, ListModel {
     }
 
     // Fields
-
     public Parameter getParameter(int index) {
         return (Parameter) parameters.get(index);
     }
@@ -195,7 +198,6 @@ public class Field implements Serializable, ListModel {
     }
 
     // List Model Methods
-
     public int getSize() {
         return parameters.size();
     }

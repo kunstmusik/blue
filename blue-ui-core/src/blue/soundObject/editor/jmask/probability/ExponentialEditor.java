@@ -39,7 +39,7 @@ public class ExponentialEditor extends javax.swing.JPanel implements DurationSet
     }
 
     private void updateDisplay() {
-        lambdaSpinner.setVisible(!this.exponential.isLabmdaTableEnabled());
+        lambdaSpinner.setVisible(!this.exponential.isLambdaTableEnabled());
         lambdaTableEditor.setVisible(this.exponential.isLambdaTableEnabled());
     }
     

@@ -158,7 +158,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
                     BlueSystem.getCurrentProjectDirectory(), csd);
 
             commandLine += " \"" + temp.getAbsolutePath() + "\"";
-            commandLine += " -L stdin";
+            //commandLine += " -L stdin";
 
             execDisk(commandLine, job.getCurrentWorkingDirectory());
             process.waitFor();

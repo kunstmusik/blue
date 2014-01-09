@@ -8,24 +8,29 @@ package blue.soundObject.editor.jmask;
 import blue.gui.ListLayoutManager;
 import blue.soundObject.jmask.Accumulatable;
 import blue.soundObject.jmask.Accumulator;
+import blue.soundObject.jmask.Mask;
+import java.awt.Color;
+import java.beans.PropertyChangeEvent;
+import java.util.Iterator;
+import java.util.Vector;
+
+import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.border.LineBorder;
+
 import blue.soundObject.jmask.Generator;
 import blue.soundObject.jmask.GeneratorRegistry;
-import blue.soundObject.jmask.Mask;
 import blue.soundObject.jmask.Maskable;
 import blue.soundObject.jmask.Parameter;
 import blue.soundObject.jmask.Quantizable;
 import blue.soundObject.jmask.Quantizer;
 import blue.ui.utilities.UiUtilities;
-import java.awt.Color;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
-import java.util.Vector;
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
-import javax.swing.border.LineBorder;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 
 /**
  * 
@@ -56,6 +61,7 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         this.setBorder(new LineBorder(Color.BLACK));
 
         emptyPanel.setLayout(new ListLayoutManager());
+        paramLabelPanel.setBackground(paramLabelPanel.getBackground().darker());
     }
 
     public void setDuration(double duration) {
@@ -136,13 +142,11 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         this.setVisible(this.parameter.isVisible());
     }
 
-    @Override
     public void addNotify() {
         super.addNotify();
         this.parameter.addPropertyChangeListener(this);
     }
 
-    @Override
     public void removeNotify() {
         super.removeNotify();
         this.parameter.removePropertyChangeListener(this);
@@ -150,8 +154,23 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
 
     public void setParameterNumber(int num) {
         this.parameterNum = num;
+        String label = "p" + num;
 
-        paramLabelPanel.setText(Integer.toString(num));
+        final String fieldName = parameter.getName();
+
+        if(fieldName != null && 
+                !fieldName.equals("")) {
+            label += " - " + fieldName;
+        }
+
+        final String newLabel = label;
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                paramLabelPanel.setText(newLabel);
+                repaint();
+            }
+        });
     }
 
     public void addParameterEditListener(ParameterEditListener listener) {
@@ -308,11 +327,11 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         emptyPanel.setLayout(emptyPanelLayout);
         emptyPanelLayout.setHorizontalGroup(
             emptyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 501, Short.MAX_VALUE)
+            .addGap(0, 521, Short.MAX_VALUE)
         );
         emptyPanelLayout.setVerticalGroup(
             emptyPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 152, Short.MAX_VALUE)
+            .addGap(0, 133, Short.MAX_VALUE)
         );
 
         add(emptyPanel, java.awt.BorderLayout.CENTER);
@@ -321,13 +340,17 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         paramLabelPanel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         paramLabelPanel.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         paramLabelPanel.setMinimumSize(new java.awt.Dimension(20, 19));
+        paramLabelPanel.setOpaque(true);
         paramLabelPanel.setPreferredSize(new java.awt.Dimension(20, 19));
         paramLabelPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 paramLabelPanelMouseReleased(evt);
             }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                labelMouseClicked(evt);
+            }
         });
-        add(paramLabelPanel, java.awt.BorderLayout.WEST);
+        add(paramLabelPanel, java.awt.BorderLayout.NORTH);
     }// </editor-fold>//GEN-END:initComponents
 
 private void maskCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maskCheckBoxMenuItemActionPerformed
@@ -387,6 +410,21 @@ private void pushDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     fireParameterEdit(ParameterEditListener.PARAMETER_PUSH_DOWN,
             parameterNum, null);
 }//GEN-LAST:event_pushDownActionPerformed
+
+    private void labelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_labelMouseClicked
+        if(evt.getClickCount() == 2) {
+            String oldVal = parameter.getName();
+
+            NotifyDescriptor.InputLine descriptor = new NotifyDescriptor.InputLine("Enter Field Name", "Field Name", NotifyDescriptor.OK_CANCEL_OPTION, NotifyDescriptor.PLAIN_MESSAGE);
+            descriptor.setInputText(parameter.getName());
+           
+            Object status = DialogDisplayer.getDefault().notify(descriptor);
+            if(status == NotifyDescriptor.OK_OPTION) {
+                parameter.setName(descriptor.getInputText());
+                setParameterNumber(this.parameterNum);           
+            }
+        }
+    }//GEN-LAST:event_labelMouseClicked
     private void changeParameterActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_changeParameterActionPerformed
 
         GeneratorRegistry.GeneratorEntry[] options = GeneratorRegistry.getGeneratorEntries();
@@ -468,7 +506,6 @@ private void pushDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JMenuItem removeParameter;
     // End of variables declaration//GEN-END:variables
 
-    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("visible")) {
             this.setVisible(this.parameter.isVisible());
