@@ -31,6 +31,11 @@ FIX
   causing the Blue render to hang on Windows; now removed for all platforms as
   input is unnecessary when rendering to disk 
 
+* Bug #91: Modified Locale default for formatting of numbers to use English 
+  formatting (i.e. always use decimal instead of comma).  This affects things 
+  like Spinner components, and the change should make number formatting uniform
+  across Blue, matching Csound's number format
+
 
 >Notes for 2.5.6<
 [release 2013.12.18]
