@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.8<
+[release 2014.01.xx]
+
+FIX
+
+* Bug #92 : Fixed setting of note pitch value to before setting of start time 
+  when updating note values on mouse release
+
+
 >Notes for 2.5.7<
 [release 2014.01.09]
 
