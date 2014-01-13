@@ -40,53 +40,29 @@ import org.openide.util.actions.Presenter;
  * @author stevenyi
  */
 @ActionID(
-        id = "blue.ui.editor.actions.OpcodesMenu",
+        id = "blue.ui.editor.actions.BlueOpcodesMenu",
 category = "Edit")
 @ActionRegistration(
-        displayName = "#opcodesMenu")
+        displayName = "#blueOpcodesMenu")
 @ActionReferences({
     @ActionReference(
-        path = "Editors/text/x-csound-orc/Popup", position = 800),
+        path = "Editors/text/x-csound-orc/Popup", position = 850, separatorAfter = 900),
     @ActionReference(
-        path = "Editors/text/x-blue-synth-builder/Popup", position = 800)
+        path = "Editors/text/x-blue-synth-builder/Popup", position = 850, separatorAfter = 900)
 })
-@NbBundle.Messages("opcodesMenu=Opcodes")
-public class OpcodesMenu extends BaseAction implements Presenter.Popup {
+@NbBundle.Messages("blueOpcodesMenu=Blue Opcodes")
+public class BlueOpcodesMenu extends BaseAction implements Presenter.Popup {
 
     JMenu menu;
 
-    public OpcodesMenu() {
-        menu = new JMenu("Opcodes");
+    public BlueOpcodesMenu() {
+        menu = new JMenu("Blue Opcodes");
 
-        OpcodeDocCategory root = CsoundManualUtilities.getOpcodeDocCategory();
-        
-        handleOpcodeDocCategory(menu, root);
-        
+        menu.add(new NameValueTextAction("blueMixerOut", "blueMixerOut asig1 [, asig2...]"));
+        menu.add(new NameValueTextAction("blueMixerOut (SubChannel)", "blueMixerOut \"subchannelName\", asig1 ,asig2 [, asig3...]"));
+        menu.add(new NameValueTextAction("blueMixerIn", "asig1 [, asig2...] blueMixerIn"));
     }
     
-    protected void handleOpcodeDocCategory(JMenu menu, OpcodeDocCategory category) {
-        
-        for(OpcodeDocCategory cat : category.subGroups) {
-            JMenu subMenu = new JMenu(cat.categoryName);
-            menu.add(subMenu);
-            handleOpcodeDocCategory(subMenu, cat);
-        }
-        
-        JMenu currentMenu = menu;
-        for(int i = 0, counter = 0; i <  category.opcodes.size(); i++, counter++) {
-            OpcodeDoc op = category.opcodes.get(i);
-            currentMenu.add(new NameValueTextAction(op.opcodeName, op.signature));
-            
-            if(counter == 15 && i < category.opcodes.size() - 2) {
-                JMenu more = new JMenu("More");
-                currentMenu.add(more);
-                currentMenu = more;
-                counter = 0;
-            }
-        }
-        
-    }
-
     @Override
     public JMenuItem getPopupPresenter() {
         return menu;
