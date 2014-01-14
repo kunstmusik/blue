@@ -46,6 +46,9 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
 
     private boolean editEnabled = true;
 
+    private GridSettings gridSettings = new GridSettings();
+    
+
     public BSBGraphicInterface() {
         nameManager.setUniqueNameCollection(this);
         nameManager.setDefaultPrefix("bsbObj");
@@ -205,6 +208,14 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
 
     public void setEditEnabled(boolean editEnabled) {
         this.editEnabled = editEnabled;
+    }
+
+    public GridSettings getGridSettings() {
+        return gridSettings;
+    }
+
+    public void setGridSettings(GridSettings gridSettings) {
+        this.gridSettings = gridSettings;
     }
 
     public void randomize() {

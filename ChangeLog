@@ -21,6 +21,12 @@ NEW
   Opcodes" that has entries for "blueMixerOut", "blueMixerOut (SubChannel)", and
   "blueMixerIn"
 
+UPDATED
+
+* BlueSynthBuilder: small optimization: if last object that was being edited is 
+  the same as the one being requested to edit, don't bother clearing the 
+  interface
+
 FIX
 
 * Bug #92: Fixed setting of note pitch value to before setting of start time 

@@ -40,11 +40,14 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Steven
  */
-public class BSBInterfaceEditor extends JComponent implements PresetListener {
+public class BSBInterfaceEditor extends JComponent implements PresetListener, 
+        PropertyChangeListener {
 
     private final BSBEditPanel bsbEditPanel;
 
@@ -143,6 +146,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
     }
 
     public void editInterface(BSBGraphicInterface gInterface, PresetGroup pGroup) {
+
+        if(this.gInterface == gInterface) {
+            return;
+        }
+        
         isUpdating = true;
 
         this.gInterface = gInterface;
@@ -178,6 +186,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
             preset.setInterfaceValues(gInterface);
             this.bsbEditPanel.editBSBGraphicInterface(gInterface);
         }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
