@@ -31,10 +31,23 @@ import java.beans.PropertyChangeSupport;
  */
 public class GridSettings {
 
+    public static enum GridStyle {
+        NONE, DOT, LINE
+//        NONE(0), DOT(1), LINE(2);
+//        private int value;
+//
+//        GridStyle(int value) {
+//            this.value = value;
+//        }
+//        public int getValue() {
+//            return value;
+//        }
+    }
+    
     private int width = 15;
     private int height = 15;
-    private boolean drawGridEnabled = false;
-    private boolean snapEnabled = false;
+    private GridStyle gridStyle = GridStyle.DOT;
+    private boolean snapEnabled = true;
 
     private transient PropertyChangeSupport propSupport;
 
@@ -63,18 +76,15 @@ public class GridSettings {
         }
     }
 
-    public boolean isDrawGridEnabled() {
-        return drawGridEnabled;
+    public GridStyle getGridStyle() {
+        return gridStyle;
     }
 
-    public void setDrawGridEnabled(boolean drawGridEnabled) {
-        boolean oldVal = this.drawGridEnabled;
-        this.drawGridEnabled = drawGridEnabled;
-        if (propSupport != null && oldVal != drawGridEnabled) {
-            propSupport.firePropertyChange("drawGridEnabled", oldVal,
-                    drawGridEnabled);
-        }
+    public void setGridStyle(GridStyle gridStyle) {
+        this.gridStyle = gridStyle;
     }
+
+    
 
     public boolean isSnapEnabled() {
         return snapEnabled;
@@ -118,8 +128,8 @@ public class GridSettings {
                 case "height":
                     gridSettings.height = XMLUtilities.readInt(node);
                     break;
-                case "drawGridEnabled":
-                    gridSettings.drawGridEnabled = XMLUtilities.readBoolean(node);
+                case "gridStyle":
+                    gridSettings.gridStyle = GridStyle.valueOf(node.getTextString());
                     break;
                 case "snapGridEnabled":
                     gridSettings.snapEnabled = XMLUtilities.readBoolean(node);
@@ -138,8 +148,7 @@ public class GridSettings {
 
         retVal.addElement(XMLUtilities.writeInt("width", width));
         retVal.addElement(XMLUtilities.writeInt("height", height));
-        retVal.addElement(XMLUtilities.writeBoolean("drawGridEnabled",
-                drawGridEnabled));
+        retVal.addElement(new Element("gridStyle").setText(gridStyle.toString()));
         retVal.addElement(XMLUtilities.writeBoolean("snapGridEnabled",
                 snapEnabled));
 

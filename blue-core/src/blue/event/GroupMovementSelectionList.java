@@ -19,6 +19,7 @@
  */
 package blue.event;
 
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,7 +37,16 @@ public class GroupMovementSelectionList extends SelectionList implements
 
     int minOffsetY = 0;
 
-    public void initiateMovement() {
+    int gridOffsetX = 0;
+    int gridOffsetY = 0;
+
+    GridSettings gridSettings = null;
+
+    public void setGridSettings(GridSettings gridSettings) {
+        this.gridSettings = gridSettings;
+    }
+
+    public void initiateMovement(JComponent source) {
         originPoints.clear();
 
         minOffsetX = Integer.MAX_VALUE;
@@ -61,6 +71,12 @@ public class GroupMovementSelectionList extends SelectionList implements
         minOffsetX = -minOffsetX;
         minOffsetY = -minOffsetY;
 
+        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+            gridOffsetX = source.getX() % gridSettings.getWidth();
+            gridOffsetY = source.getY() % gridSettings.getHeight();
+        } else {
+            gridOffsetX = gridOffsetY = 0;
+        }
     }
 
     /*
@@ -70,6 +86,14 @@ public class GroupMovementSelectionList extends SelectionList implements
      */
     public void move(int offsetX, int offsetY) {
 
+        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+            int w = gridSettings.getWidth();
+            int h = gridSettings.getHeight();
+                    
+            offsetX = (Math.round((float)offsetX / w) * w) - gridOffsetX;
+            offsetY = (Math.round((float)offsetY / h) * h) - gridOffsetY;
+        }
+        
         int xVal = (offsetX < minOffsetX) ? minOffsetX : offsetX;
         int yVal = (offsetY < minOffsetY) ? minOffsetY : offsetY;
 

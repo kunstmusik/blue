@@ -151,7 +151,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                                     SelectionEvent.SELECTION_ADD));
                         }
 
-                    // if(viewHolder.)
+                        // if(viewHolder.)
                     }
 
                     marquee.setVisible(false);
@@ -342,6 +342,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         }
 
         this.bsbInterface = null;
+        this.selectionList.setGridSettings(null);
 
         clearBSBObjects();
 
@@ -350,6 +351,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 BSBObject bsbObj = (BSBObject) iter.next();
                 addBSBObject(bsbObj, false);
             }
+            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
         }
 
         this.bsbInterface = bsbInterface;
@@ -581,24 +583,22 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         int totalWidth = getWidth();
         int totalHeight = getHeight();
 
-        if (gridSettings.isDrawGridEnabled()) {
-            // paint lines
-
-            for (int x = 0; x < totalWidth; x += w) {
-                g.drawLine(x, 0, x, totalHeight);
-            }
-            for (int y = 0; y < totalHeight; y += h) {
-                g.drawLine(0, y, totalWidth, y);
-            }
-
-        } else {
-            // paint dots
-
-            for (int x = 0; x < totalWidth; x += w) {
-                for (int y = 0; y < totalHeight; y += h) {
-                    g.drawRect(x, y, 1, 1);
+        switch (gridSettings.getGridStyle()) {
+            case DOT:
+                for (int x = 0; x < totalWidth; x += w) {
+                    for (int y = 0; y < totalHeight; y += h) {
+                        g.drawRect(x, y, 1, 1);
+                    }
                 }
-            }
+                break;
+            case LINE:
+                for (int x = 0; x < totalWidth; x += w) {
+                    g.drawLine(x, 0, x, totalHeight);
+                }
+                for (int y = 0; y < totalHeight; y += h) {
+                    g.drawLine(0, y, totalWidth, y);
+                }
+                break;
         }
 
     }
