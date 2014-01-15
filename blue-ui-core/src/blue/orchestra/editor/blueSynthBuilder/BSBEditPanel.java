@@ -121,8 +121,22 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 if (isEditing()) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(BSBEditPanel.this, e.getX(), e.getY());
-                    } else if (e.isControlDown() && copyBuffer.size() > 0) {
-                        paste(e.getX(), e.getY());
+                    } else if ((e.getModifiers() & BlueSystem.getMenuShortcutKey())
+                            == BlueSystem.getMenuShortcutKey()
+                            && copyBuffer.size() > 0) {
+                        int itemX = e.getX();
+                        int itemY = e.getY();
+                        GridSettings gridSettings = bsbInterface.getGridSettings();
+                        
+                        if (gridSettings.isSnapEnabled()) {
+                            final int width = gridSettings.getWidth();
+                            final int height = gridSettings.getHeight();
+
+                            itemX = (int) Math.floor((float) itemX / width) * width;
+                            itemY = (int) Math.floor((float) itemY / height) * height;
+                        }
+
+                        paste(itemX, itemY);
                     } else {
                         marquee.setVisible(true);
                         marquee.setStart(e.getPoint());
@@ -182,6 +196,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
                 BlueSystem.getMenuShortcutKey()), "copy");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "delete");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP,
                 InputEvent.SHIFT_DOWN_MASK), "up10");
@@ -357,7 +372,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
             return;
         }
 
-        if(this.bsbInterface != null) {
+        if (this.bsbInterface != null) {
             this.bsbInterface.getGridSettings().removePropertyChangeListener(
                     this);
         }
@@ -410,13 +425,13 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         objectViews.clear();
     }
 
-    /** Called when adding a new BSBObject or when pasting. 
+    /**
+     * Called when adding a new BSBObject or when pasting.
+     *
      * @param bsbObj
      */
     public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
 
-        
-        
         return addBSBObject(bsbObj, true);
     }
 
@@ -589,7 +604,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if(!"snapEnabled".equals(evt.getPropertyName())) {
+        if (!"snapEnabled".equals(evt.getPropertyName())) {
             repaint();
         }
     }

@@ -22,7 +22,8 @@ NEW
   "blueMixerIn"
 
 * RFE #88: BlueSynthBuilder: added new grid settings to set grid width, height,
-  style (None, Dot, Line), and snap enabled
+  style (None, Dot, Line), and snap enabled. For projects before 2.5.8, older
+  behavior is preserved and will default to style None and snap disabled.
 
 UPDATED
 
@@ -30,11 +31,16 @@ UPDATED
   the same as the one being requested to edit, don't bother clearing the 
   interface
 
+* BlueSynthBuilder: Added use of Backspace to delete items in addition the 
+  previous delete key option
+
 FIX
 
 * Bug #92: Fixed setting of note pitch value to before setting of start time 
   when updating note values on mouse release
 
+* BlueSynthBuilder: On Mac OSX, made paste shortcut use cmd-click instead of 
+  ctrl-click, as ctrl-click is used by the OS as an alias for right-clicking
 
 >Notes for 2.5.7<
 [release 2014.01.09]
