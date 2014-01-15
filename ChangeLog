@@ -21,6 +21,9 @@ NEW
   Opcodes" that has entries for "blueMixerOut", "blueMixerOut (SubChannel)", and
   "blueMixerIn"
 
+* RFE #88: BlueSynthBuilder: added new grid settings to set grid width, height,
+  style (None, Dot, Line), and snap enabled
+
 UPDATED
 
 * BlueSynthBuilder: small optimization: if last object that was being edited is 

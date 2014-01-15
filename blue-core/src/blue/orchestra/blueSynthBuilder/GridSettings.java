@@ -33,21 +33,12 @@ public class GridSettings {
 
     public static enum GridStyle {
         NONE, DOT, LINE
-//        NONE(0), DOT(1), LINE(2);
-//        private int value;
-//
-//        GridStyle(int value) {
-//            this.value = value;
-//        }
-//        public int getValue() {
-//            return value;
-//        }
     }
     
     private int width = 15;
     private int height = 15;
     private GridStyle gridStyle = GridStyle.DOT;
-    private boolean snapEnabled = true;
+    private boolean snapEnabled = true; 
 
     private transient PropertyChangeSupport propSupport;
 
