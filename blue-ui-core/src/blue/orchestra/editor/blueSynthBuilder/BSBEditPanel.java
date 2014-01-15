@@ -226,7 +226,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeUp(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeUp(val);
                 }
             }
         });
@@ -235,7 +237,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeUp(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeUp(val);
                 }
             }
         });
@@ -244,7 +248,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeDown(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeDown(val);
                 }
             }
         });
@@ -253,7 +259,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeDown(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeDown(val);
                 }
             }
         });
@@ -262,7 +270,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeLeft(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeLeft(val);
                 }
             }
         });
@@ -271,7 +281,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeLeft(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeLeft(val);
                 }
             }
         });
@@ -280,7 +292,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeRight(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeRight(val);
                 }
             }
         });
@@ -289,7 +303,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeRight(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeRight(val);
                 }
             }
         });
@@ -394,10 +410,13 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         objectViews.clear();
     }
 
-    /**
+    /** Called when adding a new BSBObject or when pasting. 
      * @param bsbObj
      */
     public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
+
+        
+        
         return addBSBObject(bsbObj, true);
     }
 
