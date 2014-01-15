@@ -81,7 +81,12 @@ public class GridSettings {
     }
 
     public void setGridStyle(GridStyle gridStyle) {
+        GridStyle oldVal = this.gridStyle;
         this.gridStyle = gridStyle;
+
+        if (propSupport != null && !oldVal.equals(gridStyle)) {
+            propSupport.firePropertyChange("gridStyle", oldVal, gridStyle);
+        }
     }
 
     
