@@ -56,6 +56,11 @@ DOCUMENTATION
 * BlueSynthBuilder: Added information about Grid Settings, always-on instrument
   code, updated images
 
+* JMask: updated screenshots, added information about editing field names
+
+* Added some basic information about the Code Editor to new "Code Editor" 
+  section under "Tools"
+
 
 >Notes for 2.5.7<
 [release 2014.01.09]
