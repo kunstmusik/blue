@@ -25,6 +25,15 @@ NEW
   style (None, Dot, Line), and snap enabled. For projects before 2.5.8, older
   behavior is preserved and will default to style None and snap disabled.
 
+* Examples: 
+ 
+  * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
+	Example of using nGen from Blue (contributed by Menno Knevel)
+
+  * Updated AthenaCL examples in soundObjects folder 
+    (contributed by Menno Knevel)
+
+
 UPDATED
 
 * BlueSynthBuilder: small optimization: if last object that was being edited is 
@@ -41,6 +50,7 @@ FIX
 
 * BlueSynthBuilder: On Mac OSX, made paste shortcut use cmd-click instead of 
   ctrl-click, as ctrl-click is used by the OS as an alias for right-clicking
+
 
 >Notes for 2.5.7<
 [release 2014.01.09]
@@ -98,11 +108,6 @@ FIX
 
 * Show error message balloon if unable to run Commandline Runner for better 
   information for the user
-
-* Examples: 
- 
-  * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
-	  Example of using nGen from Blue (contributed by Menno Knevel)
 
 
 >Notes for 2.5.3<
