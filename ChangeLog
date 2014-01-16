@@ -51,6 +51,11 @@ FIX
 * BlueSynthBuilder: On Mac OSX, made paste shortcut use cmd-click instead of 
   ctrl-click, as ctrl-click is used by the OS as an alias for right-clicking
 
+DOCUMENTATION
+
+* BlueSynthBuilder: Added information about Grid Settings, always-on instrument
+  code, updated images
+
 
 >Notes for 2.5.7<
 [release 2014.01.09]
