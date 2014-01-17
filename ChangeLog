@@ -21,15 +21,59 @@ NEW
 
 * Added link to Csound FLOSS Manual from Help Menu
 
+UPDATED
+
+* restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
+  cluster removed dependency on debugger module
+
+
+>Notes for 2.5.8<
+[release 2014.01.16]
+
+NEW
+
+* RFE #127: Added sub-menu to text editor popups for orc editing for "Blue 
+  Opcodes" that has entries for "blueMixerOut", "blueMixerOut (SubChannel)", and
+  "blueMixerIn"
+
+* RFE #88: BlueSynthBuilder: added new grid settings to set grid width, height,
+  style (None, Dot, Line), and snap enabled. For projects before 2.5.8, older
+  behavior is preserved and will default to style None and snap disabled.
+
 * Examples: 
  
   * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
 	  Example of using nGen from Blue (contributed by Menno Knevel)
 
+  * Updated AthenaCL examples in soundObjects folder 
+    (contributed by Menno Knevel)
+
 UPDATED
 
-* restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
-  cluster removed dependency on debugger module
+* BlueSynthBuilder: small optimization: if last object that was being edited is 
+  the same as the one being requested to edit, don't bother clearing the 
+  interface
+
+* BlueSynthBuilder: Added use of Backspace to delete items in addition the 
+  previous delete key option
+
+FIX
+
+* Bug #92: Fixed setting of note pitch value to before setting of start time 
+  when updating note values on mouse release
+
+* BlueSynthBuilder: On Mac OSX, made paste shortcut use cmd-click instead of 
+  ctrl-click, as ctrl-click is used by the OS as an alias for right-clicking
+
+DOCUMENTATION
+
+* BlueSynthBuilder: Added information about Grid Settings, always-on instrument
+  code, updated images
+
+* JMask: updated screenshots, added information about editing field names
+
+* Added some basic information about the Code Editor to new "Code Editor" 
+  section under "Tools"
 
 
 >Notes for 2.5.7<

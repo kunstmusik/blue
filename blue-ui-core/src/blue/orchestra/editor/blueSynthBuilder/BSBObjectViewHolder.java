@@ -119,7 +119,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
                 fireSelected(selectionType);
 
-                groupMovementSelectionList.initiateMovement();
+                groupMovementSelectionList.initiateMovement(BSBObjectViewHolder.this);
 
                 e.consume();
             }

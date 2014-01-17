@@ -10,27 +10,29 @@
     <variablelist>
 
       <varlistentry>
-        <term>Java Development Kit 1.4+</term>
+        <term>Java Development Kit 1.7+</term>
         <listitem>
           <para>Contains javac java compiler and other development tools.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>Apache Ant or Apache Maven</term>
+        <term>Netbeans 7.4</term>
+        <listitem>
+          <para>The Netbeans IDE is used to develop Blue.  It is recommended to
+          use Netbeans for compiling and developing the program.  It is available
+              at <ulink url="http://www.netbeans.org">http://www.netbeans.org</ulink>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Apache Ant</term>
         <listitem>
           <para>
-            blue comes with both an Apache Ant build file as well as an Apache
-            Maven (1.0.x) build file. Either can be used to build blue from the
-            commandline, though the user can also easily import the sources and
-            libraries of blue into an IDE (i.e. Netbeans, Eclipse, Idea) and use
-            the IDE's project build system.
-          </para>
-
-          <para>
-            The Maven build file is mostly used when doing releases, while the
-            Ant build file will be more useful for those who are simply wanting
-            to build and use blue.
+              Ant is build tool for Java projects.  It is available at 
+              <ulink url="http://ant.apache.org">http://ant.apache.org</ulink>.
+              This is required if building from the commandline.
           </para>
         </listitem>
       </varlistentry>
@@ -41,16 +43,6 @@
           <para>
             JUnit is required to run the unit tests and is integrated as part of
             the build.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>IzPack</term>
-        <listitem>
-          <para>
-            IzPack is used for building the blue installer jar; if you are not
-            building an installer, this library won't be necessary.
           </para>
         </listitem>
       </varlistentry>
@@ -75,39 +67,11 @@
     <title>Getting the Sources</title>
 
     <para>
-      To build blue, you will either need to download a src.zip file from the
-      Soureforge release server or use CVS to download the latest sources.
+        Blue's source code is maintained at Github at <ulink url="https://github.com/kunstmusik/blue">https://github.com/kunstmusik/blue</ulink>. You can download archives of the
+        source code or clone the Git repository from there.     
     </para>
 
   </section>
 
-
-  <section>
-    <title>Maintaining a Version of blue from CVS</title>
-
-    <para>
-      After checking out from CVS and building, one should modify the
-      appropriate starter script in the blue/bin directory for your platform to
-      correctly point to BLUE_HOME. After that, running CVS update and
-      rebuilding using Ant should keep you up to date.
-    </para>
-
-    <note>
-      <title>Note</title>
-      <para>
-        While checkins to CVS are almost always done in such a way that the
-        program is in a state which it will compile and function cleanly, it
-        sometimes does happen that a broken checkin occurs. Users building from
-        CVS should be careful to depend on using only a version from CVS if they
-        are not able to fix code to make things compile. If you are not able to
-        fix Java code, then it is recommended to keep two copies of builds from
-        CVS, one which to use for your general use and another for using to test
-        if things will build.
-      </para>
-    </note>
-
-
-
-  </section>
 
 </section>

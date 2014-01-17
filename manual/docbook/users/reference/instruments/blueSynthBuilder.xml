@@ -66,13 +66,12 @@ by using blueSynthBuilder.</para>
 <section>
 <title>Using BlueSynthBuilder</title>
 
-<para>BlueSynthBuilder is divided up into two tabs, each of which handles the
+<para>BlueSynthBuilder is divided up into three tabs, each of which handles the
 different concerns of the instrument builder. Also, the process of creating
 instruments and using instruments is also split between <emphasis>edit
 </emphasis>and <emphasis>usage</emphasis> modes. Instrument builders will tend
 to use both modes, while users of BSB instruments may not ever have to touch a
-line of Csound instrument code or have to modify the instrument's UI at all
-(though that liberty to do so is there). </para>
+line of Csound instrument code or have to modify the instrument UI at all. </para>
 
 <section>
 <title>Interface Editor</title>
@@ -103,6 +102,51 @@ an empty part of the edit panel and dragging a marquee to select a group of
 widgets. After selecting multiple widgets, you can drag them around as a group,
 as well as use the alignment and distribution options found on the right side
 bottom to tidy up the UI.</para>
+
+</simplesect>
+
+
+<simplesect>
+<title>Grid Settings</title>
+
+<screenshot>
+<mediaobject>
+<imageobject> <imagedata fileref="images/bsb_interface_grid.png" format="PNG" /> </imageobject>
+</mediaobject>
+</screenshot>
+
+<para>When in edit mode, you can modify the Grid Settings by using the properties
+editor on the right-hand side.  This allows you set the following values:</para>
+
+<table>
+<title>Grid Settings</title>
+    <tgroup cols="2">
+    <thead>
+        <row><entry>Property</entry><entry>Description</entry></row>
+    </thead>
+
+    <tbody>
+        <row>
+            <entry>Grid Style</entry>
+            <entry>Affects the visual style of the Grid. 
+                Options are NONE, DOT, or LINE.</entry>
+        </row>
+        <row>
+            <entry>Snap Enabled</entry>
+            <entry>Affects whether adding, pasting, and dragging of BSBObjects 
+            in the editor will snap to the grid.</entry>
+        </row>
+        <row>
+            <entry>Width</entry>
+            <entry>Sets the width of each grid box.  Defaults to 15 pixels.</entry>
+        </row>
+        <row>
+            <entry>Height</entry>
+            <entry>Sets the height of each grid box.  Defaults to 15 pixels.</entry>
+        </row>
+    </tbody>
+    </tgroup>
+</table>
 
 </simplesect>
 
@@ -170,6 +214,28 @@ The standard code completion popup will show a list of all of the replacement
 keys that have been assigned to interface objects. Selecting a
 replacement key will insert that key into the code text area, already formatted
 within &lt; and &gt;.</para>
+
+  <section>
+    <title>Always-On Instrument Code</title>
+       
+    <para>MIDI and acoustic instruments often break down into sound generation qualities that are per-note as well as per-instrument.  Having always-on code that can be encapsulated with the instrument allows modeling things like body 
+filters as well as adding effects like chorus/echo/reverb to the 
+instrument itself.  While one can always add always-on effects to a 
+mixer channel, having the capability to add these features to an 
+instrument can be useful as part of the instrument's design.</para>  
+
+    <para>To use this, one writes code in teh Always-On code tab.  The code from this tab will be used to generate an instrument that will be run after the primary instrument code, and will have a single instace of the generated instrument running for the duration of the instrument.  The signal from the main instrument code should be written out using the blueMixerOut pseudo-opcode.  If the always-on code is disabled, the audio will go from the instrument to the mixer.  If the always-on code is enabled, the signal generated from the main instrument code will be intercepted and read by the always-on instrument.  To facilitate this feature, there is blue pseudo-opcode called blueMixerIn:</para>
+
+      <programlisting>
+asig1 [, asig2...] blueMixerIn        
+      </programlisting>
+      
+    <para>The always-on code should then do processing code, then write out to blueMixerOut.</para>
+
+<para>To note, BSB widget values work perfectly fine when used within always-on code.</para>
+    
+
+  </section> 
 
 </section>
 

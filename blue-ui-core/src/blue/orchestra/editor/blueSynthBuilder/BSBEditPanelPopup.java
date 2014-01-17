@@ -19,12 +19,14 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 
 /**
  * @author steven
@@ -62,6 +64,17 @@ public class BSBEditPanelPopup extends JPopupMenu implements ActionListener {
 
         this.itemX = x;
         this.itemY = y;
+
+        if(bsbEditPanel != null && bsbEditPanel.getBSBGraphicInterface() != null) {
+            GridSettings gridSettings = bsbEditPanel.getBSBGraphicInterface().getGridSettings();
+            if(gridSettings.isSnapEnabled()) {
+                final int width = gridSettings.getWidth();
+                final int height = gridSettings.getHeight();
+                
+                itemX = (int)Math.floor((float)x / width) * width;
+                itemY = (int)Math.floor((float)y / height) * height;
+            }
+        }
 
         super.show(bsbEditPanel, x, y);
     }

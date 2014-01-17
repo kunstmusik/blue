@@ -19,6 +19,7 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.GridSettings.GridStyle;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -32,9 +33,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 /**
  * Stores BSBObjects, notification of changes used by BSBParameterList to keep
  * BSBParameters in sync with BSBObjects
- * 
+ *
  * @author steven
- * 
+ *
  */
 public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
 
@@ -45,6 +46,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
     transient Vector<BSBGraphicInterfaceListener> listeners = null;
 
     private boolean editEnabled = true;
+
+    private GridSettings gridSettings = new GridSettings();
 
     public BSBGraphicInterface() {
         nameManager.setUniqueNameCollection(this);
@@ -109,14 +112,30 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
                     .booleanValue());
         }
 
+        GridSettings gridSettings = null;
+        
         while (giNodes.hasMoreElements()) {
             Element node = giNodes.next();
             String name = node.getName();
 
-            if (name.equals("bsbObject")) {
-                Object obj = ObjectUtilities.loadFromXML(node);
-                graphicInterface.addBSBObject((BSBObject) obj);
-            } 
+            switch (name) {
+                case "bsbObject":
+                    Object obj = ObjectUtilities.loadFromXML(node);
+                    graphicInterface.addBSBObject((BSBObject) obj);
+                    break;
+                case "gridSettings":
+                    gridSettings = GridSettings.loadFromXML(node);
+                    break;
+            }
+        }
+
+        if(gridSettings == null) {
+            // preserve behavior of older projects (before 2.5.8)
+            graphicInterface.getGridSettings().setGridStyle(
+                    GridStyle.NONE);
+            graphicInterface.getGridSettings().setSnapEnabled(false);
+        } else {
+            graphicInterface.setGridSettings(gridSettings);
         }
 
         return graphicInterface;
@@ -130,6 +149,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
         retVal.setAttribute("editEnabled", Boolean.toString(editEnabled));
 
+        retVal.addElement(gridSettings.saveAsXML());
+        
         for (Iterator<BSBObject> iter = interfaceItems.iterator(); iter.hasNext();) {
             BSBObject bsbObj = iter.next();
             retVal.addElement(bsbObj.saveAsXML());
@@ -160,7 +181,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
                     new Vector<>(listeners).iterator();
 
             while (iter.hasNext()) {
-                BSBGraphicInterfaceListener listener =  iter
+                BSBGraphicInterfaceListener listener = iter
                         .next();
                 listener.bsbObjectAdded(bsbObj);
             }
@@ -206,6 +227,14 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
     public void setEditEnabled(boolean editEnabled) {
         this.editEnabled = editEnabled;
+    }
+
+    public GridSettings getGridSettings() {
+        return gridSettings;
+    }
+
+    public void setGridSettings(GridSettings gridSettings) {
+        this.gridSettings = gridSettings;
     }
 
     public void randomize() {

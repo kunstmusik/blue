@@ -1,6 +1,7 @@
 <section id="tools">
 <title>Tools</title>
 
+&codeEditor;
 &blueShare;
 &codeRepository;
 &effectsLibrary;
