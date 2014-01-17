@@ -48,14 +48,18 @@ import blue.event.SelectionListener;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.ui.utilities.UiUtilities;
+import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author steven
- * 
+ *
  */
 public class BSBEditPanel extends JLayeredPane implements SelectionListener,
-        EditModeListener {
+        EditModeListener, PropertyChangeListener {
 
     protected static final BSBObjectEditPopup bsbObjPopup = new BSBObjectEditPopup();
 
@@ -117,8 +121,22 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 if (isEditing()) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(BSBEditPanel.this, e.getX(), e.getY());
-                    } else if (e.isControlDown() && copyBuffer.size() > 0) {
-                        paste(e.getX(), e.getY());
+                    } else if ((e.getModifiers() & BlueSystem.getMenuShortcutKey())
+                            == BlueSystem.getMenuShortcutKey()
+                            && copyBuffer.size() > 0) {
+                        int itemX = e.getX();
+                        int itemY = e.getY();
+                        GridSettings gridSettings = bsbInterface.getGridSettings();
+                        
+                        if (gridSettings.isSnapEnabled()) {
+                            final int width = gridSettings.getWidth();
+                            final int height = gridSettings.getHeight();
+
+                            itemX = (int) Math.floor((float) itemX / width) * width;
+                            itemY = (int) Math.floor((float) itemY / height) * height;
+                        }
+
+                        paste(itemX, itemY);
                     } else {
                         marquee.setVisible(true);
                         marquee.setStart(e.getPoint());
@@ -147,8 +165,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                                     SelectionEvent.SELECTION_ADD));
                         }
 
-                    // if(viewHolder.)
-
+                        // if(viewHolder.)
                     }
 
                     marquee.setVisible(false);
@@ -174,9 +191,12 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         InputMap inputMap = this.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = this.getActionMap();
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, BlueSystem.getMenuShortcutKey()), "cut");
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()), "copy");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,
+                BlueSystem.getMenuShortcutKey()), "cut");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                BlueSystem.getMenuShortcutKey()), "copy");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "delete");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "delete");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "up");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP,
                 InputEvent.SHIFT_DOWN_MASK), "up10");
@@ -221,7 +241,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeUp(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeUp(val);
                 }
             }
         });
@@ -230,7 +252,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeUp(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeUp(val);
                 }
             }
         });
@@ -239,7 +263,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeDown(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeDown(val);
                 }
             }
         });
@@ -248,7 +274,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeDown(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeDown(val);
                 }
             }
         });
@@ -257,7 +285,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeLeft(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeLeft(val);
                 }
             }
         });
@@ -266,7 +296,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeLeft(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeLeft(val);
                 }
             }
         });
@@ -275,7 +307,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeRight(1);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 1;
+                    selectionList.nudgeRight(val);
                 }
             }
         });
@@ -284,14 +318,16 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
-                    selectionList.nudgeRight(10);
+                    GridSettings gridSettings = bsbInterface.getGridSettings();
+                    int val = gridSettings.isSnapEnabled() ? gridSettings.getHeight() : 10;
+                    selectionList.nudgeRight(val);
                 }
             }
         });
     }
 
     /**
-     * 
+     *
      */
     protected void recalculateSize() {
         int maxW = 1;
@@ -331,7 +367,18 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
+
+        if (this.bsbInterface == bsbInterface) {
+            return;
+        }
+
+        if (this.bsbInterface != null) {
+            this.bsbInterface.getGridSettings().removePropertyChangeListener(
+                    this);
+        }
+
         this.bsbInterface = null;
+        this.selectionList.setGridSettings(null);
 
         clearBSBObjects();
 
@@ -340,6 +387,8 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 BSBObject bsbObj = (BSBObject) iter.next();
                 addBSBObject(bsbObj, false);
             }
+            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
+            bsbInterface.getGridSettings().addPropertyChangeListener(this);
         }
 
         this.bsbInterface = bsbInterface;
@@ -356,7 +405,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
     }
 
     /**
-     * 
+     *
      */
     private void clearBSBObjects() {
 
@@ -377,9 +426,12 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
     }
 
     /**
+     * Called when adding a new BSBObject or when pasting.
+     *
      * @param bsbObj
      */
     public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
+
         return addBSBObject(bsbObj, true);
     }
 
@@ -440,7 +492,8 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         }
 
-        EventListener[] listeners = listenerList.getListeners(SelectionListener.class);
+        EventListener[] listeners = listenerList.getListeners(
+                SelectionListener.class);
 
         for (int i = 0; i < listeners.length; i++) {
             SelectionListener listener = (SelectionListener) listeners[i];
@@ -498,7 +551,8 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
             BSBObjectViewHolder viewHolder = addBSBObject(bsbObj);
 
-            viewHolder.setLocation(viewHolder.getX() + offSetX, viewHolder.getY() + offSetY);
+            viewHolder.setLocation(viewHolder.getX() + offSetX,
+                    viewHolder.getY() + offSetY);
 
             selectionPerformed(new SelectionEvent(viewHolder,
                     SelectionEvent.SELECTION_ADD));
@@ -508,7 +562,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
     }
 
     /**
-     * 
+     *
      */
     public void removeSelectedBSBObjects() {
         for (Iterator iter = selectionList.iterator(); iter.hasNext();) {
@@ -547,4 +601,48 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
     public ArrayList getSelectionList() {
         return selectionList;
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (!"snapEnabled".equals(evt.getPropertyName())) {
+            repaint();
+        }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if (this.bsbInterface == null || !this.bsbInterface.isEditEnabled()) {
+            return;
+        }
+
+        GridSettings gridSettings = bsbInterface.getGridSettings();
+
+        g.setColor(getBackground().brighter());
+        int w = gridSettings.getWidth();
+        int h = gridSettings.getHeight();
+        int totalWidth = getWidth();
+        int totalHeight = getHeight();
+
+        switch (gridSettings.getGridStyle()) {
+            case DOT:
+                for (int x = 0; x < totalWidth; x += w) {
+                    for (int y = 0; y < totalHeight; y += h) {
+                        g.drawRect(x, y, 1, 1);
+                    }
+                }
+                break;
+            case LINE:
+                for (int x = 0; x < totalWidth; x += w) {
+                    g.drawLine(x, 0, x, totalHeight);
+                }
+                for (int y = 0; y < totalHeight; y += h) {
+                    g.drawLine(0, y, totalWidth, y);
+                }
+                break;
+        }
+
+    }
+
 }

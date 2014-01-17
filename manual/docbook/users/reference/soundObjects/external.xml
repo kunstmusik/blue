@@ -58,9 +58,10 @@ name.</para>
 
 <listitem>
 
-    <para>Homepage: http://www.kgw.tu-berlin.de/~abart/index.html
+    <para>Homepage: <ulink url="http://www.bartetzki.de/en/software.html">http://www.bartetzki.de/en/software.html</ulink> for the Linux, Windows and old Mac builds,
+    <ulink url="http://www.anthonykozar.net/ports/cmask/">http://www.anthonykozar.net/ports/cmask/</ulink> for OSX 
     Author: Andre Bartetzki</para>
-    
+
     <para>Comandline to use:</para>
     
     <programlisting>cmask $infile $outfile</programlisting> 
@@ -74,8 +75,8 @@ name.</para>
 
 <listitem>
 
-    <para>Homepage: http://mustec.bgsu.edu/~mkuehn/ngen/ Author: Mikel Kuehn
-    </para>
+    <para>Homepage: <ulink url="http://mikelkuehn.com/index.php/ng">http://mikelkuehn.com/index.php/ng</ulink> 
+    Author: Mikel Kuehn</para>
     
     <para>Comandline to use:</para>
     
@@ -85,7 +86,21 @@ name.</para>
 
 </varlistentry>
 
+
+<varlistentry>
+<term>AthenaCL</term>
+<listitem>
+    <para>Homepage: <ulink url="http://www.flexatone.org/athena.html">http://www.flexatone.org/athena.html</ulink> 
+    Author: Christopher Ariza</para>
+    <para>Comandline to use:</para>
+    <programlisting>python athenaPipe.py $infile</programlisting>
+</listitem>
+</varlistentry>
+
 </variablelist>
+
+<para>Examples of the External SoundObject, as well as athenaPipe.py, can be 
+  found in the blue/examples/soundObjects folder.</para>  
 
 </simplesect>
 

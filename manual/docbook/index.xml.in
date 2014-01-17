@@ -27,6 +27,7 @@
     <!ENTITY blueLive SYSTEM "users/gettingStarted/primaryEditors/blueLive.xml">
 
     <!ENTITY tools SYSTEM "users/gettingStarted/tools.xml">
+    <!ENTITY codeEditor SYSTEM "users/gettingStarted/tools/codeEditor.xml">
     <!ENTITY codeRepository SYSTEM "users/gettingStarted/tools/codeRepository.xml">
     <!ENTITY blueShare SYSTEM "users/gettingStarted/tools/blueShare.xml">
     <!ENTITY scannedMatrix SYSTEM "users/gettingStarted/tools/scannedMatrix.xml">

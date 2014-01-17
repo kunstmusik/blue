@@ -1,8 +1,12 @@
-<blueData version='2.4.0'>
+<blueData version='2.5.3'>
   <projectProperties>
     <title>Athena CL Integration - Example 4</title>
     <author>Menno Knevel</author>
-    <notes>This example calls the athenaPipe.py file to process the AthenaCL scripts with AthenaCL.  This requires that you have Python installed as well as AthenaCL installed into site-packages for your Python runtime.</notes>
+    <notes>Please note:
+
+- The athenaPipe.py file is called to process the AthenaCL scripts with AthenaCL.  This requires that you have Python installed AND AthenaCL into site-packages or dist-packages for your Python runtime.
+
+- athenaPipe.py is be found in /blue/examples/soundObjects but may be copied elsewhere. The commandline in the External soundObject must be : python /path/to/athenaPipe.py $infile</notes>
     <sampleRate>48000</sampleRate>
     <ksmps>32</ksmps>
     <channels>2</channels>
@@ -284,15 +288,15 @@ aout2 = (ain2*korig)+(arevr*krev)
           <backgroundColor>-12566464</backgroundColor>
           <timeBehavior>0</timeBehavior>
           <noteProcessorChain/>
-          <text>emo ce
-tmo hs
-pin pathA C3, B3, D3, B5, F5
-tin a 1 3 
-tie x0 pr, pch
-tie t 0, 20
-tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc                                                  
-tie x1 cg, ud, 0, 1, 0.2
-tie x2 ru, 0, 2</text>
+          <text>emo ce                              #emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
+tmo hs                              #tmo hs is used here. This TextureModule provides limited access to Path pitch collections in an order, rate, simultaneity size, and simultaneity composition determined by generator ParameterObjects.
+pin pathA C3, B3, D3, B5, F5        #pin pathA C3, B3, D3, B5, F5 : create a PathInstance with these notes, the name is pathA.
+tin a 1 3                           #create a texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6 (=X0, X1, X2): pitch, panning, and amplitude.
+tie t 0, 20                         #influences the speed (time range).
+tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc     #a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
+tie x0 pr, pch                      #p4 (=x0) = pitch. The notes from pathA will be used as a basis and copied into X0.                                                 
+tie x1 cg, ud, 0, 1, 0.2            #p5 (=x1) = panning. Cycles between static minimum (min) and maximum (max) values with a static increment value.
+tie x2 ru, 0, 2                     #p6 (=x2) = amplitude. random uniform between 0 and 2.</text>
           <commandLine>python athenaPipe.py $infile</commandLine>
           <syntaxType>Python</syntaxType>
         </soundObject>
@@ -361,15 +365,15 @@ tie x2 ru, 0, 2</text>
           <timeBehavior>0</timeBehavior>
           <noteProcessorChain/>
           <text>emo ce
-tmo lg
-pin b D2, E1,y,y,B5,B6,y,n
-pidf 2,8
-tin a 1 3 
-tie x0 pr, pch
-tie t 0, 20
-tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc                                                  
-tie x1 cg, ud, 0, 1, 0.2
-tie x2 ru, 0, 2</text>
+tmo lg                                              #tmo LineGroove is used here.
+pin b D2, E1,y,y,B5,B6,y,n                          #create 2 groups of notes: D2, E1 and B5,B6.
+pidf 2,8                                            #give the first group (=D2, E1) a weight of 2, give the second group (=B5, B6) a weight of 8. This means that the first group of notes will be used 2/10 of the time and the second group 8/10 of the time.
+tin a 1 3                                           #create a texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6 (=X0, X1, X2) : pitch, panning, and amplitude. 
+tie x0 pr, pch                                      #p4 (=x0) = pitch. The notes from pathA will be used as a basis and copied into X0.
+tie t 0, 20                                         #influences the speed (time range).
+tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc     #a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.                                                  
+tie x1 cg, ud, 0, 1, 0.2                            #p5 (=x1) = panning. Cycles between static minimum (min) and maximum (max) values with a static increment value.
+tie x2 ru, 0, 2                                     #p7 (=x2) = amplitude. Here random uniform between 0 and 2.</text>
           <commandLine>python athenaPipe.py $infile</commandLine>
           <syntaxType>Python</syntaxType>
         </soundObject>
@@ -421,30 +425,7 @@ tie x2 ru, 0, 2</text>
           <commentText>Please, also check out the AthenaCL manual: http://www.flexatone.org/static/docs/athenacl/www/index.htm
 ***
 This example shows that note input, (like C3, B3, D3, B5, F5 etc.) can be used. Objects here contain different notes.
-***
-
-emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
-
-tmo hs is used here. This TextureModule provides limited access to Path pitch collections in an order, rate, simultaneity size, and simultaneity composition determined by generator ParameterObjects.
-
-pin pathA C3, B3, D3, B5, F5 : create a PathInstance with these notes, the name is pathA.
-
-tin a 1 3 : make a new texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6 (=X0, X1, X2)
-    and assign these 3 extra parameters values meaningful to this instrument: pitch, panning, and amplitude.
-
-p4 (=x0) = pitch.
-tie x0 pr, pch : the notes from pathA will be used as a basis and copied into X0.
-
-tie t 0, 20 : influences the speed (time range).
-
-tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc :  a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
-
-p5 (=x1) = panning.
-tie x1 cg, ud, 0, 1, 0.2. Cycles between static minimum (min) and maximum (max) values with a static increment value.
-
-p7 (=x2) = amplitude.
-tie x2 ru, 0, 2. Here random uniform between 0 and 2.
-</commentText>
+***</commentText>
         </soundObject>
         <soundObject type='blue.soundObject.Comment'>
           <subjectiveDuration>2.0</subjectiveDuration>
@@ -456,10 +437,7 @@ tie x2 ru, 0, 2. Here random uniform between 0 and 2.
 This example shows that note input, (like C3, B3, D3, B5, F5 etc.) can be used. Also shown are that more groups of notes (MultiSets) can be ceated AND different percentage weight can be given to these MultiSets. 
 ***
 
-emo ce = set EventMode to CsoundExternal. this means it generates generic data for external use (like here in Blue).
-
-tmo hs is used here. This TextureModule provides limited access to Path pitch collections in an order, rate, simultaneity size, and simultaneity composition determined by generator ParameterObjects.
-
+More about pin:
 pin b D2, E1,y,y,B5,B6,y,n : create 2 groups of notes: D2, E1 and B5,B6. 
 (The use of the yy and y,n here mean:
     enter a pitch set, sieve, spectrum, or set-class: D2, E1
@@ -468,24 +446,6 @@ pin b D2, E1,y,y,B5,B6,y,n : create 2 groups of notes: D2, E1 and B5,B6.
     enter a pitch set, sieve, spectrum, or set-class: G#5,A4,D#4,E5
       (y, n, or cancel): y
       add another set? (y, n, or cancel): n)
-
-pidf 3,8 :give the first group (=D2, E1) a weight of 2, give the second group (=B5, B6) a weight of 8. This means that the first group of notes will be used 2/10 of the time and the second group 8/10 of the time.
-
-tin a 1 3 : make a new texture with the name a. Set p1 to 1 (instr. 1) and create 3 extra p fields after p3: p4, p4, p6 (=X0, X1, X2)
-    and assign these 3 extra parameters values meaningful to this instrument: pitch, panning, and amplitude.
-
-p4 (=x0) = pitch.
-tie x0 pr, pch : the notes from pathA will be used as a basis and copied into X0.
-
-tie t 0, 20 : influences the speed (time range).
-
-tie r l, ((3,1,1),(8,1,0),(8,1,0),(16,1,1)), oc :  a fixed list of rhythms. Pulses are chosen from this list using the selector specified by the selectionString argument.
-
-p5 (=x1) = panning.
-tie x1 cg, ud, 0, 1, 0.2. Cycles between static minimum (min) and maximum (max) values with a static increment value.
-
-p7 (=x2) = amplitude.
-tie x2 ru, 0, 2. Here random uniform between 0 and 2.
 </commentText>
         </soundObject>
       </soundLayer>
