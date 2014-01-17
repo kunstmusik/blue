@@ -93,9 +93,9 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
         
         float start = this.getX() / (float) pixelSecond;
 
+        updateNotePitchFromY();
         this.note.setStart(start);
 
-        updateNotePitchFromY();
     }
 
     public void updateNotePitchFromY() {

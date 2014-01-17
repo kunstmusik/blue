@@ -20,12 +20,13 @@
 package blue.event;
 
 import java.util.EventListener;
+import javax.swing.JComponent;
 
 /**
  * @author steven
  */
 public interface GroupMovementListener extends EventListener {
-    public void initiateMovement();
+    public void initiateMovement(JComponent source);
 
     public void move(int offsetX, int offsetY);
 }

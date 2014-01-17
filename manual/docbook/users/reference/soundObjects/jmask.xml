@@ -165,11 +165,11 @@ with CMask is suggested.</para>
     <para>
         The JMask SoundObject Editor allows for viewing the editors for all of
         the assigned parameters.  Parameters are each set to generate values for
-        one pfield.  On the left hand side of each row is the Parameter Edit 
+        one pfield.  On the top side of each row is the Parameter Edit 
         Panel.  This panel shows a number at the top that corresponds to what
-        pfield this parameter will generate values for. To change things about 
-        the Parameter, right-clicking the panel will show a popup menu as shown
-        in the image above.  The options are described below:
+        pfield this parameter will generate values for, as well as the field 
+        name. To change things about the Parameter, right-click the panel to 
+        show a popup menu as shown in the image above.  The options are described below:
     </para>
     
     <variablelist>
@@ -271,6 +271,19 @@ with CMask is suggested.</para>
         <mediaobject>
             <imageobject>
                 <imagedata fileref="images/jmask2.png"
+                        format="PNG" />
+            </imageobject>
+        </mediaobject>
+    </screenshot>
+
+    <para>To edit the field name, double click the Parameter Edit Panel. A 
+      dialog will appear where you can modify the field name, as shown below:
+    </para>
+
+    <screenshot>
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref="images/jmask_field_name.png"
                         format="PNG" />
             </imageobject>
         </mediaobject>

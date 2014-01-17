@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.BorderLayout;
@@ -28,7 +27,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
@@ -38,17 +36,34 @@ import blue.components.EditEnabledCheckBox;
 import blue.event.EditModeListener;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import com.l2fprod.common.propertysheet.Property;
+import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
+import com.l2fprod.common.propertysheet.PropertyRendererRegistry;
+import com.l2fprod.common.propertysheet.PropertySheet;
+import com.l2fprod.common.propertysheet.PropertySheetPanel;
+import com.l2fprod.common.swing.renderer.DefaultCellRenderer;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyEditor;
+import javax.swing.JTabbedPane;
+import org.openide.util.Exceptions;
 
 /**
  * @author Steven
  */
-public class BSBInterfaceEditor extends JComponent implements PresetListener {
+public class BSBInterfaceEditor extends JComponent implements PresetListener,
+        PropertyChangeListener {
 
     private final BSBEditPanel bsbEditPanel;
 
     private final BSBObjectPropertySheet bsbPropSheet;
+
+    PropertySheetPanel gridPropertySheet = new PropertySheetPanel();
 
     PresetsPanel presets = new PresetsPanel();
 
@@ -96,11 +111,45 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         JScrollPane editScrollPane = new JScrollPane(bsbEditPanel);
         editScrollPane.setAutoscrolls(true);
 
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.add(BlueSystem
+                .getString("instrument.bsb.objectProperties"), bsbPropSheet);
+        tabs.add("Grid", gridPropertySheet);
+
+        gridPropertySheet.setMode(PropertySheet.VIEW_AS_FLAT_LIST);
+        gridPropertySheet.setToolBarVisible(false);
+        gridPropertySheet.setDescriptionVisible(false);
+        gridPropertySheet.getTable().setEditorFactory(
+                new PropertyEditorRegistryEx());
+        PropertyEditorRegistry registry = (PropertyEditorRegistry) gridPropertySheet.getTable().getEditorFactory();
+        registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
+        gridPropertySheet.setPreferredSize(new Dimension(250, 30));
+
+        gridPropertySheet.addPropertySheetChangeListener(
+                new PropertyChangeListener() {
+
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (gInterface != null) {
+                            Property prop = (Property) evt.getSource();
+                            prop.writeToObject(gInterface.getGridSettings());
+                        }
+                    }
+                });
+
+        try {
+            gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(
+                    GridSettings.class, Object.class));
+        } catch (IntrospectionException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
         rightBar = new JPanel(new BorderLayout());
-        rightBar.add(new JLabel(BlueSystem
-                .getString("instrument.bsb.objectProperties")),
-                BorderLayout.NORTH);
-        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
+//        rightBar.add(new JLabel(BlueSystem
+//                .getString("instrument.bsb.objectProperties")),
+//                BorderLayout.NORTH);
+//        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
+        rightBar.add(tabs, BorderLayout.CENTER);
         rightBar.add(alignPanel, BorderLayout.SOUTH);
 
         rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -111,9 +160,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         // JSplitPane split = new JSplitPane();
         // split.add(editScrollPane, JSplitPane.LEFT);
         // split.add(rightBar, JSplitPane.RIGHT);
-
         // this.add(split, BorderLayout.CENTER);
-
         this.add(editScrollPane, BorderLayout.CENTER);
         this.add(rightBar, BorderLayout.EAST);
 
@@ -143,6 +190,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
     }
 
     public void editInterface(BSBGraphicInterface gInterface, PresetGroup pGroup) {
+
+        if (this.gInterface == gInterface) {
+            return;
+        }
+
         isUpdating = true;
 
         this.gInterface = gInterface;
@@ -153,6 +205,9 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
             if (editBox.isSelected() != gInterface.isEditEnabled()) {
                 editBox.doClick();
             }
+            gridPropertySheet.readFromObject(gInterface.getGridSettings());
+        } else {
+            gridPropertySheet.readFromObject(null);
         }
 
         bsbPropSheet.clear();
@@ -180,4 +235,40 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         }
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    /**
+     * The Class PropertyEditorRegistryEx.
+     * 
+     * Code used from: 
+     * http://cgu-emp.googlecode.com/svn/trunk/EMP/src/edu/cgu/emp/swing/analysis/ObjectInspectorJPanel.java
+     */
+    private static class PropertyEditorRegistryEx extends PropertyEditorRegistry {
+
+        // We will try to get the "nearest" super class.        
+        /* (non-Javadoc)
+         * @see com.l2fprod.common.propertysheet.PropertyEditorRegistry#getEditor(java.lang.Class)
+         */
+        @Override
+        public synchronized PropertyEditor getEditor(Class type) {
+            PropertyEditor editor = super.getEditor(type);
+
+            Class c = type;
+
+            while (editor == null) {
+                c = c.getSuperclass();
+
+                if (c == null) {
+                    return editor;
+                }
+
+                editor = super.getEditor(c);
+            }
+
+            return editor;
+        }
+    }
 }

@@ -1,8 +1,11 @@
 <section id="instruments">
 <title>Instruments</title>
                  
-<para>managed by the orchestra manager, the instruments are generated into the
-&lt;CsOrchestra&gt; section of the .CSD file. </para>
+<para>Blue instruments are a higher level construct than Csound instruments. 
+  They are designed to allow encapsulating all dependencies together with the
+  instrument, thus allowing easy sharing of instruments between projects.  Blue
+  instruments may use Csound ORC code, User-Defined-Opcodes, and f-tables, and 
+  they may have a graphical user interface.</para>
     
 &genericInstrument;
 &pythonInstrument;
