@@ -79,7 +79,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
     private final SoundLayerPopup sLayerPopup = new SoundLayerPopup();
-    private final SoundObjectPopup sObjPopup;
+//    private final SoundObjectPopup sObjPopup;
     private final QuickTimeDialog qtDialog;
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap =
             new HashMap<>();
@@ -104,7 +104,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         //setAutoscrolls(true);
 
         qtDialog = new QuickTimeDialog(this);
-        sObjPopup = new SoundObjectPopup(this, ic);
+//        sObjPopup = new SoundObjectPopup(this, ic);
 
         this.buffer = SoundObjectBuffer.getInstance();
         this.data = blueData;
@@ -270,8 +270,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
                 if (!soundObjects.isEmpty()) {
-                    sObjPopup.copySObj();
-                    sObjPopup.removeSObj();
+                    //FIXME
+//                    sObjPopup.copySObj();
+//                    sObjPopup.removeSObj();
                 }
             }
         });
@@ -284,7 +285,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
                 if (!soundObjects.isEmpty()) {
-                    sObjPopup.copySObj();
+                    //FIXME
+//                    sObjPopup.copySObj();
                 }
             }
         });
@@ -1041,7 +1043,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
      * Wrapper Methods for showing popups
      */
     protected void showSoundObjectPopup(SoundObjectView sObjView, int x, int y) {
-        sObjPopup.setTimeState(timeState);
+//        sObjPopup.setTimeState(timeState);
         //sObjPopup.show(sObjView, this, x, y);
         List<? extends Action> list = Utilities.actionsForPath(
                 "blue/score/actions");

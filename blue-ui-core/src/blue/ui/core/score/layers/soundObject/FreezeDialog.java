@@ -71,8 +71,7 @@ public class FreezeDialog extends JDialog {
     /**
      * @param object
      */
-    public static void freezeSoundObjects(SoundObject[] soundObjects,
-            SoundObjectPopup sObjPopup) {
+    public static void freezeSoundObjects(SoundObject[] soundObjects) {
         FreezeDialog dialog = new FreezeDialog();
         dialog.setSize(400, 80);
         blue.utility.GUI.centerOnScreen(dialog);
@@ -81,7 +80,7 @@ public class FreezeDialog extends JDialog {
         dialog.totalJobs = soundObjects.length;
         dialog.setDone(-1);
 
-        new FreezeRunner(soundObjects, dialog, sObjPopup).start();
+        new FreezeRunner(soundObjects, dialog).start();
 
         // dialog.setVisible(false);
         // dialog.dispose();
@@ -96,13 +95,12 @@ class FreezeRunner extends Thread {
 
     private FreezeDialog dialog;
 
-    private SoundObjectPopup sObjPopup;
+//    private SoundObjectPopup sObjPopup;
 
-    public FreezeRunner(SoundObject[] soundObjects, FreezeDialog dialog,
-            SoundObjectPopup sObjPopup) {
+    public FreezeRunner(SoundObject[] soundObjects, FreezeDialog dialog) {
         this.soundObjects = soundObjects;
         this.dialog = dialog;
-        this.sObjPopup = sObjPopup;
+//        this.sObjPopup = sObjPopup;
     }
 
     @Override
@@ -111,13 +109,13 @@ class FreezeRunner extends Thread {
             if (soundObjects[i] instanceof FrozenSoundObject) {
                 System.out.println(BlueSystem
                         .getString("scoreGUI.freezeDialog.unfreezing"));
-                sObjPopup
-                        .unfreezeSoundObject((FrozenSoundObject) soundObjects[i]);
+//                sObjPopup
+//                        .unfreezeSoundObject((FrozenSoundObject) soundObjects[i]);
                 dialog.setDone(i);
             } else {
                 System.out.println(BlueSystem
                         .getString("scoreGUI.freezeDialog.freezing"));
-                sObjPopup.freezeSoundObject(soundObjects[i]);
+//                sObjPopup.freezeSoundObject(soundObjects[i]);
                 dialog.setDone(i);
             }
         }
