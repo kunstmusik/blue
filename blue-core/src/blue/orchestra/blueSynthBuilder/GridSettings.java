@@ -24,12 +24,13 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public class GridSettings {
+public class GridSettings implements Serializable {
 
     public static enum GridStyle {
         NONE, DOT, LINE
