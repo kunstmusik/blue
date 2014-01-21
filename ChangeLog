@@ -12,6 +12,14 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.9<
+[release 2014.01.21]
+
+FIX
+
+* Fixed score generation error due to GridStyle not being marked as Serializable
+
+
 >Notes for 2.5.8<
 [release 2014.01.16]
 
