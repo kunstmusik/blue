@@ -60,7 +60,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
 
     private transient Vector pListeners = null;
 
-    private ArrayList patterns = new ArrayList();
+    private ArrayList<Pattern> patterns = new ArrayList<>();
 
     public PatternObject() {
         this.setName("Pattern");
@@ -92,14 +92,14 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     public void pushUpPatternLayers(int[] rows) {
-        Object a = patterns.remove(rows[0] - 1);
+        Pattern a = patterns.remove(rows[0] - 1);
         patterns.add(rows[rows.length - 1], a);
         this.fireTableDataChanged();
 
     }
 
     public void pushDownPatternLayers(int[] rows) {
-        Object a = patterns.remove(rows[rows.length - 1] + 1);
+        Pattern a = patterns.remove(rows[rows.length - 1] + 1);
         patterns.add(rows[0], a);
         this.fireTableDataChanged();
 
