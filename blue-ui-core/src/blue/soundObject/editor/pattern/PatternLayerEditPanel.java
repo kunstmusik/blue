@@ -215,4 +215,8 @@ public class PatternLayerEditPanel extends JComponent implements
 
         return pattern.getPattern(selected);
     }
+
+    public JViewport getViewPort() {
+        return lView;
+    }
 }

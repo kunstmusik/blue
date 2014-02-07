@@ -33,6 +33,8 @@ import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -91,7 +93,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         });
 
-        JScrollPane scroll = new JScrollPane(canvas);
+        final JScrollPane scroll = new JScrollPane(canvas);
 
         scroll.setColumnHeaderView(timeBar);
         scroll.setCorner(JScrollPane.UPPER_RIGHT_CORNER, setTimeButton);
@@ -119,6 +121,17 @@ public class PatternEditor extends SoundObjectEditor {
 
         this.add(mainSplitPane, BorderLayout.CENTER);
 
+        layerPanel.getViewPort().addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if(!e.isShiftDown()) {
+                    for(MouseWheelListener listener: scroll.getMouseWheelListeners()) {
+                        listener.mouseWheelMoved(e);
+                    }
+                }
+            }
+        });
     }
 
     @Override

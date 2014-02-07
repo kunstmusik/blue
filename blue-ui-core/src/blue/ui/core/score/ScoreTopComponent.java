@@ -163,6 +163,18 @@ public final class ScoreTopComponent extends TopComponent
 
         scorePanel.addMouseListener(listener);
         scorePanel.addMouseMotionListener(listener);
+
+        layerHeaderViewPort.addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if(!e.isShiftDown()) {
+                    for(MouseWheelListener listener: scrollPane.getMouseWheelListeners()) {
+                        listener.mouseWheelMoved(e);
+                    }
+                }
+            }
+        });
     }
 
     protected void checkSize() {
