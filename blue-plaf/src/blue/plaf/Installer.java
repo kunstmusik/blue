@@ -21,6 +21,7 @@ package blue.plaf;
 
 import blue.plaf.netbeans.BlueLFCustoms;
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Logger;
@@ -31,6 +32,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.InputMapUIResource;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import org.netbeans.swing.tabcontrol.plaf.*;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
@@ -52,115 +54,114 @@ public class Installer extends ModuleInstall {
 //        TimingSource source = new SwingTimerTimingSource(30, TimeUnit.MILLISECONDS);
 //        Animator.setDefaultTimingSource(source); // shared timing source
 //        source.init(); // starts the timer
-
-       //RepaintManager.setCurrentManager(new CheckThreadViolationRepaintManager()); 
-    boolean isMac = System.getProperty("os.name").toLowerCase().startsWith("mac");
-
-
-        Object[] macEntries = null;
-
-        if (isMac) {
-            try {
-                System.setProperty("apple.laf.useScreenMenuBar", "true");
-
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-                macEntries = new Object[7];
-
-                macEntries[0] = UIManager.get("MenuBarUI");
-                //macEntries[1] = UIManager.get("MenuUI");
-                //macEntries[2] = UIManager.get("MenuItemUI");
-                macEntries[3] = UIManager.get("CheckboxMenuItemUI");
-                macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
-                macEntries[5] = UIManager.get("PopupMenuUI");
-                macEntries[6] = UIManager.get("PopupMenuSeparatorUI");
-
-            } catch (ClassNotFoundException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (InstantiationException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (IllegalAccessException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (UnsupportedLookAndFeelException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        }
-
-        try {
-
-            UIManager.getDefaults().clear();
-            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
-            UIManager.put("ClassLoader", cl);
-            UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
-
-            LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
-            UIManager.setLookAndFeel(plaf);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        //RepaintManager.setCurrentManager(new CheckThreadViolationRepaintManager()); 
 
         
+        EventQueue.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
+                        "mac");
+
+                Object[] macEntries = null;
+
+                if (isMac) {
+                    try {
+                        System.setProperty("apple.laf.useScreenMenuBar", "true");
+
+                        UIManager.setLookAndFeel(
+                                UIManager.getSystemLookAndFeelClassName());
+
+                        macEntries = new Object[7];
+
+                        macEntries[0] = UIManager.get("MenuBarUI");
+                        //macEntries[1] = UIManager.get("MenuUI");
+                        //macEntries[2] = UIManager.get("MenuItemUI");
+                        macEntries[3] = UIManager.get("CheckboxMenuItemUI");
+                        macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
+                        macEntries[5] = UIManager.get("PopupMenuUI");
+                        macEntries[6] = UIManager.get("PopupMenuSeparatorUI");
+
+                    } catch (ClassNotFoundException ex) {
+                        Exceptions.printStackTrace(ex);
+                    } catch (InstantiationException ex) {
+                        Exceptions.printStackTrace(ex);
+                    } catch (IllegalAccessException ex) {
+                        Exceptions.printStackTrace(ex);
+                    } catch (UnsupportedLookAndFeelException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+
+//                    UIManager.getDefaults().clear();
+                try {
+                   Integer in = (Integer) UIManager.get("customFontSize"); //NOI18N
+            if (in == null || in <= 11) {
+                UIManager.put("customFontSize", 12);    
+            }
+                    UIManager.put("swing.boldMetal", "false");
+                    ClassLoader cl = Lookup.getDefault().lookup(
+                            ClassLoader.class);
+                    UIManager.put("ClassLoader", cl);
+                    UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
+
+                    MetalLookAndFeel.setCurrentTheme(new BlueTheme());
+                    LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
+                    UIManager.setLookAndFeel(plaf);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
 //        UIManager.put("EditorTabDisplayerUI", "blue.plaf.BlueEditorTabDisplayerUI");
 //        UIManager.getDefaults().put("ViewTabDisplayerUI", "blue.plaf.BlueViewTabDisplayerUI");
+                UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,
+                        BorderFactory.createEmptyBorder());
+                UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_OUTER_BORDER,
+                        new BlueViewBorder(UIManager.getColor(
+                                        "SplitPane.highlight"),
+                                UIManager.getColor("SplitPane.darkShadow")));
 
-        UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,BorderFactory.createEmptyBorder());
-        UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_OUTER_BORDER,
-                new BlueViewBorder( UIManager.getColor("SplitPane.highlight"),
-				    UIManager.getColor("SplitPane.darkShadow")));
+                UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER,
+                        BorderFactory.createEmptyBorder());
+                UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_OUTER_BORDER,
+                        new BlueViewBorder(UIManager.getColor(
+                                        "SplitPane.highlight"),
+                                UIManager.getColor("SplitPane.darkShadow")));
 
-        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER,BorderFactory.createEmptyBorder());
-        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_OUTER_BORDER,
-                new BlueViewBorder( UIManager.getColor("SplitPane.highlight"),
-				    UIManager.getColor("SplitPane.darkShadow")));
+                UIManager.put("nb.output.foreground", Color.WHITE); //NOI18N
 
-        UIManager.put("nb.output.foreground", Color.WHITE); //NOI18N
-
-        if (isMac && macEntries != null) {
-            UIManager.put("MenuBarUI", macEntries[0]);
-            //UIManager.put("MenuUI", macEntries[1]);
-            //UIManager.put("MenuItemUI", macEntries[2]);
-            UIManager.put("CheckboxMenuItemUI", macEntries[3]);
-            UIManager.put("RadioButtonMenuItemUI", macEntries[4]);
-            UIManager.put("PopupMenuUI", macEntries[5]);
-            UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
-        }
-
-        if (isMac) {
-            try {
-                SwingUtilities.invokeAndWait(new Runnable() {
-                    public void run() {
-                       replaceCtrlShortcutsWithMacShortcuts();
-                    }
-                });
-            } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (InvocationTargetException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            
-        }
-        
-        logger.info("Finished blue PLAF installation");
-
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                public void run() {
-                    MacFullScreenUtil.setWindowCanFullScreen(
-                            WindowManager.getDefault().getMainWindow());
+                if (isMac && macEntries != null) {
+                    UIManager.put("MenuBarUI", macEntries[0]);
+                    //UIManager.put("MenuUI", macEntries[1]);
+                    //UIManager.put("MenuItemUI", macEntries[2]);
+                    UIManager.put("CheckboxMenuItemUI", macEntries[3]);
+                    UIManager.put("RadioButtonMenuItemUI", macEntries[4]);
+                    UIManager.put("PopupMenuUI", macEntries[5]);
+                    UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
                 }
-            });
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (InvocationTargetException ex) {
-            Exceptions.printStackTrace(ex);
-        }
 
+                if (isMac) {
+                    replaceCtrlShortcutsWithMacShortcuts();
+
+                }
+
+                logger.info("Finished blue PLAF installation");
+
+                MacFullScreenUtil.setWindowCanFullScreen(
+                        WindowManager.getDefault().getMainWindow());
+
+            }
+
+        });
     }
 
-    /** Replaces ctrl- shortcuts with command- shortcuts for OSX */
+    /**
+     * Replaces ctrl- shortcuts with command- shortcuts for OSX
+     */
     protected void replaceCtrlShortcutsWithMacShortcuts() {
 
-        for(Object keyObj: UIManager.getLookAndFeelDefaults().keySet()) {
+        for (Object keyObj : UIManager.getLookAndFeelDefaults().keySet()) {
             String key = keyObj.toString();
 
             if (key.contains("InputMap")) {
@@ -168,20 +169,20 @@ public class Installer extends ModuleInstall {
                 //System.out.println("MAP: " + key);
                 Object val = UIManager.getLookAndFeelDefaults().get(key);
 
-                if(val instanceof InputMapUIResource) {
-                    InputMapUIResource map = (InputMapUIResource)val;
-
+                if (val instanceof InputMapUIResource) {
+                    InputMapUIResource map = (InputMapUIResource) val;
 
                     for (KeyStroke keyStroke : map.allKeys()) {
 
                         int modifiers = keyStroke.getModifiers();
 
-                        if((modifiers & KeyEvent.CTRL_MASK) > 0) {
+                        if ((modifiers & KeyEvent.CTRL_MASK) > 0) {
                             modifiers -= KeyEvent.CTRL_DOWN_MASK;
                             modifiers -= KeyEvent.CTRL_MASK;
                             modifiers += KeyEvent.META_DOWN_MASK + KeyEvent.META_MASK;
 
-                            KeyStroke k = KeyStroke.getKeyStroke(keyStroke.getKeyCode(), modifiers);
+                            KeyStroke k = KeyStroke.getKeyStroke(
+                                    keyStroke.getKeyCode(), modifiers);
 
                             Object mapVal = map.get(keyStroke);
                             map.remove(keyStroke);

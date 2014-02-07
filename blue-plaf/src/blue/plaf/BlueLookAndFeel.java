@@ -115,8 +115,8 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     @Override
     public UIDefaults getDefaults() {
-        blueTheme = new BlueTheme();
-        setCurrentTheme(blueTheme);
+//        blueTheme = new BlueTheme();
+//        setCurrentTheme(blueTheme);
         return super.getDefaults();
     }
 

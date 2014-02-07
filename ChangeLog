@@ -26,6 +26,10 @@ UPDATED
 * restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
   cluster removed dependency on debugger module
 
+FIX
+
+* Redid font/theme handling so that --fontsize flag is respected (can be given
+  at commandline or put into blue/etc/blue.conf)
 
 >Notes for 2.5.9<
 [release 2014.01.21]

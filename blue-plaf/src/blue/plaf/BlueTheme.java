@@ -2,6 +2,7 @@ package blue.plaf;
 
 import java.awt.Color;
 import java.awt.Font;
+import javax.swing.UIManager;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
@@ -70,13 +71,6 @@ public class BlueTheme extends DefaultMetalTheme {
      * new ColorUIResource(255,255,255); private final ColorUIResource
      * secondary3 = new ColorUIResource(0,0,0);
      */
-
-    private FontUIResource boldFont = new FontUIResource("SansSerif",
-            Font.PLAIN, 12);
-
-    private FontUIResource plainFont = new FontUIResource("SansSerif",
-            Font.PLAIN, 12);
-
 
 
     // ColorUIResource white = new ColorUIResource(new Color(240, 240, 255));
@@ -212,64 +206,65 @@ public class BlueTheme extends DefaultMetalTheme {
         return secondary3;
     }
 
-    /**
-     * Returns the control text font.
-     *
-     * @return the control text font
-     */
+//    /**
+//     * Returns the control text font.
+//     *
+//     * @return the control text font
+//     */
     @Override
     public FontUIResource getControlTextFont() {
-        return plainFont;
+        return super.getControlTextFont();
+//        return plainFont;
     }
-
-    /**
-     * Returns the system text font.
-     *
-     * @return the system text font
-     */
+//
+//    /**
+//     * Returns the system text font.
+//     *
+//     * @return the system text font
+//     */
     @Override
     public FontUIResource getSystemTextFont() {
-        return plainFont;
-    }
-   
-    /**
-     * Returns the user text font.
-     *
-     * @return the user text font
-     */
-    @Override
-    public FontUIResource getUserTextFont() {
-        return plainFont;
-    } 
-
-    /**
-     * Returns the menu text font.
-     *
-     * @return the menu text font
-     */
-    @Override
-    public FontUIResource getMenuTextFont() {
-        return plainFont;
-    }
-    /**
-     * Returns the window title font.
-     *
-     * @return the window title font
-     */
-    @Override
-    public FontUIResource getWindowTitleFont() {
-        return boldFont;
-    }
-    
-    /**
-     * Returns the sub-text font.
-     *
-     * @return the sub-text font
-     */
-    @Override
-    public FontUIResource getSubTextFont() {
-        return super.getSubTextFont();
-    }
+        return super.getSystemTextFont();
+                }
+//   
+//    /**
+//     * Returns the user text font.
+//     *
+//     * @return the user text font
+//     */
+//    @Override
+//    public FontUIResource getUserTextFont() {
+//        return plainFont;
+//    } 
+//
+//    /**
+//     * Returns the menu text font.
+//     *
+//     * @return the menu text font
+//     */
+//    @Override
+//    public FontUIResource getMenuTextFont() {
+//        return plainFont;
+//    }
+//    /**
+//     * Returns the window title font.
+//     *
+//     * @return the window title font
+//     */
+//    @Override
+//    public FontUIResource getWindowTitleFont() {
+//        return boldFont;
+//    }
+//    
+//    /**
+//     * Returns the sub-text font.
+//     *
+//     * @return the sub-text font
+//     */
+//    @Override
+//    public FontUIResource getSubTextFont() {
+//        return super.getSubTextFont();
+//    }
 
     /**
      * Returns the white color. This returns opaque white
