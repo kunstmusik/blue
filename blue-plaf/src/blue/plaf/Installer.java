@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
@@ -55,8 +56,6 @@ public class Installer extends ModuleInstall {
 //        Animator.setDefaultTimingSource(source); // shared timing source
 //        source.init(); // starts the timer
         //RepaintManager.setCurrentManager(new CheckThreadViolationRepaintManager()); 
-
-        
         EventQueue.invokeLater(new Runnable() {
 
             @Override
@@ -94,18 +93,21 @@ public class Installer extends ModuleInstall {
                     }
                 }
 
-//                    UIManager.getDefaults().clear();
                 try {
-                   Integer in = (Integer) UIManager.get("customFontSize"); //NOI18N
-            if (in == null || in <= 11) {
-                UIManager.put("customFontSize", 12);    
-            }
-                    UIManager.put("swing.boldMetal", "false");
+                    Integer in = (Integer) UIManager.get("customFontSize"); //NOI18N
+                    UIManager.getDefaults().clear();
+                   
+                    if (in == null || in <= 11) {
+                        UIManager.put("customFontSize", 12);
+                    } else {
+                        UIManager.put("customFontSize", in.intValue());
+                    }
+                    
                     ClassLoader cl = Lookup.getDefault().lookup(
                             ClassLoader.class);
                     UIManager.put("ClassLoader", cl);
                     UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
-
+                    UIManager.put("swing.boldMetal", "false");
                     MetalLookAndFeel.setCurrentTheme(new BlueTheme());
                     LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
                     UIManager.setLookAndFeel(plaf);
@@ -113,8 +115,6 @@ public class Installer extends ModuleInstall {
                     e.printStackTrace();
                 }
 
-//        UIManager.put("EditorTabDisplayerUI", "blue.plaf.BlueEditorTabDisplayerUI");
-//        UIManager.getDefaults().put("ViewTabDisplayerUI", "blue.plaf.BlueViewTabDisplayerUI");
                 UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_CONTENT_BORDER,
                         BorderFactory.createEmptyBorder());
                 UIManager.put(DefaultTabbedContainerUI.KEY_EDITOR_OUTER_BORDER,
