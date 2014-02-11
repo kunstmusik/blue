@@ -12,6 +12,15 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.10<
+[release 2014.02.xx]
+
+FIX
+
+* Bug #94: Automations were not getting cleared correctly from the timeline when
+  disabled in a BSB Widget due to bad index code
+
+
 >Notes for 2.5.9<
 [release 2014.01.21]
 
