@@ -17,7 +17,7 @@ information.
 
 FIX
 
-* Bug #94: Automations were not getting cleared correctly from the timeline when
+* Bug #87/94: Automations were not getting cleared correctly from the timeline when
   disabled in a BSB Widget due to bad index code
 
 
