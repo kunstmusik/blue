@@ -585,8 +585,17 @@ public class AutomationManager implements ParameterListListener,
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
 
+                for(int j = 0; j < pObj.getSize(); j++) {
+                    SoundLayer temp = (SoundLayer) pObj.getLayerAt(j);
+                    System.out.println("Layer: " + temp.getName());
+                    for(int k = 0; k < temp.getAutomationParameters().size(); k++) {
+                        System.out.println("ID: " + temp.getAutomationParameters().getParameterId(
+                                        k));
+                    }
+                }
+                
                 for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(i);
+                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
 
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
