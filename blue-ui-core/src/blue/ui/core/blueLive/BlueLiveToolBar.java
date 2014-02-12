@@ -246,7 +246,7 @@ public class BlueLiveToolBar extends JToolBar {
         }
     }
 
-    private void allNotesOffButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    protected void allNotesOffButtonActionPerformed(java.awt.event.ActionEvent evt) {
         sendEvents("i \"blueAllNotesOff\" 0 1");
     }
 
