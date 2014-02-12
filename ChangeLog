@@ -13,12 +13,17 @@ information.
 [CHANGE LOG]
 
 >Notes for 2.5.10<
-[release 2014.02.xx]
+[release 2014.02.11]
+
+NEW
+
+* Added BlueLive sub-menu to the Project menu to have menu options in addition
+  to the Toolbar 
 
 FIX
 
-* Bug #87/94: Automations were not getting cleared correctly from the timeline when
-  disabled in a BSB Widget due to bad index code
+* Bug #87/94: Automations were not getting cleared correctly from the timeline 
+  when disabled in a BSB Widget due to bad index code
 
 
 >Notes for 2.5.9<
