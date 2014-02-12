@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2013 Steven Yi - all rights reserved
+copyright (c) 2001-2014 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -11,6 +11,20 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+>Notes for 2.5.10<
+[release 2014.02.11]
+
+NEW
+
+* Added BlueLive sub-menu to the Project menu to have menu options in addition
+  to the Toolbar 
+
+FIX
+
+* Bug #87/94: Automations were not getting cleared correctly from the timeline 
+  when disabled in a BSB Widget due to bad index code
+
 
 >Notes for 2.5.9<
 [release 2014.01.21]
