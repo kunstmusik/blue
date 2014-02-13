@@ -185,11 +185,6 @@ public interface SoundObject extends ScoreObject {
     public float getObjectiveDuration();
 
     /**
-     * Returns a close of this SoundObject.
-     */
-    public Object clone();
-
-    /**
      * Returns a blue.soundObject.renderer.BarRenderer which renders the
      * SoundObject on the main timeline.
      */

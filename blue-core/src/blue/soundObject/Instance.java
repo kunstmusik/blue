@@ -3,6 +3,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -81,7 +82,7 @@ public class Instance extends AbstractSoundObject implements Serializable {
      */
 
     @Override
-    public Object clone() {
+    public ScoreObject clone() {
         SoundObject librarySObj = this.getSoundObject();
 
         this.setSoundObject(null);

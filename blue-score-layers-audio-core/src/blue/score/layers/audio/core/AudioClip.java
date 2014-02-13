@@ -20,6 +20,7 @@
 package blue.score.layers.audio.core;
 
 import blue.score.ScoreObject;
+import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -217,4 +218,11 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         }
         propListeners.remove(pcl);
     }
+
+    @Override
+    public ScoreObject clone() {
+        return (ScoreObject) ObjectUtilities.clone(this);
+    }
+
+
 }

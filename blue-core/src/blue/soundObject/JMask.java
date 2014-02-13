@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObject;
 import blue.soundObject.jmask.Field;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -158,8 +159,8 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
+    public ScoreObject clone() {
+        return (ScoreObject) ObjectUtilities.clone(this);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package blue.soundObject;
 
+import blue.score.ScoreObject;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.io.Serializable;
@@ -67,8 +68,8 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
+    public ScoreObject clone() {
+        return (ScoreObject)ObjectUtilities.clone(this);
     }
 
     public void addSoundObjectListener(SoundObjectListener listener) {

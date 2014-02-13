@@ -373,7 +373,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public Object clone() {
+    public ScoreObject clone() {
         PolyObject pObj = new PolyObject();
 
         pObj.setRoot(this.isRoot());

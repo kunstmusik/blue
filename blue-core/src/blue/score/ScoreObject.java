@@ -43,4 +43,6 @@ public interface ScoreObject {
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
+    public ScoreObject clone();
+
 }

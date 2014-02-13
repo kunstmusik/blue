@@ -22,6 +22,7 @@ package blue.soundObject;
 
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.score.ScoreObject;
 import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Map;
@@ -171,7 +172,7 @@ public class DurationsSequence extends AbstractSoundObject implements
     }
 
     @Override
-    public Object clone() {
+    public ScoreObject clone() {
         DurationsSequence buffer = new DurationsSequence();
         buffer.setText(this.score);
         buffer.setStartTime(this.startTime);
