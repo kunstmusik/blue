@@ -20,6 +20,7 @@
 package blue.score.layers.patterns.core;
 
 import blue.CompileData;
+import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.soundObject.GenericScore;
@@ -221,5 +222,20 @@ public class PatternLayer implements Layer {
     @Override
     public int getLayerHeight() {
         return LAYER_HEIGHT;    
+    }
+
+    @Override
+    public boolean accepts(ScoreObject object) {
+        return false;
+    }
+
+    @Override
+    public boolean contains(ScoreObject object) {
+        return false;
+    }
+
+    @Override
+    public boolean remove(ScoreObject object) {
+        return false;
     }
 }

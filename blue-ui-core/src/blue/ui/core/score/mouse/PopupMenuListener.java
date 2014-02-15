@@ -59,11 +59,11 @@ public class PopupMenuListener extends BlueMouseAdapter {
 
                 content.add(currentLayerGroupPanel);
                 content.add(p);
-                content.add(content);
+                content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
                         ScoreTopComponent.findInstance().getLookup());
-                content.remove(content);
+                content.remove(scoreTC.getTimeState());
                 content.remove(p);
                 content.remove(currentLayerGroupPanel);
                 menu.show(comp.getParent(), e.getX(), e.getY());
@@ -76,11 +76,11 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 Point p = e.getPoint();
                 content.add(currentLayerGroupPanel);
                 content.add(p);
-                content.add(content);
+                content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(actions, 
                         ScoreTopComponent.findInstance().getLookup());
                 menu.show(comp.getParent(), e.getX(), e.getY());
-                content.remove(content);
+                content.remove(scoreTC.getTimeState());
                 content.remove(p);
                 content.remove(currentLayerGroupPanel);
             }

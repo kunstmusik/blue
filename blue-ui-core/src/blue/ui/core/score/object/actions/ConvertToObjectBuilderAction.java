@@ -24,12 +24,12 @@ import blue.soundObject.External;
 import blue.soundObject.ObjectBuilder;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -40,7 +40,6 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
@@ -56,24 +55,21 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
     private final Collection<? extends ScoreObject> scoreObjects;
     private final LayerGroupPanel lGroupPanel;
     private final Point p;
-    private final InstanceContent ic;
 
     public ConvertToObjectBuilderAction() {
-        this(null, null, null, null, null);
+        this(null, null, null, null);
     }
 
     public ConvertToObjectBuilderAction(Collection<? extends SoundObject> soundObjects,
             Collection<? extends ScoreObject> scoreObjects,
             LayerGroupPanel lGroupPanel,
-            Point p,
-            InstanceContent ic) {
-        super(NbBundle.getMessage(AlignRightAction.class,
+            Point p) {
+        super(NbBundle.getMessage(ConvertToObjectBuilderAction.class,
                 "CTL_ConvertToObjectBuilderAction"));
         this.soundObjects = soundObjects;
         this.scoreObjects = scoreObjects;
         this.lGroupPanel = lGroupPanel;
         this.p = p;
-        this.ic = ic;
     }
 
     @Override
@@ -121,8 +117,8 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
         sCanvas.getPolyObject().removeSoundObject(temp);
         sCanvas.getPolyObject().addSoundObject(index, objBuilder);
 
-        ic.remove(temp);   
-        ic.add(objBuilder);
+        ScoreController.getInstance().removeSelectedScoreObject(temp);
+        ScoreController.getInstance().addSelectedScoreObject(objBuilder);
     }
 
     @Override
@@ -142,7 +138,6 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
                 actionContext.lookupAll(SoundObject.class),
                 actionContext.lookupAll(ScoreObject.class),
                 actionContext.lookup(LayerGroupPanel.class),
-                actionContext.lookup(Point.class),
-                actionContext.lookup(InstanceContent.class));
+                actionContext.lookup(Point.class));
     }
 }

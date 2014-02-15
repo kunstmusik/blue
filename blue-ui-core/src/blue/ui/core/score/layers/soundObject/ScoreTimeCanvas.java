@@ -32,6 +32,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
@@ -270,9 +271,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
                 if (!soundObjects.isEmpty()) {
-                    //FIXME
-//                    sObjPopup.copySObj();
-//                    sObjPopup.removeSObj();
+                    ScoreController.getInstance().cutScoreObjects();
                 }
             }
         });
@@ -285,8 +284,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
                 if (!soundObjects.isEmpty()) {
-                    //FIXME
-//                    sObjPopup.copySObj();
+                    ScoreController.getInstance().copyScoreObjects();
                 }
             }
         });
@@ -298,7 +296,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
                 if (!soundObjects.isEmpty()) {
-                    removeSoundObjects();
+                    ScoreController.getInstance().deleteScoreObjects();
                 }
             }
         });
@@ -306,6 +304,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         actionMap.put("duplicateSoundObjects", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // FIXME - this needs to work with ScoreObjects...
 
                 Collection<? extends SoundObject> soundObjects =
                         Utilities.actionsGlobalContext().lookupAll(
@@ -353,6 +352,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         actionMap.put("repeatSoundObjects", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // FIXME - this needs to work with ScoreObjects...
                 Collection<? extends SoundObject> soundObjects =
                         Utilities.actionsGlobalContext().lookupAll(
                         SoundObject.class);
@@ -434,6 +434,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         });
 
         actionMap.put("showQuickTimeDialog", new AbstractAction() {
+                // FIXME - this needs to work with ScoreObjects...
             @Override
             public void actionPerformed(ActionEvent e) {
                 Collection<? extends SoundObject> soundObjects = Utilities.actionsGlobalContext().lookupAll(

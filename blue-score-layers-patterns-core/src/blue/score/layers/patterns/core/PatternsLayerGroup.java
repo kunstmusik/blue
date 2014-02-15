@@ -217,7 +217,9 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
 
         PatternLayer patternLayer = new PatternLayer();
 
+        int insertIndex = index;
         if (index < 0 || index >= this.size()) {
+            insertIndex = this.size();
             this.add(patternLayer);
         } else {
             this.add(index, patternLayer);
@@ -226,7 +228,6 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         ArrayList<Layer> layers = new ArrayList<Layer>();
         layers.add(patternLayer);
 
-        int insertIndex = this.indexOf(patternLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 

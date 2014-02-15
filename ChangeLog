@@ -35,6 +35,10 @@ FIX
 * Redid font/theme handling so that --fontsize flag is respected (can be given
   at commandline or put into blue/etc/blue.conf)
 
+* Fixed issue where after adding a new layer to a LayerGroup, if multiple empty
+  layers existed, the new layer would not function properly to show score object
+  changes 
+
 
 >Notes for 2.5.10<
 [release 2014.02.11]

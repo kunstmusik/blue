@@ -74,7 +74,6 @@ public final class ScoreTopComponent extends TopComponent
 
     private final InstanceContent content = new InstanceContent();
     private static ScoreTopComponent instance;
-    private static final int SPACER = 36;
     /**
      * path to the icon used by the component and its open action
      */
@@ -175,13 +174,15 @@ public final class ScoreTopComponent extends TopComponent
                 }
             }
         });
+
+        ScoreController.getInstance().setLookupAndContent(getLookup(), content);
     }
 
     protected void checkSize() {
         if (!checkingSize) {
             checkingSize = true;
 
-            int height = ((layerPanel.getComponentCount() - 1) * SPACER);
+            int height = ((layerPanel.getComponentCount() - 1) * Score.SPACER);
             int width = scrollPane.getViewport().getWidth();
 
             for (int i = 0; i < layerPanel.getComponentCount(); i++) {
@@ -223,6 +224,7 @@ public final class ScoreTopComponent extends TopComponent
         if (this.data != null) {
             this.data.removePropertyChangeListener(this);
             data.getScore().removeScoreListener(this);
+            content.remove(data.getScore());
         }
 
         this.clearAll();
@@ -244,6 +246,7 @@ public final class ScoreTopComponent extends TopComponent
             score.addScoreListener(this);
             scoreObjectBar.setScore(score);
 
+            content.add(score);
         } else {
         }
 
@@ -441,8 +444,8 @@ public final class ScoreTopComponent extends TopComponent
 
         layerPanel.setBackground(Color.BLACK);
         layerPanel.setOpaque(true);
-        layerPanel.setLayout(new LinearLayout(SPACER));
-        layerHeaderPanel.setLayout(new LinearLayout(SPACER));
+        layerPanel.setLayout(new LinearLayout(Score.SPACER));
+        layerHeaderPanel.setLayout(new LinearLayout(Score.SPACER));
 
         scorePanel.add(layerPanel, JLayeredPane.DEFAULT_LAYER);
 

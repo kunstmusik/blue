@@ -24,6 +24,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
@@ -40,7 +41,6 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
@@ -55,23 +55,20 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
     private final LayerGroupPanel panel;
-    private final InstanceContent ic;
 
     public AddToSoundObjectLibraryAction() {
-        this(null, null, null, null);
+        this(null, null, null);
     }
 
     public AddToSoundObjectLibraryAction(
             Collection<? extends ScoreObject> scoreObjects,
             Collection<? extends SoundObject> soundObjects,
-            LayerGroupPanel panel,
-            InstanceContent ic) {
+            LayerGroupPanel panel) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_AddToSoundObjectLibraryAction"));
         this.scoreObjects = scoreObjects;
         this.soundObjects = soundObjects;
         this.panel = panel;
-        this.ic = ic;
     }
 
     @Override
@@ -103,8 +100,7 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         return new AddToSoundObjectLibraryAction(
                 actionContext.lookupAll(ScoreObject.class),
                 actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(LayerGroupPanel.class),
-                actionContext.lookup(InstanceContent.class));
+                actionContext.lookup(LayerGroupPanel.class));
     }
 
     private void replaceSoundObject(SoundObject oldSoundObject,
@@ -127,8 +123,7 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
         sCanvas.getPolyObject().addSoundObject(index, newSoundObject);
 
-        // remove old soundObject from selected objects
-        ic.remove(oldSoundObject);
+        ScoreController.getInstance().removeSelectedScoreObject(oldSoundObject);
 
         if (recordEdit) {
 

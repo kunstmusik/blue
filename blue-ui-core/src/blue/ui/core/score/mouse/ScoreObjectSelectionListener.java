@@ -20,6 +20,7 @@
 package blue.ui.core.score.mouse;
 
 import blue.score.ScoreObject;
+import blue.ui.core.score.ScoreController;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,19 +39,20 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
         }
 
         ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
-        Collection<? extends ScoreObject> selectedScoreObjects =
-                Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
+        Collection<? extends ScoreObject> selectedScoreObjects
+                = Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
 
         if (e.isShiftDown()) {
             if (selectedScoreObjects.contains(scoreObj)) {
-                content.remove(scoreObj);
+                ScoreController.getInstance().removeSelectedScoreObject(scoreObj);
             } else {
-                content.add(scoreObj);
+                ScoreController.getInstance().addSelectedScoreObject(scoreObj);
             }
             e.consume();
         } else {
             if (!selectedScoreObjects.contains(scoreObj)) {
-                content.set(Collections.singleton(scoreObj), null);
+                ScoreController.getInstance().setSelectedScoreObjects(
+                        Collections.singleton(scoreObj));
                 e.consume();
             }
         }

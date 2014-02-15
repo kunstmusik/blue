@@ -594,7 +594,9 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         SoundLayer sLayer = new SoundLayer();
         sLayer.setHeightIndex(getDefaultHeightIndex());
 
+        int insertIndex = index;
         if (index < 0 || index >= this.size()) {
+            insertIndex = this.size();
             this.add(sLayer);
         } else {
             this.add(index, sLayer);
@@ -603,7 +605,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         ArrayList<Layer> layers = new ArrayList<>();
         layers.add(sLayer);
 
-        int insertIndex = this.indexOf(sLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 

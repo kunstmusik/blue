@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.ui.core.score.ScoreController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
@@ -37,8 +38,6 @@ public final class CopyAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-// FIXME - this should check if SoundObject or ScoreObject
-        // need to create a generic scoreObject buffer
-//        sCanvas.buffer.copySoundObjects(sCanvas.mBuffer);
+        ScoreController.getInstance().copyScoreObjects();
     }
 }

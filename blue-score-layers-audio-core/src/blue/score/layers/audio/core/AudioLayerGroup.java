@@ -118,7 +118,9 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
         AudioLayer audioLayer = new AudioLayer();
 
+        int insertIndex = index;
         if (index < 0 || index >= this.size()) {
+            insertIndex = this.size();
             this.add(audioLayer);
         } else {
             this.add(index, audioLayer);
@@ -127,7 +129,6 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         ArrayList<Layer> layers = new ArrayList<Layer>();
         layers.add(audioLayer);
 
-        int insertIndex = this.indexOf(audioLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 

@@ -26,6 +26,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Point;
@@ -42,7 +43,6 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
@@ -58,19 +58,17 @@ public final class SelectAllBeforeAction extends AbstractAction implements
 
     final Point p;
     final LayerGroupPanel lgPanel;
-    private final InstanceContent content;
 
     public SelectAllBeforeAction() {
-        this(null, null, null);
+        this(null, null);
     }
 
-    private SelectAllBeforeAction(Point p, LayerGroupPanel lgPanel, InstanceContent content) {
+    private SelectAllBeforeAction(Point p, LayerGroupPanel lgPanel) {
 
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectAllBeforeAction"));
         this.p = p;
         this.lgPanel = lgPanel;
-        this.content = content;
     }
 
     @Override
@@ -103,7 +101,7 @@ public final class SelectAllBeforeAction extends AbstractAction implements
             }
         }
 
-        content.set(newSelected, null);
+        ScoreController.getInstance().setSelectedScoreObjects(newSelected);
 
     }
 
@@ -111,7 +109,6 @@ public final class SelectAllBeforeAction extends AbstractAction implements
     public Action createContextAwareInstance(Lookup actionContext) {
         return new SelectAllBeforeAction(
                 actionContext.lookup(Point.class),
-                actionContext.lookup(LayerGroupPanel.class),
-                actionContext.lookup(InstanceContent.class));
+                actionContext.lookup(LayerGroupPanel.class));
     }
 }

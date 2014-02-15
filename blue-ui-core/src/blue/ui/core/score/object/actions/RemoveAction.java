@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.ui.core.score.ScoreController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
@@ -37,7 +38,6 @@ public final class RemoveAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // FIXME
-        //sCanvas.removeSoundObjects();
+        ScoreController.getInstance().deleteScoreObjects();
     }
 }

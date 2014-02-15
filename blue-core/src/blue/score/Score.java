@@ -52,6 +52,8 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     private NoteProcessorChain npc = new NoteProcessorChain();
     private transient ArrayList<ScoreListener> scoreListeners = null;
 
+    public static final int SPACER = 36; 
+    
     public Score() {
         this(true);
     }
@@ -270,7 +272,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         return layerGroups.iterator();
     }
 
-    public List<LayerGroup> getLayersForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
+    public List<LayerGroup> getLayerGroupsForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
         List<LayerGroup> retVal = new ArrayList<>();
 
         for (LayerGroup<Layer> layerGroup : layerGroups) {
@@ -291,5 +293,38 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         }
 
         return retVal;
+    }
+
+    /* Returns a flat list of all layers in the Score from each LayerGroup */
+    public List<Layer> getAllLayers() {
+        List<Layer> retVal = new ArrayList<>();
+
+        for (LayerGroup<Layer> layerGroup : layerGroups) {
+            for(Layer layer : layerGroup) {
+                retVal.add(layer); 
+            }
+        }
+        return retVal;
+    }
+
+    public int getGlobalLayerIndexForY(int y) {
+        int runningY = 0;
+        int runningIndex = 0;
+
+        for(LayerGroup<Layer> layerGroup : this) {
+           for(Layer layer : layerGroup) {
+               if(y <= runningY + layer.getLayerHeight()) {
+                   return runningIndex;
+               } 
+               runningY += layer.getLayerHeight();
+               runningIndex += 1;
+           } 
+           if(y <= runningY + SPACER) {
+               return -1;
+           }
+           y += SPACER;
+        }
+
+        return -1;
     }
 }

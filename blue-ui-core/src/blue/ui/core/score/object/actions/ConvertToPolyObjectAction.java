@@ -26,6 +26,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.LayerGroup;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.RemoveSoundObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.Point;
@@ -49,7 +50,6 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.InstanceContent;
 
 @ActionID(
         category = "Blue",
@@ -63,22 +63,19 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
-    private final InstanceContent content;
     private final Point p;
 
     public ConvertToPolyObjectAction() {
-        this(null, null, null, null);
+        this(null, null, null);
     }
 
     public ConvertToPolyObjectAction(Collection<? extends ScoreObject> scoreObjects,
             Collection<? extends SoundObject> soundObjects,
-            InstanceContent content,
             Point p) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_ConvertToPolyObjectAction"));
         this.scoreObjects = scoreObjects;
         this.soundObjects = soundObjects;
-        this.content = content;
         this.p = p;
     }
 
@@ -86,7 +83,7 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     public void actionPerformed(ActionEvent e) {
 
         Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
-        List<LayerGroup> layerGroups = score.getLayersForScoreObjects(
+        List<LayerGroup> layerGroups = score.getLayerGroupsForScoreObjects(
                 scoreObjects);
 
         if (layerGroups.size() != 1) {
@@ -119,20 +116,8 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         int index = pObj.getLayerNumForY(p.y);
         pObj.addSoundObject(index, temp);
 
-//        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-//
-//        PolyObject temp = sCanvas.mBuffer.getBufferedPolyObject();
-//
-//        removeSObj();
-//
-//        float startTime = (float) sObjView.getX() / timeState.getPixelSecond();
-//        temp.setStartTime(startTime);
-//
-//        sCanvas.getPolyObject().addSoundObject(index, temp);
-        for(SoundObject sObj : soundObjects) {
-            content.remove(sObj);
-        }
-        content.add(temp);
+        ScoreController.getInstance().setSelectedScoreObjects(
+                Collections.singleton(temp));
     }
 
     @Override
@@ -146,7 +131,6 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         return new ConvertToPolyObjectAction(actionContext.lookupAll(
                 ScoreObject.class),
                 actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(InstanceContent.class),
                 actionContext.lookup(Point.class)
                 );
     }

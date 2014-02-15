@@ -31,6 +31,7 @@ package blue;
 import blue.automation.ParameterIdList;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObject;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
@@ -133,7 +134,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
     }
 
     @Override
-    public boolean remove(Object sObj) {
+    public boolean remove(ScoreObject sObj) {
         if(super.remove(sObj)) {
             fireSoundObjectRemoved((SoundObject)sObj);
             return true;
@@ -419,5 +420,19 @@ public final class SoundLayer extends ArrayList<SoundObject>
     @Override
     public int getLayerHeight() {
         return LAYER_HEIGHT * (heightIndex + 1);    
+    }
+
+    @Override
+    public boolean accepts(ScoreObject object) {
+        return (object instanceof SoundObject);    
+    }
+
+    @Override
+    public boolean contains(ScoreObject object) {
+        if(!accepts(object)) {
+            return false;
+        }    
+
+        return super.contains(object);
     }
 }

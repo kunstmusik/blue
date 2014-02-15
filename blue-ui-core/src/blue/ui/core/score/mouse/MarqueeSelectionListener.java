@@ -19,11 +19,11 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
@@ -47,7 +47,7 @@ public class MarqueeSelectionListener extends BlueMouseAdapter {
         addMode = e.isShiftDown();
         
         if(!addMode) {
-            content.set(Collections.emptyList(), null);
+            ScoreController.getInstance().setSelectedScoreObjects(null);
         }
         
 

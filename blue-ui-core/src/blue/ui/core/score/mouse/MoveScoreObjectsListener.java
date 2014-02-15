@@ -21,12 +21,12 @@ package blue.ui.core.score.mouse;
 
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.ui.core.score.ScoreController;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import javax.swing.SwingUtilities;
-import org.openide.util.Utilities;
 
 /**
  *
@@ -55,7 +55,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
         Collection<? extends ScoreObject> temp =
-                Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
+                ScoreController.getInstance().getSelectedScoreObjects();
 
         if(!temp.contains(scoreObj)) {
             return;
