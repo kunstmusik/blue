@@ -211,8 +211,9 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
-        throw new UnsupportedOperationException(
-                "Error: getScoreObjectViewAtPoint should not be called for PatternsLayerPanel"); 
+//        throw new UnsupportedOperationException(
+//                "Error: getScoreObjectViewAtPoint should not be called for PatternsLayerPanel"); 
+        return null;
     }
 
     @Override
