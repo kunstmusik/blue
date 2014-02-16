@@ -131,6 +131,19 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             return;
         }
 
+        for (int i = 0; i < buffer.scoreObjects.size(); i++) {
+            ScoreObject scoreObj = buffer.scoreObjects.get(i);
+            int index = buffer.layerIndexes.get(i);
+            Layer layer = allLayers.get(index + layerTranslation);
+
+            if (!layer.accepts(scoreObj)) {
+                JOptionPane.showMessageDialog(null, "Unable to paste due to target layers not "
+                        + "accepting types of objects within the copy buffer (i.e. trying to "
+                        + "paste a SoundObject into an AudioLayer");
+                return;
+            }
+        }
+
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
 
@@ -154,7 +167,8 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);
 
-            ((ScoreObjectLayer<ScoreObject>)allLayers.get(newLayerIndex)).add(sObj);
+            ((ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex)).add(
+                    sObj);
             // FIXME - fix undoable edits
 //            sCanvas.getPolyObject().addSoundObject(newLayerIndex, sObj);
 
@@ -172,7 +186,6 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
 //        BlueUndoManager.setUndoManager("score");
 //        BlueUndoManager.addEdit(undoEdit);
-
     }
 
     @Override
@@ -183,7 +196,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 actionContext.lookup(TimeState.class));
     }
 
-    private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects, 
+    private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects,
             PolyObject pObj) {
         for (SoundLayer layer : pObj) {
             for (SoundObject sObj : layer) {
@@ -198,7 +211,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         }
     }
 
-    private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib, 
+    private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib,
             Set<Instance> instanceSoundObjects) {
         Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<>();
 
