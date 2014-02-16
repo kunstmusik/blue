@@ -19,12 +19,11 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
+import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
-import blue.score.layers.LayerGroup;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -55,40 +54,23 @@ public final class SelectLayerAction extends AbstractAction
         implements ContextAwareAction {
 
     final Point p;
-    final LayerGroupPanel lgPanel;
 
     public SelectLayerAction() {
-        this(null, null);
+        this(null);
     }
 
-    private SelectLayerAction(Point p, LayerGroupPanel lgPanel) {
+    private SelectLayerAction(Point p) {
 
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectLayerAction"));
         this.p = p;
-        this.lgPanel = lgPanel;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        LayerGroup<Layer> layerGroup = lgPanel.getLayerGroup();
-        JComponent comp = ((JComponent)lgPanel);
+        Score score = ScoreController.getInstance().getScore();
 
-        if(p.y < 0 || p.y > comp.getHeight()) {
-            return;
-        }
-
-        int y = p.y;
-        int runningY = 0;
-
-        Layer layer = null;
-        for(Layer temp : layerGroup) {
-            if(y < runningY + temp.getLayerHeight()) {
-                layer = temp;
-                break;
-            } 
-            runningY += temp.getLayerHeight();
-        }
+        Layer layer = score.getGlobalLayerForY(p.y);
 
         if(layer != null && layer instanceof ScoreObjectLayer) {
             ArrayList<ScoreObject> newSelected = new ArrayList<>();
@@ -102,8 +84,7 @@ public final class SelectLayerAction extends AbstractAction
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
         return new SelectLayerAction(
-                actionContext.lookup(Point.class),
-                actionContext.lookup(LayerGroupPanel.class));
+                actionContext.lookup(Point.class));
     }
 
 //    public void selectLayer(int soundLayerIndex) {

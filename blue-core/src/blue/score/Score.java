@@ -52,8 +52,8 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     private NoteProcessorChain npc = new NoteProcessorChain();
     private transient ArrayList<ScoreListener> scoreListeners = null;
 
-    public static final int SPACER = 36; 
-    
+    public static final int SPACER = 36;
+
     public Score() {
         this(true);
     }
@@ -286,7 +286,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
                     }
                 }
 
-                if(found) {
+                if (found) {
                     break;
                 }
             }
@@ -300,8 +300,8 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         List<Layer> retVal = new ArrayList<>();
 
         for (LayerGroup<Layer> layerGroup : layerGroups) {
-            for(Layer layer : layerGroup) {
-                retVal.add(layer); 
+            for (Layer layer : layerGroup) {
+                retVal.add(layer);
             }
         }
         return retVal;
@@ -311,20 +311,39 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         int runningY = 0;
         int runningIndex = 0;
 
-        for(LayerGroup<Layer> layerGroup : this) {
-           for(Layer layer : layerGroup) {
-               if(y <= runningY + layer.getLayerHeight()) {
-                   return runningIndex;
-               } 
-               runningY += layer.getLayerHeight();
-               runningIndex += 1;
-           } 
-           if(y <= runningY + SPACER) {
-               return -1;
-           }
-           y += SPACER;
+        for (LayerGroup<Layer> layerGroup : this) {
+            for (Layer layer : layerGroup) {
+                if (y <= runningY + layer.getLayerHeight()) {
+                    return runningIndex;
+                }
+                runningY += layer.getLayerHeight();
+                runningIndex += 1;
+            }
+            if (y <= runningY + SPACER) {
+                return -1;
+            }
+            y += SPACER;
         }
 
         return -1;
+    }
+
+    public Layer getGlobalLayerForY(int y) {
+        int runningY = 0;
+
+        for (LayerGroup<Layer> layerGroup : this) {
+            for (Layer layer : layerGroup) {
+                if (y <= runningY + layer.getLayerHeight()) {
+                    return layer;
+                }
+                runningY += layer.getLayerHeight();
+            }
+            if (y <= runningY + SPACER) {
+                return null;
+            }
+            y += SPACER;
+        }
+
+        return null;
     }
 }
