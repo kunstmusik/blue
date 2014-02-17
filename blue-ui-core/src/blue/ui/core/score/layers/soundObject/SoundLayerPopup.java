@@ -128,7 +128,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                sCanvas.sMouse.selectLayer(sLayerIndex);
+//                sCanvas.sMouse.selectLayer(sLayerIndex);
             }
         });
 
@@ -136,7 +136,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                sCanvas.sMouse.selectAllBefore(xValue);
+//                sCanvas.sMouse.selectAllBefore(xValue);
             }
         });
 
@@ -144,7 +144,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                sCanvas.sMouse.selectAllAfter(xValue);
+//                sCanvas.sMouse.selectAllAfter(xValue);
             }
         });
 
@@ -237,7 +237,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
                     start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
                 }
                 
-                sCanvas.sMouse.pasteSoundObjects(sLayerIndex, start);
+//                sCanvas.sMouse.pasteSoundObjects(sLayerIndex, start);
             }
         });
 
@@ -251,7 +251,7 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
                     start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
                 }
                 
-                sCanvas.sMouse.pasteSoundObject(sLayerIndex, start);
+//                sCanvas.sMouse.pasteSoundObject(sLayerIndex, start);
             }
         });
     }

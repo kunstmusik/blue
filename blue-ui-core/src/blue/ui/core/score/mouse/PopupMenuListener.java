@@ -22,6 +22,7 @@ package blue.ui.core.score.mouse;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
+import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
 import blue.ui.utilities.UiUtilities;
 import java.awt.Component;
 import java.awt.Point;
@@ -29,7 +30,9 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.Action;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
 
 /**
@@ -46,53 +49,54 @@ public class PopupMenuListener extends BlueMouseAdapter {
         }
     }
 
-
     protected static void showPopup(Component comp, MouseEvent e) {
-        Collection<? extends ScoreObject> soundObjects =
-                Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
+        Collection<? extends ScoreObject> soundObjects
+                = Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
+
+        Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
+                e.getPoint(), scoreTC.getScorePanel());
+
         if (currentScoreObjectView != null) {
-            if(soundObjects.size() > 0) {
+            if (soundObjects.size() > 0) {
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
 
-                Point p = e.getPoint();
 
                 content.add(currentLayerGroupPanel);
-                content.add(p);
+                content.add(point);
                 content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
                         ScoreTopComponent.findInstance().getLookup());
                 content.remove(scoreTC.getTimeState());
-                content.remove(p);
+                content.remove(point);
                 content.remove(currentLayerGroupPanel);
-                menu.show(comp.getParent(), e.getX(), e.getY());
+                menu.show(comp.getParent(), point.x, point.y);
             }
-        } else if(currentLayerGroupPanel != null) {
+        } else if (currentLayerGroupPanel != null) {
 
             Action[] actions = currentLayerGroupPanel.getLayerActions();
 
-            if(actions != null && actions.length > 0) {
+            if (actions != null && actions.length > 0) {
                 Point p = e.getPoint();
                 content.add(currentLayerGroupPanel);
-                content.add(p);
+                content.add(point);
                 content.add(scoreTC.getTimeState());
-                final JPopupMenu menu = Utilities.actionsToPopup(actions, 
+                final JPopupMenu menu = Utilities.actionsToPopup(actions,
                         ScoreTopComponent.findInstance().getLookup());
-                menu.show(comp.getParent(), e.getX(), e.getY());
+                menu.show(comp.getParent(), point.x, point.y);
                 content.remove(scoreTC.getTimeState());
-                content.remove(p);
+                content.remove(point);
                 content.remove(currentLayerGroupPanel);
             }
-            
+
 //        } else if (e.getY() < sCanvas.pObj.getTotalHeight()) {
 //            sCanvas.showSoundLayerPopup(getSoundLayerIndex(e.getY()), e.getX(),
 //                    e.getY());
 //        }
 //        isPopupOpen = true;
-
 //        this.justSelected = true;
         }
     }
-    
+
 }
