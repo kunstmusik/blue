@@ -322,7 +322,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
             if (y <= runningY + SPACER) {
                 return -1;
             }
-            y += SPACER;
+            runningY += SPACER;
         }
 
         return -1;
@@ -341,7 +341,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
             if (y <= runningY + SPACER) {
                 return null;
             }
-            y += SPACER;
+            runningY += SPACER;
         }
 
         return null;
