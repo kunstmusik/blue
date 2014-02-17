@@ -33,16 +33,14 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
-import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -151,7 +149,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         // FIXME - Need a generic way to handle shadow objects; perhaps need to
         // deal with this in the model...
-        Set<Instance> instanceSoundObjects = new HashSet<Instance>();
+        List<Instance> instanceSoundObjects = new ArrayList<Instance>();
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject sObj = buffer.scoreObjects.get(i).clone();
@@ -196,7 +194,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 actionContext.lookup(TimeState.class));
     }
 
-    private void getInstancesFromPolyObject(Set<Instance> instanceSoundObjects,
+    private void getInstancesFromPolyObject(List<Instance> instanceSoundObjects,
             PolyObject pObj) {
         for (SoundLayer layer : pObj) {
             for (SoundObject sObj : layer) {
@@ -212,7 +210,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
     }
 
     private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib,
-            Set<Instance> instanceSoundObjects) {
+            List<Instance> instanceSoundObjects) {
         Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<>();
 
         for (Instance instance : instanceSoundObjects) {
