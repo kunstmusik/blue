@@ -39,6 +39,7 @@ import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.ui.core.score.undo.RemoveSoundObjectEdit;
+import blue.ui.utilities.ParentDispatchingMouseAdapter;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
@@ -175,39 +176,12 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 //        });
         this.addMouseWheelListener(new ScoreMouseWheelListener(
                 data.getScore().getTimeState()));
-
+        final MouseAdapter mouseAdapter = new ParentDispatchingMouseAdapter(this);
+        
         // This is here as the existing mouselisteners prevent bubbling up of
         // events (i.e. from ToolTipManager)
-        this.addMouseListener(new MouseAdapter() {
-
-            private void dispatchToParent(MouseEvent e) {
-                if (!e.isConsumed()) {
-                    Container parentComp = getParent();
-                    if (parentComp != null) {
-                        parentComp.dispatchEvent(
-                                SwingUtilities.convertMouseEvent(
-                                        (Component) e.getSource(), e,
-                                        parentComp));
-                    }
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                dispatchToParent(e);
-            }
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                dispatchToParent(e);
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                dispatchToParent(e);
-            }
-
-        });
+        this.addMouseListener(mouseAdapter);
+        this.addMouseMotionListener(mouseAdapter);
     }
 
     public JPanel getSoundObjectPanel() {
