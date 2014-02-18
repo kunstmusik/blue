@@ -19,11 +19,30 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.BlueData;
+import blue.SoundLayer;
+import blue.SoundObjectLibrary;
+import blue.projects.BlueProjectManager;
+import blue.score.Score;
+import blue.score.ScoreObject;
+import blue.score.layers.Layer;
+import blue.soundObject.Instance;
+import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
@@ -33,10 +52,123 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_ReplaceWithBufferSoundObjectAction")
 @Messages("CTL_ReplaceWithBufferSoundObjectAction=Repl&ace with SoundObject in Buffer")
 @ActionReference(path = "blue/score/actions", position = 60)
-public final class ReplaceWithBufferSoundObjectAction implements ActionListener {
+public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
+        implements ContextAwareAction {
+
+    private Collection<? extends ScoreObject> scoreObjects;
+    private Collection<? extends SoundObject> soundObjects;
+    private Point p;
+
+    public ReplaceWithBufferSoundObjectAction() {
+        this(null, null, null);
+    }
+
+    public ReplaceWithBufferSoundObjectAction(Collection<? extends ScoreObject> scoreObjects,
+            Collection<? extends SoundObject> soundObjects,
+            Point p) {
+
+        super(NbBundle.getMessage(ReplaceWithBufferSoundObjectAction.class,
+                "CTL_ReplaceWithBufferSoundObjectAction"));
+        this.scoreObjects = scoreObjects;
+        this.soundObjects = soundObjects;
+        this.p = p;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return (soundObjects.size() > 0
+                && scoreObjects.size() == soundObjects.size());
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // TODO implement action body
+        Score score = ScoreController.getInstance().getScore();
+        ScoreController.ScoreObjectBuffer buffer
+                = ScoreController.getInstance().getScoreObjectBuffer();
+        List<Layer> layers = score.getAllLayers();
+
+        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
+        SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
+
+        List<Instance> instances = new ArrayList<>();
+
+        for (SoundObject sObj : soundObjects) {
+            SoundObject replacement = getReplacementObject(buffer, instances);
+            replacement.setStartTime(sObj.getStartTime());
+            replacement.setSubjectiveDuration(sObj.getSubjectiveDuration());
+
+            SoundLayer layer = (SoundLayer)findLayerForSoundObject(layers, sObj);
+            layer.remove(sObj);
+            layer.add(replacement);
+        }
+
+        sObjLib.checkAndAddInstanceSoundObjects(instances);
+
     }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new ReplaceWithBufferSoundObjectAction(
+                actionContext.lookupAll(ScoreObject.class),
+                actionContext.lookupAll(SoundObject.class),
+                actionContext.lookup(Point.class));
+
+    }
+
+    protected SoundObject getReplacementObject(ScoreController.ScoreObjectBuffer buffer,
+            List<Instance> instances) {
+        if (buffer.scoreObjects.size() == 1) {
+            SoundObject sObj = (SoundObject) buffer.scoreObjects.get(0).clone();
+            if (sObj instanceof Instance) {
+                instances.add((Instance) sObj);
+            }
+            return sObj;
+        }
+
+        PolyObject pObj = new PolyObject();
+
+        int minLayer = Integer.MAX_VALUE;
+        int maxLayer = Integer.MIN_VALUE;
+
+        for (Integer layerIndex : buffer.layerIndexes) {
+            if (layerIndex < minLayer) {
+                minLayer = layerIndex;
+            }
+            if (layerIndex > maxLayer) {
+                maxLayer = layerIndex;
+            }
+        }
+
+        int numLayers = maxLayer - minLayer + 1;
+
+        for (int i = 0; i < numLayers; i++) {
+            pObj.newLayerAt(-1);
+        }
+
+        for (int i = 0; i < buffer.scoreObjects.size(); i++) {
+            ScoreObject scoreObj = buffer.scoreObjects.get(i);
+            int layerIndex = buffer.layerIndexes.get(i);
+            SoundLayer layer = pObj.get(layerIndex - minLayer);
+
+            SoundObject clone = (SoundObject) scoreObj.clone();
+            layer.add(clone);
+
+            if (clone instanceof Instance) {
+                instances.add((Instance) clone);
+            }
+
+        }
+        return pObj;
+    }
+
+    private Layer findLayerForSoundObject(List<Layer> layers, SoundObject sObj) {
+        for (Layer layer : layers) {
+            if (layer.contains(sObj)) {
+                return layer;
+            }
+        }
+
+        return null;
+    }
+
 }

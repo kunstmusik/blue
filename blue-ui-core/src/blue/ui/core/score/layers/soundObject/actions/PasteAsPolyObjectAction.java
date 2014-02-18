@@ -129,34 +129,12 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
         }
 
-        checkAndAddInstanceSoundObjects(sObjLib, instanceSoundObjects);
+        sObjLib.checkAndAddInstanceSoundObjects(instanceSoundObjects);
 
         pObj.normalizeSoundObjects();
 
         pObj.setStartTime(start);
         ((SoundLayer) targetLayer).add(pObj);
-    }
-
-    private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib,
-            List<Instance> instanceSoundObjects) {
-        Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<>();
-
-        for (Instance instance : instanceSoundObjects) {
-            final SoundObject instanceSObj = instance.getSoundObject();
-            if (!sObjLib.contains(instanceSObj)) {
-                SoundObject copy;
-
-                if (originalToCopyMap.containsKey(instanceSObj)) {
-                    copy = originalToCopyMap.get(instanceSObj);
-                } else {
-                    copy = (SoundObject) instance.getSoundObject().clone();
-                    sObjLib.addSoundObject(copy);
-                    originalToCopyMap.put(instanceSObj, copy);
-                }
-
-                instance.setSoundObject(copy);
-            }
-        }
     }
 
     @Override
