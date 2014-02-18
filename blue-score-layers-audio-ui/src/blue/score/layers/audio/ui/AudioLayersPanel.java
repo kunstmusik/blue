@@ -30,15 +30,17 @@ import blue.score.layers.audio.core.AudioLayerListener;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
@@ -46,13 +48,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
 
@@ -130,6 +131,40 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             y += height;
         }
 
+
+        
+        // This is here as the existing mouselisteners prevent bubbling up of
+        // events (i.e. from ToolTipManager)
+        this.addMouseListener(new MouseAdapter() {
+
+            private void dispatchToParent(MouseEvent e) {
+                if (!e.isConsumed()) {
+                    Container parentComp = getParent();
+                    if (parentComp != null) {
+                        parentComp.dispatchEvent(
+                                SwingUtilities.convertMouseEvent(
+                                        (Component) e.getSource(), e,
+                                        parentComp));
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                dispatchToParent(e);
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                dispatchToParent(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                dispatchToParent(e);
+            }
+
+        });
     }
 
     public AudioLayerGroup getAudioLayerGroup() {

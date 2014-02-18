@@ -160,8 +160,8 @@ public final class ScoreTopComponent extends TopComponent
 
         reinitialize();
 
-//        scorePanel.addMouseListener(listener);
-//        scorePanel.addMouseMotionListener(listener);
+        layerPanel.addMouseListener(listener);
+        layerPanel.addMouseMotionListener(listener);
 
         layerHeaderViewPort.addMouseWheelListener(new MouseWheelListener() {
 
@@ -271,9 +271,6 @@ public final class ScoreTopComponent extends TopComponent
                 layerHeaderPanel.add(comp2, index);
             }
 
-            comp.addMouseListener(listener);
-            comp.addMouseMotionListener(listener);
-
             final Dimension d = new Dimension(comp2.getWidth(), comp.getHeight());
             comp2.setSize(d);
 
@@ -302,8 +299,6 @@ public final class ScoreTopComponent extends TopComponent
     private void removePanelsForLayerGroups(int startIndex, int endIndex) {
         for (int i = 0; i <= endIndex - startIndex; i++) {
             Component comp = layerPanel.getComponent(startIndex);
-            comp.removeMouseListener(listener);
-            comp.removeMouseMotionListener(listener);
             layerPanel.remove(startIndex);
             layerHeaderPanel.remove(startIndex);
         }
