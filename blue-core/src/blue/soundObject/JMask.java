@@ -159,8 +159,8 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public ScoreObject clone() {
-        return (ScoreObject) ObjectUtilities.clone(this);
+    public SoundObject clone() {
+        return (SoundObject) ObjectUtilities.clone(this);
     }
 
     @Override

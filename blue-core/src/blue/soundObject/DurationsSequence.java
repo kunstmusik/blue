@@ -172,7 +172,7 @@ public class DurationsSequence extends AbstractSoundObject implements
     }
 
     @Override
-    public ScoreObject clone() {
+    public SoundObject clone() {
         DurationsSequence buffer = new DurationsSequence();
         buffer.setText(this.score);
         buffer.setStartTime(this.startTime);

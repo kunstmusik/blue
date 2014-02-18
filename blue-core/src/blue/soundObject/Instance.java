@@ -82,7 +82,7 @@ public class Instance extends AbstractSoundObject implements Serializable {
      */
 
     @Override
-    public ScoreObject clone() {
+    public SoundObject clone() {
         SoundObject librarySObj = this.getSoundObject();
 
         this.setSoundObject(null);

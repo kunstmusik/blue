@@ -68,8 +68,8 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
     }
 
     @Override
-    public ScoreObject clone() {
-        return (ScoreObject)ObjectUtilities.clone(this);
+    public SoundObject clone() {
+        return (SoundObject)ObjectUtilities.clone(this);
     }
 
     public void addSoundObjectListener(SoundObjectListener listener) {

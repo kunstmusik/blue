@@ -250,4 +250,8 @@ public interface SoundObject extends ScoreObject {
      * @param color
      */
     public void setBackgroundColor(Color color);
+
+    @Override
+    public SoundObject clone();
+    
 }
