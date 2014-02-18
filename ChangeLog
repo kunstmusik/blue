@@ -30,6 +30,10 @@ UPDATED
   both the layer panels and the main content areas (implemented in main Score
   editor, PatternsObject editor) 
 
+* Modified URL that is opened for "Report a Bug" and "Request a Feature" links
+  from the Help menu to go to the issue tracker at GitHub 
+  (http://www.github.com/kunstmusik/blue/issues)
+
 FIX
 
 * Redid font/theme handling so that --fontsize flag is respected (can be given

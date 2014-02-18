@@ -12,7 +12,7 @@ import org.openide.util.Exceptions;
 
 public final class RequestFeatureAction implements ActionListener {
 
-    static final String URL_RFE = "http://sourceforge.net/tracker/?group_id=74382&atid=540833";
+    static final String URL_RFE = "http://www.github.com/kunstmusik/blue/issues";
 
     @Override
     public void actionPerformed(ActionEvent e) {

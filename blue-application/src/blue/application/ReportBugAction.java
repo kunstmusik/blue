@@ -12,7 +12,7 @@ import org.openide.util.Exceptions;
 
 public final class ReportBugAction implements ActionListener {
 
-    static final String URL_BUGS = "http://sourceforge.net/tracker/?group_id=74382&atid=540830";
+    static final String URL_BUGS = "http://www.github.com/kunstmusik/blue/issues";
 
     @Override
     public void actionPerformed(ActionEvent e) {
