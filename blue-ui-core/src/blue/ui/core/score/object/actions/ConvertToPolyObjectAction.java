@@ -23,7 +23,7 @@ import blue.SoundLayer;
 import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
-import blue.score.layers.LayerGroup;
+import blue.score.layers.Layer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
@@ -40,9 +40,6 @@ import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
-import static org.openide.NotifyDescriptor.ERROR_MESSAGE;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
@@ -64,166 +61,198 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
     private final Point p;
+    private PolyObject pObj = new PolyObject();
+    private final Layer targetLayer;
 
     public ConvertToPolyObjectAction() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     public ConvertToPolyObjectAction(Collection<? extends ScoreObject> scoreObjects,
             Collection<? extends SoundObject> soundObjects,
-            Point p) {
+            Point p, Layer targetLayer) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_ConvertToPolyObjectAction"));
         this.scoreObjects = scoreObjects;
         this.soundObjects = soundObjects;
         this.p = p;
+        this.targetLayer = targetLayer;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
-        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
-        List<LayerGroup> layerGroups = score.getLayerGroupsForScoreObjects(
-                scoreObjects);
-
-        if (layerGroups.size() != 1) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-            "Blue does not currently support converting SoundObjects into a "
-                    + "PolyObject across PolyObjects", ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(descriptor);
-            return;
-        }
-        if(!(layerGroups.get(0) instanceof PolyObject)) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Message(
-            "This operation only works with SoundObjects", ERROR_MESSAGE);
-            DialogDisplayer.getDefault().notify(descriptor);
-            return;
-        }
-
-        PolyObject pObj = (PolyObject) layerGroups.get(0);
-
         int retVal = JOptionPane.showConfirmDialog(null,
                 "This operation can not be undone.\nAre you sure?");
 
         if (retVal != JOptionPane.OK_OPTION) {
             return;
         }
+       
+        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+        List<Layer> allLayers = score.getAllLayers();
+        List<SoundObject> sObjList = new ArrayList<>();
+        List<Integer> layerIndexes = new ArrayList<>();
+        int layerMin = Integer.MAX_VALUE;
+        int layerMax = Integer.MIN_VALUE;
 
+        float start = Float.POSITIVE_INFINITY;
+        
+        for(SoundObject sObj : soundObjects) {
+            sObjList.add(sObj);
+            float sObjStart = sObj.getStartTime();
 
-        PolyObject temp = convertToPolyObject(pObj, soundObjects);
-        removeSoundObjects(soundObjects, pObj);
+            if(sObj.getStartTime() < start) {
+                start = sObj.getStartTime();
+            }
 
-        int index = pObj.getLayerNumForY(p.y);
-        pObj.addSoundObject(index, temp);
+            for(int i = 0; i < allLayers.size(); i++) {
+                if(allLayers.get(i).contains(sObj)) {
+                    layerIndexes.add(i);
+                    if(i < layerMin) {
+                        layerMin = i;
+                    }
+                    if(i > layerMax) {
+                        layerMax = i;
+                    }
+                    break;
+                }
+            }
+            if(sObjList.size() != layerIndexes.size()) {
+                throw new RuntimeException("Error: Unable to find layer for SoundObject.");
+            }
+        }
+       
+        int numLayers = layerMax - layerMin + 1;
+        for(int i = 0; i < numLayers; i++) {
+            pObj.newLayerAt(-1);
+        }
 
+        for(int i = 0; i < sObjList.size(); i++) {
+            SoundObject sObj = sObjList.get(i);
+            int layerNum = layerIndexes.get(i);
+            SoundLayer layer = (SoundLayer) allLayers.get(layerNum);
+            layer.remove(sObj);
+            pObj.get(layerNum - layerMin).add(sObj); // don't need to clone here...
+        }
+
+        pObj.normalizeSoundObjects();
+        pObj.setStartTime(start);
+
+        ((SoundLayer)targetLayer).add(pObj); 
         ScoreController.getInstance().setSelectedScoreObjects(
-                Collections.singleton(temp));
+                Collections.singleton(pObj));
     }
 
     @Override
     public boolean isEnabled() {
         return (soundObjects.size() > 0
-                && scoreObjects.size() == soundObjects.size());
+                && scoreObjects.size() == soundObjects.size() &&
+                targetLayer != null &&
+                targetLayer.accepts(pObj));
     }
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
+        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+        Point p = actionContext.lookup(Point.class);
         return new ConvertToPolyObjectAction(actionContext.lookupAll(
                 ScoreObject.class),
                 actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(Point.class)
-                );
-    }
-
-    public void removeSoundObjects(Collection<? extends SoundObject> selectedObjects, PolyObject pObj) {
-        RemoveSoundObjectEdit firstEdit = null;
-        RemoveSoundObjectEdit lastEdit = null;
-        RemoveSoundObjectEdit temp;
-
-        for (SoundObject sObj : selectedObjects) {
-            int sLayerIndex = pObj.removeSoundObject(sObj);
-
-            if (firstEdit == null) {
-                firstEdit = new RemoveSoundObjectEdit(pObj, sObj,
-                        sLayerIndex);
-                lastEdit = firstEdit;
-            } else {
-                temp = new RemoveSoundObjectEdit(pObj, sObj,
-                        sLayerIndex);
-                lastEdit.setNextEdit(temp);
-                lastEdit = temp;
-            }
-        }
-
-        if (firstEdit != null) {
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(firstEdit);
-        }
-
+                p,
+                score.getGlobalLayerForY(p.y));
     }
 
 
-    private PolyObject convertToPolyObject(PolyObject pObj, 
-            Collection<? extends SoundObject> selected) {
-        PolyObject temp = new PolyObject();
-
-        // int layerHeight = pObj.getSoundLayerHeight();
-
-        TreeMap<Integer, ArrayList<SoundObject>> sObjMap = new TreeMap<>();
-
-        float start = Float.POSITIVE_INFINITY;
-        float end = Float.NEGATIVE_INFINITY;
-        
-        for (SoundObject sObj : selected) {
-
-            int layerNum = pObj.getLayerNumForScoreObject(sObj);
-            Integer key = new Integer(layerNum);
-            float sObjStart = sObj.getStartTime();
-            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
-
-            if (!sObjMap.containsKey(key)) {
-                sObjMap.put(key, new ArrayList<SoundObject>());
-            }
-
-            ArrayList<SoundObject> list = sObjMap.get(key);
-
-            list.add(sObj);
-
-            if(sObjStart < start) {
-                start = sObjStart;
-            }
-            if(sObjEnd > end) {
-                end = sObjEnd;
-            }
-
-        }
-
-        int keyMin = ((Integer) sObjMap.firstKey()).intValue();
-        int keyMax = ((Integer) sObjMap.lastKey()).intValue();
-
-        int range = (keyMax - keyMin) + 1;
-
-        for (int i = 0; i < range; i++) {
-            temp.newLayerAt(-1);
-        }
-
-        for (Map.Entry<Integer, ArrayList<SoundObject>> entry : sObjMap.entrySet()) {
-
-            Integer key = entry.getKey();
-            ArrayList<SoundObject> sObjects = entry.getValue();
-
-            int layerNum = key.intValue() - keyMin;
-            SoundLayer sLayer = temp.get(layerNum);
-
-            for (SoundObject sObj : sObjects) {
-                sLayer.add((SoundObject) sObj.clone());
-            }
-
-        }
-
-        temp.normalizeSoundObjects();
-        temp.setStartTime(start);
-        temp.setSubjectiveDuration(end - start);
-        return temp;
-    }
+    //FIXME - code above should register an undoable edit
+//    public void removeSoundObjects(Collection<? extends SoundObject> selectedObjects, PolyObject pObj) {
+//        RemoveSoundObjectEdit firstEdit = null;
+//        RemoveSoundObjectEdit lastEdit = null;
+//        RemoveSoundObjectEdit temp;
+//
+//        for (SoundObject sObj : selectedObjects) {
+//            int sLayerIndex = pObj.removeSoundObject(sObj);
+//
+//            if (firstEdit == null) {
+//                firstEdit = new RemoveSoundObjectEdit(pObj, sObj,
+//                        sLayerIndex);
+//                lastEdit = firstEdit;
+//            } else {
+//                temp = new RemoveSoundObjectEdit(pObj, sObj,
+//                        sLayerIndex);
+//                lastEdit.setNextEdit(temp);
+//                lastEdit = temp;
+//            }
+//        }
+//
+//        if (firstEdit != null) {
+//            BlueUndoManager.setUndoManager("score");
+//            BlueUndoManager.addEdit(firstEdit);
+//        }
+//
+//    }
+//
+//
+//    private PolyObject convertToPolyObject(PolyObject pObj, 
+//            Collection<? extends SoundObject> selected) {
+//        PolyObject temp = new PolyObject();
+//
+//        // int layerHeight = pObj.getSoundLayerHeight();
+//
+//        TreeMap<Integer, ArrayList<SoundObject>> sObjMap = new TreeMap<>();
+//
+//        float start = Float.POSITIVE_INFINITY;
+//        float end = Float.NEGATIVE_INFINITY;
+//        
+//        for (SoundObject sObj : selected) {
+//
+//            int layerNum = pObj.getLayerNumForScoreObject(sObj);
+//            Integer key = new Integer(layerNum);
+//            float sObjStart = sObj.getStartTime();
+//            float sObjEnd = sObjStart + sObj.getSubjectiveDuration();
+//
+//            if (!sObjMap.containsKey(key)) {
+//                sObjMap.put(key, new ArrayList<SoundObject>());
+//            }
+//
+//            ArrayList<SoundObject> list = sObjMap.get(key);
+//
+//            list.add(sObj);
+//
+//            if(sObjStart < start) {
+//                start = sObjStart;
+//            }
+//            if(sObjEnd > end) {
+//                end = sObjEnd;
+//            }
+//
+//        }
+//
+//        int keyMin = ((Integer) sObjMap.firstKey()).intValue();
+//        int keyMax = ((Integer) sObjMap.lastKey()).intValue();
+//
+//        int range = (keyMax - keyMin) + 1;
+//
+//        for (int i = 0; i < range; i++) {
+//            temp.newLayerAt(-1);
+//        }
+//
+//        for (Map.Entry<Integer, ArrayList<SoundObject>> entry : sObjMap.entrySet()) {
+//
+//            Integer key = entry.getKey();
+//            ArrayList<SoundObject> sObjects = entry.getValue();
+//
+//            int layerNum = key.intValue() - keyMin;
+//            SoundLayer sLayer = temp.get(layerNum);
+//
+//            for (SoundObject sObj : sObjects) {
+//                sLayer.add((SoundObject) sObj.clone());
+//            }
+//
+//        }
+//
+//        temp.normalizeSoundObjects();
+//        temp.setStartTime(start);
+//        temp.setSubjectiveDuration(end - start);
+//        return temp;
+//    }
 }
