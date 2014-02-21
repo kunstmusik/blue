@@ -177,7 +177,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         this.addMouseWheelListener(new ScoreMouseWheelListener(
                 data.getScore().getTimeState()));
         final MouseAdapter mouseAdapter = new ParentDispatchingMouseAdapter(this);
-        
+
         // This is here as the existing mouselisteners prevent bubbling up of
         // events (i.e. from ToolTipManager)
         this.addMouseListener(mouseAdapter);
@@ -1082,13 +1082,31 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     /* SOUND LAYER LISTENER */
     @Override
-    public void soundObjectAdded(SoundLayer source, SoundObject sObj) {
-        addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
+    public void soundObjectAdded(final SoundLayer source, final SoundObject sObj) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
+                }
+            });
+        }
     }
 
     @Override
-    public void soundObjectRemoved(SoundLayer source, SoundObject sObj) {
-        removeSoundObjectView(sObj);
+    public void soundObjectRemoved(SoundLayer source, final SoundObject sObj) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            removeSoundObjectView(sObj);
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    removeSoundObjectView(sObj);
+                }
+            });
+        }
     }
 
     public void modifyLayerHeight(int value, int y) {
