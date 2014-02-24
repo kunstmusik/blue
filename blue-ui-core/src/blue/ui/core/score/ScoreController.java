@@ -60,10 +60,17 @@ public class ScoreController {
     }
 
     public Score getScore() {
+        if(lookup == null || content == null) {
+            return null;
+        }
         return lookup.lookup(Score.class);
     }
 
     public void copyScoreObjects() {
+        if(lookup == null || content == null) {
+            return;
+        }
+
         Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
                 ScoreObject.class);
         Score score = lookup.lookup(Score.class);
@@ -112,6 +119,10 @@ public class ScoreController {
     }
 
     public void deleteScoreObjects() {
+        if(lookup == null || content == null) {
+            return;
+        }
+        
         Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
                 ScoreObject.class);
         Score score = lookup.lookup(Score.class);
@@ -147,6 +158,10 @@ public class ScoreController {
     }
 
     public void cutScoreObjects() {
+        if(lookup == null || content == null) {
+            return;
+        }
+        
         copyScoreObjects();
         deleteScoreObjects();
     }
@@ -155,7 +170,16 @@ public class ScoreController {
         return buffer;
     }
 
+    /** Set the current collection of selected ScoreObjects. Can pass null to 
+     * clear the selection.
+     * 
+     * @param scoreObjects 
+     */
     public void setSelectedScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
+        if(lookup == null || content == null) {
+            return;
+        }
+
         for (ScoreObject scoreObj : lookup.lookupAll(ScoreObject.class)) {
             content.remove(scoreObj);
         }
@@ -167,14 +191,24 @@ public class ScoreController {
     }
 
     public void addSelectedScoreObject(ScoreObject scoreObj) {
+        if(lookup == null || content == null) {
+            return;
+        }
         content.add(scoreObj);
     }
 
     public void removeSelectedScoreObject(ScoreObject scoreObj) {
+        if(lookup == null || content == null) {
+            return;
+        }
         content.remove(scoreObj);
     }
 
+
     public Collection<? extends ScoreObject> getSelectedScoreObjects() {
+        if(lookup == null || content == null) {
+            return null;
+        }
         return lookup.lookupAll(ScoreObject.class);
     }
 
