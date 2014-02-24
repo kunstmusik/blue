@@ -113,11 +113,12 @@ public class ScoreMouseListener extends MouseAdapter {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-//        if (!isScoreMode()) {
-//            return;
-//        }
+        if(ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE) {
+            return;
+        }
 
         ScoreObjectView sObjView = scoreTC.getScoreObjectViewAtPoint(e);
+
         final JLayeredPane scorePanel = scoreTC.getScorePanel();
 
         if (sObjView != null) {
