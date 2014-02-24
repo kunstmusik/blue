@@ -29,6 +29,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
+import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
@@ -52,6 +53,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -822,6 +824,8 @@ public final class ScoreTopComponent extends TopComponent
             this.currentTimeState.removePropertyChangeListener(this);
         }
 
+        ScoreController.getInstance().setSelectedScoreObjects(null);
+        
         this.clearAll();
 
         if (score != null) {
@@ -886,6 +890,8 @@ public final class ScoreTopComponent extends TopComponent
         if (!(layerGroup instanceof PolyObject)) {
             return;
         }
+
+        ScoreController.getInstance().setSelectedScoreObjects(null);
 
         PolyObject pObj = (PolyObject) layerGroup;
 
