@@ -43,6 +43,9 @@ FIX
   layers existed, the new layer would not function properly to show score object
   changes 
 
+* Prevent resizing of Score Objects from left-hand side to have 0 duration when
+  snap is enabled 
+
 
 >Notes for 2.5.10<
 [release 2014.02.11]
