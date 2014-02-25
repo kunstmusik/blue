@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score;
 
+import blue.score.ScoreObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
@@ -26,6 +27,7 @@ import blue.ui.core.score.mouse.MarqueeSelectionListener;
 import blue.ui.core.score.mouse.MoveScoreObjectsListener;
 import blue.ui.core.score.mouse.PasteClickMouseListener;
 import blue.ui.core.score.mouse.PopupMenuListener;
+import blue.ui.core.score.mouse.ResizeScoreObjectsListener;
 import blue.ui.core.score.mouse.ScoreObjectSelectionListener;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -53,6 +55,7 @@ public class ScoreMouseListener extends MouseAdapter {
     private MouseAdapter currentGestureListener = null;
     private MouseAdapter[] mouseListeners = {
         new PopupMenuListener(), new PasteClickMouseListener(),
+        new ResizeScoreObjectsListener(),
         new ScoreObjectSelectionListener(), new MoveScoreObjectsListener(),
         new MarqueeSelectionListener()
     };
@@ -88,6 +91,10 @@ public class ScoreMouseListener extends MouseAdapter {
         for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
             current = mouseListeners[i];
             current.mousePressed(e);
+
+//            if(e.isConsumed()) {
+//                System.out.println("Current: " + current);
+//            }
         }
 
         currentGestureListener = e.isConsumed() ? current : null;
@@ -122,7 +129,9 @@ public class ScoreMouseListener extends MouseAdapter {
 
         final JLayeredPane scorePanel = scoreTC.getScorePanel();
 
-        if (sObjView != null) {
+        // FIXME - perhaps optimize the lookup to cache results using lookup listener
+        if (sObjView != null && 
+                scoreTC.getLookup().lookupAll(ScoreObject.class).contains(sObjView.getScoreObject())) {
 
             Point p = SwingUtilities.convertPoint(e.getComponent(),
                     e.getPoint(),
@@ -131,13 +140,10 @@ public class ScoreMouseListener extends MouseAdapter {
 
             if (p.x > 0 && p.x < EDGE) {
                 scorePanel.setCursor(RIGHT_RESIZE_CURSOR);
-//                dragMode = RESIZE_RIGHT;
             } else if (p.x > comp.getWidth() - EDGE && p.x <= comp.getWidth()) {
                 scorePanel.setCursor(LEFT_RESIZE_CURSOR);
-//                dragMode = RESIZE_LEFT;
             } else {
                 scorePanel.setCursor(NORMAL_CURSOR);
-//                dragMode = MOVE;
             }
         } else {
             scorePanel.setCursor(NORMAL_CURSOR);
