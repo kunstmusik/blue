@@ -47,8 +47,6 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
         }
 
         // consume as a click was done on a score object
-        e.consume();
-
         ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
         Collection<? extends ScoreObject> selectedScoreObjects
                 = scoreTC.getLookup().lookupAll(ScoreObject.class);
@@ -56,15 +54,19 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
         if (e.isShiftDown()) {
             if (selectedScoreObjects.contains(scoreObj)) {
                 ScoreController.getInstance().removeSelectedScoreObject(scoreObj);
+
             } else {
                 ScoreController.getInstance().addSelectedScoreObject(scoreObj);
             }
+            e.consume();
         } else {
             if (!selectedScoreObjects.contains(scoreObj)) {
                 ScoreController.getInstance().setSelectedScoreObjects(
                         Collections.singleton(scoreObj));
+                e.consume();
             } else if (e.getClickCount() == 2) {
                 editScoreObject(selectedScoreObjects, scoreObj);
+                e.consume();
             }
         }
 
@@ -74,11 +76,11 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
             ScoreObject scoreObj) {
         if (scoreObj instanceof PolyObject) {
             PolyObject pObj = (PolyObject) scoreObj;
-            ScoreTopComponent.findInstance().editLayerGroup(pObj);  
+            ScoreTopComponent.findInstance().editLayerGroup(pObj);
         } else {
             if (selectedScoreObjects.size() == 1) {
-                SoundObjectEditorTopComponent editor = 
-                        SoundObjectEditorTopComponent.findInstance();
+                SoundObjectEditorTopComponent editor
+                        = SoundObjectEditorTopComponent.findInstance();
 
                 if (!editor.isOpened()) {
                     editor.open();
