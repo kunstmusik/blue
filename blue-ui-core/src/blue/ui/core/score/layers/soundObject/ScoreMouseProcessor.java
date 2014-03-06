@@ -14,7 +14,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.JOptionPane;
@@ -435,7 +434,7 @@ class ScoreMouseProcessor extends MouseAdapter {
     private void editPolyObject(PolyObject pObj) {
         content.set(Collections.emptyList(), null);
 
-        ScoreTopComponent.findInstance().editLayerGroup(pObj);
+        ScoreController.getInstance().editLayerGroup(pObj);
 //        ScoreObjectBar.getInstance().addLayerGroup(pObj);
 
         this.justSelected = true;

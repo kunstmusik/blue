@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2014
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,16 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+
 package blue.ui.core.score;
 
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * Path of the current item being edited, whether it's the root score, or a 
+ * sub-LayerGroup of the score
  *
  * @author stevenyi
  */
-interface ScoreBarListener {
-    public void scoreBarScoreSelected(Score score, int scrollX, int scrollY);
-    public void scoreBarLayerGroupSelected(LayerGroup layerGroup, int scrollX, int scrollY);
+public class ScorePath {
+    WeakReference<Score> scoreRef;
+    List<WeakReference<LayerGroup>> layerGroups = new ArrayList<>();
+
+    public ScorePath(Score score) {
+        this.scoreRef = new WeakReference<>(score);
+    }
+
+    public Score getScore() {
+        return scoreRef.get();
+    }
+
+    public List<WeakReference<LayerGroup>> getLayerGroups() {
+        return layerGroups;
+    }
+
 }

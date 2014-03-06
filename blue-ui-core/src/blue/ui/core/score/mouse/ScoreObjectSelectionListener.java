@@ -76,7 +76,7 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
             ScoreObject scoreObj) {
         if (scoreObj instanceof PolyObject) {
             PolyObject pObj = (PolyObject) scoreObj;
-            ScoreTopComponent.findInstance().editLayerGroup(pObj);
+            ScoreController.getInstance().editLayerGroup(pObj);
         } else {
             if (selectedScoreObjects.size() == 1) {
                 SoundObjectEditorTopComponent editor

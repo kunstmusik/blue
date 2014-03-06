@@ -72,7 +72,7 @@ import org.openide.windows.WindowManager;
  */
 public final class ScoreTopComponent extends TopComponent
         implements ScoreListener, RenderTimeManagerListener,
-        PropertyChangeListener, ScoreBarListener, SoundObjectProvider {
+        PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
     private static ScoreTopComponent instance;
@@ -84,7 +84,7 @@ public final class ScoreTopComponent extends TopComponent
     private NoteProcessorDialog npcDialog = null;
     SoundObject bufferSoundObject;
     BlueData data;
-    ScoreObjectBar scoreObjectBar = ScoreObjectBar.getInstance();
+    ScoreObjectBar scoreObjectBar = new ScoreObjectBar();
     TimeBar timeBar = new TimeBar();
     Border libraryBorder = new LineBorder(Color.GREEN);
     JPanel leftPanel = new JPanel(new BorderLayout());
@@ -109,8 +109,8 @@ public final class ScoreTopComponent extends TopComponent
     ScoreMouseWheelListener mouseWheelListener;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
-    RenderTimeManager renderTimeManager =
-            Lookup.getDefault().lookup(RenderTimeManager.class);
+    RenderTimeManager renderTimeManager
+            = Lookup.getDefault().lookup(RenderTimeManager.class);
     PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -135,27 +135,28 @@ public final class ScoreTopComponent extends TopComponent
 
         init();
 
-        scoreObjectBar.setScoreBarListener(this);
+        ScoreController.getInstance().addScoreControllerListener(scoreObjectBar);
+        ScoreController.getInstance().addScoreControllerListener(this);
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(
-                        evt.getPropertyName())) {
-                    reinitialize();
-                }
-            }
-        });
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (BlueProjectManager.CURRENT_PROJECT.equals(
+                                evt.getPropertyName())) {
+                            reinitialize();
+                        }
+                    }
+                });
 
         scrollPane.getVerticalScrollBar().addAdjustmentListener(
                 new AdjustmentListener() {
-            @Override
-            public void adjustmentValueChanged(AdjustmentEvent ae) {
-                syncPosition.setLocation(0, ae.getValue());
-                layerHeaderViewPort.setViewPosition(syncPosition);
-            }
-        });
+                    @Override
+                    public void adjustmentValueChanged(AdjustmentEvent ae) {
+                        syncPosition.setLocation(0, ae.getValue());
+                        layerHeaderViewPort.setViewPosition(syncPosition);
+                    }
+                });
 
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
@@ -169,8 +170,8 @@ public final class ScoreTopComponent extends TopComponent
 
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
-                if(!e.isShiftDown()) {
-                    for(MouseWheelListener listener: scrollPane.getMouseWheelListeners()) {
+                if (!e.isShiftDown()) {
+                    for (MouseWheelListener listener : scrollPane.getMouseWheelListeners()) {
                         listener.mouseWheelMoved(e);
                     }
                 }
@@ -193,7 +194,6 @@ public final class ScoreTopComponent extends TopComponent
                 width = (width > d.width) ? width : d.width;
                 height += d.height;
             }
-
 
             if (width != getWidth() || height != getHeight()) {
 
@@ -243,10 +243,9 @@ public final class ScoreTopComponent extends TopComponent
 
             this.data.addPropertyChangeListener(this);
 
-
             Score score = data.getScore();
             score.addScoreListener(this);
-            scoreObjectBar.setScore(score);
+            ScoreController.getInstance().setScore(score);
 
             content.add(score);
         } else {
@@ -354,18 +353,17 @@ public final class ScoreTopComponent extends TopComponent
         scrollPane.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-
         tempoControlPanel.setBorder(BorderFactory.createRaisedBevelBorder());
 
         JButton manageButton = new JButton("Manage");
         manageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                LayerGroup lGroup = scoreObjectBar.getCurrentLayerGroup();
+                ScorePath path = ScoreController.getInstance().getScorePath();
 
                 JDialog dialog;
 
-                if (lGroup == null) {
+                if (path.layerGroups.size() == 0) {
                     ScoreManagerDialog dlg = new ScoreManagerDialog(
                             WindowManager.getDefault().getMainWindow(), true);
                     dlg.setScore(data.getScore());
@@ -374,7 +372,8 @@ public final class ScoreTopComponent extends TopComponent
                 } else {
                     LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
                             WindowManager.getDefault().getMainWindow(), true);
-                    dlg.setLayerGroup(lGroup);
+                    dlg.setLayerGroup(path.layerGroups.get(
+                            path.layerGroups.size() - 1).get());
                     dlg.setSize(300, 500);
                     dialog = dlg;
                 }
@@ -519,10 +518,6 @@ public final class ScoreTopComponent extends TopComponent
         ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
     }
 
-    public void editLayerGroup(LayerGroup layerGroup) {
-        scoreObjectBar.addLayerGroup(layerGroup);
-    }
-
     // FIXME - this needs to be better done, perhaps hidden behind an interface
     public int getHorizontalScrollValue() {
         return scrollPane.getHorizontalScrollBar().getValue();
@@ -538,10 +533,6 @@ public final class ScoreTopComponent extends TopComponent
 
     public void setVerticalScrollValue(int value) {
         scrollPane.getVerticalScrollBar().setValue(value);
-    }
-
-    public boolean isEditingRootScore() {
-        return (scoreObjectBar.getCurrentLayerGroup() == null);
     }
 
     /**
@@ -726,7 +717,8 @@ public final class ScoreTopComponent extends TopComponent
 
     private void updateRenderTimePointer() {
 
-        if (!ScoreObjectBar.getInstance().isEditingScore()) {
+        ScorePath path = ScoreController.getInstance().getScorePath();
+        if (path.layerGroups.size() != 0) {
             return;
         }
 
@@ -775,6 +767,7 @@ public final class ScoreTopComponent extends TopComponent
 //                this.timePointer = -1.0f;
 //                updateRenderTimePointer();
 //            }
+
         } else if (evt.getSource() == currentTimeState) {
             if (evt.getPropertyName().equals("pixelSecond")) {
                 float val = data.getRenderStartTime();
@@ -817,7 +810,7 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     /* SCORE BAR LISTENER METHODS */
-    @Override
+//    @Override
     public void scoreBarScoreSelected(Score score, int scrollX, int scrollY) {
 
         if (this.currentTimeState != null) {
@@ -825,7 +818,7 @@ public final class ScoreTopComponent extends TopComponent
         }
 
         ScoreController.getInstance().setSelectedScoreObjects(null);
-        
+
         this.clearAll();
 
         if (score != null) {
@@ -867,7 +860,6 @@ public final class ScoreTopComponent extends TopComponent
             renderLoopPointer.setVisible(true);
             renderTimePointer.setVisible(true);
 
-
             scorePanel.add(marquee, new Integer(500));
             marquee.setVisible(false);
 
@@ -883,7 +875,7 @@ public final class ScoreTopComponent extends TopComponent
         }
     }
 
-    @Override
+//    @Override
     public void scoreBarLayerGroupSelected(LayerGroup layerGroup, int scrollX, int scrollY) {
         //FIXME - this should not be hardcoded to PolyObject
 
@@ -908,7 +900,6 @@ public final class ScoreTopComponent extends TopComponent
 
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
-
 
             addPanelsForLayerGroup(-1, layerGroup, pObj.getTimeState());
 
@@ -957,6 +948,15 @@ public final class ScoreTopComponent extends TopComponent
         return layerPanel;
     }
 
+    @Override
+    public void scorePathChanged(ScorePath path) {
+        if (path.layerGroups.size() == 0) {
+            scoreBarScoreSelected(path.getScore(), 0, 0);
+        } else {
+
+            scoreBarLayerGroupSelected(path.layerGroups.get(path.layerGroups.size() - 1).get(), 0, 0);
+        }
+    }
 
     final static class ResolvableHelper implements Serializable {
 
@@ -989,7 +989,7 @@ public final class ScoreTopComponent extends TopComponent
 
         return retVal.getScoreObjectViewAtPoint(
                 SwingUtilities.convertPoint(e.getComponent(),
-                e.getPoint(), (JComponent) retVal));
+                        e.getPoint(), (JComponent) retVal));
     }
 
     public TimeState getTimeState() {

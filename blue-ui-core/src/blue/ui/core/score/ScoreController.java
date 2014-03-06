@@ -22,9 +22,12 @@ package blue.ui.core.score;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.WeakHashMap;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
 
@@ -46,6 +49,9 @@ public class ScoreController {
     private Lookup lookup;
     private ScoreObjectBuffer buffer = new ScoreObjectBuffer();
     private InstanceContent content;
+    private Score score = null;
+    WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
+    private List<ScoreControllerListener> listeners = new ArrayList<>();
 
     private ScoreController() {
     }
@@ -59,15 +65,87 @@ public class ScoreController {
         return this.lookup;
     }
 
-    public Score getScore() {
-        if(lookup == null || content == null) {
-            return null;
+    public void setScore(Score score) {
+        this.score = score;
+
+        ScorePath path = scorePaths.get(score);
+        if (path == null) {
+            path = new ScorePath(score);
+            scorePaths.put(score, path);
         }
-        return lookup.lookup(Score.class);
+
+        fireScorePathChanged();
+    }
+
+    public void editLayerGroup(LayerGroup layerGroup) {
+
+        ScorePath path = scorePaths.get(score);
+        if (path == null) {
+            throw new RuntimeException(
+                    "Error: LayerGroup passed in without a Score");
+        }
+
+        if (layerGroup == null) {
+            if(!path.getLayerGroups().isEmpty()) {
+                path.getLayerGroups().clear();
+                fireScorePathChanged();
+            }
+            return;
+        }
+
+        List<WeakReference<LayerGroup>> layerGroups = path.getLayerGroups();
+
+        if(!layerGroups.isEmpty() && layerGroups.get(layerGroups.size() - 1).get() == layerGroup) {
+            return;
+        }
+        
+        WeakReference<LayerGroup> foundRef = null;
+
+        for (WeakReference<LayerGroup> ref : layerGroups) {
+            if (ref.get() == layerGroup) {
+                foundRef = ref;
+                break;
+            }
+        }
+
+        if (foundRef == null) {
+           layerGroups.add(new WeakReference<>(layerGroup)); 
+        } else {
+           path.layerGroups = layerGroups.subList(0, layerGroups.indexOf(foundRef) + 1);
+        }
+        fireScorePathChanged();
+        
+    }
+
+    public Score getScore() {
+        return score;
+    }
+
+
+    public ScorePath getScorePath() {
+        return scorePaths.get(score);
+    }
+
+    public void addScoreControllerListener(ScoreControllerListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeScoreControllerListener(ScoreControllerListener listener) {
+        listeners.remove(listener);
+    }
+
+    protected void fireScorePathChanged() {
+        ScorePath path = scorePaths.get(score);
+
+        if (path != null) {
+            for (ScoreControllerListener listener : listeners) {
+                listener.scorePathChanged(path);
+            }
+        }
     }
 
     public void copyScoreObjects() {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
 
@@ -119,10 +197,10 @@ public class ScoreController {
     }
 
     public void deleteScoreObjects() {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
-        
+
         Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
                 ScoreObject.class);
         Score score = lookup.lookup(Score.class);
@@ -158,10 +236,10 @@ public class ScoreController {
     }
 
     public void cutScoreObjects() {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
-        
+
         copyScoreObjects();
         deleteScoreObjects();
     }
@@ -170,13 +248,14 @@ public class ScoreController {
         return buffer;
     }
 
-    /** Set the current collection of selected ScoreObjects. Can pass null to 
+    /**
+     * Set the current collection of selected ScoreObjects. Can pass null to
      * clear the selection.
-     * 
-     * @param scoreObjects 
+     *
+     * @param scoreObjects
      */
     public void setSelectedScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
 
@@ -191,26 +270,26 @@ public class ScoreController {
     }
 
     public void addSelectedScoreObject(ScoreObject scoreObj) {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
         content.add(scoreObj);
     }
 
     public void removeSelectedScoreObject(ScoreObject scoreObj) {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return;
         }
         content.remove(scoreObj);
     }
 
-
     public Collection<? extends ScoreObject> getSelectedScoreObjects() {
-        if(lookup == null || content == null) {
+        if (lookup == null || content == null) {
             return null;
         }
         return lookup.lookupAll(ScoreObject.class);
     }
+
 
     public static class ScoreObjectBuffer {
 
