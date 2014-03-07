@@ -134,9 +134,13 @@ public final class ScoreTopComponent extends TopComponent
                 "HINT_ScoreTopComponent"));
 
         init();
+        
+        final ScoreController scoreController = ScoreController.getInstance();
 
-        ScoreController.getInstance().addScoreControllerListener(scoreObjectBar);
-        ScoreController.getInstance().addScoreControllerListener(this);
+        scoreController.addScoreControllerListener(scoreObjectBar);
+        scoreController.addScoreControllerListener(this);
+        scoreController.setLookupAndContent(getLookup(), content);
+        scoreController.setScrollPane(scrollPane);
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 new PropertyChangeListener() {
@@ -178,7 +182,6 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
-        ScoreController.getInstance().setLookupAndContent(getLookup(), content);
     }
 
     protected void checkSize() {
@@ -363,7 +366,7 @@ public final class ScoreTopComponent extends TopComponent
 
                 JDialog dialog;
 
-                if (path.layerGroups.size() == 0) {
+                if (path.getLastLayerGroup() == null) {
                     ScoreManagerDialog dlg = new ScoreManagerDialog(
                             WindowManager.getDefault().getMainWindow(), true);
                     dlg.setScore(data.getScore());
@@ -372,8 +375,7 @@ public final class ScoreTopComponent extends TopComponent
                 } else {
                     LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
                             WindowManager.getDefault().getMainWindow(), true);
-                    dlg.setLayerGroup(path.layerGroups.get(
-                            path.layerGroups.size() - 1).get());
+                    dlg.setLayerGroup(path.getLastLayerGroup());
                     dlg.setSize(300, 500);
                     dialog = dlg;
                 }
@@ -718,7 +720,7 @@ public final class ScoreTopComponent extends TopComponent
     private void updateRenderTimePointer() {
 
         ScorePath path = ScoreController.getInstance().getScorePath();
-        if (path.layerGroups.size() != 0) {
+        if (path.getLastLayerGroup() != null) {
             return;
         }
 
@@ -950,11 +952,12 @@ public final class ScoreTopComponent extends TopComponent
 
     @Override
     public void scorePathChanged(ScorePath path) {
-        if (path.layerGroups.size() == 0) {
+        LayerGroup layerGroup = path.getLastLayerGroup();
+        if (layerGroup == null) {
             scoreBarScoreSelected(path.getScore(), 0, 0);
         } else {
 
-            scoreBarLayerGroupSelected(path.layerGroups.get(path.layerGroups.size() - 1).get(), 0, 0);
+            scoreBarLayerGroupSelected(layerGroup, 0, 0);
         }
     }
 

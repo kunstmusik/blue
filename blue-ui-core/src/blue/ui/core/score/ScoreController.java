@@ -23,11 +23,12 @@ import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.WeakHashMap;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
 
@@ -52,6 +53,7 @@ public class ScoreController {
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();
     private List<ScoreControllerListener> listeners = new ArrayList<>();
+    JScrollPane scrollPane = null;
 
     private ScoreController() {
     }
@@ -61,66 +63,73 @@ public class ScoreController {
         this.content = content;
     }
 
+    public void setScrollPane(JScrollPane scrollPane) {
+        this.scrollPane = scrollPane;
+    }
+
     protected Lookup getLookup() {
         return this.lookup;
     }
 
     public void setScore(Score score) {
+        ScorePath path = scorePaths.get(this.score);
+        if(path != null) {
+            path.setScrollX(scrollPane.getHorizontalScrollBar().getValue());
+            path.setScrollY(scrollPane.getVerticalScrollBar().getValue());
+        }
+
+        
         this.score = score;
 
-        ScorePath path = scorePaths.get(score);
+        path = scorePaths.get(score);
         if (path == null) {
             path = new ScorePath(score);
             scorePaths.put(score, path);
         }
 
         fireScorePathChanged();
+
+        final ScorePath fPath = path;
+//            SwingUtilities.invokeLater(new Runnable() {
+//                @Override
+//                public void run() {
+                   scrollPane.getHorizontalScrollBar().setValue(fPath.getScrollX());
+                   scrollPane.getVerticalScrollBar().setValue(fPath.getScrollY());
+//                }
+//            });
     }
 
     public void editLayerGroup(LayerGroup layerGroup) {
-
-        ScorePath path = scorePaths.get(score);
+        final ScorePath path = scorePaths.get(score);
         if (path == null) {
             throw new RuntimeException(
                     "Error: LayerGroup passed in without a Score");
         }
-
-        if (layerGroup == null) {
-            if(!path.getLayerGroups().isEmpty()) {
-                path.getLayerGroups().clear();
-                fireScorePathChanged();
-            }
-            return;
+       
+        if (!path.containsLayerGroup(layerGroup)) {
+            int scrollX = scrollPane.getHorizontalScrollBar().getValue();
+            int scrollY = scrollPane.getVerticalScrollBar().getValue();
+            path.setScrollX(scrollX);
+            path.setScrollY(scrollY);
         }
 
-        List<WeakReference<LayerGroup>> layerGroups = path.getLayerGroups();
+        if (path.editLayerGroup(layerGroup)) {
+            fireScorePathChanged();
 
-        if(!layerGroups.isEmpty() && layerGroups.get(layerGroups.size() - 1).get() == layerGroup) {
-            return;
-        }
-        
-        WeakReference<LayerGroup> foundRef = null;
-
-        for (WeakReference<LayerGroup> ref : layerGroups) {
-            if (ref.get() == layerGroup) {
-                foundRef = ref;
-                break;
-            }
+//            SwingUtilities.invokeLater(new Runnable() {
+//                @Override
+//                public void run() {
+                   scrollPane.getHorizontalScrollBar().setValue(path.getScrollX());
+                   scrollPane.getVerticalScrollBar().setValue(path.getScrollY());
+//                }
+//            });
         }
 
-        if (foundRef == null) {
-           layerGroups.add(new WeakReference<>(layerGroup)); 
-        } else {
-           path.layerGroups = layerGroups.subList(0, layerGroups.indexOf(foundRef) + 1);
-        }
-        fireScorePathChanged();
-        
     }
 
     public Score getScore() {
         return score;
     }
-
 
     public ScorePath getScorePath() {
         return scorePaths.get(score);
@@ -289,7 +298,6 @@ public class ScoreController {
         }
         return lookup.lookupAll(ScoreObject.class);
     }
-
 
     public static class ScoreObjectBuffer {
 

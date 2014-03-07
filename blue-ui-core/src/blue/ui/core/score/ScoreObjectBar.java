@@ -31,6 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -211,8 +212,8 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
             btn.addMouseListener(popupListener);
             this.add(btn);
 
-            for (WeakReference<LayerGroup> lgroupRef : path.layerGroups) {
-                btn = new LayerGroupButton(lgroupRef.get());
+            for (LayerGroup layerGroup : path.getLayerGroups()) {
+                btn = new LayerGroupButton(layerGroup);
                 btn.addActionListener(this);
                 btn.addMouseListener(popupListener);
                 this.add(btn);
@@ -220,7 +221,9 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
 
         } else {
             int layerGroupsCount = getComponentCount() - 1;
-            int pathSize = path.layerGroups.size();
+            List<LayerGroup> layerGroups = path.getLayerGroups();
+            int pathSize = layerGroups.size();
+
             if (layerGroupsCount > pathSize) {
                 while ((getComponentCount() - 1) > pathSize) {
                     this.remove(getComponentCount() - 1);
@@ -228,7 +231,7 @@ public final class ScoreObjectBar extends JComponent implements ActionListener,
             } else if (layerGroupsCount < pathSize) {
                 for (int i = layerGroupsCount; i < pathSize; i++) {
                     LayerGroupButton btn = new LayerGroupButton(
-                            path.layerGroups.get(i).get());
+                            layerGroups.get(i));
                     btn.addActionListener(this);
                     btn.addMouseListener(popupListener);
                     this.add(btn);
