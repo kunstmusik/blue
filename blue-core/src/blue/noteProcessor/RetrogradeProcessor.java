@@ -1,5 +1,6 @@
 package blue.noteProcessor;
 
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -23,6 +24,7 @@ import electric.xml.Element;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="RetrogradeProcessor", position = 80)
 public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable {
 
     public RetrogradeProcessor() {

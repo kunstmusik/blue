@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score;
 
 import blue.BlueSystem;
@@ -39,8 +38,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -55,12 +56,13 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
  * @author steven
  */
-
 public class NoteProcessorChainEditor extends JComponent {
 
     private NoteProcessorPopup noteProcPopup = new NoteProcessorPopup(this);
@@ -98,9 +100,9 @@ public class NoteProcessorChainEditor extends JComponent {
         Border titledBorder1 = new TitledBorder(
                 border1,
                 " "
-                        + BlueSystem
-                                .getString("soundObjectProperties.noteProcessors.title")
-                        + " ");
+                + BlueSystem
+                .getString("soundObjectProperties.noteProcessors.title")
+                + " ");
 
         Border border2 = BorderFactory.createCompoundBorder(titledBorder1,
                 BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -188,7 +190,8 @@ public class NoteProcessorChainEditor extends JComponent {
                 .add(
                         new JLabel(
                                 BlueSystem
-                                        .getString("soundObjectProperties.noteProcessors.notSupported")),
+                                .getString(
+                                        "soundObjectProperties.noteProcessors.notSupported")),
                         "unsupported");
         noteProcessorCardLayout.show(noteProcessorEditPanel, "unsupported");
 
@@ -223,27 +226,6 @@ public class NoteProcessorChainEditor extends JComponent {
     public NoteProcessorChain getNoteProcessorChain() {
         return this.npc;
     }
-
-//    public static void main(String[] args) {
-//        try {
-//            UIManager.setLookAndFeel(new BlueLookAndFeel());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        NoteProcessorChain npc = new NoteProcessorChain();
-//        npc.addNoteProcessor(new AddProcessor());
-//        npc.addNoteProcessor(new MultiplyProcessor());
-//        npc.addNoteProcessor(new TimeWarpProcessor());
-//
-//        NoteProcessorChainEditor npcEditor = new NoteProcessorChainEditor();
-//
-//        npcEditor.setNoteProcessorChain(npc);
-//
-//        blue.utility.GUI.showComponentAsStandalone(npcEditor,
-//                "NoteProcessorChain Editor Test", true);
-//
-//    }
 
     void showNoteProcessorPopup(ActionEvent e) {
         if (npc == null) {
@@ -332,30 +314,22 @@ public class NoteProcessorChainEditor extends JComponent {
         public NoteProcessorPopup(NoteProcessorChainEditor npcEditor) {
             this.npcEditor = npcEditor;
 
-            ArrayList<Class> plugins =
-                    BluePluginManager.getInstance().getNoteProcessorClasses();
+            FileObject npFiles[] = FileUtil.getConfigFile("blue/noteProcessors").getChildren();
+            List<FileObject> ordereNpFiles
+                    = FileUtil.getOrder(Arrays.asList(npFiles), true);
 
-            String className;
             JMenuItem temp;
 
             JMenu insertNoteProcessor = new JMenu("Insert Note Processor");
 
-            for (Class npClass : plugins) {
-                className = npClass.getName();
-
-                npNameClassMap.put(className, npClass);
-
-                try {
-                    temp = new JMenuItem();
-                    temp.setText(BlueSystem.getShortClassName(className));
-                    temp.setActionCommand(className);
-                    temp.addActionListener(this);
-                    insertNoteProcessor.add(temp);
-
-                } catch (Exception e) {
-                    Exceptions.printStackTrace(e);
-                }
-
+            for (FileObject fObj : ordereNpFiles) {
+                String name = (String) fObj.getAttribute("displayName");
+                System.out.println("NoteProcessor Name: " + name);
+                temp = new JMenuItem();
+                temp.setText(name);
+                temp.setActionCommand(fObj.getPath());
+                temp.addActionListener(this);
+                insertNoteProcessor.add(temp);
             }
 
             insertChainListener = new ActionListener() {
@@ -439,7 +413,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         private void updateNPCMapMenu() {
             if (npcMap == null) {
@@ -463,7 +437,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         protected void saveChain() {
             if (npcMap == null || npcEditor.getNoteProcessorChain().size() == 0) {
@@ -489,7 +463,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         protected void removeChain() {
             if (npcMap == null || npcMap.size() == 0) {
@@ -515,10 +489,11 @@ public class NoteProcessorChainEditor extends JComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
+            NoteProcessor npTemplate = FileUtil.getConfigObject(ae.getActionCommand(),
+                    NoteProcessor.class);
             try {
-                Class npClass = npNameClassMap.get(ae.getActionCommand());
-                Object tempNP = npClass.newInstance();
-                npcEditor.addNoteProcessor((NoteProcessor) tempNP);
+                NoteProcessor np = npTemplate.getClass().newInstance();
+                npcEditor.addNoteProcessor(np);
             } catch (InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -551,9 +526,9 @@ public class NoteProcessorChainEditor extends JComponent {
         private JMenuItem removeProcessor = new JMenuItem();
 
         private JMenuItem cutProcessor = new JMenuItem();
-        
+
         private JMenuItem copyProcessor = new JMenuItem();
-        
+
         private JMenuItem pasteProcessor = new JMenuItem();
 
         public EditPopup(final NoteProcessorChainEditor npcEditor) {
@@ -610,11 +585,11 @@ public class NoteProcessorChainEditor extends JComponent {
             pasteProcessor.setEnabled(NoteProcessorChainEditor.buffer != null);
 
             NoteProcessor currentNoteProcessor = npcEditor.npcModel.getCurrentNoteProcessor();
-            
+
             pasteProcessor.setEnabled(NoteProcessorChainEditor.buffer != null);
             cutProcessor.setEnabled(currentNoteProcessor != null);
             copyProcessor.setEnabled(currentNoteProcessor != null);
-            
+
             removeProcessor.setEnabled(currentNoteProcessor != null);
 
             super.show(invoker, x, y);

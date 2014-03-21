@@ -21,6 +21,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -31,6 +32,7 @@ import java.io.Serializable;
  * @author steven
  * 
  */
+@NoteProcessorPlugin(displayName="LineMultiplyProcessor", position = 150)
 public class LineMultiplyProcessor implements NoteProcessor, Serializable {
 
     private String lineMultiplyString = "0 0";

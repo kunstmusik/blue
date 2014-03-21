@@ -21,6 +21,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -33,6 +34,8 @@ import java.io.Serializable;
 /**
  * @author Steven Yi
  */
+
+@NoteProcessorPlugin(displayName="TuningProcessor", position = 160)
 public class TuningProcessor implements NoteProcessor, Serializable {
 
     // String fileName = "";

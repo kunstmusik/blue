@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -16,6 +17,7 @@ import java.util.Collections;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="RotateProcessor", position = 70)
 public class RotateProcessor implements NoteProcessor, java.io.Serializable {
 
     int noteIndex = 1;

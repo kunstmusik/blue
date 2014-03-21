@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,7 +15,7 @@ import java.io.Serializable;
  * @author steven yi
  * @version 1.0
  */
-
+@NoteProcessorPlugin(displayName="AddProcessor", position = 10)
 public class AddProcessor implements NoteProcessor, Serializable {
     float value = 0.0f;
 

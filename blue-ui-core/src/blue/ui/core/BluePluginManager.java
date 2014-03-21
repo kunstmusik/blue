@@ -87,10 +87,6 @@ public class BluePluginManager {
         return getPluginClasses(SoundObject.class);
     }
 
-    public ArrayList<Class> getNoteProcessorClasses() {
-        return getPluginClasses(NoteProcessor.class);
-    }
-
     public ArrayList<Class> getInstrumentClasses() {
         return getPluginClasses(Instrument.class);
     }

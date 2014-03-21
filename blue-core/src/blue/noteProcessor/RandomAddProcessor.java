@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -16,6 +17,7 @@ import java.io.Serializable;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="RandomAddProcessor", position = 40)
 public class RandomAddProcessor implements NoteProcessor, Serializable {
 
     int pfield = 4;

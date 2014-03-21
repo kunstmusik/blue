@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,6 +15,8 @@ import electric.xml.Element;
  * 
  * @author steven
  */
+
+@NoteProcessorPlugin(displayName="TimeWarpProcessor", position = 130)
 public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
 
     private String timeWarpString = "0 60";
