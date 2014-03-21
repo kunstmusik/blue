@@ -1,6 +1,7 @@
 package blue.orchestra;
 
 import blue.Tables;
+import blue.plugin.InstrumentPlugin;
 import blue.scripting.RhinoProxy;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
@@ -29,6 +30,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "RhinoInstrument", position = 30)
 public class RhinoInstrument extends AbstractInstrument implements
         Serializable {
 

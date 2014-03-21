@@ -5,6 +5,7 @@ import blue.orchestra.blueX7.AlgorithmCommonData;
 import blue.orchestra.blueX7.EnvelopePoint;
 import blue.orchestra.blueX7.LFOData;
 import blue.orchestra.blueX7.Operator;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
@@ -34,6 +35,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "BlueX7", position = 40)
 public class BlueX7 extends AbstractInstrument implements Serializable {
 
     private static final String BLUEX7_HAS_BEEN_COMPILED = "blueX7.hasStaticTablesBeenCompiled";

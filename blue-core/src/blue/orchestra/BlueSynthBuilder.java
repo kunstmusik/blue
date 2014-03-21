@@ -25,6 +25,7 @@ import blue.automation.Automatable;
 import blue.automation.ParameterList;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.*;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -40,6 +41,8 @@ import java.util.HashMap;
  * @author Steven Yi
  * 
  */
+
+@InstrumentPlugin(displayName = "BlueSynthBuilder", position = 50)
 public class BlueSynthBuilder extends AbstractInstrument implements
         Serializable, Automatable {
 

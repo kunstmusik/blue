@@ -4,8 +4,6 @@
  */
 package blue;
 
-import blue.noteProcessor.*;
-import blue.orchestra.*;
 import blue.plugin.BluePlugin;
 import blue.plugin.BluePluginFactory;
 import blue.plugin.DefaultBluePluginProvider;
@@ -19,37 +17,37 @@ public class BlueCorePluginProvider extends DefaultBluePluginProvider {
     
     public BlueCorePluginProvider() {
         BluePluginFactory factory = new BluePluginFactory(this);
-        factory.setPluginType(NoteProcessor.class);
+//        factory.setPluginType(NoteProcessor.class);
 
         // Note Processors
 
-        factory.appendPlugin(AddProcessor.class);
-        factory.appendPlugin(PchAddProcessor.class);
-        factory.appendPlugin(MultiplyProcessor.class);
-        factory.appendPlugin(RandomAddProcessor.class);
-        factory.appendPlugin(RandomMultiplyProcessor.class);
-        factory.appendPlugin(SubListProcessor.class);
-        factory.appendPlugin(RotateProcessor.class);
-        factory.appendPlugin(RetrogradeProcessor.class);
-        factory.appendPlugin(InversionProcessor.class);
-        factory.appendPlugin(PchInversionProcessor.class);
-        factory.appendPlugin(EqualsProcessor.class);
-        factory.appendPlugin(SwitchProcessor.class);
-        factory.appendPlugin(TimeWarpProcessor.class);
-        factory.appendPlugin(LineAddProcessor.class);
-        factory.appendPlugin(LineMultiplyProcessor.class);
-        factory.appendPlugin(TuningProcessor.class);
-        factory.appendPlugin(PythonProcessor.class);
+//        factory.appendPlugin(AddProcessor.class);
+//        factory.appendPlugin(PchAddProcessor.class);
+//        factory.appendPlugin(MultiplyProcessor.class);
+//        factory.appendPlugin(RandomAddProcessor.class);
+//        factory.appendPlugin(RandomMultiplyProcessor.class);
+//        factory.appendPlugin(SubListProcessor.class);
+//        factory.appendPlugin(RotateProcessor.class);
+//        factory.appendPlugin(RetrogradeProcessor.class);
+//        factory.appendPlugin(InversionProcessor.class);
+//        factory.appendPlugin(PchInversionProcessor.class);
+//        factory.appendPlugin(EqualsProcessor.class);
+//        factory.appendPlugin(SwitchProcessor.class);
+//        factory.appendPlugin(TimeWarpProcessor.class);
+//        factory.appendPlugin(LineAddProcessor.class);
+//        factory.appendPlugin(LineMultiplyProcessor.class);
+//        factory.appendPlugin(TuningProcessor.class);
+//        factory.appendPlugin(PythonProcessor.class);
 
         // INSTRUMENTS
 
-        factory.setPluginType(Instrument.class);
-
-        factory.appendPlugin(GenericInstrument.class);
-        factory.appendPlugin(PythonInstrument.class);
-        factory.appendPlugin(RhinoInstrument.class);
-        factory.appendPlugin(BlueX7.class);
-        factory.appendPlugin(BlueSynthBuilder.class);
+//        factory.setPluginType(Instrument.class);
+//
+//        factory.appendPlugin(GenericInstrument.class);
+//        factory.appendPlugin(PythonInstrument.class);
+//        factory.appendPlugin(RhinoInstrument.class);
+//        factory.appendPlugin(BlueX7.class);
+//        factory.appendPlugin(BlueSynthBuilder.class);
 
         // SOUND OBBJECTS
 

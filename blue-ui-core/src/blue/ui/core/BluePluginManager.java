@@ -20,8 +20,6 @@
 
 package blue.ui.core;
 
-import blue.noteProcessor.NoteProcessor;
-import blue.orchestra.Instrument;
 import blue.plugin.BluePlugin;
 import blue.plugin.BluePluginProvider;
 import blue.soundObject.SoundObject;
@@ -85,9 +83,5 @@ public class BluePluginManager {
 
     public ArrayList<Class> getSoundObjectClasses() {
         return getPluginClasses(SoundObject.class);
-    }
-
-    public ArrayList<Class> getInstrumentClasses() {
-        return getPluginClasses(Instrument.class);
     }
 }

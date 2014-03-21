@@ -47,7 +47,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -70,6 +72,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
@@ -96,8 +100,10 @@ public class UserInstrumentLibrary extends JComponent {
         this.add(label, BorderLayout.NORTH);
 
         label.setMinimumSize(new Dimension(0, 0));
-        label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
-                3, 3)));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createBevelBorder(BevelBorder.RAISED),
+                new EmptyBorder(3, 3,
+                        3, 3)));
 
         JScrollPane libraryScroll = new JScrollPane(libraryTree);
 
@@ -169,11 +175,14 @@ public class UserInstrumentLibrary extends JComponent {
 
         ActionMap actionMap = libraryTree.getActionMap();
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, BlueSystem.getMenuShortcutKey()), "cutNode");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,
+                BlueSystem.getMenuShortcutKey()), "cutNode");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()), "copyNode");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,
+                BlueSystem.getMenuShortcutKey()), "copyNode");
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()), "pasteNode");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,
+                BlueSystem.getMenuShortcutKey()), "pasteNode");
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                 "deleteNode");
@@ -337,19 +346,24 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
     UserInstrumentLibrary instrGUI;
 
-    JMenuItem addCategoryMenuItem = new JMenuItem(BlueSystem.getString("codeRepository.addGroup"));
+    JMenuItem addCategoryMenuItem = new JMenuItem(BlueSystem.getString(
+            "codeRepository.addGroup"));
 
-    JMenuItem removeCategoryMenuItem = new JMenuItem(BlueSystem.getString("codeRepository.removeGroup"));
+    JMenuItem removeCategoryMenuItem = new JMenuItem(BlueSystem.getString(
+            "codeRepository.removeGroup"));
 
     JMenu addInstrumentMenu;
 
-    JMenuItem removeInstrumentMenuItem = new JMenuItem(BlueSystem.getString("instrument.remove"));
+    JMenuItem removeInstrumentMenuItem = new JMenuItem(BlueSystem.getString(
+            "instrument.remove"));
 
     JMenuItem cutMenuItem = new JMenuItem(BlueSystem.getString("instrument.cut"));
 
-    JMenuItem copyMenuItem = new JMenuItem(BlueSystem.getString("instrument.copy"));
+    JMenuItem copyMenuItem = new JMenuItem(BlueSystem.getString(
+            "instrument.copy"));
 
-    JMenuItem pasteMenuItem = new JMenuItem(BlueSystem.getString("instrument.paste"));
+    JMenuItem pasteMenuItem = new JMenuItem(BlueSystem.getString(
+            "instrument.paste"));
 
     Separator sep = new Separator();
 
@@ -405,29 +419,34 @@ class UserInstrumentTreePopup extends JPopupMenu {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                int retVal = FileChooserManager.getDefault().showOpenDialog(IMPORT_DIALOG,
+                int retVal = FileChooserManager.getDefault().showOpenDialog(
+                        IMPORT_DIALOG,
                         SwingUtilities.getRoot(instrGUI));
 
                 if (retVal == JFileChooser.APPROVE_OPTION) {
 
-                    File f = FileChooserManager.getDefault().getSelectedFile(IMPORT_DIALOG);
+                    File f = FileChooserManager.getDefault().getSelectedFile(
+                            IMPORT_DIALOG);
                     Document doc;
 
                     try {
                         doc = new Document(f);
                         Element root = doc.getRoot();
                         if (root.getName().equals("instrument")) {
-                            Instrument tempInstr = (Instrument) ObjectUtilities.loadFromXML(root);
+                            Instrument tempInstr = (Instrument) ObjectUtilities.loadFromXML(
+                                    root);
                             addInstrument(tempInstr);
                         } else {
-                            JOptionPane.showMessageDialog(SwingUtilities.getRoot(instrGUI),
+                            JOptionPane.showMessageDialog(
+                                    SwingUtilities.getRoot(instrGUI),
                                     "Error: File did not contain instrument",
                                     "Error", JOptionPane.ERROR_MESSAGE);
                         }
 
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(instrGUI),
+                        JOptionPane.showMessageDialog(SwingUtilities.getRoot(
+                                instrGUI),
                                 "Error: Could not read instrument from file",
                                 "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -445,15 +464,18 @@ class UserInstrumentTreePopup extends JPopupMenu {
                     return;
                 }
 
-                int retVal = FileChooserManager.getDefault().showSaveDialog(EXPORT_DIALOG,
+                int retVal = FileChooserManager.getDefault().showSaveDialog(
+                        EXPORT_DIALOG,
                         SwingUtilities.getRoot(instrGUI));
 
                 if (retVal == JFileChooser.APPROVE_OPTION) {
 
-                    File f = FileChooserManager.getDefault().getSelectedFile(EXPORT_DIALOG);
+                    File f = FileChooserManager.getDefault().getSelectedFile(
+                            EXPORT_DIALOG);
 
                     if (f.exists()) {
-                        int overWrite = JOptionPane.showConfirmDialog(SwingUtilities.getRoot(instrGUI),
+                        int overWrite = JOptionPane.showConfirmDialog(
+                                SwingUtilities.getRoot(instrGUI),
                                 "Please confirm you would like to overwrite this file.");
 
                         if (overWrite != JOptionPane.OK_OPTION) {
@@ -551,7 +573,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
         if (bufferedObj instanceof Instrument) {
             addInstrument((Instrument) bufferedObj);
         } else {
-            addInstrumentCategory((InstrumentCategory) ObjectUtilities.clone(bufferedObj));
+            addInstrumentCategory((InstrumentCategory) ObjectUtilities.clone(
+                    bufferedObj));
         }
     }
 
@@ -583,10 +606,10 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         instrGUI.iLibrary.addInstrument(currentCategory, newInstrument);
 
-    /*
-     * BlueUndoManager.setUndoManager("orchestra"); BlueUndoManager.addEdit(
-     * new AddEdit(orchTableModel, clone, new Integer(iNum)));
-     */
+        /*
+         * BlueUndoManager.setUndoManager("orchestra"); BlueUndoManager.addEdit(
+         * new AddEdit(orchTableModel, clone, new Integer(iNum)));
+         */
     }
 
     private void removeInstrument() {
@@ -652,40 +675,40 @@ class UserInstrumentTreePopup extends JPopupMenu {
     }
 
     private JMenu getAddInstrumentMenu() {
-        HashMap<String, Class> instrNameClassMap = new HashMap<>();
-
-        ArrayList<Class> instrumentPlugins =
-                    BluePluginManager.getInstance().getInstrumentClasses();
-
-        String className;
-        JMenuItem temp;
-
         JMenu instrumentMenu = new JMenu("Add Instrument");
 
-        for (Class plugin : instrumentPlugins) {
+        FileObject instrFiles[] = FileUtil.getConfigFile("blue/instruments").getChildren();
+        List<FileObject> orderedInstrFiles
+                = FileUtil.getOrder(Arrays.asList(instrFiles), true);
 
-            className = plugin.getCanonicalName();
-            instrNameClassMap.put(className, plugin);
+        JMenuItem temp;
 
-            try {
-                final Instrument finalInstrument = (Instrument)plugin.newInstance();
-                temp = new JMenuItem();
+        this.setLabel("Add Instrument");
 
-                temp.setText(BlueSystem.getShortClassName(className));
-                temp.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        addInstrument(finalInstrument);
-                    }
-                });
-                instrumentMenu.add(temp);
-
-            } catch (InstantiationException | IllegalAccessException e) {
-                Exceptions.printStackTrace(e);
+        ActionListener al = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Instrument instrTemplate = FileUtil.getConfigObject(e.getActionCommand(),
+                        Instrument.class);
+                try {
+                    Instrument newInstrument = instrTemplate.getClass().newInstance();
+                    addInstrument(newInstrument);
+                } catch (InstantiationException | IllegalAccessException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
+        };
 
+        for (FileObject fObj : orderedInstrFiles) {
+            String name = (String) fObj.getAttribute("displayName");
+            System.out.println("NoteProcessor Name: " + name);
+            temp = new JMenuItem();
+            temp.setText(name);
+            temp.setActionCommand(fObj.getPath());
+            temp.addActionListener(al);
+            instrumentMenu.add(temp);
         }
+
         return instrumentMenu;
     }
 }

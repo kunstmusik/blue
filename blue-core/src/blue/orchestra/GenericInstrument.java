@@ -21,6 +21,7 @@
 package blue.orchestra;
 
 import blue.Tables;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -37,6 +38,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "GenericInstrument", position = 10)
 public class GenericInstrument extends AbstractInstrument implements
         Serializable {
 

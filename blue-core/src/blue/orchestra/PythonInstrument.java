@@ -1,6 +1,7 @@
 package blue.orchestra;
 
 import blue.Tables;
+import blue.plugin.InstrumentPlugin;
 import blue.scripting.PythonProxy;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
@@ -28,6 +29,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "PythonInstrument", position = 20)
 public class PythonInstrument extends AbstractInstrument implements
         Serializable {
 
