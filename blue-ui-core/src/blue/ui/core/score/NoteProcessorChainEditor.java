@@ -324,7 +324,6 @@ public class NoteProcessorChainEditor extends JComponent {
 
             for (FileObject fObj : ordereNpFiles) {
                 String name = (String) fObj.getAttribute("displayName");
-                System.out.println("NoteProcessor Name: " + name);
                 temp = new JMenuItem();
                 temp.setText(name);
                 temp.setActionCommand(fObj.getPath());
