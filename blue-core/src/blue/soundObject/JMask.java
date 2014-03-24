@@ -22,7 +22,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.score.ScoreObject;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.jmask.Field;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -32,6 +32,8 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+
+@SoundObjectPlugin(displayName = "JMask", live=true, position = 50)
 public class JMask extends AbstractSoundObject {
 
     private NoteProcessorChain npc = new NoteProcessorChain();

@@ -51,23 +51,23 @@ public class BlueCorePluginProvider extends DefaultBluePluginProvider {
 
         // SOUND OBBJECTS
 
-        factory.setPluginType(SoundObject.class);
-        factory.setPropertyType(BluePlugin.PROP_LIVE);
-
-        factory.appendPlugin(AudioFile.class, false);
-        factory.appendPlugin(Comment.class, false);
-        factory.appendPlugin(External.class, true);
-        factory.appendPlugin(GenericScore.class, true);
-        factory.appendPlugin(JMask.class, true);
-        factory.appendPlugin(LineObject.class, false);
-        factory.appendPlugin(ObjectBuilder.class, true);
-        factory.appendPlugin(PatternObject.class, true);
-        factory.appendPlugin(PianoRoll.class, true);
-        factory.appendPlugin(PolyObject.class, false);
-        factory.appendPlugin(PythonObject.class, true);
-        factory.appendPlugin(RhinoObject.class, true);
-        factory.appendPlugin(Sound.class, false);
-        factory.appendPlugin(TrackerObject.class, true);
-        factory.appendPlugin(ZakLineObject.class, false);
+//        factory.setPluginType(SoundObject.class);
+//        factory.setPropertyType(BluePlugin.PROP_LIVE);
+//
+//        factory.appendPlugin(AudioFile.class, false);
+//        factory.appendPlugin(Comment.class, false);
+//        factory.appendPlugin(External.class, true);
+//        factory.appendPlugin(GenericScore.class, true);
+//        factory.appendPlugin(JMask.class, true);
+//        factory.appendPlugin(LineObject.class, false);
+//        factory.appendPlugin(ObjectBuilder.class, true);
+//        factory.appendPlugin(PatternObject.class, true);
+//        factory.appendPlugin(PianoRoll.class, true);
+//        factory.appendPlugin(PolyObject.class, false);
+//        factory.appendPlugin(PythonObject.class, true);
+//        factory.appendPlugin(RhinoObject.class, true);
+//        factory.appendPlugin(Sound.class, false);
+//        factory.appendPlugin(TrackerObject.class, true);
+//        factory.appendPlugin(ZakLineObject.class, false);
     }
 }

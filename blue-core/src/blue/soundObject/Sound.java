@@ -24,6 +24,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
+import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Map;
@@ -37,7 +38,7 @@ import java.util.Map;
  * @created November 11, 2001
  * @version 1.0
  */
-
+@SoundObjectPlugin(displayName = "Sound", live=false, position = 130)
 public class Sound extends AbstractSoundObject implements Serializable,
         Cloneable {
 

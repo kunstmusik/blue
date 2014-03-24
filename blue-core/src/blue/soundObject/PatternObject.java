@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.pattern.Pattern;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -41,6 +42,8 @@ import javax.swing.table.TableModel;
 /**
  * @author Steven Yi
  */
+
+@SoundObjectPlugin(displayName = "PatternObject", live=true, position = 80)
 public class PatternObject extends AbstractSoundObject implements Serializable,
         TableModel, GenericViewable {
 

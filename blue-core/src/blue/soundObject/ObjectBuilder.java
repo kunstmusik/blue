@@ -25,6 +25,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import blue.plugin.SoundObjectPlugin;
 import blue.scripting.PythonProxy;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
@@ -38,6 +39,7 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
+@SoundObjectPlugin(displayName = "ObjectBuilder", live=true, position = 70)
 public class ObjectBuilder extends AbstractSoundObject {
 //    private static BarRenderer renderer = new LetterRenderer("O");
 

@@ -29,7 +29,6 @@ import blue.score.undo.AddSoundObjectEdit;
 import blue.settings.GeneralSettings;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.BluePluginManager;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
 import blue.utility.GenericFileFilter;
@@ -40,8 +39,9 @@ import electric.xml.Element;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JFileChooser;
@@ -50,6 +50,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
@@ -99,22 +101,26 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
         this.add(addNewPolyObject);
         this.addSeparator();
 
-        ArrayList<Class> plugins =
-                    BluePluginManager.getInstance().getSoundObjectClasses();
-        
-        for (Class sObjClass : plugins) {
-            String className = sObjClass.getName();
 
-            if (className.equals("blue.soundObject.PolyObject")) {
+        FileObject sObjFiles[] = FileUtil.getConfigFile(
+                "blue/score/soundObjects").getChildren();
+        List<FileObject> orderedSObjFiles = FileUtil.getOrder(
+                Arrays.asList(sObjFiles), true);
+        
+        for (FileObject fObj : orderedSObjFiles) {
+            
+            String displayName = (String)fObj.getAttribute(("displayName"));
+            SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(), SoundObject.class);
+
+            if ("PolyObject".equals(displayName)) {
                 continue;
             }
 
-            sObjNameClassMap.put(className, sObjClass);
-
             JMenuItem temp = new JMenuItem();
             temp.setText(BlueSystem.getString("soundLayerPopup.addNew") + " " + 
-                    BlueSystem.getShortClassName(className));
-            temp.setActionCommand(className);
+                    displayName);
+            temp.putClientProperty("sObjClass", sObj.getClass());
+            temp.setActionCommand(displayName);
             temp.addActionListener(this);
             this.add(temp);
         }
@@ -264,13 +270,10 @@ public class SoundLayerPopup extends JPopupMenu implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
 
         // TODO - refactor out to addSoundObject
-
         try {
 
-            String sObjName = ae.getActionCommand();
-            Class c = sObjNameClassMap.get(sObjName);
-
-            SoundObject sObj = (SoundObject) c.newInstance();
+                Class c = (Class)((JMenuItem)ae.getSource()).getClientProperty("sObjClass");
+                SoundObject sObj = (SoundObject) c.newInstance();
             
             int start = xValue;
 

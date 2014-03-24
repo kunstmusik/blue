@@ -3,6 +3,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.soundObject.pianoRoll.Scale;
 import blue.utility.ScoreUtilities;
@@ -20,6 +21,7 @@ import java.util.Map;
  * @author steven yi
  */
 
+@SoundObjectPlugin(displayName = "PianoRoll", live=true, position = 90)
 public class PianoRoll extends AbstractSoundObject implements Serializable, GenericViewable {
 
     public static final int DISPLAY_TIME = 0;

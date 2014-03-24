@@ -22,7 +22,6 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.BlueSystem;
 import blue.score.TimeState;
 import blue.soundObject.SoundObject;
-import blue.ui.core.BluePluginManager;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -30,8 +29,9 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -40,6 +40,8 @@ import javax.swing.JMenuItem;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -72,24 +74,21 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         ScoreTimeCanvas sTimeCanvas = sTimeCanvasRef.get();
         Point p = pRef.get();
         int sLayerIndex = sTimeCanvas.getPolyObject().getLayerNumForY(
-                (int)p.getY());
+                (int) p.getY());
 
         try {
 
-            String sObjName = e.getActionCommand();
-            Class c = sObjNameClassMap.get(sObjName);
-            if (c == null) {
-                return;
-            }
-            
+            Class c = (Class) ((JMenuItem) e.getSource()).getClientProperty(
+                    "sObjClass");
             SoundObject sObj = (SoundObject) c.newInstance();
+
             TimeState timeState = sTimeCanvas.getPolyObject().getTimeState();
 
-            float start = (float)p.getX() / timeState.getPixelSecond();
-
+            float start = (float) p.getX() / timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
-                start = ScoreUtilities.getSnapValueStart(start, timeState.getSnapValue());
+                start = ScoreUtilities.getSnapValueStart(start,
+                        timeState.getSnapValue());
             }
             sObj.setStartTime(start);
 
@@ -109,32 +108,38 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         if (menu == null) {
             menu = new JMenu("Add SoundObject");
 
-            ArrayList<Class> plugins =
-                    BluePluginManager.getInstance().getSoundObjectClasses();
+            FileObject sObjFiles[] = FileUtil.getConfigFile(
+                    "blue/score/soundObjects").getChildren();
+            List<FileObject> orderedSObjFiles = FileUtil.getOrder(
+                    Arrays.asList(sObjFiles), true);
 
-            for (Class sObjClass : plugins) {
-                String className = sObjClass.getName();
+            for (FileObject fObj : orderedSObjFiles) {
 
-//                if (className.equals("blue.soundObject.PolyObject")) {
-//                    continue;
-//                }
+                String displayName = (String) fObj.getAttribute(("displayName"));
+                SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(),
+                        SoundObject.class);
 
-                sObjNameClassMap.put(className, sObjClass);
+                if ("PolyObject".equals(displayName)) {
+                    continue;
+                }
 
                 JMenuItem temp = new JMenuItem();
                 temp.setText(
                         BlueSystem.getString("soundLayerPopup.addNew") + " "
-                        + BlueSystem.getShortClassName(className));
-                temp.setActionCommand(className);
+                        + displayName);
+                temp.putClientProperty("sObjClass", sObj.getClass());
+                temp.setActionCommand(displayName);
                 temp.addActionListener(this);
                 menu.add(temp);
             }
         }
+
         return menu;
     }
 
     @Override
-    public Action createContextAwareInstance(Lookup actionContext) {
+    public Action createContextAwareInstance(Lookup actionContext
+    ) {
         pRef = new WeakReference<>(actionContext.lookup(Point.class));
         sTimeCanvasRef = new WeakReference<>(actionContext.lookup(
                 ScoreTimeCanvas.class));

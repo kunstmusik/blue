@@ -68,20 +68,20 @@ public class BluePluginManager {
         return pluginClasses;
     }
     
-    public ArrayList<Class> getLiveSoundObjectClasses() {
-        ArrayList<Class> sObjects = new ArrayList<>();
-
-        for (BluePlugin plugin : getPlugins(SoundObject.class)) {
-            if(Boolean.TRUE.equals(
-                    plugin.getProperty(BluePlugin.PROP_LIVE))) {
-                sObjects.add(plugin.getPluginClass());
-            }
-        }
-
-        return sObjects;
-    }
-
-    public ArrayList<Class> getSoundObjectClasses() {
-        return getPluginClasses(SoundObject.class);
-    }
+//    public ArrayList<Class> getLiveSoundObjectClasses() {
+//        ArrayList<Class> sObjects = new ArrayList<>();
+//
+//        for (BluePlugin plugin : getPlugins(SoundObject.class)) {
+//            if(Boolean.TRUE.equals(
+//                    plugin.getProperty(BluePlugin.PROP_LIVE))) {
+//                sObjects.add(plugin.getPluginClass());
+//            }
+//        }
+//
+//        return sObjects;
+//    }
+//
+//    public ArrayList<Class> getSoundObjectClasses() {
+//        return getPluginClasses(SoundObject.class);
+//    }
 }

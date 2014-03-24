@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.Serializable;
@@ -36,6 +37,7 @@ import java.util.Map;
  * @version 1.0
  */
 
+@SoundObjectPlugin(displayName = "RhinoObject", live=true, position = 120)
 public class RhinoObject extends AbstractSoundObject implements Serializable,
         Cloneable {
 

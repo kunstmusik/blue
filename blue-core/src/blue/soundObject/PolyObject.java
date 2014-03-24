@@ -22,6 +22,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
@@ -47,6 +48,8 @@ import java.util.Vector;
  * @created November 11, 2001
  * @version 1.0
  */
+
+@SoundObjectPlugin(displayName = "PolyObject", live=false, position = 100)
 public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, 
         ScoreObjectLayerGroup<SoundLayer>,
         Serializable, Cloneable, GenericViewable {

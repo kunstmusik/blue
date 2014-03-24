@@ -22,6 +22,7 @@ package blue.soundObject;
 
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.ceciliaModule.CeciliaModuleCompilationUnit;
 import blue.soundObject.ceciliaModule.CeciliaObject;
 import blue.soundObject.ceciliaModule.ModuleDefinition;
@@ -37,6 +38,7 @@ import java.util.Map;
  * @author steven
  * 
  */
+//@SoundObjectPlugin(displayName = "CeciliaModule", live=false, position = 200)
 public class CeciliaModule extends AbstractSoundObject implements Serializable {
 
     public static final int ORCHESTRA_MONO = 0;

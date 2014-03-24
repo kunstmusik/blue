@@ -22,6 +22,7 @@ package blue.soundObject;
 
 import blue.automation.LineColors;
 import blue.components.lines.Line;
+import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
@@ -30,6 +31,8 @@ import java.util.Map;
 /**
  * @author Steven Yi
  */
+
+@SoundObjectPlugin(displayName = "LineObject", live=false, position = 60)
 public class LineObject extends AbstractLineObject implements Serializable {
     public LineObject() {
         this.setName("LineObject");

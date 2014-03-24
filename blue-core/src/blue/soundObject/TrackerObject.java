@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.tracker.TrackList;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+@SoundObjectPlugin(displayName = "TrackerObject", live=true, position = 140)
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 
     private TrackList tracks = new TrackList();

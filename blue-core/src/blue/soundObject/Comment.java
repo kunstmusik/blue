@@ -2,6 +2,7 @@ package blue.soundObject;
 
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import java.io.Serializable;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Map;
  * @version 1.0
  */
 
+@SoundObjectPlugin(displayName = "Comment", live=false, position = 20)
 public class Comment extends AbstractSoundObject implements Serializable,
         Cloneable {
 

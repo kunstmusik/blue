@@ -24,6 +24,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
+import blue.plugin.SoundObjectPlugin;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import javax.swing.JOptionPane;
  * @author Steven Yi
  *
  */
+@SoundObjectPlugin(displayName = "AudioFile", live=false, position = 10)
 public class AudioFile extends AbstractSoundObject implements Serializable,
         Cloneable {
 

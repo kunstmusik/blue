@@ -3,6 +3,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import blue.utility.ScoreUtilities;
@@ -31,6 +32,7 @@ import java.util.Map;
  * @version 1.0
  */
 
+@SoundObjectPlugin(displayName = "External", live=true, position = 30)
 public class External extends AbstractSoundObject implements Serializable,
         Cloneable {
 //    private static BarRenderer renderer = new LetterRenderer("E");
