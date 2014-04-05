@@ -133,6 +133,7 @@
 
     <!ENTITY developers SYSTEM "developers/top.xml">
 
+    <!ENTITY devExtending SYSTEM "developers/extending.xml">
     <!ENTITY devCore SYSTEM "developers/core/top.xml">
     <!ENTITY buildingBlue SYSTEM "developers/core/building.xml">
 

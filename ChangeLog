@@ -46,6 +46,13 @@ FIX
 * Prevent resizing of Score Objects from left-hand side to have 0 duration when
   snap is enabled 
 
+INTERNAL
+
+* Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
+  @InstrumentPlugin, @NoteProcessorPlugin)
+
+
+
 
 >Notes for 2.5.10<
 [release 2014.02.11]
