@@ -336,6 +336,11 @@ public class APIDiskRenderer implements DiskRenderService {
             argsList.Append(args[i]);
         }
 
+        if (job.getCurrentWorkingDirectory() != null) {
+            String sfdir = "--env:SFDIR=" + job.getCurrentWorkingDirectory().getAbsolutePath();
+            argsList.Append(sfdir);
+        }
+
         argsList.Append(csdPath);
 
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
