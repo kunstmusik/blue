@@ -73,7 +73,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     @Override
     public String toString() {
-        return "Csound 5 API";
+        return "Csound 6 API";
     }
 
     @Override
@@ -115,6 +115,13 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             argsList.Append(args[i]);
             io.getOut().append(" ").append(args[i]);
         }
+
+        if (currentWorkingDirectory != null) {
+            String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
+            argsList.Append(sfdir);
+            io.getOut().append(" ").append(sfdir);
+        }
+        
         io.getOut().append(" )\n");
 
         int retVal = csound.Compile(argsList.argc(), argsList.argv());

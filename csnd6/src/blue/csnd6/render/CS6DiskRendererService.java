@@ -93,6 +93,11 @@ public class CS6DiskRendererService implements DiskRenderService {
             argsList.Append(args[i]);
         }
 
+        if (currentWorkingDirectory != null) {
+            String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
+            argsList.Append(sfdir);
+        }
+
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 
         if (retVal != 0) {
