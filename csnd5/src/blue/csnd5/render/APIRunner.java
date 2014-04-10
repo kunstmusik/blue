@@ -130,6 +130,13 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             io.getOut().append(" ").append(args[i]);
 //            System.out.println("[" + i + "] " + args[i] );
         }
+
+        if (currentWorkingDirectory != null) {
+            String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
+            argsList.Append(sfdir);
+            io.getOut().append(" ").append(sfdir);
+        }
+        
         io.getOut().append(" )\n");
 
         int retVal = csound.Compile(argsList.argc(), argsList.argv());

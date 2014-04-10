@@ -20,15 +20,26 @@
 package blue.utility;
 
 import blue.scripting.PythonProxy;
+import de.congrace.exp4j.Calculable;
+import de.congrace.exp4j.ExpressionBuilder;
+import de.congrace.exp4j.UnknownFunctionException;
+import de.congrace.exp4j.UnparsableExpressionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ScoreExpressionParser {
 
     // TODO - should throw exception, also does not yet support @ and @@ syntax
     public static float eval(String input) {
 
-        String cleanInput = clean(input);
-
-        return PythonProxy.evalExpression(cleanInput);
+        try {
+            Calculable calc = new ExpressionBuilder(input).build();
+            return (float)calc.calculate();
+        } catch (UnknownFunctionException | UnparsableExpressionException ex) {
+            Logger.getLogger(ScoreExpressionParser.class.getName()).log(Level.SEVERE,
+                    null, ex);
+            throw new RuntimeException(ex);
+        }
     }
 
     private static String clean(String input) {

@@ -37,10 +37,14 @@ public class ScoreUtilitiesTest extends TestCase {
         testScore.append("i1 0 2 3 4 5 ;garbage\n");
         testScore.append("i1 + 2 3 4 5\n");
 
+        for(int i = 0; i < 200000; i++) {
+            testScore.append("i1 + 2 3 4 5 6 7 8 [ 1.34 + 34 ] \n");
+        }
+        
         NoteList nl = null;
 
         // System.out.println(testScore.toString());
-
+        long startTime = System.currentTimeMillis();
         try {
             nl = ScoreUtilities.getNotes(testScore.toString());
         } catch (Exception e) {
@@ -48,10 +52,12 @@ public class ScoreUtilitiesTest extends TestCase {
         }
 
         assertNotNull(nl);
+
+        System.out.println("getNotes(): time " + (System.currentTimeMillis() - startTime));
     }
 
     public void testMultiLineNotes() {
-        String testScore = "i1 0 2 3 4 5\n6 7 8 9\n8.8 8\n";
+        String testScore = "i 1 0 2 3 4 5\n6 7 8 9\n8.8 8\n";
         testScore += "i1 2 3 4 5\n";
         testScore += "i1 2 3 4 5\n";
         testScore += "\"test\" 1 2 3 4 5\n";
