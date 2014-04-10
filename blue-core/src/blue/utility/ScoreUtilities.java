@@ -26,6 +26,7 @@ import blue.soundObject.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class ScoreUtilities {
 
@@ -168,7 +169,7 @@ public class ScoreUtilities {
                         }
 
                         if (tempNote != null) {
-                            notes.addNote(tempNote);
+                            notes.add(tempNote);
                             previousNote = tempNote;
                         }
 
