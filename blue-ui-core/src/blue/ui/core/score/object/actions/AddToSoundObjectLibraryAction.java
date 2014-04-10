@@ -41,6 +41,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -57,18 +58,15 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
     private final LayerGroupPanel panel;
 
     public AddToSoundObjectLibraryAction() {
-        this(null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public AddToSoundObjectLibraryAction(
-            Collection<? extends ScoreObject> scoreObjects,
-            Collection<? extends SoundObject> soundObjects,
-            LayerGroupPanel panel) {
+    public AddToSoundObjectLibraryAction(Lookup lookup) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_AddToSoundObjectLibraryAction"));
-        this.scoreObjects = scoreObjects;
-        this.soundObjects = soundObjects;
-        this.panel = panel;
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.soundObjects = lookup.lookupAll(SoundObject.class);
+        this.panel = lookup.lookup(LayerGroupPanel.class);
     }
 
     @Override
@@ -97,10 +95,7 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AddToSoundObjectLibraryAction(
-                actionContext.lookupAll(ScoreObject.class),
-                actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(LayerGroupPanel.class));
+        return new AddToSoundObjectLibraryAction(actionContext);
     }
 
     private void replaceSoundObject(SoundObject oldSoundObject,

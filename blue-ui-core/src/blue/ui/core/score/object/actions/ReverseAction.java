@@ -46,6 +46,7 @@ public final class ReverseAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        //FIXME - should be a ContextAwareAction...
         Lookup lkp = ScoreTopComponent.findInstance().getLookup();
         Collection<? extends ScoreObject> selected = lkp.lookupAll(
                 ScoreObject.class);

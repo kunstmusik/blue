@@ -57,6 +57,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -72,15 +73,14 @@ public final class FreezeUnfreezeAction extends AbstractAction
     private final Collection<? extends SoundObject> soundObjects;
 
     public FreezeUnfreezeAction() {
-        this(null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public FreezeUnfreezeAction(Collection<? extends ScoreObject> scoreObjects,
-            Collection<? extends SoundObject> soundObjects) {
+    public FreezeUnfreezeAction(Lookup lookup) {
         super(NbBundle.getMessage(FreezeUnfreezeAction.class,
                 "CTL_FreezeUnfreezeAction"));
-        this.scoreObjects = scoreObjects;
-        this.soundObjects = soundObjects;
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.soundObjects = lookup.lookupAll(SoundObject.class);
     }
 
     @Override
@@ -117,10 +117,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new FreezeUnfreezeAction(
-                actionContext.lookupAll(ScoreObject.class),
-                actionContext.lookupAll(SoundObject.class)
-        );
+        return new FreezeUnfreezeAction(actionContext);
     }
 
     static class FreezeRunnable implements ProgressRunnable<Void> {

@@ -41,6 +41,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 
 @ActionID(
@@ -59,14 +60,14 @@ public final class ImportSoundObjectAction extends AbstractAction
     protected Point p;
 
     public ImportSoundObjectAction() {
-        this(null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public ImportSoundObjectAction(LayerGroupPanel lGroupPanel, Point p) {
+    public ImportSoundObjectAction(Lookup lookup) {
         super(NbBundle.getMessage(ImportSoundObjectAction.class,
                 "CTL_ImportSoundObjectAction"));
-        this.lGroupPanel = lGroupPanel;
-        this.p = p;
+        this.lGroupPanel = lookup.lookup(LayerGroupPanel.class);
+        this.p = lookup.lookup(Point.class);
     }
 
     @Override
@@ -135,8 +136,6 @@ public final class ImportSoundObjectAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new ImportSoundObjectAction(
-                actionContext.lookup(LayerGroupPanel.class),
-                actionContext.lookup(Point.class));
+        return new ImportSoundObjectAction(actionContext);
     }
 }

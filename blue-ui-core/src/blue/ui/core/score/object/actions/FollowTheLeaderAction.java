@@ -37,6 +37,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -50,13 +51,13 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
     private final Collection<? extends ScoreObject> selected;
 
     public FollowTheLeaderAction() {
-        this(null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    private FollowTheLeaderAction(Collection<? extends ScoreObject> selected) {
+    private FollowTheLeaderAction(Lookup lookup) {
         super(NbBundle.getMessage(FollowTheLeaderAction.class,
                 "CTL_FollowTheLeaderAction"));
-        this.selected = selected;
+        this.selected = lookup.lookupAll(ScoreObject.class);
     }
 
     @Override
@@ -110,7 +111,6 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new FollowTheLeaderAction(actionContext.lookupAll(
-                ScoreObject.class));
+        return new FollowTheLeaderAction(actionContext);
     }
 }

@@ -29,7 +29,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JComponent;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -38,6 +37,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -56,14 +56,14 @@ public final class SelectLayerAction extends AbstractAction
     final Point p;
 
     public SelectLayerAction() {
-        this(null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    private SelectLayerAction(Point p) {
+    private SelectLayerAction(Lookup lookup) {
 
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectLayerAction"));
-        this.p = p;
+        this.p = lookup.lookup(Point.class);
     }
 
     @Override
@@ -83,8 +83,7 @@ public final class SelectLayerAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new SelectLayerAction(
-                actionContext.lookup(Point.class));
+        return new SelectLayerAction(actionContext);
     }
 
 //    public void selectLayer(int soundLayerIndex) {

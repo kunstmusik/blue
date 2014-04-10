@@ -51,6 +51,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -67,16 +68,16 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
     private TimeState timeState;
 
     public PasteSoundObjectAction() {
-        this(null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    private PasteSoundObjectAction(Collection<? extends ScoreObject> scoreObjects,
-            Point p, TimeState timeState) {
+    private PasteSoundObjectAction(Lookup lookup) {
         super(NbBundle.getMessage(PasteSoundObjectAction.class,
                 "CTL_PasteSoundObjectAction"));
-        this.scoreObjects = scoreObjects;
-        this.p = p;
-        this.timeState = timeState;
+
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.p = lookup.lookup(Point.class);
+        this.timeState = lookup.lookup(TimeState.class);
     }
 
     @Override
@@ -188,10 +189,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new PasteSoundObjectAction(
-                actionContext.lookupAll(ScoreObject.class),
-                actionContext.lookup(Point.class),
-                actionContext.lookup(TimeState.class));
+        return new PasteSoundObjectAction(actionContext);
     }
 
     private void getInstancesFromPolyObject(List<Instance> instanceSoundObjects,

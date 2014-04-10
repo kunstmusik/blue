@@ -44,6 +44,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -60,18 +61,16 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
     private Point p;
 
     public ReplaceWithBufferSoundObjectAction() {
-        this(null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public ReplaceWithBufferSoundObjectAction(Collection<? extends ScoreObject> scoreObjects,
-            Collection<? extends SoundObject> soundObjects,
-            Point p) {
+    public ReplaceWithBufferSoundObjectAction(Lookup lookup) {
 
         super(NbBundle.getMessage(ReplaceWithBufferSoundObjectAction.class,
                 "CTL_ReplaceWithBufferSoundObjectAction"));
-        this.scoreObjects = scoreObjects;
-        this.soundObjects = soundObjects;
-        this.p = p;
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.soundObjects = lookup.lookupAll(SoundObject.class);
+        this.p = lookup.lookup(Point.class);
     }
 
     @Override
@@ -97,7 +96,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
             replacement.setStartTime(sObj.getStartTime());
             replacement.setSubjectiveDuration(sObj.getSubjectiveDuration());
 
-            SoundLayer layer = (SoundLayer)findLayerForSoundObject(layers, sObj);
+            SoundLayer layer = (SoundLayer) findLayerForSoundObject(layers, sObj);
             layer.remove(sObj);
             layer.add(replacement);
         }
@@ -108,11 +107,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new ReplaceWithBufferSoundObjectAction(
-                actionContext.lookupAll(ScoreObject.class),
-                actionContext.lookupAll(SoundObject.class),
-                actionContext.lookup(Point.class));
-
+        return new ReplaceWithBufferSoundObjectAction(actionContext);
     }
 
     protected SoundObject getReplacementObject(ScoreController.ScoreObjectBuffer buffer,

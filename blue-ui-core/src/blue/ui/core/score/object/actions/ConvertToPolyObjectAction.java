@@ -27,16 +27,13 @@ import blue.score.layers.Layer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.undo.RemoveSoundObjectEdit;
-import blue.undo.BlueUndoManager;
+import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
@@ -47,6 +44,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -65,18 +63,19 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     private final Layer targetLayer;
 
     public ConvertToPolyObjectAction() {
-        this(null, null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public ConvertToPolyObjectAction(Collection<? extends ScoreObject> scoreObjects,
-            Collection<? extends SoundObject> soundObjects,
-            Point p, Layer targetLayer) {
+    public ConvertToPolyObjectAction(Lookup lookup) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_ConvertToPolyObjectAction"));
-        this.scoreObjects = scoreObjects;
-        this.soundObjects = soundObjects;
-        this.p = p;
-        this.targetLayer = targetLayer;
+        
+        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
+
+        this.soundObjects = lookup.lookupAll(SoundObject.class);
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.p = lookup.lookup(Point.class);
+        this.targetLayer = score.getGlobalLayerForY(p.y);
     }
 
     @Override
@@ -153,13 +152,7 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
-        Point p = actionContext.lookup(Point.class);
-        return new ConvertToPolyObjectAction(actionContext.lookupAll(
-                ScoreObject.class),
-                actionContext.lookupAll(SoundObject.class),
-                p,
-                score.getGlobalLayerForY(p.y));
+        return new ConvertToPolyObjectAction(actionContext);
     }
 
 

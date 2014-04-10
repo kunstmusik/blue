@@ -40,6 +40,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -57,19 +58,17 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
     private final Point p;
 
     public ConvertToObjectBuilderAction() {
-        this(null, null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public ConvertToObjectBuilderAction(Collection<? extends SoundObject> soundObjects,
-            Collection<? extends ScoreObject> scoreObjects,
-            LayerGroupPanel lGroupPanel,
-            Point p) {
+    public ConvertToObjectBuilderAction(Lookup lookup) {
         super(NbBundle.getMessage(ConvertToObjectBuilderAction.class,
                 "CTL_ConvertToObjectBuilderAction"));
-        this.soundObjects = soundObjects;
-        this.scoreObjects = scoreObjects;
-        this.lGroupPanel = lGroupPanel;
-        this.p = p;
+
+        this.soundObjects = lookup.lookupAll(SoundObject.class);
+        this.scoreObjects = lookup.lookupAll(ScoreObject.class);
+        this.lGroupPanel = lookup.lookup(LayerGroupPanel.class);
+        this.p = lookup.lookup(Point.class);
     }
 
     @Override
@@ -134,10 +133,6 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new ConvertToObjectBuilderAction(
-                actionContext.lookupAll(SoundObject.class),
-                actionContext.lookupAll(ScoreObject.class),
-                actionContext.lookup(LayerGroupPanel.class),
-                actionContext.lookup(Point.class));
+        return new ConvertToObjectBuilderAction(actionContext);
     }
 }

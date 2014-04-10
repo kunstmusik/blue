@@ -33,6 +33,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -46,13 +47,13 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
     private final Collection<? extends ScoreObject> selected;
 
     public ShiftAction() {
-        this(null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public ShiftAction(Collection<? extends ScoreObject> selected) {
+    public ShiftAction(Lookup lookup) {
         super(NbBundle.getMessage(ShiftAction.class,
                 "CTL_ShiftAction"));
-        this.selected = selected;
+        this.selected = lookup.lookupAll(ScoreObject.class);
     }
 
     @Override
@@ -88,6 +89,6 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new ShiftAction(actionContext.lookupAll(ScoreObject.class));
+        return new ShiftAction(actionContext);
     }
 }

@@ -30,6 +30,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 //@ActionID(
 //        category = "Blue",
@@ -43,13 +44,13 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
     private final Collection<? extends ScoreObject> selected;
 
     public AlignCenterAction() {
-        this(null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public AlignCenterAction(Collection<? extends ScoreObject> soundObjects) {
+    public AlignCenterAction(Lookup lookup) {
         super(NbBundle.getMessage(AlignCenterAction.class,
                 "CTL_AlignCenterAction"));
-        this.selected = soundObjects;
+        this.selected = lookup.lookupAll(ScoreObject.class);
     }
 
     @Override
@@ -108,6 +109,6 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new AlignCenterAction(actionContext.lookupAll(ScoreObject.class));
+        return new AlignCenterAction(actionContext);
     }
 }

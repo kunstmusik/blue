@@ -34,10 +34,7 @@ import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
@@ -47,6 +44,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -66,19 +64,21 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
     private PolyObject pObj = new PolyObject();
 
     public PasteAsPolyObjectAction() {
-        this(null, null, null, null, null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    public PasteAsPolyObjectAction(List<? extends ScoreObject> scoreObjects,
-            List<Integer> layerIndexes,
-            Point p, TimeState timeState, Layer targetLayer) {
+    public PasteAsPolyObjectAction(Lookup lookup) {
+
         super(NbBundle.getMessage(PasteAsPolyObjectAction.class,
                 "CTL_PasteAsPolyObjectAction"));
-        this.scoreObjects = scoreObjects;
-        this.layerIndexes = layerIndexes;
-        this.p = p;
-        this.timeState = timeState;
-        this.targetLayer = targetLayer;
+
+        ScoreController scoreController = ScoreController.getInstance();
+        
+        this.scoreObjects = scoreController.getScoreObjectBuffer().scoreObjects;
+        this.layerIndexes = scoreController.getScoreObjectBuffer().layerIndexes;
+        this.p = lookup.lookup(Point.class);
+        this.timeState = lookup.lookup(TimeState.class);
+        this.targetLayer = scoreController.getScore().getGlobalLayerForY(p.y);
     }
 
     @Override
@@ -151,15 +151,6 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        Point p = actionContext.lookup(Point.class);
-        ScoreController scoreController = ScoreController.getInstance();
-
-        return new PasteAsPolyObjectAction(
-                scoreController.getScoreObjectBuffer().scoreObjects,
-                scoreController.getScoreObjectBuffer().layerIndexes,
-                p,
-                actionContext.lookup(TimeState.class),
-                scoreController.getScore().getGlobalLayerForY(p.y)
-        );
+        return new PasteAsPolyObjectAction(actionContext);
     }
 }

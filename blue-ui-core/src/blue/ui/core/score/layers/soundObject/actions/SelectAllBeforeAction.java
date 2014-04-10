@@ -39,6 +39,7 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -55,14 +56,14 @@ public final class SelectAllBeforeAction extends AbstractAction implements
     final Point p;
 
     public SelectAllBeforeAction() {
-        this(null);
+        this(Utilities.actionsGlobalContext());
     }
 
-    private SelectAllBeforeAction(Point p) {
+    private SelectAllBeforeAction(Lookup lookup) {
 
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectAllBeforeAction"));
-        this.p = p;
+        this.p = lookup.lookup(Point.class);
     }
 
     @Override
@@ -100,7 +101,6 @@ public final class SelectAllBeforeAction extends AbstractAction implements
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
-        return new SelectAllBeforeAction(
-                actionContext.lookup(Point.class));
+        return new SelectAllBeforeAction(actionContext);
     }
 }
