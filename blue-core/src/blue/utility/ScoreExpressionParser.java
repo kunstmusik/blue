@@ -19,7 +19,6 @@
  */
 package blue.utility;
 
-import blue.scripting.PythonProxy;
 import de.congrace.exp4j.Calculable;
 import de.congrace.exp4j.ExpressionBuilder;
 import de.congrace.exp4j.UnknownFunctionException;
