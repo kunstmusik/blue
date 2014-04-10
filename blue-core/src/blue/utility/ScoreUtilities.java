@@ -39,11 +39,6 @@ public class ScoreUtilities {
         STARTING, COLLECTING;
     };
 
-    enum CommentType {
-
-        SINGLE_LINE, MULTI_LINE;
-    };
-
     /**
      * gets will return a NoteList given a score input (String)
      *
