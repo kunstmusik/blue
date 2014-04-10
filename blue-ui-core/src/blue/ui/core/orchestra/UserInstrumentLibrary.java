@@ -701,7 +701,6 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         for (FileObject fObj : orderedInstrFiles) {
             String name = (String) fObj.getAttribute("displayName");
-            System.out.println("NoteProcessor Name: " + name);
             temp = new JMenuItem();
             temp.setText(name);
             temp.setActionCommand(fObj.getPath());

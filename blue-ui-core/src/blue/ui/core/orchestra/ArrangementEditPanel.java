@@ -844,7 +844,6 @@ public class ArrangementEditPanel extends JComponent
 
             for (FileObject fObj : orderedInstrFiles) {
                 String name = (String) fObj.getAttribute("displayName");
-                System.out.println("NoteProcessor Name: " + name);
                 temp = new JMenuItem();
                 temp.setText(name);
                 temp.setActionCommand(fObj.getPath());
