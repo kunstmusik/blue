@@ -126,15 +126,15 @@ public class Note implements Serializable, Comparable {
                 i++;
 
                 buffer.add(Float.toString(val));
-            } else if (input.charAt(i) == ' ' || input.charAt(i) == '\t') {
+            } else if (Character.isWhitespace(input.charAt(i))) {
                 while (i < size
-                        && (input.charAt(i) == ' ' || input.charAt(i) == '\t')) {
+                        && Character.isWhitespace(input.charAt(i))) {
                     i++; // eat up empty spaces or tabs
                 }
             } else {
                 start = i;
                 while (i < size
-                        && (input.charAt(i) != ' ' && input.charAt(i) != '\t')) {
+                        && !(Character.isWhitespace(input.charAt(i)))) {
                     i++;
                 }
                 buffer.add(input.substring(start, i));

@@ -93,6 +93,11 @@ public class APIDiskRenderer implements DiskRenderService {
             argsList.Append(args[i]);
         }
 
+        if (currentWorkingDirectory != null) {
+            String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
+            argsList.Append(sfdir);
+        }
+
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 
         if (retVal != 0) {
@@ -329,6 +334,11 @@ public class APIDiskRenderer implements DiskRenderService {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
             argsList.Append(args[i]);
+        }
+
+        if (job.getCurrentWorkingDirectory() != null) {
+            String sfdir = "--env:SFDIR=" + job.getCurrentWorkingDirectory().getAbsolutePath();
+            argsList.Append(sfdir);
         }
 
         argsList.Append(csdPath);

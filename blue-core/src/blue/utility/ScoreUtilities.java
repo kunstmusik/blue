@@ -19,7 +19,6 @@ package blue.utility;
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 import blue.noteProcessor.NoteProcessor;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
@@ -27,14 +26,22 @@ import blue.soundObject.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.StringTokenizer;
 
 public class ScoreUtilities {
+
     private static int RAMP_END_NOT_FOUND = -1;
 
     private static int PFIELD_NOT_FLOAT = -2;
 
-    /** ****************** OPERATIONS ON NOTELISTS ******************* */
+    enum ParseState {
+
+        STARTING, COLLECTING;
+    };
+
+    enum CommentType {
+
+        SINGLE_LINE, MULTI_LINE;
+    };
 
     /**
      * getNotes will return a NoteList given a score input (String)
@@ -43,74 +50,176 @@ public class ScoreUtilities {
      */
     public static NoteList getNotes(String in) throws NoteParseException {
         NoteList notes = new NoteList();
-        
-        if(in == null || in.length() == 0) {
+        Note previousNote = null;
+        Note tempNote = null;
+        int start = -1, end = -1, lineNumber = 1, len, lastIndex;
+        ParseState state = ParseState.STARTING;
+
+        if (in == null || (len = in.length()) == 0) {
             return notes;
         }
 
-        String clean = TextUtilities.stripMultiLineComments(in);
-        clean = TextUtilities.stripSingleLineComments(clean);
+        lastIndex = len - 1;
 
-        StringTokenizer temp = new StringTokenizer(clean, "\n");
+        for (int i = 0; i < len; i++) {
+            char c = in.charAt(i);
 
-        String[] lines = clean.split(("\n"));
+//            if (c == '\r') {
+//                i++;
+//                if (i == len) {
+//                    break;
+//                }
+//                c = in.charAt(i);
+//            }
+            if (c == '\n') {
+                lineNumber++;
+            }
 
-        for(int i = 0; i < lines.length; i++) {
-            lines[i] = lines[i].trim();
-        }
-
-        Note previousNote = null;
-        Note tempNote = null;
-
-        for(int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-
-            if(line.length() > 0 && line.startsWith("i")) {
-                line = "i" + line.substring(1);
-
-                if(i < lines.length - 1) {
-                    do {
-                        String nextLine = lines[i + 1].trim();
-
-                        if(nextLine.length() == 0) {
-                            break;
-                        }
-
-                        char c = nextLine.charAt(0);
-                        if(Character.isDigit(c) || c == '\"' || c == '.') {
-                            line += " " + nextLine;
+            switch (state) {
+                case STARTING:
+                    if (c == ';') {
+                        while (i < len) {
                             i++;
-                        } else {
-                            break;
+                            if (in.charAt(i) == '\n') {
+                                break;
+                            }
                         }
-                    } while (i < lines.length - 1);
-                }
 
-                try {
-                    tempNote = Note.createNote(line, previousNote);
-                } catch (NoteParseException e) {
-                    e.setLineNumber(i + 1);
-                    throw e;
-                }
+                    } else if (c == '/' && (i < len - 2)) {
+                        if (in.charAt(i + 1) == '/') {
+                            while (i < len) {
+                                i++;
+                                if (in.charAt(i) == '\n') {
+                                    break;
+                                }
+                            }
+                        } else if (in.charAt(i + 1) == '*') {
+                            while (i < len) {
+                                i++;
+                                if (in.charAt(i) == '*' && (i < len - 2) && in.charAt(
+                                        i + 1) == '/') {
+                                    i++;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (!Character.isWhitespace(c)) {
+                        state = ParseState.COLLECTING;
+                        start = i;
+                    }
 
-                if (tempNote != null) {
-                    notes.addNote(tempNote);
-                    previousNote = tempNote;
-                }
+                    break;
+                case COLLECTING:
+
+                    if (c == ';') {
+                        i = i - 1;
+                        end = i;
+                    } else if (c == '/' && (i < len - 2)) {
+                        if (in.charAt(i + 1) == '/') {
+                            end = i - 1;
+                            i = end;
+                        } else if (in.charAt(i + 1) == '*') {
+                            int j = i;
+
+                            // This needs to handle in-line multi-line comments
+                            // that don't span lines, as well as reset to handle
+                            // multline-comments
+                            while (j < len) {
+                                j++;
+                                if (in.charAt(j) == '\n') {
+                                    i = i - 1;
+                                    end = i;
+                                }
+                                if (in.charAt(j) == '*' && (j < len - 2) && in.charAt(
+                                        j + 1) == '/') {
+                                    i = j + 1;
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (c == '\n') {
+                        if(i < lastIndex) {
+                            c = in.charAt(i + 1);
+                                                           
+                            if (Character.isDigit(c) || c == '\"' || c == '.') {
+                                break;
+                            } else {
+                                end = i;
+                            }
+                        } else {
+                            end = i;
+                        }
+                    } else if (i == lastIndex) {
+                        end = i;
+                    }
+
+                    if (end > 0) {
+                        String noteText = TextUtilities.stripMultiLineComments(
+                                in.substring(start, end + 1));
+
+                        try {
+                            if (noteText.charAt(0) == 'i') {
+                                tempNote = Note.createNote(noteText,
+                                        previousNote);
+                            }
+                        } catch (NoteParseException e) {
+                            e.setLineNumber(lineNumber);
+                            throw e;
+                        }
+
+                        if (tempNote != null) {
+                            notes.addNote(tempNote);
+                            previousNote = tempNote;
+                        }
+
+                        state = ParseState.STARTING;
+                        start = -1;
+                        end = -1;
+                    }
+
+                    break;
             }
         }
 
-//        while (temp.hasMoreTokens()) {
-//            buffer = temp.nextToken().trim();
+//        String clean = TextUtilities.stripMultiLineComments(in);
 //
-//            if (buffer.length() > 0 && buffer.startsWith("i")) {
-//                buffer = buffer.substring(buffer.indexOf("i") + 1);
-//                buffer = "i" + buffer.trim();
+//        String[] lines = clean.split(("\n"));
+//
+//        for (int i = 0; i < lines.length; i++) {
+//            lines[i] = lines[i].trim();
+//        }
+//
+//        Note previousNote = null;
+//        Note tempNote = null;
+//
+//        for (int i = 0; i < lines.length; i++) {
+//            String line = lines[i];
+//
+//            if (line.length() > 0 && line.startsWith("i")) {
+//                line = "i" + line.substring(1);
+//
+//                if (i < lines.length - 1) {
+//                    do {
+//                        String nextLine = lines[i + 1].trim();
+//
+//                        if (nextLine.length() == 0) {
+//                            break;
+//                        }
+//
+//                        char c = nextLine.charAt(0);
+//                        if (Character.isDigit(c) || c == '\"' || c == '.') {
+//                            line += " " + nextLine;
+//                            i++;
+//                        } else {
+//                            break;
+//                        }
+//                    } while (i < lines.length - 1);
+//                }
 //
 //                try {
-//                    tempNote = Note.createNote(buffer, previousNote);
+//                    tempNote = Note.createNote(line, previousNote);
 //                } catch (NoteParseException e) {
-////                    e.setLineNumber(line);
+//                    e.setLineNumber(i + 1);
 //                    throw e;
 //                }
 //
@@ -119,10 +228,7 @@ public class ScoreUtilities {
 //                    previousNote = tempNote;
 //                }
 //            }
-//
-////            line++;
 //        }
-
         expandPluses(notes);
         expandRamps(notes);
 
@@ -175,7 +281,6 @@ public class ScoreUtilities {
                     Note endNote = nl.getNote(tailNoteIndex);
 
                     // y = mx + b, linear ramp over time
-
                     float b = Float.parseFloat(startNote.getPField(j + 1));
 
                     float rise = Float.parseFloat(endNote.getPField(j + 1))
@@ -263,7 +368,6 @@ public class ScoreUtilities {
     }
 
     // END RAMP EXPANDING CODE
-
     public static float getTotalDuration(NoteList notes) {
         int size = notes.size();
         float tempValue;
@@ -313,7 +417,6 @@ public class ScoreUtilities {
             sObj = (SoundObject) sObjects.get(i);
 
             // System.out.println("StartTime: " + sObj.getStartTime());
-
             className = sObj.getClass().getName();
 
             if (className.equals("blue.soundObject.FrozenSoundObject")
@@ -360,7 +463,6 @@ public class ScoreUtilities {
      *
      * @param notes
      */
-
     public static void normalizeNoteList(NoteList notes) {
         notes.sort();
         float minStart = notes.getNote(0).getStartTime();
@@ -470,8 +572,9 @@ public class ScoreUtilities {
 
     }
 
-    /** ************************************************************** */
-
+    /**
+     * **************************************************************
+     */
     public static float getMaxTime(SoundObject[] sObjects) {
         float max = 0.0f;
 
@@ -514,7 +617,7 @@ public class ScoreUtilities {
                 continue;
             } else if (sObj instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) sObj;
-                if(pObj.isScoreGenerationEmpty()) {
+                if (pObj.isScoreGenerationEmpty()) {
                     continue;
                 }
             }
@@ -561,7 +664,9 @@ public class ScoreUtilities {
     public static String testNotesList(NoteList nl) {
         StringBuilder returnText = new StringBuilder();
         for (int i = 0; i < nl.size(); i++) {
-            returnText.append("N").append(i).append(": s>").append(nl.getNote(i).getStartTime()).append(" d>").append(nl.getNote(i).getSubjectiveDuration()).append("\n");
+            returnText.append("N").append(i).append(": s>").append(
+                    nl.getNote(i).getStartTime()).append(" d>").append(
+                            nl.getNote(i).getSubjectiveDuration()).append("\n");
         }
         return returnText.toString();
     }
@@ -588,11 +693,11 @@ public class ScoreUtilities {
         return (octave * 12) + pitch;
 
     }
-    
+
     public static float getSnapValueStart(float time, float snapValue) {
-        return (int)(time / snapValue) * snapValue;
+        return (int) (time / snapValue) * snapValue;
     }
-    
+
     public static float getSnapValueMove(float time, float snapValue) {
         return Math.round(time / snapValue) * snapValue;
     }
