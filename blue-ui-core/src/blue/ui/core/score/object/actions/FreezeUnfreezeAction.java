@@ -210,7 +210,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             try {
                 result = CSDRenderService.getDefault().generateCSD(tempData,
-                        tempSObj.getStartTime(), renderEndTime, false);
+                        tempSObj.getStartTime(), renderEndTime, false, false);
                 tempCSD = result.getCsdText();
             } catch (Exception e) {
 //                ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this),
