@@ -12,12 +12,22 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.13<
+[release 2014.04.21]
+
+FIX
+
+* Generating a CSD or rendering to disk was not using the correct CSD
+generator, causing automations not to be rendered.
+
+
 >Notes for 2.5.12<
 [release 2014.04.11]
 
 FIX
 
-* Freezing SoundObjects was using the wrong settings (realtime settings); fixed to use disk render settings
+* Freezing SoundObjects was using the wrong settings (realtime settings);
+fixed to use disk render settings
 
 
 >Notes for 2.5.11<
@@ -33,7 +43,7 @@ UPDATED/FIX
 FIX
 
 * When using the Csound API, set --env:SFDIR=/path/to/csd so that things like
-  fout will write output relative to the directory where the .blue/.csd is used
+fout will write output relative to the directory where the .blue/.csd is used
 
 
 >Notes for 2.5.10<
