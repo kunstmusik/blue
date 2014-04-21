@@ -152,7 +152,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
             CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
                     data, startTime,
-                    endTime, false);
+                    endTime, false, false);
 
             String csd = result.getCsdText();
 

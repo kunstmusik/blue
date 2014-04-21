@@ -39,18 +39,8 @@ public abstract class CSDRenderService {
     
     protected abstract CsdRenderResult generateCSDForBlueLiveImpl(BlueData data, boolean useAPI);
     
-    public final synchronized CsdRenderResult generateCSD(BlueData data, boolean useAPI) throws
-            ScoreGenerationException {
-        return generateCSD(data, 0.0f, -1.0f, useAPI);
-    }
-    
-    public final synchronized CsdRenderResult generateCSD(BlueData data, float startTime,
-            float endTime, boolean useAPI) throws ScoreGenerationException {
-        return generateCSD(data, startTime, endTime, true, useAPI);
-    }
-    
     public final synchronized CsdRenderResult generateCSD(BlueData data,
-            float startTime, float endTime, boolean isRealTime, boolean useAPI) {
+            float startTime, float endTime, boolean isRealTime, boolean useAPI) throws ScoreGenerationException {
         return generateCSDImpl(data, startTime, endTime, isRealTime, useAPI);
     }
 

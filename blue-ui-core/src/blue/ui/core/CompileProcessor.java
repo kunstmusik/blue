@@ -108,7 +108,7 @@ public class CompileProcessor extends OptionProcessor {
             out = new PrintWriter(new BufferedWriter(
                     new FileWriter(outFileName)));
             CsdRenderResult renderResult =
-                    CSDRenderService.getDefault().generateCSD(tempData, 0.0F, -1.0F, false);
+                    CSDRenderService.getDefault().generateCSD(tempData, 0.0F, -1.0F, false, false);
             out.print(renderResult.getCsdText());
             out.close();
 

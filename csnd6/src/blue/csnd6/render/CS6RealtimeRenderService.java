@@ -205,7 +205,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
             float endTime = data.getRenderEndTime();
 
             CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
-                    data, startTime, endTime, true);
+                    data, startTime, endTime, true, true);
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(RenderTimeManager.class);
             timeManager.setTempoMapper(result.getTempoMapper());

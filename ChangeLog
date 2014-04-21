@@ -12,6 +12,14 @@ information.
 
 [CHANGE LOG]
 
+>Notes for 2.5.13<
+[release 2014.04.21]
+
+FIX
+
+* Generating a CSD or rendering to disk was not using the correct CSD generator, causing automations not to be rendered.
+
+
 >Notes for 2.5.12<
 [release 2014.04.11]
 
