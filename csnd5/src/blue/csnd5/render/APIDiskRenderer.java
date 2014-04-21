@@ -283,7 +283,7 @@ public class APIDiskRenderer implements DiskRenderService {
         try {
             result = CSDRenderService.getDefault().generateCSD(
                     data, startTime,
-                    endTime, true);
+                    endTime, false, true);
         } catch (ScoreGenerationException ex) {
             Exceptions.printStackTrace(ex);
             return null;
