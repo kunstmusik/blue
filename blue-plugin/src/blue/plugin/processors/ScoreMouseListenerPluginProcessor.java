@@ -19,7 +19,7 @@
  */
 package blue.plugin.processors;
 
-import blue.plugin.SoundObjectPlugin;
+import blue.plugin.ScoreMouseListenerPlugin;
 import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -39,22 +39,24 @@ import org.openide.util.lookup.ServiceProvider;
  * @author stevenyi
  */
 @ServiceProvider(service = Processor.class)
-@SupportedAnnotationTypes("blue.plugin.SoundObjectPlugin")
+@SupportedAnnotationTypes("blue.plugin.ScoreMouseListenerPlugin")
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
-public class SoundObjectPluginProcessor extends LayerGeneratingProcessor {
+public class ScoreMouseListenerPluginProcessor extends LayerGeneratingProcessor {
 
     @Override
     protected boolean handleProcess(Set<? extends TypeElement> set, RoundEnvironment env)
             throws LayerGenerationException {
         Elements elements = processingEnv.getElementUtils();
-        for (Element e : env.getElementsAnnotatedWith(SoundObjectPlugin.class)) {
+        for (Element e : env.getElementsAnnotatedWith(
+                ScoreMouseListenerPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
-            SoundObjectPlugin noteProcessorPlugin = clazz.getAnnotation(SoundObjectPlugin.class);
+            ScoreMouseListenerPlugin plugin = clazz.getAnnotation(
+                    ScoreMouseListenerPlugin.class);
             String teName = elements.getBinaryName(clazz).toString();
             File f = layer(e).file(
-                    "blue/score/soundObjects/" + teName.replace('.', '-') + ".instance").
-                    intvalue("position", noteProcessorPlugin.position()).
-                    bundlevalue("displayName", noteProcessorPlugin.displayName());
+                    "blue/score/mouse/" + teName.replace('.', '-') + ".instance").
+                    intvalue("position", plugin.position()).
+                    bundlevalue("displayName", plugin.displayName());
             f.write();
         }
         return true;

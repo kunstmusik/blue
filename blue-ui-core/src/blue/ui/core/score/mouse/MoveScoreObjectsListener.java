@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.ui.core.score.ScoreController;
@@ -32,6 +33,9 @@ import javax.swing.SwingUtilities;
  *
  * @author stevenyi
  */
+
+@ScoreMouseListenerPlugin(displayName = "MoveScoreObjectsListener",
+        position=50)
 public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
     Point startPoint;

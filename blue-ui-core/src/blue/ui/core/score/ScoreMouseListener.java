@@ -23,19 +23,17 @@ import blue.score.ScoreObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
-import blue.ui.core.score.mouse.MarqueeSelectionListener;
-import blue.ui.core.score.mouse.MoveScoreObjectsListener;
-import blue.ui.core.score.mouse.PasteClickMouseListener;
-import blue.ui.core.score.mouse.PopupMenuListener;
-import blue.ui.core.score.mouse.ResizeScoreObjectsListener;
-import blue.ui.core.score.mouse.ScoreObjectSelectionListener;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.lookup.InstanceContent;
 
 /**
@@ -53,21 +51,32 @@ public class ScoreMouseListener extends MouseAdapter {
             .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
-    private MouseAdapter[] mouseListeners = {
-        new PopupMenuListener(), new PasteClickMouseListener(),
-        new ResizeScoreObjectsListener(),
-        new ScoreObjectSelectionListener(), new MoveScoreObjectsListener(),
-        new MarqueeSelectionListener()
-    };
+    private MouseAdapter[] mouseListeners;
 
     public ScoreMouseListener(ScoreTopComponent tc, InstanceContent content) {
         this.scoreTC = tc;
         BlueMouseAdapter.scoreTC = tc;
         BlueMouseAdapter.content = content;
+
+        FileObject sObjFiles[] = FileUtil.getConfigFile(
+                "blue/score/mouse").getChildren();
+        List<FileObject> orderedSObjFiles = FileUtil.getOrder(
+                Arrays.asList(sObjFiles), true);
+
+        mouseListeners = new BlueMouseAdapter[sObjFiles.length];
+
+        for (int i = 0; i < orderedSObjFiles.size(); i++) {
+            FileObject fObj = orderedSObjFiles.get(i);
+            BlueMouseAdapter mouseListener = FileUtil.getConfigObject(
+                    fObj.getPath(),
+                    BlueMouseAdapter.class);
+            mouseListeners[i] = mouseListener;
+        }
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(MouseEvent e
+    ) {
         RealtimeRenderManager.getInstance().stopAuditioning();
 
         if (e.isConsumed()) {
@@ -79,12 +88,16 @@ public class ScoreMouseListener extends MouseAdapter {
 
         if (lGroupPanel != null) {
             scoreObjView = lGroupPanel.getScoreObjectViewAtPoint(
-                    SwingUtilities.convertPoint(e.getComponent(), e.getPoint(),
-                    (JComponent) lGroupPanel));
+                    SwingUtilities.convertPoint(e.getComponent(),
+                            e.getPoint(),
+                            (JComponent) lGroupPanel));
         }
 
         BlueMouseAdapter.currentLayerGroupPanel = lGroupPanel;
         BlueMouseAdapter.currentScoreObjectView = scoreObjView;
+
+        BlueMouseAdapter.content.add(
+                ScoreController.getInstance().getScorePath());
 
         MouseAdapter current = null;
 
@@ -102,7 +115,8 @@ public class ScoreMouseListener extends MouseAdapter {
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mouseDragged(MouseEvent e
+    ) {
         if (e.isConsumed() || currentGestureListener == null) {
             return;
         }
@@ -110,18 +124,22 @@ public class ScoreMouseListener extends MouseAdapter {
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-        if (e.isConsumed() || currentGestureListener == null) {
-            return;
+    public void mouseReleased(MouseEvent e
+    ) {
+
+        if (!e.isConsumed() && currentGestureListener != null) {
+            currentGestureListener.mouseReleased(e);
         }
 
-        currentGestureListener.mouseReleased(e);
         currentGestureListener = null;
+        BlueMouseAdapter.content.remove(
+                ScoreController.getInstance().getScorePath());
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
-        if(ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE) {
+    public void mouseMoved(MouseEvent e
+    ) {
+        if (ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE) {
             return;
         }
 
@@ -130,8 +148,9 @@ public class ScoreMouseListener extends MouseAdapter {
         final JLayeredPane scorePanel = scoreTC.getScorePanel();
 
         // FIXME - perhaps optimize the lookup to cache results using lookup listener
-        if (sObjView != null && 
-                scoreTC.getLookup().lookupAll(ScoreObject.class).contains(sObjView.getScoreObject())) {
+        if (sObjView != null
+                && scoreTC.getLookup().lookupAll(ScoreObject.class).contains(
+                        sObjView.getScoreObject())) {
 
             Point p = SwingUtilities.convertPoint(e.getComponent(),
                     e.getPoint(),

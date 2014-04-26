@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.ui.core.score.ScoreController;
@@ -32,6 +33,8 @@ import java.util.Collection;
  *
  * @author stevenyi
  */
+@ScoreMouseListenerPlugin(displayName = "ResizeScoreObjectsListener",
+        position=30)
 public class ResizeScoreObjectsListener extends BlueMouseAdapter {
     
     protected enum ResizeMode {

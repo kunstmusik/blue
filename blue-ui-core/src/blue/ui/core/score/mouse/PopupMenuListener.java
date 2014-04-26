@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
@@ -39,6 +40,8 @@ import org.openide.util.Utilities;
  *
  * @author stevenyi
  */
+@ScoreMouseListenerPlugin(displayName = "PopupMenuListener",
+        position=10)
 public class PopupMenuListener extends BlueMouseAdapter {
 
     @Override

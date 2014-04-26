@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.layers.soundObject.actions.PasteSoundObjectAction;
@@ -30,6 +31,8 @@ import javax.swing.Action;
  *
  * @author stevenyi
  */
+@ScoreMouseListenerPlugin(displayName = "PasteClickMouseListener",
+        position=20)
 public class PasteClickMouseListener extends BlueMouseAdapter {
 
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();

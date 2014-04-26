@@ -19,11 +19,11 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -33,6 +33,8 @@ import java.util.Collections;
  *
  * @author stevenyi
  */
+@ScoreMouseListenerPlugin(displayName = "ScoreObjectSelectionListener",
+        position=40)
 public class ScoreObjectSelectionListener extends BlueMouseAdapter {
 
     @Override

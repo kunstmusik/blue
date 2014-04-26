@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.plugin.ScoreMouseListenerPlugin;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import java.awt.Component;
@@ -31,6 +32,8 @@ import javax.swing.SwingUtilities;
  *
  * @author stevenyi
  */
+@ScoreMouseListenerPlugin(displayName = "MarqueeSelectionListener",
+        position=60)
 public class MarqueeSelectionListener extends BlueMouseAdapter {
 
     boolean addMode = false; 
