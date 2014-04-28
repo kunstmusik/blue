@@ -19,19 +19,12 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.soundObject.External;
-import blue.soundObject.PythonObject;
-import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.util.ContextAwareAction;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 

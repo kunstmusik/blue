@@ -22,16 +22,19 @@ package blue.ui.core.score.object.actions;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -40,34 +43,54 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_SetSubjectiveToObjectiveTime")
 @Messages("CTL_SetSubjectiveToObjectiveTime=Set Subjective time to Objective Time")
 @ActionReference(path = "blue/score/actions", position = 110, separatorAfter = 115)
-public final class SetSubjectiveToObjectiveTimeAction implements ActionListener {
+public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
+        implements ContextAwareAction {
+
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final Collection<? extends SoundObject> soundObjects;
+
+    public SetSubjectiveToObjectiveTimeAction() {
+        this(Utilities.actionsGlobalContext());
+    }
+
+    public SetSubjectiveToObjectiveTimeAction(Lookup lookup) {
+        super(NbBundle.getMessage(SetSubjectiveToObjectiveTimeAction.class,
+                "CTL_SetSubjectiveToObjectiveTime"));
+        scoreObjects = lookup.lookupAll(ScoreObject.class);
+        soundObjects = lookup.lookupAll(SoundObject.class);
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //FIXME - should be a ContextAwareAction...
-        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
-        Collection<? extends ScoreObject> selected = lkp.lookupAll(
-                ScoreObject.class);
-        Collection<? extends SoundObject> sObjects = lkp.lookupAll(
-                SoundObject.class);
 
-
-        if (sObjects.size() > 0 && selected.size() == sObjects.size()) {
-            for (SoundObject soundObject : sObjects) {
+        if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
+            for (SoundObject soundObject : soundObjects) {
 
                 if (soundObject.getObjectiveDuration() <= 0) {
                     JOptionPane.showMessageDialog(
                             null,
                             BlueSystem.getString(
-                            "soundObjectPopup.setTime.error.text"),
+                                    "soundObjectPopup.setTime.error.text"),
                             BlueSystem.getString(
-                            "soundObjectPopup.setTime.error.title"),
+                                    "soundObjectPopup.setTime.error.title"),
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                soundObject.setSubjectiveDuration(soundObject.getObjectiveDuration());
+                soundObject.setSubjectiveDuration(
+                        soundObject.getObjectiveDuration());
             }
         }
 
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return scoreObjects.size() == soundObjects.size()
+                && soundObjects.size() > 0;
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new SetSubjectiveToObjectiveTimeAction(actionContext);
     }
 }

@@ -24,6 +24,7 @@ import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ public final class SelectLayerAction extends AbstractAction
         implements ContextAwareAction {
 
     final Point p;
+    private final ScorePath scorePath;
 
     public SelectLayerAction() {
         this(Utilities.actionsGlobalContext());
@@ -64,19 +66,17 @@ public final class SelectLayerAction extends AbstractAction
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectLayerAction"));
         this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Score score = ScoreController.getInstance().getScore();
 
-        Layer layer = score.getGlobalLayerForY(p.y);
+        Layer layer = scorePath.getGlobalLayerForY(p.y);
 
         if(layer != null && layer instanceof ScoreObjectLayer) {
-            ArrayList<ScoreObject> newSelected = new ArrayList<>();
-            for(ScoreObject temp : (ScoreObjectLayer<ScoreObject>)layer) {
-                newSelected.add(temp);
-            }
+            ArrayList<ScoreObject> newSelected = new ArrayList<>((ScoreObjectLayer)layer);
+
             ScoreController.getInstance().setSelectedScoreObjects(newSelected);
         }
     }

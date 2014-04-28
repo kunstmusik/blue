@@ -32,6 +32,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
@@ -66,6 +67,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
     private Collection<? extends ScoreObject> scoreObjects;
     private Point p;
     private TimeState timeState;
+    private final ScorePath scorePath;
 
     public PasteSoundObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -78,15 +80,16 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
         this.p = lookup.lookup(Point.class);
         this.timeState = lookup.lookup(TimeState.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
     public boolean isEnabled() {
-        ScoreController.ScoreObjectBuffer buffer = ScoreController.getInstance().getScoreObjectBuffer();
-        Score score = ScoreController.getInstance().getScore();
-        int y = score.getGlobalLayerIndexForY(p.y);
+        ScoreController.ScoreObjectBuffer buffer
+                = ScoreController.getInstance().getScoreObjectBuffer();
 
-        return buffer.scoreObjects.size() > 0 && y >= 0;
+        return buffer.scoreObjects.size() > 0
+                && scorePath.getGlobalLayerForY(p.y) != null;
     }
 
     @Override
@@ -98,10 +101,9 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                     timeState.getSnapValue());
         }
 
-        Score score = ScoreController.getInstance().getScore();
         ScoreController.ScoreObjectBuffer buffer = ScoreController.getInstance().getScoreObjectBuffer();
-        List<Layer> allLayers = score.getAllLayers();
-        int selectedLayerIndex = score.getGlobalLayerIndexForY(p.y);
+        List<Layer> allLayers = scorePath.getAllLayers();
+        int selectedLayerIndex = scorePath.getGlobalLayerIndexForY(p.y);
 
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
@@ -136,7 +138,8 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             Layer layer = allLayers.get(index + layerTranslation);
 
             if (!layer.accepts(scoreObj)) {
-                JOptionPane.showMessageDialog(null, "Unable to paste due to target layers not "
+                JOptionPane.showMessageDialog(null,
+                        "Unable to paste due to target layers not "
                         + "accepting types of objects within the copy buffer (i.e. trying to "
                         + "paste a SoundObject into an AudioLayer");
                 return;

@@ -300,9 +300,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         List<Layer> retVal = new ArrayList<>();
 
         for (LayerGroup<Layer> layerGroup : layerGroups) {
-            for (Layer layer : layerGroup) {
-                retVal.add(layer);
-            }
+            retVal.addAll(layerGroup);
         }
         return retVal;
     }

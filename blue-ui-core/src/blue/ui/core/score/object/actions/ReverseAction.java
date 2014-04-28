@@ -19,20 +19,21 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.BlueSystem;
 import blue.score.ScoreObject;
-import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
-import blue.ui.core.score.undo.MoveSoundObjectsEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 
 @ActionID(
         category = "Blue",
@@ -41,24 +42,32 @@ import org.openide.util.NbBundle.Messages;
         displayName = "#CTL_ReverseAction")
 @Messages("CTL_ReverseAction=Re&verse")
 @ActionReference(path = "blue/score/actions", position = 90)
-public final class ReverseAction implements ActionListener {
+public final class ReverseAction extends AbstractAction
+        implements ContextAwareAction {
+
+    private final Collection<? extends ScoreObject> scoreObjects;
+
+    public ReverseAction() {
+        this(Utilities.actionsGlobalContext());
+    }
+
+    public ReverseAction(Lookup lookup) {
+
+        super(NbBundle.getMessage(ReverseAction.class, "CTL_ReverseAction"));
+        scoreObjects = lookup.lookupAll(ScoreObject.class);
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        //FIXME - should be a ContextAwareAction...
-        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
-        Collection<? extends ScoreObject> selected = lkp.lookupAll(
-                ScoreObject.class);
-
-        if (selected.size() < 2) {
+        if (scoreObjects.size() < 2) {
             return;
         }
 
         float start = Float.MAX_VALUE;
         float end = Float.MIN_VALUE;
 
-        for (ScoreObject scoreObject : selected) {
+        for (ScoreObject scoreObject : scoreObjects) {
             float tempStart = scoreObject.getStartTime();
             float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
 
@@ -71,7 +80,7 @@ public final class ReverseAction implements ActionListener {
             }
         }
 
-        for (ScoreObject scoreObject : selected) {
+        for (ScoreObject scoreObject : scoreObjects) {
             float tempStart = scoreObject.getStartTime();
             float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
 
@@ -83,13 +92,21 @@ public final class ReverseAction implements ActionListener {
         BlueUndoManager.setUndoManager("score");
 
 // FIXME - need to do undoable edit here!
-
 //        MoveSoundObjectsEdit edit = sCanvas.mBuffer.getMoveEdit(
 //                sCanvas.getPolyObject());
 //
 //        edit.setPresentationName(BlueSystem.getString(
 //                "soundObjectPopup.reverse.text"));
-
 //        BlueUndoManager.addEdit(edit);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return scoreObjects.size() > 1;
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new ReverseAction(actionContext);
     }
 }

@@ -21,9 +21,11 @@ package blue.ui.core.score.layers.soundObject.actions;
 
 import blue.score.Score;
 import blue.score.ScoreObject;
+import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -54,6 +56,8 @@ public final class SelectAllBeforeAction extends AbstractAction implements
         ContextAwareAction {
 
     final Point p;
+    private final ScorePath scorePath;
+    private final TimeState timeState;
 
     public SelectAllBeforeAction() {
         this(Utilities.actionsGlobalContext());
@@ -64,6 +68,8 @@ public final class SelectAllBeforeAction extends AbstractAction implements
         super(NbBundle.getMessage(SelectLayerAction.class,
                 "CTL_SelectAllBeforeAction"));
         this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
+        this.timeState = lookup.lookup(TimeState.class);
     }
 
     @Override
@@ -75,12 +81,11 @@ public final class SelectAllBeforeAction extends AbstractAction implements
 //            return;
 //        }
 
-        Score score = ScoreController.getInstance().getScore();
-
         float pointTime = (float) p.x
-                / ScoreTopComponent.findInstance().getTimeState().getPixelSecond();
+                / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
-        List<Layer> allLayers = score.getAllLayers();
+
+        List<Layer> allLayers = scorePath.getAllLayers();
 
         for (Layer layer : allLayers) {
             if (layer instanceof ScoreObjectLayer) {

@@ -160,19 +160,13 @@ public class ScoreController {
 
         Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
                 ScoreObject.class);
-        Score score = lookup.lookup(Score.class);
-
-        if (score == null) {
-            throw new RuntimeException(
-                    "Score object not set in ScoreController: internal error");
-        }
 
         if (scoreObjects.isEmpty()) {
             return;
         }
 
         buffer.clear();
-        List<Layer> layers = score.getAllLayers();
+        List<Layer> layers = getScorePath().getAllLayers();
 
         int layerMin = Integer.MAX_VALUE;
         List<Integer> indexes = new ArrayList<>();
@@ -223,7 +217,7 @@ public class ScoreController {
             return;
         }
 
-        List<Layer> layers = score.getAllLayers();
+        List<Layer> layers = getScorePath().getAllLayers();
 
         for (ScoreObject scoreObj : scoreObjects) {
 

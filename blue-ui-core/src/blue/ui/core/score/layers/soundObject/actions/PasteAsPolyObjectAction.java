@@ -23,6 +23,7 @@ import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
 import blue.projects.BlueProjectManager;
+import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
@@ -30,6 +31,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -60,8 +62,8 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
     private List<Integer> layerIndexes;
     private Point p;
     private TimeState timeState;
-    private Layer targetLayer;
     private PolyObject pObj = new PolyObject();
+    private final ScorePath scorePath;
 
     public PasteAsPolyObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -73,12 +75,13 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
                 "CTL_PasteAsPolyObjectAction"));
 
         ScoreController scoreController = ScoreController.getInstance();
+        Score score = scoreController.getScore();
         
         this.scoreObjects = scoreController.getScoreObjectBuffer().scoreObjects;
         this.layerIndexes = scoreController.getScoreObjectBuffer().layerIndexes;
         this.p = lookup.lookup(Point.class);
         this.timeState = lookup.lookup(TimeState.class);
-        this.targetLayer = scoreController.getScore().getGlobalLayerForY(p.y);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -134,7 +137,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         pObj.normalizeSoundObjects();
 
         pObj.setStartTime(start);
-        ((SoundLayer) targetLayer).add(pObj);
+        ((SoundLayer) scorePath.getGlobalLayerForY(p.y)).add(pObj);
     }
 
     @Override
@@ -145,7 +148,9 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             }
         }
 
-        return scoreObjects.size() > 0 && targetLayer != null && targetLayer.accepts(
+        Layer layer = scorePath.getGlobalLayerForY(p.y);
+
+        return scoreObjects.size() > 0 && layer != null && layer.accepts(
                 pObj);
     }
 

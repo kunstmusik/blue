@@ -20,16 +20,16 @@
 package blue.ui.core.score.object.actions;
 
 import blue.BlueData;
+import blue.SoundLayer;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.LayerGroupPanel;
-import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
 import blue.undo.BlueUndoManager;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
@@ -55,7 +55,8 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
 
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
-    private final LayerGroupPanel panel;
+    private final ScorePath scorePath;
+    private final Point p;
 
     public AddToSoundObjectLibraryAction() {
         this(Utilities.actionsGlobalContext());
@@ -66,7 +67,8 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
                 "CTL_AddToSoundObjectLibraryAction"));
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
         this.soundObjects = lookup.lookupAll(SoundObject.class);
-        this.panel = lookup.lookup(LayerGroupPanel.class);
+        this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -78,19 +80,29 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         }
 
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-        data.getSoundObjectLibrary().addSoundObject(sObj);
-
+         
         Instance i = new Instance(sObj);
+        i.setStartTime(sObj.getStartTime());
+        i.setSubjectiveDuration(sObj.getSubjectiveDuration());
+        
+        data.getSoundObjectLibrary().addSoundObject(sObj);
+        SoundLayer layer = (SoundLayer)scorePath.getGlobalLayerForY(p.y);
+        layer.remove(soundObjects.iterator().next());
+        layer.add(i);
 
-        replaceSoundObject(soundObjects.iterator().next(), i, true, false);
+
+// BlueUndoManager.setUndoManager("score");
+//            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(
+//                    sCanvas.getPolyObject(), oldSoundObject,
+//                    newSoundObject, index));
+        
     }
 
     @Override
     public boolean isEnabled() {
         return (scoreObjects.size() == soundObjects.size())
                 && (soundObjects.size() == 1)
-                && !(soundObjects.iterator().next() instanceof Instance)
-                && (panel instanceof ScoreTimeCanvas);
+                && !(soundObjects.iterator().next() instanceof Instance);
     }
 
     @Override
@@ -98,35 +110,4 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
         return new AddToSoundObjectLibraryAction(actionContext);
     }
 
-    private void replaceSoundObject(SoundObject oldSoundObject,
-            SoundObject newSoundObject, boolean scaleDuration,
-            boolean recordEdit) {
-
-        ScoreTimeCanvas sCanvas = (ScoreTimeCanvas) panel;
-
-        SoundObjectView sObjView = sCanvas.getViewForSoundObject(oldSoundObject);
-
-        int index = sCanvas.getPolyObject().getLayerNumForY(sObjView.getY());
-
-        newSoundObject.setStartTime(oldSoundObject.getStartTime());
-
-        if (scaleDuration) {
-            newSoundObject.setSubjectiveDuration(
-                    oldSoundObject.getSubjectiveDuration());
-        }
-
-        sCanvas.getPolyObject().removeSoundObject(oldSoundObject);
-        sCanvas.getPolyObject().addSoundObject(index, newSoundObject);
-
-        ScoreController.getInstance().removeSelectedScoreObject(oldSoundObject);
-
-        if (recordEdit) {
-
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(
-                    sCanvas.getPolyObject(), oldSoundObject,
-                    newSoundObject, index));
-        }
-
-    }
 }

@@ -24,16 +24,18 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 
 @ActionID(
@@ -43,29 +45,48 @@ import org.openide.windows.WindowManager;
         displayName = "#CTL_SetColorAction")
 @Messages("CTL_SetColorAction=Set Color")
 @ActionReference(path = "blue/score/actions", position = 400, separatorAfter = 405)
-public final class SetColorAction implements ActionListener {
+public final class SetColorAction extends AbstractAction
+        implements ContextAwareAction {
+
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final Collection<? extends SoundObject> soundObjects;
+
+    public SetColorAction() {
+        this(Utilities.actionsGlobalContext());
+    }
+
+    public SetColorAction(Lookup lookup) {
+        super(NbBundle.getMessage(SetColorAction.class, "CTL_SetColorAction"));
+        scoreObjects = lookup.lookupAll(ScoreObject.class);
+        soundObjects = lookup.lookupAll(SoundObject.class);
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        //FIXME - should be a ContextAwareAction...
-        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
-        Collection<? extends ScoreObject> selected = lkp.lookupAll(
-                ScoreObject.class);
-        Collection<? extends SoundObject> sObjects = lkp.lookupAll(SoundObject.class);
-
-
-        if (sObjects.size() > 0 && selected.size() == sObjects.size()) {
+        if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
 
             Color retVal = JColorChooser.showDialog(
                     WindowManager.getDefault().getMainWindow(), "Choose Color",
-                    sObjects.iterator().next().getBackgroundColor());
+                    soundObjects.iterator().next().getBackgroundColor());
 
             if (retVal != null) {
-                for (SoundObject sObj : sObjects) {
+                for (SoundObject sObj : soundObjects) {
                     sObj.setBackgroundColor(retVal);
                 }
             }
         }
     }
+
+    @Override
+    public boolean isEnabled() {
+        return scoreObjects.size() == soundObjects.size() &&
+                scoreObjects.size() > 0;
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new SetColorAction(actionContext);
+    }
+
 }

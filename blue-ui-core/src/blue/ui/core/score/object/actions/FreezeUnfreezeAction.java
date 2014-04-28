@@ -36,9 +36,11 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.DiskRenderManager;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.utility.FileUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.SoundFileUtilities;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -71,6 +73,8 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
     private final Collection<? extends ScoreObject> scoreObjects;
     private final Collection<? extends SoundObject> soundObjects;
+    private final Point p;
+    private final ScorePath scorePath;
 
     public FreezeUnfreezeAction() {
         this(Utilities.actionsGlobalContext());
@@ -81,12 +85,13 @@ public final class FreezeUnfreezeAction extends AbstractAction
                 "CTL_FreezeUnfreezeAction"));
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
         this.soundObjects = lookup.lookupAll(SoundObject.class);
+        this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Score score = ScoreController.getInstance().getScore();
-        List<Layer> allLayers = score.getAllLayers();
+        List<Layer> allLayers = scorePath.getAllLayers();
         List<SoundObject> sObjList = new ArrayList<>(soundObjects);
         List<Layer> layers = new ArrayList<>();
 
@@ -186,7 +191,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
             BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
             PolyObject tempPObj = new PolyObject(true);
-            SoundLayer sLayer = (SoundLayer) tempPObj.newLayerAt(-1);
+            SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
             SoundObject tempSObj = (SoundObject) sObj.clone();
             tempData.setRenderStartTime(tempSObj.getStartTime());

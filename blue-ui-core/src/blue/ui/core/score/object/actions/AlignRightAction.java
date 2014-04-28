@@ -53,10 +53,9 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
 
     @Override
     public void actionPerformed(ActionEvent ev) {
-if (selected.size() < 2) {
+        if (selected.size() < 2) {
             return;
         }
-
 
         float initialStartTimes[] = new float[selected.size()];
         float endingStartTimes[] = new float[selected.size()];
@@ -68,10 +67,10 @@ if (selected.size() < 2) {
             initialStartTimes[i] = scoreObj.getStartTime();
 
             float end = initialStartTimes[i] + scoreObj.getSubjectiveDuration();
-            
-            if(end > farRight ) {
+
+            if (end > farRight) {
                 farRight = end;
-            } 
+            }
             i++;
         }
 
@@ -84,60 +83,19 @@ if (selected.size() < 2) {
         }
 
         BlueUndoManager.setUndoManager("score");
-        AlignEdit edit = new AlignEdit(selected.toArray(new ScoreObject[0]), initialStartTimes,
+        AlignEdit edit = new AlignEdit(selected.toArray(new ScoreObject[0]),
+                initialStartTimes,
                 endingStartTimes);
 
         edit.setPresentationName("Align Right");
 
         BlueUndoManager.addEdit(edit);
-       //        SoundObject soundObjects[] = sCanvas.mBuffer.getSoundObjectsAsArray();
-//        if (soundObjects.length < 2) {
-//            return;
-//        }
-//
-//        float initialStartTimes[] = new float[soundObjects.length];
-//        float endingStartTimes[] = new float[soundObjects.length];
-//
-//        float farRight = soundObjects[0].getStartTime() + soundObjects[0].getSubjectiveDuration();
-//        initialStartTimes[0] = farRight;
-//
-//        float startTime;
-//        float endTime;
-//
-//        for (int i = 1; i < soundObjects.length; i++) {
-//
-//            startTime = soundObjects[i].getStartTime();
-//            endTime = startTime + soundObjects[i].getSubjectiveDuration();
-//
-//            initialStartTimes[i] = startTime;
-//
-//            if (endTime > farRight) {
-//                farRight = endTime;
-//            }
-//        }
-//
-//        float newStart;
-//        for (int i = 0; i < soundObjects.length; i++) {
-//            newStart = farRight - soundObjects[i].getSubjectiveDuration();
-//            soundObjects[i].setStartTime(newStart);
-//            endingStartTimes[i] = newStart;
-//        }
-//
-//        BlueUndoManager.setUndoManager("score");
-//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-//                endingStartTimes);
-//
-//        edit.setPresentationName("Align Right");
-//
-//        BlueUndoManager.addEdit(edit); 
     }
 
     @Override
     public boolean isEnabled() {
         return selected.size() > 1;
     }
-
-    
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {

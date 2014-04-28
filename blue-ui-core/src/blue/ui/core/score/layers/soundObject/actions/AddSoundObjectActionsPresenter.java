@@ -21,6 +21,7 @@ package blue.ui.core.score.layers.soundObject.actions;
 
 import blue.BlueSystem;
 import blue.score.TimeState;
+import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
@@ -82,6 +83,10 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                     "sObjClass");
             SoundObject sObj = (SoundObject) c.newInstance();
 
+            if(sObj instanceof PolyObject) {
+                ((PolyObject)sObj).newLayerAt(0);
+            }
+            
             TimeState timeState = sTimeCanvas.getPolyObject().getTimeState();
 
             float start = (float) p.getX() / timeState.getPixelSecond();
@@ -119,9 +124,9 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                 SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(),
                         SoundObject.class);
 
-                if ("PolyObject".equals(displayName)) {
-                    continue;
-                }
+//                if ("PolyObject".equals(displayName)) {
+//                    continue;
+//                }
 
                 JMenuItem temp = new JMenuItem();
                 temp.setText(

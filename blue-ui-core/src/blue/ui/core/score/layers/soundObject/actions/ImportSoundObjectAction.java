@@ -19,8 +19,11 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
+import blue.SoundLayer;
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.utilities.FileChooserManager;
@@ -58,6 +61,8 @@ public final class ImportSoundObjectAction extends AbstractAction
     private static final String IMPORT_DIALOG = "sObj.import";
     protected LayerGroupPanel lGroupPanel;
     protected Point p;
+    private final TimeState timeState;
+    private final ScorePath scorePath;
 
     public ImportSoundObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -68,6 +73,8 @@ public final class ImportSoundObjectAction extends AbstractAction
                 "CTL_ImportSoundObjectAction"));
         this.lGroupPanel = lookup.lookup(LayerGroupPanel.class);
         this.p = lookup.lookup(Point.class);
+        this.timeState = lookup.lookup(TimeState.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -88,13 +95,11 @@ public final class ImportSoundObjectAction extends AbstractAction
                 doc = new Document(f);
                 Element root = doc.getRoot();
                 if (root.getName().equals("soundObject")) {
-                    SoundObject tempInstr = (SoundObject) ObjectUtilities.loadFromXML(
+                    SoundObject tempSobj = (SoundObject) ObjectUtilities.loadFromXML(
                             root, null);
 
                     int start = p.x;
-                    TimeState timeState = sCanvas.getPolyObject().getTimeState();
-                    int sLayerIndex = sCanvas.getPolyObject().getLayerNumForY(
-                            p.y);
+                    Layer layer = scorePath.getGlobalLayerForY(p.y);
 
                     if (timeState.isSnapEnabled()) {
                         int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
@@ -103,10 +108,9 @@ public final class ImportSoundObjectAction extends AbstractAction
                     }
 
                     float startTime = (float) start / timeState.getPixelSecond();
-                    tempInstr.setStartTime(startTime);
+                    tempSobj.setStartTime(startTime);
 
-                    sCanvas.getPolyObject().addSoundObject(sLayerIndex,
-                            tempInstr);
+                    ((SoundLayer)layer).add(tempSobj);
 
                 } else {
                     JOptionPane.showMessageDialog(

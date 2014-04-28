@@ -20,14 +20,12 @@
 package blue.ui.core.score.object.actions;
 
 import blue.SoundLayer;
-import blue.projects.BlueProjectManager;
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.ui.core.score.ScorePath;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -60,7 +58,7 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     private final Collection<? extends SoundObject> soundObjects;
     private final Point p;
     private PolyObject pObj = new PolyObject();
-    private final Layer targetLayer;
+    private final ScorePath scorePath;
 
     public ConvertToPolyObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -69,13 +67,11 @@ public final class ConvertToPolyObjectAction extends AbstractAction
     public ConvertToPolyObjectAction(Lookup lookup) {
         super(NbBundle.getMessage(AlignRightAction.class,
                 "CTL_ConvertToPolyObjectAction"));
-        
-        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
 
         this.soundObjects = lookup.lookupAll(SoundObject.class);
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
         this.p = lookup.lookup(Point.class);
-        this.targetLayer = score.getGlobalLayerForY(p.y);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -86,47 +82,47 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         if (retVal != JOptionPane.OK_OPTION) {
             return;
         }
-       
-        Score score = BlueProjectManager.getInstance().getCurrentBlueData().getScore();
-        List<Layer> allLayers = score.getAllLayers();
+
+        List<Layer> allLayers = scorePath.getAllLayers();
         List<SoundObject> sObjList = new ArrayList<>();
         List<Integer> layerIndexes = new ArrayList<>();
         int layerMin = Integer.MAX_VALUE;
         int layerMax = Integer.MIN_VALUE;
 
         float start = Float.POSITIVE_INFINITY;
-        
-        for(SoundObject sObj : soundObjects) {
+
+        for (SoundObject sObj : soundObjects) {
             sObjList.add(sObj);
             float sObjStart = sObj.getStartTime();
 
-            if(sObj.getStartTime() < start) {
+            if (sObj.getStartTime() < start) {
                 start = sObj.getStartTime();
             }
 
-            for(int i = 0; i < allLayers.size(); i++) {
-                if(allLayers.get(i).contains(sObj)) {
+            for (int i = 0; i < allLayers.size(); i++) {
+                if (allLayers.get(i).contains(sObj)) {
                     layerIndexes.add(i);
-                    if(i < layerMin) {
+                    if (i < layerMin) {
                         layerMin = i;
                     }
-                    if(i > layerMax) {
+                    if (i > layerMax) {
                         layerMax = i;
                     }
                     break;
                 }
             }
-            if(sObjList.size() != layerIndexes.size()) {
-                throw new RuntimeException("Error: Unable to find layer for SoundObject.");
+            if (sObjList.size() != layerIndexes.size()) {
+                throw new RuntimeException(
+                        "Error: Unable to find layer for SoundObject.");
             }
         }
-       
+
         int numLayers = layerMax - layerMin + 1;
-        for(int i = 0; i < numLayers; i++) {
+        for (int i = 0; i < numLayers; i++) {
             pObj.newLayerAt(-1);
         }
 
-        for(int i = 0; i < sObjList.size(); i++) {
+        for (int i = 0; i < sObjList.size(); i++) {
             SoundObject sObj = sObjList.get(i);
             int layerNum = layerIndexes.get(i);
             SoundLayer layer = (SoundLayer) allLayers.get(layerNum);
@@ -137,24 +133,24 @@ public final class ConvertToPolyObjectAction extends AbstractAction
         pObj.normalizeSoundObjects();
         pObj.setStartTime(start);
 
-        ((SoundLayer)targetLayer).add(pObj); 
+        ((SoundLayer)scorePath.getGlobalLayerForY(p.y)).add(pObj);
         ScoreController.getInstance().setSelectedScoreObjects(
                 Collections.singleton(pObj));
     }
 
     @Override
     public boolean isEnabled() {
+        Layer layer = ((SoundLayer)scorePath.getGlobalLayerForY(p.y));
         return (soundObjects.size() > 0
-                && scoreObjects.size() == soundObjects.size() &&
-                targetLayer != null &&
-                targetLayer.accepts(pObj));
+                && scoreObjects.size() == soundObjects.size()
+                && layer != null
+                && layer.accepts(pObj));
     }
 
     @Override
     public Action createContextAwareInstance(Lookup actionContext) {
         return new ConvertToPolyObjectAction(actionContext);
     }
-
 
     //FIXME - code above should register an undoable edit
 //    public void removeSoundObjects(Collection<? extends SoundObject> selectedObjects, PolyObject pObj) {

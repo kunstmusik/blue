@@ -23,11 +23,9 @@ import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.FileChooserManager;
 import electric.xml.Element;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,14 +33,19 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 import org.openide.windows.WindowManager;
 
 @ActionID(
@@ -52,19 +55,29 @@ import org.openide.windows.WindowManager;
         displayName = "#CTL_ExportAction")
 @Messages("CTL_ExportAction=E&xport")
 @ActionReference(path = "blue/score/actions", position = 500)
-public final class ExportAction implements ActionListener {
+public final class ExportAction extends AbstractAction
+        implements ContextAwareAction {
 
     private static final String EXPORT_DIALOG = "sObj.export";
-    
+
+    private final Collection<? extends ScoreObject> scoreObjects;
+    private final Collection<? extends SoundObject> soundObjects;
+
+    public ExportAction() {
+        this(Utilities.actionsGlobalContext());
+    }
+
+    public ExportAction(Lookup lookup) {
+
+        super(NbBundle.getMessage(ExportAction.class, "CTL_ExportAction"));
+        scoreObjects = lookup.lookupAll(ScoreObject.class);
+        soundObjects = lookup.lookupAll(SoundObject.class);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        Lookup lkp = ScoreTopComponent.findInstance().getLookup();
-        Collection<? extends ScoreObject> selected = lkp.lookupAll(
-                ScoreObject.class);
-        Collection<? extends SoundObject> sObjects = lkp.lookupAll(SoundObject.class);
-
-        if (selected.size() == 1 && sObjects.size() == 1) {
+        if (scoreObjects.size() == 1 && soundObjects.size() == 1) {
 
             int retVal = FileChooserManager.getDefault().showSaveDialog(
                     EXPORT_DIALOG, WindowManager.getDefault().getMainWindow());
@@ -76,7 +89,8 @@ public final class ExportAction implements ActionListener {
 
                 if (f.exists()) {
                     int overWrite = JOptionPane.showConfirmDialog(
-                            SwingUtilities.getRoot(WindowManager.getDefault().getMainWindow()),
+                            SwingUtilities.getRoot(
+                                    WindowManager.getDefault().getMainWindow()),
                             "Please confirm you would like to overwrite this file.");
 
                     if (overWrite != JOptionPane.OK_OPTION) {
@@ -84,10 +98,10 @@ public final class ExportAction implements ActionListener {
                     }
                 }
 
-                SoundObject sObj = sObjects.iterator().next();
-                if ((sObj instanceof Instance) || 
-                        ((sObj instanceof PolyObject) && containsInstance(
-                        (PolyObject) sObj))) {
+                SoundObject sObj = soundObjects.iterator().next();
+                if ((sObj instanceof Instance)
+                        || ((sObj instanceof PolyObject) && containsInstance(
+                                (PolyObject) sObj))) {
                     JOptionPane.showMessageDialog(
                             WindowManager.getDefault().getMainWindow(),
                             "Error: Export of Instance or " + "PolyObjects containing Instance " + "is not allowed.",
@@ -112,7 +126,6 @@ public final class ExportAction implements ActionListener {
         }
     }
 
-
     protected boolean containsInstance(PolyObject pObj) {
         List<SoundObject> soundObjects = pObj.getSoundObjects(true);
 
@@ -128,5 +141,15 @@ public final class ExportAction implements ActionListener {
             }
         }
         return false;
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return scoreObjects.size() == 1 && soundObjects.size() == 1;
+    }
+
+    @Override
+    public Action createContextAwareInstance(Lookup actionContext) {
+        return new ExportAction(actionContext);
     }
 }

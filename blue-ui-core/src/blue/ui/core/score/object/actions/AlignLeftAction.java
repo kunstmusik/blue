@@ -20,7 +20,6 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
-import blue.soundObject.SoundObject;
 import blue.ui.core.score.undo.AlignEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
@@ -92,37 +91,6 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
 
         BlueUndoManager.addEdit(edit);
         
-        // FIXME
-//        float initialStartTimes[] = new float[sCanvas.mBuffer.size()];
-//        float endingStartTimes[] = new float[sCanvas.mBuffer.size()];
-//
-//        float farLeft = soundObjects[0].getStartTime();
-//        initialStartTimes[0] = farLeft;
-//
-//        float tempStart;
-//        for (int i = 1; i < soundObjects.length; i++) {
-//            SoundObject sObj = soundObjects[i];
-//            tempStart = sObj.getStartTime();
-//
-//            initialStartTimes[i] = tempStart;
-//
-//            if (tempStart < farLeft) {
-//                farLeft = tempStart;
-//            }
-//        }
-//        for (int i = 0; i < soundObjects.length; i++) {
-//            SoundObject sObj = soundObjects[i];
-//            sObj.setStartTime(farLeft);
-//            endingStartTimes[i] = farLeft;
-//        }
-//
-//        BlueUndoManager.setUndoManager("score");
-//        AlignEdit edit = new AlignEdit(soundObjects, initialStartTimes,
-//                endingStartTimes);
-//
-//        edit.setPresentationName("Align Left");
-//
-//        BlueUndoManager.addEdit(edit)
     }
 
     @Override

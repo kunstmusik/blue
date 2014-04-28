@@ -19,14 +19,14 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.SoundLayer;
 import blue.score.ScoreObject;
 import blue.soundObject.External;
 import blue.soundObject.ObjectBuilder;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.LayerGroupPanel;
-import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
+import blue.ui.core.score.ScorePath;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -54,8 +54,8 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
     private final Collection<? extends SoundObject> soundObjects;
     private final Collection<? extends ScoreObject> scoreObjects;
-    private final LayerGroupPanel lGroupPanel;
     private final Point p;
+    private final ScorePath scorePath;
 
     public ConvertToObjectBuilderAction() {
         this(Utilities.actionsGlobalContext());
@@ -67,8 +67,8 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
         this.soundObjects = lookup.lookupAll(SoundObject.class);
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
-        this.lGroupPanel = lookup.lookup(LayerGroupPanel.class);
         this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -82,8 +82,7 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
             return;
         }
 
-        ScoreTimeCanvas sCanvas = (ScoreTimeCanvas)lGroupPanel;
-        int index = sCanvas.getPolyObject().getLayerNumForScoreObject(temp);
+        SoundLayer layer = (SoundLayer) scorePath.getGlobalLayerForY(p.y);
 
         ObjectBuilder objBuilder = new ObjectBuilder();
 
@@ -112,9 +111,8 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
             return;
         }
 
-
-        sCanvas.getPolyObject().removeSoundObject(temp);
-        sCanvas.getPolyObject().addSoundObject(index, objBuilder);
+        layer.remove(temp);
+        layer.add(objBuilder);
 
         ScoreController.getInstance().removeSelectedScoreObject(temp);
         ScoreController.getInstance().addSelectedScoreObject(objBuilder);
@@ -122,9 +120,8 @@ public final class ConvertToObjectBuilderAction extends AbstractAction
 
     @Override
     public boolean isEnabled() {
-        if (scoreObjects.size() != soundObjects.size() || 
-                soundObjects.size() != 1 ||
-                !(lGroupPanel instanceof ScoreTimeCanvas)) {
+        if (scoreObjects.size() != soundObjects.size()
+                || soundObjects.size() != 1) {
             return false;
         }
         SoundObject sObj = soundObjects.iterator().next();

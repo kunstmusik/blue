@@ -20,6 +20,7 @@
 package blue.ui.core.score;
 
 import blue.score.Score;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import java.awt.Point;
 import java.lang.ref.WeakReference;
@@ -64,7 +65,7 @@ public class ScorePath {
             Point p = scrollLocations.get(0);
             scrollLocations.clear();
             scrollLocations.add(p);
-            
+
             return true;
         } else if (getLastLayerGroup() == layerGroup) {
             // ignore... nothing has changed
@@ -72,24 +73,24 @@ public class ScorePath {
         } else {
             boolean found = false;
 
-            for(WeakReference<LayerGroup> ref : layerGroups) {
-                if(ref.get() == layerGroup) {
+            for (WeakReference<LayerGroup> ref : layerGroups) {
+                if (ref.get() == layerGroup) {
                     found = true;
                     break;
-                } 
-            }
-           
-            if(found) {
-            for (int i = layerGroups.size() - 1; i >= 0; i--) {
-                if (layerGroups.get(i).get() == layerGroup) {
-                    break;
                 }
-                layerGroups.remove(i);
-                scrollLocations.remove(i);
             }
+
+            if (found) {
+                for (int i = layerGroups.size() - 1; i >= 0; i--) {
+                    if (layerGroups.get(i).get() == layerGroup) {
+                        break;
+                    }
+                    layerGroups.remove(i);
+                    scrollLocations.remove(i);
+                }
             } else {
                 layerGroups.add(new WeakReference<>(layerGroup));
-                scrollLocations.add(new Point(0,0));
+                scrollLocations.add(new Point(0, 0));
             }
             return true;
         }
@@ -98,7 +99,7 @@ public class ScorePath {
 //    public List<WeakReference<LayerGroup>> getLayerGroups() {
 //        return layerGroups;
 //    }
-    public LayerGroup getLastLayerGroup() {
+    public LayerGroup<? extends Layer> getLastLayerGroup() {
         if (layerGroups.isEmpty()) {
             return null;
         }
@@ -108,8 +109,8 @@ public class ScorePath {
     public List<LayerGroup> getLayerGroups() {
         List<LayerGroup> retVal = new ArrayList<>();
 
-        for(WeakReference<LayerGroup> ref : layerGroups) {
-            retVal.add(ref.get()); 
+        for (WeakReference<LayerGroup> ref : layerGroups) {
+            retVal.add(ref.get());
         }
 
         return retVal;
@@ -141,14 +142,67 @@ public class ScorePath {
     }
 
     boolean containsLayerGroup(LayerGroup layerGroup) {
-        if(layerGroup == null) {
-            return false; 
+        if (layerGroup == null) {
+            return false;
         }
-        for(WeakReference<LayerGroup> ref : layerGroups) {
+        for (WeakReference<LayerGroup> ref : layerGroups) {
             if (ref.get() == layerGroup) {
                 return true;
             }
         }
         return false;
     }
+
+    /**
+     * Gets all Layers for the object at end of path
+     *
+     * @return
+     */
+    public List<Layer> getAllLayers() {
+        List<Layer> allLayers;
+        if (getLastLayerGroup() == null) {
+            allLayers = getScore().getAllLayers();
+        } else {
+            allLayers = new ArrayList<>(getLastLayerGroup());
+        }
+        return allLayers;
+    }
+
+    public Layer getGlobalLayerForY(int y) {
+        if (getLastLayerGroup() == null) {
+            return getScore().getGlobalLayerForY(y);
+        }
+
+        int runningY = 0;
+
+        for (Layer layer : getLastLayerGroup()) {
+            if (y <= runningY + layer.getLayerHeight()) {
+                return layer;
+            }
+            runningY += layer.getLayerHeight();
+        }
+        
+        return null;
+    }
+
+
+    public int getGlobalLayerIndexForY(int y) {
+        LayerGroup<? extends Layer> layerGroup = getLastLayerGroup();
+        if (layerGroup == null) {
+            return getScore().getGlobalLayerIndexForY(y);
+        }
+
+        int runningY = 0;
+
+        for (int i = 0; i < layerGroup.size(); i++) {
+            Layer layer = layerGroup.get(i);
+            if (y <= runningY + layer.getLayerHeight()) {
+                return i;
+            }
+            runningY += layer.getLayerHeight();
+        }
+        
+        return -1;
+    }
+    
 }

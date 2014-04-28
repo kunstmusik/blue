@@ -30,6 +30,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
     private Collection<? extends ScoreObject> scoreObjects;
     private Collection<? extends SoundObject> soundObjects;
     private Point p;
+    private final ScorePath scorePath;
 
     public ReplaceWithBufferSoundObjectAction() {
         this(Utilities.actionsGlobalContext());
@@ -71,6 +73,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         this.scoreObjects = lookup.lookupAll(ScoreObject.class);
         this.soundObjects = lookup.lookupAll(SoundObject.class);
         this.p = lookup.lookup(Point.class);
+        this.scorePath = lookup.lookup(ScorePath.class);
     }
 
     @Override
@@ -81,10 +84,9 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Score score = ScoreController.getInstance().getScore();
         ScoreController.ScoreObjectBuffer buffer
                 = ScoreController.getInstance().getScoreObjectBuffer();
-        List<Layer> layers = score.getAllLayers();
+        List<Layer> layers = scorePath.getAllLayers();
 
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
