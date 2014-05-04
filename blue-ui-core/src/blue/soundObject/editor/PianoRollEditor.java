@@ -3,8 +3,9 @@ package blue.soundObject.editor;
 import blue.BlueSystem;
 import blue.gui.MyScrollPaneLayout;
 import blue.gui.ScrollerButton;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.PianoRoll;
-import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvas;
 import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
@@ -37,7 +38,8 @@ import javax.swing.JToggleButton;
  * @version 1.0
  */
 
-public class PianoRollEditor extends SoundObjectEditor implements
+@ScoreObjectEditorPlugin
+public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener, ActionListener {
 
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor();
@@ -180,7 +182,12 @@ public class PianoRollEditor extends SoundObjectEditor implements
     }
 
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof PianoRoll);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
 
         if (sObj == null) {
             return;
@@ -223,7 +230,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         GUI.setBlueLookAndFeel();
 
         PianoRollEditor pEditor = new PianoRollEditor();
-        pEditor.editSoundObject(new PianoRoll());
+        pEditor.editScoreObject(new PianoRoll());
 
         GUI.showComponentAsStandalone(pEditor, "Piano Roll Editor", true);
     }

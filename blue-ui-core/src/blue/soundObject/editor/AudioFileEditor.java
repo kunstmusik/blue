@@ -22,8 +22,9 @@ package blue.soundObject.editor;
 
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.AudioFile;
-import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
@@ -54,7 +55,8 @@ import org.openide.awt.UndoRedo;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class AudioFileEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class AudioFileEditor extends ScoreObjectEditor {
 
     JTextField audioFileName = new JTextField();
 
@@ -207,8 +209,14 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     }
 
+    
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof AudioFile);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[AudioFileEditor::editSoundObject()] ERROR: null object passed in");
@@ -366,7 +374,7 @@ public class AudioFileEditor extends SoundObjectEditor {
 
         GUI.showComponentAsStandalone(afe, "Audio File Editor Test", true);
 
-        afe.editSoundObject(new AudioFile());
+        afe.editScoreObject(new AudioFile());
 
     }
 }

@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.Sound;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class SoundRenderer extends LetterRenderer {
 
     public SoundRenderer() {

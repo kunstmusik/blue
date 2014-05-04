@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.Comment;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
@@ -19,6 +20,7 @@ import java.awt.RenderingHints;
  * @version 1.0
  */
 
+@BarRendererPlugin
 public class CommentRenderer implements BarRenderer {
     private static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
 

@@ -3,6 +3,8 @@ package blue.soundObject.editor;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
@@ -32,8 +34,8 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-
-public class GenericScoreEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class GenericScoreEditor extends ScoreObjectEditor {
 
     GenericScore sObj;
 
@@ -113,8 +115,14 @@ public class GenericScoreEditor extends SoundObjectEditor {
 
     }
 
+
     @Override
-    public final void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof GenericScore);
+    }
+
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
             editorLabel.setText("no editor available");

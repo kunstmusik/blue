@@ -1,7 +1,10 @@
 package blue.soundObject.editor;
 
-import blue.*;
+import blue.BlueSystem;
+import blue.CompileData;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.Instance;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
@@ -23,8 +26,8 @@ import org.openide.util.Exceptions;
  * @author steven yi
  * @version 1.0
  */
-
-public class InstanceEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class InstanceEditor extends ScoreObjectEditor {
 
     Instance instance;
 
@@ -70,8 +73,14 @@ public class InstanceEditor extends SoundObjectEditor {
 
     }
 
+    
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof Instance);
+    }
+    
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             instance = null;
             return;

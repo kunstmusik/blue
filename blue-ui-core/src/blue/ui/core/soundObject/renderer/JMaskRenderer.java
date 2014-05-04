@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.JMask;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class JMaskRenderer extends LetterRenderer {
 
     public JMaskRenderer() {

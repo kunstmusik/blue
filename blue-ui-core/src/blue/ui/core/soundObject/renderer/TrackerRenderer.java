@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.TrackerObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class TrackerRenderer extends LetterRenderer {
 
     public TrackerRenderer() {

@@ -1,7 +1,8 @@
 package blue.soundObject.editor;
 
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.Comment;
-import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -19,8 +20,8 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-
-public class CommentEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin 
+public class CommentEditor extends ScoreObjectEditor {
 
     Comment sObj;
 
@@ -70,8 +71,14 @@ public class CommentEditor extends SoundObjectEditor {
         undo.setLimit(1000);
     }
 
+
     @Override
-    public final void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof Comment);
+    }
+
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
             editorLabel.setText("no editor available");

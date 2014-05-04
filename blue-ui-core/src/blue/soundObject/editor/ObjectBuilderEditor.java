@@ -26,10 +26,11 @@ import blue.gui.InfoDialog;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.ObjectBuilder;
 import blue.soundObject.ObjectBuilderRegistry;
-import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
 import blue.utility.GUI;
@@ -47,7 +48,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-public class ObjectBuilderEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     private ObjectBuilder objectBuilder;
 
@@ -104,7 +106,12 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
     }
 
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof ObjectBuilder);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null || !(sObj instanceof ObjectBuilder)) {
             this.objectBuilder = null;
             System.err.println("[ERROR] ObjectBuilder::editSoundObject - "
@@ -148,7 +155,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
         ObjectBuilderEditor objBuilderEditor = new ObjectBuilderEditor();
-        objBuilderEditor.editSoundObject(new ObjectBuilder());
+        objBuilderEditor.editScoreObject(new ObjectBuilder());
         GUI.showComponentAsStandalone(objBuilderEditor, "ObjectBuilder Editor",
                 true);
     }

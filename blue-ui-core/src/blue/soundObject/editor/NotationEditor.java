@@ -1,7 +1,8 @@
 package blue.soundObject.editor;
 
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.NotationObject;
-import blue.soundObject.SoundObject;
 import blue.soundObject.notation.NotationEditPoint;
 import blue.soundObject.notation.NotationNote;
 import blue.soundObject.notation.NotationStaffRenderer;
@@ -45,7 +46,8 @@ import javax.swing.JTextField;
 // left, right - changes cursor location (place in note array)
 // dot - adds dot, shift-dot removes dot
 // +/- - sharpens or flats
-public class NotationEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class NotationEditor extends ScoreObjectEditor {
     NotationObject nObj = null;
 
     NotationStaffRenderer nStaffRenderer = new NotationStaffRenderer();
@@ -134,8 +136,14 @@ public class NotationEditor extends SoundObjectEditor {
         optionsMenu.show(this, x, y);
     }
 
+
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof NotationObject);
+    }
+    
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.nObj = null;
             return;

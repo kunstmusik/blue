@@ -24,7 +24,6 @@ import java.awt.Graphics2D;
  * @author unascribed
  * @version 1.0
  */
-
 public abstract class LetterRenderer extends GenericRenderer {
 
     private static Font miniFont = new Font("Dialog", Font.BOLD, 10);

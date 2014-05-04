@@ -19,12 +19,14 @@
  */
 package blue.clojure.soundObject;
 
+import blue.plugin.BarRendererPlugin;
 import blue.ui.core.soundObject.renderer.LetterRenderer;
 
 /**
  *
  * @author stevenyi
  */
+@BarRendererPlugin
 public class ClojureObjectRenderer extends LetterRenderer {
     public ClojureObjectRenderer() {
         super("C");

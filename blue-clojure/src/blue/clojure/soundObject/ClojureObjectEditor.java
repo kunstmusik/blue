@@ -24,10 +24,12 @@ import blue.BlueSystem;
 import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import blue.soundObject.editor.SoundObjectEditor;
+import blue.soundObject.editor.ScoreObjectEditor;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
@@ -46,7 +48,8 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-public class ClojureObjectEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class ClojureObjectEditor extends ScoreObjectEditor {
 
     ClojureObject clojureObj = null;
     UndoManager undo = new UndoRedo.Manager();
@@ -94,7 +97,12 @@ public class ClojureObjectEditor extends SoundObjectEditor {
     }
 
     @Override
-    public final void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof ClojureObject);
+    }
+    
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         this.clojureObj = null;
         
         if (sObj == null) {
@@ -213,4 +221,6 @@ public class ClojureObjectEditor extends SoundObjectEditor {
     private javax.swing.JCheckBox processOnLoadCheckBox;
     private javax.swing.JButton testButton;
     // End of variables declaration//GEN-END:variables
+
+
 }

@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
@@ -14,6 +15,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
+@BarRendererPlugin
 public class AudioFileRenderer implements BarRenderer {
 
     private static final String AUDIO_WAVEFORM_DATA = "audioWaveformData";

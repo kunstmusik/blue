@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.Instance;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class InstanceRenderer extends LetterRenderer {
 
     public InstanceRenderer() {

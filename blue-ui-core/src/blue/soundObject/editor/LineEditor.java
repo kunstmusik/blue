@@ -25,8 +25,9 @@ import blue.components.lines.Line;
 import blue.components.lines.LineListTable;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.LineObject;
-import blue.soundObject.SoundObject;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
 import javax.swing.JSplitPane;
@@ -34,7 +35,8 @@ import javax.swing.JSplitPane;
 /**
  * @author Steven Yi
  */
-public class LineEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class LineEditor extends ScoreObjectEditor {
 
     LineListTable lineTable = null;
 
@@ -74,8 +76,14 @@ public class LineEditor extends SoundObjectEditor {
         return new LineCanvas();
     }
 
+    
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof LineObject);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             // this.line = null;
 
@@ -94,7 +102,7 @@ public class LineEditor extends SoundObjectEditor {
 
     public static void main(String[] args) {
         LineEditor lineEditor = new LineEditor();
-        lineEditor.editSoundObject(new LineObject());
+        lineEditor.editScoreObject(new LineObject());
         GUI.showComponentAsStandalone(lineEditor, "Test Line Editor", true);
     }
 }

@@ -20,9 +20,16 @@
 
 package blue.soundObject.editor;
 
-import blue.*;
+import blue.Arrangement;
+import blue.BlueData;
+import blue.BlueSystem;
+import blue.CompileData;
+import blue.GlobalOrcSco;
+import blue.Tables;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
@@ -33,7 +40,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -57,7 +63,8 @@ import org.openide.util.Exceptions;
  */
 
 // TODO - Clean up UI Code in this class
-public class PolyObjectEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class PolyObjectEditor extends ScoreObjectEditor {
 
     PolyObject pObj;
 
@@ -178,7 +185,12 @@ public class PolyObjectEditor extends SoundObjectEditor {
     }
 
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof PolyObject);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[PolyObjectEditor::editSoundObject()] ERROR: not an instance of polyObject");

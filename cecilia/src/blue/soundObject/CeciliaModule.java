@@ -39,7 +39,7 @@ import java.util.Map;
  * 
  */
 //@SoundObjectPlugin(displayName = "CeciliaModule", live=false, position = 200)
-public class CeciliaModule extends AbstractSoundObject implements Serializable {
+public class CeciliaModule extends AbstractSoundObject implements Serializable, GenericViewable {
 
     public static final int ORCHESTRA_MONO = 0;
 

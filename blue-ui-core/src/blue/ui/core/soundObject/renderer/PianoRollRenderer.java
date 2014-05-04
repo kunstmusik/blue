@@ -20,6 +20,7 @@
 package blue.ui.core.soundObject.renderer;
 
 import blue.SoundLayer;
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.PianoRoll;
 import blue.soundObject.pianoRoll.PianoNote;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
@@ -31,6 +32,7 @@ import java.util.Collections;
  *
  * @author stevenyi
  */
+@BarRendererPlugin
 public class PianoRollRenderer extends GenericRenderer {
     
     @Override

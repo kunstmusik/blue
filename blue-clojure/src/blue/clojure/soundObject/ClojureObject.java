@@ -24,6 +24,7 @@ import blue.CompileData;
 import blue.clojure.BlueClojureEngine;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.AbstractSoundObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -44,6 +45,7 @@ import javax.script.ScriptException;
  *
  * @author stevenyi
  */
+@SoundObjectPlugin(displayName="ClojureObject", position=25)
 public class ClojureObject extends AbstractSoundObject implements Serializable,
         Cloneable, OnLoadProcessable {
     

@@ -23,8 +23,9 @@ package blue.soundObject.editor;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.TrackerObject;
 import blue.soundObject.editor.tracker.TracksEditor;
@@ -55,7 +56,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import skt.swing.SwingUtil;
 
-public class TrackerEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class TrackerEditor extends ScoreObjectEditor {
 
     private static final String SHORTCUT_TEXT = "ctrl-space             clear or duplicate previous note\n"
             + "ctrl-shift-space       set to OFF note\n"
@@ -208,8 +210,14 @@ public class TrackerEditor extends SoundObjectEditor {
         return panel;
     }
 
+
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof TrackerObject);
+    }
+    
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[TrackerEditor::editSoundObject()] ERROR: null SoundObject");
@@ -342,7 +350,7 @@ public class TrackerEditor extends SoundObjectEditor {
         GUI.setBlueLookAndFeel();
         TrackerEditor trackerEditor = new TrackerEditor();
 
-        trackerEditor.editSoundObject(new TrackerObject());
+        trackerEditor.editScoreObject(new TrackerObject());
 
         GUI.showComponentAsStandalone(trackerEditor, "Tracker Editor", true);
     }

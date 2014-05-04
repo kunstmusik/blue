@@ -22,9 +22,10 @@ package blue.soundObject.editor;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.JMask;
 import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.editor.jmask.EditorListPanel;
 import blue.soundObject.jmask.Field;
@@ -51,7 +52,8 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import skt.swing.SwingUtil;
 
-public class JMaskEditor extends SoundObjectEditor implements ActionListener {
+@ScoreObjectEditorPlugin
+public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
     EditorListPanel editorListPanel = new EditorListPanel();
 
@@ -123,7 +125,12 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
     }
 
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof JMask);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             return;
         }
@@ -166,7 +173,7 @@ public class JMaskEditor extends SoundObjectEditor implements ActionListener {
         JMask jmask = new JMask();
         jmask.setSubjectiveDuration(5.0f);
 
-        editor.editSoundObject(jmask);
+        editor.editScoreObject(jmask);
         GUI.showComponentAsStandalone(editor, "JMask Editor", true);
     }
 

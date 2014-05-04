@@ -21,8 +21,9 @@ package blue.soundObject.editor;
 
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.FrozenSoundObject;
-import blue.soundObject.SoundObject;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.FileUtilities;
 import java.awt.BorderLayout;
@@ -45,7 +46,8 @@ import org.openide.windows.WindowManager;
  * @author steven
  * 
  */
-public class FrozenSoundObjectEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
     private FrozenSoundObject fso;
 
@@ -93,8 +95,14 @@ public class FrozenSoundObjectEditor extends SoundObjectEditor {
         fcm.setDialogTitle(this, "Save Copy of Frozen Soundfile");
     }
 
+
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof FrozenSoundObject);
+    }
+    
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null
                 || !sObj.getClass().getName().equals(
                 "blue.soundObject.FrozenSoundObject")) {

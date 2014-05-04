@@ -138,7 +138,7 @@ class ScoreMouseProcessor extends MouseAdapter {
                                 editPolyObject(pObj);
                             } else {
                                 if (selectedSoundObjects.size() == 1) {
-                                    SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
+                                    ScoreObjectEditorTopComponent editor = ScoreObjectEditorTopComponent.findInstance();
 
                                     if (!editor.isOpened()) {
                                         editor.open();
@@ -449,8 +449,8 @@ class ScoreMouseProcessor extends MouseAdapter {
                         e.getY());
             }
         } else if (e.getY() < sCanvas.pObj.getTotalHeight()) {
-            sCanvas.showSoundLayerPopup(getSoundLayerIndex(e.getY()), e.getX(),
-                    e.getY());
+//            sCanvas.showSoundLayerPopup(getSoundLayerIndex(e.getY()), e.getX(),
+//                    e.getY());
         }
         isPopupOpen = true;
 

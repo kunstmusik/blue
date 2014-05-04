@@ -120,7 +120,12 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
 
             for (FileObject fObj : orderedSObjFiles) {
 
+                if(fObj.isFolder()) {
+                    continue;
+                }
+                
                 String displayName = (String) fObj.getAttribute(("displayName"));
+
                 SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(),
                         SoundObject.class);
 

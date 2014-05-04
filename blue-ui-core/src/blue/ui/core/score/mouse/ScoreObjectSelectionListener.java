@@ -24,7 +24,7 @@ import blue.score.ScoreObject;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
+import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,8 +81,8 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
             ScoreController.getInstance().editLayerGroup(pObj);
         } else {
             if (selectedScoreObjects.size() == 1) {
-                SoundObjectEditorTopComponent editor
-                        = SoundObjectEditorTopComponent.findInstance();
+                ScoreObjectEditorTopComponent editor
+                        = ScoreObjectEditorTopComponent.findInstance();
 
                 if (!editor.isOpened()) {
                     editor.open();

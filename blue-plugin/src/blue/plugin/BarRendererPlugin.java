@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2014
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,26 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.clojure;
 
-import blue.clojure.soundObject.ClojureObject;
-import blue.clojure.soundObject.ClojureObjectRenderer;
-import blue.plugin.BluePluginFactory;
-import blue.plugin.DefaultBluePluginProvider;
-import blue.ui.core.soundObject.renderer.BarRenderer;
+package blue.plugin;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  *
  * @author stevenyi
  */
-public class BlueClojurePluginProvider extends DefaultBluePluginProvider {
-    
-    public BlueClojurePluginProvider() {
-        BluePluginFactory factory = new BluePluginFactory(this);
-
-        factory.setPluginType(BarRenderer.class);
-        factory.appendPlugin(ClojureObjectRenderer.class, ClojureObject.class);
-
-    }
-
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+public @interface BarRendererPlugin {
 }

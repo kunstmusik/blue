@@ -20,8 +20,9 @@
 
 package blue.soundObject.editor;
 
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.PatternObject;
-import blue.soundObject.SoundObject;
 import blue.soundObject.editor.pattern.PatternCanvas;
 import blue.soundObject.editor.pattern.PatternLayerEditPanel;
 import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
@@ -46,7 +47,9 @@ import javax.swing.event.ListSelectionListener;
 /**
  * @author Steven Yi
  */
-public class PatternEditor extends SoundObjectEditor {
+
+@ScoreObjectEditorPlugin
+public class PatternEditor extends ScoreObjectEditor {
 
     private PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
 
@@ -134,8 +137,14 @@ public class PatternEditor extends SoundObjectEditor {
         });
     }
 
+    
     @Override
-    public void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof PatternObject);
+    }
+
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             return;
         }
@@ -160,7 +169,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         PatternEditor patternEditor = new PatternEditor();
 
-        patternEditor.editSoundObject(new PatternObject());
+        patternEditor.editScoreObject(new PatternObject());
 
         GUI.showComponentAsStandalone(patternEditor, "Pattern Editor", true);
     }

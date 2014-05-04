@@ -32,28 +32,28 @@ public class BlueUICorePluginProvider extends DefaultBluePluginProvider {
           
         //SOUND OBJECT EDITORS
         BluePluginFactory factory = new BluePluginFactory(this);
-        factory.setPluginType(SoundObjectEditor.class);
-        factory.setPropertyType(BluePlugin.PROP_EDIT_CLASS);
-
-        factory.appendPlugin(PatternEditor.class, PatternObject.class);
-        factory.appendPlugin(JMaskEditor.class, JMask.class);
-        factory.appendPlugin(ZakLineEditor.class, ZakLineObject.class);
-        factory.appendPlugin(PianoRollEditor.class, PianoRoll.class);
-        factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
-        factory.appendPlugin(LineEditor.class, LineObject.class);
-        factory.appendPlugin(PythonEditor.class, PythonObject.class);
-        factory.appendPlugin(GenericScoreEditor.class, GenericScore.class);
-        factory.appendPlugin(CommentEditor.class, Comment.class);
-        factory.appendPlugin(RhinoObjectEditor.class, RhinoObject.class);
-        factory.appendPlugin(SoundEditor.class, Sound.class);
-        factory.appendPlugin(ObjectBuilderEditor.class, ObjectBuilder.class);
-        factory.appendPlugin(TrackerEditor.class, TrackerObject.class);
-        factory.appendPlugin(InstanceEditor.class, Instance.class);
-        factory.appendPlugin(ExternalEditor.class, External.class);
-        factory.appendPlugin(AudioFileEditor.class, AudioFile.class);
-        factory.appendPlugin(NotationEditor.class, NotationObject.class);
-        factory.appendPlugin(FrozenSoundObjectEditor.class,
-                FrozenSoundObject.class);
+//        factory.setPluginType(ScoreObjectEditor.class);
+//        factory.setPropertyType(BluePlugin.PROP_EDIT_CLASS);
+//
+//        factory.appendPlugin(PatternEditor.class, PatternObject.class);
+//        factory.appendPlugin(JMaskEditor.class, JMask.class);
+//        factory.appendPlugin(ZakLineEditor.class, ZakLineObject.class);
+//        factory.appendPlugin(PianoRollEditor.class, PianoRoll.class);
+//        factory.appendPlugin(PolyObjectEditor.class, PolyObject.class);
+//        factory.appendPlugin(LineEditor.class, LineObject.class);
+//        factory.appendPlugin(PythonEditor.class, PythonObject.class);
+//        factory.appendPlugin(GenericScoreEditor.class, GenericScore.class);
+//        factory.appendPlugin(CommentEditor.class, Comment.class);
+//        factory.appendPlugin(RhinoObjectEditor.class, RhinoObject.class);
+//        factory.appendPlugin(SoundEditor.class, Sound.class);
+//        factory.appendPlugin(ObjectBuilderEditor.class, ObjectBuilder.class);
+//        factory.appendPlugin(TrackerEditor.class, TrackerObject.class);
+//        factory.appendPlugin(InstanceEditor.class, Instance.class);
+//        factory.appendPlugin(ExternalEditor.class, External.class);
+//        factory.appendPlugin(AudioFileEditor.class, AudioFile.class);
+//        factory.appendPlugin(NotationEditor.class, NotationObject.class);
+//        factory.appendPlugin(FrozenSoundObjectEditor.class,
+//                FrozenSoundObject.class);
 
 
         // INSTRUMENT EDITORS

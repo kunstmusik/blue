@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.PythonObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class PythonObjectRenderer extends LetterRenderer {
 
     public PythonObjectRenderer() {

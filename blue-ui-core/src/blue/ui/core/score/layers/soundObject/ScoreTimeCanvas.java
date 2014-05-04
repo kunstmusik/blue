@@ -81,7 +81,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
-    private final SoundLayerPopup sLayerPopup = new SoundLayerPopup();
+//    private final SoundLayerPopup sLayerPopup = new SoundLayerPopup();
 //    private final SoundObjectPopup sObjPopup;
     private final QuickTimeDialog qtDialog;
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap
@@ -1046,11 +1046,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                 new Action[0]),
                 ScoreTopComponent.findInstance().getLookup());
         menu.show(sObjView.getParent(), x, y);
-    }
-
-    protected void showSoundLayerPopup(int soundLayerIndex, int x, int y) {
-        sLayerPopup.setTimeState(timeState);
-        sLayerPopup.show(soundLayerIndex, this, x, y);
     }
 
     /**

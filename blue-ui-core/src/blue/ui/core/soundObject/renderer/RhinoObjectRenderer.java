@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.RhinoObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class RhinoObjectRenderer extends LetterRenderer {
 
     public RhinoObjectRenderer() {

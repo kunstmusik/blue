@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.SoundObject;
@@ -14,7 +15,7 @@ import java.awt.*;
  * @author steven yi
  * @version 1.0
  */
-
+@BarRendererPlugin
 public class GenericRenderer implements BarRenderer {
     protected int labelOffset = 5;
 

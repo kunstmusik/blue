@@ -24,6 +24,8 @@ import blue.BlueSystem;
 import blue.CompileData;
 import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.PythonObject;
 import blue.soundObject.SoundObject;
@@ -46,7 +48,8 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-public class PythonEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin
+public class PythonEditor extends ScoreObjectEditor {
 
     PythonObject pObj = null;
     UndoManager undo = new UndoRedo.Manager();
@@ -94,7 +97,12 @@ public class PythonEditor extends SoundObjectEditor {
     }
 
     @Override
-    public final void editSoundObject(SoundObject sObj) {
+    public boolean accepts(ScoreObject sObj) {
+        return (sObj != null && sObj instanceof PythonObject);
+    }
+
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         this.pObj = null;
         
         if (sObj == null) {

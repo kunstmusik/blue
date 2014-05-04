@@ -27,7 +27,7 @@ import blue.score.layers.patterns.core.PatternsPluginProvider;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
-import blue.ui.core.score.layers.soundObject.SoundObjectEditorTopComponent;
+import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import blue.utility.ObjectUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -136,7 +136,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
     protected void editSoundObject() {
         content.set(Collections.singleton(patternLayer.getSoundObject()), null);
 
-        SoundObjectEditorTopComponent editor = SoundObjectEditorTopComponent.findInstance();
+        ScoreObjectEditorTopComponent editor = ScoreObjectEditorTopComponent.findInstance();
 
         if (!editor.isOpened()) {
             editor.open();

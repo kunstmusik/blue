@@ -23,12 +23,14 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.AbstractLineObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin
 public class AbstractLineObjectRenderer extends LetterRenderer {
 
     public AbstractLineObjectRenderer() {
