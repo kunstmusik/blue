@@ -20,28 +20,26 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.event.SelectionEvent;
-import blue.plugin.BluePlugin;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.ScoreObjectEditor;
-import blue.ui.core.BluePluginManager;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -54,6 +52,31 @@ import org.openide.windows.WindowManager;
 /**
  * Top component which displays something.
  */
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.score.layers.soundObject//ScoreObjectEditorTopComponent//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "ScoreObjectEditorTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "output", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 100),
+    @ActionReference(path = "Shortcuts", 
+            name = "DS-E")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_ScoreObjectEditorAction",
+        preferredID = "ScoreObjectEditorTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_ScoreObjectEditorAction=ScoreObjectEditor",
+    "CTL_ScoreObjectEditorTopComponent=ScoreObjectEditor Window",
+    "HINT_ScoreObjectEditorTopComponent=This is a ScoreObjectEditor window"
+})
 final public class ScoreObjectEditorTopComponent extends TopComponent
         implements LookupListener {
 
@@ -172,26 +195,16 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         result.removeLookupListener(this);
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
+    void writeProperties(java.util.Properties p) {
+        // better to version settings since initial version as advocated at
+        // http://wiki.apidesign.org/wiki/PropertyFiles
+        p.setProperty("version", "1.0");
+        // TODO store your settings
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return ScoreObjectEditorTopComponent.getDefault();
-        }
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
+        // TODO read your settings according to their version
     }
 
     @Override

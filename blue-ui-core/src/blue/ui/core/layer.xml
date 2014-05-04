@@ -185,12 +185,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
                 <attr name="position" intvalue="100"/>
             </file>
-            <file name="blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.score.layers.soundObject.Bundle#CTL_ScoreObjectEditorAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent.findInstance"/>
@@ -344,10 +338,6 @@
 
         <folder name="Window">
             <file name="Output_hidden"/>
-            <file name="SoundObjectEditorAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance"/>
-                <attr name="position" intvalue="100"/>
-            </file>
 
             <file name="SoundObjectPropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
@@ -480,10 +470,6 @@
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-blueLive-BlueLiveAction.instance"/>
         </file>
 
-        <file name="DS-E.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectEditorAction.instance"/>
-        </file>
-
 
         <file name="F3.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
@@ -580,7 +566,6 @@
             <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
             <file name="AudioFilePlayerTopComponent.settings" url="AudioFilePlayerTopComponentSettings.xml"/>
             <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
-            <file name="SoundObjectEditorTopComponent.settings" url="SoundObjectEditorTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
             <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
         </folder>
@@ -614,9 +599,6 @@
             <folder name="output">
                 <file name="MixerTopComponent.wstcref" url="MixerTopComponentWstcref.xml">
                     <attr name="position" intvalue="200"/>
-                </file>
-                <file name="SoundObjectEditorTopComponent.wstcref" url="SoundObjectEditorTopComponentWstcref.xml">
-                    <attr name="position" intvalue="100"/>
                 </file>
             </folder>
             <folder name="properties">
