@@ -10,6 +10,7 @@ import blue.gui.InfoDialog;
 import blue.orchestra.Instrument;
 import blue.orchestra.PythonInstrument;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
@@ -24,6 +25,8 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
+
+@InstrumentEditorPlugin
 public class PythonInstrumentEditor extends InstrumentEditor {
 
     private static HashMap tokenMarkerTypes = new HashMap();

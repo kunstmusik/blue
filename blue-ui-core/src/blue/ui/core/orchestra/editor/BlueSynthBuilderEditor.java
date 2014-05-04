@@ -29,6 +29,7 @@ import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBCodeEditor;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import java.awt.BorderLayout;
 import javax.swing.JLabel;
@@ -37,6 +38,7 @@ import javax.swing.JTabbedPane;
 /**
  * @author Steven Yi
  */
+@InstrumentEditorPlugin
 public class BlueSynthBuilderEditor extends InstrumentEditor {
 
     private BlueSynthBuilder bsb;

@@ -13,6 +13,7 @@ import blue.BlueSystem;
 import blue.orchestra.BlueX7;
 import blue.orchestra.Instrument;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.orchestra.editor.blueX7.AlgorithmCommonPanel;
 import blue.ui.core.orchestra.editor.blueX7.BlueX7ImportDialog;
 import blue.ui.core.orchestra.editor.blueX7.CsoundCodePanel;
@@ -36,6 +37,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+@InstrumentEditorPlugin
 public class BlueX7Editor extends InstrumentEditor {
     AlgorithmCommonPanel common = new AlgorithmCommonPanel();
 

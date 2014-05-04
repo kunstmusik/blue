@@ -19,7 +19,7 @@
  */
 package blue.plugin.processors;
 
-import blue.plugin.ScoreObjectEditorPlugin;
+import blue.plugin.InstrumentEditorPlugin;
 import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -39,19 +39,19 @@ import org.openide.util.lookup.ServiceProvider;
  * @author stevenyi
  */
 @ServiceProvider(service = Processor.class)
-@SupportedAnnotationTypes("blue.plugin.ScoreObjectEditorPlugin")
+@SupportedAnnotationTypes("blue.plugin.InstrumentEditorPlugin")
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
-public class ScoreObjectEditorPluginProcessor extends LayerGeneratingProcessor {
+public class InstrumentEditorPluginProcessor extends LayerGeneratingProcessor {
 
     @Override
     protected boolean handleProcess(Set<? extends TypeElement> set, RoundEnvironment env)
             throws LayerGenerationException {
         Elements elements = processingEnv.getElementUtils();
-        for (Element e : env.getElementsAnnotatedWith(ScoreObjectEditorPlugin.class)) {
+        for (Element e : env.getElementsAnnotatedWith(InstrumentEditorPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
             String teName = elements.getBinaryName(clazz).toString();
             File f = layer(e).file(
-                    "blue/score/objectEditors/" + teName.replace('.', '-') + ".instance");
+                    "blue/instrumentEditors/" + teName.replace('.', '-') + ".instance");
             f.write();
         }
         return true;

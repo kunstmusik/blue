@@ -2,13 +2,10 @@ package blue.ui.core.orchestra;
 
 import blue.orchestra.Instrument;
 import blue.orchestra.editor.InstrumentEditor;
-import blue.plugin.BluePlugin;
-import blue.ui.core.BluePluginManager;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
-import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -21,6 +18,8 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
@@ -35,9 +34,7 @@ public final class InstrumentEditPanel extends JComponent {
 
     JPanel editPanel = new JPanel();
 
-    HashMap<Class, Class> instrEditorMap = new HashMap<>();
-
-    HashMap<Class, InstrumentEditor> editors = new HashMap<>();
+    HashMap<Class, InstrumentEditor> instrEditorMap = new HashMap<>();
 
     CardLayout cardLayout = new CardLayout();
 
@@ -98,13 +95,19 @@ public final class InstrumentEditPanel extends JComponent {
 
         setEditingLibraryObject(false);
 
-        ArrayList<BluePlugin> plugins = BluePluginManager.getInstance().getPlugins(InstrumentEditor.class);
+        FileObject sObjEditorFiles[] = FileUtil.getConfigFile(
+                "blue/instrumentEditors").getChildren();
 
-        for(BluePlugin plugin : plugins) {
-            instrEditorMap.put((Class)plugin.getProperty(BluePlugin.PROP_EDIT_CLASS),
-                    plugin.getPluginClass());
+        for (FileObject fObj : sObjEditorFiles) {
+            InstrumentEditor instrEditor = FileUtil.getConfigObject(
+                    fObj.getPath(),
+                    InstrumentEditor.class);
+            instrEditorMap.put(instrEditor.getInstrumentClass(), 
+                    instrEditor);
+                        editPanel.add(instrEditor, instrEditor.getClass().getName());
+
         }
-
+        
     }
 
     public void setEditingLibraryObject(boolean isLibaryObject) {
@@ -136,28 +139,15 @@ public final class InstrumentEditPanel extends JComponent {
 
 
         Class instrClass = instr.getClass();
-        Class instrEditorClass = null;
-
+        InstrumentEditor instrEditor = null;
         for(Class c : instrEditorMap.keySet()) {
             if(c.isAssignableFrom(instrClass)) {
-                instrEditorClass = instrEditorMap.get(c);
+                instrEditor = instrEditorMap.get(c);
                 break;
             }
         }
 
-        InstrumentEditor instrEditor = editors.get(instrEditorClass);
-
-        if(instrEditor == null) {
-            try {
-                instrEditor = (InstrumentEditor) instrEditorClass.newInstance();
-            } catch (    InstantiationException | IllegalAccessException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            editors.put(instrEditorClass, instrEditor);
-            editPanel.add(instrEditor, instrEditorClass.getName());
-        } 
-
-        cardLayout.show(editPanel, instrEditor.getClass().getCanonicalName());
+        cardLayout.show(editPanel, instrEditor.getClass().getName());
         instrEditor.editInstrument(instr);
         
     }
