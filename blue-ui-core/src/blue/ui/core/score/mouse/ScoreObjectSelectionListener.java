@@ -28,13 +28,15 @@ import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 
 /**
  *
  * @author stevenyi
  */
 @ScoreMouseListenerPlugin(displayName = "ScoreObjectSelectionListener",
-        position=40)
+        position = 40)
 public class ScoreObjectSelectionListener extends BlueMouseAdapter {
 
     @Override
@@ -82,7 +84,9 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
         } else {
             if (selectedScoreObjects.size() == 1) {
                 ScoreObjectEditorTopComponent editor
-                        = ScoreObjectEditorTopComponent.findInstance();
+                        = (ScoreObjectEditorTopComponent) WindowManager
+                        .getDefault()
+                        .findTopComponent("ScoreObjectEditorTopComponent");
 
                 if (!editor.isOpened()) {
                     editor.open();

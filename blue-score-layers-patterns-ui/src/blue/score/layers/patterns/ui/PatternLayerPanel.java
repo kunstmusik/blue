@@ -19,11 +19,8 @@
  */
 package blue.score.layers.patterns.ui;
 
-import blue.BlueSystem;
-import blue.plugin.BluePlugin;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
-import blue.score.layers.patterns.core.PatternsPluginProvider;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
@@ -36,29 +33,36 @@ import java.awt.Dimension;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.openide.util.lookup.InstanceContent;
+import org.openide.windows.WindowManager;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternLayerPanel extends javax.swing.JPanel 
+public class PatternLayerPanel extends javax.swing.JPanel
         implements PropertyChangeListener {
-    
+
     private final PatternLayer patternLayer;
 
     private InstanceContent content;
 
-    private static final Border border = BorderFactory.createBevelBorder(BevelBorder.RAISED);
+    private static final Border border = BorderFactory.createBevelBorder(
+            BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+
     /**
      * Creates new form PatternLayerPanel
      */
@@ -68,7 +72,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
         this.setSize(d);
         this.setPreferredSize(d);
         this.content = ic;
-        
+
 //        
 //        addMouseListener(new MouseAdapter() {
 //
@@ -83,16 +87,15 @@ public class PatternLayerPanel extends javax.swing.JPanel
 //            
 //            
 //        });
-        
         ActionListener al = new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                JMenuItem temp = (JMenuItem)e.getSource();
+                JMenuItem temp = (JMenuItem) e.getSource();
                 Class c = (Class) temp.getClientProperty("sObjClass");
-                
+
                 try {
-                    SoundObject sObj = (SoundObject)c.newInstance();
+                    SoundObject sObj = (SoundObject) c.newInstance();
                     patternLayer.setSoundObject(sObj);
                     editSoundObject();
                 } catch (InstantiationException ex) {
@@ -100,51 +103,68 @@ public class PatternLayerPanel extends javax.swing.JPanel
                 } catch (IllegalAccessException ex) {
                     Exceptions.printStackTrace(ex);
                 }
-                
-                
-            }
-            
-        };
-        
-        ArrayList<BluePlugin> plugins = new PatternsPluginProvider().getPlugins(
-                SoundObject.class);
-        for (BluePlugin bluePlugin : plugins) {
-            Class sObjClass = bluePlugin.getPluginClass();
-            String className = sObjClass.getName();
 
+            }
+
+        };
+
+        FileObject sObjFiles[] = FileUtil.getConfigFile(
+                "blue/score/layers/patterns/soundObjects").getChildren();
+        List<FileObject> orderedSObjFiles = FileUtil.getOrder(
+                Arrays.asList(sObjFiles), true);
+
+        for (FileObject fObj : orderedSObjFiles) {
+
+            if (fObj.isFolder()) {
+                continue;
+            }
+
+            SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(),
+                    SoundObject.class);
+
+
+            String originalFile = (String) fObj.getAttribute("originalFile");
+            String displayName = (String)FileUtil.getConfigFile(originalFile).
+                    getAttribute("displayName");
+            
             JMenuItem temp = new JMenuItem();
-            temp.setText(BlueSystem.getShortClassName(className));
-            temp.putClientProperty("sObjClass", sObjClass);
+            temp.setText(displayName);
+            temp.putClientProperty("sObjClass", sObj.getClass());
+            temp.setActionCommand(displayName);
             temp.addActionListener(al);
             changeSObjMenu.add(temp);
-        
         }
-        
+
         setBorder(border);
-        
+
         this.patternLayer = layer;
-        
+
         nameLabel.setText(patternLayer.getName());
         muteToggleButton.setSelected(patternLayer.isMuted());
         soloToggleButton.setSelected(patternLayer.isSolo());
-        
-        muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
-        soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
+
+        muteToggleButton.putClientProperty(
+                "BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
+        soloToggleButton.putClientProperty(
+                "BlueToggleButton.selectColorOverride", Color.GREEN.darker());
         this.patternLayer.addPropertyChangeListener(this);
     }
 
     protected void editSoundObject() {
         content.set(Collections.singleton(patternLayer.getSoundObject()), null);
 
-        ScoreObjectEditorTopComponent editor = ScoreObjectEditorTopComponent.findInstance();
+        ScoreObjectEditorTopComponent editor
+                = (ScoreObjectEditorTopComponent) WindowManager
+                .getDefault()
+                .findTopComponent("ScoreObjectEditorTopComponent");
 
         if (!editor.isOpened()) {
             editor.open();
-        } 
+        }
 
-        editor.requestActive();     
+        editor.requestActive();
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -274,7 +294,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }// </editor-fold>//GEN-END:initComponents
 
     private void nameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameTextActionPerformed
-         if (patternLayer == null) {
+        if (patternLayer == null) {
             return;
         }
 
@@ -303,18 +323,18 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
     private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
-        
+
         Class current = patternLayer.getSoundObject().getClass();
-        
-        for(Component c : changeSObjMenu.getMenuComponents()) {
-            JMenuItem menuItem = (JMenuItem)c;
+
+        for (Component c : changeSObjMenu.getMenuComponents()) {
+            JMenuItem menuItem = (JMenuItem) c;
             Class clazz = (Class) menuItem.getClientProperty("sObjClass");
             menuItem.setEnabled(!current.equals(clazz));
         }
-        
+
         final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
         setSObjFromBufferMenuItem.setEnabled(sObjBuffer.size() == 1);
-        
+
         jPopupMenu1.show(otherMenuButton, 0, otherMenuButton.getHeight());
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
@@ -324,10 +344,10 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
     private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
         final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
-        if(sObjBuffer.size() == 1) {
+        if (sObjBuffer.size() == 1) {
             SoundObject sObj = sObjBuffer.getBufferedSoundObject();
             SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                        sObj);
+                    sObj);
             copy.setStartTime(0.0f);
             copy.setSubjectiveDuration(4);
             copy.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
@@ -338,7 +358,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
     private void copySObjToBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySObjToBufferMenuItemActionPerformed
         SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                            patternLayer.getSoundObject());
+                patternLayer.getSoundObject());
         SoundObjectBuffer.getInstance().setBufferedObject(copy, 0, 0);
     }//GEN-LAST:event_copySObjToBufferMenuItemActionPerformed
 
@@ -351,7 +371,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
         ((CardLayout) jPanel1.getLayout()).show(jPanel1, "textField");
         nameText.requestFocusInWindow();
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu changeSObjMenu;
     private javax.swing.JMenuItem copySObjToBufferMenuItem;
@@ -371,26 +391,26 @@ public class PatternLayerPanel extends javax.swing.JPanel
     @Override
     public void removeNotify() {
         super.removeNotify();
-        if(this.patternLayer != null) {
+        if (this.patternLayer != null) {
             this.patternLayer.removePropertyChangeListener(this);
         }
     }
-    
+
     @Override
     public void addNotify() {
         super.addNotify();
-        if(this.patternLayer != null) {
+        if (this.patternLayer != null) {
             this.patternLayer.addPropertyChangeListener(this);
         }
     }
-        
+
     public void setSelected(boolean val) {
         setBorder(val ? selectionBorder : border);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if(evt.getSource() == this.patternLayer) {
+        if (evt.getSource() == this.patternLayer) {
             String propName = evt.getPropertyName();
 
             if (propName.equals("name")) {

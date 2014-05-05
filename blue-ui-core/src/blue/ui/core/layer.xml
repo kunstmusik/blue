@@ -3,11 +3,6 @@
 <filesystem>
 
     <folder name="blue">
-        <folder name="pluginProviders">
-            <file name="blue-ui-core-BlueUICorePluginProvider.instance">
-                <attr name="position" intvalue="10"/>
-            </file>
-        </folder>
         <folder name="score">
             <folder name="layers">
                 <folder name="uiProviders">

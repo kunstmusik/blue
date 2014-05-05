@@ -30,7 +30,6 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
@@ -46,7 +45,6 @@ import org.openide.util.LookupListener;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
 
 /**
@@ -85,8 +83,6 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
      * path to the icon used by the component and its open action
      */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-
-    private static final String PREFERRED_ID = "SoundObjectEditorTopComponent";
 
     JPanel editPanel = new JPanel();
 
@@ -144,44 +140,6 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
-    public static synchronized ScoreObjectEditorTopComponent getDefault() {
-        if (instance == null) {
-            instance = new ScoreObjectEditorTopComponent();
-        }
-        return instance;
-    }
-
-    /**
-     * Obtain the ScoreObjectEditorTopComponent instance. Never call
-     * {@link #getDefault} directly!
-     */
-    public static synchronized ScoreObjectEditorTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(ScoreObjectEditorTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof ScoreObjectEditorTopComponent) {
-            return (ScoreObjectEditorTopComponent) win;
-        }
-        Logger.getLogger(ScoreObjectEditorTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
 
     @Override
     public void componentOpened() {

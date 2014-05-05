@@ -38,6 +38,7 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
+import org.openide.windows.WindowManager;
 
 /**
  * ScoreMouseProcessor handles mouse actions for ScoreTimeCanvas
@@ -94,9 +95,9 @@ class ScoreMouseProcessor extends MouseAdapter {
 
         Component comp = sCanvas.getSoundObjectPanel().getComponentAt(
                 e.getPoint());
-        
-        Collection<? extends SoundObject> selectedSoundObjects = 
-                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+
+        Collection<? extends SoundObject> selectedSoundObjects
+                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
         SoundObjectView sObjView;
 
@@ -107,7 +108,8 @@ class ScoreMouseProcessor extends MouseAdapter {
                 sObjView = (SoundObjectView) comp;
 
                 if (dragMode == RESIZE_RIGHT) {
-                    content.set(Collections.singleton(sObjView.getSoundObject()), null);
+                    content.set(Collections.singleton(sObjView.getSoundObject()),
+                            null);
                     this.justSelected = false;
                     this.initialDuration = sObjView.getSubjectiveDuration();
                     sCanvas.automationPanel.initiateScoreScale(
@@ -115,7 +117,8 @@ class ScoreMouseProcessor extends MouseAdapter {
                             sObjView.getStartTime() + sObjView.getSubjectiveDuration(),
                             getSoundLayerIndex(sObjView.getY()));
                 } else if (dragMode == RESIZE_LEFT) {
-                    content.set(Collections.singleton(sObjView.getStartTime()), null);
+                    content.set(Collections.singleton(sObjView.getStartTime()),
+                            null);
                     this.justSelected = false;
                     this.initialEndTime = sObjView.getStartTime() + sObjView.getSubjectiveDuration();
                     sCanvas.automationPanel.initiateScoreScale(
@@ -130,7 +133,8 @@ class ScoreMouseProcessor extends MouseAdapter {
 //                        } else {
 //                            addBufferedSoundObject(sObjView, e);
 //                        }
-                    } else if (selectedSoundObjects.contains(sObjView.getSoundObject())) {
+                    } else if (selectedSoundObjects.contains(
+                            sObjView.getSoundObject())) {
                         if (e.getClickCount() >= 2) {
                             if ((sObjView.getSoundObject() instanceof PolyObject)) {
                                 PolyObject pObj = (PolyObject) (sObjView
@@ -138,7 +142,11 @@ class ScoreMouseProcessor extends MouseAdapter {
                                 editPolyObject(pObj);
                             } else {
                                 if (selectedSoundObjects.size() == 1) {
-                                    ScoreObjectEditorTopComponent editor = ScoreObjectEditorTopComponent.findInstance();
+                                    ScoreObjectEditorTopComponent editor
+                                            = (ScoreObjectEditorTopComponent) WindowManager
+                                            .getDefault()
+                                            .findTopComponent(
+                                                    "ScoreObjectEditorTopComponent");
 
                                     if (!editor.isOpened()) {
                                         editor.open();
@@ -216,8 +224,8 @@ class ScoreMouseProcessor extends MouseAdapter {
 
         boolean shouldConsume = true;
 
-        Collection<? extends SoundObject> selectedSoundObjects = 
-                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        Collection<? extends SoundObject> selectedSoundObjects
+                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
         if (SwingUtilities.isLeftMouseButton(e)) {
             //FIXME
@@ -236,7 +244,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //                    BlueUndoManager.addEdit(moveEdit);
 
                 } else if (dragMode == RESIZE_RIGHT) {
-            // FIXME
+                    // FIXME
 //                    BlueUndoManager.setUndoManager("score");
 //
 //                    SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[0];
@@ -326,13 +334,12 @@ class ScoreMouseProcessor extends MouseAdapter {
     private void duplicateSoundObjectsInPlace() {
         PolyObject pObj = sCanvas.getPolyObject();
 
-
-        Collection<? extends SoundObject> selectedSoundObjects = 
-                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        Collection<? extends SoundObject> selectedSoundObjects
+                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 
         AddSoundObjectEdit top = null;
 
-        for (SoundObject sObj : selectedSoundObjects) { 
+        for (SoundObject sObj : selectedSoundObjects) {
             SoundObject temp = (SoundObject) ObjectUtilities.clone(sObj);
 
             int index = pObj.getSoundLayerIndex(sObj);
@@ -441,10 +448,10 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     private void showPopup(Component comp, MouseEvent e) {
-        Collection<? extends SoundObject> soundObjects = 
-                Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+        Collection<? extends SoundObject> soundObjects
+                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
         if (comp instanceof SoundObjectView) {
-            if (soundObjects.contains(((SoundObjectView)comp).getSoundObject())) {
+            if (soundObjects.contains(((SoundObjectView) comp).getSoundObject())) {
                 sCanvas.showSoundObjectPopup((SoundObjectView) comp, e.getX(),
                         e.getY());
             }
@@ -857,7 +864,6 @@ class ScoreMouseProcessor extends MouseAdapter {
                         .getComponents();
 
 //                content.set(Collections.emptyList(), null);
-
                 ArrayList<SoundObject> selected = new ArrayList<>();
                 for (int i = 0; i < comps.length; i++) {
                     Component comp = comps[i];
@@ -920,14 +926,14 @@ class ScoreMouseProcessor extends MouseAdapter {
     }
 
     private void checkAndAddInstanceSoundObjects(SoundObjectLibrary sObjLib, Set<Instance> instanceSoundObjects) {
-        Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<SoundObject,SoundObject>();
+        Map<SoundObject, SoundObject> originalToCopyMap = new HashMap<SoundObject, SoundObject>();
 
         for (Instance instance : instanceSoundObjects) {
             final SoundObject instanceSObj = instance.getSoundObject();
-            if(!sObjLib.contains(instanceSObj)) {
+            if (!sObjLib.contains(instanceSObj)) {
                 SoundObject copy;
 
-                if(originalToCopyMap.containsKey(instanceSObj)) {
+                if (originalToCopyMap.containsKey(instanceSObj)) {
                     copy = originalToCopyMap.get(instanceSObj);
                 } else {
                     copy = (SoundObject) instance.getSoundObject().clone();
