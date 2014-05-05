@@ -35,7 +35,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JMenuItem;
