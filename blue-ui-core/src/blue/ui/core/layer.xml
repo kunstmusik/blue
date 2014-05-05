@@ -198,12 +198,6 @@
                 <attr name="displayName" bundlevalue="blue.ui.core.scratchPad.Bundle#CTL_ScratchPadAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="blue-ui-core-soundFile-AudioFilePlayerAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.soundFile.AudioFilePlayerTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.soundFile.Bundle#CTL_AudioFilePlayerAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-tables-TablesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.tables.TablesTopComponent.findInstance"/>
@@ -345,11 +339,6 @@
             <file name="ScratchPadAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>
                 <attr name="position" intvalue="400"/>
-            </file>
-
-            <file name="AudioFilePlayerAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
-                <attr name="position" intvalue="450"/>
             </file>
 
             <file name="blue-ui-core-score-MarkersAction-separatorBefore.instance">
@@ -559,7 +548,6 @@
 
             <file name="MarkersTopComponent.settings" url="MarkersTopComponentSettings.xml"/>
             <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
-            <file name="AudioFilePlayerTopComponent.settings" url="AudioFilePlayerTopComponentSettings.xml"/>
             <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
             <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
@@ -602,7 +590,6 @@
                 <file name="ScratchPadTopComponent.wstcref" url="ScratchPadTopComponentWstcref.xml"/>
                 <file name="SoundObjectLibraryTopComponent.wstcref" url="SoundObjectLibraryTopComponentWstcref.xml"/>
                 <file name="SoundObjectPropertiesTopComponent.wstcref" url="SoundObjectPropertiesTopComponentWstcref.xml"/>
-                <file name="AudioFilePlayerTopComponent.wstcref" url="AudioFilePlayerTopComponentWstcref.xml"/>
             </folder>
         </folder>
         <file name="WindowManager.wswmgr" url="WindowManager.wswmgr"/>

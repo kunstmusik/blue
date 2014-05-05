@@ -86,7 +86,7 @@ public class AudioFilePlayer extends javax.swing.JPanel {
         try {
             aFormat = AudioSystem.getAudioFileFormat(soundFile);
             format = aFormat.getFormat();
-        } catch (UnsupportedAudioFileException | IOException e) {
+        } catch (UnsupportedAudioFileException | IOException | NullPointerException e) {
             isAudioFile = false;
 
             timeDivisor = -1;

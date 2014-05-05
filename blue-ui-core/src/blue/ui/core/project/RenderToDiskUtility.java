@@ -82,7 +82,6 @@ public class RenderToDiskUtility {
 //                startTime = 0.0f;
 //                endTime = -1.0f;
 //            }
-
 //            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
 //                    data, startTime,
 //                    endTime, false);
@@ -95,7 +94,6 @@ public class RenderToDiskUtility {
 //            String playArgs[] = new String[command.args.length + 1];
 //            System.arraycopy(command.args, 0, playArgs, 0, command.args.length);
 //            playArgs[command.args.length] = "\"" + temp.getAbsolutePath() + "\"";
-
             DiskRenderJob job = new DiskRenderJob(command.args, command.filename,
                     data, BlueSystem.getCurrentProjectDirectory());
 
@@ -297,12 +295,15 @@ public class RenderToDiskUtility {
                     } else {
                         SwingUtilities.invokeLater(
                                 new Runnable() {
-                            @Override
-                            public void run() {
-                                AudioFilePlayerTopComponent.getDefault().
-                                        setAudioFile(f);
-                            }
-                        });
+                                    @Override
+                                    public void run() {
+                                        AudioFilePlayerTopComponent tc
+                                        = (AudioFilePlayerTopComponent) WindowManager.getDefault().
+                                        findTopComponent(
+                                                "AudioFilePlayerTopComponent");
+                                        tc.setAudioFile(f);
+                                    }
+                                });
                     }
                 }
 
