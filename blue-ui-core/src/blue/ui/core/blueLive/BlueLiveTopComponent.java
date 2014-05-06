@@ -43,7 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.Receiver;
 import javax.swing.*;
@@ -55,6 +54,10 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.netbeans.api.settings.FactoryMethod;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
@@ -70,6 +73,26 @@ import skt.swing.SwingUtil;
  */
 @ConvertAsProperties(dtd = "-//blue.ui.core.blueLive//BlueLive//EN",
         autostore = false)
+@TopComponent.Description(
+        preferredID = "BlueLiveTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.blueLive.BlueLiveTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750),
+    @ActionReference(path = "Shortcuts", name = "D-8")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_BlueLiveAction",
+        preferredID = "BlueLiveTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_BlueLiveAction=BlueLive",
+    "CTL_BlueLiveTopComponent=BlueLive Window",
+    "HINT_BlueLiveTopComponent=This is a BlueLive window"
+})
 public final class BlueLiveTopComponent extends TopComponent
         implements SoundObjectProvider {
 
@@ -1084,45 +1107,13 @@ public final class BlueLiveTopComponent extends TopComponent
     private javax.swing.JButton triggerButton;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
     public static synchronized BlueLiveTopComponent getDefault() {
         if (instance == null) {
             instance = new BlueLiveTopComponent();
         }
         return instance;
     }
-
-    /**
-     * Obtain the BlueLiveTopComponent instance. Never call {@link #getDefault}
-     * directly!
-     */
-    public static synchronized BlueLiveTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(BlueLiveTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof BlueLiveTopComponent) {
-            return (BlueLiveTopComponent) win;
-        }
-        Logger.getLogger(BlueLiveTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
-
+    
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -1140,20 +1131,8 @@ public final class BlueLiveTopComponent extends TopComponent
         // TODO store your settings
     }
 
-    Object readProperties(java.util.Properties p) {
-        BlueLiveTopComponent singleton = BlueLiveTopComponent.getDefault();
-        singleton.readPropertiesImpl(p);
-        return singleton;
-    }
-
-    private void readPropertiesImpl(java.util.Properties p) {
+    void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
-        // TODO read your settings according to their version
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 
     private void setupNoteTemplatePopup() {
@@ -1264,8 +1243,8 @@ public final class BlueLiveTopComponent extends TopComponent
 
             super("Add SoundObject");
 
-            for (Map.Entry<Class<? extends SoundObject>, String> entry : 
-                    liveSoundObjectTemplates.entrySet()) {
+            for (Map.Entry<Class<? extends SoundObject>, String> entry
+                    : liveSoundObjectTemplates.entrySet()) {
 
                 sObjNameClassMap.put(entry.getValue(), entry.getKey());
 
@@ -1286,7 +1265,8 @@ public final class BlueLiveTopComponent extends TopComponent
 
             try {
 
-                Class c = (Class)((JMenuItem)ae.getSource()).getClientProperty("sObjClass");
+                Class c = (Class) ((JMenuItem) ae.getSource()).getClientProperty(
+                        "sObjClass");
                 SoundObject sObj = (SoundObject) c.newInstance();
                 addSoundObject(mouseColumn, mouseRow, sObj);
             } catch (IllegalAccessException | InstantiationException cnfe) {
@@ -1520,8 +1500,9 @@ public final class BlueLiveTopComponent extends TopComponent
                             liveObjectsTable.getColumnCount() > 1);
 
                     if (!objectAvailable && buffer.hasBufferedSoundObject()) {
-                        pasteMenuItem.setEnabled(liveSoundObjectTemplates.containsKey(
-                                buffer.getBufferedSoundObject().getClass()));
+                        pasteMenuItem.setEnabled(
+                                liveSoundObjectTemplates.containsKey(
+                                        buffer.getBufferedSoundObject().getClass()));
                     } else {
                         pasteMenuItem.setEnabled(false);
                     }

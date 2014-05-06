@@ -143,12 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-blueLive-BlueLiveAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.blueLive.BlueLiveTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.blueLive.Bundle#CTL_BlueLiveAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-midi-MidiInputPanelAction.instance">
                 <attr name="component" methodvalue="blue.ui.core.midi.MidiInputPanelTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="blue.ui.core.midi.Bundle#CTL_MidiInputPanelAction"/>
@@ -395,15 +389,7 @@
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
                 <attr name="position" intvalue="1600"/>
             </file>
-            <file name="BlueLiveAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-blueLive-BlueLiveAction.instance"/>
-                <attr name="position" intvalue="1700"/>
-            </file>
 
-            <file name="blue-ui-core-blueLive-BlueLiveAction-separatorAfter.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="1750"/>
-            </file>
 
             <file name="org-netbeans-core-io-ui-IOWindowAction.shadow" url="org-netbeans-core-io-ui-IOWindowAction_1.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
@@ -450,11 +436,6 @@
         <file name="D-7.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
         </file>
-        <file name="D-8.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-blueLive-BlueLiveAction.instance"/>
-        </file>
-
-
         <file name="F3.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
         </file>
@@ -542,9 +523,6 @@
             <file name="ProjectPropertiesTopComponent.settings" url="ProjectPropertiesTopComponentSettings.xml">
                 <attr name="position" intvalue="600"/>
             </file>
-            <file name="BlueLiveTopComponent.settings" url="BlueLiveTopComponentSettings.xml">
-                <attr name="position" intvalue="700"/>
-            </file>
 
             <file name="MarkersTopComponent.settings" url="MarkersTopComponentSettings.xml"/>
             <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
@@ -554,9 +532,6 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="BlueLiveTopComponent.wstcref" url="BlueLiveTopComponentWstcref.xml">
-                    <attr name="position" intvalue="700"/>
-                </file>
                 <file name="GlobalOrchestraTopComponent.wstcref" url="GlobalOrchestraTopComponentWstcref.xml">
                     <attr name="position" intvalue="400"/>
                 </file>
