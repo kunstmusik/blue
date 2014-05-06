@@ -206,13 +206,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
                 <attr name="position" intvalue="400"/>
             </file>
-            <file name="blue-ui-core-globals-GlobalScoreAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.globals.GlobalScoreTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.globals.Bundle#CTL_GlobalScoreAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-                <attr name="position" intvalue="600"/>
-            </file>
             <file name="blue-ui-core-project-ProjectPropertiesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.project.ProjectPropertiesTopComponent.findInstance"/>
@@ -370,10 +363,6 @@
                 <attr name="position" intvalue="1350"/>
             </file>
 
-            <file name="GlobalScoreAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalScoreAction.instance"/>
-                <attr name="position" intvalue="1500"/>
-            </file>
             <file name="ProjectPropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
                 <attr name="position" intvalue="1600"/>
@@ -415,9 +404,6 @@
         </file>
         <file name="D-4.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-tables-TablesAction.instance"/>
-        </file>
-        <file name="D-6.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-globals-GlobalScoreAction.instance"/>
         </file>
         <file name="D-7.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
@@ -500,9 +486,6 @@
             <file name="TablesTopComponent.settings" url="TablesTopComponentSettings.xml">
                 <attr name="position" intvalue="300"/>
             </file>
-            <file name="GlobalScoreTopComponent.settings" url="GlobalScoreTopComponentSettings.xml">
-                <attr name="position" intvalue="500"/>
-            </file>
             <file name="ProjectPropertiesTopComponent.settings" url="ProjectPropertiesTopComponentSettings.xml">
                 <attr name="position" intvalue="600"/>
             </file>
@@ -515,9 +498,6 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="GlobalScoreTopComponent.wstcref" url="GlobalScoreTopComponentWstcref.xml">
-                    <attr name="position" intvalue="500"/>
-                </file>
                 <file name="OrchestraTopComponent.wstcref" url="OrchestraTopComponentWstcref.xml">
                     <attr name="position" intvalue="100"/>
                 </file>
