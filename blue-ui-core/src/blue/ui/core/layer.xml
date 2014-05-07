@@ -182,13 +182,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
                 <attr name="position" intvalue="400"/>
             </file>
-            <file name="blue-ui-core-project-ProjectPropertiesAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.project.ProjectPropertiesTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_ProjectPropertiesAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-                <attr name="position" intvalue="700"/>
-            </file>
         </folder>
     </folder>
     <folder name="Menu">
@@ -317,11 +310,6 @@
                 <attr name="position" intvalue="1350"/>
             </file>
 
-            <file name="ProjectPropertiesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
-                <attr name="position" intvalue="1600"/>
-            </file>
-
 
             <file name="org-netbeans-core-io-ui-IOWindowAction.shadow" url="org-netbeans-core-io-ui-IOWindowAction_1.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
@@ -355,9 +343,6 @@
         </file>
         <file name="D-4.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-tables-TablesAction.instance"/>
-        </file>
-        <file name="D-7.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-project-ProjectPropertiesAction.instance"/>
         </file>
         <file name="F3.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
@@ -427,9 +412,6 @@
             <file name="TablesTopComponent.settings" url="TablesTopComponentSettings.xml">
                 <attr name="position" intvalue="300"/>
             </file>
-            <file name="ProjectPropertiesTopComponent.settings" url="ProjectPropertiesTopComponentSettings.xml">
-                <attr name="position" intvalue="600"/>
-            </file>
 
             <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
@@ -437,9 +419,6 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="ProjectPropertiesTopComponent.wstcref" url="ProjectPropertiesTopComponentWstcref.xml">
-                    <attr name="position" intvalue="600"/>
-                </file>
                 <file name="ScoreTopComponent.wstcref" url="ScoreTopComponentWstcref.xml">
                     <attr name="position" intvalue="0"/>
                 </file>
