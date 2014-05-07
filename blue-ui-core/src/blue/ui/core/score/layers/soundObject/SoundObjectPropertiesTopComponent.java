@@ -33,21 +33,43 @@ import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
-/**
- * Top component which displays something.
- */
-final class SoundObjectPropertiesTopComponent extends TopComponent implements SoundObjectListener, SelectionListener, LookupListener {
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.score.layers.soundObject//SoundObjectProperties//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "SoundObjectPropertiesTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "properties", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.SoundObjectPropertiesTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 200),
+    @ActionReference(path = "Shortcuts", name = "F3")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_SoundObjectPropertiesAction",
+        preferredID = "SoundObjectPropertiesTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_SoundObjectPropertiesAction=SoundObject Properties",
+    "CTL_SoundObjectPropertiesTopComponent=SoundObject Properties",
+    "HINT_SoundObjectPropertiesTopComponent=This is a SoundObject Properties window"
+})
+public final class SoundObjectPropertiesTopComponent extends TopComponent implements SoundObjectListener, SelectionListener, LookupListener {
 
     private SoundObject sObj = null;
 
@@ -57,30 +79,30 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 
     private boolean isUpdating = false;
 
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "SoundObjectPropertiesTopComponent";
-
     Lookup.Result<SoundObject> result = null;
 
     private SoundObjectPropertiesTopComponent() {
         initComponents();
-        setName(NbBundle.getMessage(SoundObjectPropertiesTopComponent.class, "CTL_SoundObjectPropertiesTopComponent"));
-        setToolTipText(NbBundle.getMessage(SoundObjectPropertiesTopComponent.class, "HINT_SoundObjectPropertiesTopComponent"));
+        setName(NbBundle.getMessage(SoundObjectPropertiesTopComponent.class,
+                "CTL_SoundObjectPropertiesTopComponent"));
+        setToolTipText(NbBundle.getMessage(
+                SoundObjectPropertiesTopComponent.class,
+                "HINT_SoundObjectPropertiesTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        nameText.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        nameText.getDocument().addDocumentListener(
+                    new SimpleDocumentListener() {
 
-            @Override
-            public void documentChanged(DocumentEvent e) {
-                if (nameText.getText() != null && sObj != null) {
-                    isUpdating = true;
-                    updateName();
-                    isUpdating = false;
-                }
-            }
-        });
-        
+                        @Override
+                        public void documentChanged(DocumentEvent e) {
+                            if (nameText.getText() != null && sObj != null) {
+                                isUpdating = true;
+                                updateName();
+                                isUpdating = false;
+                            }
+                        }
+                    });
+
     }
 
     private void setSoundObject(SoundObject soundObj) {
@@ -100,7 +122,8 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
             sObj = soundObj;
             updateProperties();
 
-            noteProcessorChainEditor2.setNoteProcessorChain(sObj.getNoteProcessorChain());
+            noteProcessorChainEditor2.setNoteProcessorChain(
+                    sObj.getNoteProcessorChain());
 
             colorPanel.setColor(sObj.getBackgroundColor());
 
@@ -345,7 +368,6 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 //
 //        setSoundObject(sObj);
 //    }
-
     private void setLibraryItem(boolean isLibrary) {
         startTimeText.setEnabled(!isLibrary);
     }
@@ -359,7 +381,7 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 
         switch (event.getPropertyChanged()) {
             case SoundObjectEvent.NAME:
-                if(!isUpdating) {
+                if (!isUpdating) {
                     nameText.setText(sObj.getName());
                 }
                 break;
@@ -381,20 +403,20 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     // SELECTION LISTENER
     @Override
     public void selectionPerformed(SelectionEvent e) {
-        if(e == null) {
+        if (e == null) {
             setSoundObject(null);
             return;
         }
 
         Object item = e.getSelectedItem();
 
-        if(item == null) {
+        if (item == null) {
             setSoundObject(null);
 //            setLibraryItem(false);
             return;
         }
 
-        SoundObject sObj = (SoundObject)item;
+        SoundObject sObj = (SoundObject) item;
         setSoundObject(sObj);
         setLibraryItem(e.getSelectionSubType() != null);
 
@@ -417,14 +439,13 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
 //                // System.out.println("Clear");
 //                break;
 //        }
-
 //        setSoundObject(sObj);
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -719,11 +740,6 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
     private javax.swing.JCheckBox useRepeatPoint;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
     public static synchronized SoundObjectPropertiesTopComponent getDefault() {
         if (instance == null) {
             instance = new SoundObjectPropertiesTopComponent();
@@ -731,78 +747,54 @@ final class SoundObjectPropertiesTopComponent extends TopComponent implements So
         return instance;
     }
 
-    /**
-     * Obtain the SoundObjectPropertiesTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized SoundObjectPropertiesTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(SoundObjectPropertiesTopComponent.class.getName()).
-                    warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof SoundObjectPropertiesTopComponent) {
-            return (SoundObjectPropertiesTopComponent) win;
-        }
-        Logger.getLogger(SoundObjectPropertiesTopComponent.class.getName()).
-                warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
-
     @Override
     public void componentOpened() {
         result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
-        result.addLookupListener (this);
+        result.addLookupListener(this);
         resultChanged(null);
     }
-    
+
     @Override
     public void componentClosed() {
         result.removeLookupListener(this);
-    }    
+    }
 
     @Override
     protected void componentActivated() {
         super.componentActivated();
-        
-        if(nameText.isEnabled()) {
+
+        if (nameText.isEnabled()) {
             nameText.requestFocus();
         }
- 
-    }
-    
-    
 
-    /** replaces this in object stream */
+    }
+
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
+    }
+
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
+    }
+
+    /**
+     * replaces this in object stream
+     */
     @Override
     public Object writeReplace() {
         return new ResolvableHelper();
     }
 
     @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
-
-    @Override
     public void resultChanged(LookupEvent ev) {
 
-        if(!(TopComponent.getRegistry().getActivated() instanceof SoundObjectProvider)) {
+        if (!(TopComponent.getRegistry().getActivated() instanceof SoundObjectProvider)) {
             return;
         }
-        
+
         Collection<? extends SoundObject> soundObjects = result.allInstances();
-        if(soundObjects.size() == 1) {
-              setSoundObject(soundObjects.iterator().next());
+        if (soundObjects.size() == 1) {
+            setSoundObject(soundObjects.iterator().next());
         } else {
             setSoundObject(null);
         }

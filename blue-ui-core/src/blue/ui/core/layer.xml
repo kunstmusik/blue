@@ -143,12 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectPropertiesTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectPropertiesAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-tables-TablesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.tables.TablesTopComponent.findInstance"/>
@@ -258,12 +252,6 @@
         <folder name="Window">
             <file name="Output_hidden"/>
 
-            <file name="SoundObjectPropertiesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
-                <attr name="position" intvalue="200"/>
-            </file>
-
-
 
             <file name="UserDefinedOpcodeAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
@@ -304,9 +292,6 @@
         </file>
         <file name="D-4.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-tables-TablesAction.instance"/>
-        </file>
-        <file name="F3.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectPropertiesAction.instance"/>
         </file>
         <file name="F6.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
@@ -365,7 +350,6 @@
                 <attr name="position" intvalue="300"/>
             </file>
 
-            <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
         </folder>
         <folder name="Modes">
             <folder name="editor">
@@ -375,9 +359,6 @@
                 <file name="UserDefinedOpcodeTopComponent.wstcref" url="UserDefinedOpcodeTopComponentWstcref.xml">
                     <attr name="position" intvalue="200"/>
                 </file>
-            </folder>
-            <folder name="properties">
-                <file name="SoundObjectPropertiesTopComponent.wstcref" url="SoundObjectPropertiesTopComponentWstcref.xml"/>
             </folder>
         </folder>
         <file name="WindowManager.wswmgr" url="WindowManager.wswmgr"/>
