@@ -32,14 +32,14 @@ public class PresetsUtilities {
             return;
         }
 
-        ArrayList subGroups = presetGroup.getSubGroups();
+        ArrayList<PresetGroup> subGroups = presetGroup.getSubGroups();
         for (int i = 0; i < subGroups.size(); i++) {
-            synchronizePresets((PresetGroup) subGroups.get(i), gInterface);
+            synchronizePresets(subGroups.get(i), gInterface);
         }
 
-        ArrayList presets = presetGroup.getPresets();
+        ArrayList<Preset> presets = presetGroup.getPresets();
         for (int i = 0; i < presets.size(); i++) {
-            Preset preset = (Preset) presets.get(i);
+            Preset preset = presets.get(i);
             preset.synchronizeWithInterface(gInterface);
         }
     }
