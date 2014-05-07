@@ -161,12 +161,6 @@
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
                 <attr name="position" intvalue="200"/>
             </file>
-            <file name="blue-ui-core-score-MarkersAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.MarkersTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_MarkersAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-score-ScoreAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.ScoreTopComponent.findInstance"/>
@@ -321,15 +315,7 @@
                 <attr name="position" intvalue="400"/>
             </file>
 
-            <file name="blue-ui-core-score-MarkersAction-separatorBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="490"/>
-            </file>
 
-            <file name="MarkersAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-MarkersAction.instance"/>
-                <attr name="position" intvalue="500"/>
-            </file>
             <file name="MixerAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
                 <attr name="position" intvalue="600"/>
@@ -424,9 +410,6 @@
         <file name="F9.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
         </file>
-        <file name="S-F4.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-MarkersAction.instance"/>
-        </file>
         <file name="S-F5.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
         </file>
@@ -490,7 +473,6 @@
                 <attr name="position" intvalue="600"/>
             </file>
 
-            <file name="MarkersTopComponent.settings" url="MarkersTopComponentSettings.xml"/>
             <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
             <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
@@ -520,7 +502,6 @@
                 </file>
             </folder>
             <folder name="properties">
-                <file name="MarkersTopComponent.wstcref" url="MarkersTopComponentWstcref.xml"/>
                 <file name="MidiInputPanelTopComponent.wstcref" url="MidiInputPanelTopComponentWstcref.xml"/>
                 <file name="ScratchPadTopComponent.wstcref" url="ScratchPadTopComponentWstcref.xml"/>
                 <file name="SoundObjectLibraryTopComponent.wstcref" url="SoundObjectLibraryTopComponentWstcref.xml"/>
