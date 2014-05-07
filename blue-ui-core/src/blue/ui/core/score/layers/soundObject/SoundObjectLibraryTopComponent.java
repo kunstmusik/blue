@@ -21,7 +21,6 @@ package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueData;
 import blue.SoundObjectLibrary;
-import blue.event.SelectionEvent;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
@@ -31,36 +30,52 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.Collections;
-import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
-/**
- * Top component which displays something.
- */
-final class SoundObjectLibraryTopComponent extends TopComponent 
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.score.layers.soundObject//SoundObjectLibrary//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "SoundObjectLibraryTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 300),
+    @ActionReference(path = "Shortcuts", name = "F4")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_SoundObjectLibraryAction",
+        preferredID = "SoundObjectLibraryTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_SoundObjectLibraryAction=SoundObject Library",
+    "CTL_SoundObjectLibraryTopComponent=SoundObject Library",
+    "HINT_SoundObjectLibraryTopComponent=This is a SoundObject Library window"
+})
+public final class SoundObjectLibraryTopComponent extends TopComponent
         implements ChangeListener, SoundObjectProvider {
 
     private static SoundObjectLibraryTopComponent instance;
 
     private final InstanceContent content = new InstanceContent();
-    
-    /**
-     * path to the icon used by the component and its open action
-     */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "SoundObjectLibraryTopComponent";
+
     private SoundObjectBuffer sObjBuffer;
     private SoundObjectLibrary sObjLib = new SoundObjectLibrary();
 
@@ -68,7 +83,7 @@ final class SoundObjectLibraryTopComponent extends TopComponent
         initComponents();
 
         associateLookup(new AbstractLookup(content));
-        
+
         setName(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "CTL_SoundObjectLibraryTopComponent"));
         setToolTipText(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
@@ -95,14 +110,14 @@ final class SoundObjectLibraryTopComponent extends TopComponent
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(
-                        evt.getPropertyName())) {
-                    reinitialize();
-                }
-            }
-        });
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (BlueProjectManager.CURRENT_PROJECT.equals(
+                                evt.getPropertyName())) {
+                            reinitialize();
+                        }
+                    }
+                });
 
         reinitialize();
     }
@@ -122,13 +137,13 @@ final class SoundObjectLibraryTopComponent extends TopComponent
     protected void fireSoundObjectSelected(SoundObject sObj) {
 
         content.set(Collections.singleton(sObj), null);
-        
+
     }
 
     protected void fireSoundObjectRemoved(SoundObject sObj) {
 
         content.set(Collections.emptyList(), null);
-        
+
     }
 
     public void setSoundObjectLibrary(SoundObjectLibrary sObjLib) {
@@ -268,18 +283,18 @@ final class SoundObjectLibraryTopComponent extends TopComponent
 
             if (retVal == NotifyDescriptor.YES_OPTION) {
 
-                SoundObject sObj = sObjLib.getSoundObject(sObjLibTable.getSelectedRow());
-                
+                SoundObject sObj = sObjLib.getSoundObject(
+                        sObjLibTable.getSelectedRow());
+
                 SoundObjectLibraryUtils.removeLibrarySoundObject(
                         BlueProjectManager.getInstance().getCurrentBlueData(),
                         sObj);
-                
-                // sObjEditPanel.editSoundObject(null);
 
+                // sObjEditPanel.editSoundObject(null);
                 fireSoundObjectRemoved((SoundObject) sObj);
 
                 sObjLibTable.revalidate();
-            } 
+            }
         }
     }//GEN-LAST:event_removeButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -291,44 +306,11 @@ final class SoundObjectLibraryTopComponent extends TopComponent
     private javax.swing.JTable sObjLibTable;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
     public static synchronized SoundObjectLibraryTopComponent getDefault() {
         if (instance == null) {
             instance = new SoundObjectLibraryTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the SoundObjectLibraryTopComponent instance. Never call
-     * {@link #getDefault} directly!
-     */
-    public static synchronized SoundObjectLibraryTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(SoundObjectLibraryTopComponent.class.getName()).
-                    warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof SoundObjectLibraryTopComponent) {
-            return (SoundObjectLibraryTopComponent) win;
-        }
-        Logger.getLogger(SoundObjectLibraryTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -341,30 +323,16 @@ final class SoundObjectLibraryTopComponent extends TopComponent
         // TODO add custom code on component closing
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
     }
 
     @Override
     public void stateChanged(ChangeEvent ce) {
         this.sObjLibTable.revalidate();
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return SoundObjectLibraryTopComponent.getDefault();
-        }
     }
 }
