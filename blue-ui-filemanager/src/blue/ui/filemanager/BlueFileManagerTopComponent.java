@@ -25,7 +25,6 @@ import org.openide.awt.ActionReference;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
-import org.openide.nodes.AbstractNode;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 
@@ -67,6 +66,8 @@ public final class BlueFileManagerTopComponent extends TopComponent
 //        explorerManager.setRootContext(new AbstractNode(new CategoryChildren()));
         explorerManager.getRootContext().setDisplayName(
                 "Roots");
+        explorerManager.setRootContext(new FileManagerRootNode(new FileManagerRoots()));
+//        explorerManager.setRootContext();
     }
 
     /**
