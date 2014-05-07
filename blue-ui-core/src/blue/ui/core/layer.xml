@@ -142,15 +142,6 @@
                 <attr name="noIconInMenu" stringvalue="false"/>
             </file>
         </folder>
-        <folder name="Window">
-            <file name="blue-ui-core-udo-UserDefinedOpcodeAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.udo.UserDefinedOpcodeTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.udo.Bundle#CTL_UserDefinedOpcodeAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-                <attr name="position" intvalue="400"/>
-            </file>
-        </folder>
     </folder>
     <folder name="Menu">
         <folder name="File">
@@ -245,13 +236,6 @@
         <folder name="Window">
             <file name="Output_hidden"/>
 
-
-            <file name="UserDefinedOpcodeAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
-                <attr name="position" intvalue="1300"/>
-            </file>
-
-
             <file name="org-netbeans-core-io-ui-IOWindowAction.shadow" url="org-netbeans-core-io-ui-IOWindowAction_1.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
                 <attr name="position" intvalue="1800"/>
@@ -276,9 +260,6 @@
           <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
         </file>
 
-        <file name="D-3.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
-        </file>
         <file name="F6.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
         </file>
@@ -328,19 +309,6 @@
         <file name="QuickSearch_hidden"/>
     </folder>
     <folder name="Windows2">
-        <folder name="Components">
-            <file name="UserDefinedOpcodeTopComponent.settings" url="UserDefinedOpcodeTopComponentSettings.xml">
-                <attr name="position" intvalue="200"/>
-            </file>
-
-        </folder>
-        <folder name="Modes">
-            <folder name="editor">
-                <file name="UserDefinedOpcodeTopComponent.wstcref" url="UserDefinedOpcodeTopComponentWstcref.xml">
-                    <attr name="position" intvalue="200"/>
-                </file>
-            </folder>
-        </folder>
         <file name="WindowManager.wswmgr" url="WindowManager.wswmgr"/>
     </folder>
 

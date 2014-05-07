@@ -14,26 +14,45 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.logging.Logger;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
-/**
- * Top component which displays something.
- */
-final class UserDefinedOpcodeTopComponent extends TopComponent {
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.udo//UserDefinedOpcode//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "UserDefinedOpcodeTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.udo.UserDefinedOpcodeTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1300),
+    @ActionReference(path = "Shortcuts",
+            name = "D-3")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_UserDefinedOpcodeAction",
+        preferredID = "UserDefinedOpcodeTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_UserDefinedOpcodeAction=User-Defined Opcodes",
+    "CTL_UserDefinedOpcodeTopComponent=UDO",
+    "HINT_UserDefinedOpcodeTopComponent=Editor for Project UDO's"
+})
+public final class UserDefinedOpcodeTopComponent extends TopComponent {
 
     private static UserDefinedOpcodeTopComponent instance;
-
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "UserDefinedOpcodeTopComponent";
 
     Border libraryBorder = new LineBorder(Color.GREEN);
 
@@ -161,42 +180,11 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
     private blue.ui.core.udo.UDOLibraryPanel uDOLibraryPanel1;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
     public static synchronized UserDefinedOpcodeTopComponent getDefault() {
         if (instance == null) {
             instance = new UserDefinedOpcodeTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the UserDefinedOpcodeTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized UserDefinedOpcodeTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(UserDefinedOpcodeTopComponent.class.getName()).
-                    warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof UserDefinedOpcodeTopComponent) {
-            return (UserDefinedOpcodeTopComponent) win;
-        }
-        Logger.getLogger(UserDefinedOpcodeTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -209,15 +197,18 @@ final class UserDefinedOpcodeTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
+    }
+
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
+    }
+
     /** replaces this in object stream */
     @Override
     public Object writeReplace() {
         return new ResolvableHelper();
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 
     final static class ResolvableHelper implements Serializable {
