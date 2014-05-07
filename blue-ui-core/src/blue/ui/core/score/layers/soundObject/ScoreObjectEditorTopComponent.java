@@ -71,8 +71,8 @@ import org.openide.windows.TopComponent;
         preferredID = "ScoreObjectEditorTopComponent"
 )
 @NbBundle.Messages({
-    "CTL_ScoreObjectEditorAction=ScoreObjectEditor",
-    "CTL_ScoreObjectEditorTopComponent=ScoreObjectEditor Window",
+    "CTL_ScoreObjectEditorAction=ScoreObject Editor",
+    "CTL_ScoreObjectEditorTopComponent=ScoreObject Editor",
     "HINT_ScoreObjectEditorTopComponent=This is a ScoreObjectEditor window"
 })
 final public class ScoreObjectEditorTopComponent extends TopComponent
