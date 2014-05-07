@@ -143,13 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-orchestra-OrchestraAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.orchestra.OrchestraTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.orchestra.Bundle#CTL_OrchestraAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-                <attr name="position" intvalue="200"/>
-            </file>
             <file name="blue-ui-core-score-ScoreAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.ScoreTopComponent.findInstance"/>
@@ -315,10 +308,6 @@
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
                 <attr name="position" intvalue="1000"/>
             </file>
-            <file name="OrchestraAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-orchestra-OrchestraAction.instance"/>
-                <attr name="position" intvalue="1100"/>
-            </file>
             <file name="UserDefinedOpcodeAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
                 <attr name="position" intvalue="1300"/>
@@ -360,9 +349,6 @@
 
         <file name="D-1.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
-        </file>
-        <file name="D-2.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-orchestra-OrchestraAction.instance"/>
         </file>
         <file name="D-3.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
@@ -435,9 +421,6 @@
             <file name="ScoreTopComponent.settings" url="ScoreTopComponentSettings.xml">
                 <attr name="position" intvalue="1"/>
             </file>
-            <file name="OrchestraTopComponent.settings" url="OrchestraTopComponentSettings.xml">
-                <attr name="position" intvalue="100"/>
-            </file>
             <file name="UserDefinedOpcodeTopComponent.settings" url="UserDefinedOpcodeTopComponentSettings.xml">
                 <attr name="position" intvalue="200"/>
             </file>
@@ -454,9 +437,6 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="OrchestraTopComponent.wstcref" url="OrchestraTopComponentWstcref.xml">
-                    <attr name="position" intvalue="100"/>
-                </file>
                 <file name="ProjectPropertiesTopComponent.wstcref" url="ProjectPropertiesTopComponentWstcref.xml">
                     <attr name="position" intvalue="600"/>
                 </file>
