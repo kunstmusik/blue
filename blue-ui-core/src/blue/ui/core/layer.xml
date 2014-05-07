@@ -143,12 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-mixer-MixerAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.mixer.MixerTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.mixer.Bundle#CTL_MixerAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-orchestra-OrchestraAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.orchestra.OrchestraTopComponent.findInstance"/>
@@ -311,12 +305,6 @@
             </file>
 
 
-            <file name="MixerAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
-                <attr name="position" intvalue="600"/>
-            </file>
-
-
 
             <file name="blue-ui-core-score-ScoreAction-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
@@ -401,9 +389,6 @@
         <file name="F9.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderStopProjectAction.instance"/>
         </file>
-        <file name="S-F5.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-mixer-MixerAction.instance"/>
-        </file>
 
         <file name="DS-F9.shadow">
             <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAction.instance"/>
@@ -463,7 +448,6 @@
                 <attr name="position" intvalue="600"/>
             </file>
 
-            <file name="MixerTopComponent.settings" url="MixerTopComponentSettings.xml"/>
             <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
             <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
@@ -483,11 +467,6 @@
                     <attr name="position" intvalue="300"/>
                 </file>
                 <file name="UserDefinedOpcodeTopComponent.wstcref" url="UserDefinedOpcodeTopComponentWstcref.xml">
-                    <attr name="position" intvalue="200"/>
-                </file>
-            </folder>
-            <folder name="output">
-                <file name="MixerTopComponent.wstcref" url="MixerTopComponentWstcref.xml">
                     <attr name="position" intvalue="200"/>
                 </file>
             </folder>
