@@ -13,7 +13,6 @@ import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -23,12 +22,7 @@ import org.openide.awt.ActionReferences;
 import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
-/**
- * Top component which displays something.
- */
 @ConvertAsProperties(
         dtd = "-//blue.ui.core.tables//Tables//EN",
         autostore = false
