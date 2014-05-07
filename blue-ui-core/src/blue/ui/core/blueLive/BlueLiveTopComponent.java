@@ -90,7 +90,7 @@ import skt.swing.SwingUtil;
 )
 @NbBundle.Messages({
     "CTL_BlueLiveAction=BlueLive",
-    "CTL_BlueLiveTopComponent=BlueLive Window",
+    "CTL_BlueLiveTopComponent=BlueLive",
     "HINT_BlueLiveTopComponent=This is a BlueLive window"
 })
 public final class BlueLiveTopComponent extends TopComponent

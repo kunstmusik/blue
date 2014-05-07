@@ -143,11 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-midi-MidiInputPanelAction.instance">
-                <attr name="component" methodvalue="blue.ui.core.midi.MidiInputPanelTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.midi.Bundle#CTL_MidiInputPanelAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-mixer-MixerAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.mixer.MixerTopComponent.findInstance"/>
@@ -321,10 +316,6 @@
                 <attr name="position" intvalue="600"/>
             </file>
 
-            <file name="MidiInputPanelAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-midi-MidiInputPanelAction.instance"/>
-                <attr name="position" intvalue="700"/>
-            </file>
 
 
             <file name="blue-ui-core-score-ScoreAction-separatorBefore.instance">
@@ -456,7 +447,6 @@
     </folder>
     <folder name="Windows2">
         <folder name="Components">
-            <file name="MidiInputPanelTopComponent.settings" url="MidiInputPanelTopComponentSettings.xml"/>
             <file name="ScoreTopComponent.settings" url="ScoreTopComponentSettings.xml">
                 <attr name="position" intvalue="1"/>
             </file>
@@ -502,7 +492,6 @@
                 </file>
             </folder>
             <folder name="properties">
-                <file name="MidiInputPanelTopComponent.wstcref" url="MidiInputPanelTopComponentWstcref.xml"/>
                 <file name="ScratchPadTopComponent.wstcref" url="ScratchPadTopComponentWstcref.xml"/>
                 <file name="SoundObjectLibraryTopComponent.wstcref" url="SoundObjectLibraryTopComponentWstcref.xml"/>
                 <file name="SoundObjectPropertiesTopComponent.wstcref" url="SoundObjectPropertiesTopComponentWstcref.xml"/>

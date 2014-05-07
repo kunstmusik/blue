@@ -11,6 +11,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Logger;
 import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -20,13 +23,26 @@ import org.openide.windows.WindowManager;
  */
 @ConvertAsProperties(dtd = "-//blue.ui.core.midi//MidiInputPanel//EN",
 autostore = false)
+@TopComponent.Description(
+        preferredID = "MidiInputPanelTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "properties", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.midi.MidiInputPanelTopComponent")
+@ActionReference(path = "Menu/Window", position = 700)
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_MidiInputPanelAction",
+        preferredID = "MidiInputPanelTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_MidiInputPanelAction=MIDI Input Panel",
+    "CTL_MidiInputPanelTopComponent=MIDI Input Panel",
+    "HINT_MidiInputPanelTopComponent=This is a MidiInput window"
+})
 public final class MidiInputPanelTopComponent extends TopComponent {
 
     private static MidiInputPanelTopComponent instance;
-
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "MidiInputPanelTopComponent";
 
     public MidiInputPanelTopComponent() {
         initComponents();
@@ -91,11 +107,6 @@ public final class MidiInputPanelTopComponent extends TopComponent {
     private blue.ui.core.midi.MidiInputProcessorPanel midiInputProcessorPanel1;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
     public static synchronized MidiInputPanelTopComponent getDefault() {
         if (instance == null) {
             instance = new MidiInputPanelTopComponent();
@@ -103,30 +114,6 @@ public final class MidiInputPanelTopComponent extends TopComponent {
         return instance;
     }
 
-    /**
-     * Obtain the MidiInputPanelTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized MidiInputPanelTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(MidiInputPanelTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof MidiInputPanelTopComponent) {
-            return (MidiInputPanelTopComponent) win;
-        }
-        Logger.getLogger(MidiInputPanelTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
 
     @Override
     public void componentOpened() {
@@ -145,21 +132,8 @@ public final class MidiInputPanelTopComponent extends TopComponent {
         // TODO store your settings
     }
 
-    Object readProperties(java.util.Properties p) {
-        if (instance == null) {
-            instance = this;
-        }
-        instance.readPropertiesImpl(p);
-        return instance;
-    }
-
-    private void readPropertiesImpl(java.util.Properties p) {
+    void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
-        // TODO read your settings according to their version
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
 }
