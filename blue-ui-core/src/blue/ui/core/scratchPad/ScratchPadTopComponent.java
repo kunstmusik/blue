@@ -27,25 +27,47 @@ import blue.ui.utilities.SimpleDocumentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
 
 /**
- * Top component which displays something.
+ * TopComponent for project scratchpad
  */
-final class ScratchPadTopComponent extends TopComponent {
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.scratchPad//ScratchPad//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "ScratchPadTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.scratchPad.ScratchPadTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 400),
+    @ActionReference(path = "Shortcuts", name = "F5")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_ScratchPadAction",
+        preferredID = "ScratchPadTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_ScratchPadAction=Scratch Pad",
+    "CTL_ScratchPadTopComponent=Scratch Pad",
+    "HINT_ScratchPadTopComponent=This is a Scratch Pad window"
+})
+public final class ScratchPadTopComponent extends TopComponent {
 
     private static ScratchPadTopComponent instance;
 
     private ScratchPadData scratchPadData = null;
-
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "ScratchPadTopComponent";
 
     private ScratchPadTopComponent() {
         initComponents();
@@ -178,30 +200,6 @@ final class ScratchPadTopComponent extends TopComponent {
         return instance;
     }
 
-    /**
-     * Obtain the ScratchPadTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized ScratchPadTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(ScratchPadTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof ScratchPadTopComponent) {
-            return (ScratchPadTopComponent) win;
-        }
-        Logger.getLogger(ScratchPadTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
 
     @Override
     public void componentOpened() {
@@ -213,23 +211,11 @@ final class ScratchPadTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
-    /** replaces this in object stream */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper();
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
-
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        public Object readResolve() {
-            return ScratchPadTopComponent.getDefault();
-        }
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
     }
 }

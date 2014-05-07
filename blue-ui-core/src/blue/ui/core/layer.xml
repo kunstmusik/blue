@@ -155,12 +155,6 @@
                 <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_SoundObjectPropertiesAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="blue-ui-core-scratchPad-ScratchPadAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.scratchPad.ScratchPadTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.scratchPad.Bundle#CTL_ScratchPadAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
             <file name="blue-ui-core-tables-TablesAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.tables.TablesTopComponent.findInstance"/>
@@ -278,10 +272,6 @@
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance"/>
                 <attr name="position" intvalue="300"/>
             </file>
-            <file name="ScratchPadAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>
-                <attr name="position" intvalue="400"/>
-            </file>
 
 
 
@@ -330,9 +320,6 @@
         </file>
         <file name="F4.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance"/>
-        </file>
-        <file name="F5.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-scratchPad-ScratchPadAction.instance"/>
         </file>
         <file name="F6.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-soundFile-AudioFilePlayerAction.instance"/>
@@ -391,7 +378,6 @@
                 <attr name="position" intvalue="300"/>
             </file>
 
-            <file name="ScratchPadTopComponent.settings" url="ScratchPadTopComponentSettings.xml"/>
             <file name="SoundObjectLibraryTopComponent.settings" url="SoundObjectLibraryTopComponentSettings.xml"/>
             <file name="SoundObjectPropertiesTopComponent.settings" url="SoundObjectPropertiesTopComponentSettings.xml"/>
         </folder>
@@ -405,7 +391,6 @@
                 </file>
             </folder>
             <folder name="properties">
-                <file name="ScratchPadTopComponent.wstcref" url="ScratchPadTopComponentWstcref.xml"/>
                 <file name="SoundObjectLibraryTopComponent.wstcref" url="SoundObjectLibraryTopComponentWstcref.xml"/>
                 <file name="SoundObjectPropertiesTopComponent.wstcref" url="SoundObjectPropertiesTopComponentWstcref.xml"/>
             </folder>
