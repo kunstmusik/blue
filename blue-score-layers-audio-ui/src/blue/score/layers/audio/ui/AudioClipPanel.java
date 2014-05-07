@@ -21,7 +21,6 @@ package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
-import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Color;
@@ -34,12 +33,13 @@ import javax.swing.JPanel;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
+import org.openide.windows.WindowManager;
 
 /**
  *
  * @author stevenyi
  */
-public class AudioClipPanel extends JPanel 
+public class AudioClipPanel extends JPanel
         implements PropertyChangeListener, ScoreObjectView<AudioClip>, LookupListener {
 
     private final AudioClip audioClip;
@@ -47,12 +47,11 @@ public class AudioClipPanel extends JPanel
     boolean selected = false;
     static Color selectedBg = new Color(255, 255, 255, 128);
 
-
     Lookup.Result<AudioClip> result = null;
+
     public AudioClipPanel(AudioClip audioClip, TimeState timeState) {
         this.audioClip = audioClip;
         this.timeState = timeState;
-
 
         setOpaque(true);
         setBackground(Color.DARK_GRAY);
@@ -69,17 +68,20 @@ public class AudioClipPanel extends JPanel
         audioClip.addPropertyChangeListener(this);
         timeState.addPropertyChangeListener(this);
 
-        result = ScoreTopComponent.findInstance().getLookup().lookupResult(AudioClip.class);
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                "ScoreTopComponent");
+        result = scoreTopComponent.getLookup().lookupResult(AudioClip.class);
+
         result.addLookupListener(this);
     }
-    
+
     @Override
     public void removeNotify() {
         audioClip.removePropertyChangeListener(this);
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
         result = null;
-        
+
         super.removeNotify();
     }
 

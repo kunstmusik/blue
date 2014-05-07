@@ -1034,20 +1034,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         return false;
     }
 
-    /*
-     * Wrapper Methods for showing popups
-     */
-    protected void showSoundObjectPopup(SoundObjectView sObjView, int x, int y) {
-//        sObjPopup.setTimeState(timeState);
-        //sObjPopup.show(sObjView, this, x, y);
-        List<? extends Action> list = Utilities.actionsForPath(
-                "blue/score/actions");
-        final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
-                new Action[0]),
-                ScoreTopComponent.findInstance().getLookup());
-        menu.show(sObjView.getParent(), x, y);
-    }
-
     /**
      *
      */

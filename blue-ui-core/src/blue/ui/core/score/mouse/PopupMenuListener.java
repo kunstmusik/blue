@@ -35,13 +35,15 @@ import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 
 /**
  *
  * @author stevenyi
  */
 @ScoreMouseListenerPlugin(displayName = "PopupMenuListener",
-        position=10)
+        position = 10)
 public class PopupMenuListener extends BlueMouseAdapter {
 
     @Override
@@ -59,18 +61,20 @@ public class PopupMenuListener extends BlueMouseAdapter {
         Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
                 e.getPoint(), scoreTC.getScorePanel());
 
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                "ScoreTopComponent");
+
         if (currentScoreObjectView != null) {
             if (soundObjects.size() > 0) {
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
-
 
                 content.add(currentLayerGroupPanel);
                 content.add(point);
                 content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
-                        ScoreTopComponent.findInstance().getLookup());
+                        scoreTopComponent.getLookup());
                 content.remove(scoreTC.getTimeState());
                 content.remove(point);
                 content.remove(currentLayerGroupPanel);
@@ -86,7 +90,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 content.add(point);
                 content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(actions,
-                        ScoreTopComponent.findInstance().getLookup());
+                        scoreTopComponent.getLookup());
                 menu.show(comp.getParent(), point.x, point.y);
                 content.remove(scoreTC.getTimeState());
                 content.remove(point);

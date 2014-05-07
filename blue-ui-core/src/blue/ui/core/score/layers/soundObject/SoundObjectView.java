@@ -35,6 +35,7 @@ import javax.swing.JComponent;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
+import org.openide.windows.WindowManager;
 
 /**
  * Title: blue (Object Composition Environment)
@@ -183,7 +184,10 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     @Override
     public void addNotify() {
         super.addNotify();
-        result = ScoreTopComponent.findInstance().getLookup().lookupResult(
+
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                "ScoreTopComponent");
+        result = scoreTopComponent.getLookup().lookupResult(
                 SoundObject.class);
         result.addLookupListener(this);
         resultChanged(null);

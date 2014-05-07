@@ -143,13 +143,6 @@
             </file>
         </folder>
         <folder name="Window">
-            <file name="blue-ui-core-score-ScoreAction.instance">
-                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
-                <attr name="component" methodvalue="blue.ui.core.score.ScoreTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="blue.ui.core.score.Bundle#CTL_ScoreAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-                <attr name="position" intvalue="100"/>
-            </file>
             <file name="blue-ui-core-score-layers-soundObject-SoundObjectLibraryAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="component" methodvalue="blue.ui.core.score.layers.soundObject.SoundObjectLibraryTopComponent.findInstance"/>
@@ -292,15 +285,6 @@
 
 
 
-            <file name="blue-ui-core-score-ScoreAction-separatorBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="990"/>
-            </file>
-
-            <file name="ScoreAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
-                <attr name="position" intvalue="1000"/>
-            </file>
             <file name="UserDefinedOpcodeAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
                 <attr name="position" intvalue="1300"/>
@@ -335,9 +319,6 @@
           <attr name="originalFile" stringvalue="Actions/Window/org-netbeans-core-io-ui-IOWindowAction.instance"/>
         </file>
 
-        <file name="D-1.shadow">
-            <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-score-ScoreAction.instance"/>
-        </file>
         <file name="D-3.shadow">
             <attr name="originalFile" stringvalue="Actions/Window/blue-ui-core-udo-UserDefinedOpcodeAction.instance"/>
         </file>
@@ -403,9 +384,6 @@
     </folder>
     <folder name="Windows2">
         <folder name="Components">
-            <file name="ScoreTopComponent.settings" url="ScoreTopComponentSettings.xml">
-                <attr name="position" intvalue="1"/>
-            </file>
             <file name="UserDefinedOpcodeTopComponent.settings" url="UserDefinedOpcodeTopComponentSettings.xml">
                 <attr name="position" intvalue="200"/>
             </file>
@@ -419,9 +397,6 @@
         </folder>
         <folder name="Modes">
             <folder name="editor">
-                <file name="ScoreTopComponent.wstcref" url="ScoreTopComponentWstcref.xml">
-                    <attr name="position" intvalue="0"/>
-                </file>
                 <file name="TablesTopComponent.wstcref" url="TablesTopComponentWstcref.xml">
                     <attr name="position" intvalue="300"/>
                 </file>

@@ -29,7 +29,6 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
-import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
@@ -53,12 +52,14 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -68,19 +69,38 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
 /**
- * Top component which displays something.
+ * TopComponent for Score Timeline.
  */
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.score//Score//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "ScoreTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.score.ScoreTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1000, separatorBefore = 990),
+    @ActionReference(path = "Shortcuts", name = "D-1")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_ScoreAction",
+        preferredID = "ScoreTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_ScoreAction=Score",
+    "CTL_ScoreTopComponent=Score",
+    "HINT_ScoreTopComponent=This is a Score window"
+})
 public final class ScoreTopComponent extends TopComponent
         implements ScoreListener, RenderTimeManagerListener,
         PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
     private static ScoreTopComponent instance;
-    /**
-     * path to the icon used by the component and its open action
-     */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "ScoreTopComponent";
     private NoteProcessorDialog npcDialog = null;
     SoundObject bufferSoundObject;
     BlueData data;
@@ -134,7 +154,7 @@ public final class ScoreTopComponent extends TopComponent
                 "HINT_ScoreTopComponent"));
 
         init();
-        
+
         final ScoreController scoreController = ScoreController.getInstance();
 
         scoreController.addScoreControllerListener(scoreObjectBar);
@@ -565,43 +585,11 @@ public final class ScoreTopComponent extends TopComponent
     private javax.swing.JSplitPane topSplitPane;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use
-     * {@link #findInstance}.
-     */
     public static synchronized ScoreTopComponent getDefault() {
         if (instance == null) {
             instance = new ScoreTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the ScoreTopComponent instance. Never call {@link #getDefault}
-     * directly!
-     */
-    public static synchronized ScoreTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(ScoreTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof ScoreTopComponent) {
-            return (ScoreTopComponent) win;
-        }
-        Logger.getLogger(ScoreTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -622,9 +610,12 @@ public final class ScoreTopComponent extends TopComponent
         return new ResolvableHelper();
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
+    }
+
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
     }
 
     @Override
