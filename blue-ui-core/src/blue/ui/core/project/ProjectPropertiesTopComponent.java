@@ -45,7 +45,7 @@ import org.openide.windows.TopComponent;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "editor", openAtStartup = false,
+@TopComponent.Registration(mode = "editor", openAtStartup = true,
         position = 700)
 @ActionID(category = "Window", id = "blue.ui.core.project.ProjectPropertiesTopComponent")
 @ActionReferences({
