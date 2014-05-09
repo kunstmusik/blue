@@ -59,7 +59,8 @@ import org.openide.windows.TopComponent;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "output", openAtStartup = false)
+@TopComponent.Registration(mode = "output", openAtStartup = false,
+        position = 100)
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 100),

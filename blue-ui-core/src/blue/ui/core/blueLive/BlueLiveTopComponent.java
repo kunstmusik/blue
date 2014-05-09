@@ -78,7 +78,8 @@ import skt.swing.SwingUtil;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@TopComponent.Registration(mode = "editor", openAtStartup = false,
+        position = 800)
 @ActionID(category = "Window", id = "blue.ui.core.blueLive.BlueLiveTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750),

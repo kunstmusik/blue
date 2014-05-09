@@ -32,7 +32,8 @@ import org.openide.windows.TopComponent;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@TopComponent.Registration(mode = "editor", openAtStartup = false,
+        position = 200)
 @ActionID(category = "Window", id = "blue.ui.core.midi.OrchestraTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 1100),

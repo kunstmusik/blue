@@ -80,7 +80,8 @@ import org.openide.windows.WindowManager;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
-@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@TopComponent.Registration(mode = "editor", openAtStartup = false,
+        position = 100)
 @ActionID(category = "Window", id = "blue.ui.core.score.ScoreTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 1000, separatorBefore = 990),
