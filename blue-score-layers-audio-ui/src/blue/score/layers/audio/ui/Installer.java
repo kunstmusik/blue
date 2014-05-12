@@ -19,12 +19,34 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.projects.BlueProjectManager;
 import org.openide.modules.ModuleInstall;
 
 public class Installer extends ModuleInstall {
 
+    BlueProjectPropertyChangeListener projectListener
+            = new BlueProjectPropertyChangeListener();
+
     @Override
     public void restored() {
-        // TODO
+        final BlueProjectManager instance = BlueProjectManager.getInstance();
+
+        instance.addPropertyChangeListener(
+                projectListener);
+
+        if(instance.getCurrentProject() != 
+                projectListener.currentProject) {
+            projectListener.currentProject = instance.getCurrentProject();
+            projectListener.attachListeners(projectListener.currentProject);
+        }
     }
+
+    @Override
+    public void uninstalled() {
+        BlueProjectManager.getInstance().removePropertyChangeListener(
+                projectListener);
+        projectListener.detachListeners(projectListener.currentProject);
+        projectListener.currentProject = null;
+    }
+
 }
