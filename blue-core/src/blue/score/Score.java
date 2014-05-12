@@ -70,25 +70,38 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     public void addLayerGroup(LayerGroup layerGroup) {
         layerGroups.add(layerGroup);
         int index = layerGroups.size() - 1;
+
+        List<LayerGroup> newGroups = new ArrayList<>();
+        newGroups.add(layerGroup);
+        
         ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED,
-                index, index);
+                index, index, layerGroup);
         fireScoreDataEvent(sde);
     }
 
     public void addLayerGroup(int index, LayerGroup layerGroup) {
         layerGroups.add(index, layerGroup);
+
+
+        List<LayerGroup> newGroups = new ArrayList<>();
+        newGroups.add(layerGroup);
+        
         ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED,
-                index, index);
+                index, index, newGroups);
         fireScoreDataEvent(sde);
     }
 
     public void removeLayerGroups(int startIndex, int endIndex) {
+
+        List<LayerGroup> removedGroups = new ArrayList<>();
+        
         for (int i = 0; i <= (endIndex - startIndex); i++) {
-            layerGroups.remove(startIndex);
+            LayerGroup group = layerGroups.remove(startIndex);
+            removedGroups.add(group);
         }
         ScoreDataEvent sde = new ScoreDataEvent(this,
                 ScoreDataEvent.DATA_REMOVED,
-                startIndex, endIndex);
+                startIndex, endIndex, removedGroups);
         fireScoreDataEvent(sde);
     }
 
@@ -98,11 +111,13 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         }
 
         int endIndex = layerGroups.size() - 1;
+
+        List<LayerGroup> removedGroups = new ArrayList<>(layerGroups);
         layerGroups.clear();
 
         ScoreDataEvent sde = new ScoreDataEvent(this,
                 ScoreDataEvent.DATA_REMOVED,
-                0, endIndex);
+                0, endIndex, removedGroups);
         fireScoreDataEvent(sde);
     }
 

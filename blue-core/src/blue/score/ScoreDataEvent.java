@@ -36,9 +36,9 @@ public class ScoreDataEvent {
     private Score source;
     private List<LayerGroup> layerGroups;
 
-    public ScoreDataEvent(Score source, int type, int startIndex, int endIndex) {
-        this(source, type, startIndex, endIndex, null);
-    }
+//    public ScoreDataEvent(Score source, int type, int startIndex, int endIndex) {
+//        this(source, type, startIndex, endIndex, null);
+//    }
     
      public ScoreDataEvent(Score source, int type, int startIndex,
             int endIndex, List<LayerGroup> layers) {
