@@ -30,6 +30,7 @@ import blue.score.layers.ScoreObjectLayerGroup;
 import blue.soundObject.*;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.rmi.dgc.VMID;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
@@ -43,6 +44,12 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     private String name = "Audio Layer Group";
 
+    private String uniqueId;
+    
+    public AudioLayerGroup() {
+        this.uniqueId = Integer.toString(new VMID().hashCode());
+    }
+    
     @Override
     public String getName() {
         return name;
@@ -75,11 +82,19 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         return noteList;
     }
 
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
     public static AudioLayerGroup loadFromXML(Element data) throws Exception {
         AudioLayerGroup layerGroup = new AudioLayerGroup();
 
         if (data.getAttribute("name") != null) {
             layerGroup.setName(data.getAttributeValue("name"));
+        }
+        
+        if(data.getAttribute("uniqueId") != null) {
+            layerGroup.uniqueId = data.getAttributeValue("uniqueId");
         }
 
         Elements nodes = data.getElements();
@@ -103,6 +118,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element root = new Element("audioLayerGroup");
         root.setAttribute("name", name);
+        root.setAttribute("uniqueId", uniqueId);
 
         Element audioLayersNode = root.addElement("audioLayers");
 

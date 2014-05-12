@@ -29,6 +29,7 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.rmi.dgc.VMID;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -50,9 +51,10 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
     private transient Vector<PropertyChangeListener> propListeners = null;
     private transient Vector<AudioLayerListener> layerListeners = null;
+    private String uniqueId;
 
     public AudioLayer() {
-
+        this.uniqueId = Integer.toString(new VMID().hashCode());
     }
 
     @Override
@@ -126,6 +128,10 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         return (heightIndex + 1) * LAYER_HEIGHT;
     }
 
+    public String getUniqueId() {
+        return uniqueId;
+    }
+
     public Element saveAsXML() {
         Element retVal = new Element("audioLayer");
 
@@ -134,6 +140,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         retVal.setAttribute("solo", Boolean.toString(isSolo()));
         retVal.setAttribute("heightIndex", Integer.toString(this
                 .getHeightIndex()));
+        retVal.setAttribute("uniqueId", uniqueId);
 
         for (AudioClip clip : this) {
             retVal.addElement(clip.saveAsXML());
@@ -150,6 +157,10 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
                 Boolean.valueOf(data.getAttributeValue("muted")).booleanValue());
         layer.setSolo(
                 Boolean.valueOf(data.getAttributeValue("solo")).booleanValue());
+
+        if (data.getAttribute("uniqueId") != null) {
+            layer.uniqueId = data.getAttributeValue("uniqueId");
+        }
 
         String heightIndexStr = data.getAttributeValue("heightIndex");
         if (heightIndexStr != null) {
