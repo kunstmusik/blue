@@ -157,10 +157,12 @@ public class BlueProjectManager {
     }
 
     public void setCurrentProject(BlueProject project) {
+        BlueProject previousProject = currentProject;
+        currentProject = project;
+
         if (!projects.contains(project)) {
             addProject(project);
         }
-        currentProject = project;
 
         if (currentProject != null) {
             BlueUndoManager.setUndoGroup(project.getUndoManager());
@@ -193,7 +195,7 @@ public class BlueProjectManager {
             
         }
 
-        fireUpdatedCurrentProject();
+        fireUpdatedCurrentProject(previousProject, currentProject);
 
     }
 
@@ -257,14 +259,15 @@ public class BlueProjectManager {
         }
     }
 
-    public synchronized void fireUpdatedCurrentProject() {
+    protected synchronized void fireUpdatedCurrentProject(BlueProject oldProject, 
+            BlueProject newProject) {
 
         if (listeners == null || listeners.size() == 0) {
             return;
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                CURRENT_PROJECT, null, currentProject);
+                CURRENT_PROJECT, oldProject, newProject);
 
         for (PropertyChangeListener pcl : listeners) {
             pcl.propertyChange(pce);
