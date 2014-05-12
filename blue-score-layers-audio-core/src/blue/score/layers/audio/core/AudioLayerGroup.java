@@ -47,7 +47,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     private String uniqueId;
     
     public AudioLayerGroup() {
-        this.uniqueId = Integer.toString(new VMID().hashCode());
+        this.uniqueId = new VMID().toString();
     }
     
     @Override

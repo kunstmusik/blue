@@ -54,7 +54,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
     private String uniqueId;
 
     public AudioLayer() {
-        this.uniqueId = Integer.toString(new VMID().hashCode());
+        this.uniqueId = new VMID().toString();
     }
 
     @Override
