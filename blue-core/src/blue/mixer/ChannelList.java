@@ -44,6 +44,10 @@ public class ChannelList implements ListModel, Serializable {
 
     private transient Vector<ChannelListListener> channelListListeners = null;
 
+    /** UniqueId of object that is associated with ChannelList 
+     * (i.e. AudioLayerGroup) */
+    private String association = null;
+
     /** Creates a new instance of ChannelList */
     public ChannelList() {
     }
@@ -52,6 +56,11 @@ public class ChannelList implements ListModel, Serializable {
         ChannelList channels = new ChannelList();
 
         Elements nodes = data.getElements();
+
+        String associationVal = data.getAttributeValue("association");
+        if(associationVal != null && !"null".equals(associationVal)) {
+            channels.setAssociation(data.getAttributeValue("association"));
+        }
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -68,11 +77,23 @@ public class ChannelList implements ListModel, Serializable {
     public Element saveAsXML() {
         Element retVal = new Element("channelList");
 
+        if(association != null) {
+            retVal.setAttribute("association", association);
+        }
+
         for (Channel channel : channels) {
             retVal.addElement(channel.saveAsXML());
         }
 
         return retVal;
+    }
+
+    public String getAssociation() {
+        return association;
+    }
+
+    public void setAssociation(String association) {
+        this.association = association;
     }
 
     public Channel getChannel(int index) {
@@ -265,4 +286,5 @@ public class ChannelList implements ListModel, Serializable {
             }
         }
     }
+
 }

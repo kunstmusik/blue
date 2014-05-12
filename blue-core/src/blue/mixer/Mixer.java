@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
 import blue.orchestra.GenericInstrument;
@@ -28,18 +27,19 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * TODO - need to create dependency graph, then do depth first crawl to create
  * audio mix signals
- * 
- * 
+ *
+ *
  * @author Steven Yi
  */
-
 public class Mixer implements Serializable {
 
     private static final MessageFormat GA_VAR = new MessageFormat(
@@ -49,6 +49,9 @@ public class Mixer implements Serializable {
             "ga_bluesub_{0}_{1}");
 
     public static final String MASTER_CHANNEL = "Master";
+
+    private List<ChannelList> channelListGroups
+            = new ArrayList<>();
 
     private ChannelList channels = new ChannelList();
 
@@ -92,6 +95,15 @@ public class Mixer implements Serializable {
                             break;
                     }
                     break;
+                case "channelListGroups":
+
+                    Elements listGroupsNodes = node.getElements();
+                    while (listGroupsNodes.hasMoreElements()) {
+                        mixer.channelListGroups.add(ChannelList.loadFromXML(
+                                listGroupsNodes.next()));
+                    }
+
+                    break;
                 case "channel":
                     mixer.setMaster(Channel.loadFromXML(node));
                     break;
@@ -109,6 +121,14 @@ public class Mixer implements Serializable {
         retVal.addElement(XMLUtilities.writeFloat("extraRenderTime",
                 extraRenderTime));
 
+        if (channelListGroups.size() > 0) {
+            Element groupsNode = new Element("channelListGroups");
+            retVal.addElement(groupsNode);
+            for (ChannelList list : channelListGroups) {
+                groupsNode.addElement(list.saveAsXML());
+            }
+        }
+
         Element channelsNode = channels.saveAsXML();
         channelsNode.setAttribute("list", "channels");
         retVal.addElement(channelsNode);
@@ -120,6 +140,10 @@ public class Mixer implements Serializable {
         retVal.addElement(master.saveAsXML());
 
         return retVal;
+    }
+
+    public List<ChannelList> getChannelListGroups() {
+        return channelListGroups;
     }
 
     public Channel getChannel(int index) {
@@ -152,12 +176,12 @@ public class Mixer implements Serializable {
 
     public static String getChannelVar(String channelName, int channel) {
         return GA_VAR
-                .format(new Object[] { channelName, new Integer(channel) });
+                .format(new Object[]{channelName, new Integer(channel)});
     }
 
     public static String getSubChannelVar(String channelName, int channel) {
-        return SUBMIX_VAR.format(new Object[] { channelName,
-                new Integer(channel) });
+        return SUBMIX_VAR.format(new Object[]{channelName,
+            new Integer(channel)});
     }
 
     public String getVar(Channel c, int channel) {
@@ -245,7 +269,7 @@ public class Mixer implements Serializable {
 
         buffer
                 .append(MixerNode.getMixerCode(this, udos, manager, node,
-                        nchnls));
+                                nchnls));
 
         buffer.append("outc ");
 
@@ -342,7 +366,6 @@ public class Mixer implements Serializable {
 //                .generateInstrument());
 //
 //    }
-
     public void setChannels(ChannelList channels) {
         this.channels = channels;
     }
@@ -371,7 +394,7 @@ public class Mixer implements Serializable {
     /**
      * Tells mixer that subchannel to act as if it has a dependency, used by
      * blueMixerOut when using subchannel form of calling.
-     * 
+     *
      * @param subChannelName
      */
     public void addSubChannelDependency(String subChannelName) {
@@ -441,7 +464,7 @@ public class Mixer implements Serializable {
         }
         return subChannelCache;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);

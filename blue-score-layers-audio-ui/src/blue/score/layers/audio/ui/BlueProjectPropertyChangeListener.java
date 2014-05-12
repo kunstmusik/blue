@@ -19,14 +19,22 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.mixer.ChannelList;
+import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
+import blue.score.layers.LayerGroup;
+import blue.score.layers.audio.core.AudioLayerGroup;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 /**
+ * This class adds logic to check for changes to AudioLayerGroups and
+ * AudioLayers and ensure changes (add, remove, reorder) get synced with Mixer
+ * channel groups and channels.
  *
  * @author stevenyi
  */
@@ -34,16 +42,48 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
     protected BlueProject currentProject = null;
     protected ScoreListener scoreListener;
-    
+
     public BlueProjectPropertyChangeListener() {
         scoreListener = new ScoreListener() {
 
             @Override
             public void layerGroupsChanged(ScoreDataEvent sde) {
-                switch(sde.getType()) {
+                if (currentProject == null) {
+                    return;
+                }
+
+                Mixer mixer = currentProject.getData().getMixer();
+                List<ChannelList> channelGroups = mixer.getChannelListGroups();
+
+                switch (sde.getType()) {
                     case ScoreDataEvent.DATA_ADDED:
+
+                        for (LayerGroup lg : sde.getLayerGroups()) {
+                            if (lg instanceof AudioLayerGroup) {
+                                //FIXME - should check order of where to add
+                                ChannelList channels = new ChannelList();
+                                channelGroups.add(channels);
+                                channels.setAssociation(
+                                        ((AudioLayerGroup) lg).getUniqueId());
+                            }
+                        }
+
                         break;
                     case ScoreDataEvent.DATA_REMOVED:
+
+                        for (LayerGroup lg : sde.getLayerGroups()) {
+                            if (lg instanceof AudioLayerGroup) {
+                                String uniqueId = ((AudioLayerGroup) lg).getUniqueId();
+                                
+                                for(ChannelList list : channelGroups) {
+                                    if(uniqueId.equals(list.getAssociation())) {
+                                        channelGroups.remove(list);
+                                        break;
+                                    }
+                                }
+                                
+                            }
+                        }
                         break;
                     case ScoreDataEvent.DATA_CHANGED:
                         break;
@@ -52,8 +92,6 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         };
     }
 
-
-    
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (BlueProjectManager.CURRENT_PROJECT.equals(
@@ -61,15 +99,15 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
             BlueProject oldProject = (BlueProject) evt.getOldValue();
             BlueProject newProject = (BlueProject) evt.getNewValue();
 
-            if(oldProject == newProject) {
+            if (oldProject == newProject) {
                 return;
             }
 
-            if(oldProject != null) {
+            if (oldProject != null) {
                 detachListeners(oldProject);
             }
 
-            if(newProject != null) {
+            if (newProject != null) {
                 attachListeners(newProject);
             }
             currentProject = newProject;
@@ -78,7 +116,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
     protected void detachListeners(BlueProject project) {
 //        System.out.println("Detach listeners to project: " + project);
-        if(project == null) {
+        if (project == null) {
             return;
         }
 
@@ -87,12 +125,11 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
     protected void attachListeners(BlueProject project) {
 //        System.out.println("Attach listeners to project: " + project);
-        if(project == null) {
+        if (project == null) {
             return;
         }
-        
+
         project.getData().getScore().addScoreListener(scoreListener);
     }
 
-    
 }
