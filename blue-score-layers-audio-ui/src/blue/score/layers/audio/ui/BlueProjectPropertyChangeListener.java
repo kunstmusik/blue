@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
@@ -26,6 +27,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
 import blue.score.layers.LayerGroup;
+import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -60,11 +62,18 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
                         for (LayerGroup lg : sde.getLayerGroups()) {
                             if (lg instanceof AudioLayerGroup) {
+                                AudioLayerGroup alg = (AudioLayerGroup)lg;
                                 //FIXME - should check order of where to add
                                 ChannelList channels = new ChannelList();
                                 channelGroups.add(channels);
                                 channels.setAssociation(
-                                        ((AudioLayerGroup) lg).getUniqueId());
+                                        alg.getUniqueId());
+
+                                for(AudioLayer layer : alg) {
+                                    Channel channel = new Channel();
+                                    channel.setAssociation(layer.getUniqueId());
+                                    channels.addChannel(channel);
+                                }
                             }
                         }
 

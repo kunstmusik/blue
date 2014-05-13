@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
+import javax.swing.JScrollPane;
 
 class ChannelListLayout implements LayoutManager {
 
@@ -41,14 +42,27 @@ class ChannelListLayout implements LayoutManager {
             return new Dimension(0, 0);
         }
 
-        Component c = parent.getComponent(0);
+        Component topHeightComponent = parent;
 
-        Dimension size = c.getPreferredSize();
+        while (!(topHeightComponent instanceof JScrollPane)) {
+            topHeightComponent = topHeightComponent.getParent();
+        }
 
-        int w = (count * size.width) + widthAdjustment;
+        int w = widthAdjustment;
+        int h = Integer.MIN_VALUE;
 
-        int h = size.height > parent.getParent().getHeight() ? size.height
-                : parent.getParent().getHeight();
+        for (int i = 0; i < parent.getComponentCount(); i++) {
+            Dimension tempSize = parent.getComponent(i).getPreferredSize();
+            w += tempSize.width;
+
+            if (tempSize.height > h) {
+                h = tempSize.height;
+            }
+        }
+
+        if (h < topHeightComponent.getHeight()) {
+            h = topHeightComponent.getHeight();
+        }
 
         return new Dimension(w, h);
     }
@@ -68,14 +82,35 @@ class ChannelListLayout implements LayoutManager {
 
         Dimension size = c.getPreferredSize();
 
-        int h = size.height > parent.getParent().getHeight() ? size.height
-                : parent.getParent().getHeight();
+        Component topHeightComponent = parent;
+
+        while (!(topHeightComponent instanceof JScrollPane)) {
+            topHeightComponent = topHeightComponent.getParent();
+        }
+
+        int h = Integer.MIN_VALUE;
+        for (int i = 0; i < parent.getComponentCount(); i++) {
+            Dimension tempSize = parent.getComponent(i).getPreferredSize();
+            if (tempSize.height > h) {
+                h = tempSize.height;
+            }
+        }
+
+        if (h < topHeightComponent.getHeight()) {
+            h = topHeightComponent.getHeight();
+        }
+
+        int x = 0;
 
         for (int i = 0; i < count; i++) {
             Component temp = parent.getComponent(i);
 
-            temp.setLocation(size.width * i, 0);
-            temp.setSize(size.width, h);
+            Dimension tempSize = temp.getPreferredSize();
+
+            temp.setLocation(x, 0);
+            temp.setSize(tempSize.width, h);
+
+            x += tempSize.width;
         }
     }
 

@@ -79,6 +79,8 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
 
     private boolean updatingLine = false;
 
+    private String association = null;
+
     public Channel() {
         levelParameter.setName("Volume");
         levelParameter.setLabel("dB");
@@ -93,6 +95,11 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
     public static Channel loadFromXML(Element data) throws Exception {
         Channel channel = new Channel();
 
+        String associationVal = data.getAttributeValue("association");
+        if(associationVal != null && !"null".equals(associationVal)) {
+            channel.setAssociation(data.getAttributeValue("association"));
+        }
+        
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -140,6 +147,10 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
     public Element saveAsXML() {
         Element retVal = new Element("channel");
 
+        if(association != null) {
+            retVal.setAttribute("association", association);
+        }
+        
         retVal.addElement(new Element("name").setText(name));
         retVal.addElement(new Element("outChannel").setText(outChannel));
         retVal.addElement(XMLUtilities.writeFloat("level", level));
@@ -157,6 +168,14 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         retVal.addElement(levelParameter.saveAsXML());
 
         return retVal;
+    }
+
+    public String getAssociation() {
+        return association;
+    }
+
+    public void setAssociation(String association) {
+        this.association = association;
     }
 
     public EffectsChain getPreEffects() {

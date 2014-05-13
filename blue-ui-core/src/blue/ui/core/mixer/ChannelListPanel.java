@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
@@ -44,7 +43,9 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 
     private ChannelList subChannels = null;
 
-    /** Creates a new instance of ChanelListPanel */
+    /**
+     * Creates a new instance of ChanelListPanel
+     */
     public ChannelListPanel() {
         this.setLayout(new ChannelListLayout());
 
@@ -194,6 +195,15 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
             // }
         }
 
+    }
+
+    @Override
+    public void addNotify() {
+        Dimension preferredLayoutSize = getLayout()
+                .preferredLayoutSize(ChannelListPanel.this);
+        
+        setPreferredSize(preferredLayoutSize);
+        setSize(preferredLayoutSize);
     }
 
 }
