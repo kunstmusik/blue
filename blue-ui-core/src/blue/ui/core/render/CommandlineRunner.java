@@ -118,7 +118,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             float endTime = data.getRenderEndTime();
 
             CsdRenderResult result = CSDRenderService.getDefault()
-                    .generateCSD(data, startTime, endTime, false, false);
+                    .generateCSD(data, startTime, endTime, true, false);
 
             RenderTimeManager timeManager = Lookup.getDefault().lookup(
                     RenderTimeManager.class);

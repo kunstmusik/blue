@@ -74,7 +74,7 @@ public class ScoreUtilities {
             switch (state) {
                 case STARTING:
                     if (c == ';') {
-                        while (i < len) {
+                        while (i < lastIndex) {
                             i++;
                             if (in.charAt(i) == '\n') {
                                 break;
@@ -83,14 +83,14 @@ public class ScoreUtilities {
 
                     } else if (c == '/' && (i < len - 2)) {
                         if (in.charAt(i + 1) == '/') {
-                            while (i < len) {
+                            while (i < lastIndex) {
                                 i++;
                                 if (in.charAt(i) == '\n') {
                                     break;
                                 }
                             }
                         } else if (in.charAt(i + 1) == '*') {
-                            while (i < len) {
+                            while (i < lastIndex) {
                                 i++;
                                 if (in.charAt(i) == '*' && (i < len - 2) && in.charAt(
                                         i + 1) == '/') {
@@ -120,7 +120,7 @@ public class ScoreUtilities {
                             // This needs to handle in-line multi-line comments
                             // that don't span lines, as well as reset to handle
                             // multline-comments
-                            while (j < len) {
+                            while (j < lastIndex) {
                                 j++;
                                 if (in.charAt(j) == '\n') {
                                     i = i - 1;

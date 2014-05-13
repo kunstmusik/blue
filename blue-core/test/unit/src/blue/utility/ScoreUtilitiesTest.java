@@ -58,7 +58,7 @@ public class ScoreUtilitiesTest extends TestCase {
 
     public void testMultiLineNotes() {
         String testScore = "i 1 0 2 3 4 5\n6 7 8 9\n8.8 8\n";
-        testScore += "i1 2 3 4 5\n";
+        testScore += "i1 2 3 4 5 ;comment\n";
         testScore += "i1 2 3 4 5\n";
         testScore += "\"test\" 1 2 3 4 5\n";
 
@@ -77,6 +77,36 @@ public class ScoreUtilitiesTest extends TestCase {
         assertEquals("\"test\"", nl.get(2).getPField(6));
 
 //        System.out.println(nl.toString());
+    }
+
+    public void testCommentAtEnd() {
+        String testScore = "i1 0 2 3 4 5 ; comment";
+
+        String testScore2 = "i1 0 2 3 4 5 /* comment \n test test */i";
+        
+        NoteList nl = null;
+
+        try {
+            nl = ScoreUtilities.getNotes(testScore);
+        } catch (NoteParseException ex) {
+            ex.printStackTrace();
+        }
+
+        assertNotNull(nl);
+        assertEquals(1, nl.size());
+        assertEquals(6, nl.getNote(0).getPCount());
+        assertEquals("5", nl.getNote(0).getPField(6)); 
+
+        try {
+            nl = ScoreUtilities.getNotes(testScore2);
+        } catch (NoteParseException ex) {
+            ex.printStackTrace();
+        }
+
+        assertNotNull(nl);
+        assertEquals(1, nl.size());
+        assertEquals(6, nl.getNote(0).getPCount());
+        assertEquals("5", nl.getNote(0).getPField(6)); 
     }
 
     public void testScoreCarry() {

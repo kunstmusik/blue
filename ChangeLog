@@ -52,6 +52,16 @@ INTERNAL
   @InstrumentPlugin, @NoteProcessorPlugin)
 
 
+>Notes for 2.5.14<
+[release 2014.05.13]
+
+FIX
+
+* Note parsing failed when a comment was the last item in a score block
+
+* Time pointer was not showing when using Commandline runner
+
+
 >Notes for 2.5.13<
 [release 2014.04.21]
 
