@@ -94,8 +94,8 @@ public class ScoreUtilitiesTest extends TestCase {
 
         assertNotNull(nl);
         assertEquals(1, nl.size());
-        assertEquals(6, nl.getNote(0).getPCount());
-        assertEquals("5", nl.getNote(0).getPField(6)); 
+        assertEquals(6, nl.get(0).getPCount());
+        assertEquals("5", nl.get(0).getPField(6)); 
 
         try {
             nl = ScoreUtilities.getNotes(testScore2);
@@ -105,8 +105,8 @@ public class ScoreUtilitiesTest extends TestCase {
 
         assertNotNull(nl);
         assertEquals(1, nl.size());
-        assertEquals(6, nl.getNote(0).getPCount());
-        assertEquals("5", nl.getNote(0).getPField(6)); 
+        assertEquals(6, nl.get(0).getPCount());
+        assertEquals("5", nl.get(0).getPField(6)); 
     }
 
     public void testScoreCarry() {
