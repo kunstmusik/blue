@@ -20,6 +20,8 @@ FIX
 
 * Note parsing failed when a comment was the last item in a score block
 
+* Time pointer was not showing when using Commandline runner
+
 
 >Notes for 2.5.13<
 [release 2014.04.21]
