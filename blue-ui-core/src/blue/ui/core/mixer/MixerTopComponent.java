@@ -28,6 +28,8 @@ import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
@@ -79,6 +81,8 @@ public final class MixerTopComponent extends TopComponent
 
     private Arrangement arrangement;
 
+    private Integer dividerLocationReset;
+
     private MixerTopComponent() {
         initComponents();
 
@@ -98,11 +102,41 @@ public final class MixerTopComponent extends TopComponent
                     public void propertyChange(PropertyChangeEvent evt) {
                         if (BlueProjectManager.CURRENT_PROJECT.equals(
                                 evt.getPropertyName())) {
-                            reinitialize();
+                            SwingUtilities.invokeLater(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    reinitialize();
+                                }
+                            });
                         }
                     }
                 });
 
+        jSplitPane1.addComponentListener(new ComponentListener() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                if(dividerLocationReset != null) {
+                    jSplitPane1.setLastDividerLocation(dividerLocationReset);
+                    jSplitPane1.setDividerLocation(dividerLocationReset);
+                    dividerLocationReset = null;
+                }
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+            }
+        });
+        
         channelGroupsPanel.setLayout(new ChannelListLayout());
 
         reinitialize();
@@ -119,8 +153,9 @@ public final class MixerTopComponent extends TopComponent
 
             for (ChannelList list : data.getMixer().getChannelListGroups()) {
                 ChannelListPanel panel = new ChannelListPanel();
-                panel.setChannelList(list, data.getMixer().getSubChannels());
                 channelGroupsPanel.add(panel);
+
+                panel.setChannelList(list, data.getMixer().getSubChannels());
                 panel.revalidate();
             }
 
@@ -287,8 +322,7 @@ public final class MixerTopComponent extends TopComponent
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        channelsPanel = new blue.ui.core.mixer.ChannelListPanel();
         enabled = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         extraRenderText = new javax.swing.JTextField();
@@ -296,13 +330,8 @@ public final class MixerTopComponent extends TopComponent
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         channelGroupsPanel = new javax.swing.JPanel();
-        channelsPanel = new blue.ui.core.mixer.ChannelListPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         subChannelsPanel = new blue.ui.core.mixer.SubChannelListPanel();
-
-        jScrollPane3.setBorder(null);
-
-        setLayout(new java.awt.BorderLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(enabled, org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.enabled.text")); // NOI18N
         enabled.addActionListener(new java.awt.event.ActionListener() {
@@ -314,14 +343,14 @@ public final class MixerTopComponent extends TopComponent
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.jLabel1.text")); // NOI18N
 
         extraRenderText.setText(org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.extraRenderText.text")); // NOI18N
-        extraRenderText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                extraRenderTextActionPerformed(evt);
-            }
-        });
         extraRenderText.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 extraRenderTextFocusLost(evt);
+            }
+        });
+        extraRenderText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                extraRenderTextActionPerformed(evt);
             }
         });
 
@@ -330,8 +359,7 @@ public final class MixerTopComponent extends TopComponent
 
         jSplitPane1.setDividerLocation(400);
 
-        channelGroupsPanel.add(channelsPanel);
-
+        channelGroupsPanel.setLayout(null);
         jScrollPane1.setViewportView(channelGroupsPanel);
 
         jSplitPane1.setLeftComponent(jScrollPane1);
@@ -340,41 +368,39 @@ public final class MixerTopComponent extends TopComponent
 
         jSplitPane1.setRightComponent(jScrollPane2);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(enabled)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 550, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 188, Short.MAX_VALUE)
                         .addComponent(jLabel1))
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 755, Short.MAX_VALUE))
+                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(extraRenderText)
                     .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(extraRenderText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
                     .addComponent(enabled))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
                         .addContainerGap())
                     .addComponent(jSplitPane1)))
         );
-
-        add(jPanel1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void enabledActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledActionPerformed
@@ -398,10 +424,8 @@ public final class MixerTopComponent extends TopComponent
     private javax.swing.JCheckBox enabled;
     private javax.swing.JTextField extraRenderText;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
     private blue.ui.core.mixer.ChannelPanel masterPanel;
     private blue.ui.core.mixer.SubChannelListPanel subChannelsPanel;
@@ -439,15 +463,7 @@ public final class MixerTopComponent extends TopComponent
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         if (p.containsKey("dividerLocation")) {
-            final int loc = Integer.parseInt(p.getProperty("dividerLocation"));
-            
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    jSplitPane1.setDividerLocation(loc);
-                }
-            });
+            dividerLocationReset = Integer.parseInt(p.getProperty("dividerLocation"));
         }
     }
 

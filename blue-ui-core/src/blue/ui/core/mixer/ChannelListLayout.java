@@ -4,7 +4,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 
 class ChannelListLayout implements LayoutManager {
 
@@ -44,7 +44,7 @@ class ChannelListLayout implements LayoutManager {
 
         Component topHeightComponent = parent;
 
-        while (!(topHeightComponent instanceof JScrollPane)) {
+        while (!(topHeightComponent instanceof JViewport)) {
             topHeightComponent = topHeightComponent.getParent();
         }
 
@@ -84,7 +84,7 @@ class ChannelListLayout implements LayoutManager {
 
         Component topHeightComponent = parent;
 
-        while (!(topHeightComponent instanceof JScrollPane)) {
+        while (!(topHeightComponent instanceof JViewport)) {
             topHeightComponent = topHeightComponent.getParent();
         }
 
