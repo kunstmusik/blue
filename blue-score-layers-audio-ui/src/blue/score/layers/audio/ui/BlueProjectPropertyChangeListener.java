@@ -19,14 +19,19 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.BlueData;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.Score;
 import blue.score.ScoreDataEvent;
 import blue.score.ScoreListener;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
+import blue.score.layers.LayerGroupDataEvent;
+import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
 import java.beans.PropertyChangeEvent;
@@ -44,8 +49,41 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
     protected BlueProject currentProject = null;
     protected ScoreListener scoreListener;
+    protected LayerGroupListener layerGroupListener;
 
     public BlueProjectPropertyChangeListener() {
+
+        layerGroupListener = new LayerGroupListener() {
+
+            @Override
+            public void layerGroupChanged(LayerGroupDataEvent event) {
+                if (!(event.getSource() instanceof AudioLayerGroup)) {
+                    return;
+                }
+
+                AudioLayerGroup alg = (AudioLayerGroup) event.getSource();
+                ChannelList list = findChannelListForAudioLayerGroup(
+                        currentProject.getData().getMixer(), alg);
+
+                switch (event.getType()) {
+                    case LayerGroupDataEvent.DATA_ADDED:
+                        //FIXME - handle indexes
+                        for(Layer layer : event.getLayers()) {
+                            AudioLayer aLayer = (AudioLayer)layer;
+                            Channel channel = new Channel();
+                            channel.setAssociation(aLayer.getUniqueId());
+                            list.addChannel(channel);
+                        }
+
+                        break;
+                    case LayerGroupDataEvent.DATA_REMOVED:
+                        break;
+                    case LayerGroupDataEvent.DATA_CHANGED:
+                        break;
+                }
+            }
+        };
+
         scoreListener = new ScoreListener() {
 
             @Override
@@ -62,14 +100,16 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
                         for (LayerGroup lg : sde.getLayerGroups()) {
                             if (lg instanceof AudioLayerGroup) {
-                                AudioLayerGroup alg = (AudioLayerGroup)lg;
+                                AudioLayerGroup alg = (AudioLayerGroup) lg;
+                                alg.addLayerGroupListener(layerGroupListener);
                                 //FIXME - should check order of where to add
+
                                 ChannelList channels = new ChannelList();
                                 channelGroups.add(channels);
                                 channels.setAssociation(
                                         alg.getUniqueId());
 
-                                for(AudioLayer layer : alg) {
+                                for (AudioLayer layer : alg) {
                                     Channel channel = new Channel();
                                     channel.setAssociation(layer.getUniqueId());
                                     channels.addChannel(channel);
@@ -82,15 +122,17 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
                         for (LayerGroup lg : sde.getLayerGroups()) {
                             if (lg instanceof AudioLayerGroup) {
-                                String uniqueId = ((AudioLayerGroup) lg).getUniqueId();
-                                
-                                for(ChannelList list : channelGroups) {
-                                    if(uniqueId.equals(list.getAssociation())) {
+                                AudioLayerGroup alg = (AudioLayerGroup) lg;
+                                String uniqueId = alg.getUniqueId();
+                                alg.removeLayerGroupListener(layerGroupListener);
+
+                                for (ChannelList list : channelGroups) {
+                                    if (uniqueId.equals(list.getAssociation())) {
                                         channelGroups.remove(list);
                                         break;
                                     }
                                 }
-                                
+
                             }
                         }
                         break;
@@ -117,6 +159,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
             }
 
             if (newProject != null) {
+                synchronizeAudioLayersAndMixer(newProject.getData());
                 attachListeners(newProject);
             }
             currentProject = newProject;
@@ -124,21 +167,49 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
     }
 
     protected void detachListeners(BlueProject project) {
-//        System.out.println("Detach listeners to project: " + project);
         if (project == null) {
             return;
         }
 
-        project.getData().getScore().removeScoreListener(scoreListener);
+        Score score = project.getData().getScore();
+
+        for (LayerGroup lg : score) {
+            if (lg instanceof AudioLayerGroup) {
+                lg.removeLayerGroupListener(layerGroupListener);
+            }
+        }
+
+        score.removeScoreListener(scoreListener);
     }
 
     protected void attachListeners(BlueProject project) {
-//        System.out.println("Attach listeners to project: " + project);
         if (project == null) {
             return;
         }
 
-        project.getData().getScore().addScoreListener(scoreListener);
+        Score score = project.getData().getScore();
+
+        for (LayerGroup lg : score) {
+            if (lg instanceof AudioLayerGroup) {
+                lg.addLayerGroupListener(layerGroupListener);
+            }
+        }
+        score.addScoreListener(scoreListener);
+    }
+
+    ChannelList findChannelListForAudioLayerGroup(Mixer mixer, AudioLayerGroup alg) {
+        String uniqueId = alg.getUniqueId();
+
+        for (ChannelList list : mixer.getChannelListGroups()) {
+            if (uniqueId.equals(list.getAssociation())) {
+                return list;
+            }
+        }
+        return null;
+    }
+
+    private void synchronizeAudioLayersAndMixer(BlueData data) {
+        // TODO - Implement
     }
 
 }

@@ -30,6 +30,8 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
@@ -50,8 +52,7 @@ public class Mixer implements Serializable {
 
     public static final String MASTER_CHANNEL = "Master";
 
-    private List<ChannelList> channelListGroups
-            = new ArrayList<>();
+    private ObservableList<ChannelList> channelListGroups;
 
     private ChannelList channels = new ChannelList();
 
@@ -66,6 +67,7 @@ public class Mixer implements Serializable {
     private transient HashMap<String, String> subChannelDependencies = null;
 
     public Mixer() {
+        this.channelListGroups = FXCollections.observableArrayList();
         master.setName(MASTER_CHANNEL);
     }
 
