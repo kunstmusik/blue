@@ -28,6 +28,9 @@ import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.util.ObservableList;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
@@ -82,6 +85,7 @@ public final class MixerTopComponent extends TopComponent
     private Arrangement arrangement;
 
     private Integer dividerLocationReset;
+    private final ObservableListListener<ChannelList> listChangeListener;
 
     private MixerTopComponent() {
         initComponents();
@@ -125,7 +129,7 @@ public final class MixerTopComponent extends TopComponent
 
             @Override
             public void componentShown(ComponentEvent e) {
-                if(dividerLocationReset != null) {
+                if (dividerLocationReset != null) {
                     jSplitPane1.setLastDividerLocation(dividerLocationReset);
                     jSplitPane1.setDividerLocation(dividerLocationReset);
                     dividerLocationReset = null;
@@ -136,8 +140,40 @@ public final class MixerTopComponent extends TopComponent
             public void componentHidden(ComponentEvent e) {
             }
         });
-        
+
         channelGroupsPanel.setLayout(new ChannelListLayout());
+
+        this.listChangeListener = new ObservableListListener<ChannelList>() {
+
+            @Override
+            public void listChanged(ObservableListEvent<ChannelList> listEvent) {
+                int index = listEvent.getStartIndex();
+                int index2 = listEvent.getEndIndex();
+                
+                switch (listEvent.getType()) {
+                    case ObservableListEvent.DATA_ADDED:
+
+                        for (ChannelList list : listEvent.getAffectedItems()) {
+                            ChannelListPanel panel = new ChannelListPanel();
+                            channelGroupsPanel.add(panel, index);
+
+                            panel.setChannelList(list,
+                                    mixer.getSubChannels());
+                            panel.revalidate();
+                            index++;
+                        }
+                        break;
+                    case ObservableListEvent.DATA_REMOVED:
+                        for(int i = 0; i <= index2 - index2; i++) {
+                            channelGroupsPanel.remove(index);
+                        }
+                        break;
+                    case ObservableListEvent.DATA_CHANGED:
+                        break;
+                }
+            }
+
+        };
 
         reinitialize();
     }
@@ -187,6 +223,11 @@ public final class MixerTopComponent extends TopComponent
     }
 
     public void setMixer(Mixer mixer) {
+
+        if (this.mixer != null) {
+            this.mixer.getChannelListGroups().removeListener(listChangeListener);
+        }
+
         this.mixer = null;
 
         enabled.setSelected(mixer.isEnabled());
@@ -202,6 +243,8 @@ public final class MixerTopComponent extends TopComponent
         masterPanel.setChannel(mixer.getMaster());
 
         this.mixer = mixer;
+
+        this.mixer.getChannelListGroups().addListener(listChangeListener);
 
         EffectEditorManager.getInstance().clear();
         SendEditorManager.getInstance().clear();
@@ -463,7 +506,8 @@ public final class MixerTopComponent extends TopComponent
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         if (p.containsKey("dividerLocation")) {
-            dividerLocationReset = Integer.parseInt(p.getProperty("dividerLocation"));
+            dividerLocationReset = Integer.parseInt(p.getProperty(
+                    "dividerLocation"));
         }
     }
 

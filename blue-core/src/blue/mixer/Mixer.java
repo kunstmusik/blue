@@ -22,16 +22,14 @@ package blue.mixer;
 import blue.orchestra.GenericInstrument;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
+import blue.util.ObservableArrayList;
+import blue.util.ObservableList;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
@@ -67,7 +65,7 @@ public class Mixer implements Serializable {
     private transient HashMap<String, String> subChannelDependencies = null;
 
     public Mixer() {
-        this.channelListGroups = FXCollections.observableArrayList();
+        this.channelListGroups = new ObservableArrayList<>();
         master.setName(MASTER_CHANNEL);
     }
 
@@ -144,7 +142,7 @@ public class Mixer implements Serializable {
         return retVal;
     }
 
-    public List<ChannelList> getChannelListGroups() {
+    public ObservableList<ChannelList> getChannelListGroups() {
         return channelListGroups;
     }
 
