@@ -323,7 +323,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
 
-        if (start < 0 || end >= score.getLayerGroupCount() - 1) {
+        if (start < 0 || end >= score.size() - 1) {
             return;
         }
         
@@ -441,7 +441,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             propertiesScrollPane.setViewportView(null);
             
         } else {
-            final LayerGroup layerGroup = score.getLayerGroup(rowIndex);
+            final LayerGroup layerGroup = score.get(rowIndex);
             
             layersTable.setModel(new LayersTableModel(layerGroup));
             

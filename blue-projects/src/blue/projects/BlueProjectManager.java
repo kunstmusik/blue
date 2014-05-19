@@ -99,8 +99,7 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        for(int i = 0; i <  blueData.getScore().getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = blueData.getScore().getLayerGroup(i);
+        for(LayerGroup layerGroup : blueData.getScore()) {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
                 

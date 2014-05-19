@@ -136,8 +136,7 @@ public class AutomationManager implements ParameterListListener,
 
                 Score score = data.getScore();
 
-                for (int i = 0; i < score.getLayerGroupCount(); i++) {
-                    LayerGroup layerGroup = score.getLayerGroup(i);
+                for (LayerGroup layerGroup : score) {
 
                     if (!(layerGroup instanceof PolyObject)) {
                         continue;
@@ -203,8 +202,7 @@ public class AutomationManager implements ParameterListListener,
             removeListenerFromChannel(mixer.getMaster());
 
             if (this.score != null) {
-                for (int i = 0; i < score.getLayerGroupCount(); i++) {
-                    LayerGroup layerGroup = score.getLayerGroup(i);
+                for (LayerGroup layerGroup : score) {
                     layerGroup.removeLayerGroupListener(this);
                 }
             }
@@ -262,8 +260,7 @@ public class AutomationManager implements ParameterListListener,
 
         this.score = data.getScore();
 
-        for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : this.score) {
             layerGroup.addLayerGroupListener(this);
         }
 
@@ -575,8 +572,7 @@ public class AutomationManager implements ParameterListListener,
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
-        for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
@@ -704,8 +700,7 @@ public class AutomationManager implements ParameterListListener,
             return;
         }
 
-        for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

@@ -147,7 +147,7 @@ public class CSDUtility {
 
         switch (importMode) {
             case IMPORT_GLOBAL:
-                data.getScore().getLayerGroup(0).newLayerAt(-1);
+                data.getScore().get(0).newLayerAt(-1);
                 data.getGlobalOrcSco().setGlobalSco(noteText);
                 break;
 
@@ -227,7 +227,7 @@ public class CSDUtility {
 
         genScore.setStartTime(section.sectionStartTime);
 
-        PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+        PolyObject pObj = (PolyObject)data.getScore().get(0);
         
         SoundLayer sLayer = pObj.newLayerAt(-1);
         sLayer.add(genScore);
@@ -289,7 +289,7 @@ public class CSDUtility {
                 continue;
             }
 
-            PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+            PolyObject pObj = (PolyObject)data.getScore().get(0);
             sLayer = pObj.newLayerAt(-1);
 
             String score = buffer.toString();

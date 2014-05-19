@@ -29,6 +29,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
+import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -36,7 +37,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -44,13 +44,11 @@ import java.util.Map;
  *
  * @author stevenyi
  */
-public class Score implements Serializable, Iterable<LayerGroup> {
+public class Score extends ObservableArrayList<LayerGroup> implements Serializable {
 
     Tempo tempo = null;
     TimeState timeState = null;
-    ArrayList<LayerGroup> layerGroups = new ArrayList<>();
     private NoteProcessorChain npc = new NoteProcessorChain();
-    private transient ArrayList<ScoreListener> scoreListeners = null;
 
     public static final int SPACER = 36;
 
@@ -61,73 +59,12 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     private Score(boolean populate) {
         if (populate) {
             PolyObject pObj = new PolyObject(true);
-            layerGroups.add(pObj);
+            add(pObj);
             timeState = new TimeState();
         }
         tempo = new Tempo();
     }
 
-    public void addLayerGroup(LayerGroup layerGroup) {
-        layerGroups.add(layerGroup);
-        int index = layerGroups.size() - 1;
-
-        List<LayerGroup> newGroups = new ArrayList<>();
-        newGroups.add(layerGroup);
-        
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED,
-                index, index, layerGroup);
-        fireScoreDataEvent(sde);
-    }
-
-    public void addLayerGroup(int index, LayerGroup layerGroup) {
-        layerGroups.add(index, layerGroup);
-
-
-        List<LayerGroup> newGroups = new ArrayList<>();
-        newGroups.add(layerGroup);
-        
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED,
-                index, index, newGroups);
-        fireScoreDataEvent(sde);
-    }
-
-    public void removeLayerGroups(int startIndex, int endIndex) {
-
-        List<LayerGroup> removedGroups = new ArrayList<>();
-        
-        for (int i = 0; i <= (endIndex - startIndex); i++) {
-            LayerGroup group = layerGroups.remove(startIndex);
-            removedGroups.add(group);
-        }
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_REMOVED,
-                startIndex, endIndex, removedGroups);
-        fireScoreDataEvent(sde);
-    }
-
-    public void clearLayerGroups() {
-        if (layerGroups.size() == 0) {
-            return;
-        }
-
-        int endIndex = layerGroups.size() - 1;
-
-        List<LayerGroup> removedGroups = new ArrayList<>(layerGroups);
-        layerGroups.clear();
-
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_REMOVED,
-                0, endIndex, removedGroups);
-        fireScoreDataEvent(sde);
-    }
-
-    public LayerGroup getLayerGroup(int index) {
-        return layerGroups.get(index);
-    }
-
-    public int getLayerGroupCount() {
-        return layerGroups.size();
-    }
 
     public Tempo getTempo() {
         return tempo;
@@ -159,7 +96,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         retVal.addElement(timeState.saveAsXML());
         retVal.addElement(npc.saveAsXML());
 
-        for (LayerGroup layerGroup : layerGroups) {
+        for (LayerGroup layerGroup : this) {
             retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
 
@@ -191,21 +128,21 @@ public class Score implements Serializable, Iterable<LayerGroup> {
                         throw new RuntimeException(
                                 "Unable to load Score LayerGroup of type: " + node.getName());
                     }
-                    score.layerGroups.add(layerGroup);
+                    score.add(layerGroup);
                     break;
             }
         }
 
-        if (score.layerGroups.size() == 0) {
+        if (score.size() == 0) {
             PolyObject pObj = new PolyObject(true);
-            score.layerGroups.add(pObj);
+            score.add(pObj);
         }
 
         return score;
     }
 
     public void processOnLoad() {
-        for (LayerGroup layerGroup : layerGroups) {
+        for (LayerGroup layerGroup : this) {
             layerGroup.onLoadComplete();
         }
     }
@@ -215,14 +152,14 @@ public class Score implements Serializable, Iterable<LayerGroup> {
 
         boolean soloFound = false;
 
-        for (LayerGroup layerGroup : layerGroups) {
+        for (LayerGroup layerGroup : this) {
             soloFound = layerGroup.hasSoloLayers();
             if (soloFound) {
                 break;
             }
         }
 
-        for (LayerGroup layerGroup : layerGroups) {
+        for (LayerGroup layerGroup : this) {
             NoteList nl = layerGroup.generateForCSD(compileData, startTime,
                     endTime, soloFound);
             noteList.merge(nl);
@@ -237,60 +174,10 @@ public class Score implements Serializable, Iterable<LayerGroup> {
         return noteList;
     }
 
-    /* Listener Code */
-    public void addScoreListener(ScoreListener listener) {
-        if (scoreListeners == null) {
-            scoreListeners = new ArrayList<>();
-        }
-
-        scoreListeners.add(listener);
-    }
-
-    public void removeScoreListener(ScoreListener listener) {
-        if (scoreListeners != null) {
-            scoreListeners.remove(listener);
-        }
-    }
-
-    public void fireScoreDataEvent(ScoreDataEvent sde) {
-        if (scoreListeners != null) {
-            for (ScoreListener listener : scoreListeners) {
-                listener.layerGroupsChanged(sde);
-            }
-        }
-    }
-
-    public void pushUpLayerGroups(int start, int end) {
-        LayerGroup a = layerGroups.remove(start - 1);
-        layerGroups.add(end, a);
-
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_CHANGED, start - 1, end,
-                layerGroups.subList(start - 1, end + 1));
-
-        fireScoreDataEvent(sde);
-    }
-
-    public void pushDownLayerGroups(int start, int end) {
-        LayerGroup a = layerGroups.remove(end + 1);
-        layerGroups.add(start, a);
-
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_CHANGED, start, end + 1,
-                layerGroups.subList(start, end + 2));
-
-        fireScoreDataEvent(sde);
-    }
-
-    @Override
-    public Iterator<LayerGroup> iterator() {
-        return layerGroups.iterator();
-    }
-
     public List<LayerGroup> getLayerGroupsForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
         List<LayerGroup> retVal = new ArrayList<>();
 
-        for (LayerGroup<Layer> layerGroup : layerGroups) {
+        for (LayerGroup<Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 boolean found = false;
                 if (layer instanceof ScoreObjectLayer) {
@@ -314,7 +201,7 @@ public class Score implements Serializable, Iterable<LayerGroup> {
     public List<Layer> getAllLayers() {
         List<Layer> retVal = new ArrayList<>();
 
-        for (LayerGroup<Layer> layerGroup : layerGroups) {
+        for (LayerGroup<Layer> layerGroup : this) {
             retVal.addAll(layerGroup);
         }
         return retVal;

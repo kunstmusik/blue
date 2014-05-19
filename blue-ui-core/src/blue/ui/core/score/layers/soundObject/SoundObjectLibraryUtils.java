@@ -47,8 +47,7 @@ public class SoundObjectLibraryUtils {
         }
        
         Score score = data.getScore();
-        for(int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for(LayerGroup layerGroup : score) {
 
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

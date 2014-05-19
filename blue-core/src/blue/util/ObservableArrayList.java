@@ -49,8 +49,8 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
     @Override
     public boolean addAll(Collection<? extends T> c) {
         int index = size();
-        
-        boolean retVal = super.addAll(c); 
+
+        boolean retVal = super.addAll(c);
 
         if (retVal) {
             List<T> affected = new ArrayList<>(c);
@@ -130,18 +130,41 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
 
     @Override
     public T set(int index, T element) {
-        T retVal = super.set(index, element); 
+        T retVal = super.set(index, element);
 
         ObservableListEvent<T> event = new ObservableListEvent<>(this,
                 ObservableListEvent.DATA_CHANGED, index, index,
                 null);
         fireListChange(event);
-        
+
         return retVal;
     }
 
-    
+    @Override
+    public void pushUpItems(int start, int end) {
+        T a = super.remove(start - 1);
+        super.add(end, a);
 
+        ObservableListEvent<T> evt = new ObservableListEvent<>(this,
+                ObservableListEvent.DATA_CHANGED, start - 1, end,
+                subList(start - 1, end + 1));
+
+        fireListChange(evt);
+    }
+
+    @Override
+    public void pushDownItems(int start, int end) {
+        T a = super.remove(end + 1);
+        super.add(start, a);
+
+        ObservableListEvent<T> evt = new ObservableListEvent<>(this,
+                ObservableListEvent.DATA_CHANGED, start, end + 1,
+                subList(start, end + 2));
+
+        fireListChange(evt);
+    }
+
+    @Override
     public void addListener(ObservableListListener<T> listener) {
         if (listeners == null) {
             listeners = new ArrayList<>();
@@ -149,6 +172,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         listeners.add(listener);
     }
 
+    @Override
     public void removeListener(ObservableListListener<T> listener) {
         if (listeners != null) {
             listeners.remove(listener);
@@ -162,6 +186,5 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
             }
         }
     }
-
 
 }

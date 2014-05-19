@@ -87,6 +87,10 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
         this.channels.addListDataListener(this);
     }
 
+    public ChannelList getChannels() {
+        return channels;
+    }
+
     private void clearChannels() {
         for (int i = 0; i < getComponentCount(); i++) {
             ChannelPanel cPanel = (ChannelPanel) getComponent(i);
@@ -205,5 +209,21 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 //        setPreferredSize(preferredLayoutSize);
 //        setSize(preferredLayoutSize);
 //    }
+    @Override
+    public void removeNotify() {
+        if(this.channels != null) {
+            this.channels.removeListDataListener(this);
+        } 
+        super.removeNotify(); 
+    }
 
+    @Override
+    public void addNotify() {
+        super.addNotify(); 
+        if(this.channels != null) {
+            this.channels.addListDataListener(this);
+        }
+    }
+
+    
 }

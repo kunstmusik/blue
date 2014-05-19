@@ -27,8 +27,6 @@ import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.Score;
-import blue.score.ScoreDataEvent;
-import blue.score.ScoreListener;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
@@ -46,6 +44,8 @@ import blue.ui.core.score.manager.ScoreManagerDialog;
 import blue.ui.core.score.tempo.TempoEditor;
 import blue.ui.core.score.tempo.TempoEditorControl;
 import blue.ui.utilities.LinearLayout;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import blue.utility.GUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -97,7 +97,7 @@ import org.openide.windows.WindowManager;
     "HINT_ScoreTopComponent=This is a Score window"
 })
 public final class ScoreTopComponent extends TopComponent
-        implements ScoreListener, RenderTimeManagerListener,
+        implements ObservableListListener<LayerGroup>, RenderTimeManagerListener,
         PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
@@ -249,7 +249,7 @@ public final class ScoreTopComponent extends TopComponent
 
         if (this.data != null) {
             this.data.removePropertyChangeListener(this);
-            data.getScore().removeScoreListener(this);
+            data.getScore().removeListener(this);
             content.remove(data.getScore());
         }
 
@@ -268,7 +268,7 @@ public final class ScoreTopComponent extends TopComponent
             this.data.addPropertyChangeListener(this);
 
             Score score = data.getScore();
-            score.addScoreListener(this);
+            score.addListener(this);
             ScoreController.getInstance().setScore(score);
 
             content.add(score);
@@ -619,61 +619,6 @@ public final class ScoreTopComponent extends TopComponent
         String version = p.getProperty("version");
     }
 
-    @Override
-    public void layerGroupsChanged(ScoreDataEvent sde) {
-        if (sde.getType() == ScoreDataEvent.DATA_ADDED) {
-            Score score = data.getScore();
-            for (int i = sde.getStartIndex(); i <= sde.getEndIndex(); i++) {
-                addPanelsForLayerGroup(i, score.getLayerGroup(i),
-                        score.getTimeState());
-            }
-            layerHeaderPanel.revalidate();
-            checkSize();
-        } else if (sde.getType() == ScoreDataEvent.DATA_REMOVED) {
-            removePanelsForLayerGroups(sde.getStartIndex(), sde.getEndIndex());
-        } else if (sde.getType() == ScoreDataEvent.DATA_CHANGED) {
-            List<LayerGroup> layerGroups = sde.getLayerGroups();
-            JComponent c = (JComponent) layerPanel.getComponent(
-                    sde.getStartIndex());
-            LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");
-
-            if (layerGroups.get(1) == lGroup) {
-                // handle push down
-                Component comp = layerPanel.getComponent(sde.getEndIndex());
-                layerPanel.remove(comp);
-                layerPanel.add(comp, sde.getStartIndex());
-
-                Component comp2 = layerHeaderPanel.getComponent(
-                        sde.getEndIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, sde.getStartIndex());
-
-                layerPanel.revalidate();
-                layerHeaderPanel.revalidate();
-
-                layerPanel.repaint();
-                layerHeaderPanel.repaint();
-            } else {
-                // handle push up
-                Component comp = layerPanel.getComponent(sde.getStartIndex());
-                layerPanel.remove(comp);
-                layerPanel.add(comp, sde.getEndIndex());
-
-                Component comp2 = layerHeaderPanel.getComponent(
-                        sde.getStartIndex());
-                layerHeaderPanel.remove(comp2);
-                layerHeaderPanel.add(comp2, sde.getEndIndex());
-
-                layerPanel.revalidate();
-                layerHeaderPanel.revalidate();
-
-                layerPanel.repaint();
-                layerHeaderPanel.repaint();
-            }
-
-        }
-    }
-
 // TODO - Reevaulate to see if this can't be done with a
     // PropertyChangeListener on BlueData
     public void updateRenderStartPointerX(int x, boolean fireUpdate) {
@@ -820,8 +765,7 @@ public final class ScoreTopComponent extends TopComponent
             layerPanel.removeAll();
             layerHeaderPanel.removeAll();
 
-            for (int i = 0; i < score.getLayerGroupCount(); i++) {
-                LayerGroup layerGroup = score.getLayerGroup(i);
+            for (LayerGroup layerGroup : score) {
                 addPanelsForLayerGroup(-1, layerGroup, score.getTimeState());
             }
 
@@ -950,6 +894,61 @@ public final class ScoreTopComponent extends TopComponent
         } else {
 
             scoreBarLayerGroupSelected(layerGroup, 0, 0);
+        }
+    }
+
+    @Override
+    public void listChanged(ObservableListEvent<LayerGroup> evt) {
+        if (evt.getType() == ObservableListEvent.DATA_ADDED) {
+            Score score = data.getScore();
+            for (int i = evt.getStartIndex(); i <= evt.getEndIndex(); i++) {
+                addPanelsForLayerGroup(i, score.get(i),
+                        score.getTimeState());
+            }
+            layerHeaderPanel.revalidate();
+            checkSize();
+        } else if (evt.getType() == ObservableListEvent.DATA_REMOVED) {
+            removePanelsForLayerGroups(evt.getStartIndex(), evt.getEndIndex());
+        } else if (evt.getType() == ObservableListEvent.DATA_CHANGED) {
+            List<LayerGroup> layerGroups = evt.getAffectedItems();
+            JComponent c = (JComponent) layerPanel.getComponent(
+                    evt.getStartIndex());
+            LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");
+
+            if (layerGroups.get(1) == lGroup) {
+                // handle push down
+                Component comp = layerPanel.getComponent(evt.getEndIndex());
+                layerPanel.remove(comp);
+                layerPanel.add(comp, evt.getStartIndex());
+
+                Component comp2 = layerHeaderPanel.getComponent(
+                        evt.getEndIndex());
+                layerHeaderPanel.remove(comp2);
+                layerHeaderPanel.add(comp2, evt.getStartIndex());
+
+                layerPanel.revalidate();
+                layerHeaderPanel.revalidate();
+
+                layerPanel.repaint();
+                layerHeaderPanel.repaint();
+            } else {
+                // handle push up
+                Component comp = layerPanel.getComponent(evt.getStartIndex());
+                layerPanel.remove(comp);
+                layerPanel.add(comp, evt.getEndIndex());
+
+                Component comp2 = layerHeaderPanel.getComponent(
+                        evt.getStartIndex());
+                layerHeaderPanel.remove(comp2);
+                layerHeaderPanel.add(comp2, evt.getEndIndex());
+
+                layerPanel.revalidate();
+                layerHeaderPanel.revalidate();
+
+                layerPanel.repaint();
+                layerHeaderPanel.repaint();
+            }
+
         }
     }
 

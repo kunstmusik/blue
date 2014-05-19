@@ -26,14 +26,14 @@ import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.Score;
-import blue.score.ScoreDataEvent;
-import blue.score.ScoreListener;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -48,7 +48,7 @@ import java.util.List;
 public class BlueProjectPropertyChangeListener implements PropertyChangeListener {
 
     protected BlueProject currentProject = null;
-    protected ScoreListener scoreListener;
+    protected ObservableListListener<LayerGroup> scoreListener;
     protected LayerGroupListener layerGroupListener;
 
     public BlueProjectPropertyChangeListener() {
@@ -68,8 +68,8 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                 switch (event.getType()) {
                     case LayerGroupDataEvent.DATA_ADDED:
                         //FIXME - handle indexes
-                        for(Layer layer : event.getLayers()) {
-                            AudioLayer aLayer = (AudioLayer)layer;
+                        for (Layer layer : event.getLayers()) {
+                            AudioLayer aLayer = (AudioLayer) layer;
                             Channel channel = new Channel();
                             channel.setAssociation(aLayer.getUniqueId());
                             list.addChannel(channel);
@@ -77,17 +77,31 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
                         break;
                     case LayerGroupDataEvent.DATA_REMOVED:
+                        for (Layer layer : event.getLayers()) {
+                            AudioLayer aLayer = (AudioLayer) layer;
+                            String uniqueId = aLayer.getUniqueId();
+                            for (int i = 0; i < list.getSize(); i++) {
+                                Channel channel = list.getChannel(i);
+                                if (uniqueId.equals(channel.getAssociation())) {
+                                    list.removeChannel(channel);
+                                    break;
+                                }
+                            }
+                        }
                         break;
-                    case LayerGroupDataEvent.DATA_CHANGED:
-                        break;
+                    case LayerGroupDataEvent.DATA_CHANGED: {
+                        Channel channel = list.getChannel(event.getStartIndex());
+                        
+                    }
+                    break;
                 }
             }
         };
 
-        scoreListener = new ScoreListener() {
-
+        scoreListener = new ObservableListListener<LayerGroup>() {
+            
             @Override
-            public void layerGroupsChanged(ScoreDataEvent sde) {
+            public void listChanged(ObservableListEvent<LayerGroup> evt) {
                 if (currentProject == null) {
                     return;
                 }
@@ -95,10 +109,10 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                 Mixer mixer = currentProject.getData().getMixer();
                 List<ChannelList> channelGroups = mixer.getChannelListGroups();
 
-                switch (sde.getType()) {
-                    case ScoreDataEvent.DATA_ADDED:
+                switch (evt.getType()) {
+                    case ObservableListEvent.DATA_ADDED:
 
-                        for (LayerGroup lg : sde.getLayerGroups()) {
+                        for (LayerGroup lg : evt.getAffectedItems()) {
                             if (lg instanceof AudioLayerGroup) {
                                 AudioLayerGroup alg = (AudioLayerGroup) lg;
                                 alg.addLayerGroupListener(layerGroupListener);
@@ -118,9 +132,9 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                         }
 
                         break;
-                    case ScoreDataEvent.DATA_REMOVED:
+                    case ObservableListEvent.DATA_REMOVED:
 
-                        for (LayerGroup lg : sde.getLayerGroups()) {
+                        for (LayerGroup lg : evt.getAffectedItems()) {
                             if (lg instanceof AudioLayerGroup) {
                                 AudioLayerGroup alg = (AudioLayerGroup) lg;
                                 String uniqueId = alg.getUniqueId();
@@ -136,7 +150,8 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                             }
                         }
                         break;
-                    case ScoreDataEvent.DATA_CHANGED:
+                    case ObservableListEvent.DATA_CHANGED:
+
                         break;
                 }
             }
@@ -179,7 +194,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
             }
         }
 
-        score.removeScoreListener(scoreListener);
+        score.removeListener(scoreListener);
     }
 
     protected void attachListeners(BlueProject project) {
@@ -194,7 +209,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                 lg.addLayerGroupListener(layerGroupListener);
             }
         }
-        score.addScoreListener(scoreListener);
+        score.addListener(scoreListener);
     }
 
     ChannelList findChannelListForAudioLayerGroup(Mixer mixer, AudioLayerGroup alg) {

@@ -84,7 +84,7 @@ public final class ImportMidiAction implements ActionListener {
             }
             pObj.setName("SoundObject Layer Group");
             pObj.setRoot(true);
-            tempData.getScore().addLayerGroup(pObj);
+            tempData.getScore().add(pObj);
         } catch (NoteParseException e) {
             JOptionPane.showMessageDialog(mainWindow, BlueSystem.getString(
                     "message.file.couldNotImport"), BlueSystem.getString(

@@ -47,7 +47,7 @@ public class SoundObjectLibraryUtilsTest {
         BlueData data = new BlueData();
         Score score = data.getScore();
         PolyObject polyObj = new PolyObject(true);
-        score.addLayerGroup(polyObj);
+        score.add(polyObj);
         SoundObjectLibrary library = data.getSoundObjectLibrary();
         SoundLayer layer = polyObj.newLayerAt(0);
         

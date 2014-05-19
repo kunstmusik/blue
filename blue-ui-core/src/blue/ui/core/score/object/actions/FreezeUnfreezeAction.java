@@ -207,8 +207,8 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             sLayer.add(tempSObj);
 
-            tempData.getScore().clearLayerGroups();
-            tempData.getScore().addLayerGroup(tempPObj);
+            tempData.getScore().clear();
+            tempData.getScore().add(tempPObj);
 
             String tempCSD;
             CsdRenderResult result;
@@ -340,9 +340,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
         private int freezeReferenceCount(Score score, String waveFileName) {
             int retVal = 0;
 
-            for (int i = 0; i < score.getLayerGroupCount(); i++) {
-
-                LayerGroup lGroup = score.getLayerGroup(i);
+            for (LayerGroup lGroup : score) {
 
                 if (lGroup instanceof PolyObject) {
 

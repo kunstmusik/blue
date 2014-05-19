@@ -28,9 +28,9 @@ import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.util.ObservableList;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
+import java.awt.Component;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
@@ -149,7 +149,7 @@ public final class MixerTopComponent extends TopComponent
             public void listChanged(ObservableListEvent<ChannelList> listEvent) {
                 int index = listEvent.getStartIndex();
                 int index2 = listEvent.getEndIndex();
-                
+
                 switch (listEvent.getType()) {
                     case ObservableListEvent.DATA_ADDED:
 
@@ -164,11 +164,12 @@ public final class MixerTopComponent extends TopComponent
                         }
                         break;
                     case ObservableListEvent.DATA_REMOVED:
-                        for(int i = 0; i <= index2 - index2; i++) {
+                        for (int i = 0; i <= index2 - index2; i++) {
                             channelGroupsPanel.remove(index);
                         }
                         break;
                     case ObservableListEvent.DATA_CHANGED:
+                        reinitialize();
                         break;
                 }
             }

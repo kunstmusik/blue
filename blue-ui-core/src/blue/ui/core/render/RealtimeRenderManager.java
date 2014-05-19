@@ -224,8 +224,8 @@ public final class RealtimeRenderManager {
             sLayer.add((SoundObject) sObj.clone());
         }
 
-        tempData.getScore().clearLayerGroups();
-        tempData.getScore().addLayerGroup(tempPObj);
+        tempData.getScore().clear();
+        tempData.getScore().add(tempPObj);
 
         Mixer m = tempData.getMixer();
 

@@ -42,7 +42,7 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     
     @Override
     public int getRowCount() {
-        return this.score.getLayerGroupCount();
+        return this.score.size();
     }
 
     @Override
@@ -58,13 +58,13 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if(columnIndex == 0) {
-            score.getLayerGroup(rowIndex).setName((String)aValue);
+            score.get(rowIndex).setName((String)aValue);
         }
     }
     
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        return score.getLayerGroup(rowIndex).getName();
+        return score.get(rowIndex).getName();
     }
 
     @Override
@@ -77,22 +77,24 @@ public class LayerGroupTableModel extends AbstractTableModel  {
     /****/
     
     public void addLayerGroup(int index, LayerGroup layerGroup) {
-        score.addLayerGroup(index, layerGroup);
+        score.add(index, layerGroup);
         fireTableRowsInserted(index, index);
      }
 
     void removeLayerGroups(int minSelectionIndex, int maxSelectionIndex) {
-        score.removeLayerGroups(minSelectionIndex, maxSelectionIndex);
+        for(int i = 0; i < (maxSelectionIndex - minSelectionIndex) + 1; i++) {
+            score.remove(minSelectionIndex);
+        }
         fireTableRowsDeleted(minSelectionIndex, maxSelectionIndex);
     }
 
     void pushUpLayerGroups(int start, int end) {
-        score.pushUpLayerGroups(start, end);
+        score.pushUpItems(start, end);
         fireTableRowsUpdated(start - 1, end);
     }
 
     void pushDownLayerGroups(int start, int end) {
-        score.pushDownLayerGroups(start, end);
+        score.pushDownItems(start, end);
         fireTableRowsUpdated(start, end + 1);
     }
 

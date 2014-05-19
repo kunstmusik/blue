@@ -50,7 +50,7 @@ public class ScoreControllerTest {
         this.scoreController = ScoreController.getInstance();
         InstanceContent content = new InstanceContent();
         Score score = new Score();
-        PolyObject pObj = (PolyObject) score.getLayerGroup(0);
+        PolyObject pObj = (PolyObject) score.get(0);
         SoundLayer layer1 = new SoundLayer();
         SoundLayer layer2 = new SoundLayer();
 
@@ -112,7 +112,7 @@ public class ScoreControllerTest {
     public void testDeleteScoreObjects() {
        
         Score score = scoreController.getScore();
-        PolyObject pObj = (PolyObject) score.getLayerGroup(0);
+        PolyObject pObj = (PolyObject) score.get(0);
         Lookup lookup = scoreController.getLookup();
         
         assertEquals(0, buffer.scoreObjects.size());
@@ -134,7 +134,7 @@ public class ScoreControllerTest {
     public void testCutScoreObjects() {
         System.out.println("cut score objects");
         Score score = scoreController.getScore();
-        PolyObject pObj = (PolyObject) score.getLayerGroup(0);
+        PolyObject pObj = (PolyObject) score.get(0);
         Lookup lookup = scoreController.getLookup();
        
         assertEquals(0, buffer.scoreObjects.size());

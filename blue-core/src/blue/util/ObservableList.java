@@ -27,6 +27,8 @@ import java.util.List;
  */
 public interface ObservableList<T> extends List<T> {
 
+    public void pushUpItems(int startIndex, int endIndex);
+    public void pushDownItems(int startIndex, int endIndex);
     public void addListener(ObservableListListener<T> listener); 
     public void removeListener(ObservableListListener<T> listener);
 
