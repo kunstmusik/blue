@@ -147,7 +147,7 @@ public class Mixer implements Serializable {
     }
 
     public Channel getChannel(int index) {
-        return channels.getChannel(index);
+        return channels.get(index);
     }
 
     public ChannelList getChannels() {
@@ -155,7 +155,7 @@ public class Mixer implements Serializable {
     }
 
     public Channel getSubChannel(int index) {
-        return subChannels.getChannel(index);
+        return subChannels.get(index);
     }
 
     public ChannelList getSubChannels() {
@@ -202,7 +202,7 @@ public class Mixer implements Serializable {
         StrBuilder buffer = new StrBuilder();
 
         for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
+            Channel c = channels.get(i);
 
             for (int j = 0; j < nchnls; j++) {
 
@@ -212,7 +212,7 @@ public class Mixer implements Serializable {
         }
 
         for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
+            Channel c = subChannels.get(i);
 
             for (int j = 0; j < nchnls; j++) {
                 buffer.append(getSubChannelVar(c.getName(), j)).append(
@@ -232,7 +232,7 @@ public class Mixer implements Serializable {
         StrBuilder buffer = new StrBuilder();
 
         for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
+            Channel c = channels.get(i);
 
             for (int j = 0; j < nchnls; j++) {
 
@@ -241,7 +241,7 @@ public class Mixer implements Serializable {
         }
 
         for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
+            Channel c = subChannels.get(i);
 
             for (int j = 0; j < nchnls; j++) {
 
@@ -291,7 +291,7 @@ public class Mixer implements Serializable {
         Send[] allSends = new Send[0];
 
         for (int i = 0; i < this.getSubChannels().size(); i++) {
-            Channel c = this.getSubChannels().getChannel(i);
+            Channel c = this.getSubChannels().get(i);
 
             Send[] sends = c.getSends();
 
@@ -306,7 +306,7 @@ public class Mixer implements Serializable {
         }
 
         for (int i = 0; i < this.getChannels().size(); i++) {
-            Channel c = this.getChannels().getChannel(i);
+            Channel c = this.getChannels().get(i);
             Send[] sends = c.getSends();
 
             if (sends.length == 0) {
@@ -446,7 +446,7 @@ public class Mixer implements Serializable {
 
     private Channel getSubChannelByName(String name) {
         for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
+            Channel c = subChannels.get(i);
             if (c.getName().equals(name)) {
                 return c;
             }

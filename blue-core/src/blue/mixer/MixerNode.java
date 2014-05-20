@@ -528,7 +528,7 @@ class MixerNode {
     private static void attachChildren(final Mixer mixer, MixerNode node,
             HashMap validOutCache) {
         for (int i = 0; i < mixer.getChannels().size(); i++) {
-            Channel c = mixer.getChannels().getChannel(i);
+            Channel c = mixer.getChannels().get(i);
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();
@@ -545,7 +545,7 @@ class MixerNode {
         ArrayList temp = new ArrayList();
 
         for (int i = 0; i < mixer.getSubChannels().size(); i++) {
-            Channel c = mixer.getSubChannels().getChannel(i);
+            Channel c = mixer.getSubChannels().get(i);
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();

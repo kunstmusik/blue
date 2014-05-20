@@ -169,7 +169,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
     private void rebuildChannelsUI(final ChannelList channels) {
 
         for (int i = 0; i < channels.size(); i++) {
-            Channel channel = channels.getChannel(i);
+            Channel channel = channels.get(i);
             ChannelPanel cPanel = createChannelPanel(channel);
 
             this.add(cPanel);
@@ -213,7 +213,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
             }
         }
 
-        subChannels.addChannel(channel);
+        subChannels.add(channel);
 
         ChannelPanel cPanel = createChannelPanel(channel);
 
@@ -228,7 +228,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         Channel channel = selectedChannelPanel.getChannel();
 
         channel.removePropertyChangeListener(this);
-        subChannels.removeChannel(channel);
+        subChannels.remove(channel);
 
         models.remove(selectedChannelPanel.getChannelOutModel());
 

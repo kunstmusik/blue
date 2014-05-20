@@ -25,7 +25,6 @@ import blue.InstrumentAssignment;
 import blue.SoundLayer;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
-import blue.mixer.ChannelListListener;
 import blue.mixer.Effect;
 import blue.mixer.EffectsChain;
 import blue.mixer.Mixer;
@@ -37,6 +36,8 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -63,7 +64,7 @@ import org.openide.NotifyDescriptor;
  * @author steven
  */
 public class AutomationManager implements ParameterListListener,
-        AutomatableCollectionListener, ChannelListListener, LayerGroupListener {
+        AutomatableCollectionListener, ObservableListListener<Channel>, LayerGroupListener {
 
     /**
      * cache of all parameters in project
@@ -188,15 +189,15 @@ public class AutomationManager implements ParameterListListener,
             Mixer mixer = this.data.getMixer();
 
             ChannelList channels = mixer.getChannels();
-            channels.removeChannelListListener(this);
+            channels.removeListener(this);
             for (int i = 0; i < channels.size(); i++) {
-                removeListenerFromChannel(channels.getChannel(i));
+                removeListenerFromChannel(channels.get(i));
             }
 
             ChannelList subChannels = mixer.getSubChannels();
-            subChannels.removeChannelListListener(this);
+            subChannels.removeListener(this);
             for (int i = 0; i < subChannels.size(); i++) {
-                removeListenerFromChannel(subChannels.getChannel(i));
+                removeListenerFromChannel(subChannels.get(i));
             }
 
             removeListenerFromChannel(mixer.getMaster());
@@ -241,15 +242,15 @@ public class AutomationManager implements ParameterListListener,
         Mixer mixer = data.getMixer();
 
         ChannelList channels = mixer.getChannels();
-        channels.addChannelListListener(this);
+        channels.addListener(this);
         for (int i = 0; i < channels.size(); i++) {
-            addListenerToChannel(channels.getChannel(i));
+            addListenerToChannel(channels.get(i));
         }
 
         ChannelList subChannels = mixer.getSubChannels();
-        subChannels.addChannelListListener(this);
+        subChannels.addListener(this);
         for (int i = 0; i < subChannels.size(); i++) {
-            addListenerToChannel(subChannels.getChannel(i));
+            addListenerToChannel(subChannels.get(i));
         }
 
         addListenerToChannel(mixer.getMaster());
@@ -372,7 +373,7 @@ public class AutomationManager implements ParameterListListener,
                 JMenu channelsMenu = new JMenu("Channels");
 
                 for (int i = 0; i < channels.size(); i++) {
-                    channelsMenu.add(buildChannelMenu(channels.getChannel(i),
+                    channelsMenu.add(buildChannelMenu(channels.get(i),
                             soundLayer));
                 }
 
@@ -385,7 +386,7 @@ public class AutomationManager implements ParameterListListener,
             if (subChannels.size() > 0) {
                 JMenu subChannelsMenu = new JMenu("Sub-Channels");
                 for (int i = 0; i < subChannels.size(); i++) {
-                    subChannelsMenu.add(buildChannelMenu(subChannels.getChannel(
+                    subChannelsMenu.add(buildChannelMenu(subChannels.get(
                             i), soundLayer));
                 }
 
@@ -640,6 +641,21 @@ public class AutomationManager implements ParameterListListener,
     }
 
     @Override
+    public void listChanged(ObservableListEvent<Channel> listEvent) {
+        switch(listEvent.getType()) {
+            case ObservableListEvent.DATA_ADDED:
+                for(Channel channel : listEvent.getAffectedItems()) {
+                    channelAdded(channel);
+                }
+                break;
+            case ObservableListEvent.DATA_REMOVED:
+                for(Channel channel : listEvent.getAffectedItems()) {
+                    channelRemoved(channel);
+                }
+                break;
+        }
+    }
+
     public void channelAdded(Channel channel) {
         addListenerToChannel(channel);
         // dirty = true;
@@ -648,7 +664,6 @@ public class AutomationManager implements ParameterListListener,
     /*
      * Remove all parameters, clear them from SoundLayers
      */
-    @Override
     public void channelRemoved(Channel channel) {
         EffectsChain pre = channel.getPreEffects();
         pre.removeAutomatableCollectionListener(this);
@@ -761,4 +776,5 @@ public class AutomationManager implements ParameterListListener,
 
         }
     }
+
 }

@@ -450,9 +450,9 @@ public class ArrangementEditPanel extends JComponent
         }
 
         for (int i = channels.size() - 1; i >= 0; i--) {
-            Channel channel = channels.getChannel(i);
+            Channel channel = channels.get(i);
             if (!idList.contains(channel.getName())) {
-                channels.removeChannel(channel);
+                channels.remove(channel);
             }
         }
 

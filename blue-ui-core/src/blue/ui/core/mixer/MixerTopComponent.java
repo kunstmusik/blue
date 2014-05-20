@@ -302,7 +302,7 @@ public final class MixerTopComponent extends TopComponent
         if (oldIdCount == 0 && newIdCount == 1) {
             // rename old channel
             for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.getChannel(i);
+                Channel channel = channels.get(i);
 
                 if (channel.getName().equals(oldId)) {
                     channel.setName(newId);
@@ -312,10 +312,10 @@ public final class MixerTopComponent extends TopComponent
         } else if (oldIdCount == 0 && newIdCount > 1) {
             // remove old channel, use current channel for newId
             for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.getChannel(i);
+                Channel channel = channels.get(i);
 
                 if (channel.getName().equals(oldId)) {
-                    channels.removeChannel(channel);
+                    channels.remove(channel);
                     break;
                 }
             }
@@ -323,7 +323,7 @@ public final class MixerTopComponent extends TopComponent
             // create new channel
             Channel channel = new Channel();
             channel.setName(newId);
-            channels.addChannel(channel);
+            channels.add(channel);
         } // else if(oldIdCount > 0 && newIdCount > 1) {
         // do neither, as channels exist for both before and after
         // }

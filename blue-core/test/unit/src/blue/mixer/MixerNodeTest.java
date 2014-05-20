@@ -31,7 +31,7 @@ public class MixerNodeTest extends TestCase {
         Channel channel = new Channel();
         channel.setName("1");
 
-        mixer.getChannels().addChannel(channel);
+        mixer.getChannels().add(channel);
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
 
@@ -47,12 +47,12 @@ public class MixerNodeTest extends TestCase {
         Channel channel = new Channel();
         channel.setName("1");
 
-        mixer.getChannels().addChannel(channel);
+        mixer.getChannels().add(channel);
 
         Channel subChannel1 = new Channel();
         subChannel1.setName("subChannel1");
 
-        mixer.getSubChannels().addChannel(subChannel1);
+        mixer.getSubChannels().add(subChannel1);
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
 
@@ -72,17 +72,17 @@ public class MixerNodeTest extends TestCase {
         Channel channel = new Channel();
         channel.setName("1");
 
-        mixer.getChannels().addChannel(channel);
+        mixer.getChannels().add(channel);
 
         Channel subChannel1 = new Channel();
         subChannel1.setName("subChannel1");
 
-        mixer.getSubChannels().addChannel(subChannel1);
+        mixer.getSubChannels().add(subChannel1);
 
         Channel subChannel2 = new Channel();
         subChannel2.setName("subChannel2");
 
-        mixer.getSubChannels().addChannel(subChannel2);
+        mixer.getSubChannels().add(subChannel2);
 
         // setting up routing
         channel.setOutChannel(subChannel1.getName());
@@ -116,23 +116,23 @@ public class MixerNodeTest extends TestCase {
         Channel channel = new Channel();
         channel.setName("1");
 
-        mixer.getChannels().addChannel(channel);
+        mixer.getChannels().add(channel);
 
         Channel channel2 = new Channel();
         channel2.setName("2");
 
-        mixer.getChannels().addChannel(channel2);
+        mixer.getChannels().add(channel2);
 
         // setup subchannels
         Channel subChannel1 = new Channel();
         subChannel1.setName("subChannel1");
 
-        mixer.getSubChannels().addChannel(subChannel1);
+        mixer.getSubChannels().add(subChannel1);
 
         Channel subChannel2 = new Channel();
         subChannel2.setName("subChannel2");
 
-        mixer.getSubChannels().addChannel(subChannel2);
+        mixer.getSubChannels().add(subChannel2);
 
         // setting up routing
         channel.setOutChannel(subChannel1.getName());
@@ -171,12 +171,12 @@ public class MixerNodeTest extends TestCase {
         Channel channel = new Channel();
         channel.setName("1");
 
-        mixer.getChannels().addChannel(channel);
+        mixer.getChannels().add(channel);
 
         Channel subChannel1 = new Channel();
         subChannel1.setName("subChannel1");
 
-        mixer.getSubChannels().addChannel(subChannel1);
+        mixer.getSubChannels().add(subChannel1);
 
         Channel subChannel2 = new Channel();
         subChannel2.setName("subChannel2");
@@ -186,7 +186,7 @@ public class MixerNodeTest extends TestCase {
 
         subChannel2.getPostEffects().addSend(send);
 
-        mixer.getSubChannels().addChannel(subChannel2);
+        mixer.getSubChannels().add(subChannel2);
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
 
@@ -460,14 +460,14 @@ public class MixerNodeTest extends TestCase {
             Channel channel = new Channel();
             channel.setName(Integer.toString(i + 1));
 
-            mixer.getChannels().addChannel(channel);
+            mixer.getChannels().add(channel);
         }
 
         for (int i = 0; i < numSubChannels; i++) {
             Channel subChannel = new Channel();
             subChannel.setName("subChannel" + (i + 1));
 
-            mixer.getSubChannels().addChannel(subChannel);
+            mixer.getSubChannels().add(subChannel);
         }
 
         return mixer;

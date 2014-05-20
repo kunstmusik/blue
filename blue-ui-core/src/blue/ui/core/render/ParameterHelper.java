@@ -53,14 +53,14 @@ public class ParameterHelper {
         if (mixer != null && mixer.isEnabled()) {
             ChannelList channels = mixer.getChannels();
             for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.getChannel(i);
+                Channel channel = channels.get(i);
                 
-                appendAllParametersFromChannel(params, channels.getChannel(i));
+                appendAllParametersFromChannel(params, channels.get(i));
             }
 
             ChannelList subChannels = mixer.getSubChannels();
             for (int i = 0; i < subChannels.size(); i++) {
-                appendAllParametersFromChannel(params, subChannels.getChannel(i));
+                appendAllParametersFromChannel(params, subChannels.get(i));
             }
 
             appendAllParametersFromChannel(params, mixer.getMaster());
@@ -91,12 +91,12 @@ public class ParameterHelper {
         if (mixer != null && mixer.isEnabled()) {
             ChannelList channels = mixer.getChannels();
             for (int i = 0; i < channels.size(); i++) {
-                appendParametersFromChannel(params, channels.getChannel(i));
+                appendParametersFromChannel(params, channels.get(i));
             }
 
             ChannelList subChannels = mixer.getSubChannels();
             for (int i = 0; i < subChannels.size(); i++) {
-                appendParametersFromChannel(params, subChannels.getChannel(i));
+                appendParametersFromChannel(params, subChannels.get(i));
             }
 
             appendParametersFromChannel(params, mixer.getMaster());
@@ -180,13 +180,13 @@ public class ParameterHelper {
         ChannelList channels = mixer.getChannels();
         
         for (int i = 0; i < channels.size(); i++) {
-            clearChannelCompilationVar(channels.getChannel(i));
+            clearChannelCompilationVar(channels.get(i));
         }
         
         ChannelList subChannels = mixer.getSubChannels();
         
         for (int i = 0; i < subChannels.size(); i++) {
-            clearChannelCompilationVar(subChannels.getChannel(i));
+            clearChannelCompilationVar(subChannels.get(i));
         }
         
         clearChannelCompilationVar(mixer.getMaster());

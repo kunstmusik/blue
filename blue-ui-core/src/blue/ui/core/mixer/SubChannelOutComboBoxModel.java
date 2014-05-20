@@ -21,6 +21,8 @@
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -33,7 +35,7 @@ import javax.swing.event.ListDataListener;
  * @author steven
  */
 public class SubChannelOutComboBoxModel implements ComboBoxModel,
-        ListDataListener {
+        ObservableListListener<Channel> {
 
     ChannelList channels = null;
 
@@ -51,17 +53,17 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
 
     public void setData(ChannelList subChannels, Channel c) {
         if (this.channels != null) {
-            this.channels.removeListDataListener(this);
+            this.channels.removeListener(this);
         }
 
         this.channels = subChannels;
         this.channel = c;
 
-        this.channels.addListDataListener(this);
+        this.channels.addListener(this);
     }
 
     public void clearListeners() {
-        this.channels.removeListDataListener(this);
+        this.channels.removeListener(this);
         this.channels = null;
     }
 
@@ -116,7 +118,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         retVal.add(Channel.MASTER);
 
         for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
+            Channel c = channels.get(i);
 
             if (c == this.channel) {
                 continue;
@@ -135,7 +137,7 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
 
     private Channel getChannelByName(String name) {
         for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
+            Channel c = channels.get(i);
             if (c.getName().equals(name)) {
                 return c;
             }
@@ -218,38 +220,6 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
         }
     }
 
-    @Override
-    public void intervalAdded(ListDataEvent e) {
-        // System.out.println("channelOutComboBoxModel::intervalAdded()");
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, -1, -1);
-
-        fireListEvent(lde);
-
-        if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((SubChannelOutComboBoxModel) copies.get(i)).intervalAdded(e);
-            }
-        }
-    }
-
-    @Override
-    public void intervalRemoved(ListDataEvent e) {
-        if (channels.indexByName(selectedItem) < 0) {
-            setSelectedItem(Channel.MASTER);
-        }
-        if (copies != null) {
-            for (int i = 0; i < copies.size(); i++) {
-                ((SubChannelOutComboBoxModel) copies.get(i)).intervalRemoved(e);
-            }
-        }
-    }
-
-    @Override
-    public void contentsChanged(ListDataEvent e) {
-        System.out.println("channelOutComboBoxModel::contentsChanged()");
-    }
-
     public void reconcile(String oldName, String newName) {
         Object selected = this.getSelectedItem();
 
@@ -279,5 +249,50 @@ public class SubChannelOutComboBoxModel implements ComboBoxModel,
 
         copies.add(copy);
         return copy;
+    }
+
+
+    @Override
+    public void listChanged(ObservableListEvent<Channel> listEvent) {
+        switch (listEvent.getType()) {
+            case ObservableListEvent.DATA_ADDED:
+                intervalAdded(listEvent);
+                break;
+            case ObservableListEvent.DATA_REMOVED:
+                intervalRemoved(listEvent);
+                break;
+            case ObservableListEvent.DATA_CHANGED:
+                contentsChanged();
+                break;
+        }
+    }
+
+    public void intervalAdded(ObservableListEvent<Channel> e) {
+        // System.out.println("channelOutComboBoxModel::intervalAdded()");
+        ListDataEvent lde = new ListDataEvent(this,
+                ListDataEvent.CONTENTS_CHANGED, -1, -1);
+
+        fireListEvent(lde);
+
+        if (copies != null) {
+            for (int i = 0; i < copies.size(); i++) {
+                ((SubChannelOutComboBoxModel) copies.get(i)).intervalAdded(e);
+            }
+        }
+    }
+
+    public void intervalRemoved(ObservableListEvent<Channel> e) {
+        if (channels.indexByName(selectedItem) < 0) {
+            setSelectedItem(Channel.MASTER);
+        }
+        if (copies != null) {
+            for (int i = 0; i < copies.size(); i++) {
+                ((SubChannelOutComboBoxModel) copies.get(i)).intervalRemoved(e);
+            }
+        }
+    }
+
+    public void contentsChanged() {
+//        System.out.println("channelOutComboBoxModel::contentsChanged()");
     }
 }

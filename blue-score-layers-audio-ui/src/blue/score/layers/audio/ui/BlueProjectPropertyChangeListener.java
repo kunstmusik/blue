@@ -73,7 +73,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                             AudioLayer aLayer = (AudioLayer) layer;
                             Channel channel = new Channel();
                             channel.setAssociation(aLayer.getUniqueId());
-                            list.addChannel(channel);
+                            list.add(channel);
                         }
 
                         break;
@@ -81,10 +81,10 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                         for (Layer layer : event.getLayers()) {
                             AudioLayer aLayer = (AudioLayer) layer;
                             String uniqueId = aLayer.getUniqueId();
-                            for (int i = 0; i < list.getSize(); i++) {
-                                Channel channel = list.getChannel(i);
+                            for (int i = 0; i < list.size(); i++) {
+                                Channel channel = list.get(i);
                                 if (uniqueId.equals(channel.getAssociation())) {
-                                    list.removeChannel(channel);
+                                    list.remove(channel);
                                     break;
                                 }
                             }
@@ -129,7 +129,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                                 for (AudioLayer layer : alg) {
                                     Channel channel = new Channel();
                                     channel.setAssociation(layer.getUniqueId());
-                                    channels.addChannel(channel);
+                                    channels.add(channel);
                                 }
                             }
                         }
