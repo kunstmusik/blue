@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
@@ -128,34 +129,55 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 
     @Override
     public void intervalAdded(ListDataEvent e) {
-        int index0 = e.getIndex0();
-        int index1 = e.getIndex1();
+        final int index0 = e.getIndex0();
+        final int index1 = e.getIndex1();
 
-        for (int i = index0; i <= index1; i++) {
-            Channel channel = channels.getChannel(i);
-            ChannelPanel cPanel = createChannelPanel(channel);
+        SwingUtilities.invokeLater(new Runnable() {
 
-            this.add(cPanel, i);
-        }
+            @Override
+            public void run() {
+                for (int i = index0; i <= index1; i++) {
+                    Channel channel = channels.getChannel(i);
+                    ChannelPanel cPanel = createChannelPanel(channel);
+
+                    add(cPanel, i);
+                }
+                revalidate();
+            }
+        });
+
     }
 
     @Override
     public void intervalRemoved(ListDataEvent e) {
-        int index0 = e.getIndex0();
-        int index1 = e.getIndex1();
+        final int index0 = e.getIndex0();
+        final int index1 = e.getIndex1();
 
-        for (int i = index1; i >= index0; i--) {
-            ChannelPanel cPanel = (ChannelPanel) getComponent(i);
-            cPanel.clear();
+        SwingUtilities.invokeLater(new Runnable() {
 
-            this.remove(index0);
-        }
+            @Override
+            public void run() {
+                for (int i = index1; i >= index0; i--) {
+                    ChannelPanel cPanel = (ChannelPanel) getComponent(i);
+                    cPanel.clear();
+
+                    remove(index0);
+                }
+
+                revalidate();
+            }
+        });
     }
 
     @Override
     public void contentsChanged(ListDataEvent e) {
-        // System.out.println("contentsChanged");
-        rebuildChannelsUI(channels);
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                rebuildChannelsUI(channels);
+            }
+        });
     }
 
     void sort() {
@@ -211,19 +233,18 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 //    }
     @Override
     public void removeNotify() {
-        if(this.channels != null) {
+        if (this.channels != null) {
             this.channels.removeListDataListener(this);
-        } 
-        super.removeNotify(); 
+        }
+        super.removeNotify();
     }
 
     @Override
     public void addNotify() {
-        super.addNotify(); 
-        if(this.channels != null) {
+        super.addNotify();
+        if (this.channels != null) {
             this.channels.addListDataListener(this);
         }
     }
 
-    
 }
