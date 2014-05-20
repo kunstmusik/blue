@@ -223,14 +223,6 @@ public class ChannelListPanel extends JComponent implements ListDataListener,
 
     }
 
-//    @Override
-//    public void addNotify() {
-//        Dimension preferredLayoutSize = getLayout()
-//                .preferredLayoutSize(ChannelListPanel.this);
-//        
-//        setPreferredSize(preferredLayoutSize);
-//        setSize(preferredLayoutSize);
-//    }
     @Override
     public void removeNotify() {
         if (this.channels != null) {
