@@ -36,6 +36,7 @@ import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -90,8 +91,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                         }
                         break;
                     case LayerGroupDataEvent.DATA_CHANGED: {
-                        Channel channel = list.getChannel(event.getStartIndex());
-                        
+
                     }
                     break;
                 }
@@ -99,7 +99,10 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         };
 
         scoreListener = new ObservableListListener<LayerGroup>() {
-            
+            /* TODO - May need to introduce a new interface for layerGroups that
+             * require matching mixer channel lists if new layer groups require
+             * that functionality, so that channel lists can be sorted correctly
+             */
             @Override
             public void listChanged(ObservableListEvent<LayerGroup> evt) {
                 if (currentProject == null) {
@@ -150,10 +153,64 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                             }
                         }
                         break;
-                    case ObservableListEvent.DATA_CHANGED:
+                    case ObservableListEvent.DATA_CHANGED: {
+
+                        List<LayerGroup> affectedItems = evt.getAffectedItems();
+                        List<AudioLayerGroup> affectedAudioGroups = new ArrayList<>();
+                        for (LayerGroup layerGroup : evt.getAffectedItems()) {
+                            if (layerGroup instanceof AudioLayerGroup) {
+                                affectedAudioGroups.add(
+                                        (AudioLayerGroup) layerGroup);
+                            }
+                        }
+
+                        if (affectedAudioGroups.size() <= 1) {
+                            return;
+                        }
+
+                        if (evt.getSubType() == ObservableListEvent.DATA_PUSHED_DOWN) {
+                            if (affectedItems.get(0) instanceof AudioLayerGroup) {
+                                ChannelList first = findChanneListByAssociation(
+                                        channelGroups,
+                                        affectedAudioGroups.get(0).getUniqueId());
+                                ChannelList second = findChanneListByAssociation(
+                                        channelGroups,
+                                        affectedAudioGroups.get(1).getUniqueId());
+
+                                channelGroups.remove(first);
+                                channelGroups.add(channelGroups.indexOf(second),
+                                        first);
+
+                            }
+
+                        } else if (evt.getSubType() == ObservableListEvent.DATA_PUSHED_UP) {
+                            if (affectedItems.get(affectedItems.size() - 1) instanceof AudioLayerGroup) {
+                                ChannelList newLast = findChanneListByAssociation(
+                                        channelGroups,
+                                        affectedAudioGroups.get(affectedAudioGroups.size() - 1).getUniqueId());
+                                ChannelList second = findChanneListByAssociation(
+                                        channelGroups,
+                                        affectedAudioGroups.get(affectedItems.size() - 2).getUniqueId());
+
+                                channelGroups.remove(newLast);
+                                channelGroups.add(channelGroups.indexOf(
+                                        second), newLast);
+
+                            }
+                        }
 
                         break;
+                    }
                 }
+            }
+
+            private ChannelList findChanneListByAssociation(List<ChannelList> channelLists, String uniqueId) {
+                for (ChannelList list : channelLists) {
+                    if (uniqueId.equals(list.getAssociation())) {
+                        return list;
+                    }
+                }
+                return null;
             }
         };
     }
