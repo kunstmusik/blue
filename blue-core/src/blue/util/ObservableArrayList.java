@@ -21,6 +21,7 @@ package blue.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +38,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         if (retVal) {
             List<T> affected = new ArrayList<>(c);
             ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                    ObservableListEvent.DATA_ADDED, index,
+                    ObservableListEvent.DATA_ADDED, -1, index,
                     index + c.size() - 1,
                     affected);
             super.clear();
@@ -55,7 +56,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         if (retVal) {
             List<T> affected = new ArrayList<>(c);
             ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                    ObservableListEvent.DATA_ADDED, index,
+                    ObservableListEvent.DATA_ADDED, -1, index,
                     index + c.size() - 1,
                     affected);
             super.clear();
@@ -68,7 +69,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
     public void clear() {
         List<T> affected = new ArrayList<>(this);
         ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_REMOVED, 0, affected.size() - 1,
+                ObservableListEvent.DATA_REMOVED, -1, 0, affected.size() - 1,
                 affected);
         super.clear();
         fireListChange(event);
@@ -82,7 +83,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
             List<T> affected = new ArrayList<>();
             affected.add((T) o);
             ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                    ObservableListEvent.DATA_REMOVED, index, index,
+                    ObservableListEvent.DATA_REMOVED, -1, index, index,
                     affected);
             fireListChange(event);
         }
@@ -96,7 +97,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
             List<T> affected = new ArrayList<>();
             affected.add(retVal);
             ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                    ObservableListEvent.DATA_REMOVED, index, index,
+                    ObservableListEvent.DATA_REMOVED, -1, index, index,
                     affected);
             fireListChange(event);
         }
@@ -109,7 +110,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         List<T> affected = new ArrayList<>();
         affected.add(element);
         ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_ADDED, index, index,
+                ObservableListEvent.DATA_ADDED, -1, index, index,
                 affected);
         fireListChange(event);
     }
@@ -121,7 +122,7 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         List<T> affected = new ArrayList<>();
         affected.add(e);
         ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_ADDED, index, index,
+                ObservableListEvent.DATA_ADDED, -1, index, index,
                 affected);
         fireListChange(event);
 
@@ -132,9 +133,12 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
     public T set(int index, T element) {
         T retVal = super.set(index, element);
 
+        List<T> affected = Collections.singletonList(retVal);
+
         ObservableListEvent<T> event = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_CHANGED, index, index,
-                null);
+                ObservableListEvent.DATA_CHANGED, ObservableListEvent.DATA_SET,
+                index, index,
+                affected);
         fireListChange(event);
 
         return retVal;
@@ -146,7 +150,9 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         super.add(end, a);
 
         ObservableListEvent<T> evt = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_CHANGED, start - 1, end,
+                ObservableListEvent.DATA_CHANGED,
+                ObservableListEvent.DATA_PUSHED_UP,
+                start - 1, end,
                 subList(start - 1, end + 1));
 
         fireListChange(evt);
@@ -158,7 +164,9 @@ public class ObservableArrayList<T> extends ArrayList<T> implements ObservableLi
         super.add(start, a);
 
         ObservableListEvent<T> evt = new ObservableListEvent<>(this,
-                ObservableListEvent.DATA_CHANGED, start, end + 1,
+                ObservableListEvent.DATA_CHANGED, 
+                ObservableListEvent.DATA_PUSHED_DOWN,
+                start, end + 1,
                 subList(start, end + 2));
 
         fireListChange(evt);

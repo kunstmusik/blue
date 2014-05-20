@@ -30,15 +30,20 @@ public class ObservableListEvent<E> {
     public static final int DATA_ADDED = 0;
     public static final int DATA_REMOVED = 1;
     public static final int DATA_CHANGED = 2;
+    public static final int DATA_SET = 4;
+    public static final int DATA_PUSHED_UP = 8;
+    public static final int DATA_PUSHED_DOWN = 16;
     private final int startIndex;
     private final int endIndex;
     private final int type;
+    private final int subType;
     private final List<E> source;
     private final List<E> affectedItems;
 
-    public ObservableListEvent(List<E> source, int type, int startIndex, int endIndex, List<E> affectedItems) {
+    public ObservableListEvent(List<E> source, int type, int subType, int startIndex, int endIndex, List<E> affectedItems) {
         this.source = source;
         this.type = type;
+        this.subType = subType;
         this.startIndex = Math.min(startIndex, endIndex);
         this.endIndex = Math.max(startIndex, endIndex);
         this.affectedItems = affectedItems;
@@ -54,6 +59,10 @@ public class ObservableListEvent<E> {
 
     public int getType() {
         return type;
+    }
+
+    public int getSubType() {
+        return subType;
     }
 
     public List<E> getSource() {
