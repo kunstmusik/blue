@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
@@ -246,4 +247,20 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
 
         return null;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.tempo);
+        hash = 79 * hash + Objects.hashCode(this.timeState);
+        return hash;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
+
+     
 }
