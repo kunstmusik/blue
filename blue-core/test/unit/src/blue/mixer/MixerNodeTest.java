@@ -21,7 +21,7 @@ package blue.mixer;
 
 import blue.udo.OpcodeList;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 import junit.framework.TestCase;
 
 public class MixerNodeTest extends TestCase {
@@ -208,7 +208,7 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(4, node.children.size());
 
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        Map subChannelCache = mixer.getSubChannelCache();
 
         assertTrue(MixerNode.isValidOut("subChannel1", subChannelCache));
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
@@ -223,7 +223,7 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(4, node.children.size());
 
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        Map subChannelCache = mixer.getSubChannelCache();
 
         assertFalse(MixerNode.isValidOut("subChannel1", subChannelCache));
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
@@ -239,7 +239,7 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(4, node.children.size());
 
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        Map subChannelCache = mixer.getSubChannelCache();
 
         assertTrue(MixerNode.isValidOut("subChannel1", subChannelCache));
         assertTrue(MixerNode.isValidOut("subChannel2", subChannelCache));
@@ -255,7 +255,7 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(3, node.children.size());
 
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        Map subChannelCache = mixer.getSubChannelCache();
 
         assertFalse(MixerNode.isValidOut("subChannel1", subChannelCache));
         assertFalse(MixerNode.isValidOut("subChannel2", subChannelCache));
@@ -276,7 +276,7 @@ public class MixerNodeTest extends TestCase {
 
         assertEquals(4, node.children.size());
 
-        HashMap subChannelCache = mixer.getSubChannelCache();
+        Map subChannelCache = mixer.getSubChannelCache();
 
         assertFalse(MixerNode.isValidOut("subChannel1", subChannelCache));
         assertFalse(MixerNode.isValidOut("subChannel2", subChannelCache));

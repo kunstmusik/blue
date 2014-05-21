@@ -30,6 +30,7 @@ import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
@@ -62,7 +63,7 @@ public class Mixer implements Serializable {
 
     private float extraRenderTime = 0.0f;
 
-    private transient HashMap<String, String> subChannelDependencies = null;
+    private transient Map<String, String> subChannelDependencies = null;
 
     public Mixer() {
         this.channelListGroups = new ObservableArrayList<>();
@@ -454,8 +455,8 @@ public class Mixer implements Serializable {
         return null;
     }
 
-    public HashMap<String, Channel> getSubChannelCache() {
-        HashMap<String, Channel> subChannelCache = new HashMap<>();
+    public Map<String, Channel> getSubChannelCache() {
+        Map<String, Channel> subChannelCache = new HashMap<>();
 
         for (int i = 0; i < getSubChannels().size(); i++) {
             Channel subChannel = getSubChannel(i);
