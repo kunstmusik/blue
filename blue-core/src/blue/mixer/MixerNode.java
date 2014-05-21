@@ -59,8 +59,7 @@ class MixerNode {
 
         retVal.append(name).append("\n");
 
-        for (int i = 0; i < children.size(); i++) {
-            MixerNode m = children.get(i);
+        for (MixerNode m : children) {
             retVal.append(m.str(depth + 2));
         }
 
@@ -524,8 +523,7 @@ class MixerNode {
 
     private static void attachChildren(final Mixer mixer, MixerNode node,
             Map<String, Boolean> validOutCache) {
-        for (int i = 0; i < mixer.getChannels().size(); i++) {
-            Channel c = mixer.getChannels().get(i);
+        for (Channel c : mixer.getAllSourceChannels()) {
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();
@@ -541,8 +539,7 @@ class MixerNode {
 
         List<MixerNode> temp = new ArrayList<>();
 
-        for (int i = 0; i < mixer.getSubChannels().size(); i++) {
-            Channel c = mixer.getSubChannels().get(i);
+        for (Channel c : mixer.getSubChannels()) {
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();

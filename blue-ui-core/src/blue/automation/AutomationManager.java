@@ -134,7 +134,6 @@ public class AutomationManager implements ParameterListListener,
 
                 //TODO - This class needs further updating for generic 
                 //LayerGroup Design
-
                 Score score = data.getScore();
 
                 for (LayerGroup layerGroup : score) {
@@ -181,17 +180,22 @@ public class AutomationManager implements ParameterListListener,
                     ParameterList parameters = temp.getParameterList();
 
                     // parameterMap.put(temp, parameters);
-
                     parameters.removeParameterListListener(this);
                 }
             }
 
             Mixer mixer = this.data.getMixer();
 
+            for (ChannelList list : mixer.getChannelListGroups()) {
+                list.removeListener(this);
+                for (Channel c : list) {
+                    removeListenerFromChannel(c);
+                }
+            }
             ChannelList channels = mixer.getChannels();
             channels.removeListener(this);
-            for (int i = 0; i < channels.size(); i++) {
-                removeListenerFromChannel(channels.get(i));
+            for (Channel c : channels) {
+                removeListenerFromChannel(c);
             }
 
             ChannelList subChannels = mixer.getSubChannels();
@@ -213,9 +217,7 @@ public class AutomationManager implements ParameterListListener,
 
         // menu = null;
         // dirty = false;
-
         allParameters.clear();
-
 
         if (data == null) {
             return;
@@ -241,10 +243,16 @@ public class AutomationManager implements ParameterListListener,
 
         Mixer mixer = data.getMixer();
 
+        for (ChannelList list : mixer.getChannelListGroups()) {
+            list.addListener(this);
+            for (Channel c : list) {
+                addListenerToChannel(c);
+            }
+        }
         ChannelList channels = mixer.getChannels();
         channels.addListener(this);
-        for (int i = 0; i < channels.size(); i++) {
-            addListenerToChannel(channels.get(i));
+        for (Channel c : channels) {
+            addListenerToChannel(c);
         }
 
         ChannelList subChannels = mixer.getSubChannels();
@@ -256,7 +264,6 @@ public class AutomationManager implements ParameterListListener,
         addListenerToChannel(mixer.getMaster());
 
         // System.err.println(this);
-
         this.data = data;
 
         this.score = data.getScore();
@@ -268,7 +275,6 @@ public class AutomationManager implements ParameterListListener,
         this.data.addPropertyChangeListener(renderTimeListener);
 
         // Build Map from Mixer Channels
-
     }
 
     private void addListenerToChannel(Channel channel) {
@@ -409,7 +415,7 @@ public class AutomationManager implements ParameterListListener,
             public void actionPerformed(ActionEvent e) {
                 Object retVal = DialogDisplayer.getDefault().notify(
                         new NotifyDescriptor.Confirmation(
-                        "Please Confirm Clearing All Parameter Data for this SoundLayer"));
+                                "Please Confirm Clearing All Parameter Data for this SoundLayer"));
 
                 if (retVal == NotifyDescriptor.YES_OPTION) {
 
@@ -429,9 +435,7 @@ public class AutomationManager implements ParameterListListener,
         clearAll.setEnabled(soundLayer.getAutomationParameters().size() > 0);
 
         // }
-
         // System.err.println(parameterMap);
-
         return menu;
     }
 
@@ -590,8 +594,6 @@ public class AutomationManager implements ParameterListListener,
             }
         }
 
-
-
         // dirty = true;
     }
 
@@ -642,14 +644,14 @@ public class AutomationManager implements ParameterListListener,
 
     @Override
     public void listChanged(ObservableListEvent<Channel> listEvent) {
-        switch(listEvent.getType()) {
+        switch (listEvent.getType()) {
             case ObservableListEvent.DATA_ADDED:
-                for(Channel channel : listEvent.getAffectedItems()) {
+                for (Channel channel : listEvent.getAffectedItems()) {
                     channelAdded(channel);
                 }
                 break;
             case ObservableListEvent.DATA_REMOVED:
-                for(Channel channel : listEvent.getAffectedItems()) {
+                for (Channel channel : listEvent.getAffectedItems()) {
                     channelRemoved(channel);
                 }
                 break;

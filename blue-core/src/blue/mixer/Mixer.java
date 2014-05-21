@@ -29,7 +29,9 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
@@ -151,6 +153,17 @@ public class Mixer implements Serializable {
         return channels.get(index);
     }
 
+    public List<Channel> getAllSourceChannels() {
+        List<Channel> allChannels = new ArrayList<>();
+
+        for (ChannelList list : channelListGroups) {
+            allChannels.addAll(list);
+        }
+        allChannels.addAll(channels);
+
+        return allChannels;
+    }
+
     public ChannelList getChannels() {
         return channels;
     }
@@ -202,8 +215,9 @@ public class Mixer implements Serializable {
     public String getInitStatements(int nchnls) {
         StrBuilder buffer = new StrBuilder();
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.get(i);
+        List<Channel> allChannels = getAllSourceChannels();
+
+        for (Channel c : allChannels) {
 
             for (int j = 0; j < nchnls; j++) {
 
@@ -232,18 +246,15 @@ public class Mixer implements Serializable {
     public String getClearStatements(int nchnls) {
         StrBuilder buffer = new StrBuilder();
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.get(i);
-
+        List<Channel> allChannels = getAllSourceChannels();
+        for (Channel c : allChannels) {
             for (int j = 0; j < nchnls; j++) {
 
                 buffer.append(getChannelVar(c.getName(), j)).append(" = 0\n");
             }
         }
 
-        for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.get(i);
-
+        for (Channel c : subChannels) {
             for (int j = 0; j < nchnls; j++) {
 
                 buffer.append(getSubChannelVar(c.getName(), j))
@@ -266,6 +277,7 @@ public class Mixer implements Serializable {
 
         MixerNode node = MixerNode.getMixerGraph(this);
 
+        System.out.println(">>> " + node);
         EffectManager manager = new EffectManager();
 
         buffer
@@ -306,8 +318,7 @@ public class Mixer implements Serializable {
             allSends = temp;
         }
 
-        for (int i = 0; i < this.getChannels().size(); i++) {
-            Channel c = this.getChannels().get(i);
+        for (Channel c : this.getAllSourceChannels()) {
             Send[] sends = c.getSends();
 
             if (sends.length == 0) {
