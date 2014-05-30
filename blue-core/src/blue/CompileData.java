@@ -19,8 +19,10 @@
  */
 package blue;
 
+import blue.mixer.Channel;
 import blue.orchestra.Instrument;
 import java.util.HashMap;
+import java.util.Map;
 
 //TODO - Should probably add methods to this class so that Arrangement, 
 //OpcodeList, etc. are hidden from public and to reduce dependencies
@@ -36,6 +38,7 @@ public class CompileData {
     private final HashMap compileMap = new HashMap();
     private final Arrangement arrangement;
     private final Tables tables;
+    private final Map<Channel, Integer> channelIdAssignments;
 
     public static CompileData createEmptyCompileData() {
         CompileData compileData = new CompileData(
@@ -46,6 +49,7 @@ public class CompileData {
     public CompileData(Arrangement arrangement, Tables tables) {
         this.arrangement = arrangement;
         this.tables = tables;
+        channelIdAssignments = new HashMap<>();
     }
 
     /** 
@@ -85,5 +89,8 @@ public class CompileData {
     public void appendTables(String tablesString) {
         tables.setTables(tables.getTables() + "\n" + tablesString);
     }
-   
+  
+    public Map<Channel, Integer> getChannelIdAssignments() {
+        return channelIdAssignments;
+    }
 }

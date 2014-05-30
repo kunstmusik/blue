@@ -19,6 +19,7 @@
  */
 package blue.mixer;
 
+import blue.CompileData;
 import blue.udo.OpcodeList;
 import java.util.ArrayList;
 import java.util.Map;
@@ -284,6 +285,7 @@ public class MixerNodeTest extends TestCase {
     }
 
     public void testGetMixerCode() {
+        CompileData data = CompileData.createEmptyCompileData();
         Mixer mixer = getTestMixer(1, 1);
 
         mixer.getChannel(0).setLevel(-96.0f);
@@ -296,7 +298,9 @@ public class MixerNodeTest extends TestCase {
         MixerNode node = MixerNode.getMixerGraph(mixer);
         Send[] allSends = mixer.getAllSends();
 
-        String output = MixerNode.getMixerCode(mixer, opcodeList, manager,
+        assignChannelIds(data, mixer);
+
+        String output = MixerNode.getMixerCode(data, mixer, opcodeList, manager,
                 node, nchnls);
 
         assertEquals("", output);
@@ -308,6 +312,7 @@ public class MixerNodeTest extends TestCase {
      */
     public void testGetMixerCode2() {
 
+        CompileData data = CompileData.createEmptyCompileData();
         Send send = new Send();
         send.setSendChannel("subChannel1");
 
@@ -321,8 +326,10 @@ public class MixerNodeTest extends TestCase {
         int nchnls = 2;
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
-
-        String out = MixerNode.getMixerCode(mixer, opcodeList, manager, node,
+    
+        assignChannelIds(data, mixer);
+        
+        String out = MixerNode.getMixerCode(data, mixer, opcodeList, manager, node,
                 nchnls);
 
         assertEquals("", out);
@@ -334,6 +341,7 @@ public class MixerNodeTest extends TestCase {
      */
     public void testGetMixerCode3() {
 
+        CompileData data = CompileData.createEmptyCompileData();
         Send send = new Send();
         send.setSendChannel("subChannel1");
 
@@ -348,12 +356,13 @@ public class MixerNodeTest extends TestCase {
         int nchnls = 2;
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
-
-        String out = MixerNode.getMixerCode(mixer, opcodeList, manager, node,
+        assignChannelIds(data, mixer);
+        
+        String out = MixerNode.getMixerCode(data, mixer, opcodeList, manager, node,
                 nchnls);
 
-        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_1_0\n"
-                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_1_1\n"
+        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_0_0\n"
+                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_0_1\n"
                 + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluesub_subChannel1_0\n"
                 + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluesub_subChannel1_1\n";
 
@@ -361,6 +370,7 @@ public class MixerNodeTest extends TestCase {
     }
 
     public void testGetMixerCode4() {
+        CompileData data = CompileData.createEmptyCompileData();
         Mixer mixer = getTestMixer(3, 2);
 
         mixer.getChannel(1).setOutChannel("subChannel1");
@@ -371,16 +381,17 @@ public class MixerNodeTest extends TestCase {
         int nchnls = 2;
 
         MixerNode node = MixerNode.getMixerGraph(mixer);
-
-        String out = MixerNode.getMixerCode(mixer, opcodeList, manager, node,
+        assignChannelIds(data, mixer);
+        
+        String out = MixerNode.getMixerCode(data, mixer, opcodeList, manager, node,
                 nchnls);
 
-        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_2_0\n"
+        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_1_0\n"
+                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_1_1\n"
+                + "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_2_0\n"
                 + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_2_1\n"
-                + "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_3_0\n"
-                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_3_1\n"
-                + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluemix_1_0\n"
-                + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluemix_1_1\n"
+                + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluemix_0_0\n"
+                + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluemix_0_1\n"
                 + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluesub_subChannel1_0\n"
                 + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluesub_subChannel1_1\n";
 
@@ -471,5 +482,19 @@ public class MixerNodeTest extends TestCase {
         }
 
         return mixer;
+    }
+
+     private void assignChannelIds(CompileData compileData, Mixer mixer) {
+
+        Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
+        int i = 0;
+        for (Channel channel : mixer.getAllSourceChannels()) {
+            assignments.put(channel, i++);
+        }
+
+        for (Channel channel : mixer.getSubChannels()) {
+            assignments.put(channel, i++);
+        }
+        assignments.put(mixer.getMaster(), i);
     }
 }

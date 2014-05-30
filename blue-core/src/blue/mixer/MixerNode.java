@@ -1,5 +1,6 @@
 package blue.mixer;
 
+import blue.CompileData;
 import blue.automation.Parameter;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
@@ -94,7 +95,7 @@ class MixerNode {
      * @return
      */
 
-    public static String getMixerCode(Mixer mixer, OpcodeList udos,
+    public static String getMixerCode(CompileData data, Mixer mixer, OpcodeList udos,
             EffectManager manager, MixerNode mixerNode, int nchnls) {
 
         StrBuilder buffer = new StrBuilder();
@@ -122,9 +123,9 @@ class MixerNode {
 
             for (int j = 0; j < nchnls; j++) {
                 if (j == 0) {
-                    signalChannels = mixer.getVar(tempNode.channel, j);
+                    signalChannels = mixer.getVar(data, tempNode.channel, j);
                 } else {
-                    signalChannels += ", " + mixer.getVar(tempNode.channel, j);
+                    signalChannels += ", " + mixer.getVar(data, tempNode.channel, j);
                 }
 
             }
@@ -150,7 +151,7 @@ class MixerNode {
             if (tempNode.generatesOutSignal) {
 
                 // apply fader value
-                applyFader(mixer, tempNode, nchnls, buffer);
+                applyFader(data, mixer, tempNode, nchnls, buffer);
 
                 // apply post-fader effects
 
@@ -179,7 +180,7 @@ class MixerNode {
                     inputSignalCache.add(outChannelName);
 
                     for (int j = 0; j < nchnls; j++) {
-                        String channelVar = mixer.getVar(tempNode.channel, j);
+                        String channelVar = mixer.getVar(data, tempNode.channel, j);
                         String outChannelVar = Mixer.getSubChannelVar(
                                 outChannelName, j);
 
@@ -321,7 +322,7 @@ class MixerNode {
         return index;
     }
 
-    private static void applyFader(Mixer mixer, MixerNode node, int nchnls,
+    private static void applyFader(CompileData data, Mixer mixer, MixerNode node, int nchnls,
             StrBuilder buffer) {
         String modifier = null;
 
@@ -355,7 +356,7 @@ class MixerNode {
 
         if (modifier != null) {
             for (int i = 0; i < nchnls; i++) {
-                String sig = mixer.getVar(node.channel, i);
+                String sig = mixer.getVar(data, node.channel, i);
                 buffer.append(sig).append(" = ");
                 buffer.append(sig).append(" * ");
                 buffer.append(modifier).append("\n");

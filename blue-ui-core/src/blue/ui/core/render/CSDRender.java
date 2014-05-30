@@ -19,6 +19,7 @@ import blue.automation.Automatable;
 import blue.automation.Parameter;
 import blue.components.lines.Line;
 import blue.components.lines.LinePoint;
+import blue.mixer.Channel;
 import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.noteProcessor.TempoMapper;
@@ -42,6 +43,7 @@ import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,7 +61,8 @@ public class CSDRender extends CSDRenderService {
     protected synchronized CsdRenderResult generateCSDForBlueLiveImpl(
             BlueData data, boolean usingAPI) {
 
-        ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
+        ArrayList<StringChannel> stringChannels = getStringChannels(
+                data.getArrangement());
 
         ParameterHelper.clearCompilationVarNames(data);
 
@@ -76,14 +79,12 @@ public class CSDRender extends CSDRenderService {
             assignParameterNames(originalParameters);
         }
 
-
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
         arrangement.clearUnusedInstrAssignments();
 
         String[] instrIds = arrangement.getInstrumentIds();
 
         //PolyObject tempPObj = (PolyObject) data.getPolyObject().clone();
-
         boolean hasInstruments = arrangement.size() > 0;
 
         GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco().clone();
@@ -95,7 +96,8 @@ public class CSDRender extends CSDRenderService {
         arrangement.generateUserDefinedOpcodes(udos);
         appendFtgenTableNumbers(globalOrcSco.getGlobalOrc(), tables);
         arrangement.generateFTables(tables);
-        
+
+        CompileData compileData = new CompileData(arrangement, tables);
         // SKIPPING ANYTHING RELATED TO SCORE
 
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
@@ -106,15 +108,17 @@ public class CSDRender extends CSDRenderService {
         Mixer mixer = null;
         if (mixerEnabled) {
             mixer = (Mixer) data.getMixer().clone();
+            assignChannelIds(compileData, mixer);
         }
 
+        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
+        
         int nchnls = getNchnls(data, true);
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
-        arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
+        arrangement.preGenerateOrchestra(compileData, mixer, nchnls, alwaysOnInstruments);
 
-        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
 
         NoteList generatedNotes = null;
 
@@ -122,12 +126,13 @@ public class CSDRender extends CSDRenderService {
             int instrId = arrangement.addInstrumentAtEnd(instrument);
             globalSco += "i" + instrId + " 0 " + totalDur + "\n";
         }
-        
+
         if (usingAPI) {
 //            ArrayList parameters = ParameterHelper.getAllParameters(
 //                    arrangement, mixer);
             generatedNotes = new NoteList();
-            handleParametersForBlueLive(originalParameters, stringChannels, globalOrcSco,
+            handleParametersForBlueLive(originalParameters, stringChannels,
+                    globalOrcSco,
                     generatedNotes, arrangement, usingAPI);
 
         }
@@ -136,9 +141,12 @@ public class CSDRender extends CSDRenderService {
 
             clearUnusedMixerChannels(mixer, arrangement);
 
-            globalOrcSco.appendGlobalOrc(mixer.getInitStatements(nchnls));
-            int instrId = arrangement.addInstrumentAtEnd(mixer.getMixerInstrument(
-                    udos, nchnls));
+
+            globalOrcSco.appendGlobalOrc(mixer.getInitStatements(compileData,
+                    nchnls));
+            int instrId = arrangement.addInstrumentAtEnd(
+                    mixer.getMixerInstrument(compileData,
+                            udos, nchnls));
 
             globalSco += "i" + instrId + " 0 " + totalDur;
 
@@ -148,16 +156,15 @@ public class CSDRender extends CSDRenderService {
                 createAllNotesOffInstrument(instrIds));
 
         String ftables = tables.getTables();
-        
+
         StrBuilder score = new StrBuilder();
         score.append("<CsoundSynthesizer>\n\n");
 
-        appendCsInstruments(data, udos, arrangement, globalOrcSco, score,
+        appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, score,
                 mixer, true);
         appendCsScore(globalSco, ftables, generatedNotes, totalDur, score);
 
         score.append("</CsoundSynthesizer>");
-
 
 //        Tempo tempo = data.getScore().getTempo();
         TempoMapper tempoMapper = null;
@@ -167,11 +174,9 @@ public class CSDRender extends CSDRenderService {
 //        } else {
 //            tempoMapper = CSDRender.getTempoMapper(globalSco);
 //        }
-        
-        CsdRenderResult renderResult =
-                new CsdRenderResult(score.toString(), tempoMapper,
-                originalParameters, stringChannels);
-
+        CsdRenderResult renderResult
+                = new CsdRenderResult(score.toString(), tempoMapper,
+                        originalParameters, stringChannels);
 
         return renderResult;
     }
@@ -180,8 +185,9 @@ public class CSDRender extends CSDRenderService {
     protected CsdRenderResult generateCSDImpl(BlueData data,
             float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
 
-        ArrayList<StringChannel> stringChannels = getStringChannels(data.getArrangement());
-        
+        ArrayList<StringChannel> stringChannels = getStringChannels(
+                data.getArrangement());
+
         ParameterHelper.clearCompilationVarNames(data);
 
         boolean usingAPI = isRealTime && _usingAPI;
@@ -201,7 +207,6 @@ public class CSDRender extends CSDRenderService {
 //                    data.getArrangement(), data.getMixer());
 //        }
 
-
         assignParameterNames(originalParameters);
 
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
@@ -217,7 +222,6 @@ public class CSDRender extends CSDRenderService {
 
         // get parameters
         //ArrayList parameters;
-
 //        if (usingAPI) {
 //        parameters = ParameterHelper.getAllParameters(
 //                arrangement, mixer);
@@ -225,7 +229,6 @@ public class CSDRender extends CSDRenderService {
 //            parameters = ParameterHelper.getActiveParameters(
 //                    arrangement, mixer);
 //        }
-
         GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco().clone();
 
         OpcodeList udos = (OpcodeList) ObjectUtilities.clone(
@@ -239,18 +242,18 @@ public class CSDRender extends CSDRenderService {
 
         // generating ftables
         arrangement.generateFTables(tables);
-        
+
         CompileData compileData = new CompileData(arrangement, tables);
         NoteList generatedNotes;
         try {
-            generatedNotes = data.getScore().generateForCSD(compileData, 
-           startTime, endTime);
+            generatedNotes = data.getScore().generateForCSD(compileData,
+                    startTime, endTime);
         } catch (ScoreGenerationException ex) {
-            throw new RuntimeException(ex);    
+            throw new RuntimeException(ex);
         }
-        
+
         String ftables = tables.getTables();
-        
+
         // Handle Render End Instrument and Note
         if (endTime > 0.0f && endTime > startTime) {
             Instrument instr = createRenderEndInstrument();
@@ -272,7 +275,7 @@ public class CSDRender extends CSDRenderService {
         if (tempo.isEnabled()) {
             tempoMapper = getTempoMapper(tempo);
             globalOrcSco.appendGlobalSco(
-                getTempoScore(tempo, renderStartTime, endTime));
+                    getTempoScore(tempo, renderStartTime, endTime));
         } else {
             tempoMapper = getTempoMapper(globalOrcSco.getGlobalSco());
         }
@@ -307,18 +310,20 @@ public class CSDRender extends CSDRenderService {
 
         System.out.println("Global Duration = " + globalDur);
 
-
         int nchnls = getNchnls(data, isRealTime);
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
-
-        arrangement.preGenerateOrchestra(mixer, nchnls, alwaysOnInstruments);
 
         boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
 
         if (generateMixer) {
             globalDur += mixer.getExtraRenderTime();
+            assignChannelIds(compileData, mixer);
         }
+        
+        arrangement.preGenerateOrchestra(compileData, mixer, nchnls,
+                alwaysOnInstruments);
+
 
         for (Instrument instrument : alwaysOnInstruments) {
             int instrId = arrangement.addInstrumentAtEnd(instrument);
@@ -338,10 +343,11 @@ public class CSDRender extends CSDRenderService {
 
             clearUnusedMixerChannels(mixer, arrangement);
 
-            globalOrcSco.appendGlobalOrc(mixer.getInitStatements(nchnls) + "\n");
+            globalOrcSco.appendGlobalOrc(mixer.getInitStatements(
+                    compileData, nchnls) + "\n");
 
-            int instrId = arrangement.addInstrumentAtEnd(mixer.getMixerInstrument(
-                    udos, nchnls));
+            int instrId = arrangement.addInstrumentAtEnd(
+                    mixer.getMixerInstrument(compileData, udos, nchnls));
 
             try {
                 Note n = Note.createNote("i" + instrId + " 0 " + globalDur);
@@ -352,11 +358,11 @@ public class CSDRender extends CSDRenderService {
 
         }
 
-        handleParameters(originalParameters, stringChannels, globalOrcSco, generatedNotes,
+        handleParameters(originalParameters, stringChannels, globalOrcSco,
+                generatedNotes,
                 arrangement,
                 startTime,
                 startTime + globalDur, isRealTime, _usingAPI);
-
 
         if (isRealTime && !usingAPI) {
             Instrument instr = createBlueTimePointerInstrument();
@@ -375,17 +381,15 @@ public class CSDRender extends CSDRenderService {
 
         csd.append("<CsoundSynthesizer>\n\n");
 
-        appendCsInstruments(data, udos, arrangement, globalOrcSco, csd, mixer,
+        appendCsInstruments(compileData, data, udos, arrangement, globalOrcSco, csd, mixer,
                 isRealTime);
         appendCsScore(globalSco, ftables, generatedNotes, totalDur, csd);
 
         csd.append("</CsoundSynthesizer>");
 
-
-        CsdRenderResult renderResult =
-                new CsdRenderResult(csd.toString(), tempoMapper,
-                originalParameters, stringChannels);
-        
+        CsdRenderResult renderResult
+                = new CsdRenderResult(csd.toString(), tempoMapper,
+                        originalParameters, stringChannels);
 
         return renderResult;
     }
@@ -402,23 +406,23 @@ public class CSDRender extends CSDRenderService {
                 if (instr instanceof Automatable) {
                     Automatable auto = (Automatable) instr;
                     ArrayList<StringChannel> stringChannels = auto.getStringChannels();
-                   
-                    if(stringChannels != null) {
+
+                    if (stringChannels != null) {
                         params.addAll(stringChannels);
                     }
-                    
+
                 }
 
             }
         }
-        
-        for(StringChannel strChannel : params) {
+
+        for (StringChannel strChannel : params) {
             strChannel.setChannelName(scnm.getUniqueStringChannel());
         }
 
         return params;
     }
-    
+
     private void clearUnusedMixerChannels(Mixer mixer,
             Arrangement arrangement) {
 
@@ -428,7 +432,6 @@ public class CSDRender extends CSDRenderService {
             InstrumentAssignment ia = arrangement.getInstrumentAssignment(i);
             ids.add(ia.arrangementId);
         }
-
 
         ChannelList channelList = mixer.getChannels();
         channelList.clearChannelsNotInList(ids);
@@ -585,8 +588,8 @@ public class CSDRender extends CSDRenderService {
         score.append("</CsScore>\n\n");
     }
 
-    private void appendCsInstruments(BlueData data, OpcodeList udos,
-            Arrangement arrangement, GlobalOrcSco globalOrcSco,
+    private void appendCsInstruments(CompileData compileData, BlueData data, 
+            OpcodeList udos, Arrangement arrangement, GlobalOrcSco globalOrcSco,
             StrBuilder score, Mixer mixer, boolean isRealTime) {
 
         ProjectProperties projProps = data.getProjectProperties();
@@ -633,11 +636,11 @@ public class CSDRender extends CSDRenderService {
         score.append("\n");
         score.append(
                 CommandProcessor.processCommandBlocks(
-                arrangement.generateGlobalOrc())).append("\n");
+                        arrangement.generateGlobalOrc())).append("\n");
         score.append("\n");
         score.append(udos.toString()).append("\n");
         score.append("\n");
-        score.append(arrangement.generateOrchestra(mixer, nchnls));
+        score.append(arrangement.generateOrchestra(compileData, mixer, nchnls));
         score.append("\n");
         score.append("</CsInstruments>\n\n");
     }
@@ -679,8 +682,6 @@ public class CSDRender extends CSDRenderService {
 
         StrBuilder buffer = new StrBuilder();
         String compilationVarName = param.getCompilationVarName();
-
-
 
         if (param.getResolution() > 0.0f) {
             buffer.append(compilationVarName);
@@ -792,7 +793,7 @@ public class CSDRender extends CSDRenderService {
                 paramScore.append(instrId).append("\t");
                 paramScore.append(
                         NumberUtilities.formatFloat(start - renderStart)).append(
-                        "\t");
+                                "\t");
                 paramScore.append(".0001\t");
                 paramScore.append(NumberUtilities.formatFloat(endVal)).append(
                         "\n");
@@ -830,7 +831,6 @@ public class CSDRender extends CSDRenderService {
 //                if (p1.getY() == p2.getY() && p1.getY() == lastValue) {
 //                    continue;
 //                }
-
                 float startVal = p1.getY();
                 float endVal = p2.getY();
 
@@ -931,26 +931,26 @@ public class CSDRender extends CSDRenderService {
 
         boolean useAPI = isRealTime && _usingAPI;
 
-        for(StringChannel strChannel : stringChannels) {
+        for (StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
-            
+
             initStatements.append(varName);
             initStatements.append(" = ");
-            initStatements.append("\"").append(strChannel.getValue()).append("\"\n");
-            
+            initStatements.append("\"").append(strChannel.getValue()).append(
+                    "\"\n");
+
             if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
                 initStatements.append(varName).append("\", 3\n");
-            } 
+            }
         }
-        
+
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
-
             float initialVal;
 
             if (param.isAutomationEnabled()) {
@@ -967,12 +967,11 @@ public class CSDRender extends CSDRenderService {
                 initialVal = param.getFixedValue();
             }
 
-            
             // init statements
-                initStatements.append(varName);
-                initStatements.append(" init ");
-                initStatements.append(NumberUtilities.formatFloat(initialVal));
-                initStatements.append("\n");
+            initStatements.append(varName);
+            initStatements.append(" init ");
+            initStatements.append(NumberUtilities.formatFloat(initialVal));
+            initStatements.append("\n");
 
             if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
@@ -998,7 +997,6 @@ public class CSDRender extends CSDRenderService {
         }
 
 //        globalOrcSco.appendGlobalSco(paramScore.toString());
-
     }
 
     private void handleParametersForBlueLive(ArrayList parameters,
@@ -1011,26 +1009,26 @@ public class CSDRender extends CSDRenderService {
         StrBuilder initStatements = new StrBuilder();
         StrBuilder paramScore = new StrBuilder();
 
-        for(StringChannel strChannel : stringChannels) {
+        for (StringChannel strChannel : stringChannels) {
             String varName = strChannel.getChannelName();
-            
+
             initStatements.append(varName);
             initStatements.append(" = ");
-            initStatements.append("\"").append(strChannel.getValue()).append("\"\n");
+            initStatements.append("\"").append(strChannel.getValue()).append(
+                    "\"\n");
 
             if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
-                initStatements.append(varName).append("\", 3\n");            
-            } 
+                initStatements.append(varName).append("\", 3\n");
+            }
         }
-        
+
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
             varNum[0] = new Integer(i);
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
-
             float initialVal = param.getFixedValue();
 
             float resolution = param.getResolution();
@@ -1046,7 +1044,7 @@ public class CSDRender extends CSDRenderService {
             initStatements.append(NumberUtilities.formatFloat(initialVal));
             initStatements.append("\n");
 
-            if(useAPI) {
+            if (useAPI) {
                 initStatements.append(varName).append(" chnexport \"");
                 initStatements.append(varName).append("\", 3\n");
             }
@@ -1060,7 +1058,6 @@ public class CSDRender extends CSDRenderService {
         }
 
 //        globalOrcSco.appendGlobalSco(paramScore.toString());
-
     }
 
     protected TempoMapper getTempoMapper(Tempo tempo) {
@@ -1091,5 +1088,19 @@ public class CSDRender extends CSDRenderService {
         }
 
         return mapper;
+    }
+
+     private void assignChannelIds(CompileData compileData, Mixer mixer) {
+
+        Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
+        int i = 0;
+        for (Channel channel : mixer.getAllSourceChannels()) {
+            assignments.put(channel, i++);
+        }
+
+        for (Channel channel : mixer.getSubChannels()) {
+            assignments.put(channel, i++);
+        }
+        assignments.put(mixer.getMaster(), i);
     }
 }
