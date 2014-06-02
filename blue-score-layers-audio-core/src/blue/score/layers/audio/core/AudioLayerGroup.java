@@ -75,9 +75,13 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
         NoteList noteList = new NoteList();
 
-        if (processWithSolo) {
-        } else {
+        for (AudioLayer layer : this) {
+            if(!processWithSolo || layer.isSolo()) {
+               noteList.merge(layer.generateForCSD(compileData, startTime,
+                       endTime));
+            }   
         }
+        
 
         return noteList;
     }

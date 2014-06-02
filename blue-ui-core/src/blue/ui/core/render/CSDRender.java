@@ -213,11 +213,13 @@ public class CSDRender extends CSDRenderService {
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
+        CompileData compileData = new CompileData(arrangement, tables);
         Mixer mixer = null;
         boolean mixerEnabled = data.getMixer().isEnabled();
 
         if (mixerEnabled) {
             mixer = (Mixer) data.getMixer().clone();
+            assignChannelIds(compileData, mixer);
         }
 
         // get parameters
@@ -243,7 +245,6 @@ public class CSDRender extends CSDRenderService {
         // generating ftables
         arrangement.generateFTables(tables);
 
-        CompileData compileData = new CompileData(arrangement, tables);
         NoteList generatedNotes;
         try {
             generatedNotes = data.getScore().generateForCSD(compileData,
@@ -318,7 +319,6 @@ public class CSDRender extends CSDRenderService {
 
         if (generateMixer) {
             globalDur += mixer.getExtraRenderTime();
-            assignChannelIds(compileData, mixer);
         }
         
         arrangement.preGenerateOrchestra(compileData, mixer, nchnls,

@@ -20,6 +20,9 @@
 package blue.score.layers.audio.core;
 
 import blue.CompileData;
+import blue.mixer.Channel;
+import blue.mixer.Mixer;
+import blue.orchestra.GenericInstrument;
 import blue.score.ScoreObject;
 import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.score.layers.ScoreObjectLayer;
@@ -29,9 +32,14 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.rmi.dgc.VMID;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -52,6 +60,8 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
     private transient Vector<PropertyChangeListener> propListeners = null;
     private transient Vector<AudioLayerListener> layerListeners = null;
     private String uniqueId;
+
+    private static MessageFormat INSTR_TEXT = null;
 
     public AudioLayer() {
         this.uniqueId = new VMID().toString();
@@ -188,8 +198,86 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         }
     }
 
-    NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) throws SoundObjectException {
+    protected String getInstrumentText(String var1, String var2) {
+        if (INSTR_TEXT == null) {
+            StringBuilder str = new StringBuilder();
+            try {
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(
+                                this.getClass().getClassLoader().getResourceAsStream(
+                                        "blue/score/layers/audio/core/playback_instrument.orc")))) {
+                                    String line;
+                                    while ((line = br.readLine()) != null) {
+                                        str.append(line).append("\n");
+                                    }
+                                }
+
+            } catch (IOException ioe) {
+                throw new RuntimeException(
+                        "[error] AudioLayer could not load instr text");
+            }
+
+            INSTR_TEXT = new MessageFormat(str.toString());
+        }
+
+        return INSTR_TEXT.format(new Object[] {var1, var2});
+
+    }
+
+    protected void generateInstrumentForAudioLayer(CompileData compileData) {
+
+        if (compileData.getCompilationVariable(this.uniqueId) != null) {
+            return;
+        }
+
+        Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
+
+        Channel c = null;
+        for (Channel channel : assignments.keySet()) {
+            if (uniqueId.equals(channel.getAssociation())) {
+                c = channel;
+            }
+        }
+
+        if (c == null) {
+            throw new RuntimeException(
+                    "Could not find channel for audioLayer: " + this.getUniqueId());
+        }
+
+        int channelId = assignments.get(c);
+
+        GenericInstrument instr = new GenericInstrument();
+        StringBuilder str = new StringBuilder();
+
+        try {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    this.getClass().getClassLoader().getResourceAsStream(
+                            "blue/score/layers/audio/core/playback_instrument.orc")))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            str.append(line).append("\n");
+                        }
+                    }
+
+        } catch (IOException ioe) {
+            throw new RuntimeException(
+                    "[error] AudioLayer could not load instr text");
+        }
+
+        String var1 = Mixer.getChannelVar(channelId, 0);
+        String var2 = Mixer.getChannelVar(channelId, 1);
+
+        instr.setText(getInstrumentText(var1, var2));
+
+        int instrId = compileData.addInstrument(instr);
+
+        compileData.setCompilationVariable(this.uniqueId, this.uniqueId);
+    }
+
+    NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws SoundObjectException {
         NoteList notes = new NoteList();
+
+        generateInstrumentForAudioLayer(compileData);
 
         return notes;
     }

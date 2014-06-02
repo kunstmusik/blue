@@ -551,7 +551,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
             return input;
         }
 
-        for(Channel channel : mixer.getChannels()) {
+        for(Channel channel : mixer.getAllSourceChannels()) {
             if(channel.getName().equals(arrangementId)) {
                 c = channel;
                 break;
