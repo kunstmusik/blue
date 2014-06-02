@@ -34,6 +34,8 @@ UPDATED
   from the Help menu to go to the issue tracker at GitHub 
   (http://www.github.com/kunstmusik/blue/issues)
 
+* Mixer: Reworked layout of channel panels to be more compact
+
 FIX
 
 * Redid font/theme handling so that --fontsize flag is respected (can be given
