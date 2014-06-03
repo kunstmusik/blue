@@ -45,11 +45,11 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     private String name = "Audio Layer Group";
 
     private String uniqueId;
-    
+
     public AudioLayerGroup() {
         this.uniqueId = new VMID().toString();
     }
-    
+
     @Override
     public String getName() {
         return name;
@@ -76,12 +76,13 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         NoteList noteList = new NoteList();
 
         for (AudioLayer layer : this) {
-            if(!processWithSolo || layer.isSolo()) {
-               noteList.merge(layer.generateForCSD(compileData, startTime,
-                       endTime));
-            }   
+            if (!processWithSolo || layer.isSolo()) {
+                if (!layer.isMuted()) {
+                    noteList.merge(layer.generateForCSD(compileData, startTime,
+                            endTime));
+                }
+            }
         }
-        
 
         return noteList;
     }
@@ -96,8 +97,8 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         if (data.getAttribute("name") != null) {
             layerGroup.setName(data.getAttributeValue("name"));
         }
-        
-        if(data.getAttribute("uniqueId") != null) {
+
+        if (data.getAttribute("uniqueId") != null) {
             layerGroup.uniqueId = data.getAttributeValue("uniqueId");
         }
 
@@ -108,7 +109,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
             if ("audioLayers".equals(nodeName)) {
                 Elements aLayerNodes = node.getElements();
-                while(aLayerNodes.hasMoreElements()) {
+                while (aLayerNodes.hasMoreElements()) {
                     layerGroup.add(
                             AudioLayer.loadFromXML(aLayerNodes.next()));
                 }
@@ -203,7 +204,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     @Override
     public void onLoadComplete() {
 //        for (AudioLayer layer : audioLayers) {
-            //
+        //
 //        }
     }
 
@@ -250,8 +251,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         return 0;
     }
 
-
-   public int getLayerNumForY(int y) {
+    public int getLayerNumForY(int y) {
         int runningY = 0;
 
         for (int i = 0; i < this.size(); i++) {
@@ -268,8 +268,8 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
     @Override
     public int getLayerNumForScoreObject(ScoreObject scoreObj) {
-        for(int i = 0; i < this.size(); i++) {
-            if(get(i).contains(scoreObj)) {
+        for (int i = 0; i < this.size(); i++) {
+            if (get(i).contains(scoreObj)) {
                 return i;
             }
         }

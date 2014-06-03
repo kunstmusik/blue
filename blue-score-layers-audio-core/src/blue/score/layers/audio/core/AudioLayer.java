@@ -26,6 +26,7 @@ import blue.orchestra.GenericInstrument;
 import blue.score.ScoreObject;
 import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.score.layers.ScoreObjectLayer;
+import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObjectException;
 import electric.xml.Element;
@@ -220,14 +221,14 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
             INSTR_TEXT = new MessageFormat(str.toString());
         }
 
-        return INSTR_TEXT.format(new Object[] {var1, var2});
+        return INSTR_TEXT.format(new Object[]{var1, var2});
 
     }
 
-    protected void generateInstrumentForAudioLayer(CompileData compileData) {
+    protected int generateInstrumentForAudioLayer(CompileData compileData) {
 
         if (compileData.getCompilationVariable(this.uniqueId) != null) {
-            return;
+            return (Integer)compileData.getCompilationVariable(this.uniqueId);
         }
 
         Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
@@ -271,16 +272,78 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
         int instrId = compileData.addInstrument(instr);
 
-        compileData.setCompilationVariable(this.uniqueId, this.uniqueId);
+        compileData.setCompilationVariable(this.uniqueId, instrId);
+        return instrId;
     }
 
     NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws SoundObjectException {
         NoteList notes = new NoteList();
 
-        generateInstrumentForAudioLayer(compileData);
+        int instrId = generateInstrumentForAudioLayer(compileData);
+        float adjustedEnd = endTime - startTime;
 
+        for (AudioClip clip : this) {
+
+            float clipStart = clip.getStartTime();
+            float clipDur = clip.getSubjectiveDuration();
+            float clipEnd = clipStart + clipDur;
+
+            Note n = Note.createNote(5);
+
+            if (clipEnd > startTime) {
+                if (endTime <= startTime) {
+
+                    float adjustedStart = startTime - clipStart;
+                    float eventStart = clipStart - startTime;
+                    
+                    if (adjustedStart < 0.0f) {
+                        adjustedStart = 0.0f;
+                    }
+
+                    if(eventStart < 0.0f) {
+                        eventStart = 0.0f; 
+                    }
+
+                    n.setPField(Integer.toString(instrId), 1);
+                    n.setStartTime(eventStart);
+                    n.setSubjectiveDuration(clipDur - adjustedStart);
+                    n.setPField("\"" + clip.getAudioFile().getAbsolutePath() + "\"", 4);
+                    n.setPField(Float.toString(adjustedStart), 5);
+                    
+                    notes.add(n);
+                } else if (clipStart < endTime) {
+
+                    float adjustedStart = startTime - clipStart;
+                    float eventStart = clipStart - startTime;
+                    float eventDur = clipDur - adjustedStart;
+                    
+                    if (adjustedStart < 0.0f) {
+                        adjustedStart = 0.0f;
+                    }
+
+                    if(eventStart < 0.0f) {
+                        eventStart = 0.0f; 
+                    }
+
+                    if(adjustedStart + eventDur > adjustedEnd) {
+                        eventDur = adjustedEnd - eventStart;
+                    }
+
+
+                    n.setPField(Integer.toString(instrId), 1);
+                    n.setStartTime(eventStart);
+                    n.setSubjectiveDuration(eventDur);
+                    n.setPField("\"" + clip.getAudioFile().getAbsolutePath() + "\"", 4);
+                    n.setPField(Float.toString(adjustedStart), 5);
+                    
+                    notes.add(n);
+                }
+            }
+
+        }
         return notes;
     }
+
 
     /* Property Change Event Code */
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
@@ -373,4 +436,5 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
         return super.contains(object);
     }
+
 }
