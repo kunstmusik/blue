@@ -31,6 +31,7 @@ import blue.mixer.EffectsChain;
 import blue.mixer.Mixer;
 import blue.orchestra.Instrument;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParameterHelper {
     public static ArrayList<Parameter> getAllParameters(Arrangement arr, Mixer mixer) {
@@ -51,16 +52,14 @@ public class ParameterHelper {
         }
 
         if (mixer != null && mixer.isEnabled()) {
-            ChannelList channels = mixer.getChannels();
-            for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.get(i);
-                
-                appendAllParametersFromChannel(params, channels.get(i));
+            List<Channel> channels = mixer.getAllSourceChannels();
+            for (Channel channel : channels) {
+                appendAllParametersFromChannel(params, channel);
             }
 
             ChannelList subChannels = mixer.getSubChannels();
-            for (int i = 0; i < subChannels.size(); i++) {
-                appendAllParametersFromChannel(params, subChannels.get(i));
+            for (Channel channel : subChannels) {
+                appendAllParametersFromChannel(params, channel);
             }
 
             appendAllParametersFromChannel(params, mixer.getMaster());
@@ -69,8 +68,8 @@ public class ParameterHelper {
         return params;
     }
     
-    public static ArrayList getActiveParameters(Arrangement arr, Mixer mixer) {
-        ArrayList params = new ArrayList();
+    public static List<Parameter> getActiveParameters(Arrangement arr, Mixer mixer) {
+        List<Parameter> params = new ArrayList<>();
 
         for (int i = 0; i < arr.size(); i++) {
             InstrumentAssignment ia = arr.getInstrumentAssignment(i);
@@ -89,14 +88,14 @@ public class ParameterHelper {
         }
 
         if (mixer != null && mixer.isEnabled()) {
-            ChannelList channels = mixer.getChannels();
-            for (int i = 0; i < channels.size(); i++) {
-                appendParametersFromChannel(params, channels.get(i));
+            List<Channel> channels = mixer.getAllSourceChannels();
+            for (Channel channel : channels) {
+                appendParametersFromChannel(params, channel);
             }
 
             ChannelList subChannels = mixer.getSubChannels();
-            for (int i = 0; i < subChannels.size(); i++) {
-                appendParametersFromChannel(params, subChannels.get(i));
+            for (Channel subChannel : subChannels) {
+                appendParametersFromChannel(params, subChannel);
             }
 
             appendParametersFromChannel(params, mixer.getMaster());
@@ -129,7 +128,7 @@ public class ParameterHelper {
         params.add(levelParameter);
     }
     
-    private static void appendParametersFromChannel(ArrayList<Parameter> params,
+    private static void appendParametersFromChannel(List<Parameter> params,
             Channel channel) {
 
         EffectsChain pre = channel.getPreEffects();
@@ -151,11 +150,9 @@ public class ParameterHelper {
         }
     }
 
-    private static void addActiveParametersFromList(ArrayList<Parameter> params,
+    private static void addActiveParametersFromList(List<Parameter> params,
             ParameterList list) {
-        for (int j = 0; j < list.size(); j++) {
-            Parameter param = list.getParameter(j);
-
+        for (Parameter param : params) {
             if (param.isAutomationEnabled()) {
                 params.add(param);
             }
@@ -177,16 +174,16 @@ public class ParameterHelper {
 
         Mixer mixer = data.getMixer();
         
-        ChannelList channels = mixer.getChannels();
+        List<Channel> channels = mixer.getAllSourceChannels();
         
-        for (int i = 0; i < channels.size(); i++) {
-            clearChannelCompilationVar(channels.get(i));
+        for (Channel channel : channels) {
+            clearChannelCompilationVar(channel);
         }
         
         ChannelList subChannels = mixer.getSubChannels();
         
-        for (int i = 0; i < subChannels.size(); i++) {
-            clearChannelCompilationVar(subChannels.get(i));
+        for (Channel subChannel : subChannels) {
+            clearChannelCompilationVar(subChannel);
         }
         
         clearChannelCompilationVar(mixer.getMaster());
