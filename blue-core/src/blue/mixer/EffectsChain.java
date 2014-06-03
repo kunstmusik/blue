@@ -30,6 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
@@ -41,9 +42,9 @@ public class EffectsChain implements Serializable, ListModel,
         PropertyChangeListener {
     private ArrayList effects = new ArrayList();
 
-    private transient Vector listeners = null;
+    private transient List<ListDataListener> listeners = null;
 
-    private transient Vector automatableCollectionListeners = null;
+    private transient List<AutomatableCollectionListener> automatableCollectionListeners = null;
 
     public Element saveAsXML() {
         Element retVal = new Element("effectsChain");
@@ -179,22 +180,26 @@ public class EffectsChain implements Serializable, ListModel,
 
     /* List Model Methods */
 
+    @Override
     public int getSize() {
         return effects.size();
     }
 
+    @Override
     public Object getElementAt(int index) {
         return effects.get(index);
     }
 
+    @Override
     public void addListDataListener(ListDataListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
 
         listeners.add(l);
     }
 
+    @Override
     public void removeListDataListener(ListDataListener l) {
         if (listeners != null) {
             listeners.remove(l);
@@ -206,8 +211,7 @@ public class EffectsChain implements Serializable, ListModel,
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : listeners) {
             listener.intervalAdded(lde);
         }
     }
@@ -217,8 +221,7 @@ public class EffectsChain implements Serializable, ListModel,
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : listeners) {
             listener.intervalRemoved(lde);
         }
     }
@@ -228,8 +231,7 @@ public class EffectsChain implements Serializable, ListModel,
             return;
         }
 
-        for (Iterator iter = listeners.iterator(); iter.hasNext();) {
-            ListDataListener listener = (ListDataListener) iter.next();
+        for (ListDataListener listener : listeners) {
             listener.contentsChanged(lde);
         }
     }
@@ -242,7 +244,7 @@ public class EffectsChain implements Serializable, ListModel,
     public void addAutomatableCollectionListener(
             AutomatableCollectionListener listener) {
         if (automatableCollectionListeners == null) {
-            automatableCollectionListeners = new Vector();
+            automatableCollectionListeners = new Vector<>();
         }
         automatableCollectionListeners.add(listener);
     }
@@ -256,12 +258,8 @@ public class EffectsChain implements Serializable, ListModel,
 
     private void fireAutomatableAdded(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners)
-                    .iterator();
 
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter
-                        .next();
+            for(AutomatableCollectionListener listener : automatableCollectionListeners) {
                 listener.automatableAdded(automatable);
             }
         }
@@ -269,16 +267,13 @@ public class EffectsChain implements Serializable, ListModel,
 
     private void fireAutomatableRemoved(Automatable automatable) {
         if (automatableCollectionListeners != null) {
-            Iterator iter = new Vector(automatableCollectionListeners)
-                    .iterator();
-            while (iter.hasNext()) {
-                AutomatableCollectionListener listener = (AutomatableCollectionListener) iter
-                        .next();
+            for(AutomatableCollectionListener listener : automatableCollectionListeners) {
                 listener.automatableRemoved(automatable);
             }
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("sendChannel")) {
             Object obj = evt.getSource();
