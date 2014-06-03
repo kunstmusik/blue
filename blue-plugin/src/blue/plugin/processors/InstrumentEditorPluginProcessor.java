@@ -28,6 +28,8 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import org.openide.filesystems.annotations.LayerBuilder.File;
 import org.openide.filesystems.annotations.LayerGeneratingProcessor;
@@ -49,9 +51,22 @@ public class InstrumentEditorPluginProcessor extends LayerGeneratingProcessor {
         Elements elements = processingEnv.getElementUtils();
         for (Element e : env.getElementsAnnotatedWith(InstrumentEditorPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
+            InstrumentEditorPlugin instrumentEditorPlugin = 
+                    clazz.getAnnotation(InstrumentEditorPlugin.class);
+
             String teName = elements.getBinaryName(clazz).toString();
             File f = layer(e).file(
                     "blue/instrumentEditors/" + teName.replace('.', '-') + ".instance");
+
+            TypeMirror tm = null;
+            try {
+                instrumentEditorPlugin.instrumentType();
+            } catch(MirroredTypeException mte) {
+                tm = mte.getTypeMirror();
+            }
+            
+            f.stringvalue("instrumentType", 
+                    tm.toString());
             f.write();
         }
         return true;

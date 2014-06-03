@@ -37,7 +37,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-@InstrumentEditorPlugin
+@InstrumentEditorPlugin(instrumentType = BlueX7.class)
 public class BlueX7Editor extends InstrumentEditor {
     AlgorithmCommonPanel common = new AlgorithmCommonPanel();
 
@@ -197,9 +197,4 @@ public class BlueX7Editor extends InstrumentEditor {
 //                "BlueX7 GUI Test", true);
 //        blueX7Editor1.editInstrument(new BlueX7());
 //    }
-
-    @Override
-    public Class getInstrumentClass() {
-        return BlueX7.class;
-    }
 }

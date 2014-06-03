@@ -26,7 +26,7 @@ import org.openide.awt.UndoRedo;
  * @author steven
  */
 
-@InstrumentEditorPlugin
+@InstrumentEditorPlugin(instrumentType = RhinoInstrument.class)
 public class RhinoInstrumentEditor extends InstrumentEditor {
 
     private static HashMap tokenMarkerTypes = new HashMap();
@@ -207,8 +207,4 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
     private javax.swing.JButton testButton;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public Class getInstrumentClass() {
-        return RhinoInstrument.class;
-    }
 }

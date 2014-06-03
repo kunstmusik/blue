@@ -38,7 +38,7 @@ import javax.swing.JTabbedPane;
 /**
  * @author Steven Yi
  */
-@InstrumentEditorPlugin
+@InstrumentEditorPlugin(instrumentType = BlueSynthBuilder.class)
 public class BlueSynthBuilderEditor extends InstrumentEditor {
 
     private BlueSynthBuilder bsb;
@@ -101,8 +101,4 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
 //        GUI.showComponentAsStandalone(bsbEditor, "BlueSynthEditor Test", true);
 //    }
 
-    @Override
-    public Class getInstrumentClass() {
-        return BlueSynthBuilder.class;
-    }
 }

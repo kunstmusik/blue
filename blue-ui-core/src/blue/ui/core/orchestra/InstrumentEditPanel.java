@@ -21,20 +21,21 @@ import javax.swing.event.DocumentListener;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public final class InstrumentEditPanel extends JComponent {
 
     JPanel editPanel = new JPanel();
 
-    HashMap<Class, InstrumentEditor> instrEditorMap = new HashMap<>();
+    HashMap<Class, String> instrEditorMap = new HashMap<>();
+    HashMap<Class, InstrumentEditor> instrEditorCache = new HashMap<>();
 
     CardLayout cardLayout = new CardLayout();
 
@@ -99,15 +100,17 @@ public final class InstrumentEditPanel extends JComponent {
                 "blue/instrumentEditors").getChildren();
 
         for (FileObject fObj : sObjEditorFiles) {
-            InstrumentEditor instrEditor = FileUtil.getConfigObject(
-                    fObj.getPath(),
-                    InstrumentEditor.class);
-            instrEditorMap.put(instrEditor.getInstrumentClass(), 
-                    instrEditor);
-                        editPanel.add(instrEditor, instrEditor.getClass().getName());
+            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
 
+            try {
+                instrEditorMap.put(cl.loadClass((String) fObj.getAttribute(
+                        "instrumentType")),
+                        fObj.getPath());
+            } catch (ClassNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
-        
+
     }
 
     public void setEditingLibraryObject(boolean isLibaryObject) {
@@ -137,19 +140,23 @@ public final class InstrumentEditPanel extends JComponent {
         commentPane.setEnabled(true);
         commentPane.setText(instr.getComment());
 
-
         Class instrClass = instr.getClass();
-        InstrumentEditor instrEditor = null;
-        for(Class c : instrEditorMap.keySet()) {
-            if(c.isAssignableFrom(instrClass)) {
-                instrEditor = instrEditorMap.get(c);
-                break;
+        InstrumentEditor instrEditor = instrEditorCache.get(instrClass);
+
+        if (instrEditor == null) {
+            for (Class c : instrEditorMap.keySet()) {
+                if (c.isAssignableFrom(instrClass)) {
+                    String path = instrEditorMap.get(c);
+                    instrEditor = FileUtil.getConfigObject(path,
+                            InstrumentEditor.class);
+                    editPanel.add(instrEditor, instrEditor.getClass().getName());
+                    break;
+                }
             }
         }
 
         cardLayout.show(editPanel, instrEditor.getClass().getName());
         instrEditor.editInstrument(instr);
-        
     }
 
 //    public static void main(String args[]) {
@@ -169,5 +176,4 @@ public final class InstrumentEditPanel extends JComponent {
 //            }
 //        });
 //    }
-
 }
