@@ -19,7 +19,7 @@ import blue.soundObject.editor.lineEditor.ZakLineListTable;
  * 
  * @author mbechard
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = ZakLineObject.class)
 public class ZakLineEditor extends LineEditor {
 
     /** Creates a new instance of ZakLineEditor */
@@ -43,12 +43,6 @@ public class ZakLineEditor extends LineEditor {
         return new LineCanvas();
     }
 
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof ZakLineObject);
-    }
-    
     /**
      * Edits the SoundObject, using zak class references when necessary
      */

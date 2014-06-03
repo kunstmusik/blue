@@ -56,7 +56,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import skt.swing.SwingUtil;
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = TrackerObject.class)
 public class TrackerEditor extends ScoreObjectEditor {
 
     private static final String SHORTCUT_TEXT = "ctrl-space             clear or duplicate previous note\n"
@@ -210,12 +210,6 @@ public class TrackerEditor extends ScoreObjectEditor {
         return panel;
     }
 
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof TrackerObject);
-    }
-    
     @Override
     public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {

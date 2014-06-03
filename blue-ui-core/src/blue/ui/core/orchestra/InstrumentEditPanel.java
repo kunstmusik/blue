@@ -99,8 +99,9 @@ public final class InstrumentEditPanel extends JComponent {
         FileObject sObjEditorFiles[] = FileUtil.getConfigFile(
                 "blue/instrumentEditors").getChildren();
 
+        ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
+        
         for (FileObject fObj : sObjEditorFiles) {
-            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
 
             try {
                 instrEditorMap.put(cl.loadClass((String) fObj.getAttribute(

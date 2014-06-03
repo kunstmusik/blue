@@ -63,7 +63,7 @@ import org.openide.util.Exceptions;
  */
 
 // TODO - Clean up UI Code in this class
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = PolyObject.class)
 public class PolyObjectEditor extends ScoreObjectEditor {
 
     PolyObject pObj;
@@ -182,11 +182,6 @@ public class PolyObjectEditor extends ScoreObjectEditor {
 
                     }
                 });
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof PolyObject);
     }
 
     @Override

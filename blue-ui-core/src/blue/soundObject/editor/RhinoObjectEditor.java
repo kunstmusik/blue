@@ -35,7 +35,7 @@ import org.openide.awt.UndoRedo;
  * @version 1.0
  */
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = RhinoObject.class)
 public class RhinoObjectEditor extends ScoreObjectEditor {
 
     RhinoObject sObj;
@@ -114,11 +114,6 @@ public class RhinoObjectEditor extends ScoreObjectEditor {
 
         });
 
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof RhinoObject);
     }
 
     @Override

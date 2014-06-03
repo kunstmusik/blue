@@ -55,7 +55,7 @@ import org.openide.awt.UndoRedo;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = AudioFile.class) 
 public class AudioFileEditor extends ScoreObjectEditor {
 
     JTextField audioFileName = new JTextField();
@@ -207,12 +207,6 @@ public class AudioFileEditor extends ScoreObjectEditor {
             }
         }
 
-    }
-
-    
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof AudioFile);
     }
 
     @Override

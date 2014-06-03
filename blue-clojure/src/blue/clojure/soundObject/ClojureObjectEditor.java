@@ -48,7 +48,7 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = ClojureObject.class)
 public class ClojureObjectEditor extends ScoreObjectEditor {
 
     ClojureObject clojureObj = null;
@@ -96,11 +96,6 @@ public class ClojureObjectEditor extends ScoreObjectEditor {
 
     }
 
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof ClojureObject);
-    }
-    
     @Override
     public final void editScoreObject(ScoreObject sObj) {
         this.clojureObj = null;

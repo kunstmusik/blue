@@ -52,7 +52,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import skt.swing.SwingUtil;
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = JMask.class)
 public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
     EditorListPanel editorListPanel = new EditorListPanel();
@@ -122,11 +122,6 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
         SwingUtil.installActions(this, new Action[]{testAction},
                 WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof JMask);
     }
 
     @Override

@@ -53,7 +53,7 @@ import javax.swing.JTabbedPane;
  * @author steven
  * 
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = CeciliaModule.class)
 public class CeciliaModuleEditor extends ScoreObjectEditor {
 
     private CeciliaModule ceciliaModule;
@@ -178,11 +178,6 @@ public class CeciliaModuleEditor extends ScoreObjectEditor {
         }
 
         return stateData;
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof CeciliaModule);
     }
 
     @Override

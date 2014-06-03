@@ -46,7 +46,7 @@ import javax.swing.JTextField;
 // left, right - changes cursor location (place in note array)
 // dot - adds dot, shift-dot removes dot
 // +/- - sharpens or flats
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = NotationObject.class)
 public class NotationEditor extends ScoreObjectEditor {
     NotationObject nObj = null;
 
@@ -136,12 +136,6 @@ public class NotationEditor extends ScoreObjectEditor {
         optionsMenu.show(this, x, y);
     }
 
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof NotationObject);
-    }
-    
     @Override
     public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {

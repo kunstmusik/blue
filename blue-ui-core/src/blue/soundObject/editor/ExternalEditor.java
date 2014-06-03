@@ -47,7 +47,7 @@ import org.openide.awt.UndoRedo;
  * @author unascribed
  * @version 1.0
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = External.class)
 public class ExternalEditor extends ScoreObjectEditor {
 
     External external;
@@ -163,11 +163,6 @@ public class ExternalEditor extends ScoreObjectEditor {
 
         });
 
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof External);
     }
 
     @Override

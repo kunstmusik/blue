@@ -38,7 +38,7 @@ import javax.swing.JToggleButton;
  * @version 1.0
  */
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = PianoRollEditor.class)
 public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener, ActionListener {
 
@@ -179,11 +179,6 @@ public class PianoRollEditor extends ScoreObjectEditor implements
         JScrollBar scrollbar = noteScrollPane.getVerticalScrollBar();
         int max = scrollbar.getMaximum();
         scrollbar.setValue((max / 32) * 13);
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof PianoRoll);
     }
 
     @Override

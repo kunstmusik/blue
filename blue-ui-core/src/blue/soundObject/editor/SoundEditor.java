@@ -37,7 +37,7 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = Sound.class)
 public class SoundEditor extends ScoreObjectEditor {
 
     Sound sObj;
@@ -116,11 +116,6 @@ public class SoundEditor extends ScoreObjectEditor {
 
         });
 
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof Sound);
     }
 
     @Override

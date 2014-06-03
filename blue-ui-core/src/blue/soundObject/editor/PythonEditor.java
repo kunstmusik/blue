@@ -48,7 +48,7 @@ import org.openide.awt.UndoRedo;
  *
  * @author steven
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = PythonObject.class)
 public class PythonEditor extends ScoreObjectEditor {
 
     PythonObject pObj = null;
@@ -94,11 +94,6 @@ public class PythonEditor extends ScoreObjectEditor {
             }
         });
 
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof PythonObject);
     }
 
     @Override

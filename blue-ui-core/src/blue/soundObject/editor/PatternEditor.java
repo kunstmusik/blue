@@ -48,7 +48,7 @@ import javax.swing.event.ListSelectionListener;
  * @author Steven Yi
  */
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = Pattern.class)
 public class PatternEditor extends ScoreObjectEditor {
 
     private PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
@@ -135,12 +135,6 @@ public class PatternEditor extends ScoreObjectEditor {
                 }
             }
         });
-    }
-
-    
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof PatternObject);
     }
 
     @Override

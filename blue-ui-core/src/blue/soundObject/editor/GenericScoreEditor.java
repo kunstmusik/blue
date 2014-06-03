@@ -34,7 +34,7 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = GenericScore.class)
 public class GenericScoreEditor extends ScoreObjectEditor {
 
     GenericScore sObj;
@@ -113,12 +113,6 @@ public class GenericScoreEditor extends ScoreObjectEditor {
 
         });
 
-    }
-
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof GenericScore);
     }
 
     @Override

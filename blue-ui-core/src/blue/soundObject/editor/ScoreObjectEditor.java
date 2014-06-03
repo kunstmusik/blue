@@ -13,14 +13,6 @@ import javax.swing.JComponent;
 public abstract class ScoreObjectEditor extends JComponent {
 
     /**
-     * Returns if this editor accepts the object passed in for editing.
-     *
-     * @param sObj
-     * @return
-     */
-    public abstract boolean accepts(ScoreObject sObj);
-
-    /**
      * Actually edits an object. This method is called after accepts().
      *
      * @param sObj

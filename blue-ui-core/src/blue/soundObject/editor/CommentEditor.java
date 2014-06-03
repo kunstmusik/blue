@@ -20,7 +20,7 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-@ScoreObjectEditorPlugin 
+@ScoreObjectEditorPlugin(scoreObjectType = Comment.class)
 public class CommentEditor extends ScoreObjectEditor {
 
     Comment sObj;
@@ -69,12 +69,6 @@ public class CommentEditor extends ScoreObjectEditor {
         scoreEditPane.setUndoManager(undo);
 
         undo.setLimit(1000);
-    }
-
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof Comment);
     }
 
     @Override

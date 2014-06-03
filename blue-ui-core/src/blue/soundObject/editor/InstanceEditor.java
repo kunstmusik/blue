@@ -26,7 +26,7 @@ import org.openide.util.Exceptions;
  * @author steven yi
  * @version 1.0
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = Instance.class)
 public class InstanceEditor extends ScoreObjectEditor {
 
     Instance instance;
@@ -73,12 +73,6 @@ public class InstanceEditor extends ScoreObjectEditor {
 
     }
 
-    
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof Instance);
-    }
-    
     @Override
     public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {

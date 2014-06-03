@@ -46,7 +46,7 @@ import org.openide.windows.WindowManager;
  * @author steven
  * 
  */
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = FrozenSoundObject.class)
 public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
     private FrozenSoundObject fso;
@@ -95,12 +95,6 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
         fcm.setDialogTitle(this, "Save Copy of Frozen Soundfile");
     }
 
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof FrozenSoundObject);
-    }
-    
     @Override
     public void editScoreObject(ScoreObject sObj) {
         if (sObj == null

@@ -27,9 +27,9 @@ import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JPanel;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.DialogDisplayer;
@@ -39,6 +39,7 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -64,7 +65,7 @@ import org.openide.windows.TopComponent;
 @ActionID(category = "Window", id = "blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent")
 @ActionReferences({
     @ActionReference(path = "Menu/Window", position = 100),
-    @ActionReference(path = "Shortcuts", 
+    @ActionReference(path = "Shortcuts",
             name = "DS-E")
 })
 @TopComponent.OpenActionRegistration(
@@ -91,9 +92,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     SoundObject currentSoundObject;
 
-//    HashMap<Class, Class> sObjEditorMap = new HashMap<>();
-//    HashMap<Class, ScoreObjectEditor> editors = new HashMap<>();
-    List<ScoreObjectEditor> editors = new ArrayList<>();
+    Map<Class, String> sObjEditorMap = new HashMap<>();
+    Map<Class, ScoreObjectEditor> editors = new HashMap<>();
 
     JPanel emptyPanel = new JPanel();
 
@@ -114,13 +114,16 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
         FileObject sObjEditorFiles[] = FileUtil.getConfigFile(
                 "blue/score/objectEditors").getChildren();
+        ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
 
         for (FileObject fObj : sObjEditorFiles) {
-            ScoreObjectEditor sObjEditor = FileUtil.getConfigObject(
-                    fObj.getPath(),
-                    ScoreObjectEditor.class);
-            editors.add(sObjEditor);
-            editPanel.add(sObjEditor.getClass().getName(), sObjEditor);
+            try {
+                sObjEditorMap.put(cl.loadClass((String) fObj.getAttribute(
+                        "scoreObjectType")),
+                        fObj.getPath());
+            } catch (ClassNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         setEditingLibraryObject(null);
@@ -141,7 +144,6 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
     @Override
     public void componentOpened() {
         result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
@@ -216,17 +218,20 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
             this.setEditingLibraryObject(SelectionEvent.SELECTION_LIBRARY);
         }
 
-        boolean found = false;
-        for (ScoreObjectEditor sObjEditor : editors) {
-            if (sObjEditor.accepts(sObjToEdit)) {
-                sObjEditor.editScoreObject(sObjToEdit);
-                cardLayout.show(editPanel, sObjEditor.getClass().getName());
-                found = true;
-                break;
+        ScoreObjectEditor editor = editors.get(sObjToEdit.getClass());
+        if (editor == null) {
+            for (Class c : sObjEditorMap.keySet()) {
+                if (c.isAssignableFrom(sObjToEdit.getClass())) {
+                    String path = sObjEditorMap.get(c);
+                    editor = FileUtil.getConfigObject(path,
+                            ScoreObjectEditor.class);
+                    editPanel.add(editor, editor.getClass().getName());
+                    break;
+                }
             }
         }
 
-        if (!found) {
+        if (editor == null) {
             DialogDisplayer.getDefault().notify(new NotifyDescriptor(
                     "Could not find editor for SoundObject of type: " + sObjToEdit.getClass().getCanonicalName(),
                     "Error",
@@ -234,6 +239,10 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
                     NotifyDescriptor.ERROR_MESSAGE, null, null));
             return;
         }
+        
+        editor.editScoreObject(sObjToEdit);
+        cardLayout.show(editPanel, editor.getClass().getName());
+
 
 //        Logger.getLogger(ScoreObjectEditorTopComponent.class.getName()).fine("SoundObject Selected: " + className);;
     }

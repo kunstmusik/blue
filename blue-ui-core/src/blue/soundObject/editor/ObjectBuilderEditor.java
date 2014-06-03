@@ -48,7 +48,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-@ScoreObjectEditorPlugin
+@ScoreObjectEditorPlugin(scoreObjectType = ObjectBuilder.class)
 public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     private ObjectBuilder objectBuilder;
@@ -103,11 +103,6 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
 
         });
 
-    }
-
-    @Override
-    public boolean accepts(ScoreObject sObj) {
-        return (sObj != null && sObj instanceof ObjectBuilder);
     }
 
     @Override
