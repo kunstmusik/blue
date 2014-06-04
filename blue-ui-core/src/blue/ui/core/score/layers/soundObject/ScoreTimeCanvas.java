@@ -746,7 +746,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.automationPanel.setPolyObject(pObj, timeState);
 
-        content.set(Collections.emptyList(), null);
+//        content.set(Collections.emptyList(), null);
 
         // TODO - REFACTOR THIS OUT TO POLY OBJECT CONTROLLER
         SoundLayer tempLayer;
@@ -864,40 +864,40 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     /**
      * *******************
      */
-    public void removeSoundObjects() {
-//        int size = mBuffer.size();
-        SoundObjectView sObjView;
-        RemoveSoundObjectEdit firstEdit = null;
-        RemoveSoundObjectEdit lastEdit = null;
-        RemoveSoundObjectEdit temp;
-
-        Collection<? extends SoundObject> selectedObjects
-                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
-
-        for (SoundObject sObj : selectedObjects) {
-            int sLayerIndex = getPolyObject().removeSoundObject(sObj);
-
-            if (firstEdit == null) {
-                firstEdit = new RemoveSoundObjectEdit(getPolyObject(), sObj,
-                        sLayerIndex);
-                lastEdit = firstEdit;
-            } else {
-                temp = new RemoveSoundObjectEdit(getPolyObject(), sObj,
-                        sLayerIndex);
-                lastEdit.setNextEdit(temp);
-                lastEdit = temp;
-            }
-        }
-
-        if (firstEdit != null) {
-            BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(firstEdit);
-        }
-
-        content.set(Collections.emptyList(), null);
-
-        repaint();
-    }
+//    public void removeSoundObjects() {
+////        int size = mBuffer.size();
+//        SoundObjectView sObjView;
+//        RemoveSoundObjectEdit firstEdit = null;
+//        RemoveSoundObjectEdit lastEdit = null;
+//        RemoveSoundObjectEdit temp;
+//
+//        Collection<? extends SoundObject> selectedObjects
+//                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
+//
+//        for (SoundObject sObj : selectedObjects) {
+//            int sLayerIndex = getPolyObject().removeSoundObject(sObj);
+//
+//            if (firstEdit == null) {
+//                firstEdit = new RemoveSoundObjectEdit(getPolyObject(), sObj,
+//                        sLayerIndex);
+//                lastEdit = firstEdit;
+//            } else {
+//                temp = new RemoveSoundObjectEdit(getPolyObject(), sObj,
+//                        sLayerIndex);
+//                lastEdit.setNextEdit(temp);
+//                lastEdit = temp;
+//            }
+//        }
+//
+//        if (firstEdit != null) {
+//            BlueUndoManager.setUndoManager("score");
+//            BlueUndoManager.addEdit(firstEdit);
+//        }
+//
+//        content.set(Collections.emptyList(), null);
+//
+//        repaint();
+//    }
 
     /* TODO - Remove this method and implement by events */
     public void updateSoundObjectsLayerMap() {
