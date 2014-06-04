@@ -19,13 +19,14 @@
  */
 package blue.ui.core.soundObject.renderer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 
 /**
  *
@@ -35,8 +36,8 @@ public class BarRendererCache {
 
     private static BarRendererCache instance = null;
 
-    private Map<Class, BarRenderer> barRenderers = new HashMap<>();
-    private List<BarRenderer> renderers = new ArrayList<>();
+    private final Map<Class, String> barRenderersMap = new HashMap<>();
+    private final Map<Class, BarRenderer> barRenderersCache = new HashMap<>();
 
     private BarRendererCache() {
     }
@@ -51,11 +52,16 @@ public class BarRendererCache {
             List<FileObject> orderedRendererFObjs = FileUtil.getOrder(
                     Arrays.asList(rendererFObjs), true);
 
+            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
+
             for (FileObject fObj : orderedRendererFObjs) {
-                BarRenderer barRenderer = FileUtil.getConfigObject(
-                        fObj.getPath(),
-                        BarRenderer.class);
-                instance.renderers.add(barRenderer);
+                try {
+                    instance.barRenderersMap.put(cl.loadClass((String) fObj.getAttribute(
+                            "scoreObjectType")),
+                            fObj.getPath());
+                } catch (ClassNotFoundException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
         }
         return instance;
@@ -63,15 +69,17 @@ public class BarRendererCache {
 
     public BarRenderer getBarRenderer(Class clazz) {
 
-        BarRenderer renderer = barRenderers.get(clazz);
+        BarRenderer renderer = barRenderersCache.get(clazz);
 
         if (renderer == null) {
 
-            for (BarRenderer temp : renderers) {
-                Class c = temp.getSoundObjectClass();
+            for (Class c : barRenderersMap.keySet()) {
                 if (c.isAssignableFrom(clazz)) {
-                    renderer = temp;
-                    barRenderers.put(clazz, temp);
+                    String path = barRenderersMap.get(c);
+                    renderer = FileUtil.getConfigObject(path,
+                            BarRenderer.class);
+                    barRenderersCache.put(clazz, renderer);
+                    break;
                 }
             }
         }

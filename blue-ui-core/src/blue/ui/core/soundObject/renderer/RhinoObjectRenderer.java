@@ -30,16 +30,11 @@ import blue.soundObject.RhinoObject;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = RhinoObject.class)
 public class RhinoObjectRenderer extends LetterRenderer {
 
     public RhinoObjectRenderer() {
         super("R");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return RhinoObject.class;
     }
 
 }

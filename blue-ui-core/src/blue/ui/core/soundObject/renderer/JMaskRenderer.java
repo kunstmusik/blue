@@ -30,16 +30,11 @@ import blue.soundObject.JMask;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = JMask.class)
 public class JMaskRenderer extends LetterRenderer {
 
     public JMaskRenderer() {
         super("J");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return JMask.class;
     }
 
 }

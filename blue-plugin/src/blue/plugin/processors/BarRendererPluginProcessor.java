@@ -20,7 +20,6 @@
 package blue.plugin.processors;
 
 import blue.plugin.BarRendererPlugin;
-import blue.plugin.SoundObjectPlugin;
 import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -29,6 +28,8 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import org.openide.filesystems.annotations.LayerBuilder.File;
 import org.openide.filesystems.annotations.LayerGeneratingProcessor;
@@ -51,8 +52,20 @@ public class BarRendererPluginProcessor extends LayerGeneratingProcessor {
         for (Element e : env.getElementsAnnotatedWith(BarRendererPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
             String teName = elements.getBinaryName(clazz).toString();
+            BarRendererPlugin barRendererPlugin = 
+                    clazz.getAnnotation(BarRendererPlugin.class);
+
             File f = layer(e).file(
                     "blue/score/barRenderers/" + teName.replace('.', '-') + ".instance");
+            TypeMirror tm = null;
+            try {
+                barRendererPlugin.scoreObjectType();
+            } catch(MirroredTypeException mte) {
+                tm = mte.getTypeMirror();
+            }
+            
+            f.stringvalue("scoreObjectType", 
+                    tm.toString());
             f.write();
         }
         return true;

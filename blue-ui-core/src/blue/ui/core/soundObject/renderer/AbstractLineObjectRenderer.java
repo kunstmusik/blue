@@ -30,16 +30,11 @@ import blue.soundObject.AbstractLineObject;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = AbstractLineObject.class)
 public class AbstractLineObjectRenderer extends LetterRenderer {
 
     public AbstractLineObjectRenderer() {
         super("L");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return AbstractLineObject.class;
     }
 
 }

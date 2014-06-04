@@ -20,7 +20,7 @@ import java.awt.RenderingHints;
  * @version 1.0
  */
 
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = Comment.class)
 public class CommentRenderer implements BarRenderer {
     private static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
 
@@ -107,8 +107,4 @@ public class CommentRenderer implements BarRenderer {
     public void cleanup(SoundObjectView sObjView) {
     }
 
-    @Override
-    public Class getSoundObjectClass() {
-        return Comment.class;
-    }
 }

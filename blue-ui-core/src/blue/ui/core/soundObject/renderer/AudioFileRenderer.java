@@ -15,7 +15,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = AudioFile.class)
 public class AudioFileRenderer implements BarRenderer {
 
     private static final String AUDIO_WAVEFORM_DATA = "audioWaveformData";
@@ -219,9 +219,5 @@ public class AudioFileRenderer implements BarRenderer {
         }
         sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, null);
     }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return AudioFile.class;
-    }
+    
 }

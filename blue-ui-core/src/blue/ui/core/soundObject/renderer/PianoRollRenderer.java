@@ -32,7 +32,7 @@ import java.util.Collections;
  *
  * @author stevenyi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollRenderer extends GenericRenderer {
     
     @Override
@@ -81,11 +81,6 @@ public class PianoRollRenderer extends GenericRenderer {
         return cache;
     }
 
-    @Override
-    public Class getSoundObjectClass() {
-        return PianoRoll.class;
-    }
-    
     class PianoRollValueCache {
         int max;
         int min;

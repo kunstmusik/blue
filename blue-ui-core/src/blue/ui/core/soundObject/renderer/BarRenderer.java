@@ -18,7 +18,5 @@ public interface BarRenderer {
 
     public void cleanup(SoundObjectView sObjView);
 
-    public Class getSoundObjectClass();
-
     //public boolean accepts(SoundObject scoreObject);
 }

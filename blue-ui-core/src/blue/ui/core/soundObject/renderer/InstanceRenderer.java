@@ -30,16 +30,11 @@ import blue.soundObject.Instance;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = Instance.class)
 public class InstanceRenderer extends LetterRenderer {
 
     public InstanceRenderer() {
         super("I");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return Instance.class;
     }
 
 }

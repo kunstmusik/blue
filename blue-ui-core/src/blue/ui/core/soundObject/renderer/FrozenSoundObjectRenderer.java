@@ -13,7 +13,7 @@ import java.awt.*;
  * @author steven yi
  * @version 1.0
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = FrozenSoundObject.class)
 public class FrozenSoundObjectRenderer implements BarRenderer {
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
@@ -109,8 +109,4 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
     public void cleanup(SoundObjectView sObjView) {
     }
 
-    @Override
-    public Class getSoundObjectClass() {
-        return FrozenSoundObject.class;
-    }
 }

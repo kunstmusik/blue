@@ -30,16 +30,11 @@ import blue.soundObject.External;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = External.class)
 public class ExternalRenderer extends LetterRenderer {
 
     public ExternalRenderer() {
         super("E");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return External.class;
     }
 
 }

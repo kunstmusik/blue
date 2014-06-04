@@ -30,16 +30,11 @@ import blue.soundObject.ObjectBuilder;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = ObjectBuilder.class)
 public class ObjectBuilderRenderer extends LetterRenderer {
 
     public ObjectBuilderRenderer() {
         super("O");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return ObjectBuilder.class;
     }
 
 }

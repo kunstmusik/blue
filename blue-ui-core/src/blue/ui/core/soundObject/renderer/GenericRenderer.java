@@ -15,7 +15,7 @@ import java.awt.*;
  * @author steven yi
  * @version 1.0
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = GenericViewable.class)
 public class GenericRenderer implements BarRenderer {
     protected int labelOffset = 5;
 
@@ -167,11 +167,6 @@ public class GenericRenderer implements BarRenderer {
 
     @Override
     public void cleanup(SoundObjectView sObjView) {
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return GenericViewable.class;
     }
 
 }

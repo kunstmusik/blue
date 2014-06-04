@@ -30,16 +30,11 @@ import blue.soundObject.PythonObject;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = PythonObject.class)
 public class PythonObjectRenderer extends LetterRenderer {
 
     public PythonObjectRenderer() {
         super("P");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return PythonObject.class;
     }
 
 }

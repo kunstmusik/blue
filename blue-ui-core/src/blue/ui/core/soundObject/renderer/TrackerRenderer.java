@@ -30,16 +30,10 @@ import blue.soundObject.TrackerObject;
  *
  * @author syi
  */
-@BarRendererPlugin
+@BarRendererPlugin(scoreObjectType = TrackerObject.class)
 public class TrackerRenderer extends LetterRenderer {
 
     public TrackerRenderer() {
         super("T");
     }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return TrackerObject.class;
-    }
-
 }

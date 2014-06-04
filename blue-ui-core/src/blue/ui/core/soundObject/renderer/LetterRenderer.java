@@ -74,7 +74,4 @@ public abstract class LetterRenderer extends GenericRenderer {
         g.drawString(letter, 3, 12);
 
     }
-
-    @Override
-    public abstract Class getSoundObjectClass();
 }
