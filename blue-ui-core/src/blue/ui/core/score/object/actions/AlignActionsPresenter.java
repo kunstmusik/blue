@@ -32,7 +32,9 @@ import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.Utilities;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
@@ -52,11 +54,14 @@ public final class AlignActionsPresenter extends AbstractAction implements Conte
                 "CTL_AlignActionsPresenter"));
         org.openide.awt.Mnemonics.setLocalizedText(menu, menu.getText());
 
+        ScoreTopComponent scoreTC = (ScoreTopComponent)WindowManager.
+                getDefault().findTopComponent("ScoreTopComponent");
+
         for (Action action : actions) {
             Action temp = action;
             if (action instanceof ContextAwareAction) {
                 temp = ((ContextAwareAction) action).createContextAwareInstance(
-                        ScoreTopComponent.getDefault().getLookup());
+                        scoreTC.getLookup());
             }
             menu.add(new JMenuItem(temp));
         }
