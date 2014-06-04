@@ -58,8 +58,8 @@ public class PopupMenuListener extends BlueMouseAdapter {
         Collection<? extends ScoreObject> soundObjects
                 = Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
 
-        Point point = SwingUtilities.convertPoint((JComponent) e.getSource(),
-                e.getPoint(), scoreTC.getScorePanel());
+        Point point = SwingUtilities.convertPoint(e.getComponent(),
+                e.getPoint(), scoreTC.getLayerPanel());
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
                 "ScoreTopComponent");
@@ -68,17 +68,20 @@ public class PopupMenuListener extends BlueMouseAdapter {
             if (soundObjects.size() > 0) {
                 List<? extends Action> list = Utilities.actionsForPath(
                         "blue/score/actions");
-
                 content.add(currentLayerGroupPanel);
                 content.add(point);
                 content.add(scoreTC.getTimeState());
+
                 final JPopupMenu menu = Utilities.actionsToPopup(list.toArray(
                         new Action[0]),
                         scoreTopComponent.getLookup());
-                content.remove(scoreTC.getTimeState());
-                content.remove(point);
-                content.remove(currentLayerGroupPanel);
-                menu.show(comp.getParent(), point.x, point.y);
+                try {
+                    menu.show(scoreTopComponent.getLayerPanel(), point.x, point.y);
+                } finally {
+                    content.remove(scoreTC.getTimeState());
+                    content.remove(point);
+                    content.remove(currentLayerGroupPanel);
+                }
             }
         } else if (currentLayerGroupPanel != null) {
 
@@ -91,10 +94,13 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 content.add(scoreTC.getTimeState());
                 final JPopupMenu menu = Utilities.actionsToPopup(actions,
                         scoreTopComponent.getLookup());
-                menu.show(comp.getParent(), point.x, point.y);
-                content.remove(scoreTC.getTimeState());
-                content.remove(point);
-                content.remove(currentLayerGroupPanel);
+                try {
+                    menu.show(scoreTopComponent.getLayerPanel(), point.x, point.y);
+                } finally {
+                    content.remove(scoreTC.getTimeState());
+                    content.remove(point);
+                    content.remove(currentLayerGroupPanel);
+                }
             }
 
 //        } else if (e.getY() < sCanvas.pObj.getTotalHeight()) {
