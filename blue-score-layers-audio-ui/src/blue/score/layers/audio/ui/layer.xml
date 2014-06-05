@@ -12,6 +12,18 @@
                 </folder>
                 <folder name="audio">
                     <folder name="actions">
+
+
+                        <file name="blue-ui-core-score-layers-soundObject-actions-PasteSoundObjectAction.shadow">
+                            <!--blue.ui.core.score.layers.soundObject.actions.PasteSoundObjectAction-->
+                            <attr name="originalFile" stringvalue="Actions/Blue/blue-ui-core-score-layers-soundObject-actions-PasteSoundObjectAction.instance"/>
+                            <attr intvalue="50" name="position"/>
+                        </file>
+                        <file name="blue-ui-core-score-layers-soundObject-actions-PasteSoundObjectAction-separatorAfter.instance">
+                            <!--blue.ui.core.score.layers.soundObject.actions.PasteAsPolyObjectAction-->
+                            <attr name="instanceCreate" newvalue="javax.swing.JSeparator"/>
+                            <attr intvalue="65" name="position"/>
+                        </file>
                         
                         <file name="blue-ui-core-score-layers-soundObject-actions-SelectLayerAction.shadow">
                             <!--blue.ui.core.score.layers.soundObject.actions.SelectLayerAction-->
