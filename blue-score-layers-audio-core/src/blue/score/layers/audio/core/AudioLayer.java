@@ -81,7 +81,9 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
             return false;
         }
         boolean retVal = super.remove(o);
-        fireAudioClipRemoved((AudioClip) o);
+        if(retVal) {
+            fireAudioClipRemoved((AudioClip) o);
+        }
         return retVal;
     }
 
