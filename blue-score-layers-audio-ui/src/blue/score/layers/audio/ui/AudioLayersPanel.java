@@ -52,6 +52,7 @@ import java.util.Map;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
 
@@ -106,7 +107,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 //                selectedClips);
 //        this.addMouseListener(listener);
 //        this.addMouseMotionListener(listener);
-
         new AudioLayersDropTargetListener(this);
 
         heightListener = new PropertyChangeListener() {
@@ -122,15 +122,12 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             layer.addPropertyChangeListener(heightListener);
             layer.addAudioLayerListener(this);
 
-
             for (AudioClip clip : layer) {
                 addClipPanel(clip, timeState, y, height);
             }
             y += height;
         }
 
-
-        
         // This is here as the existing mouselisteners prevent bubbling up of
         // events (i.e. from ToolTipManager)
         MouseAdapter mouseAdapter = new ParentDispatchingMouseAdapter(this);
@@ -162,34 +159,45 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     }
 
     @Override
-    public void layerGroupChanged(LayerGroupDataEvent event) {
-        ArrayList<Layer> layers = event.getLayers();
+    public void layerGroupChanged(final LayerGroupDataEvent event) {
+        final ArrayList<Layer> layers = event.getLayers();
 
-        if (event.getType() == LayerGroupDataEvent.DATA_ADDED) {
-            for (Layer layer : layers) {
-                ((AudioLayer) layer).addPropertyChangeListener(heightListener);
-                ((AudioLayer) layer).addAudioLayerListener(this);
+        SwingUtilities.invokeLater(new Runnable() {
 
-                for (AudioClip clip : (AudioLayer) layer) {
-                    addClipPanel(clip, timeState, 0, 0);
+            @Override
+            public void run() {
+                if (event.getType() == LayerGroupDataEvent.DATA_ADDED) {
+                    for (Layer layer : layers) {
+                        ((AudioLayer) layer).addPropertyChangeListener(
+                                heightListener);
+                        ((AudioLayer) layer).addAudioLayerListener(
+                                AudioLayersPanel.this);
+
+                        for (AudioClip clip : (AudioLayer) layer) {
+                            addClipPanel(clip, timeState, 0, 0);
+                        }
+
+                    }
+
+                } else if (event.getType() == LayerGroupDataEvent.DATA_REMOVED) {
+                    for (Layer layer : layers) {
+                        ((AudioLayer) layer).removePropertyChangeListener(
+                                heightListener);
+                        ((AudioLayer) layer).removeAudioLayerListener(
+                                AudioLayersPanel.this);
+
+                        for (AudioClip clip : (AudioLayer) layer) {
+                            removeClipPanel(clip);
+                        }
+                    }
                 }
 
+                updateAudioClipYandHeight();
+                checkSize();
+                repaint();
             }
 
-        } else if (event.getType() == LayerGroupDataEvent.DATA_REMOVED) {
-            for (Layer layer : layers) {
-                ((AudioLayer) layer).removePropertyChangeListener(heightListener);
-                ((AudioLayer) layer).removeAudioLayerListener(this);
-
-                for (AudioClip clip : (AudioLayer) layer) {
-                    removeClipPanel(clip);
-                }
-            }
-        }
-
-        updateAudioClipYandHeight();
-        checkSize();
-        repaint();
+        });
     }
 
     protected Dimension checkSize() {
@@ -389,14 +397,29 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     }
 
     @Override
-    public void audioClipAdded(AudioLayer source, AudioClip clip) {
-        Rectangle rect = getAudioLayerRect(source);
-        addClipPanel(clip, timeState, rect.y, rect.height);
+    public void audioClipAdded(final AudioLayer source, final AudioClip clip) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                Rectangle rect = getAudioLayerRect(source);
+                addClipPanel(clip, timeState, rect.y, rect.height);
+                checkSize();
+                repaint();
+            }
+        });
     }
 
     @Override
-    public void audioClipRemoved(AudioLayer source, AudioClip clip) {
-        removeClipPanel(clip);
+    public void audioClipRemoved(final AudioLayer source, final AudioClip clip) {
+        System.out.println("audioClipRemoved");
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                removeClipPanel(clip);
+                checkSize();
+                repaint();
+            }
+        });
     }
 
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
