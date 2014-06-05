@@ -19,7 +19,6 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
@@ -32,7 +31,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
@@ -46,11 +44,8 @@ import org.openide.util.Utilities;
 @ActionRegistration(
         displayName = "#CTL_SelectLayerAction")
 @Messages("CTL_SelectLayerAction=Select Layer")
-@ActionReferences({
-@ActionReference(path = "blue/score/layers/audio/actions",
-        position = 80),
 @ActionReference(path = "blue/score/layers/soundObject/actions",
-        position = 80) })
+        position = 80) 
 public final class SelectLayerAction extends AbstractAction
         implements ContextAwareAction {
 

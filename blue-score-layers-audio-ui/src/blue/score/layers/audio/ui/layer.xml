@@ -10,6 +10,32 @@
                         <attr name="position" intvalue="200"/>
                     </file>
                 </folder>
+                <folder name="audio">
+                    <folder name="actions">
+                        
+                        <file name="blue-ui-core-score-layers-soundObject-actions-SelectLayerAction.shadow">
+                            <!--blue.ui.core.score.layers.soundObject.actions.SelectLayerAction-->
+                            <attr name="originalFile" stringvalue="Actions/Blue/blue-ui-core-score-layers-soundObject-actions-SelectLayerAction.instance"/>
+                            <attr intvalue="80" name="position"/>
+                        </file>
+                        <file name="blue-ui-core-score-layers-soundObject-actions-SelectAllBeforeAction.shadow">
+                            <!--blue.ui.core.score.layers.soundObject.actions.SelectAllBeforeAction-->
+                            <attr name="originalFile" stringvalue="Actions/Blue/blue-ui-core-score-layers-soundObject-actions-SelectAllBeforeAction.instance"/>
+                            <attr intvalue="90" name="position"/>
+                        </file>
+                        <file name="blue-ui-core-score-layers-soundObject-actions-SelectAllAfterAction.shadow">
+                            <!--blue.ui.core.score.layers.soundObject.actions.SelectAllAfterAction-->
+                            <attr name="originalFile" stringvalue="Actions/Blue/blue-ui-core-score-layers-soundObject-actions-SelectAllAfterAction.instance"/>
+                            <attr intvalue="100" name="position"/>
+                        </file>
+                        <file name="blue-ui-core-score-layers-soundObject-actions-SelectAllAfterAction-separatorAfter.instance">
+                            <!--blue.ui.core.score.layers.soundObject.actions.SelectAllAfterAction-->
+                            <attr name="instanceCreate" newvalue="javax.swing.JSeparator"/>
+                            <attr intvalue="105" name="position"/>
+                        </file>
+                        
+                    </folder>
+                </folder>
             </folder>
         </folder>
     </folder>

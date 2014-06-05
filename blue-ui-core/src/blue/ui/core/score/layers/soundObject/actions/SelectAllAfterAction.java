@@ -19,14 +19,12 @@
  */
 package blue.ui.core.score.layers.soundObject.actions;
 
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
-import blue.ui.core.score.ScoreTopComponent;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -35,7 +33,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Lookup;
@@ -49,11 +46,8 @@ import org.openide.util.Utilities;
 @ActionRegistration(
         displayName = "#CTL_SelectAllAfterAction")
 @Messages("CTL_SelectAllAfterAction=Select All After")
-@ActionReferences({
-    @ActionReference(path = "blue/score/layers/audio/actions",
-            position = 100, separatorAfter = 105),
-    @ActionReference(path = "blue/score/layers/soundObject/actions",
-            position = 100, separatorAfter = 105)})
+@ActionReference(path = "blue/score/layers/soundObject/actions",
+        position = 100, separatorAfter = 105)
 public final class SelectAllAfterAction extends AbstractAction
         implements ContextAwareAction {
 
@@ -85,7 +79,6 @@ public final class SelectAllAfterAction extends AbstractAction
                 / timeState.getPixelSecond();
         List<ScoreObject> newSelected = new ArrayList<>();
         List<Layer> allLayers = scorePath.getAllLayers();
-
 
         for (Layer layer : allLayers) {
             if (layer instanceof ScoreObjectLayer) {
