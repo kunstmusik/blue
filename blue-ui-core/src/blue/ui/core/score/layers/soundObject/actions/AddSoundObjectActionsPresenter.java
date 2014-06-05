@@ -23,6 +23,7 @@ import blue.BlueSystem;
 import blue.score.TimeState;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
 import blue.undo.BlueUndoManager;
@@ -48,6 +49,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
@@ -77,6 +79,9 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         int sLayerIndex = sTimeCanvas.getPolyObject().getLayerNumForY(
                 (int) p.getY());
 
+        ScoreTopComponent stc = (ScoreTopComponent) WindowManager.getDefault().
+                findTopComponent("ScoreTopComponent");
+
         try {
 
             Class c = (Class) ((JMenuItem) e.getSource()).getClientProperty(
@@ -87,7 +92,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
                 ((PolyObject)sObj).newLayerAt(0);
             }
             
-            TimeState timeState = sTimeCanvas.getPolyObject().getTimeState();
+            TimeState timeState = stc.getTimeState();
 
             float start = (float) p.getX() / timeState.getPixelSecond();
 
