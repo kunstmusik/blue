@@ -20,6 +20,7 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.event.SelectionEvent;
+import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.ScoreObjectEditor;
@@ -27,6 +28,8 @@ import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -99,6 +102,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     Lookup.Result<SoundObject> result = null;
 
+    PropertyChangeListener projectListener;
+
     private ScoreObjectEditorTopComponent() {
         initComponents();
         setName(NbBundle.getMessage(ScoreObjectEditorTopComponent.class,
@@ -128,6 +133,15 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
         setEditingLibraryObject(null);
         setActivatedNodes(null);
+
+        projectListener = new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                editSoundObject(null);
+
+            }
+        };
     }
 
     /**
@@ -146,6 +160,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
     // End of variables declaration//GEN-END:variables
     @Override
     public void componentOpened() {
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                projectListener);
         result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
         result.addLookupListener(this);
         resultChanged(null);
@@ -153,6 +169,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     @Override
     public void componentClosed() {
+        BlueProjectManager.getInstance().removePropertyChangeListener(
+                projectListener);
         result.removeLookupListener(this);
     }
 
@@ -239,10 +257,9 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
                     NotifyDescriptor.ERROR_MESSAGE, null, null));
             return;
         }
-        
+
         editor.editScoreObject(sObjToEdit);
         cardLayout.show(editPanel, editor.getClass().getName());
-
 
 //        Logger.getLogger(ScoreObjectEditorTopComponent.class.getName()).fine("SoundObject Selected: " + className);;
     }

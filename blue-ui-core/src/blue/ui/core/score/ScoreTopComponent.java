@@ -27,6 +27,7 @@ import blue.gui.ScrollerButton;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.score.Score;
+import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
@@ -257,6 +258,10 @@ public final class ScoreTopComponent extends TopComponent
         this.data = currentData;
         AutomationManager.getInstance().setData(this.data);
 
+        for(ScoreObject scoreObj : getLookup().lookupAll(ScoreObject.class)) {
+            content.remove(scoreObj);
+        }
+        
         if (data != null) {
 
             Tempo tempo = data.getScore().getTempo();
