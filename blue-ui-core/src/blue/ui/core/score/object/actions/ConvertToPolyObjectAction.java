@@ -140,7 +140,7 @@ public final class ConvertToPolyObjectAction extends AbstractAction
 
     @Override
     public boolean isEnabled() {
-        Layer layer = ((SoundLayer)scorePath.getGlobalLayerForY(p.y));
+        Layer layer = scorePath.getGlobalLayerForY(p.y);
         return (soundObjects.size() > 0
                 && scoreObjects.size() == soundObjects.size()
                 && layer != null
