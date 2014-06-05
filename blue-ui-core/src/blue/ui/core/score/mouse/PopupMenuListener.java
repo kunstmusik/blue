@@ -59,7 +59,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 = Utilities.actionsGlobalContext().lookupAll(ScoreObject.class);
 
         Point point = SwingUtilities.convertPoint(e.getComponent(),
-                e.getPoint(), scoreTC.getLayerPanel());
+                e.getPoint(), scoreTC.getScorePanel());
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
                 "ScoreTopComponent");
@@ -76,7 +76,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
                         new Action[0]),
                         scoreTopComponent.getLookup());
                 try {
-                    menu.show(scoreTopComponent.getLayerPanel(), point.x, point.y);
+                    menu.show(scoreTopComponent.getScorePanel(), point.x, point.y);
                 } finally {
                     content.remove(scoreTC.getTimeState());
                     content.remove(point);
@@ -95,7 +95,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
                 final JPopupMenu menu = Utilities.actionsToPopup(actions,
                         scoreTopComponent.getLookup());
                 try {
-                    menu.show(scoreTopComponent.getLayerPanel(), point.x, point.y);
+                    menu.show(scoreTopComponent.getScorePanel(), point.x, point.y);
                 } finally {
                     content.remove(scoreTC.getTimeState());
                     content.remove(point);
