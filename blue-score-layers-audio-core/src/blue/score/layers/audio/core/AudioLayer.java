@@ -439,4 +439,16 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         return super.contains(object);
     }
 
+    public float getMaxTime() {
+        float max = 0.0f;
+
+        for (AudioClip clip : this) {
+            float end = clip.getStartTime() + clip.getSubjectiveDuration();
+            if(end > max) {
+                max = end;
+            }
+        }
+        return max;
+    }
+
 }

@@ -247,15 +247,24 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         return runningHeight * Layer.LAYER_HEIGHT;
     }
 
-    public int getMaxTime() {
-        return 0;
+    public final float getMaxTime() {
+        float max = 0.0f;
+        float temp;
+
+        for (AudioLayer tempLayer : this) {
+            temp = tempLayer.getMaxTime();
+            if (temp > max) {
+                max = temp;
+            }
+        }
+        return max;
     }
 
     public int getLayerNumForY(int y) {
         int runningY = 0;
 
         for (int i = 0; i < this.size(); i++) {
-            AudioLayer layer = (AudioLayer) this.get(i);
+            AudioLayer layer = this.get(i);
             runningY += layer.getAudioLayerHeight();
 
             if (runningY > y) {
