@@ -19,6 +19,7 @@
  */
 package blue.ui.filemanager;
 
+import java.awt.BorderLayout;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -64,8 +65,9 @@ public final class BlueFileManagerTopComponent extends TopComponent
         associateLookup(ExplorerUtils.createLookup(explorerManager,
                 getActionMap()));
         explorerManager.setRootContext(new FileManagerRootNode(new FileManagerRoots()));
-        BeanTreeView btv = (BeanTreeView)scrollPane;
+        BeanTreeView btv = new BeanTreeView();
         btv.setRootVisible(false);
+        add(btv, BorderLayout.CENTER);
         
     }
 
@@ -77,22 +79,10 @@ public final class BlueFileManagerTopComponent extends TopComponent
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        scrollPane = new BeanTreeView();
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(scrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
-        );
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables
     @Override
     public void componentOpened() {

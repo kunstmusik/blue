@@ -50,12 +50,6 @@ public class FileNode extends AbstractNode {
         setDisplayName(useFullName ? f.getAbsolutePath() : f.getName());
     }
 
-    @Override
-    public String getHtmlDisplayName() {
-        String name = useFullName ? file.getAbsolutePath() : file.getName();
-        return "<font color='!textText'>" + name + "</font>";
-    }
-
     static class FileChildFactory extends ChildFactory<File> {
 
         private final File file;
