@@ -63,8 +63,6 @@ public final class BlueFileManagerTopComponent extends TopComponent
         setToolTipText(Bundle.HINT_BlueFileManagerTopComponent());
         associateLookup(ExplorerUtils.createLookup(explorerManager,
                 getActionMap()));
-        explorerManager.getRootContext().setDisplayName(
-                "Roots");
         explorerManager.setRootContext(new FileManagerRootNode(new FileManagerRoots()));
         BeanTreeView btv = (BeanTreeView)scrollPane;
         btv.setRootVisible(false);
