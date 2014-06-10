@@ -54,7 +54,7 @@ public class FileManagerRootNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(File key) {
-            return new FileNode(key, true);
+            return new FileNode(key, true, roots);
         }
 
     }

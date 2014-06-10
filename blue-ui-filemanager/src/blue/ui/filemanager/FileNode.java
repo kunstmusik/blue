@@ -19,10 +19,13 @@
  */
 package blue.ui.filemanager;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -36,26 +39,45 @@ public class FileNode extends AbstractNode {
 
     private final File file;
     private boolean useFullName;
+    private final FileManagerRoots roots;
 
-    public FileNode(File f) {
-        this(f, false);
-    }
-
-    public FileNode(File f, boolean useFullName) {
+    public FileNode(File f, boolean useFullName, FileManagerRoots roots) {
         super(f.isDirectory()
-                ? Children.create(new FileChildFactory(f), true)
+                ? Children.create(new FileChildFactory(f, roots), true)
                 : Children.LEAF);
         this.file = f;
         this.useFullName = useFullName;
+        this.roots = roots;
         setDisplayName(useFullName ? f.getAbsolutePath() : f.getName());
     }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        if(this.isLeaf() || roots.contains(file)) {
+            return null;
+        }
+
+        return new Action[]{
+            new AbstractAction("Whoah!") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+                
+            }
+        };
+    }
+
+    
 
     static class FileChildFactory extends ChildFactory<File> {
 
         private final File file;
+        private final FileManagerRoots roots;
 
-        public FileChildFactory(File f) {
+        public FileChildFactory(File f, FileManagerRoots roots) {
             this.file = f;
+            this.roots = roots;
         }
 
         @Override
@@ -73,7 +95,7 @@ public class FileNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(File key) {
-            return new FileNode(key);
+            return new FileNode(key, false, roots);
         }
 
     }

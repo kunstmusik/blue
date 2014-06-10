@@ -44,4 +44,12 @@ public class FileManagerRoots {
         retVal.addAll(customRoots);
         return retVal;
     }
+
+    public boolean staticRootsContains(File f) {
+        return staticRoots.contains(f);
+    }
+    
+    public boolean contains(File f) {
+        return staticRoots.contains(f) || customRoots.contains(f);
+    }
 }
