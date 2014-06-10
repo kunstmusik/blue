@@ -64,8 +64,6 @@ public class Installer extends ModuleInstall {
                         "mac");
 
                 Object[] macEntries = null;
-                // Necessary for Node renderers to use swing rendering
-                System.setProperty("nb.useSwingHtmlRendering", "true");
                 if (isMac) {
                     try {
                         System.setProperty("apple.laf.useScreenMenuBar", "true");

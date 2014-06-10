@@ -251,7 +251,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // being very difficult to see
         table.put("textHighlight", getTranslucentColor(getTextHighlightColor(),
                 128));
-        table.put("text", getWhite());
+        table.put("text", getBlack());
     }
 
     // helper to simplify creation of translucent colors
