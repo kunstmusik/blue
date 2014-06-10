@@ -172,6 +172,7 @@ public final class BlueLFCustoms extends LFCustoms {
             "nbProgressBar.popupText.foreground", UIManager.getColor("TextField.foreground"),
             "nbProgressBar.popupText.selectBackground", UIManager.getColor("List.selectionBackground"),
             "nbProgressBar.popupText.selectForeground", UIManager.getColor("List.selectionForeground"),                    
+            "nb.dark.theme", true,
 
         }; //NOI18N
 
