@@ -19,17 +19,16 @@
  */
 package blue.ui.filemanager;
 
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Utilities;
 
 /**
  *
@@ -53,22 +52,26 @@ public class FileNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        if(this.isLeaf() || roots.contains(file)) {
+        List<? extends Action> list = null;
+
+        if(roots.customRootsContains(file)) {
+            list = Utilities.actionsForPath( "blue/fileManager/roots/actions");
+        } else if(!roots.staticRootsContains(file)) {
+            list = Utilities.actionsForPath( "blue/fileManager/folder/actions");
+        } else {
             return null;
         }
-
-        return new Action[]{
-            new AbstractAction("Whoah!") {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-                
-            }
-        };
+        
+        return list.toArray(new Action[0]);
     }
 
-    
+    public File getFile() {
+        return file;
+    }
+
+    public FileManagerRoots getRoots() {
+        return roots;
+    }
 
     static class FileChildFactory extends ChildFactory<File> {
 

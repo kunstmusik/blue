@@ -23,6 +23,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import org.openide.util.Exceptions;
+import org.openide.util.NbPreferences;
 
 /**
  *
@@ -30,12 +36,16 @@ import java.util.List;
  */
 public class FileManagerRoots {
 
-    List<File> staticRoots = new ArrayList<File>();
-    List<File> customRoots = new ArrayList<File>();
+    List<File> staticRoots = new ArrayList<>();
+    List<File> customRoots = new ArrayList<>();
+
+    transient List<ChangeListener> listeners = new ArrayList<>();
 
     public FileManagerRoots() {
         staticRoots.addAll(Arrays.asList(File.listRoots()));
         staticRoots.add(new File(System.getProperty("user.home")));
+
+        loadCustomRoots();
     }
 
     public List<File> getRoots() {
@@ -48,8 +58,85 @@ public class FileManagerRoots {
     public boolean staticRootsContains(File f) {
         return staticRoots.contains(f);
     }
+
+    public boolean customRootsContains(File file) {
+        return customRoots.contains(file);
+    }
     
     public boolean contains(File f) {
         return staticRoots.contains(f) || customRoots.contains(f);
     }
+
+    public void addRoot(File f) {
+        if (!f.isDirectory() || contains(f)) {
+            return;
+        }
+
+        customRoots.add(f);
+        fireChange(new ChangeEvent(this));
+        saveCustomRoots();
+    }
+
+    public void removeRoot(File f) {
+        if(customRoots.contains(f)) {
+            customRoots.remove(f);
+            fireChange(new ChangeEvent(this));
+            saveCustomRoots();
+        }
+    }
+
+    /* Listener code */
+    public void addChangeListener(ChangeListener cl) {
+        listeners.add(cl);
+    }
+
+    public void removeChangeListener(ChangeListener cl) {
+        listeners.remove(cl);
+    }
+
+    public void fireChange(ChangeEvent ce) {
+        for (ChangeListener listener : listeners) {
+            listener.stateChanged(ce);
+        }
+    }
+
+    private void loadCustomRoots() {
+        Preferences p = NbPreferences.forModule(FileManagerRoots.class);
+
+        int i = 0;
+
+        while (true) {
+            String root = p.get("customRoot" + i, null);
+            if (root == null) {
+                break;
+            }
+            File f = new File(root);
+            if (f.exists() && f.isDirectory()) {
+                customRoots.add(f);
+            }
+            i++;
+        }
+    }
+
+    private void saveCustomRoots() {
+        Preferences p = NbPreferences.forModule(FileManagerRoots.class);
+        try {
+            p.clear();
+        } catch (BackingStoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        int i = 0;
+        for (File f : customRoots) {
+            p.put("customRoot" + i, f.getAbsolutePath());
+            i++;
+        }
+
+        try {
+            p.flush();
+        } catch (BackingStoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
 }

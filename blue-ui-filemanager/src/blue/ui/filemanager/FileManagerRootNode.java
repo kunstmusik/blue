@@ -20,7 +20,10 @@
 package blue.ui.filemanager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -44,6 +47,13 @@ public class FileManagerRootNode extends AbstractNode {
 
         private FileManagerRootChildFactory(FileManagerRoots roots) {
             this.roots = roots;
+            roots.addChangeListener(new ChangeListener() {
+
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    refresh(true);
+                }
+            });
         }
 
         @Override
@@ -56,6 +66,6 @@ public class FileManagerRootNode extends AbstractNode {
         protected Node createNodeForKey(File key) {
             return new FileNode(key, true, roots);
         }
-
+        
     }
 }
