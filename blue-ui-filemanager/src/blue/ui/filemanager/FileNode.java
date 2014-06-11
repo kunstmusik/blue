@@ -29,6 +29,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Utilities;
+import org.openide.util.lookup.Lookups;
 
 /**
  *
@@ -43,7 +44,7 @@ public class FileNode extends AbstractNode {
     public FileNode(File f, boolean useFullName, FileManagerRoots roots) {
         super(f.isDirectory()
                 ? Children.create(new FileChildFactory(f, roots), true)
-                : Children.LEAF);
+                : Children.LEAF, Lookups.singleton(f));
         this.file = f;
         this.useFullName = useFullName;
         this.roots = roots;
