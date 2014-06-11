@@ -21,7 +21,6 @@ package blue.ui.core.score.mouse;
 
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
-import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
 import blue.ui.utilities.UiUtilities;
@@ -31,11 +30,9 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.Action;
-import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import org.openide.util.Utilities;
-import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 
 /**
@@ -66,8 +63,7 @@ public class PopupMenuListener extends BlueMouseAdapter {
 
         if (currentScoreObjectView != null) {
             if (soundObjects.size() > 0) {
-                List<? extends Action> list = Utilities.actionsForPath(
-                        "blue/score/actions");
+                List<? extends Action> list = Utilities.actionsForPath( "blue/score/actions");
                 content.add(currentLayerGroupPanel);
                 content.add(point);
                 content.add(scoreTC.getTimeState());
