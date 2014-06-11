@@ -411,7 +411,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void audioClipRemoved(final AudioLayer source, final AudioClip clip) {
-        System.out.println("audioClipRemoved");
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
