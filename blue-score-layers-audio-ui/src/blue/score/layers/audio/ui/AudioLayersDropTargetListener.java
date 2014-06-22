@@ -33,6 +33,7 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
+import java.awt.dnd.InvalidDnDOperationException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -75,7 +76,9 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
         } else {
             Node node = NodeTransfer.node(dtde.getTransferable(),
                     NodeTransfer.DND_COPY);
-            if (node != null) {
+            File f = node.getLookup().lookup(File.class);
+
+            if (node != null && f != null && f.isFile()) {
                 dtde.acceptDrag(DnDConstants.ACTION_COPY);
             } else {
                 dtde.rejectDrag();
@@ -112,15 +115,15 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
      */
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        
+
         Node node = NodeTransfer.node(dtde.getTransferable(),
                 NodeTransfer.DND_COPY);
         if (node != null) {
 
             File f = node.getLookup().lookup(File.class);
 
-            if(f == null) {
-                dtde.rejectDrop();
+            if(f == null || !f.isFile()) {
+                dtde.dropComplete(false);
                 return;
             }
 
@@ -249,7 +252,8 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
                 return;
             }
             dtde.rejectDrop();
-        } catch (UnsupportedFlavorException | IOException e) {
+        } catch (UnsupportedFlavorException | IOException | 
+                InvalidDnDOperationException e) {
             e.printStackTrace();
             dtde.rejectDrop();
         }        
