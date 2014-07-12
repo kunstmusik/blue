@@ -19,14 +19,12 @@
  */
 package blue.ui.core.soundObject.renderer;
 
-import java.util.Arrays;
+import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 
 /**
  *
@@ -36,7 +34,7 @@ public class BarRendererCache {
 
     private static BarRendererCache instance = null;
 
-    private final Map<Class, String> barRenderersMap = new HashMap<>();
+    private final Map<Class, LazyPlugin<BarRenderer>> barRenderersMap = new HashMap<>();
     private final Map<Class, BarRenderer> barRenderersCache = new HashMap<>();
 
     private BarRendererCache() {
@@ -46,22 +44,14 @@ public class BarRendererCache {
         if (instance == null) {
             instance = new BarRendererCache();
 
-            FileObject rendererFObjs[] = FileUtil.getConfigFile(
-                    "blue/score/barRenderers").getChildren();
+            List<LazyPlugin<BarRenderer>> plugins = LazyPluginFactory.loadPlugins(
+                    "blue/score/barRenderers", BarRenderer.class,
+                    new ClassAssociationProcessor("scoreObjectType"));
 
-            List<FileObject> orderedRendererFObjs = FileUtil.getOrder(
-                    Arrays.asList(rendererFObjs), true);
-
-            ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
-
-            for (FileObject fObj : orderedRendererFObjs) {
-                try {
-                    instance.barRenderersMap.put(cl.loadClass((String) fObj.getAttribute(
-                            "scoreObjectType")),
-                            fObj.getPath());
-                } catch (ClassNotFoundException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+            for (LazyPlugin<BarRenderer> plugin : plugins) {
+                instance.barRenderersMap.put(
+                        (Class) plugin.getMetaData("association"),
+                        plugin);
             }
         }
         return instance;
@@ -75,9 +65,8 @@ public class BarRendererCache {
 
             for (Class c : barRenderersMap.keySet()) {
                 if (c.isAssignableFrom(clazz)) {
-                    String path = barRenderersMap.get(c);
-                    renderer = FileUtil.getConfigObject(path,
-                            BarRenderer.class);
+                    LazyPlugin<BarRenderer> plugin = barRenderersMap.get(c);
+                    renderer = plugin.getInstance();
                     barRenderersCache.put(clazz, renderer);
                     break;
                 }

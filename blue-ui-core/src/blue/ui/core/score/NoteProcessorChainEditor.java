@@ -25,6 +25,8 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
 import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
@@ -312,19 +314,17 @@ public class NoteProcessorChainEditor extends JComponent {
         public NoteProcessorPopup(NoteProcessorChainEditor npcEditor) {
             this.npcEditor = npcEditor;
 
-            FileObject npFiles[] = FileUtil.getConfigFile("blue/noteProcessors").getChildren();
-            List<FileObject> ordereNpFiles
-                    = FileUtil.getOrder(Arrays.asList(npFiles), true);
-
+            List<LazyPlugin<NoteProcessor>> plugins = LazyPluginFactory.
+                    loadPlugins("blue/noteProcessors", NoteProcessor.class);
+            
             JMenuItem temp;
 
             JMenu insertNoteProcessor = new JMenu("Insert Note Processor");
 
-            for (FileObject fObj : ordereNpFiles) {
-                String name = (String) fObj.getAttribute("displayName");
+            for (LazyPlugin<NoteProcessor> plugin : plugins) {
                 temp = new JMenuItem();
-                temp.setText(name);
-                temp.setActionCommand(fObj.getPath());
+                temp.setText(plugin.getDisplayName());
+                temp.putClientProperty("plugin", plugin);
                 temp.addActionListener(this);
                 insertNoteProcessor.add(temp);
             }
@@ -486,8 +486,13 @@ public class NoteProcessorChainEditor extends JComponent {
 
         @Override
         public void actionPerformed(ActionEvent ae) {
-            NoteProcessor npTemplate = FileUtil.getConfigObject(ae.getActionCommand(),
-                    NoteProcessor.class);
+
+
+            LazyPlugin<NoteProcessor> plugin = (LazyPlugin<NoteProcessor>) 
+                        ((JMenuItem)ae.getSource()).getClientProperty("plugin");
+
+            NoteProcessor npTemplate = plugin.getInstance();
+
             try {
                 NoteProcessor np = npTemplate.getClass().newInstance();
                 npcEditor.addNoteProcessor(np);

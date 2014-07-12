@@ -31,6 +31,9 @@ import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
+import blue.ui.nbutilities.lazyplugin.AttributeFilter;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
@@ -38,7 +41,6 @@ import blue.utility.ScoreUtilities;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -54,12 +56,9 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import org.netbeans.api.settings.ConvertAsProperties;
-import org.netbeans.api.settings.FactoryMethod;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.AbstractLookup;
@@ -126,20 +125,16 @@ public final class BlueLiveTopComponent extends TopComponent
 
     public BlueLiveTopComponent() {
 
-        FileObject sObjFiles[] = FileUtil.getConfigFile(
-                "blue/score/soundObjects").getChildren();
-        List<FileObject> orderedSObjFiles = FileUtil.getOrder(
-                Arrays.asList(sObjFiles), true);
-
+        List<LazyPlugin<SoundObject>> plugins = LazyPluginFactory.loadPlugins(
+                "blue/score/soundObjects", SoundObject.class, 
+                new AttributeFilter("live"));
+        
         liveSoundObjectTemplates = new HashMap<>();
 
-        for (FileObject fObj : orderedSObjFiles) {
-            if (Boolean.TRUE.equals(fObj.getAttribute("live"))) {
-                liveSoundObjectTemplates.put(
-                        FileUtil.getConfigObject(fObj.getPath(),
-                                SoundObject.class).getClass(),
-                        (String) fObj.getAttribute("displayName"));
-            }
+        for (LazyPlugin<SoundObject> plugin : plugins) {
+            liveSoundObjectTemplates.put(
+                        plugin.getInstance().getClass(),
+                        plugin.getDisplayName());
         }
 
         initComponents();

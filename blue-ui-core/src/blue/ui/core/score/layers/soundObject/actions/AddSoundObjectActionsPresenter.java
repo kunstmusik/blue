@@ -26,12 +26,13 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +43,6 @@ import javax.swing.JMenuItem;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.ContextAwareAction;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -82,11 +81,16 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         ScoreTopComponent stc = (ScoreTopComponent) WindowManager.getDefault().
                 findTopComponent("ScoreTopComponent");
 
+        LazyPlugin<SoundObject> plugin = (LazyPlugin<SoundObject>)
+                ((JMenuItem)e.getSource()).getClientProperty(
+                "plugin");
+
+        
+        
         try {
 
-            Class c = (Class) ((JMenuItem) e.getSource()).getClientProperty(
-                    "sObjClass");
-            SoundObject sObj = (SoundObject) c.newInstance();
+            SoundObject sObj = (SoundObject) plugin.getInstance().
+                    getClass().newInstance();
 
             if(sObj instanceof PolyObject) {
                 ((PolyObject)sObj).newLayerAt(0);
@@ -118,32 +122,17 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
         if (menu == null) {
             menu = new JMenu("Add SoundObject");
 
-            FileObject sObjFiles[] = FileUtil.getConfigFile(
-                    "blue/score/soundObjects").getChildren();
-            List<FileObject> orderedSObjFiles = FileUtil.getOrder(
-                    Arrays.asList(sObjFiles), true);
-
-            for (FileObject fObj : orderedSObjFiles) {
-
-                if(fObj.isFolder()) {
-                    continue;
-                }
-                
-                String displayName = (String) fObj.getAttribute(("displayName"));
-
-                SoundObject sObj = FileUtil.getConfigObject(fObj.getPath(),
-                        SoundObject.class);
-
-//                if ("PolyObject".equals(displayName)) {
-//                    continue;
-//                }
+            List<LazyPlugin<SoundObject>> plugins = LazyPluginFactory.loadPlugins(
+                "blue/score/soundObjects", SoundObject.class);
+            
+            for (LazyPlugin<SoundObject> plugin : plugins) {
 
                 JMenuItem temp = new JMenuItem();
                 temp.setText(
                         BlueSystem.getString("soundLayerPopup.addNew") + " "
-                        + displayName);
-                temp.putClientProperty("sObjClass", sObj.getClass());
-                temp.setActionCommand(displayName);
+                        + plugin.getDisplayName());
+                temp.putClientProperty("plugin", plugin);
+                temp.setActionCommand(plugin.getDisplayName());
                 temp.addActionListener(this);
                 menu.add(temp);
             }

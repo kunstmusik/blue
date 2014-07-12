@@ -33,6 +33,8 @@ import blue.orchestra.BlueSynthBuilder;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
 import blue.settings.GeneralSettings;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
@@ -67,7 +69,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -96,8 +97,6 @@ import javax.swing.table.TableModel;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
@@ -827,9 +826,8 @@ public class ArrangementEditPanel extends JComponent
 
         public AddInstrumentPopup() {
 
-            FileObject instrFiles[] = FileUtil.getConfigFile("blue/instruments").getChildren();
-            List<FileObject> orderedInstrFiles
-                    = FileUtil.getOrder(Arrays.asList(instrFiles), true);
+            List<LazyPlugin<Instrument>> plugins = LazyPluginFactory.loadPlugins(
+                    "blue/instruments", Instrument.class);
 
             JMenuItem temp;
 
@@ -838,27 +836,27 @@ public class ArrangementEditPanel extends JComponent
             ActionListener al = new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    fireAddInstrument(e.getActionCommand());
+                    LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>) 
+                            ((JMenuItem) e.getSource()).getClientProperty(
+                            "plugin");
+
+                    fireAddInstrument(plugin.getInstance());
                 }
             };
 
-            for (FileObject fObj : orderedInstrFiles) {
-                String name = (String) fObj.getAttribute("displayName");
+            for (LazyPlugin<Instrument> plugin : plugins) {
                 temp = new JMenuItem();
-                temp.setText(name);
-                temp.setActionCommand(fObj.getPath());
+                temp.setText(plugin.getDisplayName());
+                temp.putClientProperty("plugin", plugin);
                 temp.addActionListener(al);
                 this.add(temp);
             }
-
 
             pack();
 
         }
 
-        private void fireAddInstrument(String objectPath) {
-            Instrument instrTemplate = FileUtil.getConfigObject(objectPath,
-                    Instrument.class);
+        private void fireAddInstrument(Instrument instrTemplate) {
             try {
                 Instrument np = instrTemplate.getClass().newInstance();
                 addInstrument(np);

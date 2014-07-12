@@ -2,11 +2,15 @@ package blue.ui.core.orchestra;
 
 import blue.orchestra.Instrument;
 import blue.orchestra.editor.InstrumentEditor;
+import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -34,7 +38,7 @@ public final class InstrumentEditPanel extends JComponent {
 
     JPanel editPanel = new JPanel();
 
-    HashMap<Class, String> instrEditorMap = new HashMap<>();
+    HashMap<Class, LazyPlugin<InstrumentEditor>> instrEditorMap = new HashMap<>();
     HashMap<Class, InstrumentEditor> instrEditorCache = new HashMap<>();
 
     CardLayout cardLayout = new CardLayout();
@@ -96,20 +100,15 @@ public final class InstrumentEditPanel extends JComponent {
 
         setEditingLibraryObject(false);
 
-        FileObject sObjEditorFiles[] = FileUtil.getConfigFile(
-                "blue/instrumentEditors").getChildren();
+        List<LazyPlugin<InstrumentEditor>> plugins = 
+                LazyPluginFactory.loadPlugins("blue/instrumentEditors",
+                        InstrumentEditor.class, 
+                        new ClassAssociationProcessor("instrumentType"));
 
-        ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
-        
-        for (FileObject fObj : sObjEditorFiles) {
+        for (LazyPlugin<InstrumentEditor> plugin : plugins) {
 
-            try {
-                instrEditorMap.put(cl.loadClass((String) fObj.getAttribute(
-                        "instrumentType")),
-                        fObj.getPath());
-            } catch (ClassNotFoundException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+            instrEditorMap.put((Class)plugin.getMetaData("association"), 
+                    plugin);
         }
 
     }
@@ -147,9 +146,8 @@ public final class InstrumentEditPanel extends JComponent {
         if (instrEditor == null) {
             for (Class c : instrEditorMap.keySet()) {
                 if (c.isAssignableFrom(instrClass)) {
-                    String path = instrEditorMap.get(c);
-                    instrEditor = FileUtil.getConfigObject(path,
-                            InstrumentEditor.class);
+                    LazyPlugin<InstrumentEditor> plugin = instrEditorMap.get(c);
+                    instrEditor = plugin.getInstance();
                     editPanel.add(instrEditor, instrEditor.getClass().getName());
                     break;
                 }

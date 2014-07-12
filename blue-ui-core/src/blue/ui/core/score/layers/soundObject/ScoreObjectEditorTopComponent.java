@@ -25,6 +25,9 @@ import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.soundObject.editor.ScoreObjectEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
+import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -32,6 +35,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -40,9 +44,6 @@ import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -95,7 +96,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     SoundObject currentSoundObject;
 
-    Map<Class, String> sObjEditorMap = new HashMap<>();
+    Map<Class, LazyPlugin<ScoreObjectEditor>> sObjEditorMap = new HashMap<>();
     Map<Class, ScoreObjectEditor> editors = new HashMap<>();
 
     JPanel emptyPanel = new JPanel();
@@ -117,18 +118,15 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         this.add(editPanel, BorderLayout.CENTER);
         editPanel.add(emptyPanel, "none");
 
-        FileObject sObjEditorFiles[] = FileUtil.getConfigFile(
-                "blue/score/objectEditors").getChildren();
-        ClassLoader cl = Lookup.getDefault().lookup(ClassLoader.class);
 
-        for (FileObject fObj : sObjEditorFiles) {
-            try {
-                sObjEditorMap.put(cl.loadClass((String) fObj.getAttribute(
-                        "scoreObjectType")),
-                        fObj.getPath());
-            } catch (ClassNotFoundException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+        List<LazyPlugin<ScoreObjectEditor>> plugins = LazyPluginFactory.
+                loadPlugins("blue/score/objectEditors", 
+                        ScoreObjectEditor.class, 
+                        new ClassAssociationProcessor("scoreObjectType"));
+        
+        for (LazyPlugin<ScoreObjectEditor> plugin : plugins) {
+                sObjEditorMap.put(
+                        (Class)plugin.getMetaData("association"), plugin);
         }
 
         setEditingLibraryObject(null);
@@ -240,9 +238,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         if (editor == null) {
             for (Class c : sObjEditorMap.keySet()) {
                 if (c.isAssignableFrom(sObjToEdit.getClass())) {
-                    String path = sObjEditorMap.get(c);
-                    editor = FileUtil.getConfigObject(path,
-                            ScoreObjectEditor.class);
+                    LazyPlugin<ScoreObjectEditor> plugin = sObjEditorMap.get(c);
+                    editor = plugin.getInstance();
                     editPanel.add(editor, editor.getClass().getName());
                     break;
                 }

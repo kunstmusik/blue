@@ -23,6 +23,8 @@ import blue.score.ScoreObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.mouse.BlueMouseAdapter;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
@@ -58,19 +60,13 @@ public class ScoreMouseListener extends MouseAdapter {
         BlueMouseAdapter.scoreTC = tc;
         BlueMouseAdapter.content = content;
 
-        FileObject sObjFiles[] = FileUtil.getConfigFile(
-                "blue/score/mouse").getChildren();
-        List<FileObject> orderedSObjFiles = FileUtil.getOrder(
-                Arrays.asList(sObjFiles), true);
+        List<LazyPlugin<BlueMouseAdapter>> plugins = LazyPluginFactory.loadPlugins(
+                "blue/score/mouse", BlueMouseAdapter.class);
+        
+        mouseListeners = new BlueMouseAdapter[plugins.size()];
 
-        mouseListeners = new BlueMouseAdapter[sObjFiles.length];
-
-        for (int i = 0; i < orderedSObjFiles.size(); i++) {
-            FileObject fObj = orderedSObjFiles.get(i);
-            BlueMouseAdapter mouseListener = FileUtil.getConfigObject(
-                    fObj.getPath(),
-                    BlueMouseAdapter.class);
-            mouseListeners[i] = mouseListener;
+        for (int i = 0; i < plugins.size(); i++) {
+            mouseListeners[i] = plugins.get(i).getInstance();
         }
     }
 

@@ -25,6 +25,8 @@ import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
@@ -675,10 +677,9 @@ class UserInstrumentTreePopup extends JPopupMenu {
     private JMenu getAddInstrumentMenu() {
         JMenu instrumentMenu = new JMenu("Add Instrument");
 
-        FileObject instrFiles[] = FileUtil.getConfigFile("blue/instruments").getChildren();
-        List<FileObject> orderedInstrFiles
-                = FileUtil.getOrder(Arrays.asList(instrFiles), true);
-
+        List<LazyPlugin<Instrument>> plugins = LazyPluginFactory.loadPlugins(
+                "blue/instruments", Instrument.class);
+        
         JMenuItem temp;
 
         this.setLabel("Add Instrument");
@@ -686,8 +687,10 @@ class UserInstrumentTreePopup extends JPopupMenu {
         ActionListener al = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Instrument instrTemplate = FileUtil.getConfigObject(e.getActionCommand(),
-                        Instrument.class);
+                LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>) 
+                        ((JMenuItem)e.getSource()).getClientProperty("plugin");
+
+                Instrument instrTemplate = plugin.getInstance();
                 try {
                     Instrument newInstrument = instrTemplate.getClass().newInstance();
                     addInstrument(newInstrument);
@@ -697,11 +700,10 @@ class UserInstrumentTreePopup extends JPopupMenu {
             }
         };
 
-        for (FileObject fObj : orderedInstrFiles) {
-            String name = (String) fObj.getAttribute("displayName");
+        for (LazyPlugin<Instrument> plugin : plugins) {
             temp = new JMenuItem();
-            temp.setText(name);
-            temp.setActionCommand(fObj.getPath());
+            temp.setText(plugin.getDisplayName());
+            temp.putClientProperty("plugin", plugin);
             temp.addActionListener(al);
             instrumentMenu.add(temp);
         }
