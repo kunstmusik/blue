@@ -5,9 +5,10 @@ import blue.score.layers.Layer;
 import blue.soundObject.AudioFile;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformCache;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformData;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformListener;
+import blue.ui.utilities.audio.AudioWaveformCache;
+import blue.ui.utilities.audio.AudioWaveformData;
+import blue.ui.utilities.audio.AudioWaveformListener;
+import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -151,62 +152,10 @@ public class AudioFileRenderer implements BarRenderer {
 
         g.translate(1, 2);
 
-        paintWaveForm(g, sObjVisibleHeight, waveData);
+        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, waveData);
 
         g.translate(-1, -2);
 
-    }
-
-    private void paintWaveForm(Graphics2D g, int sObjVisibleHeight,
-            AudioWaveformData waveForm) {
-
-        if (waveForm.data == null) {
-            return;
-        }
-
-        // if (waveForm.percentLoadingComplete < 1.0) {
-        // return;
-        // }
-
-        Rectangle bounds = g.getClipBounds();
-
-        int startX = bounds.x; // + 1;
-        int endX = startX + bounds.width;
-
-        if (startX < 0) {
-            startX = 0;
-        }
-
-        // System.out.println(startX + " : " + endX + " : " + bounds);
-
-        int index;
-
-        int channelHeight = sObjVisibleHeight / waveForm.data.length;
-        int middleZero = channelHeight / 2;
-
-        for (int j = 0; j < waveForm.data.length; j++) {
-            int yAdjust = j * channelHeight;
-
-            for (int i = startX; i < endX; i++) {
-                index = i * 2;
-
-                if (index + 1 > waveForm.data[j].length) {
-                    break;
-                }
-
-                // if(index + 1 > waveForm.data[j].length) {
-                // break;
-                // }
-
-                int y1 = (int) (middleZero - (waveForm.data[j][index] * middleZero))
-                        + yAdjust;
-                int y2 = (int) (middleZero - (waveForm.data[j][index + 1] * middleZero))
-                        + yAdjust;
-
-                g.drawLine(i, y1, i, y2);
-
-            }
-        }
     }
 
     @Override

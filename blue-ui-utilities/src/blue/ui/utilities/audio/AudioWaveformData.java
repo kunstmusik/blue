@@ -1,7 +1,7 @@
 /**
  *
  */
-package blue.ui.core.soundObject.renderer.audioFile;
+package blue.ui.utilities.audio;
 
 public class AudioWaveformData {
     public volatile double percentLoadingComplete = 0.0;

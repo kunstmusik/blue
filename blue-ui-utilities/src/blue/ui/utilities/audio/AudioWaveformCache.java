@@ -1,4 +1,4 @@
-package blue.ui.core.soundObject.renderer.audioFile;
+package blue.ui.utilities.audio;
 
 import java.io.File;
 import java.util.HashMap;

@@ -17,7 +17,7 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.ui.core.soundObject.renderer.audioFile;
+package blue.ui.utilities.audio;
 
 import java.io.BufferedInputStream;
 import java.io.File;
