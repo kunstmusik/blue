@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.BlueSystem;
 import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.AudioFile;
@@ -34,7 +35,7 @@ public class AudioFileRenderer implements BarRenderer {
 
     protected static Color selectedFontColor = Color.darkGray;
 
-    protected static AudioWaveformCache waveCache = new AudioWaveformCache();
+    protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
 
     @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
@@ -127,7 +128,8 @@ public class AudioFileRenderer implements BarRenderer {
                 .getClientProperty(AUDIO_WAVEFORM_DATA);
 
         if (waveData == null) {
-            waveData = waveCache.getAudioWaveformData(audioFilename,
+            waveData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
 
             if (waveData.percentLoadingComplete < 1.0) {
@@ -140,7 +142,8 @@ public class AudioFileRenderer implements BarRenderer {
                 || !waveData.fileName.equals(audioFile.getSoundFileName())) {
             waveCache.removeReference(waveData);
 
-            waveData = waveCache.getAudioWaveformData(audioFilename,
+            waveData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
             sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, waveData);
 

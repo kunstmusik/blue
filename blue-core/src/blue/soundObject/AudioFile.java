@@ -172,28 +172,35 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return powTwoSamples;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 

@@ -194,8 +194,6 @@ public class AudioFileEditor extends ScoreObjectEditor {
                     String absFilePath = temp.getCanonicalPath();
                     String relPath = BlueSystem.getRelativePath(absFilePath);
 
-                    System.out.println("Rel Path: " + relPath);
-
                     af.setSoundFileName(relPath);
                     setAudioFileInfo(relPath);
                 } catch (Exception e) {

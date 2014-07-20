@@ -23,13 +23,20 @@ import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.utilities.audio.AudioWaveformCache;
+import blue.ui.utilities.audio.AudioWaveformData;
+import blue.ui.utilities.audio.AudioWaveformListener;
+import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.Collection;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -42,12 +49,17 @@ import org.openide.windows.WindowManager;
 public class AudioClipPanel extends JPanel
         implements PropertyChangeListener, ScoreObjectView<AudioClip>, LookupListener {
 
+    protected static final AudioWaveformCache waveformCache
+            = AudioWaveformCache.getInstance();
+
     private final AudioClip audioClip;
     private final TimeState timeState;
     boolean selected = false;
     static Color selectedBg = new Color(255, 255, 255, 128);
 
     Lookup.Result<AudioClip> result = null;
+
+    AudioWaveformData waveData = null;
 
     public AudioClipPanel(AudioClip audioClip, TimeState timeState) {
         this.audioClip = audioClip;
@@ -73,6 +85,8 @@ public class AudioClipPanel extends JPanel
         result = scoreTopComponent.getLookup().lookupResult(AudioClip.class);
 
         result.addLookupListener(this);
+
+        updateWaveformData();
     }
 
     @Override
@@ -81,6 +95,9 @@ public class AudioClipPanel extends JPanel
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
         result = null;
+
+        waveformCache.removeReference(waveData);
+        this.waveData = null;
 
         super.removeNotify();
     }
@@ -106,6 +123,10 @@ public class AudioClipPanel extends JPanel
         return selected;
     }
 
+    private boolean isBright(Color c) {
+        return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
+    }
+    
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
@@ -130,18 +151,40 @@ public class AudioClipPanel extends JPanel
 //        g2d.setColor(border);
 //        g2d.draw(rect);
 //
+
+        Color waveColor;
+
+        Color bgColor = getBackground();
+
+        if(isBright(bgColor)) {
+            waveColor = bgColor.brighter().brighter();
+        } else {
+            waveColor = bgColor.darker().darker();
+        }
+
+        g.setColor(waveColor);
+
+        g.translate(1, 2);
+
+        AudioWaveformUI.paintWaveForm((Graphics2D) g, this.getHeight(), waveData);
+
+        g.translate(-1, -2);
+
         g.setColor(getForeground());
         g.drawString(audioClip.getName(), 5, 15);
-
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.timeState) {
             switch (evt.getPropertyName()) {
-                case "pixelSecond":
+                case "pixelSecond": {
+                    if(timeState.getPixelSecond() != waveData.pixelSeconds) {
+                        updateWaveformData();
+                    }
                     reset();
                     break;
+                }
             }
         } else if (evt.getSource() == this.audioClip) {
             switch (evt.getPropertyName()) {
@@ -150,6 +193,19 @@ public class AudioClipPanel extends JPanel
                     reset();
                     break;
             }
+        }
+    }
+
+    private void updateWaveformData() {
+        String absFilePath = audioClip.getAudioFile().getAbsolutePath();
+        waveformCache.removeReference(waveData);
+        waveData = waveformCache.getAudioWaveformData(
+                absFilePath,
+                timeState.getPixelSecond());
+        
+        if (waveData.percentLoadingComplete < 1.0) {
+            waveformCache.addAudioWaveformListener(
+                    new AudioWaveformListener(absFilePath, this));
         }
     }
 

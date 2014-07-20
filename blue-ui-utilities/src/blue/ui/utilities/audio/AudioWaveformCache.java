@@ -18,6 +18,18 @@ public class AudioWaveformCache {
 
     private AudioWaveformCacheGenerator generator = null;
 
+    private static AudioWaveformCache INSTANCE = null;
+
+    public static synchronized AudioWaveformCache getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new AudioWaveformCache();
+        }
+
+        return INSTANCE;
+    }
+    
+    private AudioWaveformCache() {}
+    
     public synchronized AudioWaveformData getAudioWaveformData(
             String audioFilename, int pixelSeconds) {
 

@@ -101,6 +101,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     private final PropertyChangeListener heightListener;
     private final BlueData data;
     private final InstanceContent content;
+    private final ScoreTimelineDropTargetListener dropTargetListener;
 
     public ScoreTimeCanvas(BlueData blueData, InstanceContent ic) {
         this.content = ic;
@@ -151,7 +152,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
         });
 
-        new ScoreTimelineDropTargetListener(this);
+        dropTargetListener = new ScoreTimelineDropTargetListener(this);
 
         ToolTipManager.sharedInstance().registerComponent(this);
 
@@ -736,7 +737,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         this.pObj = pObj;
         this.timeState = timeState;
 
-        //sMouse.setTimeState(timeState);
+        dropTargetListener.setTimeState(timeState);
         multiLineMouse.setTimeState(timeState);
 
         if (this.getPolyObject() != null) {
