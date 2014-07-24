@@ -49,12 +49,13 @@ public class SoundObjectPluginProcessor extends LayerGeneratingProcessor {
         Elements elements = processingEnv.getElementUtils();
         for (Element e : env.getElementsAnnotatedWith(SoundObjectPlugin.class)) {
             TypeElement clazz = (TypeElement) e;
-            SoundObjectPlugin noteProcessorPlugin = clazz.getAnnotation(SoundObjectPlugin.class);
+            SoundObjectPlugin sObjPlugin = clazz.getAnnotation(SoundObjectPlugin.class);
             String teName = elements.getBinaryName(clazz).toString();
             File f = layer(e).file(
                     "blue/score/soundObjects/" + teName.replace('.', '-') + ".instance").
-                    intvalue("position", noteProcessorPlugin.position()).
-                    bundlevalue("displayName", noteProcessorPlugin.displayName());
+                    intvalue("position", sObjPlugin.position()).
+                    bundlevalue("displayName", sObjPlugin.displayName()).
+                    boolvalue("live", sObjPlugin.live());
             f.write();
         }
         return true;
