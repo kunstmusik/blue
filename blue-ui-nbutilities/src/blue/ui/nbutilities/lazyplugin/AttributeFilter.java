@@ -35,7 +35,7 @@ public class AttributeFilter implements LazyPluginFactory.Filter {
     
     @Override
     public boolean accept(FileObject fObj) {
-        return Boolean.TRUE.equals(attrName);
+        return Boolean.TRUE.equals(fObj.getAttribute(attrName));
     }
     
 }
