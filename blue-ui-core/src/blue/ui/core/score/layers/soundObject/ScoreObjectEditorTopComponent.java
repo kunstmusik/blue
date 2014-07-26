@@ -21,8 +21,8 @@ package blue.ui.core.score.layers.soundObject;
 
 import blue.event.SelectionEvent;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.Instance;
-import blue.soundObject.SoundObject;
 import blue.soundObject.editor.ScoreObjectEditor;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
@@ -94,14 +94,14 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
     CardLayout cardLayout = new CardLayout();
 
-    SoundObject currentSoundObject;
+    ScoreObject currentSoundObject;
 
     Map<Class, LazyPlugin<ScoreObjectEditor>> sObjEditorMap = new HashMap<>();
     Map<Class, ScoreObjectEditor> editors = new HashMap<>();
 
     JPanel emptyPanel = new JPanel();
 
-    Lookup.Result<SoundObject> result = null;
+    Lookup.Result<ScoreObject> result = null;
 
     PropertyChangeListener projectListener;
 
@@ -136,7 +136,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                editSoundObject(null);
+                editScoreObject(null);
 
             }
         };
@@ -160,7 +160,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
     public void componentOpened() {
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 projectListener);
-        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result = Utilities.actionsGlobalContext().lookupResult(ScoreObject.class);
         result.addLookupListener(this);
         resultChanged(null);
     }
@@ -191,12 +191,12 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
             return;
         }
 
-        Collection<? extends SoundObject> soundObjects = result.allInstances();
-        if (soundObjects.size() == 1) {
-            editSoundObject(soundObjects.iterator().next());
+        Collection<? extends ScoreObject> scoreObjects = result.allInstances();
+        if (scoreObjects.size() == 1) {
+            editScoreObject(scoreObjects.iterator().next());
             //FIXME - setEditingLibraryObject(...)
         } else {
-            editSoundObject(null);
+            editScoreObject(null);
         }
     }
 
@@ -214,7 +214,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
 //        this.libraryEditLabel.setVisible(isLibaryObject);
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    public void editScoreObject(ScoreObject sObj) {
         if (currentSoundObject == sObj) {
             return;
         }
@@ -227,7 +227,7 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
             return;
         }
 
-        SoundObject sObjToEdit = sObj;
+        ScoreObject sObjToEdit = sObj;
 
         if (sObj instanceof Instance) {
             sObjToEdit = ((Instance) sObj).getSoundObject();
