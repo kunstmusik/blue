@@ -46,7 +46,10 @@ FIX
   changes 
 
 * Prevent resizing of Score Objects from left-hand side to have 0 duration when
-  snap is enabled 
+  snap is enabled
+
+* Issue #250 - setting minimum and maximum for BSB Knobs did not update the knob
+  view location when using truncate option
 
 INTERNAL
 
