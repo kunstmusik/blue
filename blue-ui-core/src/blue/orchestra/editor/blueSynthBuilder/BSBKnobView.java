@@ -126,7 +126,6 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         value = (value * (knob.getMaximum() - knob.getMinimum()))
                 + knob.getMinimum();
         knob.setValue(value);
-
         updateValueDisplay();
 
     }
@@ -163,6 +162,10 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
 
         knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+
+        float newVal = (knob.getValue() - knob.getMinimum()) / 
+                (knob.getMaximum() - knob.getMinimum());
+        knobView.setVal(newVal);
         updateValueDisplay();
     }
 
@@ -186,6 +189,9 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
 
         knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+        float newVal = (knob.getValue() - knob.getMinimum()) / 
+                (knob.getMaximum() - knob.getMinimum());
+        knobView.setVal(newVal);
         updateValueDisplay();
     }
 
