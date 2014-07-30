@@ -20,10 +20,9 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.components.PropertyEditor;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.noteProcessor.NoteProcessorChainMap;
-import blue.score.undo.ResizeSoundObjectEdit;
+import blue.score.ScoreObject;
+import blue.score.undo.ResizeScoreObjectEdit;
 import blue.score.undo.StartTimeEdit;
 import blue.soundObject.SoundObject;
 import blue.score.ScoreObjectEvent;
@@ -69,9 +68,9 @@ import org.openide.windows.TopComponent;
     "CTL_SoundObjectPropertiesTopComponent=SoundObject Properties",
     "HINT_SoundObjectPropertiesTopComponent=This is a SoundObject Properties window"
 })
-public final class SoundObjectPropertiesTopComponent extends TopComponent implements ScoreObjectListener, SelectionListener, LookupListener {
+public final class SoundObjectPropertiesTopComponent extends TopComponent implements ScoreObjectListener, LookupListener {
 
-    private SoundObject sObj = null;
+    private ScoreObject sObj = null;
 
     private static SoundObjectPropertiesTopComponent instance;
 
@@ -79,7 +78,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     private boolean isUpdating = false;
 
-    Lookup.Result<SoundObject> result = null;
+    Lookup.Result<ScoreObject> result = null;
 
     private SoundObjectPropertiesTopComponent() {
         initComponents();
@@ -91,72 +90,78 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
         nameText.getDocument().addDocumentListener(
-                    new SimpleDocumentListener() {
+                new SimpleDocumentListener() {
 
-                        @Override
-                        public void documentChanged(DocumentEvent e) {
-                            if (nameText.getText() != null && sObj != null) {
-                                isUpdating = true;
-                                updateName();
-                                isUpdating = false;
-                            }
+                    @Override
+                    public void documentChanged(DocumentEvent e) {
+                        if (nameText.getText() != null && sObj != null) {
+                            isUpdating = true;
+                            updateName();
+                            isUpdating = false;
                         }
-                    });
+                    }
+                });
 
     }
 
-    private void setSoundObject(SoundObject soundObj) {
+    private void setScoreObject(ScoreObject scoreObj) {
+        SoundObject soundObj = null;
+        if (scoreObj instanceof SoundObject) {
+            soundObj = (SoundObject) scoreObj;
+        }
+
         isUpdating = true;
 
         if (this.sObj != null) {
             this.sObj.removeScoreObjectListener(this);
         }
 
-        if (soundObj == null) {
+        if (scoreObj == null) {
             sObj = null;
             disableFields();
             propEdittor.editObject(null);
             noteProcessorChainEditor2.setNoteProcessorChain(null);
         } else {
             enableFields();
-            sObj = soundObj;
+            setFieldsVisible(scoreObj != null);
+            sObj = scoreObj;
             updateProperties();
-
-            noteProcessorChainEditor2.setNoteProcessorChain(
-                    sObj.getNoteProcessorChain());
-
             colorPanel.setColor(sObj.getBackgroundColor());
 
-            final int timeBehavior = sObj.getTimeBehavior();
-            if (timeBehavior == SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
-                timeBehaviorBox.setEnabled(false);
-                useRepeatPoint.setEnabled(false);
-                repeatePointText.setEnabled(false);
-            } else {
-                timeBehaviorBox.setEnabled(true);
-                timeBehaviorBox.setSelectedIndex(timeBehavior);
 
-                if (timeBehavior == SoundObject.TIME_BEHAVIOR_REPEAT) {
-
-                    useRepeatPoint.setEnabled(true);
-
-                    float repeatPoint = sObj.getRepeatPoint();
-
-                    if (repeatPoint <= 0.0f) {
-                        useRepeatPoint.setSelected(false);
-                        repeatePointText.setEnabled(false);
-                    } else {
-                        useRepeatPoint.setSelected(true);
-                        repeatePointText.setEnabled(true);
-                        repeatePointText.setText(Float.toString(repeatPoint));
-                    }
-
-                } else {
+            if (soundObj != null) {
+                noteProcessorChainEditor2.setNoteProcessorChain(
+                    soundObj.getNoteProcessorChain());
+                final int timeBehavior = soundObj.getTimeBehavior();
+                if (timeBehavior == SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED) {
+                    timeBehaviorBox.setEnabled(false);
                     useRepeatPoint.setEnabled(false);
                     repeatePointText.setEnabled(false);
+                } else {
+                    timeBehaviorBox.setEnabled(true);
+                    timeBehaviorBox.setSelectedIndex(timeBehavior);
+
+                    if (timeBehavior == SoundObject.TIME_BEHAVIOR_REPEAT) {
+
+                        useRepeatPoint.setEnabled(true);
+
+                        float repeatPoint = soundObj.getRepeatPoint();
+
+                        if (repeatPoint <= 0.0f) {
+                            useRepeatPoint.setSelected(false);
+                            repeatePointText.setEnabled(false);
+                        } else {
+                            useRepeatPoint.setSelected(true);
+                            repeatePointText.setEnabled(true);
+                            repeatePointText.setText(Float.toString(repeatPoint));
+                        }
+
+                    } else {
+                        useRepeatPoint.setEnabled(false);
+                        repeatePointText.setEnabled(false);
+                    }
                 }
             }
-
             propEdittor.editObject(null);
 
             sObj.addScoreObjectListener(this);
@@ -172,8 +177,10 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             subjectiveDurationText.setText(Float.toString(sObj
                     .getSubjectiveDuration()));
 
-            float repeatPoint = sObj.getRepeatPoint();
-            repeatePointText.setText(Float.toString(repeatPoint));
+            if (sObj instanceof SoundObject) {
+                float repeatPoint = ((SoundObject) sObj).getRepeatPoint();
+                repeatePointText.setText(Float.toString(repeatPoint));
+            }
 
             updateEndTime();
         }
@@ -231,17 +238,24 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
         BlueUndoManager.setUndoManager("score");
 
-        BlueUndoManager.addEdit(new ResizeSoundObjectEdit(this.sObj,
+        BlueUndoManager.addEdit(new ResizeScoreObjectEdit(this.sObj,
                 initialDuration, this.sObj.getSubjectiveDuration()));
 
     }
 
     private void updateTimeBehavior() {
-        sObj.setTimeBehavior(timeBehaviorBox.getSelectedIndex());
+
+        if (!(sObj instanceof ScoreObject)) {
+            return;
+        }
+
+        SoundObject soundObj = (SoundObject) sObj;
+
+        soundObj.setTimeBehavior(timeBehaviorBox.getSelectedIndex());
 
         if (timeBehaviorBox.getSelectedIndex() == SoundObject.TIME_BEHAVIOR_REPEAT) {
 
-            boolean repeatPointUsed = sObj.getRepeatPoint() > 0.0f;
+            boolean repeatPointUsed = soundObj.getRepeatPoint() > 0.0f;
 
             useRepeatPoint.setSelected(repeatPointUsed);
             useRepeatPoint.setEnabled(true);
@@ -255,13 +269,18 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             repeatePointText.setEnabled(false);
 
             if (!isUpdating) {
-                sObj.setRepeatPoint(-1.0f);
+                soundObj.setRepeatPoint(-1.0f);
             }
 
         }
     }
 
     private void updateUseRepeatPoint() {
+        if (!(sObj instanceof ScoreObject)) {
+            return;
+        }
+
+        SoundObject soundObj = (SoundObject) sObj;
         repeatePointText.setEnabled(useRepeatPoint.isSelected());
 
         if (!isUpdating) {
@@ -271,14 +290,19 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 dur = sObj.getSubjectiveDuration();
             }
 
-            sObj.setRepeatPoint(dur);
+            soundObj.setRepeatPoint(dur);
             repeatePointText.setText(Float.toString(dur));
         }
 
     }
 
     protected void updateRepeatPoint() {
-        float initialRepeatPoint = sObj.getRepeatPoint();
+        if (!(sObj instanceof ScoreObject)) {
+            return;
+        }
+
+        SoundObject soundObj = (SoundObject) sObj;
+        float initialRepeatPoint = soundObj.getRepeatPoint();
         float newValue;
 
         try {
@@ -292,13 +316,19 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             repeatePointText.setText(Float.toString(initialRepeatPoint));
             return;
         } else {
-            sObj.setRepeatPoint(newValue);
+            soundObj.setRepeatPoint(newValue);
             repeatePointText.setText(Float.toString(newValue));
         }
 
     }
 
     // utility methods
+    private void setFieldsVisible(boolean isSoundObject) {
+        timeBehaviorBox.setVisible(isSoundObject);
+        repeatePointText.setVisible(isSoundObject);
+        noteProcessorChainEditor2.setVisible(isSoundObject);
+    }
+
     private void enableFields() {
         nameText.setEnabled(true);
         startTimeText.setEnabled(true);
@@ -398,48 +428,6 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
                 colorPanel.setColor(sObj.getBackgroundColor());
                 break;
         }
-    }
-
-    // SELECTION LISTENER
-    @Override
-    public void selectionPerformed(SelectionEvent e) {
-        if (e == null) {
-            setSoundObject(null);
-            return;
-        }
-
-        Object item = e.getSelectedItem();
-
-        if (item == null) {
-            setSoundObject(null);
-//            setLibraryItem(false);
-            return;
-        }
-
-        SoundObject sObj = (SoundObject) item;
-        setSoundObject(sObj);
-        setLibraryItem(e.getSelectionSubType() != null);
-
-//        switch (e.getSelectionType()) {
-//            case SelectionEvent.SELECTION_SINGLE:
-//                sObjBuffer.clear();
-//                sObjBuffer.add(sObj);
-//                // System.out.println("Single");
-//                break;
-//            case SelectionEvent.SELECTION_ADD:
-//                // System.out.println("Add");
-//                sObjBuffer.add(sObj);
-//                break;
-//            case SelectionEvent.SELECTION_REMOVE:
-//                sObjBuffer.remove(sObj);
-//                // System.out.println("Remove");
-//                break;
-//            case SelectionEvent.SELECTION_CLEAR:
-//                sObjBuffer.clear();
-//                // System.out.println("Clear");
-//                break;
-//        }
-//        setSoundObject(sObj);
     }
 
     /**
@@ -749,7 +737,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     @Override
     public void componentOpened() {
-        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result = Utilities.actionsGlobalContext().lookupResult(ScoreObject.class);
         result.addLookupListener(this);
         resultChanged(null);
     }
@@ -792,11 +780,11 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
             return;
         }
 
-        Collection<? extends SoundObject> soundObjects = result.allInstances();
-        if (soundObjects.size() == 1) {
-            setSoundObject(soundObjects.iterator().next());
+        Collection<? extends ScoreObject> scoreObjects = result.allInstances();
+        if (scoreObjects.size() == 1) {
+            setScoreObject(scoreObjects.iterator().next());
         } else {
-            setSoundObject(null);
+            setScoreObject(null);
         }
     }
 
