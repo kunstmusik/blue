@@ -36,7 +36,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.NAME);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public String getName() {
@@ -49,7 +49,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.START_TIME);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public float getStartTime() {
@@ -62,7 +62,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.DURATION);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public float getSubjectiveDuration() {
@@ -88,7 +88,7 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         soundObjectListeners.remove(listener);
     }
 
-    public void fireSoundObjectEvent(ScoreObjectEvent sObjEvent) {
+    public void fireScoreObjectEvent(ScoreObjectEvent sObjEvent) {
         if (soundObjectListeners == null) {
             return;
         }
@@ -108,6 +108,6 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.COLOR);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 }

@@ -20,10 +20,13 @@
 package blue.score.layers.audio.core;
 
 import blue.score.ScoreObject;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -49,7 +52,10 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     float audioDuration = 0.0f;
     float start = 0.0f;
     float duration = 0.0f;
-    transient List<PropertyChangeListener> propListeners = null;
+    Color backgroundColor = Color.DARK_GRAY;
+
+    transient List<ScoreObjectListener> scoreObjListeners = null;
+//    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
     }
@@ -98,10 +104,15 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     @Override
     public void setStartTime(float start) {
         if(this.start == start) return;
-        float old = this.start;
+//        float old = this.start;
         this.start = start;
 
-        firePropertyChangeEvent("startTime", old, start);
+//        firePropertyChangeEvent("startTime", old, start);
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.START_TIME);
+
+        fireScoreObjectEvent(event);
     }
 
     @Override
@@ -112,9 +123,14 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     @Override
     public void setSubjectiveDuration(float duration) {
         if(this.duration == duration) return;
-        float old = this.duration;
+//        float old = this.duration;
         this.duration = duration;
-        firePropertyChangeEvent("subjectiveDuration", old, start);
+//        firePropertyChangeEvent("subjectiveDuration", old, start);
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.DURATION);
+
+        fireScoreObjectEvent(event);
     }
 
     @Override
@@ -127,12 +143,34 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         return (int) (o.duration - this.duration);
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.NAME);
+
+        fireScoreObjectEvent(event);
+    }
+
+    @Override
+    public Color getBackgroundColor() {
+        return this.backgroundColor;
+    }
+
+    @Override
+    public void setBackgroundColor(Color color) {
+        this.backgroundColor = color;
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.COLOR);
+
+        fireScoreObjectEvent(event);
     }
 
     public int getNumChannels() {
@@ -150,6 +188,9 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         root.addElement(XMLUtilities.writeFloat("start", start));
         root.addElement(XMLUtilities.writeFloat("duration", duration));
 
+        String colorStr = Integer.toString(getBackgroundColor().getRGB());
+        root.addElement("backgroundColor").setText(colorStr);
+        
         return root;
     }
 
@@ -181,47 +222,74 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
                 case "duration":
                     clip.duration = XMLUtilities.readFloat(node);
                     break;
+                case "backgroundColor":
+                    String colorStr = data.getTextString("backgroundColor");
+                    clip.setBackgroundColor(new Color(Integer.parseInt(colorStr)));
+                    break;
             }
         }
 
         return clip;
     }
 
-    private void firePropertyChangeEvent(String param, Object oldValue, Object newValue) {
-        if (propListeners == null) {
-            return;
-        }
-
-        PropertyChangeEvent pce = new PropertyChangeEvent(this, param,
-                oldValue, newValue);
-
-        for (PropertyChangeListener listener : propListeners) {
-           listener.propertyChange(pce);
-        }
-    }
-
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        if (propListeners == null) {
-            propListeners = new ArrayList<PropertyChangeListener>();
-        }
-
-        if (propListeners.contains(pcl)) {
-            return;
-        }
-
-        propListeners.add(pcl);
-    }
-
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        if (propListeners == null) {
-            return;
-        }
-        propListeners.remove(pcl);
-    }
+//    private void firePropertyChangeEvent(String param, Object oldValue, Object newValue) {
+//        if (propListeners == null) {
+//            return;
+//        }
+//
+//        PropertyChangeEvent pce = new PropertyChangeEvent(this, param,
+//                oldValue, newValue);
+//
+//        for (PropertyChangeListener listener : propListeners) {
+//           listener.propertyChange(pce);
+//        }
+//    }
+//
+//    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+//        if (propListeners == null) {
+//            propListeners = new ArrayList<PropertyChangeListener>();
+//        }
+//
+//        if (propListeners.contains(pcl)) {
+//            return;
+//        }
+//
+//        propListeners.add(pcl);
+//    }
+//
+//    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+//        if (propListeners == null) {
+//            return;
+//        }
+//        propListeners.remove(pcl);
+//    }
 
     @Override
     public ScoreObject clone() {
         return (ScoreObject) ObjectUtilities.clone(this);
+    }
+
+    @Override
+    public void addScoreObjectListener(ScoreObjectListener listener) {
+        if (scoreObjListeners == null) {
+            scoreObjListeners = new ArrayList<>();
+        }
+        scoreObjListeners.add(listener);
+    }
+
+    @Override
+    public void removeScoreObjectListener(ScoreObjectListener listener) {
+        if (scoreObjListeners != null) {
+            scoreObjListeners.remove(listener);
+        }
+    }
+
+    protected void fireScoreObjectEvent(ScoreObjectEvent event) {
+        if (scoreObjListeners != null) {
+            for (ScoreObjectListener listener : scoreObjListeners) {
+               listener.scoreObjectChanged(event);
+            }
+        }
     }
 
 

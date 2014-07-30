@@ -138,7 +138,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*

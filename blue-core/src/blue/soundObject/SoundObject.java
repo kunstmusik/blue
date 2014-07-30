@@ -123,45 +123,6 @@ public interface SoundObject extends ScoreObject {
     public NoteList generateForCSD(CompileData compileData, float startTime, 
             float endTime) throws SoundObjectException;
     
-    /**
-     * Sets the name of the SoundObject.
-     */
-    public void setName(String name);
-
-    /**
-     * Gets the name of the SoundObject;
-     */
-    public String getName();
-
-    /**
-     * Sets the start time of the SoundObject.
-     */
-    @Override
-    public void setStartTime(float startTime);
-
-    /**
-     * Gets the start time of the SoundObject.
-     */
-    @Override
-    public float getStartTime();
-
-    /**
-     * Sets the subjective duration of the SoundObject.
-     * 
-     * The subjective duration of the soundObject is the amount of time a
-     * SoundObject is assigned to last, irregardless of its contents.
-     */
-    @Override
-    public void setSubjectiveDuration(float subjectDuration);
-
-    /**
-     * Gets the subjective duration of the SoundObject.
-     * 
-     * The subjective duration of the soundObject is the amount of time a
-     * SoundObject is assigned to last, irregardless of its contents.
-     */
-    @Override
-    public float getSubjectiveDuration();
 
     /**
      * Gets the objective duration of the SoundObject.
@@ -224,33 +185,6 @@ public interface SoundObject extends ScoreObject {
      */
     public void setNoteProcessorChain(NoteProcessorChain chain);
 
-    /**
-     * Adds a ScoreObjectListener to this SoundObject
-     * 
-     * @param listener
-     */
-    public void addScoreObjectListener(ScoreObjectListener listener);
-
-    /**
-     * Removes a ScoreObjectListener to this Soundobject
-     * 
-     * @param listener
-     */
-    public void removeScoreObjectListener(ScoreObjectListener listener);
-
-    /**
-     * Gets background color for SoundObject
-     * 
-     * @return
-     */
-    public Color getBackgroundColor();
-
-    /**
-     * Sets background color for SoundObject
-     * 
-     * @param color
-     */
-    public void setBackgroundColor(Color color);
 
     @Override
     public SoundObject clone();

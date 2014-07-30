@@ -136,7 +136,7 @@ public class JMask extends AbstractSoundObject {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public void setTimeBehavior(int timeBehavior) {

@@ -19,6 +19,8 @@
  */
 package blue.score;
 
+import java.awt.Color;
+
 /**
  * Object that exists in the Score Timeline that can be selected, moved, and/or
  * resized. 
@@ -26,23 +28,80 @@ package blue.score;
  * @author stevenyi
  */
 public interface ScoreObject {
+
+    /**
+     * Sets the name of the ScoreObject.
+     */
+    public void setName(String name);
+
+    /**
+     * Gets the name of the ScoreObject;
+     */
+    public String getName();
+    
+    /**
+     * Gets the start time of the ScoreObject.
+     */
     //FIXME -  change this to use double
     public float getStartTime();
 
+    /**
+     * Sets the start time of the ScoreObject.
+     */
     //FIXME -  change this to use double
     public void setStartTime(float startTime);
     
+    /**
+     * Gets the subjective duration of the ScoreObject.
+     * 
+     * The subjective duration of the ScoreObject is the amount of time a
+     * ScoreObject is assigned to last, regardless of its contents.
+     */
     //FIXME -  change this to use double
     public float getSubjectiveDuration();
 
+    /**
+     * Sets the subjective duration of the ScoreObject.
+     * 
+     * The subjective duration of the ScoreObject is the amount of time a
+     * ScoreObject is assigned to last, regardless of its contents.
+     */
     //FIXME -  change this to use double
     public void setSubjectiveDuration(float duration);
-//    boolean isLayerTransferrable();
 
+//    boolean isLayerTransferrable();
     // maybe use interface of Resizable?
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
+    /**
+     * Adds a ScoreObjectListener to this ScoreObject
+     * 
+     * @param listener
+     */
+    public void addScoreObjectListener(ScoreObjectListener listener);
+
+    /**
+     * Removes a ScoreObjectListener to this ScoreObject
+     * 
+     * @param listener
+     */
+    public void removeScoreObjectListener(ScoreObjectListener listener);
+   
+    /**
+     * Gets background color for ScoreObject
+     * 
+     * @return
+     */
+    public Color getBackgroundColor();
+
+    /**
+     * Sets background color for ScoreObject
+     * 
+     * @param color
+     */
+    public void setBackgroundColor(Color color);
+           
     public ScoreObject clone();
 
 }

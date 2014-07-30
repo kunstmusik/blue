@@ -256,7 +256,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*

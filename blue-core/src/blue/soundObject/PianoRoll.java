@@ -204,7 +204,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public static SoundObject loadFromXML(Element data,

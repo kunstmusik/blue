@@ -19,6 +19,8 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.ui.core.score.ScoreObjectView;
@@ -32,11 +34,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.Collection;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -47,7 +47,8 @@ import org.openide.windows.WindowManager;
  * @author stevenyi
  */
 public class AudioClipPanel extends JPanel
-        implements PropertyChangeListener, ScoreObjectView<AudioClip>, LookupListener {
+        implements PropertyChangeListener, ScoreObjectListener,
+        ScoreObjectView<AudioClip>, LookupListener {
 
     protected static final AudioWaveformCache waveformCache
             = AudioWaveformCache.getInstance();
@@ -77,7 +78,7 @@ public class AudioClipPanel extends JPanel
     public void addNotify() {
         super.addNotify();
 
-        audioClip.addPropertyChangeListener(this);
+        audioClip.addScoreObjectListener(this);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -91,7 +92,7 @@ public class AudioClipPanel extends JPanel
 
     @Override
     public void removeNotify() {
-        audioClip.removePropertyChangeListener(this);
+        audioClip.removeScoreObjectListener(this);
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
         result = null;
@@ -186,14 +187,7 @@ public class AudioClipPanel extends JPanel
                     break;
                 }
             }
-        } else if (evt.getSource() == this.audioClip) {
-            switch (evt.getPropertyName()) {
-                case "startTime":
-                case "duration":
-                    reset();
-                    break;
-            }
-        }
+        } 
     }
 
     private void updateWaveformData() {
@@ -227,5 +221,17 @@ public class AudioClipPanel extends JPanel
         boolean newSelected = soundObjects.contains(this.audioClip);
 
         setSelected(newSelected);
+    }
+
+    @Override
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if (event.getScoreObject() == this.audioClip) {
+            switch (event.getPropertyChanged()) {
+                case ScoreObjectEvent.START_TIME:
+                case ScoreObjectEvent.DURATION:
+                    reset();
+                    break;
+            }
+        }
     }
 }
