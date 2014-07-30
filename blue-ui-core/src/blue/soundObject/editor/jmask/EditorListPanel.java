@@ -20,8 +20,8 @@
 package blue.soundObject.editor.jmask;
 
 import blue.soundObject.JMask;
-import blue.soundObject.SoundObjectEvent;
-import blue.soundObject.SoundObjectListener;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.soundObject.jmask.Field;
 import blue.soundObject.jmask.Generator;
 import blue.soundObject.jmask.Parameter;
@@ -39,7 +39,7 @@ import javax.swing.event.ListDataListener;
  * @author steven
  */
 public class EditorListPanel extends JComponent implements
-        ParameterEditListener, ListDataListener, Scrollable, SoundObjectListener {
+        ParameterEditListener, ListDataListener, Scrollable, ScoreObjectListener {
 
     JMask jMask = null;
     Field field = null;
@@ -83,7 +83,7 @@ public class EditorListPanel extends JComponent implements
 
         field.addListDataListener(this);
         
-        jMask.addSoundObjectListener(this);
+        jMask.addScoreObjectListener(this);
         
         this.jMask = jMask;
 
@@ -189,7 +189,7 @@ public class EditorListPanel extends JComponent implements
         }
 
         if (this.jMask != null) {
-            this.jMask.removeSoundObjectListener(this);
+            this.jMask.removeScoreObjectListener(this);
         }
 
         this.field = null;
@@ -206,8 +206,8 @@ public class EditorListPanel extends JComponent implements
     }
 
     @Override
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if(event.getPropertyChanged() == SoundObjectEvent.DURATION) {            
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if(event.getPropertyChanged() == ScoreObjectEvent.DURATION) {            
             for (int i = 0; i < getComponentCount(); i++) {
                 ParameterEditor pEditor = (ParameterEditor) getComponent(i);
                 pEditor.setDuration(this.jMask.getSubjectiveDuration());

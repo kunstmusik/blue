@@ -17,8 +17,37 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-package blue.soundObject;
+package blue.score;
 
-public interface SoundObjectListener {
-    public void soundObjectChanged(SoundObjectEvent event);
+import blue.score.ScoreObject;
+
+public class ScoreObjectEvent {
+
+    public static final int NAME = 0;
+
+    public static final int START_TIME = 1;
+
+    public static final int DURATION = 2;
+
+    public static final int COLOR = 3;
+
+    public static final int REPEAT_POINT = 4;
+
+    private ScoreObject sObj;
+
+    private int propertyChanged;
+
+    public ScoreObjectEvent(ScoreObject sObj, int propertyChanged) {
+        this.sObj = sObj;
+        this.propertyChanged = propertyChanged;
+    }
+
+    public int getPropertyChanged() {
+        return propertyChanged;
+    }
+
+    public ScoreObject getScoreObject() {
+        return sObj;
+    }
+
 }

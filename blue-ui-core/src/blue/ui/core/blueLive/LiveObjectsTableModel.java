@@ -24,8 +24,8 @@ import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
 import blue.blueLive.LiveObjectSet;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
-import blue.soundObject.SoundObjectListener;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Iterator;
@@ -38,7 +38,7 @@ import javax.swing.table.TableModel;
  * 
  * @author steven
  */
-public class LiveObjectsTableModel implements TableModel, SoundObjectListener, 
+public class LiveObjectsTableModel implements TableModel, ScoreObjectListener, 
         PropertyChangeListener {
 
     LiveObjectBins bins = null;
@@ -52,7 +52,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
                 for(int j = 0; j < this.bins.getRowCount(); j++) {
                     LiveObject lObj = this.bins.getLiveObject(i, j);
                     if(lObj != null && lObj.getSoundObject() != null) {
-                        lObj.getSoundObject().removeSoundObjectListener(this);
+                        lObj.getSoundObject().removeScoreObjectListener(this);
                     }
                 }
             }
@@ -65,7 +65,7 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
             for(int j = 0; j < bins.getRowCount(); j++) {
                 LiveObject lObj = bins.getLiveObject(i, j);
                 if(lObj != null && lObj.getSoundObject() != null) {
-                    lObj.getSoundObject().addSoundObjectListener(this);
+                    lObj.getSoundObject().addScoreObjectListener(this);
                 }
             }
         }
@@ -123,13 +123,13 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
             LiveObject newObj = (LiveObject)aValue;
             
             if(oldLiveObj != null && oldLiveObj.getSoundObject() != null) {
-                oldLiveObj.getSoundObject().removeSoundObjectListener(this);
+                oldLiveObj.getSoundObject().removeScoreObjectListener(this);
             }
             
             bins.setLiveObject(columnIndex, rowIndex, newObj);
             
             if(newObj != null && newObj.getSoundObject() != null) {
-                newObj.getSoundObject().addSoundObjectListener(this);
+                newObj.getSoundObject().addScoreObjectListener(this);
             }
             
             fireTableDataChanged();
@@ -192,9 +192,10 @@ public class LiveObjectsTableModel implements TableModel, SoundObjectListener,
     }
 
     @Override
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if(event.getPropertyChanged() == SoundObjectEvent.NAME) {
-            LiveObject lObj = getLiveObjectForSoundObject(event.getSoundObject());
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if(event.getPropertyChanged() == ScoreObjectEvent.NAME) {
+            LiveObject lObj = getLiveObjectForSoundObject((SoundObject) 
+                    event.getScoreObject());
             
             if(lObj != null) {
                 int row = bins.getRowForObject(lObj);

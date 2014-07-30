@@ -30,7 +30,7 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.OnLoadProcessable;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -169,8 +169,8 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
         
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
         fireSoundObjectEvent(event);
     }

@@ -22,8 +22,8 @@ package blue.ui.core.score.layers.soundObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
-import blue.soundObject.SoundObjectListener;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.soundObject.renderer.BarRenderer;
@@ -51,7 +51,7 @@ import org.openide.windows.WindowManager;
  * @version 1.0
  */
 public final class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
-        SoundObjectListener, LookupListener, ScoreObjectView<SoundObject> {
+        ScoreObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
     private SoundObject sObj;
     boolean selected = false;
@@ -66,7 +66,7 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
         renderer = BarRendererCache.getInstance().getBarRenderer(
                 this.sObj.getClass());
 
-        this.sObj.addSoundObjectListener(this);
+        this.sObj.addScoreObjectListener(this);
 
         try {
             init();
@@ -77,7 +77,7 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
 
     void cleanup() {
         if (this.sObj != null) {
-            this.sObj.removeSoundObjectListener(this);
+            this.sObj.removeScoreObjectListener(this);
 
             renderer.cleanup(this);
             this.timeState = null;
@@ -153,24 +153,24 @@ public final class SoundObjectView extends JComponent implements Comparable<Soun
     }
 
     @Override
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if (event == null || event.getSoundObject() != this.sObj) {
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if (event == null || event.getScoreObject() != this.sObj) {
             return;
         }
 
         switch (event.getPropertyChanged()) {
-            case SoundObjectEvent.NAME:
+            case ScoreObjectEvent.NAME:
                 repaint();
                 break;
-            case SoundObjectEvent.START_TIME:
+            case ScoreObjectEvent.START_TIME:
             // fall through
-            case SoundObjectEvent.DURATION:
+            case ScoreObjectEvent.DURATION:
                 updateView();
                 break;
-            case SoundObjectEvent.COLOR:
+            case ScoreObjectEvent.COLOR:
                 repaint();
                 break;
-            case SoundObjectEvent.REPEAT_POINT:
+            case ScoreObjectEvent.REPEAT_POINT:
                 repaint();
                 break;
 

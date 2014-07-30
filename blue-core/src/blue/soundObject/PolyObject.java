@@ -19,6 +19,8 @@
  */
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
@@ -62,7 +64,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     protected float startTime = 0.0f;
     protected String name = "";
     protected Color backgroundColor = Color.DARK_GRAY;
-    transient Vector<SoundObjectListener> soundObjectListeners = null;
+    transient Vector<ScoreObjectListener> soundObjectListeners = null;
     private NoteProcessorChain npc = new NoteProcessorChain();
     private int timeBehavior;
     float repeatPoint = -1.0f;
@@ -411,8 +413,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
         fireSoundObjectEvent(event);
     }
@@ -773,8 +775,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public void setName(String name) {
         this.name = name;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.NAME);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.NAME);
 
         fireSoundObjectEvent(event);
     }
@@ -786,8 +788,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public void setStartTime(float startTime) {
         this.startTime = startTime;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.START_TIME);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.START_TIME);
 
         fireSoundObjectEvent(event);
     }
@@ -799,8 +801,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public void setSubjectiveDuration(float subjectiveDuration) {
         this.subjectiveDuration = subjectiveDuration;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.DURATION);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.DURATION);
 
         fireSoundObjectEvent(event);
     }
@@ -809,27 +811,27 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return subjectiveDuration;
     }
 
-    public void addSoundObjectListener(SoundObjectListener listener) {
+    public void addScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             soundObjectListeners = new Vector<>();
         }
         soundObjectListeners.add(listener);
     }
 
-    public void removeSoundObjectListener(SoundObjectListener listener) {
+    public void removeScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             return;
         }
         soundObjectListeners.remove(listener);
     }
 
-    public void fireSoundObjectEvent(SoundObjectEvent sObjEvent) {
+    public void fireSoundObjectEvent(ScoreObjectEvent sObjEvent) {
         if (soundObjectListeners == null) {
             return;
         }
 
-        for (SoundObjectListener listener : soundObjectListeners) {
-            listener.soundObjectChanged(sObjEvent);
+        for (ScoreObjectListener listener : soundObjectListeners) {
+            listener.scoreObjectChanged(sObjEvent);
         }
     }
 
@@ -840,8 +842,8 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public void setBackgroundColor(Color backgroundColor) {
         this.backgroundColor = backgroundColor;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.COLOR);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.COLOR);
 
         fireSoundObjectEvent(event);
     }

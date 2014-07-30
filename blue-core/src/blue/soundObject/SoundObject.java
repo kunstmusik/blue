@@ -20,6 +20,7 @@
 
 package blue.soundObject;
 
+import blue.score.ScoreObjectListener;
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreObject;
@@ -224,18 +225,18 @@ public interface SoundObject extends ScoreObject {
     public void setNoteProcessorChain(NoteProcessorChain chain);
 
     /**
-     * Adds a SoundObjectListener to this SoundObject
+     * Adds a ScoreObjectListener to this SoundObject
      * 
      * @param listener
      */
-    public void addSoundObjectListener(SoundObjectListener listener);
+    public void addScoreObjectListener(ScoreObjectListener listener);
 
     /**
-     * Removes a SoundObjectListener to this Soundobject
+     * Removes a ScoreObjectListener to this Soundobject
      * 
      * @param listener
      */
-    public void removeSoundObjectListener(SoundObjectListener listener);
+    public void removeScoreObjectListener(ScoreObjectListener listener);
 
     /**
      * Gets background color for SoundObject

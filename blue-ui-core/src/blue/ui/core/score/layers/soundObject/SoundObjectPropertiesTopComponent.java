@@ -26,8 +26,8 @@ import blue.noteProcessor.NoteProcessorChainMap;
 import blue.score.undo.ResizeSoundObjectEdit;
 import blue.score.undo.StartTimeEdit;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
-import blue.soundObject.SoundObjectListener;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.BlueUndoManager;
@@ -69,7 +69,7 @@ import org.openide.windows.TopComponent;
     "CTL_SoundObjectPropertiesTopComponent=SoundObject Properties",
     "HINT_SoundObjectPropertiesTopComponent=This is a SoundObject Properties window"
 })
-public final class SoundObjectPropertiesTopComponent extends TopComponent implements SoundObjectListener, SelectionListener, LookupListener {
+public final class SoundObjectPropertiesTopComponent extends TopComponent implements ScoreObjectListener, SelectionListener, LookupListener {
 
     private SoundObject sObj = null;
 
@@ -109,7 +109,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
         isUpdating = true;
 
         if (this.sObj != null) {
-            this.sObj.removeSoundObjectListener(this);
+            this.sObj.removeScoreObjectListener(this);
         }
 
         if (soundObj == null) {
@@ -159,7 +159,7 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
             propEdittor.editObject(null);
 
-            sObj.addSoundObjectListener(this);
+            sObj.addScoreObjectListener(this);
         }
 
         isUpdating = false;
@@ -374,27 +374,27 @@ public final class SoundObjectPropertiesTopComponent extends TopComponent implem
 
     // SOUND OBJECT LISTENER
     @Override
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if (event.getSoundObject() != this.sObj) {
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if (event.getScoreObject() != this.sObj) {
             return;
         }
 
         switch (event.getPropertyChanged()) {
-            case SoundObjectEvent.NAME:
+            case ScoreObjectEvent.NAME:
                 if (!isUpdating) {
                     nameText.setText(sObj.getName());
                 }
                 break;
-            case SoundObjectEvent.START_TIME:
+            case ScoreObjectEvent.START_TIME:
                 startTimeText.setText(Float.toString(sObj.getStartTime()));
                 updateEndTime();
                 break;
-            case SoundObjectEvent.DURATION:
+            case ScoreObjectEvent.DURATION:
                 subjectiveDurationText.setText(Float.toString(sObj
                         .getSubjectiveDuration()));
                 updateEndTime();
                 break;
-            case SoundObjectEvent.COLOR:
+            case ScoreObjectEvent.COLOR:
                 colorPanel.setColor(sObj.getBackgroundColor());
                 break;
         }
