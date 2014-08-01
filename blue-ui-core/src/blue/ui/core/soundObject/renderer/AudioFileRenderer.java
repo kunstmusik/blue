@@ -26,7 +26,7 @@ public class AudioFileRenderer implements BarRenderer {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
-    protected static Color selectedBgColor = Color.white;
+    protected static Color selectedBgColor = new Color(255,255,255,128);
 
     protected static Color selectedBorder1 = selectedBgColor.brighter()
             .brighter();
@@ -37,6 +37,10 @@ public class AudioFileRenderer implements BarRenderer {
 
     protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
 
+    private boolean isBright(Color c) {
+        return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
+    }
+    
     @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
@@ -51,6 +55,7 @@ public class AudioFileRenderer implements BarRenderer {
         Color border1;
         Color border2;
         Color fontColor;
+        Color waveColor;
 
         SoundObject sObj = sObjView.getSoundObject();
 
@@ -64,24 +69,23 @@ public class AudioFileRenderer implements BarRenderer {
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
 
-            int total = bgColor.getRed() + bgColor.getGreen()
-                    + bgColor.getBlue();
-
-            if (total > 128 * 3) {
-                fontColor = Color.black;
-            } else {
-                fontColor = Color.white;
-            }
+            fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
 
         }
 
+        if(isBright(bgColor)) {
+            waveColor = bgColor.brighter().brighter();
+        } else {
+            waveColor = bgColor.darker().darker();
+        }
+        
         g.setPaint(bgColor);
 
         g.fillRect(clip.x, 2, clip.width, h - 4);
 
         // Draw Waveform
 
-        g.setPaint(fontColor);
+        g.setPaint(waveColor);
 
         paintWaveform(g, sObjView, pixelSeconds);
 
