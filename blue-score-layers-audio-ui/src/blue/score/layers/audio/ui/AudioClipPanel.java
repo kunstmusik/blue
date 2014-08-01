@@ -25,6 +25,7 @@ import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.utilities.BlueGradientFactory;
 import blue.ui.utilities.audio.AudioWaveformCache;
 import blue.ui.utilities.audio.AudioWaveformData;
 import blue.ui.utilities.audio.AudioWaveformListener;
@@ -56,8 +57,16 @@ public class AudioClipPanel extends JPanel
     private final AudioClip audioClip;
     private final TimeState timeState;
     boolean selected = false;
-    static Color selectedBg = new Color(255, 255, 255, 128);
 
+    protected static Color selectedBgColor = new Color(255, 255, 255, 128);
+
+    protected static Color selectedBorder1 = selectedBgColor.brighter()
+            .brighter();
+
+    protected static Color selectedBorder2 = selectedBgColor.darker().darker();
+
+    protected static Color selectedFontColor = Color.darkGray;
+    
     Lookup.Result<AudioClip> result = null;
 
     AudioWaveformData waveData = null;
@@ -109,14 +118,6 @@ public class AudioClipPanel extends JPanel
         }
         this.selected = selected;
 
-        if (selected) {
-            setBackground(selectedBg);
-            setForeground(Color.BLACK);
-        } else {
-            setBackground(Color.DARK_GRAY);
-            setForeground(Color.WHITE);
-        }
-
         repaint();
     }
 
@@ -129,39 +130,48 @@ public class AudioClipPanel extends JPanel
     }
     
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
+    protected void paintComponent(Graphics graphics) {
+        Graphics2D g = (Graphics2D) graphics;
+        int w = getWidth();
+        int h = getHeight();
 
-//        Graphics2D g2d = (Graphics2D) g;
-//        Color bg, border, text;
-//
-//        if (selected) {
-//            bg = Color.WHITE;
-//            border = Color.DARK_GRAY;
-//            text = Color.BLACK;
-//        } else {
-//            bg = Color.DARK_GRAY;
-//            border = Color.BLACK;
-//            text = Color.WHITE;
-//        }
-//
-//        Rectangle rect = this.getBounds();
-//
-//        g2d.setColor(bg);
-//        g2d.draw(rect);
-//        g2d.setColor(border);
-//        g2d.draw(rect);
-//
-
+        Color bgColor;
+        Color border1;
+        Color border2;
+        Color fontColor;
         Color waveColor;
 
-        Color bgColor = getBackground();
+        if (isSelected()) {
+            bgColor = selectedBgColor;
+            border1 = selectedBorder1;
+            border2 = selectedBorder2;
+            fontColor = selectedFontColor;
+        } else {
+            bgColor = audioClip.getBackgroundColor();
+            border1 = bgColor.brighter().brighter();
+            border2 = bgColor.darker().darker();
+
+            fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
+        }
 
         if(isBright(bgColor)) {
             waveColor = bgColor.brighter().brighter();
         } else {
             waveColor = bgColor.darker().darker();
         }
+                
+        g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
+
+        g.fillRect(0, 2, w, h - 4);
+
+        g.setColor(border1);
+        g.drawLine(0, 2, w - 1, 2);
+        g.drawLine(0, 2, 0, h - 4);
+
+        g.setColor(border2);
+        g.drawLine(0, h - 3, w, h - 3);
+        g.drawLine(w - 1, h - 3, w - 1, 2);
+
 
         g.setColor(waveColor);
 
@@ -171,7 +181,7 @@ public class AudioClipPanel extends JPanel
 
         g.translate(-1, -2);
 
-        g.setColor(getForeground());
+        g.setColor(fontColor);
         g.drawString(audioClip.getName(), 5, 15);
     }
 
