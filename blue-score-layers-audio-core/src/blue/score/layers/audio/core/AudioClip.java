@@ -50,6 +50,7 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     File audioFile = null;
     int numChannels = 0;
     float audioDuration = 0.0f;
+    float fileStartTime = 0.0f;
     float start = 0.0f;
     float duration = 0.0f;
     Color backgroundColor = Color.DARK_GRAY;
@@ -94,8 +95,27 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 
     public void setAudioDuration(float originalDuration) {
         this.audioDuration = originalDuration;
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.OTHER, "audioDuration");
+
+        fireScoreObjectEvent(event);
     }
 
+    public float getFileStartTime() {
+        return fileStartTime;
+    }
+
+    public void setFileStartTime(float fileStartTime) {
+        this.fileStartTime = fileStartTime;
+
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.OTHER, "fileStartTime");
+
+        fireScoreObjectEvent(event);
+
+    }
+    
     @Override
     public float getStartTime() {
         return start;
@@ -185,6 +205,7 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         root.addElement("audioFile").setText(audioFile.getAbsolutePath());
         root.addElement(XMLUtilities.writeInt("numChannels", numChannels));
         root.addElement(XMLUtilities.writeFloat("audioDuration", audioDuration));
+        root.addElement(XMLUtilities.writeFloat("fileStart", fileStartTime));
         root.addElement(XMLUtilities.writeFloat("start", start));
         root.addElement(XMLUtilities.writeFloat("duration", duration));
 
@@ -215,6 +236,9 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
                     break;
                 case "audioDuration":
                     clip.audioDuration = XMLUtilities.readFloat(node);
+                    break;
+                case "fileStart":
+                    clip.fileStartTime = XMLUtilities.readFloat(node);
                     break;
                 case "start":
                     clip.start = XMLUtilities.readFloat(node);

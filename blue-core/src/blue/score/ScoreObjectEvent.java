@@ -32,14 +32,23 @@ public class ScoreObjectEvent {
     public static final int COLOR = 3;
 
     public static final int REPEAT_POINT = 4;
+    
+    public static final int OTHER = Integer.MAX_VALUE;
 
     private ScoreObject sObj;
 
     private int propertyChanged;
 
+    private String namedProperty;
+
     public ScoreObjectEvent(ScoreObject sObj, int propertyChanged) {
+        this(sObj, propertyChanged, null);
+    }
+
+    public ScoreObjectEvent(ScoreObject sObj, int propertyChanged, String namedProperty) {
         this.sObj = sObj;
         this.propertyChanged = propertyChanged;
+        this.namedProperty = namedProperty;
     }
 
     public int getPropertyChanged() {
