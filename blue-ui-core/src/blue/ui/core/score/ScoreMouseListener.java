@@ -29,13 +29,11 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.lookup.InstanceContent;
 
 /**
@@ -62,7 +60,7 @@ public class ScoreMouseListener extends MouseAdapter {
 
         List<LazyPlugin<BlueMouseAdapter>> plugins = LazyPluginFactory.loadPlugins(
                 "blue/score/mouse", BlueMouseAdapter.class);
-        
+
         mouseListeners = new BlueMouseAdapter[plugins.size()];
 
         for (int i = 0; i < plugins.size(); i++) {
@@ -97,16 +95,17 @@ public class ScoreMouseListener extends MouseAdapter {
 
         MouseAdapter current = null;
 
-        for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
-            current = mouseListeners[i];
-            current.mousePressed(e);
-
-//            if(e.isConsumed()) {
-//                System.out.println("Current: " + current);
-//            }
+        try {
+            for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
+                current = mouseListeners[i];
+                current.mousePressed(e);
+            }
+            currentGestureListener = e.isConsumed() ? current : null;
+        } catch (Exception ex) {
+            Logger.getLogger("ScoreMouseListener").
+                    severe("Mouse Press threw exception: " + ex.getMessage());
+            currentGestureListener = null;
         }
-
-        currentGestureListener = e.isConsumed() ? current : null;
 
     }
 
@@ -116,15 +115,26 @@ public class ScoreMouseListener extends MouseAdapter {
         if (e.isConsumed() || currentGestureListener == null) {
             return;
         }
-        currentGestureListener.mouseDragged(e);
+        try {
+            currentGestureListener.mouseDragged(e);
+        } catch (Exception ex) {
+            Logger.getLogger("ScoreMouseListener").
+                    severe("Mouse Dragged threw exception: " + ex.getMessage());
+            currentGestureListener = null;
+        }
     }
 
     @Override
-    public void mouseReleased(MouseEvent e
-    ) {
+    public void mouseReleased(MouseEvent e) {
 
         if (!e.isConsumed() && currentGestureListener != null) {
-            currentGestureListener.mouseReleased(e);
+            try {
+                currentGestureListener.mouseReleased(e);
+            } catch (Exception ex) {
+                Logger.getLogger("ScoreMouseListener").
+                        severe("Mouse Released threw exception: " + ex.getMessage());
+                currentGestureListener = null;
+            }
         }
 
         currentGestureListener = null;
