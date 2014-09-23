@@ -29,6 +29,7 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -49,6 +50,8 @@ public class ScoreMouseListener extends MouseAdapter {
             .getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
     private final Cursor NORMAL_CURSOR = Cursor
             .getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+    private final Cursor MOVE_CURSOR = Cursor
+            .getPredefinedCursor(Cursor.MOVE_CURSOR);
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
     private MouseAdapter[] mouseListeners;
@@ -76,6 +79,7 @@ public class ScoreMouseListener extends MouseAdapter {
         if (e.isConsumed()) {
             return;
         }
+        scoreTC.getScorePanel().requestFocus();
 
         LayerGroupPanel lGroupPanel = scoreTC.getLayerGroupPanelAtPoint(e);
         ScoreObjectView scoreObjView = null;
@@ -153,9 +157,13 @@ public class ScoreMouseListener extends MouseAdapter {
 
         final JLayeredPane scorePanel = scoreTC.getScorePanel();
 
+        Collection<? extends ScoreObject> selectedObjects = 
+                scoreTC.getLookup().lookupAll(ScoreObject.class);
+        
         // FIXME - perhaps optimize the lookup to cache results using lookup listener
         if (sObjView != null
-                && scoreTC.getLookup().lookupAll(ScoreObject.class).contains(
+                && selectedObjects.size() == 1 
+                && selectedObjects.contains(
                         sObjView.getScoreObject())) {
 
             Point p = SwingUtilities.convertPoint(e.getComponent(),
@@ -168,7 +176,7 @@ public class ScoreMouseListener extends MouseAdapter {
             } else if (p.x > comp.getWidth() - EDGE && p.x <= comp.getWidth()) {
                 scorePanel.setCursor(LEFT_RESIZE_CURSOR);
             } else {
-                scorePanel.setCursor(NORMAL_CURSOR);
+                scorePanel.setCursor(MOVE_CURSOR);
             }
         } else {
             scorePanel.setCursor(NORMAL_CURSOR);
