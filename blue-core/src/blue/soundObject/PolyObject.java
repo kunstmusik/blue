@@ -811,6 +811,28 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return subjectiveDuration;
     }
 
+    @Override
+    public float getMaxResizeRightDiff() {
+        return Float.MAX_VALUE;
+    }
+
+    @Override
+    public float getMaxResizeLeftDiff() {
+        return -getStartTime();
+    }
+    
+    @Override
+    public void resizeLeft(float newStartTime) {
+        float diff = startTime - newStartTime;
+        setStartTime(newStartTime);
+        setSubjectiveDuration(subjectiveDuration + diff);
+    }
+
+    @Override
+    public void resizeRight(float newEndTime) {
+        setSubjectiveDuration(newEndTime - startTime);
+    }
+
     public void addScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             soundObjectListeners = new Vector<>();

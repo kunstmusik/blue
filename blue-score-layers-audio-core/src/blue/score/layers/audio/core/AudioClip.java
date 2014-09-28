@@ -154,6 +154,54 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     }
 
     @Override
+    public float getMaxResizeRightDiff() {
+        return audioDuration - (fileStartTime + duration);
+    }
+
+    @Override
+    public float getMaxResizeLeftDiff() {
+        return (start < fileStartTime) ? -start : -fileStartTime;
+    }
+    
+    @Override
+    public void resizeLeft(float newStartTime) {
+
+        if(newStartTime >= start + duration) {
+            return;
+        } 
+        
+        float diff = newStartTime - start;
+        float maxFileStartDiff = -fileStartTime;
+
+        if(diff < maxFileStartDiff) {
+            diff = maxFileStartDiff;
+        }
+
+        float maxDurDiff = audioDuration - duration;
+        if(-diff > maxDurDiff) {
+            diff = -maxDurDiff;
+        } 
+
+        setFileStartTime(fileStartTime + diff);
+        setStartTime(start + diff);
+        setSubjectiveDuration(duration - diff);
+    }
+
+    @Override
+    public void resizeRight(float newEndTime) {
+
+        if(newEndTime <= start) {
+            return;
+        }
+        
+        float newDur = newEndTime - start;
+
+        newDur = (newDur > audioDuration) ? audioDuration : newDur;
+        
+        setSubjectiveDuration(newDur);
+    }
+    
+    @Override
     public int compareTo(AudioClip o) {
         float diff = o.start - this.start;
         if (diff != 0) {

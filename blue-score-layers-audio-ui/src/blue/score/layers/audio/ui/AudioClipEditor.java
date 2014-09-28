@@ -60,7 +60,7 @@ public class AudioClipEditor extends ScoreObjectEditor {
                                     Float.toString(audioClip.getSubjectiveDuration()));
                             break;
                         case ScoreObjectEvent.OTHER:
-                            if ("fileStartTime".equals(event.getPropertyChanged())) {
+                            if ("fileStartTime".equals(event.getNamedProperty())) {
 
                             fileStartTextField.setText(
                                     Float.toString(audioClip.getFileStartTime()));

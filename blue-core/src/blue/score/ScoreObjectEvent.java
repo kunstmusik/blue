@@ -55,6 +55,10 @@ public class ScoreObjectEvent {
         return propertyChanged;
     }
 
+    public String getNamedProperty() {
+        return namedProperty;
+    }
+
     public ScoreObject getScoreObject() {
         return sObj;
     }

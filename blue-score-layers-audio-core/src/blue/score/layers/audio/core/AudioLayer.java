@@ -353,7 +353,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
             return;
         }
 
-        Iterator iter = new Vector(propListeners).iterator();
+        Iterator<PropertyChangeListener> iter = new Vector<>(propListeners).iterator();
 
         while (iter.hasNext()) {
             PropertyChangeListener listener = (PropertyChangeListener) iter

@@ -50,6 +50,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
     ResizeMode resizeMode = ResizeMode.RESIZE_LEFT;
     private ScoreObject[] selectedScoreObjects;
     private float minDiffTime;
+    private float maxDiffTime;
     
     @Override
     public void mousePressed(MouseEvent e) {
@@ -89,15 +90,20 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         endTimes = new float[selectedScoreObjects.length];
         
         minDiffTime = Float.MAX_VALUE;
+        maxDiffTime = Float.MIN_VALUE;
         
         for (int i = 0; i < selectedScoreObjects.length; i++) {
-            startTimes[i] = selectedScoreObjects[i].getStartTime();
-            endTimes[i] = startTimes[i] + selectedScoreObjects[i].getSubjectiveDuration();
-            if (startTimes[i] < minDiffTime) {
-                minDiffTime = startTimes[i];
+            final ScoreObject sObj = selectedScoreObjects[i];
+            startTimes[i] = sObj.getStartTime();
+            endTimes[i] = startTimes[i] + sObj.getSubjectiveDuration();
+
+            if (sObj.getMaxResizeLeftDiff() < minDiffTime) {
+                minDiffTime = sObj.getMaxResizeLeftDiff();
+            }
+            if (sObj.getMaxResizeRightDiff() > maxDiffTime) {
+                maxDiffTime = sObj.getMaxResizeRightDiff();
             }
         }
-        minDiffTime = -minDiffTime;
     }
     
     @Override
@@ -126,7 +132,7 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
         
         TimeState timeState = scoreTC.getTimeState();
         int xVal = e.getX();
-        float newDuration;
+        float newEnd;
         
         if (timeState.isSnapEnabled()) {
             final float snapValue = timeState.getSnapValue();
@@ -137,22 +143,21 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             float minTime = ScoreUtilities.getSnapValueMove(
                     startTimes[0] + snapValue / 2, snapValue);
             
-            endTime = (endTime < minTime) ? minTime : endTime;
-            
-            newDuration = endTime - startTimes[0];
+            newEnd = (endTime < minTime) ? minTime : endTime;
             
         } else {
             
             float endTime = (float) xVal / timeState.getPixelSecond();
-            float minTime = (float) EDGE / timeState.getPixelSecond();
-            newDuration = endTime - startTimes[0];
-            
-            if (newDuration < minTime) {
-                newDuration = minTime;
-            }
+            float minTime = startTimes[0] + ((float) EDGE / timeState.getPixelSecond());
+           
+            newEnd = (endTime < minTime) ? minTime : endTime;
+        }
+
+        if (newEnd > endTimes[0] + maxDiffTime) {
+            newEnd = endTimes[0] + maxDiffTime;
         }
         
-        selectedScoreObjects[0].setSubjectiveDuration(newDuration);
+        selectedScoreObjects[0].resizeRight(newEnd);
     }
     
     private void resizeScoreObjectLeft(MouseEvent e) {
@@ -194,9 +199,14 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
             }
             
         }
-        
-        selectedScoreObjects[0].setStartTime(newStart);
-        selectedScoreObjects[0].setSubjectiveDuration(endTimes[0] - newStart);
+
+        if(newStart < startTimes[0] + minDiffTime) {
+            newStart = startTimes[0] + minDiffTime;
+        }
+       
+        selectedScoreObjects[0].resizeLeft(newStart);
+//        selectedScoreObjects[0].setStartTime(newStart);
+//        selectedScoreObjects[0].setSubjectiveDuration(endTimes[0] - newStart);
     }
 
 }

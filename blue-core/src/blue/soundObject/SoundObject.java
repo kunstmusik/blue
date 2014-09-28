@@ -20,12 +20,10 @@
 
 package blue.soundObject;
 
-import blue.score.ScoreObjectListener;
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreObject;
 import electric.xml.Element;
-import java.awt.Color;
 import java.util.Map;
 
 /**

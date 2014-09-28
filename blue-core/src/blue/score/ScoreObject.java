@@ -74,6 +74,11 @@ public interface ScoreObject {
 //    boolean isLeftResizable()
     // boolean isRightResizble()
 
+    public float getMaxResizeRightDiff();
+    public float getMaxResizeLeftDiff();
+    public void resizeLeft(float newStartTime);
+    public void resizeRight(float newEndTime);
+
     /**
      * Adds a ScoreObjectListener to this ScoreObject
      * 
