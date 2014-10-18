@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2005 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2014 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published

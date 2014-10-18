@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2007 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2014 Steven Yi (stevenyi@gmail.com)
  *
  * Based on CMask by Andre Bartetzki
  *
