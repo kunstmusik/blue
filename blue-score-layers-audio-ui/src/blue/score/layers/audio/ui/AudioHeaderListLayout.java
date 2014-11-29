@@ -99,7 +99,9 @@ public class AudioHeaderListLayout implements LayoutManager {
 
         int runningY = 0;
 
-        for (int i = 0; i < count; i++) {
+        int size = Math.min(count, audioLayerGroup.size());
+
+        for (int i = 0; i < size; i++) {
             Component temp = parent.getComponent(i);
             AudioLayer layer = audioLayerGroup.get(i);
 

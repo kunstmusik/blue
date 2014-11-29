@@ -88,9 +88,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         reverseTransform.setToIdentity();
         reverseTransform.setToScale(1 / timeState.getPixelSecond(), 1.0);
 
-        layerGroup.addLayerGroupListener(this);
-        timeState.addPropertyChangeListener(this);
-
         final Dimension d = checkSize();
         this.setSize(d);
         this.setBackground(Color.BLACK);
@@ -119,8 +116,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         int y = 0;
         for (AudioLayer layer : layerGroup) {
             int height = layer.getAudioLayerHeight();
-            layer.addPropertyChangeListener(heightListener);
-            layer.addAudioLayerListener(this);
 
             for (AudioClip clip : layer) {
                 addClipPanel(clip, timeState, y, height);
@@ -145,6 +140,23 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     }
 
     @Override
+    public void addNotify() {
+        super.addNotify();
+
+        if(layerGroup == null) {
+            return;
+        }
+        
+        layerGroup.addLayerGroupListener(this);
+        timeState.addPropertyChangeListener(this);
+
+        for (AudioLayer layer : layerGroup) {
+            layer.addPropertyChangeListener(heightListener);
+            layer.addAudioLayerListener(this);
+        }
+    }
+    
+    @Override
     public void removeNotify() {
         super.removeNotify();
         layerGroup.removeLayerGroupListener(this);
@@ -155,7 +167,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             layer.removeAudioLayerListener(this);
         }
 
-        clipPanelMap.clear();
+//        clipPanelMap.clear();
     }
 
     @Override

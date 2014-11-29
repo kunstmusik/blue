@@ -62,7 +62,6 @@ public class AudioHeaderListPanel extends JPanel implements
     
     public AudioHeaderListPanel(AudioLayerGroup audioLayerGroup) {
         this.layerGroup = audioLayerGroup;
-        this.layerGroup.addLayerGroupListener(this);
         this.setLayout(layout);
         layout.setAudioLayerGroup(audioLayerGroup);
         
@@ -212,15 +211,16 @@ public class AudioHeaderListPanel extends JPanel implements
     public void addNotify() {
         super.addNotify();
         checkSize();
-//        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
+        if (this.layerGroup != null) {
+            this.layerGroup.addLayerGroupListener(this);
+        }
     }
     
     @Override
     public void removeNotify() {
         if (this.layerGroup != null) {
-            this.layerGroup.addLayerGroupListener(this);
+            this.layerGroup.removeLayerGroupListener(this);
         }
-//        SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
     }
 
     /* LAYER GROUP LISTENER */
