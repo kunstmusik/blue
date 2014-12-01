@@ -41,16 +41,15 @@ public final class SoundObjectBuffer {
 
     ArrayList yValues = new ArrayList();
 
-    private static SoundObjectBuffer instance = null;
+    private static class LazyHolder {
+        private static final SoundObjectBuffer INSTANCE = new SoundObjectBuffer();
+    }
 
     private SoundObjectBuffer() {
     }
 
     public static SoundObjectBuffer getInstance() {
-        if (instance == null) {
-            instance = new SoundObjectBuffer();
-        }
-        return instance;
+        return LazyHolder.INSTANCE;
     }
 
     public SoundObject getSoundObject(int i) {
