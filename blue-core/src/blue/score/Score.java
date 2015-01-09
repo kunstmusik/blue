@@ -221,12 +221,12 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
                 runningIndex += 1;
             }
             if (y <= runningY + SPACER) {
-                return -1;
+                return runningIndex;
             }
             runningY += SPACER;
         }
 
-        return -1;
+        return runningIndex - 1;
     }
 
     public Layer getGlobalLayerForY(int y) {

@@ -20,6 +20,7 @@
 package blue.ui.core.score;
 
 import blue.score.Score;
+import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import java.awt.Point;
@@ -202,7 +203,43 @@ public class ScorePath {
             runningY += layer.getLayerHeight();
         }
         
+        return layerGroup.size() - 1;
+    }
+
+    public Layer getLayerForScoreObject(ScoreObject scoreObj) {
+        List<? extends Layer> layers;
+
+        if (getLastLayerGroup() == null) {
+            layers = getScore().getAllLayers();
+        } else  {
+            layers = getLastLayerGroup();
+        }
+    
+        for(Layer layer : layers) {
+            if(layer.contains(scoreObj)) {
+                return layer;
+            }
+        }
+        
+        return null;
+    }
+
+
+    public int getGlobalLayerIndexForScoreObject(ScoreObject scoreObj) {
+        List<? extends Layer> layers;
+        if (getLastLayerGroup() == null) {
+            layers = getScore().getAllLayers();
+        } else  {
+            layers = getLastLayerGroup();
+        }
+    
+        for(int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            if(layer.contains(scoreObj)) {
+                return i;
+            }
+        }
+        
         return -1;
     }
-    
 }

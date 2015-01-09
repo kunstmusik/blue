@@ -96,6 +96,8 @@ public class AudioClipPanel extends JPanel
 
         result.addLookupListener(this);
 
+        Collection<? extends AudioClip> soundObjects = result.allInstances();
+        setSelected(soundObjects.contains(this.audioClip));
         updateWaveformData();
     }
 
