@@ -38,7 +38,7 @@ import javax.swing.JToggleButton;
  * @version 1.0
  */
 
-@ScoreObjectEditorPlugin(scoreObjectType = PianoRollEditor.class)
+@ScoreObjectEditorPlugin(scoreObjectType = PianoRoll.class)
 public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener, ActionListener {
 
