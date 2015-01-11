@@ -436,7 +436,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
         AudioClipPanel panel = new AudioClipPanel(clip, timeState);
         panel.setBounds(panel.getX(), y, panel.getWidth(), height);
-        add(panel);
+        add(panel, 0);
         clipPanelMap.put(clip, panel);
     }
 

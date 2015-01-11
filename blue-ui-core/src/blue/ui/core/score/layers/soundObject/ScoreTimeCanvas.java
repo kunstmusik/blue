@@ -792,7 +792,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private void addSoundObjectView(int soundLayerIndex, SoundObject sObj) {
         SoundObjectView temp = new SoundObjectView(sObj, timeState);
-        sObjPanel.add(temp);
+        sObjPanel.add(temp, 0);
         temp.setLocation(
                 (int) (sObj.getStartTime() * timeState.getPixelSecond()),
                 getPolyObject().getYForLayerNum(soundLayerIndex));
