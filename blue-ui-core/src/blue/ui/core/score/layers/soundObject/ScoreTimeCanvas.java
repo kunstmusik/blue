@@ -34,17 +34,14 @@ import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectView;
-import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import blue.ui.core.score.undo.AddSoundObjectEdit;
-import blue.ui.core.score.undo.RemoveSoundObjectEdit;
 import blue.ui.utilities.ParentDispatchingMouseAdapter;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -60,7 +57,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
@@ -81,8 +77,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     private static final MessageFormat toolTipFormat = new MessageFormat(
             "<html><b>Name:</b> {0}<br>" + "<b>Type:</b> {1}<br>" + "<b>Start Time:</b> {2}<br>" + "<b>Duration:</b> {3}<br>" + "<b>End Time:</b> {4}</html>");
-//    private final SoundLayerPopup sLayerPopup = new SoundLayerPopup();
-//    private final SoundObjectPopup sObjPopup;
     private final QuickTimeDialog qtDialog;
     private final HashMap<SoundObject, SoundObjectView> soundObjectToViewMap
             = new HashMap<>();
@@ -91,10 +85,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     TimeState timeState = null;
     public final SoundObjectBuffer buffer;
     AlphaMarquee marquee = new AlphaMarquee();
-//    MotionBuffer mBuffer = MotionBuffer.getInstance();
     Point start = new Point(0, 0);
     Point end;
-//    ScoreMouseProcessor sMouse;
     MultiLineMouseProcessor multiLineMouse;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
     JPanel sObjPanel = new JPanel();
@@ -105,10 +97,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     public ScoreTimeCanvas(BlueData blueData, InstanceContent ic) {
         this.content = ic;
-        //setAutoscrolls(true);
 
         qtDialog = new QuickTimeDialog(this);
-//        sObjPopup = new SoundObjectPopup(this, ic);
 
         this.buffer = SoundObjectBuffer.getInstance();
         this.data = blueData;
@@ -124,17 +114,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         time = 3;
 
-//        sMouse = new ScoreMouseProcessor(this, ic);
         multiLineMouse = new MultiLineMouseProcessor(this);
 
-//        addMouseListener(sMouse);
-        //       addMouseMotionListener(sMouse);
-//        addMouseListener(multiLineMouse);
-//        addMouseMotionListener(multiLineMouse);
         ModeManager.getInstance().addModeListener(this);
 
-//        sMouse.addSelectionListener(mBuffer);
-//        multiLineMouse.addSelectionListener(mBuffer);
         initActions();
 
         sObjPanel.setOpaque(false);
@@ -158,23 +141,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.setFocusable(true);
 
-//        this.addSelectionListener(new SelectionListener() {
-//
-//            @Override
-//            public void selectionPerformed(SelectionEvent e) {
-//                SoundObjectView sObjView = (SoundObjectView) e.getSelectedItem();
-//
-//                Object item;
-//                if (sObjView == null) {
-//                    item = null;
-//                } else {
-//                    item = sObjView.getSoundObject();
-//                }
-//
-//                SelectionEvent selectionEvent = new SelectionEvent(item, e.getSelectionType());
-//                SoundObjectSelectionBus.getInstance().selectionPerformed(selectionEvent);
-//            }
-//        });
         this.addMouseWheelListener(new ScoreMouseWheelListener(
                 data.getScore().getTimeState()));
         final MouseAdapter mouseAdapter = new ParentDispatchingMouseAdapter(this);
