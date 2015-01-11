@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.BlueSystem;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
@@ -41,11 +42,14 @@ import javax.swing.SwingUtilities;
 @ScoreMouseListenerPlugin(displayName = "MoveScoreObjectsListener",
         position=50)
 public class MoveScoreObjectsListener extends BlueMouseAdapter {
+    private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
 
     private Point startPoint;
 
     //Collection<? extends ScoreObject> selectedScoreObjects = null;
     //Map<ScoreObject, Float> startTimes = new HashMap<>();
+    
+    boolean initialDrag = true;
     
     private ScoreObject[] selectedScoreObjects = null;
     private float[] startTimes = null;
@@ -88,9 +92,7 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     public void mousePressed(MouseEvent e) {
 
         if (currentScoreObjectView == null || 
-                !SwingUtilities.isLeftMouseButton(e) ||
-                e.isAltDown() || e.isAltGraphDown() || 
-                e.isControlDown() || e.isMetaDown() || e.isShiftDown()) {
+                !SwingUtilities.isLeftMouseButton(e)) {
             return;
         }    
 
@@ -119,6 +121,8 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         minYAdjust = Integer.MIN_VALUE;
         maxYAdjust = Integer.MAX_VALUE;
         
+        initialDrag = true;
+        
         List<Layer> allLayers = scorePath.getAllLayers();
         
         for (int i = 0; i < selectedScoreObjects.length; i++) {
@@ -141,8 +145,27 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        ScoreController scoreController = ScoreController.getInstance();
+        ScorePath scorePath = ScoreController.getInstance().getScorePath();
+        List<Layer> allLayers = scorePath.getAllLayers();
+
         e.consume();
 
+        if(initialDrag) {
+            initialDrag = false;
+            if((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                for(int i = 0; i < selectedScoreObjects.length; i++) {
+                    ScoreObject original = selectedScoreObjects[i];
+                    ScoreObject clone = original.clone();
+                    ScoreObjectLayer layer = (ScoreObjectLayer)allLayers.get(startLayerIndices[i]);      
+                    layer.add(clone);
+                    scoreController.removeSelectedScoreObject(original);
+                    scoreController.addSelectedScoreObject(clone);
+                    selectedScoreObjects[i] = clone;
+                }
+            }
+        }
+        
         float diffTime = e.getX() - startPoint.x;
         TimeState timeState = scoreTC.getTimeState();
         diffTime = diffTime / timeState.getPixelSecond();
@@ -161,7 +184,6 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         }
 
-        ScorePath scorePath = ScoreController.getInstance().getScorePath();
         int newLayerIndex = scorePath.getGlobalLayerIndexForY(e.getY()); 
         int layerAdjust = newLayerIndex - startLayer;
         layerAdjust = Math.max(layerAdjust, minYAdjust);
@@ -170,10 +192,6 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         if(layerAdjusted) {
             lastLayerAdjust = layerAdjust;
         }
-       
-
-        List<Layer> allLayers = scorePath.getAllLayers();
-        ScoreController scoreController = ScoreController.getInstance();
         
         for(int i = 0; i < selectedScoreObjects.length; i++) {
             selectedScoreObjects[i].setStartTime(startTimes[i] + diffTime);
@@ -204,74 +222,4 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         startTimes = null;
     }
 
-
-    // MOUSE DRAGGING CODE
-    private void moveSoundObjects(MouseEvent e) {
-        // FIXME
-//        int xTrans = e.getX() - sCanvas.start.x;
-//
-//        int layerStart = sCanvas.pObj.getLayerNumForY(sCanvas.start.y);
-//        int newLayer = sCanvas.pObj.getLayerNumForY(e.getY());
-//
-//        int yTranslation = -(layerStart - newLayer);
-//
-//        // snap to layer
-//
-//        int minLayer = sCanvas.pObj.getLayerNumForY(sCanvas.mBuffer.minY);
-//        int maxLayer = sCanvas.pObj.getLayerNumForY(sCanvas.mBuffer.maxY);
-//
-//        if ((yTranslation + minLayer) < 0) {
-//            yTranslation = -minLayer;
-//        } else if ((yTranslation + maxLayer) >= sCanvas.pObj.getSize()) {
-//            yTranslation = sCanvas.pObj.getSize() - maxLayer - 1;
-//        }
-//
-//        float timeAdjust = (float) xTrans / timeState.getPixelSecond();
-//
-//        float initialStartTime = sCanvas.mBuffer.initialStartTimes[0];
-//
-//        if (timeAdjust < -initialStartTime) {
-//            timeAdjust = -initialStartTime;
-//        }
-//
-//        if (timeState.isSnapEnabled()) {
-//
-//
-//            float tempStart = initialStartTime + timeAdjust;
-//            float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
-//                    timeState.getSnapValue());
-//
-//
-//            timeAdjust = snappedStart - initialStartTime;
-//
-//        }
-//
-//
-//
-//        //FIXME - needs to use time instead of x value
-//        sCanvas.automationPanel.setMultiLineTranslation(timeAdjust);
-//
-//        for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-//
-//
-//            int originalLayer = sCanvas.pObj
-//                    .getLayerNumForY(sCanvas.mBuffer.sObjYValues[i]);
-//
-//            int newY = sCanvas.pObj.getYForLayerNum(originalLayer + yTranslation);
-//
-//            SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
-//            SoundObject sObj = sObjView.getSoundObject();
-//
-//            float newStart = sCanvas.mBuffer.initialStartTimes[i] + timeAdjust;
-//
-//            sObjView.setLocation(sObjView.getX(), newY);
-//
-//            sObjView.setSize(sObjView.getWidth(), sCanvas.pObj
-//                    .getSoundLayerHeight(originalLayer + yTranslation));
-//
-//            sObj.setStartTime(newStart);
-//
-//        }
-
-    }
 }
