@@ -488,15 +488,11 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 //    }
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
-        Point temp = new Point();
-        for (AudioClipPanel panel : clipPanelMap.values()) {
-            temp.x = p.x - panel.getX();
-            temp.y = p.y - panel.getY();
-            if (panel.contains(temp)) {
-                return panel;
-            }
-        }
+        Component c = getComponentAt(p);
 
+        if(c instanceof ScoreObjectView) {
+            return (ScoreObjectView)c;
+        }
         return null;
     }
 

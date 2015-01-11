@@ -1153,15 +1153,10 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
-        Point temp = new Point();
-        for (SoundObjectView view : soundObjectToViewMap.values()) {
-            temp.x = p.x - view.getX();
-            temp.y = p.y - view.getY();
-            if (view.contains(temp)) {
-                return view;
-            }
+        Component c = sObjPanel.getComponentAt(p);
+        if(c instanceof ScoreObjectView) {
+            return (ScoreObjectView)c;
         }
-
         return null;
     }
 
