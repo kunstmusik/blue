@@ -35,7 +35,7 @@ import javax.swing.JSplitPane;
 /**
  * @author Steven Yi
  */
-@ScoreObjectEditorPlugin(scoreObjectType = LineEditor.class)
+@ScoreObjectEditorPlugin(scoreObjectType = LineObject.class)
 public class LineEditor extends ScoreObjectEditor {
 
     LineListTable lineTable = null;
