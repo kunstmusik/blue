@@ -20,6 +20,8 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
+import blue.ui.core.score.undo.MoveScoreObjectsEdit;
+import blue.undo.BlueUndoManager;
 import java.util.Collection;
 
 /**
@@ -27,39 +29,51 @@ import java.util.Collection;
  * @author stevenyi
  */
 public class NudgeUtils {
-    
+
     // TODO - Respect snap values, Make Undoable
-    public static void nudgeHorizontal(float timeValue, 
+    public static void nudgeHorizontal(float timeValue,
             Collection<? extends ScoreObject> scoreObjects) {
-        if(scoreObjects == null || scoreObjects.size() == 0) {
+        if (scoreObjects == null || scoreObjects.size() == 0) {
             return;
         }
 
         float adjustedTime = timeValue;
 
-        if(timeValue < 0.0f) { 
-            for(ScoreObject scoreObj: scoreObjects) {
+        if (timeValue < 0.0f) {
+            for (ScoreObject scoreObj : scoreObjects) {
                 float start = scoreObj.getStartTime();
-                if(start == 0.0) {
+                if (start == 0.0) {
                     return;
                 }
-                if(adjustedTime < -start) {
+                if (adjustedTime < -start) {
                     adjustedTime = -start;
                 }
             }
         }
-       
 
         //FIXME - handle for translating automations
 //        mBuffer.motionBufferObjects();
 //        setSelectionDragRegions();
+        int len = scoreObjects.size();
+        ScoreObject[] objects = scoreObjects.<ScoreObject>toArray(
+                new ScoreObject[scoreObjects.size()]);
+        float[] startTimes = new float[len];
+        float[] endTimes = new float[len];
 
-
-        for(ScoreObject scoreObj: scoreObjects) {
-            scoreObj.setStartTime(scoreObj.getStartTime() + adjustedTime);
+        for (int i = 0; i < objects.length; i++) {
+            ScoreObject scoreObj = objects[i];
+            startTimes[i] = scoreObj.getStartTime();
+            endTimes[i] = scoreObj.getStartTime() + adjustedTime;
+            scoreObj.setStartTime(endTimes[i]);
         }
+
+        MoveScoreObjectsEdit edit = new MoveScoreObjectsEdit(objects,
+                null, null, startTimes, endTimes);
+
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(edit);
 
 //        automationPanel.setMultiLineTranslation(timeValue);
 //        automationPanel.commitMultiLineDrag();
-    } 
+    }
 }

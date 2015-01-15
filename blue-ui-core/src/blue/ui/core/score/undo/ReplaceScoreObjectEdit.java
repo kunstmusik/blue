@@ -2,7 +2,7 @@
  * Created on Aug 10, 2003
  *
  */
-package blue.score.undo;
+package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
 import blue.soundObject.PolyObject;
@@ -15,7 +15,7 @@ import javax.swing.undo.CannotUndoException;
  * @author steven
  * 
  */
-public class ReplaceSoundObjectEdit extends AbstractUndoableEdit {
+public class ReplaceScoreObjectEdit extends AbstractUndoableEdit {
     private SoundObject oldSObj;
 
     private SoundObject newSObj;
@@ -24,7 +24,7 @@ public class ReplaceSoundObjectEdit extends AbstractUndoableEdit {
 
     private PolyObject pObj;
 
-    public ReplaceSoundObjectEdit(PolyObject pObj, SoundObject sObjOld,
+    public ReplaceScoreObjectEdit(PolyObject pObj, SoundObject sObjOld,
             SoundObject sObjNew, int soundLayerIndex) {
 
         this.pObj = pObj;

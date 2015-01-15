@@ -14,16 +14,16 @@ import javax.swing.undo.CannotUndoException;
 /**
  * @author steven
  */
-public class RemoveSoundObjectEdit extends AbstractUndoableEdit {
+public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
     private SoundObject sObj;
 
     private int soundLayerIndex;
 
     private PolyObject pObj;
 
-    RemoveSoundObjectEdit nextEdit = null;
+    RemoveScoreObjectEdit nextEdit = null;
 
-    public RemoveSoundObjectEdit(PolyObject pObj, SoundObject sObj,
+    public RemoveScoreObjectEdit(PolyObject pObj, SoundObject sObj,
             int soundLayerIndex) {
 
         this.pObj = pObj;
@@ -57,7 +57,7 @@ public class RemoveSoundObjectEdit extends AbstractUndoableEdit {
         return BlueSystem.getString("scoreGUI.action.removeSoundObjects");
     }
 
-    public void setNextEdit(RemoveSoundObjectEdit nextEdit) {
+    public void setNextEdit(RemoveScoreObjectEdit nextEdit) {
         this.nextEdit = nextEdit;
     }
 }

@@ -25,6 +25,7 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.SoundObjectProvider;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -76,7 +77,6 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
 
     private final InstanceContent content = new InstanceContent();
 
-    private SoundObjectBuffer sObjBuffer;
     private SoundObjectLibrary sObjLib = new SoundObjectLibrary();
 
     private SoundObjectLibraryTopComponent() {
@@ -89,9 +89,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         setToolTipText(NbBundle.getMessage(SoundObjectLibraryTopComponent.class,
                 "HINT_SoundObjectLibraryTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
-
-        this.sObjBuffer = SoundObjectBuffer.getInstance();
-
+        
         sObjLibTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -255,7 +253,8 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         int index = sObjLibTable.getSelectedRow();
         if (index != -1) {
             SoundObject sObj = sObjLib.getSoundObject(index);
-            sObjBuffer.setBufferedObject((SoundObject) sObj.clone(), 0, 0);
+            ScoreController.getInstance().setSelectedScoreObjects(
+                    Collections.singleton(sObj.clone()));
         }
 }//GEN-LAST:event_copyButtonActionPerformed
 
@@ -266,7 +265,8 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
             Instance tempSObj = new Instance(originalSObj);
             tempSObj.setStartTime(0.0f);
             tempSObj.setSubjectiveDuration(tempSObj.getObjectiveDuration());
-            sObjBuffer.setBufferedObject(tempSObj, 0, 0);
+            ScoreController.getInstance().setSelectedScoreObjects(
+                    Collections.singleton(tempSObj));
         }
     }//GEN-LAST:event_copyInstanceButtonActionPerformed
 

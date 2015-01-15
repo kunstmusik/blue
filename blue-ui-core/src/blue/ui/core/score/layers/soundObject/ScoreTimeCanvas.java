@@ -82,7 +82,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     int time;
     PolyObject pObj;
     TimeState timeState = null;
-    public final SoundObjectBuffer buffer;
     AlphaMarquee marquee = new AlphaMarquee();
     Point start = new Point(0, 0);
     Point end;
@@ -97,7 +96,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     public ScoreTimeCanvas(BlueData blueData, InstanceContent ic) {
         this.content = ic;
 
-        this.buffer = SoundObjectBuffer.getInstance();
         this.data = blueData;
 
         heightListener = new PropertyChangeListener() {

@@ -24,6 +24,8 @@ import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
+import blue.ui.core.score.undo.MoveScoreObjectsEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -46,9 +48,9 @@ public final class NudgeDownAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<? extends ScoreObject> selected = 
-                ScoreController.getInstance().getSelectedScoreObjects();
-              
+        Collection<? extends ScoreObject> selected
+                = ScoreController.getInstance().getSelectedScoreObjects();
+
         if (!selected.isEmpty()) {
             ScorePath path = ScoreController.getInstance().getScorePath();
 
@@ -58,29 +60,39 @@ public final class NudgeDownAction implements ActionListener {
             int[] indexes = new int[selected.size()];
             int lastIndex = layers.size() - 1;
 
-            for(int i = 0; i < scoreObjects.length; i++) {
-                int index = path.getGlobalLayerIndexForScoreObject(scoreObjects[i]);
-                
-                if(index >= lastIndex) {
+            for (int i = 0; i < scoreObjects.length; i++) {
+                int index = path.getGlobalLayerIndexForScoreObject(
+                        scoreObjects[i]);
+
+                if (index >= lastIndex) {
                     return;
                 }
 
                 Layer layer = layers.get(index + 1);
-                if(!layer.accepts(scoreObjects[i])) {
+                if (!layer.accepts(scoreObjects[i])) {
                     return;
                 }
 
-                indexes[i] = index; 
+                indexes[i] = index;
             }
 
-            for(int i = 0; i < scoreObjects.length; i++) {
-                Layer from = layers.get(indexes[i]);
-                Layer to = layers.get(indexes[i] + 1);
+            int len = scoreObjects.length;
+            ScoreObjectLayer[] startLayers = new ScoreObjectLayer[len];
+            ScoreObjectLayer[] endLayers = new ScoreObjectLayer[len];
 
-                from.remove(scoreObjects[i]);
-                ((ScoreObjectLayer)to).add(scoreObjects[i]);
+            for (int i = 0; i < scoreObjects.length; i++) {
+                startLayers[i] = (ScoreObjectLayer) layers.get(indexes[i]);
+                endLayers[i] = (ScoreObjectLayer) layers.get(indexes[i] + 1);
+
+                startLayers[i].remove(scoreObjects[i]);
+                endLayers[i].add(scoreObjects[i]);
             }
 
+            MoveScoreObjectsEdit edit = new MoveScoreObjectsEdit(scoreObjects,
+                    startLayers, endLayers, null, null);
+
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(edit);
         }
     }
 }

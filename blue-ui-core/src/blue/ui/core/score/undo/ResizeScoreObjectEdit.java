@@ -5,7 +5,7 @@
 package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -15,17 +15,17 @@ import javax.swing.undo.CannotUndoException;
  * 
  */
 
-public class ResizeSoundObjectEdit extends AbstractUndoableEdit {
-    private SoundObject[] sObj;
+public class ResizeScoreObjectEdit extends AbstractUndoableEdit {
+    private ScoreObject[] sObj;
 
     private float initialDuration, endingDuration;
 
-    public ResizeSoundObjectEdit(SoundObject sObj, float initialDuration,
+    public ResizeScoreObjectEdit(ScoreObject sObj, float initialDuration,
             float endingDuration) {
 
         this.initialDuration = initialDuration;
         this.endingDuration = endingDuration;
-        this.sObj = new SoundObject[1];
+        this.sObj = new ScoreObject[1];
         this.sObj[0] = sObj;
     }
 

@@ -27,6 +27,8 @@ import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
+import blue.ui.core.score.undo.MoveScoreObjectsEdit;
+import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -38,19 +40,18 @@ import javax.swing.SwingUtilities;
  *
  * @author stevenyi
  */
-
 @ScoreMouseListenerPlugin(displayName = "MoveScoreObjectsListener",
-        position=50)
+        position = 50)
 public class MoveScoreObjectsListener extends BlueMouseAdapter {
+
     private static final int OS_CTRL_KEY = BlueSystem.getMenuShortcutKey();
 
     private Point startPoint;
 
     //Collection<? extends ScoreObject> selectedScoreObjects = null;
     //Map<ScoreObject, Float> startTimes = new HashMap<>();
-    
     boolean initialDrag = true;
-    
+
     private ScoreObject[] selectedScoreObjects = null;
     private float[] startTimes = null;
     private float minDiffTime = Float.MIN_VALUE;
@@ -61,49 +62,49 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     private int lastLayerAdjust = 0;
     private int minYAdjust = 0;
     private int maxYAdjust = 0;
-   
-    protected static int getMinYAdjust(List<Layer> layers, 
+
+    protected static int getMinYAdjust(List<Layer> layers,
             ScoreObject scoreObj, int sObjLayerIndex) {
         for (int index = sObjLayerIndex - 1; index >= 0; index--) {
-           if(layers.get(index).accepts(scoreObj)) {
-               continue;
-           } 
-           return (index + 1) - sObjLayerIndex;
+            if (layers.get(index).accepts(scoreObj)) {
+                continue;
+            }
+            return (index + 1) - sObjLayerIndex;
         }
-        
+
         return -sObjLayerIndex;
     }
 
-    protected static int getMaxYAdjust(List<Layer> layers, 
-            ScoreObject scoreObj, 
+    protected static int getMaxYAdjust(List<Layer> layers,
+            ScoreObject scoreObj,
             int sObjLayerIndex) {
 
         for (int index = sObjLayerIndex + 1; index < layers.size(); index++) {
-           if(layers.get(index).accepts(scoreObj)) {
-               continue;
-           } 
-           return (index - 1) - sObjLayerIndex;
+            if (layers.get(index).accepts(scoreObj)) {
+                continue;
+            }
+            return (index - 1) - sObjLayerIndex;
         }
-        
+
         return layers.size() - 1 - sObjLayerIndex;
     }
-    
+
     @Override
     public void mousePressed(MouseEvent e) {
 
-        if (currentScoreObjectView == null || 
-                !SwingUtilities.isLeftMouseButton(e)) {
-            return;
-        }    
-
-        ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
-        Collection<? extends ScoreObject> temp =
-                ScoreController.getInstance().getSelectedScoreObjects();
-
-        if(!temp.contains(scoreObj)) {
+        if (currentScoreObjectView == null
+                || !SwingUtilities.isLeftMouseButton(e)) {
             return;
         }
-        
+
+        ScoreObject scoreObj = currentScoreObjectView.getScoreObject();
+        Collection<? extends ScoreObject> temp
+                = ScoreController.getInstance().getSelectedScoreObjects();
+
+        if (!temp.contains(scoreObj)) {
+            return;
+        }
+
         e.consume();
 
         ScorePath scorePath = ScoreController.getInstance().getScorePath();
@@ -120,27 +121,27 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         lastLayerAdjust = 0;
         minYAdjust = Integer.MIN_VALUE;
         maxYAdjust = Integer.MAX_VALUE;
-        
+
         initialDrag = true;
-        
+
         List<Layer> allLayers = scorePath.getAllLayers();
-        
+
         for (int i = 0; i < selectedScoreObjects.length; i++) {
             startTimes[i] = selectedScoreObjects[i].getStartTime();
-            if(startTimes[i] < minDiffTime) {
+            if (startTimes[i] < minDiffTime) {
                 minDiffTime = startTimes[i];
             }
-            startLayerIndices[i] = currentLayerIndices[i] = 
-                scorePath.getGlobalLayerIndexForScoreObject(
-                        selectedScoreObjects[i]); 
+            startLayerIndices[i] = currentLayerIndices[i]
+                    = scorePath.getGlobalLayerIndexForScoreObject(
+                            selectedScoreObjects[i]);
             int minY = getMinYAdjust(allLayers, scoreObj, startLayerIndices[i]);
             int maxY = getMaxYAdjust(allLayers, scoreObj, startLayerIndices[i]);
 
-            minYAdjust = (minY > minYAdjust) ? minY : minYAdjust; 
-            maxYAdjust = (maxY < maxYAdjust) ? maxY : maxYAdjust; 
+            minYAdjust = (minY > minYAdjust) ? minY : minYAdjust;
+            maxYAdjust = (maxY < maxYAdjust) ? maxY : maxYAdjust;
         }
         minDiffTime = -minDiffTime;
-        
+
     }
 
     @Override
@@ -151,13 +152,14 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         e.consume();
 
-        if(initialDrag) {
+        if (initialDrag) {
             initialDrag = false;
-            if((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
-                for(int i = 0; i < selectedScoreObjects.length; i++) {
+            if ((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) {
+                for (int i = 0; i < selectedScoreObjects.length; i++) {
                     ScoreObject original = selectedScoreObjects[i];
                     ScoreObject clone = original.clone();
-                    ScoreObjectLayer layer = (ScoreObjectLayer)allLayers.get(startLayerIndices[i]);      
+                    ScoreObjectLayer layer = (ScoreObjectLayer) allLayers.get(
+                            startLayerIndices[i]);
                     layer.add(clone);
                     scoreController.removeSelectedScoreObject(original);
                     scoreController.addSelectedScoreObject(clone);
@@ -165,15 +167,15 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
                 }
             }
         }
-        
+
         float diffTime = e.getX() - startPoint.x;
         TimeState timeState = scoreTC.getTimeState();
         diffTime = diffTime / timeState.getPixelSecond();
 
-        if(diffTime < minDiffTime) {
+        if (diffTime < minDiffTime) {
             diffTime = minDiffTime;
         }
-        
+
         if (timeState.isSnapEnabled()) {
 
             float tempStart = -minDiffTime + diffTime;
@@ -184,30 +186,31 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
 
         }
 
-        int newLayerIndex = scorePath.getGlobalLayerIndexForY(e.getY()); 
+        int newLayerIndex = scorePath.getGlobalLayerIndexForY(e.getY());
         int layerAdjust = newLayerIndex - startLayer;
         layerAdjust = Math.max(layerAdjust, minYAdjust);
         layerAdjust = Math.min(layerAdjust, maxYAdjust);
         boolean layerAdjusted = lastLayerAdjust != layerAdjust;
-        if(layerAdjusted) {
+        if (layerAdjusted) {
             lastLayerAdjust = layerAdjust;
         }
-        
-        for(int i = 0; i < selectedScoreObjects.length; i++) {
+
+        for (int i = 0; i < selectedScoreObjects.length; i++) {
             selectedScoreObjects[i].setStartTime(startTimes[i] + diffTime);
-            if(layerAdjusted) {
+            if (layerAdjusted) {
                 ScoreObject scoreObj = selectedScoreObjects[i];
                 int startIndex = startLayerIndices[i];
                 int curLayerIndex = currentLayerIndices[i];
-                int newSObjLayerIndex = startIndex + layerAdjust; 
-                
+                int newSObjLayerIndex = startIndex + layerAdjust;
+
                 allLayers.get(curLayerIndex).remove(scoreObj);
 
                 // Re-add moved scoreObject as selected
                 scoreController.addSelectedScoreObject(scoreObj);
-                
-                ((ScoreObjectLayer)allLayers.get(newSObjLayerIndex)).add(scoreObj);
-                
+
+                ((ScoreObjectLayer) allLayers.get(newSObjLayerIndex)).add(
+                        scoreObj);
+
                 currentLayerIndices[i] = newSObjLayerIndex;
 
             }
@@ -218,8 +221,33 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
     public void mouseReleased(MouseEvent e) {
 
         e.consume();
+
+        if (!initialDrag) {
+            List<Layer> allLayers = ScoreController.getInstance().getScorePath().getAllLayers();
+
+            int len = startTimes.length;
+            float[] endTimes = new float[len];
+            ScoreObjectLayer[] startLayers = new ScoreObjectLayer[len];
+            ScoreObjectLayer[] endLayers = new ScoreObjectLayer[len];
+
+            for (int i = 0; i < selectedScoreObjects.length; i++) {
+                endTimes[i] = selectedScoreObjects[i].getStartTime();
+                startLayers[i] = (ScoreObjectLayer) allLayers.get(startLayerIndices[i]);
+                endLayers[i] = (ScoreObjectLayer) allLayers.get(currentLayerIndices[i]);
+            }
+
+            MoveScoreObjectsEdit edit = new MoveScoreObjectsEdit(
+                    selectedScoreObjects, startLayers, endLayers, startTimes,
+                    endTimes);
+
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(edit);
+        }
+
         selectedScoreObjects = null;
         startTimes = null;
+        startLayerIndices = null;
+        currentLayerIndices = null;
     }
 
 }

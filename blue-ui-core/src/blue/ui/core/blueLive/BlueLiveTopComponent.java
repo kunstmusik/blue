@@ -27,10 +27,12 @@ import blue.blueLive.LiveObjectSetList;
 import blue.midi.*;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.SoundObjectProvider;
-import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
 import blue.ui.nbutilities.lazyplugin.AttributeFilter;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
@@ -41,6 +43,7 @@ import blue.utility.ScoreUtilities;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -106,7 +109,6 @@ public final class BlueLiveTopComponent extends TopComponent
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
     private static final String PREFERRED_ID = "BlueLiveTopComponent";
     BlueData data = null;
-    SoundObjectBuffer buffer = SoundObjectBuffer.getInstance();
     LiveObjectsTableModel model;
     LiveObjectSetListTableModel setModel;
     BufferMenu bufferPopup;
@@ -126,15 +128,15 @@ public final class BlueLiveTopComponent extends TopComponent
     public BlueLiveTopComponent() {
 
         List<LazyPlugin<SoundObject>> plugins = LazyPluginFactory.loadPlugins(
-                "blue/score/soundObjects", SoundObject.class, 
+                "blue/score/soundObjects", SoundObject.class,
                 new AttributeFilter("live"));
-        
+
         liveSoundObjectTemplates = new HashMap<>();
 
         for (LazyPlugin<SoundObject> plugin : plugins) {
             liveSoundObjectTemplates.put(
-                        plugin.getInstance().getClass(),
-                        plugin.getDisplayName());
+                    plugin.getInstance().getClass(),
+                    plugin.getDisplayName());
         }
 
         initComponents();
@@ -395,10 +397,10 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
 
-                    SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                            lObj.getSoundObject());
+                    ScoreObject copy = lObj.getSoundObject().clone();
 
-                    buffer.setBufferedObject(copy, 0, 0);
+                    ScoreController.getInstance().setSelectedScoreObjects(
+                            Collections.singleton(copy));
 
                 }
             }
@@ -410,7 +412,18 @@ public final class BlueLiveTopComponent extends TopComponent
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                SoundObject sObj = buffer.getBufferedSoundObject();
+                Collection<? extends ScoreObject> selected
+                        = ScoreController.getInstance().getSelectedScoreObjects();
+
+                if (selected.size() != 1) {
+                    return;
+                }
+                ScoreObject scoreObj = selected.iterator().next();
+                if (scoreObj instanceof SoundObject) {
+                    return;
+                }
+
+                SoundObject sObj = (SoundObject) scoreObj;
 
                 int row = liveObjectsTable.getSelectedRow();
                 int column = liveObjectsTable.getSelectedColumn();
@@ -420,8 +433,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     return;
                 }
 
-                SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                        sObj);
+                SoundObject copy = sObj.clone();
                 copy.setStartTime(0.0f);
 
                 addSoundObject(column, row, copy);
@@ -1109,7 +1121,7 @@ public final class BlueLiveTopComponent extends TopComponent
         }
         return instance;
     }
-    
+
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -1358,10 +1370,10 @@ public final class BlueLiveTopComponent extends TopComponent
 
                     if (lObj != null) {
 
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                                lObj.getSoundObject());
+                        SoundObject copy = lObj.getSoundObject().clone();
 
-                        buffer.setBufferedObject(copy, 0, 0);
+                        ScoreController.getInstance().setSelectedScoreObjects(
+                                Collections.singleton(copy));
 
                         model.setValueAt(null, mouseRow, mouseColumn);
                         content.set(Collections.emptyList(), null);
@@ -1379,11 +1391,10 @@ public final class BlueLiveTopComponent extends TopComponent
 
                     if (lObj != null) {
 
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                                lObj.getSoundObject());
+                        SoundObject copy = lObj.getSoundObject().clone();
 
-                        buffer.setBufferedObject(copy, 0, 0);
-
+                        ScoreController.getInstance().setSelectedScoreObjects(
+                                Collections.singleton(copy));
                     }
 
                 }
@@ -1392,7 +1403,19 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    SoundObject sObj = buffer.getBufferedSoundObject();
+
+                    Collection<? extends ScoreObject> selected
+                            = ScoreController.getInstance().getSelectedScoreObjects();
+
+                    if (selected.size() != 1) {
+                        return;
+                    }
+                    ScoreObject scoreObj = selected.iterator().next();
+                    if (scoreObj instanceof SoundObject) {
+                        return;
+                    }
+
+                    SoundObject sObj = (SoundObject) scoreObj;
 
                     if (!liveSoundObjectTemplates.containsKey(sObj.getClass())) {
                         return;
@@ -1495,10 +1518,13 @@ public final class BlueLiveTopComponent extends TopComponent
                     removeColumn.setEnabled(
                             liveObjectsTable.getColumnCount() > 1);
 
-                    if (!objectAvailable && buffer.hasBufferedSoundObject()) {
+                    Collection<? extends ScoreObject> selected = 
+                            ScoreController.getInstance().getSelectedScoreObjects();
+                    
+                    if (!objectAvailable && selected.size() == 1) {
                         pasteMenuItem.setEnabled(
                                 liveSoundObjectTemplates.containsKey(
-                                        buffer.getBufferedSoundObject().getClass()));
+                                        selected.iterator().next().getClass()));
                     } else {
                         pasteMenuItem.setEnabled(false);
                     }

@@ -27,7 +27,7 @@ import blue.soundObject.Instance;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
-import blue.ui.core.score.undo.ReplaceSoundObjectEdit;
+import blue.ui.core.score.undo.ReplaceScoreObjectEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -92,7 +92,7 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
 
 
 // BlueUndoManager.setUndoManager("score");
-//            BlueUndoManager.addEdit(new ReplaceSoundObjectEdit(
+//            BlueUndoManager.addEdit(new ReplaceScoreObjectEdit(
 //                    sCanvas.getPolyObject(), oldSoundObject,
 //                    newSoundObject, index));
         

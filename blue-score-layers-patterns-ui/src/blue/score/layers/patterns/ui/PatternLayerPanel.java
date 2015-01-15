@@ -19,11 +19,12 @@
  */
 package blue.score.layers.patterns.ui;
 
+import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
-import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import blue.utility.ObjectUtilities;
 import java.awt.CardLayout;
@@ -34,6 +35,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -331,8 +333,10 @@ public class PatternLayerPanel extends javax.swing.JPanel
             menuItem.setEnabled(!current.equals(clazz));
         }
 
-        final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
-        setSObjFromBufferMenuItem.setEnabled(sObjBuffer.size() == 1);
+        ScoreController controller = ScoreController.getInstance();
+        Collection<? extends ScoreObject> selected = controller.getSelectedScoreObjects();
+        setSObjFromBufferMenuItem.setEnabled(selected.size() == 1 && 
+                selected.iterator().next() instanceof SoundObject);
 
         jPopupMenu1.show(otherMenuButton, 0, otherMenuButton.getHeight());
     }//GEN-LAST:event_otherMenuButtonActionPerformed
@@ -342,11 +346,15 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_editSObjMenuItemActionPerformed
 
     private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
-        final SoundObjectBuffer sObjBuffer = SoundObjectBuffer.getInstance();
-        if (sObjBuffer.size() == 1) {
-            SoundObject sObj = sObjBuffer.getBufferedSoundObject();
-            SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                    sObj);
+        ScoreController controller = ScoreController.getInstance();
+        Collection<? extends ScoreObject> selected = controller.getSelectedScoreObjects();
+        if (selected.size() == 1) {
+            ScoreObject scoreObj = selected.iterator().next();
+            if(!(scoreObj instanceof SoundObject)) {
+               return; 
+            }
+            SoundObject sObj = (SoundObject) scoreObj;
+            SoundObject copy = sObj.clone();
             copy.setStartTime(0.0f);
             copy.setSubjectiveDuration(4);
             copy.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
@@ -356,9 +364,8 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_setSObjFromBufferMenuItemActionPerformed
 
     private void copySObjToBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySObjToBufferMenuItemActionPerformed
-        SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                patternLayer.getSoundObject());
-        SoundObjectBuffer.getInstance().setBufferedObject(copy, 0, 0);
+        ScoreObject copy = patternLayer.getSoundObject().clone();
+        ScoreController.getInstance().setSelectedScoreObjects(Collections.singleton(copy));
     }//GEN-LAST:event_copySObjToBufferMenuItemActionPerformed
 
     public void editName() {

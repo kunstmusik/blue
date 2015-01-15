@@ -387,50 +387,6 @@ class MultiLineMouseProcessor extends MouseAdapter {
 
     // UTILITY METHODS
 
-    public int getLayerMin(SoundObjectBuffer objBuffer) {
-        int min = Integer.MAX_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int layerNum = getSoundLayerIndex(objBuffer.getY(i));
-
-            if (layerNum < min) {
-                min = layerNum;
-            }
-
-        }
-
-        return min;
-    }
-
-    public int getLayerMax(SoundObjectBuffer objBuffer) {
-        int max = Integer.MIN_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int layerNum = getSoundLayerIndex(objBuffer.getY(i));
-
-            if (layerNum > max) {
-                max = layerNum;
-            }
-
-        }
-
-        return max;
-    }
-
-    public int getStartX(SoundObjectBuffer objBuffer) {
-        int min = Integer.MAX_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int x = objBuffer.getX(i);
-            if (x < min) {
-                min = x;
-            }
-
-        }
-
-        return min;
-    }
-
     public void selectLayer(int soundLayerIndex) {
         final int index = soundLayerIndex;
 
