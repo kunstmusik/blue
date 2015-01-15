@@ -33,7 +33,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
-import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -149,7 +149,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
 
-        AddSoundObjectEdit undoEdit = null;
+        AddScoreObjectEdit undoEdit = null;
 
         // FIXME - Need a generic way to handle shadow objects; perhaps need to
         // deal with this in the model...
@@ -174,7 +174,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
             // FIXME - fix undoable edits
 //            sCanvas.getPolyObject().addSoundObject(newLayerIndex, sObj);
 
-//            AddSoundObjectEdit tempEdit = new AddSoundObjectEdit(sCanvas
+//            AddScoreObjectEdit tempEdit = new AddScoreObjectEdit(sCanvas
 //                    .getPolyObject(), sObj, newLayerIndex);
 //
 //            if (undoEdit == null) {

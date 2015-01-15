@@ -15,7 +15,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
-import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
@@ -337,7 +337,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //        Collection<? extends SoundObject> selectedSoundObjects
 //                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
 //
-//        AddSoundObjectEdit top = null;
+//        AddScoreObjectEdit top = null;
 //
 //        for (SoundObject sObj : selectedSoundObjects) {
 //            SoundObject temp = (SoundObject) ObjectUtilities.clone(sObj);
@@ -352,7 +352,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //
 //            pObj.get(index).add(temp);
 //
-//            AddSoundObjectEdit edit = new AddSoundObjectEdit(pObj, temp, index);
+//            AddScoreObjectEdit edit = new AddScoreObjectEdit(pObj, temp, index);
 //
 //            if (top == null) {
 //                top = edit;
@@ -497,7 +497,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //            pObj.addSoundObject(soundLayerIndex, sObj);
 //
 //            BlueUndoManager.setUndoManager("score");
-//            BlueUndoManager.addEdit(new AddSoundObjectEdit(pObj, sObj,
+//            BlueUndoManager.addEdit(new AddScoreObjectEdit(pObj, sObj,
 //                    soundLayerIndex));
 //
 //        }
@@ -527,7 +527,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //        BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
 //
 //        SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
-//        AddSoundObjectEdit undoEdit = null;
+//        AddScoreObjectEdit undoEdit = null;
 //
 //        Set<Instance> instanceSoundObjects = new HashSet<Instance>();
 //
@@ -554,7 +554,7 @@ class ScoreMouseProcessor extends MouseAdapter {
 //
 //            sCanvas.getPolyObject().addSoundObject(newLayerIndex, sObj);
 //
-//            AddSoundObjectEdit tempEdit = new AddSoundObjectEdit(sCanvas
+//            AddScoreObjectEdit tempEdit = new AddScoreObjectEdit(sCanvas
 //                    .getPolyObject(), sObj, newLayerIndex);
 //
 //            if (undoEdit == null) {

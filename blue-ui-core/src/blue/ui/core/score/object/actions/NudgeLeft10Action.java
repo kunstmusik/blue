@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2015
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,30 +19,39 @@
  */
 package blue.ui.core.score.object.actions;
 
+import blue.score.ScoreObject;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.RemoveAction")
+        id = "blue.ui.core.score.object.actions.NudgeLeft10Action"
+)
 @ActionRegistration(
-        displayName = "#CTL_RemoveAction")
-@Messages("CTL_RemoveAction=&Remove ScoreObjects")
-@ActionReferences({
-@ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305),
-@ActionReference(path = "blue/score/shortcuts", name = "DELETE"),
-@ActionReference(path = "blue/score/shortcuts", name = "BACK_SPACE")
-})
-public final class RemoveAction implements ActionListener {
+        displayName = "#CTL_NudgeLeft10Action"
+)
+@Messages("CTL_NudgeLeft10Action=NudgeLeft10Action")
+@ActionReference(path = "blue/score/shortcuts", name = "S-LEFT")
+public final class NudgeLeft10Action implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ScoreController.getInstance().deleteScoreObjects();
+        Collection<? extends ScoreObject> scoreObjects
+                = ScoreController.getInstance().getSelectedScoreObjects();
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) 
+                WindowManager.getDefault().findTopComponent("ScoreTopComponent");
+
+        if (!scoreObjects.isEmpty()) {
+            float adjust = -10.0f / scoreTopComponent.getTimeState().getPixelSecond();
+            NudgeUtils.nudgeHorizontal(adjust, scoreObjects);
+        }
     }
 }

@@ -2,11 +2,12 @@ package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
-import blue.ui.core.score.undo.ResizeSoundObjectEdit;
+import blue.score.ScoreObject;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -31,13 +32,11 @@ public class QuickTimeDialog extends JDialog {
 
     JTextField durText = new JTextField();
 
-    ScoreTimeCanvas stCanvas;
+    private ScoreObject scoreObj;
 
-    SoundObjectView sObjView;
-
-    public QuickTimeDialog(ScoreTimeCanvas stCanvas) {
+    public QuickTimeDialog(Frame owner) {
+        super(owner);
         this.setTitle(BlueSystem.getString("scoreGUI.quickTimeDialog.title"));
-        this.stCanvas = stCanvas;
         itemPanel.addItem(BlueSystem
                 .getString("soundObjectProperties.startTime"), startText);
         itemPanel
@@ -91,30 +90,31 @@ public class QuickTimeDialog extends JDialog {
     }
 
     private void handleWindowDeactivated() {
-        if (sObjView != null) {
+        if (scoreObj != null) {
             try {
-                float initialStart = sObjView.getStartTime();
-                float initialSubjectiveDuration = sObjView
+                float initialStart = scoreObj.getStartTime();
+                float initialSubjectiveDuration = scoreObj 
                         .getSubjectiveDuration();
 
                 float newStart = Float.parseFloat(startText.getText());
                 float newSubjectiveDuration = Float.parseFloat(durText
                         .getText());
 
-                sObjView.setStartTime(newStart);
-                sObjView.setSubjectiveTime(newSubjectiveDuration);
+                scoreObj.setStartTime(newStart);
+                scoreObj.setSubjectiveDuration(newSubjectiveDuration);
 
                 BlueUndoManager.setUndoManager("score");
 
                 if (initialStart != newStart) {
                     BlueUndoManager.addEdit(new StartTimeEdit(initialStart,
-                            newStart, sObjView.getSoundObject()));
+                            newStart, scoreObj));
                 }
 
                 if (initialSubjectiveDuration != newSubjectiveDuration) {
-                    BlueUndoManager.addEdit(new ResizeSoundObjectEdit(sObjView
-                            .getSoundObject(), initialSubjectiveDuration,
-                            newSubjectiveDuration));
+                    // FIXME
+//                    BlueUndoManager.addEdit(new ResizeSoundObjectEdit(sObjView
+//                            .getSoundObject(), initialSubjectiveDuration,
+//                            newSubjectiveDuration));
                 }
 
             } catch (NumberFormatException nfe) {
@@ -134,14 +134,14 @@ public class QuickTimeDialog extends JDialog {
         hide();
     }
 
-    public void show(SoundObjectView sObjView) {
-        this.sObjView = sObjView;
+    public void show(ScoreObject scoreObject) {
+        this.scoreObj = scoreObject;
         // Point p = new Point(sObjView.getX(), sObjView.getY());
         // SwingUtilities.convertPointToScreen(p, stCanvas);
         // this.setLocation(p.x, p.y - this.getHeight());
 
-        startText.setText(Float.toString(sObjView.getStartTime()));
-        durText.setText(Float.toString(sObjView.getSubjectiveDuration()));
+        startText.setText(Float.toString(scoreObj.getStartTime()));
+        durText.setText(Float.toString(scoreObj.getSubjectiveDuration()));
 
         super.show();
         startText.requestFocus();

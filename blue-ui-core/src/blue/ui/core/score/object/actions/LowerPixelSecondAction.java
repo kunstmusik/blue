@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2015
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
@@ -27,22 +27,27 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.RemoveAction")
+        id = "blue.ui.core.score.object.actions.LowerPixelSecondAction"
+)
 @ActionRegistration(
-        displayName = "#CTL_RemoveAction")
-@Messages("CTL_RemoveAction=&Remove ScoreObjects")
+        displayName = "#CTL_LowerPixelSecondAction"
+)
+@Messages("CTL_LowerPixelSecondAction=LowerPixelSecondAction")
 @ActionReferences({
-@ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305),
-@ActionReference(path = "blue/score/shortcuts", name = "DELETE"),
-@ActionReference(path = "blue/score/shortcuts", name = "BACK_SPACE")
+    @ActionReference(path = "blue/score/shortcuts", name = "D-LEFT"),
+    @ActionReference(path = "blue/score/shortcuts", name = "D-MINUS")
 })
-public final class RemoveAction implements ActionListener {
+
+public final class LowerPixelSecondAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ScoreController.getInstance().deleteScoreObjects();
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) 
+                WindowManager.getDefault().findTopComponent("ScoreTopComponent");
+        scoreTopComponent.getTimeState().lowerPixelSecond();
     }
 }

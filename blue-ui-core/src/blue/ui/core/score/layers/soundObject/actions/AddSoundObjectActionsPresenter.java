@@ -25,7 +25,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
-import blue.ui.core.score.undo.AddSoundObjectEdit;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.nbutilities.lazyplugin.LazyPlugin;
 import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.undo.BlueUndoManager;
@@ -109,8 +109,8 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
             sTimeCanvas.getPolyObject().addSoundObject(sLayerIndex, sObj);
 
             BlueUndoManager.setUndoManager("score");
-            BlueUndoManager.addEdit(new AddSoundObjectEdit(
-                    sTimeCanvas.getPolyObject(), sObj, sLayerIndex));
+            BlueUndoManager.addEdit(new AddScoreObjectEdit(
+                    sTimeCanvas.getPolyObject().get(sLayerIndex), sObj));
 
         } catch (InstantiationException | IllegalAccessException ex) {
             Exceptions.printStackTrace(ex);

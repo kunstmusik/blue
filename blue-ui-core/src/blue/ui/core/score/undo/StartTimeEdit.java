@@ -5,7 +5,7 @@
 package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -19,13 +19,13 @@ public class StartTimeEdit extends AbstractUndoableEdit {
 
     float newStart;
 
-    SoundObject sObj[];
+    ScoreObject sObj[];
 
-    public StartTimeEdit(float initialStart, float newStart, SoundObject sObj) {
+    public StartTimeEdit(float initialStart, float newStart, ScoreObject sObj) {
 
         this.initialStart = initialStart;
         this.newStart = newStart;
-        this.sObj = new SoundObject[] { sObj };
+        this.sObj = new ScoreObject[] { sObj };
     }
 
     @Override

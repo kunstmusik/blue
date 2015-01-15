@@ -61,9 +61,12 @@ import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
@@ -204,6 +207,17 @@ public final class ScoreTopComponent extends TopComponent
             }
         });
 
+        FileObject files[] = FileUtil.getConfigFile(
+                "blue/score/shortcuts").getChildren();
+        InputMap inputMap = scorePanel.getInputMap(
+                WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        ActionMap actionMap = scorePanel.getActionMap();
+        for (FileObject fObj : files) {
+            Action a = FileUtil.getConfigObject(fObj.getPath(), Action.class);
+            KeyStroke ks = Utilities.stringToKey(fObj.getName());
+            inputMap.put(ks, a.getValue(Action.NAME));
+            actionMap.put(a.getValue(Action.NAME), a);
+        }
     }
 
     protected void checkSize() {

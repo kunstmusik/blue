@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -34,7 +35,10 @@ import org.openide.util.NbBundle.Messages;
 @ActionRegistration(
         displayName = "#CTL_CutAction")
 @Messages("CTL_CutAction=Cu&t")
-@ActionReference(path = "blue/score/actions", position = 200)
+@ActionReferences({
+@ActionReference(path = "blue/score/actions", position = 200),
+@ActionReference(path = "blue/score/shortcuts", name="D-X")
+})
 public final class CutAction extends AbstractAction {
 
     public CutAction() {

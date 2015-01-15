@@ -5,36 +5,30 @@
 package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
-import blue.SoundLayer;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
+import blue.score.layers.ScoreObjectLayer;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 
 /**
  * @author steven
- * 
+ *
  */
+public class AddScoreObjectEdit extends AbstractUndoableEdit {
 
-public class AddSoundObjectEdit extends AbstractUndoableEdit {
-    private SoundObject sObj;
+    private ScoreObject sObj;
 
-    private int soundLayerIndex;
+    private ScoreObjectLayer layer;
 
-    private PolyObject pObj;
+    private AddScoreObjectEdit nextEdit = null;
 
-    private AddSoundObjectEdit nextEdit = null;
-
-    public AddSoundObjectEdit(PolyObject pObj, SoundObject sObj,
-            int soundLayerIndex) {
-
-        this.pObj = pObj;
+    public AddScoreObjectEdit(ScoreObjectLayer layer, ScoreObject sObj) {
+        this.layer = layer;
         this.sObj = sObj;
-        this.soundLayerIndex = soundLayerIndex;
     }
 
-    public void addSubEdit(AddSoundObjectEdit edit) {
+    public void addSubEdit(AddScoreObjectEdit edit) {
         if (nextEdit != null) {
             nextEdit.addSubEdit(edit);
         } else {
@@ -46,8 +40,7 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
     public void redo() throws CannotRedoException {
         super.redo();
 
-        SoundLayer sLayer = pObj.get(soundLayerIndex);
-        sLayer.add(sObj);
+        layer.add(sObj);
 
         if (nextEdit != null) {
             nextEdit.redo();
@@ -58,8 +51,8 @@ public class AddSoundObjectEdit extends AbstractUndoableEdit {
     public void undo() throws CannotUndoException {
         super.undo();
 
-        pObj.removeSoundObject(sObj);
-
+        layer.remove(sObj);
+        
         if (nextEdit != null) {
             nextEdit.undo();
         }

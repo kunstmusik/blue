@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
+ * Copyright (C) 2015
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,30 +19,32 @@
  */
 package blue.ui.core.score.object.actions;
 
-import blue.ui.core.score.ScoreController;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.undo.UndoManager;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 
 @ActionID(
         category = "Blue",
-        id = "blue.ui.core.score.actions.RemoveAction")
+        id = "blue.ui.core.score.object.actions.UndoAction"
+)
 @ActionRegistration(
-        displayName = "#CTL_RemoveAction")
-@Messages("CTL_RemoveAction=&Remove ScoreObjects")
-@ActionReferences({
-@ActionReference(path = "blue/score/actions", position = 300, separatorAfter = 305),
-@ActionReference(path = "blue/score/shortcuts", name = "DELETE"),
-@ActionReference(path = "blue/score/shortcuts", name = "BACK_SPACE")
-})
-public final class RemoveAction implements ActionListener {
+        displayName = "#CTL_UndoAction"
+)
+@Messages("CTL_UndoAction=UndoAction")
+@ActionReference(path = "blue/score/shortcuts", name = "D-Z")
+public final class UndoAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ScoreController.getInstance().deleteScoreObjects();
+        BlueUndoManager.setUndoManager("score");
+        UndoManager undoManager = BlueUndoManager.getUndoManager();
+        if (undoManager.canUndo()) {
+            undoManager.undo();
+        }
     }
 }

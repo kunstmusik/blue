@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle.Messages;
 
@@ -33,7 +34,10 @@ import org.openide.util.NbBundle.Messages;
 @ActionRegistration(
         displayName = "#CTL_CopyAction")
 @Messages("CTL_CopyAction=&Copy")
-@ActionReference(path = "blue/score/actions", position = 210, separatorAfter = 215)
+@ActionReferences({
+@ActionReference(path = "blue/score/actions", position = 210, separatorAfter = 215),
+@ActionReference(path = "blue/score/shortcuts", name = "D-C")
+})
 public final class CopyAction implements ActionListener {
 
     @Override

@@ -233,6 +233,8 @@ public class ScoreController {
                 throw new RuntimeException(
                         "Error: Unable to find Layer to remove ScoreObject: Internal Error");
             }
+
+            //FIXME - add undoable edit here...
             content.remove(scoreObj);
         }
 
