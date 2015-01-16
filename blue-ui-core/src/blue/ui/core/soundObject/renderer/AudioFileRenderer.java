@@ -144,8 +144,6 @@ public class AudioFileRenderer implements BarRenderer {
             sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, waveData);
         } else if (waveData.pixelSeconds != pixelSeconds
                 || !waveData.fileName.equals(audioFile.getSoundFileName())) {
-            waveCache.removeReference(waveData);
-
             waveData = waveCache.getAudioWaveformData(
                     BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
@@ -167,12 +165,6 @@ public class AudioFileRenderer implements BarRenderer {
 
     @Override
     public void cleanup(SoundObjectView sObjView) {
-        AudioWaveformData waveData = (AudioWaveformData) sObjView
-                .getClientProperty(AUDIO_WAVEFORM_DATA);
-
-        if (waveData != null) {
-            waveCache.removeReference(waveData);
-        }
         sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, null);
     }
     

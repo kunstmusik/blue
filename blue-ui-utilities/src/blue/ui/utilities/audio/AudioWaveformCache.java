@@ -1,8 +1,10 @@
 package blue.ui.utilities.audio;
 
 import java.io.File;
+import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 public class AudioWaveformCache {
@@ -11,9 +13,9 @@ public class AudioWaveformCache {
 
     public static final AudioWaveformData NOT_YET_CACHED = new AudioWaveformData();
 
-    private final HashMap<AudioWaveformData, Integer> refCountCache =
-            new HashMap<>();
-
+    private final Map<WaveformCacheKey, SoftReference<AudioWaveformData>> waveCache
+            = new HashMap<>();
+    
     private Vector listeners = null;
 
     private AudioWaveformCacheGenerator generator = null;
@@ -37,18 +39,15 @@ public class AudioWaveformCache {
             return EMPTY_AUDIO_FILENAME;
         }
 
-        AudioWaveformData waveData = findAudioWaveformData(audioFilename,
-                pixelSeconds);
-
-        if (waveData != null) {
-            // System.out.println("Wave Data Not Null\n" + waveData);
-            Integer refCount = (Integer) refCountCache.get(waveData);
-            refCountCache.put(waveData, new Integer(refCount.intValue() + 1));
-            // System.out.println(refCountCache);
-            return waveData;
+        WaveformCacheKey key = new WaveformCacheKey(audioFilename, pixelSeconds);
+        
+        SoftReference<AudioWaveformData> waveDataRef = waveCache.get(key);
+        
+        if (waveDataRef != null && waveDataRef.get() != null) {
+            return waveDataRef.get();
         }
 
-        waveData = new AudioWaveformData();
+        AudioWaveformData waveData = new AudioWaveformData();
         waveData.fileName = audioFilename;
         waveData.pixelSeconds = pixelSeconds;
         waveData.data = null;
@@ -57,8 +56,8 @@ public class AudioWaveformCache {
         File f = new File(audioFilename);
 
         if (!f.exists() && !f.isFile()) {
-            refCountCache.put(waveData, new Integer(1));
-            // System.out.println(refCountCache);
+            waveCache.put(new WaveformCacheKey(audioFilename, pixelSeconds), 
+                    new SoftReference<>(waveData));
             return waveData;
         }
 
@@ -79,58 +78,17 @@ public class AudioWaveformCache {
             generator.addAudioWaveformData(waveData);
         }
 
-        refCountCache.put(waveData, new Integer(1));
+        waveCache.put(new WaveformCacheKey(audioFilename, pixelSeconds), 
+                new SoftReference<>(waveData));
         // System.out.println(refCountCache);
         return waveData;
     }
 
-    public synchronized void removeReference(AudioWaveformData audioWaveformData) {
-        if (audioWaveformData == EMPTY_AUDIO_FILENAME) {
-            return;
-        }
-
-        if (!refCountCache.containsKey(audioWaveformData)) {
-            return;
-        }
-
-        Integer count = (Integer) refCountCache.get(audioWaveformData);
-
-        if (count == null || count.intValue() - 1 <= 0) {
-            refCountCache.remove(audioWaveformData);
-        } else {
-            refCountCache.put(audioWaveformData, new Integer(
-                    count.intValue() - 1));
-        }
-
-        // System.out.println(refCountCache);
-    }
-
     public synchronized void clearCache() {
-        refCountCache.clear();
+        waveCache.clear();
         if (listeners != null) {
             listeners.clear();
         }
-    }
-
-    private synchronized AudioWaveformData findAudioWaveformData(
-            String audioFilename, int pixelSeconds) {
-
-        if (refCountCache.size() == 0) {
-            return null;
-        }
-
-        for (Iterator iter = refCountCache.keySet().iterator(); iter.hasNext();) {
-            AudioWaveformData data = (AudioWaveformData) iter.next();
-
-            // System.out.println(data);
-
-            if (data.fileName.equals(audioFilename)
-                    && data.pixelSeconds == pixelSeconds) {
-                return data;
-            }
-        }
-
-        return null;
     }
 
     public synchronized void addAudioWaveformListener(

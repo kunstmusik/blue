@@ -108,7 +108,6 @@ public class AudioClipPanel extends JPanel
         result.removeLookupListener(this);
         result = null;
 
-        waveformCache.removeReference(waveData);
         this.waveData = null;
 
         super.removeNotify();
@@ -204,7 +203,6 @@ public class AudioClipPanel extends JPanel
 
     private void updateWaveformData() {
         String absFilePath = audioClip.getAudioFile().getAbsolutePath();
-        waveformCache.removeReference(waveData);
         waveData = waveformCache.getAudioWaveformData(
                 absFilePath,
                 timeState.getPixelSecond());
