@@ -20,7 +20,8 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
-import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -54,7 +55,7 @@ public final class ReverseAction extends AbstractAction
     public ReverseAction(Lookup lookup) {
 
         super(NbBundle.getMessage(ReverseAction.class, "CTL_ReverseAction"));
-        scoreObjects = lookup.lookupAll(ScoreObject.class);
+        scoreObjects = ScoreController.getInstance().getSelectedScoreObjects();
     }
 
     @Override
@@ -80,24 +81,33 @@ public final class ReverseAction extends AbstractAction
             }
         }
 
-        for (ScoreObject scoreObject : scoreObjects) {
-            float tempStart = scoreObject.getStartTime();
-            float tempEnd = tempStart + scoreObject.getSubjectiveDuration();
+        int len = scoreObjects.size();
+        ScoreObject[] objects = scoreObjects.<ScoreObject>toArray(
+                new ScoreObject[scoreObjects.size()]);
+        float[] startTimes = new float[len];
+        float[] endTimes = new float[len];
+        
+        for (int i = 0; i < len; i++) {
+            ScoreObject scoreObj = objects[i];
+            float tempStart = scoreObj.getStartTime();
+            float tempEnd = tempStart + scoreObj.getSubjectiveDuration();
 
             float newStart = start + (end - tempEnd);
 
-            scoreObject.setStartTime(newStart);
+            scoreObj.setStartTime(newStart);
+
+            startTimes[i] = tempStart;
+            endTimes[i] = newStart;
         }
 
         BlueUndoManager.setUndoManager("score");
 
-// FIXME - need to do undoable edit here!
-//        MoveSoundObjectsEdit edit = sCanvas.mBuffer.getMoveEdit(
-//                sCanvas.getPolyObject());
-//
-//        edit.setPresentationName(BlueSystem.getString(
-//                "soundObjectPopup.reverse.text"));
-//        BlueUndoManager.addEdit(edit);
+        MoveScoreObjectsEdit edit = new MoveScoreObjectsEdit(objects,
+                null, null, startTimes, endTimes);
+
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(edit);
+
     }
 
     @Override
