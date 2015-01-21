@@ -19,15 +19,13 @@
  */
 package blue.ui.core.mixer;
 
+import blue.gui.DialogUtil;
 import blue.mixer.*;
+import java.awt.Frame;
 import java.util.HashMap;
 import java.util.Iterator;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.JDialog;
-
-import blue.gui.DialogUtil;
-import java.awt.Frame;
 
 public class SendEditorManager {
 

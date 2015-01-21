@@ -5,11 +5,11 @@
     <title>Requirements</title>
 
     <para>
-      blue requires a Java 7 (also known as 1.7) or greater JVM (Java Virtual 
+      Blue requires a Java 7 (also known as 1.7) or greater JVM (Java Virtual 
       Machine). To test to see if you have a JVM installed and what version, at 
       a command prompt type "java -version". If you see something along the 
       lines of "command not found" then you need to install a Java Virtual 
-      Machine.
+      Machine. 
     </para>
 
     <para>A Java JVM for Linux, Windows, Mac OSX, and Solaris can be found at:
@@ -23,33 +23,33 @@
       From this page, the correct download for the JRE (Java Runtime 
       Environment) for your platform should be chosen automatically for you. 
       (Note: There are two main releases of Java, the JRE, and the JDK 
-      (Java Development Kit). You only need the JRE to run blue, though if you
+      (Java Development Kit). You only need the JRE to run Blue, though if you
       are interested in developing in Java you need the JDK.)
     </para>
 
   </section>
 
   <section id="installingBlue">
-    <title>Installing blue</title>
+    <title>Installing Blue</title>
 
     <para>
-      To install blue, you should download the latest ZIP file or DMG from
-      the blue Sourceforge page
-      <ulink url="http://www.sourceforge.net/projects/bluemusic">here</ulink>. 
-      For OSX users, download the DMG file which contains a blue.app.  You can 
+      To install Blue, you should download the latest ZIP file or DMG from
+      the Blue Sourceforge page
+      <ulink url="http://www.sourceforge.net/projects/Bluemusic">here</ulink>. 
+      For OSX users, download the DMG file which contains a Blue.app.  You can 
       double-click the Application to run, as well as copy it to your 
       Applications folder to install it.</para>
 
     <para>
       For Linux and Windows users, download the ZIP file and unzip it. Inside of
-      the bin folder you will see a "blue" script for Linux or a "blue.exe" file
+      the bin folder you will see a "Blue" script for Linux or a "Blue.exe" file
       for use on Windows.</para>
 
     <para>
-      Note: After starting blue, 
+      Note: After starting Blue, 
       you may want to explore the example projects and pieces found in the 
-      blue/example folder (or right-click and explore contents of 
-      blue.app/example if on OSX).
+      Blue/example folder (or right-click and explore contents of 
+      Blue.app/example if on OSX).
     </para>
 
     <section id="platformNotes">
@@ -79,12 +79,12 @@
         <title>Linux</title>
 
         <para>
-          For 64-bit systems, you may run into issues when running blue with the
+          For 64-bit systems, you may run into issues when running Blue with the
           API enabled where modifying widget values is not reflected in 
           performance. This is likely due to the Csound Java API being compiled
           with SWIG &lt; 2.0.  As of the time of this writing, the version of 
           Csound in Debian Stable for amd64 is compiled with SWIG 1.3.0, and 
-          does not work with blue.  To work around this, you can install a 
+          does not work with Blue.  To work around this, you can install a 
           newer version of Csound if available (i.e. from a testing repo), or 
           compile Csound yourself and ensure you are using SWIG version 2.0 or greater. 
         </para>
@@ -99,21 +99,21 @@
     <title>Installing Csound</title>
 
     <para>
-      blue is able to interact with Csound either by calling Csound like a 
-      command-line program (classic blue), or by directly interacting with 
-      Csound via the Csound API. Instructions on setting up blue for each 
+      Blue is able to interact with Csound either by calling Csound like a 
+      command-line program (classic Blue), or by directly interacting with 
+      Csound via the Csound API. Instructions on setting up Blue for each 
       method is described below as well as discussion on benefits and 
       limitations.
     </para>
     
     <section id="commandLineCsound">
-      <title>Using blue with command-line Csound</title>  
+      <title>Using Blue with command-line Csound</title>  
         
       <para>
-        This may be considered "classical" blue usage and interaction with 
-        Csound as this was the method by which blue ran with Csound for the 
-        first eight years in existance.  The way blue operates in this mode is 
-        by rendering the .blue project into a temporary CSD file on disk, then
+        This may be considered "classical" Blue usage and interaction with 
+        Csound as this was the method by which Blue ran with Csound for the 
+        first eight years in existance.  The way Blue operates in this mode is 
+        by rendering the .Blue project into a temporary CSD file on disk, then
         calling Csound with that temporary CSD file in the same way as if you 
         were on a command-line shell and executing Csound yourself with that
         file.
@@ -123,7 +123,7 @@
         The benefit to this mode of Csound usage is that it is easier to switch
         out your version of Csound or use multiple versions of Csound on the 
         same computer.  It is also a little more stable than using the API in 
-        that if Csound crashes for some reason, it won't take down blue with it.
+        that if Csound crashes for some reason, it won't take down Blue with it.
         Also, it may be more performant to use the command-line mode.  These
         benefits however need to be weighed against the benefits of using the 
         API, which is described below.
@@ -138,37 +138,50 @@
     </section>
     
     <section id="csoundAPI">
-      <title>Using blue with the Csound API</title>
+      <title>Using Blue with the Csound API</title>
     
       <para>
-        Enabling blue to use the Csound API when rendering with Csound opens up
+        Enabling Blue to use the Csound API when rendering with Csound opens up
         the ability to manipulate and edit widget values and automations
-        in realtime during a render, as well as the ability to use blueLive on 
+        in realtime during a render, as well as the ability to use BlueLive on 
         Windows.  Because of its enhancement to the user-experience while 
-        rendering and composing, it is now the preferred method of using blue
-        with Csound.  blue should work out-of-the-box with the API if Csound is
+        rendering and composing, it is now the preferred method of using Blue
+        with Csound.  Blue should work out-of-the-box with the API if Csound is
         installed using the installers provided on SourceForge, or installed
         via a package manager if on Linux.  
       </para>
       
       <note>
         <title>Note</title>
-        <para>blue currently
+        <para>Blue currently
         only works with the API if the version of Csound used is compiled
         using 64-bit doubles.  (The float version is not currently supported 
         when using the API.)  There are technical difficulties in supporting
         two different versions of Csound API in the same build and it is not
         known if or when the float build will be supported.  For users 
-        interested in using the float build of Csound with blue, you will need
-        to run blue using the command-line Csound mode.</para>
+        interested in using the float build of Csound with Blue, you will need
+        to run Blue using the command-line Csound mode.</para>
+
+        <para>Additionally, the architecture that Csound is compiled for must 
+          match the architecture of the Java runtime you are using. For example,
+          on Windows, Csound is currently only built for i386 CPU (i.e. 
+          32-bit Windows) and not x86_64/amd64  (i.e. 64-bit Windows). In this 
+          case, you will need to run Blue using a 32-bit Java Runtime. For OSX,
+          this is not an issue as Csound is compiled as a universal binary for
+          both i386 and x86_64. On Linux, it is likely that the version of 
+          Csound you install/compile and the Java Runtime that you install will
+          likely be the same, but if the API does not show as available it may
+          be something to check. 
+        </para>
+           
       </note>
           
       <para>
         The Java API for Csound is split into two parts: the csnd6.jar file as 
         well as the lib_jcsound6.so native library (this file is called
         _jcsound6.dll on Windows, and lib_jcsound6.jnilib on Mac OSX). For 
-          Csound 5, the names use "csnd" and "_jcsound" instead. blue comes 
-        with it's own copy of csnd.jar and csnd6.jar; to use the API from blue it will need 
+          Csound 5, the names use "csnd" and "_jcsound" instead. Blue comes 
+        with it's own copy of csnd.jar and csnd6.jar; to use the API from Blue it will need 
         to have access to the native library to work. If the API is not enabled
         for use out-of-the-box, the following explains how to setup the API on 
         different platforms.
@@ -178,19 +191,20 @@
         <title>Windows</title>
         
         <para>Users using the Windows Installer for Csound should use the 
-          doubles version from SourceForge (has -d in the name). After 
-          installing, the installer should setup everything such that blue 
+          doubles version from SourceForge (for Csound 5, the installer has -d 
+          in the name, for Csound 6, the default is the doubls version). After 
+          installing, the installer should setup everything such that Blue 
           should work with the API. If for some reason it is unable to do so, or 
           you have compiled Csound yourself and the location of jcsound.dll is 
           different from where it is installed with the installer, you can 
-          modify the blue/etc/blue.conf file to tell blue where to find the 
+          modify the Blue/etc/Blue.conf file to tell Blue where to find the 
           _jcsound6.dll. For example, if the directory where jcsound6.dll is 
-          located is in c:\myCsound, open up blue/etc/blue.conf and modify the 
+          located is in c:\myCsound, open up Blue/etc/Blue.conf and modify the 
           default so that it contains:
         </para>
         
         <programlisting>
-default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/myCsound"
+default_options="--branding Blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/myCsound"
         </programlisting>
       </simplesect>
       
@@ -201,7 +215,7 @@ default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
           Linux users should install a doubles version of Csound. The version of 
           Csound found in package repositories should be one compiled for 
           doubles. After installing Csound and the Java interface for Csound,
-          locate where lib_jcsound6.so is and modify the blue/bin/blue file. 
+          locate where lib_jcsound6.so is and modify the Blue/bin/Blue file. 
           Search for the lines that contain "-J-Djava.library.path=/usr/lib/jni"
           and modify /usr/lib/jni (the default for Debian/Ubuntu-based systems)
           to the directory where lib_jcsound.so is located.
@@ -225,7 +239,7 @@ default_options="--branding blue -J-Xms256m -J-Xmx768m -J-Djava.library.path=c:/
         <title>Checking the API is Enabled</title>
         
         <para>
-          To check if the API is enabled, open blue and open up the Program 
+          To check if the API is enabled, open Blue and open up the Program 
           Options. This is available from the Blue->Preferences menu option on 
           OSX, and from the Tools->Options menu option Windows and Linux. In the 
           Blue tab, under both Disk and Realtime Render settings, there is an 

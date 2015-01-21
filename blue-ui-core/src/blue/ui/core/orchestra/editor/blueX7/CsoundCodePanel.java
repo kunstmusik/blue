@@ -20,15 +20,14 @@
 
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.orchestra.BlueX7;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-import blue.orchestra.BlueX7;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 

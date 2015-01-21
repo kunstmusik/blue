@@ -24,15 +24,18 @@ import blue.blueLive.LiveObject;
 import blue.blueLive.LiveObjectBins;
 import blue.blueLive.LiveObjectSet;
 import blue.blueLive.LiveObjectSetList;
-import blue.event.SelectionEvent;
 import blue.midi.*;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
-import blue.ui.core.BluePluginManager;
-import blue.ui.core.score.layers.soundObject.SoundObjectBuffer;
-import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.layers.SoundObjectProvider;
+import blue.ui.nbutilities.lazyplugin.AttributeFilter;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ObjectUtilities;
@@ -40,9 +43,11 @@ import blue.utility.ScoreUtilities;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.logging.Logger;
+import java.util.List;
+import java.util.Map;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.Receiver;
 import javax.swing.*;
@@ -53,29 +58,57 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.AbstractLookup;
+import org.openide.util.lookup.InstanceContent;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.util.Exceptions;
 import skt.swing.SwingUtil;
 
 /**
  * Top component which displays something.
  */
 @ConvertAsProperties(dtd = "-//blue.ui.core.blueLive//BlueLive//EN",
-autostore = false)
-public final class BlueLiveTopComponent extends TopComponent {
+        autostore = false)
+@TopComponent.Description(
+        preferredID = "BlueLiveTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = true,
+        position = 800)
+@ActionID(category = "Window", id = "blue.ui.core.blueLive.BlueLiveTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1700, separatorAfter = 1750),
+    @ActionReference(path = "Shortcuts", name = "D-8")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_BlueLiveAction",
+        preferredID = "BlueLiveTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_BlueLiveAction=BlueLive",
+    "CTL_BlueLiveTopComponent=BlueLive",
+    "HINT_BlueLiveTopComponent=This is a BlueLive window"
+})
+public final class BlueLiveTopComponent extends TopComponent
+        implements SoundObjectProvider {
 
     private static BlueLiveTopComponent instance;
+
+    private final InstanceContent content = new InstanceContent();
+
     /**
      * path to the icon used by the component and its open action
      */
 //    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
     private static final String PREFERRED_ID = "BlueLiveTopComponent";
     BlueData data = null;
-    SoundObjectBuffer buffer = SoundObjectBuffer.getInstance();
     LiveObjectsTableModel model;
     LiveObjectSetListTableModel setModel;
     BufferMenu bufferPopup;
@@ -83,16 +116,33 @@ public final class BlueLiveTopComponent extends TopComponent {
     MidiInputManager midiManager;
     ScoPadReceiver scoPadReceiver = new ScoPadReceiver();
     JPopupMenu noteTemplatePopup;
-    ArrayList<Class> plugins = BluePluginManager.getInstance().getLiveSoundObjectClasses();
     BlueLiveToolBar blueLiveToolBar;
     int mouseColumn = -1;
     int mouseRow = -1;
     PerformanceThread performanceThread = null;
-    
+
+    Map<Class<? extends SoundObject>, String> liveSoundObjectTemplates;
+
     CompileData compileData = CompileData.createEmptyCompileData();
 
     public BlueLiveTopComponent() {
+
+        List<LazyPlugin<SoundObject>> plugins = LazyPluginFactory.loadPlugins(
+                "blue/score/soundObjects", SoundObject.class,
+                new AttributeFilter("live"));
+
+        liveSoundObjectTemplates = new HashMap<>();
+
+        for (LazyPlugin<SoundObject> plugin : plugins) {
+            liveSoundObjectTemplates.put(
+                    plugin.getInstance().getClass(),
+                    plugin.getDisplayName());
+        }
+
         initComponents();
+
+        associateLookup(new AbstractLookup(content));
+
         setName(NbBundle.getMessage(BlueLiveTopComponent.class,
                 "CTL_BlueLiveTopComponent"));
         setToolTipText(NbBundle.getMessage(BlueLiveTopComponent.class,
@@ -115,6 +165,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         liveObjectsTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (!e.getValueIsAdjusting()) {
                             if (data == null) {
@@ -129,25 +180,20 @@ public final class BlueLiveTopComponent extends TopComponent {
                             if (lObj != null) {
                                 SwingUtilities.invokeLater(new Runnable() {
 
+                                    @Override
                                     public void run() {
-                                        SelectionEvent se = new SelectionEvent(
-                                                lObj.getSoundObject(),
-                                                SelectionEvent.SELECTION_SINGLE,
-                                                SelectionEvent.SELECTION_BLUE_LIVE);
-                                        SoundObjectSelectionBus.getInstance().
-                                                selectionPerformed(se);
+                                        content.set(Collections.singleton(
+                                                        lObj.getSoundObject()),
+                                                null);
                                     }
                                 });
                             } else {
                                 SwingUtilities.invokeLater(new Runnable() {
 
+                                    @Override
                                     public void run() {
-                                        SelectionEvent se = new SelectionEvent(
-                                                null,
-                                                SelectionEvent.SELECTION_CLEAR,
-                                                SelectionEvent.SELECTION_BLUE_LIVE);
-                                        SoundObjectSelectionBus.getInstance().
-                                                selectionPerformed(se);
+                                        content.set(Collections.emptyList(),
+                                                null);
                                     }
                                 });
                             }
@@ -158,6 +204,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         liveObjectsTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     if (bufferPopup == null) {
@@ -181,31 +228,34 @@ public final class BlueLiveTopComponent extends TopComponent {
         });
 
         liveObjectsTable.setColumnSelectionAllowed(true);
-        
+
         liveObjectSetListTable.setModel(setModel);
         liveObjectSetListTable.setRowHeight(24);
-        liveObjectSetListTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+        liveObjectSetListTable.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION);
+
         liveObjectSetListTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (!e.getValueIsAdjusting()) {
                             if (data == null) {
                                 return;
                             }
-                            
+
                             int row = liveObjectSetListTable.getSelectedRow();
-                            
-                            if(row < 0) {
+
+                            if (row < 0) {
                                 return;
                             }
 
-                            final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(row);
+                            final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(
+                                    row);
 
                             if (lObjSet != null) {
                                 model.setEnabled(lObjSet);
-                            } 
+                            }
 
                         }
                     }
@@ -216,22 +266,21 @@ public final class BlueLiveTopComponent extends TopComponent {
             @Override
             public void mouseMoved(MouseEvent e) {
                 int row = liveObjectSetListTable.rowAtPoint(e.getPoint());
-                
-                if(row < setModel.getRowCount()) {
-                    final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(row);
+
+                if (row < setModel.getRowCount()) {
+                    final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(
+                            row);
 
                     liveObjectRenderer.setLiveObjectSet(lObjSet);
-                    
+
                     if (lObjSet != null) {
                         liveObjectsTable.repaint();
                     }
                 }
             }
 
-            
-           
         });
-        
+
         liveObjectSetListTable.addMouseListener(new MouseAdapter() {
 
             @Override
@@ -247,19 +296,19 @@ public final class BlueLiveTopComponent extends TopComponent {
                         setsBufferPopup = new SetsBufferMenu();
                     }
                     mouseRow = liveObjectSetListTable.rowAtPoint(e.getPoint());
-                    mouseColumn = liveObjectSetListTable.columnAtPoint(e.getPoint());
-                    setsBufferPopup.show(liveObjectSetListTable, e.getX(), e.getY());
+                    mouseColumn = liveObjectSetListTable.columnAtPoint(
+                            e.getPoint());
+                    setsBufferPopup.show(liveObjectSetListTable, e.getX(),
+                            e.getY());
                 }
             }
 
-            
-            
         });
-        
 
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (data == null) {
                             return;
@@ -270,18 +319,19 @@ public final class BlueLiveTopComponent extends TopComponent {
                     }
                 });
 
-
         midiManager = MidiInputManager.getInstance();
 
         // receiver for live space tab
         midiManager.addReceiver(new Receiver() {
 
+            @Override
             public void send(MidiMessage message, long timeStamp) {
                 if (jTabbedPane1.getSelectedIndex() != 0) {
                     return;
                 }
             }
 
+            @Override
             public void close() {
             }
         });
@@ -294,15 +344,17 @@ public final class BlueLiveTopComponent extends TopComponent {
         quarterNoteSpinner.setModel(new SpinnerNumberModel(1.0, 0.0,
                 Double.POSITIVE_INFINITY, 1.0));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                new PropertyChangeListener() {
 
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(
-                        evt.getPropertyName())) {
-                    reinitialize();
-                }
-            }
-        });
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (BlueProjectManager.CURRENT_PROJECT.equals(
+                                evt.getPropertyName())) {
+                            reinitialize();
+                        }
+                    }
+                });
 
         reinitialize();
 
@@ -321,8 +373,8 @@ public final class BlueLiveTopComponent extends TopComponent {
             }
         };
         singleTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
-        
+                KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
+
         Action multiTrigger = new AbstractAction("trigger-multi") {
 
             @Override
@@ -331,58 +383,67 @@ public final class BlueLiveTopComponent extends TopComponent {
             }
         };
         multiTrigger.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK));
-        
+                KeyEvent.VK_T,
+                BlueSystem.getMenuShortcutKey() | KeyEvent.SHIFT_DOWN_MASK));
+
         Action copyObj = new AbstractAction("copy-obj") {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
-                            liveObjectsTable.getSelectedRow(), 
-                            liveObjectsTable.getSelectedColumn());
+                        liveObjectsTable.getSelectedRow(),
+                        liveObjectsTable.getSelectedColumn());
 
                 if (lObj != null) {
 
-                    SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                            lObj.getSoundObject());
+                    ScoreObject copy = lObj.getSoundObject().clone();
 
-                    buffer.setBufferedObject(copy, 0, 0);
+                    ScoreController.getInstance().setSelectedScoreObjects(
+                            Collections.singleton(copy));
 
                 }
             }
         };
         copyObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
-        
+                KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
+
         Action pasteObj = new AbstractAction("paste-obj") {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                SoundObject sObj = buffer.getBufferedSoundObject();
+                Collection<? extends ScoreObject> selected
+                        = ScoreController.getInstance().getSelectedScoreObjects();
 
-                int row = liveObjectsTable.getSelectedRow();
-                int column = liveObjectsTable.getSelectedColumn();
-                
-                if (sObj == null || !plugins.contains(sObj.getClass()) || row < 0 || column < 0) {
+                if (selected.size() != 1) {
+                    return;
+                }
+                ScoreObject scoreObj = selected.iterator().next();
+                if (scoreObj instanceof SoundObject) {
                     return;
                 }
 
-                SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                        sObj);
+                SoundObject sObj = (SoundObject) scoreObj;
+
+                int row = liveObjectsTable.getSelectedRow();
+                int column = liveObjectsTable.getSelectedColumn();
+
+                if (sObj == null || !liveSoundObjectTemplates.containsKey(
+                        sObj.getClass()) || row < 0 || column < 0) {
+                    return;
+                }
+
+                SoundObject copy = sObj.clone();
                 copy.setStartTime(0.0f);
-                
-                
-                
+
                 addSoundObject(column, row, copy);
             }
         };
-        
+
         pasteObj.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(
-                    KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));        
+                KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));
 
-
-        SwingUtil.installActions(liveObjectsTable, 
+        SwingUtil.installActions(liveObjectsTable,
                 new Action[]{singleTrigger, multiTrigger, copyObj, pasteObj});
     }
 
@@ -395,7 +456,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         if (project != null) {
             currentData = project.getData();
-        }   
+        }
 
         if (currentData != null) {
 
@@ -417,15 +478,11 @@ public final class BlueLiveTopComponent extends TopComponent {
 //            liveObjectsTable.getColumnModel().getColumn(2).setMaxWidth(100);
 //            liveObjectsTable.getColumnModel().getColumn(2).setMinWidth(100);
 //            liveObjectsTable.getColumnModel().getColumn(2).setWidth(100);
-
             // csoundCommand.setText(data.getLiveData().getCommandLine());
             // liveSpace.setLiveObjects(data.getLiveData().getLiveSoundObjects());
-
-            // sObjEditPanel.editSoundObject(null);
-
             repeatSpinner.setValue(liveData.getRepeat());
             tempoSpinner.setValue(liveData.getTempo());
-            
+
             this.data = currentData;
 
             this.repaint();
@@ -890,8 +947,9 @@ public final class BlueLiveTopComponent extends TopComponent {
         float quarterNote = ((Double) quarterNoteSpinner.getValue()).floatValue();
         float dur = quarterNote * (float) time;
 
-        outputTextArea.setText(outputTextArea.getText() + scoPadReceiver.getNotes(
-                template, instrId, start, dur));
+        outputTextArea.setText(
+                outputTextArea.getText() + scoPadReceiver.getNotes(
+                        template, instrId, start, dur));
 
         startSpinner.setValue(new Double(start + dur));
     }//GEN-LAST:event_outputTextAreaKeyPressed
@@ -923,7 +981,6 @@ public final class BlueLiveTopComponent extends TopComponent {
                         sObj.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
                     }
 
-                    
                     nl.addAll(sObj.generateForCSD(compileData, 0.0f, -1.0f));
                 }
             } catch (Exception e) {
@@ -968,21 +1025,21 @@ public final class BlueLiveTopComponent extends TopComponent {
         if (data == null) {
             return;
         }
-        
-        data.getLiveData().setTempo((Integer)tempoSpinner.getValue());
+
+        data.getLiveData().setTempo((Integer) tempoSpinner.getValue());
     }//GEN-LAST:event_tempoSpinnerStateChanged
 
     private void repeatSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatSpinnerStateChanged
         if (data == null) {
             return;
         }
-        
-        data.getLiveData().setRepeat((Integer)repeatSpinner.getValue());
+
+        data.getLiveData().setRepeat((Integer) repeatSpinner.getValue());
     }//GEN-LAST:event_repeatSpinnerStateChanged
 
     private void buttonUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonUpActionPerformed
-        int row = liveObjectSetListTable.getSelectedRow();        
-        if(row >= 1 && row < setModel.getRowCount()) {
+        int row = liveObjectSetListTable.getSelectedRow();
+        if (row >= 1 && row < setModel.getRowCount()) {
             setModel.pushUpSet(row);
             liveObjectSetListTable.setRowSelectionInterval(row - 1, row - 1);
         }
@@ -990,23 +1047,23 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     private void buttonDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonDownActionPerformed
         int row = liveObjectSetListTable.getSelectedRow();
-        
-        if(row >= 0 && row < setModel.getRowCount() - 1) {
+
+        if (row >= 0 && row < setModel.getRowCount() - 1) {
             setModel.pushDownSet(row);
             liveObjectSetListTable.setRowSelectionInterval(row + 1, row + 1);
         }
-        
+
     }//GEN-LAST:event_buttonDownActionPerformed
 
     private void buttonAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAddActionPerformed
-        if(data != null) {
+        if (data != null) {
             LiveData liveData = data.getLiveData();
             LiveObjectBins bins = liveData.getLiveObjectBins();
             LiveObjectSetList sets = liveData.getLiveObjectSets();
-            
+
             LiveObjectSet set = bins.getEnabledLiveObjectSet();
-            
-            if(set != null && set.size() > 0) {
+
+            if (set != null && set.size() > 0) {
                 setModel.addLiveObjectSet(set);
             }
         }
@@ -1014,8 +1071,8 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     private void buttonRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRemoveActionPerformed
         int row = liveObjectSetListTable.getSelectedRow();
-        
-        if(row >= 0 && row < setModel.getRowCount() - 1) {
+
+        if (row >= 0 && row < setModel.getRowCount() - 1) {
             setModel.removeLiveObjectSet(row);
         }
     }//GEN-LAST:event_buttonRemoveActionPerformed
@@ -1058,42 +1115,11 @@ public final class BlueLiveTopComponent extends TopComponent {
     private javax.swing.JButton triggerButton;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files
-     * only, i.e. deserialization routines; otherwise you could get a
-     * non-deserialized instance. To obtain the singleton instance, use {@link #findInstance}.
-     */
     public static synchronized BlueLiveTopComponent getDefault() {
         if (instance == null) {
             instance = new BlueLiveTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the BlueLiveTopComponent instance. Never call {@link #getDefault}
-     * directly!
-     */
-    public static synchronized BlueLiveTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(BlueLiveTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof BlueLiveTopComponent) {
-            return (BlueLiveTopComponent) win;
-        }
-        Logger.getLogger(BlueLiveTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID
-                + "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -1113,20 +1139,8 @@ public final class BlueLiveTopComponent extends TopComponent {
         // TODO store your settings
     }
 
-    Object readProperties(java.util.Properties p) {
-        BlueLiveTopComponent singleton = BlueLiveTopComponent.getDefault();
-        singleton.readPropertiesImpl(p);
-        return singleton;
-    }
-
-    private void readPropertiesImpl(java.util.Properties p) {
+    void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
-        // TODO read your settings according to their version
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 
     private void setupNoteTemplatePopup() {
@@ -1137,6 +1151,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
         final ActionListener al = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (noteTemplateText.isEnabled()) {
                     int loc = noteTemplateText.getCaret().getDot();
@@ -1181,6 +1196,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         int currentRepeat;
         long waitTime;
 
+        @Override
         public void run() {
             while (keepRunning) {
 
@@ -1190,16 +1206,16 @@ public final class BlueLiveTopComponent extends TopComponent {
 //                    repeatButton.setSelected(false);
 //                    break;
 //                }
-
                 if (beatCounter == 0) {
 
                     currentRepeatTempo = ((Integer) tempoSpinner.getValue()).intValue();
                     currentRepeat = ((Integer) repeatSpinner.getValue()).intValue();
                     waitTime = (long) (1000 * (60.0f / currentRepeatTempo));
 
-                    if(blueLiveToolBar.isRunning()) {
+                    if (blueLiveToolBar.isRunning()) {
                         new Thread() {
 
+                            @Override
                             public void run() {
                                 triggerButtonActionPerformed(null);
                             }
@@ -1212,7 +1228,6 @@ public final class BlueLiveTopComponent extends TopComponent {
                 if (beatCounter >= currentRepeat) {
                     beatCounter = 0;
                 }
-
 
                 try {
                     Thread.sleep(waitTime);
@@ -1230,95 +1245,88 @@ public final class BlueLiveTopComponent extends TopComponent {
 
     class AddMenu extends JMenu implements ActionListener {
 
-        HashMap<String, Class> sObjNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> sObjNameClassMap = new HashMap<>();
 
         public AddMenu() {
 
             super("Add SoundObject");
 
-            for (Class sObjClass : plugins) {
+            for (Map.Entry<Class<? extends SoundObject>, String> entry
+                    : liveSoundObjectTemplates.entrySet()) {
 
-                String className = sObjClass.getName();
-
-                sObjNameClassMap.put(className, sObjClass);
+                sObjNameClassMap.put(entry.getValue(), entry.getKey());
 
                 JMenuItem temp = new JMenuItem();
-                temp.setText(BlueSystem.getString("soundLayerPopup.addNew") + " " + BlueSystem.getShortClassName(
-                        className));
-                temp.setActionCommand(className);
+                temp.setText(
+                        BlueSystem.getString("soundLayerPopup.addNew") + " " + BlueSystem.getShortClassName(
+                                entry.getValue()));
+                temp.putClientProperty("sObjClass", entry.getKey());
+                temp.setActionCommand(entry.getValue());
                 temp.addActionListener(this);
                 this.add(temp);
             }
 
         }
 
+        @Override
         public void actionPerformed(ActionEvent ae) {
 
             try {
 
-                String sObjName = ae.getActionCommand();
-                Class c = BlueSystem.getClassLoader().loadClass(sObjName);
-
+                Class c = (Class) ((JMenuItem) ae.getSource()).getClientProperty(
+                        "sObjClass");
                 SoundObject sObj = (SoundObject) c.newInstance();
                 addSoundObject(mouseColumn, mouseRow, sObj);
-            } catch (ClassNotFoundException cnfe) {
+            } catch (IllegalAccessException | InstantiationException cnfe) {
                 JOptionPane.showMessageDialog(
                         null,
                         BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
-            } catch (IllegalAccessException iae) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
-            } catch (InstantiationException ie) {
-                JOptionPane.showMessageDialog(
-                        null,
-                        BlueSystem.getString(
-                        "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
+                                "soundLayerPopup.soundObject.couldNotInstantiate") + "\n" + ae.getActionCommand());
             }
         }
     }
 
     class SetsBufferMenu extends JPopupMenu {
+
         Action renameAction;
         Action removeAction;
-        
+
         public SetsBufferMenu() {
             renameAction = new AbstractAction("Rename") {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     final LiveObjectSetList liveObjectSets = data.getLiveData().getLiveObjectSets();
-                    
-                    if(mouseRow >= 0 && mouseRow < liveObjectSets.size()) {
+
+                    if (mouseRow >= 0 && mouseRow < liveObjectSets.size()) {
                         LiveObjectSet set = liveObjectSets.get(mouseRow);
-                        String retVal = JOptionPane.showInputDialog(WindowManager.getDefault().getMainWindow(), 
-                                       "Rename",
-                                       set.getName());
-                        
-                        if(retVal != null) {
+                        String retVal = JOptionPane.showInputDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                "Rename",
+                                set.getName());
+
+                        if (retVal != null) {
                             set.setName(retVal);
                             liveObjectSetListTable.repaint();
                         }
                     }
                 }
-                
+
             };
-            
+
             removeAction = new AbstractAction("Remove") {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     setModel.removeLiveObjectSet(mouseRow);
                 }
-                
+
             };
             this.add(renameAction);
             this.add(removeAction);
         }
     }
-    
+
     class BufferMenu extends JPopupMenu {
 
         JMenu addMenu = new AddMenu();
@@ -1341,6 +1349,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         public BufferMenu() {
             removeInstrumentMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
 
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
@@ -1348,35 +1357,33 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                     if (lObj != null) {
                         model.setValueAt(null, mouseRow, mouseColumn);
-                        SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                new SelectionEvent(null,
-                                SelectionEvent.SELECTION_CLEAR));
+                        content.set(Collections.emptyList(), null);
                     }
                 }
             });
             cutMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                             mouseRow, mouseColumn);
 
                     if (lObj != null) {
 
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                                lObj.getSoundObject());
+                        SoundObject copy = lObj.getSoundObject().clone();
 
-                        buffer.setBufferedObject(copy, 0, 0);
+                        ScoreController.getInstance().setSelectedScoreObjects(
+                                Collections.singleton(copy));
 
                         model.setValueAt(null, mouseRow, mouseColumn);
-                        SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                new SelectionEvent(null,
-                                SelectionEvent.SELECTION_CLEAR));
+                        content.set(Collections.emptyList(), null);
                     }
 
                 }
             });
             copyMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
 
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
@@ -1384,21 +1391,33 @@ public final class BlueLiveTopComponent extends TopComponent {
 
                     if (lObj != null) {
 
-                        SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                                lObj.getSoundObject());
+                        SoundObject copy = lObj.getSoundObject().clone();
 
-                        buffer.setBufferedObject(copy, 0, 0);
-
+                        ScoreController.getInstance().setSelectedScoreObjects(
+                                Collections.singleton(copy));
                     }
 
                 }
             });
             pasteMenuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
-                    SoundObject sObj = buffer.getBufferedSoundObject();
 
-                    if (!plugins.contains(sObj.getClass())) {
+                    Collection<? extends ScoreObject> selected
+                            = ScoreController.getInstance().getSelectedScoreObjects();
+
+                    if (selected.size() != 1) {
+                        return;
+                    }
+                    ScoreObject scoreObj = selected.iterator().next();
+                    if (scoreObj instanceof SoundObject) {
+                        return;
+                    }
+
+                    SoundObject sObj = (SoundObject) scoreObj;
+
+                    if (!liveSoundObjectTemplates.containsKey(sObj.getClass())) {
                         return;
                     }
 
@@ -1412,9 +1431,9 @@ public final class BlueLiveTopComponent extends TopComponent {
             /*
              * Row and Column Handling
              */
-
             insertRowBefore.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertRow(mouseRow);
                 }
@@ -1422,6 +1441,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertRowAfter.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertRow(mouseRow + 1);
                 }
@@ -1429,14 +1449,15 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             removeRow.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.removeRow(mouseRow);
                 }
             });
 
-
             insertColumnBefore.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertColumn(mouseColumn);
                 }
@@ -1444,6 +1465,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             insertColumnAfter.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.insertColumn(mouseColumn + 1);
                 }
@@ -1451,6 +1473,7 @@ public final class BlueLiveTopComponent extends TopComponent {
 
             removeColumn.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     model.removeColumn(mouseColumn);
                 }
@@ -1459,7 +1482,6 @@ public final class BlueLiveTopComponent extends TopComponent {
             /*
              * Setup Menu
              */
-
             this.add(addMenu);
             this.add(removeInstrumentMenuItem);
             this.addSeparator();
@@ -1481,6 +1503,7 @@ public final class BlueLiveTopComponent extends TopComponent {
         private void setupPopupListener() {
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
                             mouseRow, mouseColumn);
@@ -1495,17 +1518,23 @@ public final class BlueLiveTopComponent extends TopComponent {
                     removeColumn.setEnabled(
                             liveObjectsTable.getColumnCount() > 1);
 
-                    if (!objectAvailable && buffer.hasBufferedSoundObject()) {
-                        pasteMenuItem.setEnabled(plugins.contains(
-                                buffer.getBufferedSoundObject().getClass()));
+                    Collection<? extends ScoreObject> selected = 
+                            ScoreController.getInstance().getSelectedScoreObjects();
+                    
+                    if (!objectAvailable && selected.size() == 1) {
+                        pasteMenuItem.setEnabled(
+                                liveSoundObjectTemplates.containsKey(
+                                        selected.iterator().next().getClass()));
                     } else {
                         pasteMenuItem.setEnabled(false);
                     }
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
             });

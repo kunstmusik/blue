@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
@@ -32,26 +31,32 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     }
 
+    @Override
     public String getID() {
         return "Blue";
     }
 
+    @Override
     public String getName() {
         return "Blue";
     }
 
+    @Override
     public String getDescription() {
         return "Look and Feel for 'blue'";
     }
 
+    @Override
     public boolean isNativeLookAndFeel() {
         return false;
     }
 
+    @Override
     public boolean isSupportedLookAndFeel() {
         return true;
     }
 
+    @Override
     protected void initClassDefaults(UIDefaults table) {
         super.initClassDefaults(table);
 
@@ -108,12 +113,14 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         }
     }
 
+    @Override
     public UIDefaults getDefaults() {
-        blueTheme = new BlueTheme();
-        setCurrentTheme(blueTheme);
+//        blueTheme = new BlueTheme();
+//        setCurrentTheme(blueTheme);
         return super.getDefaults();
     }
 
+    @Override
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
         
@@ -236,6 +243,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     }
 
+    @Override
     protected void initSystemColorDefaults(UIDefaults table) {
         super.initSystemColorDefaults(table);
         // we made the color a bit darker because the were complaints about the
@@ -243,7 +251,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // being very difficult to see
         table.put("textHighlight", getTranslucentColor(getTextHighlightColor(),
                 128));
-        table.put("text", getWhite());
+        table.put("text", getBlack());
     }
 
     // helper to simplify creation of translucent colors
@@ -297,6 +305,7 @@ class BlueTableBorder extends AbstractBorder {
 
     protected Insets editorBorderInsets = new Insets(2, 2, 2, 0);
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         g.translate(x, y);
 
@@ -310,6 +319,7 @@ class BlueTableBorder extends AbstractBorder {
         g.translate(-x, -y);
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
         return editorBorderInsets;
     }

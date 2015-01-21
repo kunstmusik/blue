@@ -19,23 +19,22 @@
  */
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.io.IOException;
-
-import javax.swing.JLabel;
-
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.FrozenSoundObject;
-import blue.soundObject.SoundObject;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.FileUtilities;
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.openide.DialogDisplayer;
@@ -47,7 +46,8 @@ import org.openide.windows.WindowManager;
  * @author steven
  * 
  */
-public class FrozenSoundObjectEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = FrozenSoundObject.class)
+public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
     private FrozenSoundObject fso;
 
@@ -67,6 +67,7 @@ public class FrozenSoundObjectEditor extends SoundObjectEditor {
         panel.add(button);
         button.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 saveCopy();
             }
@@ -94,7 +95,8 @@ public class FrozenSoundObjectEditor extends SoundObjectEditor {
         fcm.setDialogTitle(this, "Save Copy of Frozen Soundfile");
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null
                 || !sObj.getClass().getName().equals(
                 "blue.soundObject.FrozenSoundObject")) {

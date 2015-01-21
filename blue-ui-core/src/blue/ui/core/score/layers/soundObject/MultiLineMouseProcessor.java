@@ -20,17 +20,6 @@
 
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.Component;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.JComponent;
-import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-
 import blue.components.AlphaMarquee;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
@@ -41,7 +30,16 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.JComponent;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 
 class MultiLineMouseProcessor extends MouseAdapter {
 
@@ -74,6 +72,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         return (float)timeState.getPixelSecond();
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -119,7 +118,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
                             l1, l2);
                     
                     sCanvas.start = e.getPoint();
-                    sCanvas.mBuffer.motionBufferObjects();
+//                    sCanvas.mBuffer.motionBufferObjects();
                     return;
                 }
                
@@ -130,6 +129,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -180,6 +180,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
         }
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         
         if(!isMultiLineMode()) {
@@ -220,14 +221,15 @@ class MultiLineMouseProcessor extends MouseAdapter {
                        
                     }
 
-                    if (sCanvas.mBuffer.size() != 0 && !isPopupOpen) {
-                        if(mouseTranslateTime + sCanvas.mBuffer.initialStartTimes[0] < 0) {
-                            return; 
-                        }
-                        
-                        
-                        moveSoundObjectsByTime(mouseTranslateTime);                    
-                    }
+                    // FIXME
+//                    if (sCanvas.mBuffer.size() != 0 && !isPopupOpen) {
+//                        if(mouseTranslateTime + sCanvas.mBuffer.initialStartTimes[0] < 0) {
+//                            return; 
+//                        }
+//                        
+//                        
+//                        moveSoundObjectsByTime(mouseTranslateTime);                    
+//                    }
 
                     
                     float diff = marquee.endTime - marquee.startTime;
@@ -308,16 +310,17 @@ class MultiLineMouseProcessor extends MouseAdapter {
         
         float newStart;
 
-        for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
-            newStart = sCanvas.mBuffer.initialStartTimes[i] + transTime;
-          
-            SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
-
-            SoundObject sObj = sObjView.getSoundObject();
-
-            sObj.setStartTime(newStart);
-
-        }
+        //FIXME
+//        for (int i = 0; i < sCanvas.mBuffer.motionBuffer.length; i++) {
+//            newStart = sCanvas.mBuffer.initialStartTimes[i] + transTime;
+//          
+//            SoundObjectView sObjView = sCanvas.mBuffer.motionBuffer[i];
+//
+//            SoundObject sObj = sObjView.getSoundObject();
+//
+//            sObj.setStartTime(newStart);
+//
+//        }
 
     }
 
@@ -384,55 +387,12 @@ class MultiLineMouseProcessor extends MouseAdapter {
 
     // UTILITY METHODS
 
-    public int getLayerMin(SoundObjectBuffer objBuffer) {
-        int min = Integer.MAX_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int layerNum = getSoundLayerIndex(objBuffer.getY(i));
-
-            if (layerNum < min) {
-                min = layerNum;
-            }
-
-        }
-
-        return min;
-    }
-
-    public int getLayerMax(SoundObjectBuffer objBuffer) {
-        int max = Integer.MIN_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int layerNum = getSoundLayerIndex(objBuffer.getY(i));
-
-            if (layerNum > max) {
-                max = layerNum;
-            }
-
-        }
-
-        return max;
-    }
-
-    public int getStartX(SoundObjectBuffer objBuffer) {
-        int min = Integer.MAX_VALUE;
-
-        for (int i = 0; i < objBuffer.size(); i++) {
-            int x = objBuffer.getX(i);
-            if (x < min) {
-                min = x;
-            }
-
-        }
-
-        return min;
-    }
-
     public void selectLayer(int soundLayerIndex) {
         final int index = soundLayerIndex;
 
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -461,6 +421,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
     public void selectAllBefore(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();
@@ -490,6 +451,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
     public void selectAllAfter(final int value) {
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 Component[] comps = sCanvas.getSoundObjectPanel()
                         .getComponents();

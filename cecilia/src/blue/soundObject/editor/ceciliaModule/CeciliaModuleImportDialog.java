@@ -20,17 +20,15 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import javax.swing.JFileChooser;
-
 import blue.BlueSystem;
 import blue.soundObject.ceciliaModule.ModuleDefinition;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.GenericFileFilter;
 import blue.utility.TextUtilities;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import javax.swing.JFileChooser;
 
 public class CeciliaModuleImportDialog {
     private static final String FILE_IMPORT = "ceciliaModuleImportDialog";

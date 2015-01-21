@@ -20,9 +20,11 @@
 
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.pattern.Pattern;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -41,6 +43,8 @@ import javax.swing.table.TableModel;
 /**
  * @author Steven Yi
  */
+
+@SoundObjectPlugin(displayName = "PatternObject", live=true, position = 80)
 public class PatternObject extends AbstractSoundObject implements Serializable,
         TableModel, GenericViewable {
 
@@ -60,7 +64,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
 
     private transient Vector pListeners = null;
 
-    private ArrayList patterns = new ArrayList();
+    private ArrayList<Pattern> patterns = new ArrayList<>();
 
     public PatternObject() {
         this.setName("Pattern");
@@ -92,14 +96,14 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     public void pushUpPatternLayers(int[] rows) {
-        Object a = patterns.remove(rows[0] - 1);
+        Pattern a = patterns.remove(rows[0] - 1);
         patterns.add(rows[rows.length - 1], a);
         this.fireTableDataChanged();
 
     }
 
     public void pushDownPatternLayers(int[] rows) {
-        Object a = patterns.remove(rows[rows.length - 1] + 1);
+        Pattern a = patterns.remove(rows[rows.length - 1] + 1);
         patterns.add(rows[0], a);
         this.fireTableDataChanged();
 
@@ -225,10 +229,10 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public void setNoteProcessorChain(NoteProcessorChain chain) {
@@ -249,18 +253,20 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
             Element node = nodes.next();
 
             String nodeName = node.getName();
-
-            if (nodeName.equals("beats")) {
-                pattern.setBeats(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("subDivisions")) {
-                pattern.setSubDivisions(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("patterns")) {
-                Elements patternNodes = node.getElements();
-
-                while (patternNodes.hasMoreElements()) {
-                    Pattern p = Pattern.loadFromXML(patternNodes.next());
-                    pattern.addPattern(p);
-                }
+            switch (nodeName) {
+                case "beats":
+                    pattern.setBeats(Integer.parseInt(node.getTextString()));
+                    break;
+                case "subDivisions":
+                    pattern.setSubDivisions(Integer.parseInt(node.getTextString()));
+                    break;
+                case "patterns":
+                    Elements patternNodes = node.getElements();
+                    while (patternNodes.hasMoreElements()) {
+                        Pattern p = Pattern.loadFromXML(patternNodes.next());
+                        pattern.addPattern(p);
+                    }
+                    break;
             }
 
         }

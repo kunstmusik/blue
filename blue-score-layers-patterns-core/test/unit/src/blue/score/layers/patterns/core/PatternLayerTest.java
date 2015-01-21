@@ -24,7 +24,6 @@ import blue.soundObject.GenericScore;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
-import electric.xml.Element;
 import org.junit.*;
 import static org.junit.Assert.*;
 
@@ -59,8 +58,8 @@ public class PatternLayerTest {
                 endTime, patternBeatsLength);
         System.out.println(result.toString());
         assertEquals(6, result.size());
-        assertEquals("1.0", result.getNote(1).getPField(2));
-        assertEquals("8.0", result.getNote(4).getPField(2));
+        assertEquals("1.0", result.get(1).getPField(2));
+        assertEquals("8.0", result.get(4).getPField(2));
         
         result = instance.generateForCSD(compileData, 4.0f,
                 endTime, patternBeatsLength);

@@ -23,7 +23,6 @@ import blue.BlueSystem;
 import blue.score.TimeState;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -38,6 +37,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
         this.timeState = timeState;        
     }
 
+    @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
         final ScoreTimeCanvas sTimeCanvas = (ScoreTimeCanvas) e.getSource();
 

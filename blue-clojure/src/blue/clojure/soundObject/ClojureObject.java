@@ -24,12 +24,13 @@ import blue.CompileData;
 import blue.clojure.BlueClojureEngine;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.AbstractSoundObject;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.OnLoadProcessable;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
+import blue.score.ScoreObjectEvent;
 import blue.soundObject.SoundObjectException;
 import blue.soundObject.SoundObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -38,13 +39,13 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import javax.script.Bindings;
 import javax.script.ScriptException;
 
 /**
  *
  * @author stevenyi
  */
+@SoundObjectPlugin(displayName="ClojureObject", position=25)
 public class ClojureObject extends AbstractSoundObject implements Serializable,
         Cloneable, OnLoadProcessable {
     
@@ -168,10 +169,10 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
         
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*

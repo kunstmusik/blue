@@ -8,7 +8,8 @@ package blue.soundObject.editor;
 
 import blue.components.LineCanvas;
 import blue.components.lines.LineListTable;
-import blue.soundObject.SoundObject;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.ZakLineObject;
 import blue.soundObject.editor.lineEditor.ZakLineListTable;
 
@@ -18,6 +19,7 @@ import blue.soundObject.editor.lineEditor.ZakLineListTable;
  * 
  * @author mbechard
  */
+@ScoreObjectEditorPlugin(scoreObjectType = ZakLineObject.class)
 public class ZakLineEditor extends LineEditor {
 
     /** Creates a new instance of ZakLineEditor */
@@ -28,6 +30,7 @@ public class ZakLineEditor extends LineEditor {
     /**
      * Gets a new LineTable specialized for zak lines
      */
+    @Override
     protected LineListTable getNewLineTable() {
         return new ZakLineListTable();
     }
@@ -35,6 +38,7 @@ public class ZakLineEditor extends LineEditor {
     /**
      * 
      */
+    @Override
     protected LineCanvas getNewLineCanvas() {
         return new LineCanvas();
     }
@@ -42,7 +46,8 @@ public class ZakLineEditor extends LineEditor {
     /**
      * Edits the SoundObject, using zak class references when necessary
      */
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             // this.line = null;
 

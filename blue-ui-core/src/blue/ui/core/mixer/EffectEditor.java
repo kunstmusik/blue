@@ -19,28 +19,25 @@
  */
 package blue.ui.core.mixer;
 
-import blue.mixer.*;
-import java.awt.BorderLayout;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-
 import blue.BlueSystem;
+import blue.mixer.*;
 import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
 import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.ui.core.mixer.EffectsObjectRegistry;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.undo.TabWatchingUndoableEditGenerator;
 import blue.utility.GUI;
+import java.awt.BorderLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
@@ -81,6 +78,7 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         inSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
         inSpinner.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (effect != null) {
                     Integer val = (Integer) inSpinner.getValue();
@@ -92,6 +90,7 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         outSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
         outSpinner.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (effect != null) {
                     Integer val = (Integer) outSpinner.getValue();
@@ -105,6 +104,7 @@ public class EffectEditor extends javax.swing.JPanel implements
 
         commentsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (effect != null) {
                             effect.setComments(commentsText.getText());
@@ -128,6 +128,7 @@ public class EffectEditor extends javax.swing.JPanel implements
                 completionProvider);
         code1.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (effect != null) {
                             effect.setCode(code1.getText());
@@ -289,6 +290,7 @@ public class EffectEditor extends javax.swing.JPanel implements
         GUI.showComponentAsStandalone(editor, "Effect Editor", true);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.effect) {
             String prop = evt.getPropertyName();

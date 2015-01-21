@@ -17,29 +17,33 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
+import blue.CompileData;
 import blue.orchestra.GenericInstrument;
 import blue.udo.OpcodeList;
 import blue.utility.ObjectUtilities;
+import blue.util.ObservableArrayList;
+import blue.util.ObservableList;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
 /**
  * TODO - need to create dependency graph, then do depth first crawl to create
  * audio mix signals
- * 
- * 
+ *
+ *
  * @author Steven Yi
  */
-
 public class Mixer implements Serializable {
 
     private static final MessageFormat GA_VAR = new MessageFormat(
@@ -49,6 +53,8 @@ public class Mixer implements Serializable {
             "ga_bluesub_{0}_{1}");
 
     public static final String MASTER_CHANNEL = "Master";
+
+    private ObservableList<ChannelList> channelListGroups;
 
     private ChannelList channels = new ChannelList();
 
@@ -60,9 +66,10 @@ public class Mixer implements Serializable {
 
     private float extraRenderTime = 0.0f;
 
-    private transient HashMap<String, String> subChannelDependencies = null;
+    private transient Map<String, String> subChannelDependencies = null;
 
     public Mixer() {
+        this.channelListGroups = new ObservableArrayList<>();
         master.setName(MASTER_CHANNEL);
     }
 
@@ -74,22 +81,36 @@ public class Mixer implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "enabled":
+                    mixer.setEnabled(XMLUtilities.readBoolean(node));
+                    break;
+                case "extraRenderTime":
+                    mixer.setExtraRenderTime(XMLUtilities.readFloat(node));
+                    break;
+                case "channelList":
+                    String listType = node.getAttributeValue("list");
+                    switch (listType) {
+                        case "channels":
+                            mixer.setChannels(ChannelList.loadFromXML(node));
+                            break;
+                        case "subChannels":
+                            mixer.setSubChannels(ChannelList.loadFromXML(node));
+                            break;
+                    }
+                    break;
+                case "channelListGroups":
 
-            if (nodeName.equals("enabled")) {
-                mixer.setEnabled(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("extraRenderTime")) {
-                mixer.setExtraRenderTime(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("channelList")) {
-                String listType = node.getAttributeValue("list");
+                    Elements listGroupsNodes = node.getElements();
+                    while (listGroupsNodes.hasMoreElements()) {
+                        mixer.channelListGroups.add(ChannelList.loadFromXML(
+                                listGroupsNodes.next()));
+                    }
 
-                if (listType.equals("channels")) {
-                    mixer.setChannels(ChannelList.loadFromXML(node));
-                } else if (listType.equals("subChannels")) {
-                    mixer.setSubChannels(ChannelList.loadFromXML(node));
-                }
-
-            } else if (nodeName.equals("channel")) {
-                mixer.setMaster(Channel.loadFromXML(node));
+                    break;
+                case "channel":
+                    mixer.setMaster(Channel.loadFromXML(node));
+                    break;
             }
 
         }
@@ -104,6 +125,14 @@ public class Mixer implements Serializable {
         retVal.addElement(XMLUtilities.writeFloat("extraRenderTime",
                 extraRenderTime));
 
+        if (channelListGroups.size() > 0) {
+            Element groupsNode = new Element("channelListGroups");
+            retVal.addElement(groupsNode);
+            for (ChannelList list : channelListGroups) {
+                groupsNode.addElement(list.saveAsXML());
+            }
+        }
+
         Element channelsNode = channels.saveAsXML();
         channelsNode.setAttribute("list", "channels");
         retVal.addElement(channelsNode);
@@ -117,8 +146,23 @@ public class Mixer implements Serializable {
         return retVal;
     }
 
+    public ObservableList<ChannelList> getChannelListGroups() {
+        return channelListGroups;
+    }
+
     public Channel getChannel(int index) {
-        return channels.getChannel(index);
+        return channels.get(index);
+    }
+
+    public List<Channel> getAllSourceChannels() {
+        List<Channel> allChannels = new ArrayList<>();
+
+        for (ChannelList list : channelListGroups) {
+            allChannels.addAll(list);
+        }
+        allChannels.addAll(channels);
+
+        return allChannels;
     }
 
     public ChannelList getChannels() {
@@ -126,7 +170,7 @@ public class Mixer implements Serializable {
     }
 
     public Channel getSubChannel(int index) {
-        return subChannels.getChannel(index);
+        return subChannels.get(index);
     }
 
     public ChannelList getSubChannels() {
@@ -145,23 +189,26 @@ public class Mixer implements Serializable {
         this.enabled = enabled;
     }
 
-    public static String getChannelVar(String channelName, int channel) {
+    public static String getChannelVar(int blueChannelId, int channel) {
         return GA_VAR
-                .format(new Object[] { channelName, new Integer(channel) });
+                .format(new Object[]{
+                    new Integer(blueChannelId), 
+                    new Integer(channel)});
     }
 
-    public static String getSubChannelVar(String channelName, int channel) {
-        return SUBMIX_VAR.format(new Object[] { channelName,
-                new Integer(channel) });
+    public static String getSubChannelVar(String subChannelName, int channel) {
+        return SUBMIX_VAR.format(new Object[]{
+            subChannelName,
+            new Integer(channel)});
     }
 
-    public String getVar(Channel c, int channel) {
+    public String getVar(CompileData data, Channel c, int channel) {
         String retVal;
 
         String name = c.getName();
 
         if (isChannel(c)) {
-            retVal = getChannelVar(name, channel);
+            retVal = getChannelVar(data.getChannelIdAssignments().get(c), channel);
         } else {
             retVal = getSubChannelVar(name, channel);
         }
@@ -169,21 +216,22 @@ public class Mixer implements Serializable {
         return retVal.replaceAll(" ", "");
     }
 
-    public String getInitStatements(int nchnls) {
+    public String getInitStatements(CompileData data, int nchnls) {
         StrBuilder buffer = new StrBuilder();
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
+        List<Channel> allChannels = getAllSourceChannels();
+
+        for (Channel c : allChannels) {
 
             for (int j = 0; j < nchnls; j++) {
 
-                buffer.append(getChannelVar(c.getName(), j)).append(
+                buffer.append(getChannelVar(data.getChannelIdAssignments().get(c), j)).append(
                         "\tinit\t0\n");
             }
         }
 
         for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
+            Channel c = subChannels.get(i);
 
             for (int j = 0; j < nchnls; j++) {
                 buffer.append(getSubChannelVar(c.getName(), j)).append(
@@ -199,21 +247,19 @@ public class Mixer implements Serializable {
         return buffer.toString();
     }
 
-    public String getClearStatements(int nchnls) {
+    public String getClearStatements(CompileData data, int nchnls) {
         StrBuilder buffer = new StrBuilder();
 
-        for (int i = 0; i < channels.size(); i++) {
-            Channel c = channels.getChannel(i);
-
+        List<Channel> allChannels = getAllSourceChannels();
+        for (Channel c : allChannels) {
             for (int j = 0; j < nchnls; j++) {
 
-                buffer.append(getChannelVar(c.getName(), j)).append(" = 0\n");
+                buffer.append(getChannelVar(
+                        data.getChannelIdAssignments().get(c), j)).append(" = 0\n");
             }
         }
 
-        for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
-
+        for (Channel c : subChannels) {
             for (int j = 0; j < nchnls; j++) {
 
                 buffer.append(getSubChannelVar(c.getName(), j))
@@ -228,7 +274,7 @@ public class Mixer implements Serializable {
         return buffer.toString();
     }
 
-    public GenericInstrument getMixerInstrument(OpcodeList udos, int nchnls) {
+    public GenericInstrument getMixerInstrument(CompileData data, OpcodeList udos, int nchnls) {
         GenericInstrument instr = new GenericInstrument();
         instr.setName("Blue Mixer Instrument");
 
@@ -239,8 +285,8 @@ public class Mixer implements Serializable {
         EffectManager manager = new EffectManager();
 
         buffer
-                .append(MixerNode.getMixerCode(this, udos, manager, node,
-                        nchnls));
+                .append(MixerNode.getMixerCode(data, this, udos, manager, node,
+                                nchnls));
 
         buffer.append("outc ");
 
@@ -248,10 +294,10 @@ public class Mixer implements Serializable {
             if (i > 0) {
                 buffer.append(", ");
             }
-            buffer.append(getVar(master, i));
+            buffer.append(getVar(data, master, i));
         }
 
-        buffer.append("\n").append(getClearStatements(nchnls));
+        buffer.append("\n").append(getClearStatements(data, nchnls));
 
         instr.setText(buffer.toString());
 
@@ -262,7 +308,7 @@ public class Mixer implements Serializable {
         Send[] allSends = new Send[0];
 
         for (int i = 0; i < this.getSubChannels().size(); i++) {
-            Channel c = this.getSubChannels().getChannel(i);
+            Channel c = this.getSubChannels().get(i);
 
             Send[] sends = c.getSends();
 
@@ -276,8 +322,7 @@ public class Mixer implements Serializable {
             allSends = temp;
         }
 
-        for (int i = 0; i < this.getChannels().size(); i++) {
-            Channel c = this.getChannels().getChannel(i);
+        for (Channel c : this.getAllSourceChannels()) {
             Send[] sends = c.getSends();
 
             if (sends.length == 0) {
@@ -298,45 +343,8 @@ public class Mixer implements Serializable {
     }
 
     public boolean isChannel(Channel channel) {
-        return channels.contains(channel);
+        return getAllSourceChannels().contains(channel);
     }
-
-//    public static void main(String args[]) {
-//        Mixer mixer = new Mixer();
-//
-//        for (int i = 0; i < 5; i++) {
-//            Channel c = new Channel();
-//            c.setName("SubChannel " + (i + 1));
-//            c.setLevel(0.3f);
-//
-//            mixer.getSubChannels().addChannel(c);
-//        }
-//
-//        for (int i = 0; i < 10; i++) {
-//            Channel c = new Channel();
-//            c.setName(Integer.toString(i + 1));
-//            c.setLevel(0.9f);
-//
-//            int outNum = (int) (Math.random() * 6);
-//
-//            if (outNum == 5) {
-//                c.setOutChannel(Channel.MASTER);
-//            } else {
-//                c.setOutChannel(mixer.getSubChannels().getChannel(outNum)
-//                        .getName());
-//            }
-//
-//            mixer.getChannels().addChannel(c);
-//        }
-//
-//        System.out.println(mixer.getInitStatements(2));
-//
-//        System.out.println("\n\n=================================\n\n");
-//
-//        System.out.println(mixer.getMixerInstrument(new OpcodeList(), 2)
-//                .generateInstrument());
-//
-//    }
 
     public void setChannels(ChannelList channels) {
         this.channels = channels;
@@ -350,6 +358,7 @@ public class Mixer implements Serializable {
         this.subChannels = subChannels;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }
@@ -365,12 +374,12 @@ public class Mixer implements Serializable {
     /**
      * Tells mixer that subchannel to act as if it has a dependency, used by
      * blueMixerOut when using subchannel form of calling.
-     * 
+     *
      * @param subChannelName
      */
     public void addSubChannelDependency(String subChannelName) {
         if (subChannelDependencies == null) {
-            subChannelDependencies = new HashMap<String,String>();
+            subChannelDependencies = new HashMap<>();
         }
         subChannelDependencies.put(subChannelName, subChannelName);
     }
@@ -417,7 +426,7 @@ public class Mixer implements Serializable {
 
     private Channel getSubChannelByName(String name) {
         for (int i = 0; i < subChannels.size(); i++) {
-            Channel c = subChannels.getChannel(i);
+            Channel c = subChannels.get(i);
             if (c.getName().equals(name)) {
                 return c;
             }
@@ -425,8 +434,8 @@ public class Mixer implements Serializable {
         return null;
     }
 
-    public HashMap<String, Channel> getSubChannelCache() {
-        HashMap<String, Channel> subChannelCache = new HashMap<String, Channel>();
+    public Map<String, Channel> getSubChannelCache() {
+        Map<String, Channel> subChannelCache = new HashMap<>();
 
         for (int i = 0; i < getSubChannels().size(); i++) {
             Channel subChannel = getSubChannel(i);
@@ -435,7 +444,8 @@ public class Mixer implements Serializable {
         }
         return subChannelCache;
     }
-    
+
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

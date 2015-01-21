@@ -126,38 +126,45 @@ public abstract class BlueTabControlButton extends JButton {
         return buttonId;
     }
 
+    @Override
     public Icon getIcon() {
         if( null != displayer )
             return displayer.getUI().getButtonIcon( getButtonId(), STATE_DEFAULT );
         return null;
     }
 
+    @Override
     public Icon getPressedIcon() {
         if( null != displayer )
             return displayer.getUI().getButtonIcon( getButtonId(), STATE_PRESSED );
         return null;
     }
 
+    @Override
     public Icon getRolloverIcon() {
         if( null != displayer )
             return displayer.getUI().getButtonIcon( getButtonId(), STATE_ROLLOVER );
         return null;
     }
 
+    @Override
     public Icon getRolloverSelectedIcon() {
         return getRolloverIcon();
     }
 
+    @Override
     public Icon getDisabledIcon() {
         if( null != displayer )
             return displayer.getUI().getButtonIcon( getButtonId(), STATE_DISABLED );
         return null;
     }
 
+    @Override
     public Icon getDisabledSelectedIcon() {
         return getDisabledIcon();
     }
 
+    @Override
     public void updateUI() {
         super.updateUI();
         // don't call configureButton() from super constructor
@@ -182,6 +189,7 @@ public abstract class BlueTabControlButton extends JButton {
         }
     }
 
+    @Override
     protected void fireActionPerformed(ActionEvent event) {
         super.fireActionPerformed(event);
         performAction( event );

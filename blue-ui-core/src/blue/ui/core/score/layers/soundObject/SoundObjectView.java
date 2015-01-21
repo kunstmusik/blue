@@ -17,21 +17,25 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score.layers.soundObject;
-
-import java.awt.BorderLayout;
-import java.awt.Graphics;
-
-import javax.swing.JComponent;
 
 import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectEvent;
-import blue.soundObject.SoundObjectListener;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
+import blue.ui.core.score.ScoreObjectView;
+import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.soundObject.renderer.BarRenderer;
 import blue.ui.core.soundObject.renderer.BarRendererCache;
+import java.awt.BorderLayout;
+import java.awt.Graphics;
+import java.util.Collection;
+import javax.swing.JComponent;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
+import org.openide.windows.WindowManager;
 
 /**
  * Title: blue (Object Composition Environment)
@@ -42,30 +46,27 @@ import blue.ui.core.soundObject.renderer.BarRendererCache;
  * <p>
  * Company: steven yi music
  * <p>
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
-public final class SoundObjectView extends JComponent implements Comparable,
-        SoundObjectListener {
+public final class SoundObjectView extends JComponent implements Comparable<SoundObjectView>,
+        ScoreObjectListener, LookupListener, ScoreObjectView<SoundObject> {
 
     private SoundObject sObj;
-
     boolean selected = false;
-
     private TimeState timeState;
-
     BarRenderer renderer = null;
+    Lookup.Result<SoundObject> result = null;
 
     public SoundObjectView(SoundObject sObj, TimeState timeState) {
         this.sObj = sObj;
         this.timeState = timeState;
 
+        renderer = BarRendererCache.getInstance().getBarRenderer(
+                this.sObj.getClass());
 
-        renderer = BarRendererCache.getInstance().getBarRenderer(this.sObj.getClass());
-
-        this.sObj.addSoundObjectListener(this);
+        this.sObj.addScoreObjectListener(this);
 
         try {
             init();
@@ -75,15 +76,15 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     void cleanup() {
-        if(this.sObj != null) {
-            this.sObj.removeSoundObjectListener(this);
+        if (this.sObj != null) {
+            this.sObj.removeScoreObjectListener(this);
 
             renderer.cleanup(this);
             this.timeState = null;
             this.sObj = null;
         }
     }
-    
+
     private void init() {
         this.setBounds(-1, 0, (int) (sObj.getSubjectiveDuration() * timeState
                 .getPixelSecond()), Layer.LAYER_HEIGHT);
@@ -96,13 +97,16 @@ public final class SoundObjectView extends JComponent implements Comparable,
     }
 
     public void updateView(int newY, int newHeight) {
-        this.setLocation((int) (this.getStartTime() * timeState.getPixelSecond()),
+        this.setLocation(
+                (int) (this.getStartTime() * timeState.getPixelSecond()),
                 newY);
         this.setSize((int) (this.getSubjectiveDuration() * timeState
                 .getPixelSecond()), newHeight);
     }
 
-    /** *************************** */
+    /**
+     * ***************************
+     */
     public void setStartTime(float yo) {
         sObj.setStartTime(yo);
     }
@@ -123,31 +127,22 @@ public final class SoundObjectView extends JComponent implements Comparable,
         return sObj;
     }
 
-    public void select() {
-        selected = true;
-        repaint();
-    }
-
-    public void deselect() {
-        selected = false;
-        repaint();
-    }
-
     public boolean isSelected() {
         return selected;
     }
 
+    @Override
     public void paintComponent(Graphics graphics) {
-        if(renderer != null && timeState != null) {
+        if (renderer != null && timeState != null) {
             renderer.render(graphics, this, timeState.getPixelSecond());
         }
     }
 
-    public int compareTo(Object sObjView) {
-        SoundObjectView a = (SoundObjectView) sObjView;
+    @Override
+    public int compareTo(SoundObjectView sObjView) {
 
         int x1 = this.getX();
-        int x2 = a.getX();
+        int x2 = sObjView.getX();
 
         if (x1 > x2) {
             return 1;
@@ -157,24 +152,25 @@ public final class SoundObjectView extends JComponent implements Comparable,
         return 0;
     }
 
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if (event == null || event.getSoundObject() != this.sObj) {
+    @Override
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if (event == null || event.getScoreObject() != this.sObj) {
             return;
         }
 
         switch (event.getPropertyChanged()) {
-            case SoundObjectEvent.NAME:
+            case ScoreObjectEvent.NAME:
                 repaint();
                 break;
-            case SoundObjectEvent.START_TIME:
-                // fall through
-            case SoundObjectEvent.DURATION:
+            case ScoreObjectEvent.START_TIME:
+            // fall through
+            case ScoreObjectEvent.DURATION:
                 updateView();
                 break;
-            case SoundObjectEvent.COLOR:
+            case ScoreObjectEvent.COLOR:
                 repaint();
                 break;
-            case SoundObjectEvent.REPEAT_POINT:
+            case ScoreObjectEvent.REPEAT_POINT:
                 repaint();
                 break;
 
@@ -183,5 +179,42 @@ public final class SoundObjectView extends JComponent implements Comparable,
 
     public BarRenderer getRenderer() {
         return renderer;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+
+        ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
+                "ScoreTopComponent");
+        result = scoreTopComponent.getLookup().lookupResult(
+                SoundObject.class);
+        result.addLookupListener(this);
+        resultChanged(null);
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        result.removeLookupListener(this);
+        result = null;
+    }
+
+    @Override
+    public void resultChanged(LookupEvent ev) {
+        if (result != null) {
+            Collection<? extends SoundObject> soundObjects = result.allInstances();
+            boolean newSelected = soundObjects.contains(this.sObj);
+
+            if (newSelected != selected) {
+                selected = newSelected;
+                repaint();
+            }
+        }
+    }
+
+    @Override
+    public SoundObject getScoreObject() {
+        return this.sObj;
     }
 }

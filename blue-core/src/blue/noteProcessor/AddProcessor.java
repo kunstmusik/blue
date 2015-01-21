@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,7 +15,7 @@ import java.io.Serializable;
  * @author steven yi
  * @version 1.0
  */
-
+@NoteProcessorPlugin(displayName="AddProcessor", position = 10)
 public class AddProcessor implements NoteProcessor, Serializable {
     float value = 0.0f;
 
@@ -23,6 +24,7 @@ public class AddProcessor implements NoteProcessor, Serializable {
     public AddProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[add] pfield: " + pfield + " value: " + value;
         return "[add]";
@@ -48,7 +50,7 @@ public class AddProcessor implements NoteProcessor, Serializable {
         Note temp;
         float fieldVal = 0f;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 fieldVal = Float.parseFloat(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
@@ -69,7 +71,7 @@ public class AddProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

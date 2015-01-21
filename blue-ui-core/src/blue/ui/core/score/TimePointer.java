@@ -13,6 +13,7 @@ public class TimePointer extends JComponent {
         this.color = color;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         g.setColor(this.color);
         g.drawLine(0, 0, 0, this.getHeight());

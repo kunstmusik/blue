@@ -1,11 +1,14 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.gui.LabelledRangeBar;
+import blue.gui.LabelledRangeLabelFilter;
+import blue.orchestra.BlueX7;
+import blue.orchestra.blueX7.AlgorithmCommonData;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -14,11 +17,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledRangeBar;
-import blue.gui.LabelledRangeLabelFilter;
-import blue.orchestra.BlueX7;
-import blue.orchestra.blueX7.AlgorithmCommonData;
 import org.openide.util.ImageUtilities;
 
 /**
@@ -114,6 +112,7 @@ public class AlgorithmCommonPanel extends JComponent {
         algorithmPicture = new JLabel(algoIcon[0]);
 
         algorithm.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 algorithmPicture.setIcon(algoIcon[algorithm.getValue() - 1]);
             }
@@ -130,6 +129,7 @@ public class AlgorithmCommonPanel extends JComponent {
                     "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4",
                     "C5" };
 
+            @Override
             public String filter(int val) {
                 if (val < KeyTransposeName.length) {
                     return KeyTransposeName[val];
@@ -167,6 +167,7 @@ public class AlgorithmCommonPanel extends JComponent {
         this.add(algorithmEditPanelTop, BorderLayout.CENTER);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 checkData();
             }
@@ -177,6 +178,7 @@ public class AlgorithmCommonPanel extends JComponent {
         feedback.addChangeListener(cl);
 
         ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 checkData();
             }

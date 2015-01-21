@@ -19,11 +19,11 @@
  */
 package blue.components;
 
+import blue.utility.GUI;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Insets;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -31,8 +31,6 @@ import javax.swing.JFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
-
-import blue.utility.GUI;
 
 public class PaletteWindow extends JFrame {
 

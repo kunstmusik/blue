@@ -60,23 +60,30 @@ public class Weibull implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("s")) {
-                retVal.s = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("t")) {
-                retVal.t = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("sTableEnabled")) {
-                retVal.sTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("tTableEnabled")) {
-                retVal.tTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("sTable")) {
-                    retVal.sTable = Table.loadFromXML(node);
-                } else if (tableId.equals("tTable")) {
-                    retVal.tTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "s":
+                    retVal.s = XMLUtilities.readDouble(node);
+                    break;
+                case "t":
+                    retVal.t = XMLUtilities.readDouble(node);
+                    break;
+                case "sTableEnabled":
+                    retVal.sTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "tTableEnabled":
+                    retVal.tTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "sTable":
+                            retVal.sTable = Table.loadFromXML(node);
+                            break;
+                        case "tTable":
+                            retVal.tTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 

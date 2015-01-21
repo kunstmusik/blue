@@ -34,6 +34,7 @@ class StreamBuffer extends Thread {
         this.buffer = buffer;
     }
 
+    @Override
     public void run() {
         try {
             InputStreamReader isr = new InputStreamReader(is);

@@ -32,6 +32,7 @@ public class CSeparator extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#processText(java.lang.String)
      */
+    @Override
     public String processText(String ceciliaText) {
         // TODO Auto-generated method stub
         return null;
@@ -42,6 +43,7 @@ public class CSeparator extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#initialize(java.lang.String[])
      */
+    @Override
     public void initialize(String[] tokens) {
         // TODO Auto-generated method stub
 
@@ -60,6 +62,7 @@ public class CSeparator extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = CeciliaObject.getBasicXML(this);
 

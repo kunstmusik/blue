@@ -20,9 +20,11 @@
 
 package blue.tools.codeRepository;
 
+import blue.utility.GUI;
+import com.l2fprod.common.swing.BaseDialog;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.Container;
-
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -35,16 +37,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-
 import org.wonderly.awt.Packer;
-
-import blue.tools.codeRepository.CodeRepositoryManager;
-import blue.tools.codeRepository.ElementHolder;
-import blue.utility.GUI;
-
-import com.l2fprod.common.swing.BaseDialog;
-
-import electric.xml.ParseException;
 
 public class AddToCodeRepositoryDialog extends BaseDialog {
 
@@ -91,6 +84,7 @@ public class AddToCodeRepositoryDialog extends BaseDialog {
 
     }
 
+    @Override
     public boolean ask() {
         initTree();
         return super.ask();

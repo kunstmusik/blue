@@ -19,6 +19,11 @@
  */
 package blue.ui.core.score.noteProcessorChain;
 
+import blue.BlueSystem;
+import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
+import blue.soundObject.editor.pianoRoll.ScaleSelectionPanel;
+import blue.soundObject.pianoRoll.Scale;
+import blue.ui.utilities.FileChooserManager;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -26,17 +31,10 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-
-import blue.BlueSystem;
-import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
-import blue.soundObject.editor.pianoRoll.ScaleSelectionPanel;
-import blue.soundObject.pianoRoll.Scale;
-import blue.ui.utilities.FileChooserManager;
 
 /**
  * @author steven
@@ -61,6 +59,7 @@ public class ScaleEditor extends JComponent {
         button.setMargin(new Insets(0, 0, 0, 0));
 
         button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectScale();
             }

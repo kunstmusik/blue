@@ -49,6 +49,7 @@ public class CSlider extends CeciliaObject {
 
     float value = 0.0f;
 
+    @Override
     public String processText(String ceciliaText) {
         // TODO Auto-generated method stub
         return null;
@@ -59,6 +60,7 @@ public class CSlider extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#initialize(java.lang.String[])
      */
+    @Override
     public void initialize(String[] tokens) {
         this.setObjectName(tokens[1]);
 
@@ -254,6 +256,7 @@ public class CSlider extends CeciliaObject {
      * 
      * @see blue.soundObject.ceciliaModule.CeciliaObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = CeciliaObject.getBasicXML(this);
 

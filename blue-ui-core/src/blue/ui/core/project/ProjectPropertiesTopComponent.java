@@ -26,12 +26,12 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Logger;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
 
 /**
  * Top component which displays something.
@@ -40,13 +40,30 @@ import org.netbeans.api.settings.ConvertAsProperties;
     dtd="-//blue.ui.core.project//ProjectProperties//EN",
     autostore=false
 )
+@TopComponent.Description(
+        preferredID = "ProjectPropertiesTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = true,
+        position = 700)
+@ActionID(category = "Window", id = "blue.ui.core.project.ProjectPropertiesTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1600),
+    @ActionReference(path = "Shortcuts", name = "D-7")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_ProjectPropertiesAction",
+        preferredID = "ProjectPropertiesTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_ProjectPropertiesAction=Project Properties",
+    "CTL_ProjectPropertiesTopComponent=Project Properties",
+    "HINT_ProjectPropertiesTopComponent=This is a ProjectProperties window"
+})
 public final class ProjectPropertiesTopComponent extends TopComponent {
 
     private static ProjectPropertiesTopComponent instance;
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-
-    private static final String PREFERRED_ID = "ProjectPropertiesTopComponent";
 
     public ProjectPropertiesTopComponent() {
         initComponents();
@@ -55,6 +72,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();
@@ -135,6 +153,7 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
     private blue.ui.core.project.ProjectInformationPanel projectInformationPanel1;
     private blue.ui.core.project.RealtimeRenderSettingsPanel realtimeRenderSettingsPanel1;
     // End of variables declaration//GEN-END:variables
+
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
      * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
@@ -145,32 +164,6 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
             instance = new ProjectPropertiesTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the ProjectPropertiesTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized ProjectPropertiesTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(ProjectPropertiesTopComponent.class.getName()).
-                    warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof ProjectPropertiesTopComponent) {
-            return (ProjectPropertiesTopComponent) win;
-        }
-        Logger.getLogger(ProjectPropertiesTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -202,8 +195,4 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         // TODO read your settings according to their version
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
 }

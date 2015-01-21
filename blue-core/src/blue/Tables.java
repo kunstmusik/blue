@@ -34,6 +34,7 @@ public class Tables implements java.io.Serializable, Cloneable {
         this.tables = tables;
     }
 
+    @Override
     public Object clone() {
         Tables temp = new Tables();
         temp.setTables(this.getTables());

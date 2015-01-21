@@ -20,8 +20,8 @@ import blue.udo.UserDefinedOpcode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.Map.Entry;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class CSDUtility {
     public static final int IMPORT_GLOBAL = 0;
@@ -147,7 +147,7 @@ public class CSDUtility {
 
         switch (importMode) {
             case IMPORT_GLOBAL:
-                data.getScore().getLayerGroup(0).newLayerAt(-1);
+                data.getScore().get(0).newLayerAt(-1);
                 data.getGlobalOrcSco().setGlobalSco(noteText);
                 break;
 
@@ -227,10 +227,10 @@ public class CSDUtility {
 
         genScore.setStartTime(section.sectionStartTime);
 
-        PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
+        PolyObject pObj = (PolyObject)data.getScore().get(0);
         
-        SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
-        sLayer.addSoundObject(genScore);
+        SoundLayer sLayer = pObj.newLayerAt(-1);
+        sLayer.add(genScore);
 
     }
 
@@ -289,8 +289,8 @@ public class CSDUtility {
                 continue;
             }
 
-            PolyObject pObj = (PolyObject)data.getScore().getLayerGroup(0);
-            sLayer = (SoundLayer)pObj.newLayerAt(-1);
+            PolyObject pObj = (PolyObject)data.getScore().get(0);
+            sLayer = pObj.newLayerAt(-1);
 
             String score = buffer.toString();
             NoteList notes;
@@ -302,7 +302,7 @@ public class CSDUtility {
             }
 
             notes.sort();
-            float minStart = notes.getNote(0).getStartTime();
+            float minStart = notes.get(0).getStartTime();
 
             ScoreUtilities.normalizeNoteList(notes);
 
@@ -311,7 +311,7 @@ public class CSDUtility {
 
             genScore.setStartTime(minStart + section.sectionStartTime);
 
-            sLayer.addSoundObject(genScore);
+            sLayer.add(genScore);
 
         }
     }

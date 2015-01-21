@@ -19,14 +19,21 @@
  */
 package blue.score.layers;
 
+import blue.score.ScoreObject;
+import java.io.Serializable;
+
 /**
  *
  * @author stevenyi
  */
-public interface Layer {
+public interface Layer extends Serializable {
     public static final int LAYER_HEIGHT = 22;
     
     public String getName();
-    
     public void setName(String name);
+    public int getLayerHeight();
+    
+    public boolean accepts(ScoreObject object);
+    public boolean contains(ScoreObject object);
+    public boolean remove(ScoreObject object);
 }

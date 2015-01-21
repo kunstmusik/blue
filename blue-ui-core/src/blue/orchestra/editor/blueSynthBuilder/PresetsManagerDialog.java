@@ -20,32 +20,6 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.dnd.DnDConstants;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
-
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
@@ -60,6 +34,30 @@ import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.ParseException;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.dnd.DnDConstants;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Steven
@@ -93,6 +91,7 @@ public class PresetsManagerDialog extends JDialog implements
         JButton saveButton = new JButton(BlueSystem.getString("common.save"));
         saveButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 retVal = (PresetGroup) model.getRoot();
                 setVisible(false);
@@ -104,6 +103,7 @@ public class PresetsManagerDialog extends JDialog implements
                 .getString("programOptions.cancelButton"));
         cancelButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
             }
@@ -128,6 +128,7 @@ public class PresetsManagerDialog extends JDialog implements
 
         tree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 TreePath path = tree.getSelectionPath();
@@ -218,6 +219,7 @@ public class PresetsManagerDialog extends JDialog implements
 
             remove.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null) {
                         return;
@@ -233,6 +235,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             cut.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null) {
                         return;
@@ -252,6 +255,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             copy.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null) {
                         return;
@@ -269,6 +273,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             paste.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null || !(userObj instanceof PresetGroup)) {
                         return;
@@ -290,6 +295,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             importItem.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null || !(userObj instanceof PresetGroup)) {
                         return;
@@ -309,18 +315,22 @@ public class PresetsManagerDialog extends JDialog implements
                         try {
                             doc = new Document(f);
                             Element root = doc.getRoot();
-                            if (root.getName().equals("presetGroup")) {
-                                PresetGroup pGroup = PresetGroup
-                                        .loadFromXML(root);
-                                model.addPresetGroup(group, pGroup);
-                            } else if (root.getName().equals("preset")) {
-                                Preset p = Preset.loadFromXML(root);
-                                model.addPreset(group, p);
-                            } else {
-                                JOptionPane.showMessageDialog(
-                                        PresetsManagerDialog.this,
-                                        "Error: File did not contain presets",
-                                        "Error", JOptionPane.ERROR_MESSAGE);
+                            switch (root.getName()) {
+                                case "presetGroup":
+                                    PresetGroup pGroup = PresetGroup
+                                            .loadFromXML(root);
+                                    model.addPresetGroup(group, pGroup);
+                                    break;
+                                case "preset":
+                                    Preset p = Preset.loadFromXML(root);
+                                    model.addPreset(group, p);
+                                    break;
+                                default:
+                                    JOptionPane.showMessageDialog(
+                                            PresetsManagerDialog.this,
+                                            "Error: File did not contain presets",
+                                            "Error", JOptionPane.ERROR_MESSAGE);
+                                    break;
                             }
 
                         } catch (ParseException ex) {
@@ -336,6 +346,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             export.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null) {
                         return;
@@ -387,6 +398,7 @@ public class PresetsManagerDialog extends JDialog implements
             });
 
             addFolder.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (userObj == null || !(userObj instanceof PresetGroup)) {
                         return;
@@ -444,10 +456,12 @@ public class PresetsManagerDialog extends JDialog implements
         }
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

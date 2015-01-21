@@ -19,14 +19,8 @@
  */
 package blue.upgrades;
 
-import blue.BlueData;
-import blue.ProjectProperties;
-import blue.utility.TextUtilities;
 import electric.xml.Attribute;
 import electric.xml.Element;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -41,7 +35,7 @@ public class UpgradeManager {
 
     Logger logger = Logger.getLogger("UpgradeManager");
     
-    private ArrayList<ProjectUpgrader> upgraders = new ArrayList<ProjectUpgrader>();
+    private ArrayList<ProjectUpgrader> upgraders = new ArrayList<>();
     private static UpgradeManager instance = null;
 
     public static UpgradeManager getInstance() {

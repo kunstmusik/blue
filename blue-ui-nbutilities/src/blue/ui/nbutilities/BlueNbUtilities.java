@@ -22,7 +22,6 @@ package blue.ui.nbutilities;
 import java.awt.Component;
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
-import javax.swing.text.Document;
 import javax.swing.text.EditorKit;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.editor.Utilities;

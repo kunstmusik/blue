@@ -19,7 +19,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Arc2D;
-
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -108,6 +107,7 @@ public class Knob extends JComponent {
         setPreferredSize(prefSize);
         hitArc.setAngleStart(235); // Degrees ??? Radians???
         addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 dragpos = me.getX() + me.getY();
                 startVal = val;
@@ -120,6 +120,7 @@ public class Knob extends JComponent {
                 requestFocus();
             }
 
+            @Override
             public void mouseClicked(MouseEvent me) {
                 hitArc.setAngleExtent(-(LENGTH + 20));
                 if (hitArc.contains(me.getX(), me.getY())) {
@@ -135,6 +136,7 @@ public class Knob extends JComponent {
 
         // Let the user control the knob with the mouse
         addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
             public void mouseDragged(MouseEvent me) {
                 if (dragType == SIMPLE) {
                     float f = DRAG_SPEED * ((me.getX() + me.getY()) - dragpos);
@@ -151,6 +153,7 @@ public class Knob extends JComponent {
                 }
             }
 
+            @Override
             public void mouseMoved(MouseEvent me) {
             }
         });
@@ -158,12 +161,15 @@ public class Knob extends JComponent {
         // Let the user control the knob with the keyboard
         addKeyListener(new KeyListener() {
 
+            @Override
             public void keyTyped(KeyEvent e) {
             }
 
+            @Override
             public void keyReleased(KeyEvent e) {
             }
 
+            @Override
             public void keyPressed(KeyEvent e) {
                 int k = e.getKeyCode();
                 if (k == KeyEvent.VK_RIGHT) {
@@ -176,10 +182,12 @@ public class Knob extends JComponent {
 
         // Handle focus so that the knob gets the correct focus highlighting.
         addFocusListener(new FocusListener() {
+            @Override
             public void focusGained(FocusEvent e) {
                 repaint();
             }
 
+            @Override
             public void focusLost(FocusEvent e) {
                 repaint();
             }
@@ -194,11 +202,13 @@ public class Knob extends JComponent {
         return dragType;
     }
 
+    @Override
     public boolean isManagingFocus() {
         return true;
     }
 
-    public boolean isFocusTraversable() {
+    @Override
+    public boolean isFocusable() {
         return true;
     }
 
@@ -239,6 +249,7 @@ public class Knob extends JComponent {
         listenerList.remove(ChangeListener.class, cl);
     }
 
+    @Override
     public Dimension getMinimumSize() {
         return MIN_SIZE;
     }
@@ -260,6 +271,7 @@ public class Knob extends JComponent {
     }
 
     // Paint the DKnob
+    @Override
     public void paint(Graphics g) {
         int width = getWidth();
         int height = getHeight();

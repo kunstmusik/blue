@@ -25,6 +25,7 @@ import blue.automation.Automatable;
 import blue.automation.ParameterList;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.*;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -40,6 +41,8 @@ import java.util.HashMap;
  * @author Steven Yi
  * 
  */
+
+@InstrumentPlugin(displayName = "BlueSynthBuilder", position = 50)
 public class BlueSynthBuilder extends AbstractInstrument implements
         Serializable, Automatable {
 
@@ -115,6 +118,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String generateAlwaysOnInstrument() {
         String retVal = bsbCompilationUnit
                 .replaceBSBValues(getAlwaysOnInstrumentText());
@@ -161,24 +165,32 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("globalOrc")) {
-                bsb.setGlobalOrc(node.getTextString());
-            } else if (nodeName.equals("globalSco")) {
-                bsb.setGlobalSco(node.getTextString());
-            } else if (nodeName.equals("instrumentText")) {
-                bsb.setInstrumentText(node.getTextString());
-            } else if (nodeName.equals("alwaysOnInstrumentText")) {
-                bsb.setAlwaysOnInstrumentText(node.getTextString());
-            } else if (nodeName.equals("graphicInterface")) {
-                bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
-            } else if (nodeName.equals("presetGroup")) {
-                bsb.setPresetGroup(PresetGroup.loadFromXML(node));
-            } else if (nodeName.equals("bsbParameterList")) {
-                bsb.parameterList = (BSBParameterList) BSBParameterList
-                        .loadFromXML(node);
-            } else if (nodeName.equals("opcodeList")) {
-                bsb.opcodeList = OpcodeList.loadFromXML(node);
+            switch (nodeName) {
+                case "globalOrc":
+                    bsb.setGlobalOrc(node.getTextString());
+                    break;
+                case "globalSco":
+                    bsb.setGlobalSco(node.getTextString());
+                    break;
+                case "instrumentText":
+                    bsb.setInstrumentText(node.getTextString());
+                    break;
+                case "alwaysOnInstrumentText":
+                    bsb.setAlwaysOnInstrumentText(node.getTextString());
+                    break;
+                case "graphicInterface":
+                    bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
+                    break;
+                case "presetGroup":
+                    bsb.setPresetGroup(PresetGroup.loadFromXML(node));
+                    break;
+                case "bsbParameterList":
+                    bsb.parameterList = (BSBParameterList) BSBParameterList
+                            .loadFromXML(node);
+                    break;
+                case "opcodeList":
+                    bsb.opcodeList = OpcodeList.loadFromXML(node);
+                    break;
             }
 
         }
@@ -223,6 +235,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }
@@ -367,7 +380,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
 
     @Override
     public ArrayList<StringChannel> getStringChannels() {
-        ArrayList<StringChannel> stringChannels = new ArrayList<StringChannel>();
+        ArrayList<StringChannel> stringChannels = new ArrayList<>();
         
         for(int i = 0; i < graphicInterface.size(); i++) {
             BSBObject bsbObj = graphicInterface.getBSBObject(i);

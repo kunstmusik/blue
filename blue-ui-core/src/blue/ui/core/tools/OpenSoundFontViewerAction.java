@@ -25,6 +25,7 @@ import java.awt.event.ActionListener;
 
 public final class OpenSoundFontViewerAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         SoundFontViewer soundFontViewer = new SoundFontViewer();
 

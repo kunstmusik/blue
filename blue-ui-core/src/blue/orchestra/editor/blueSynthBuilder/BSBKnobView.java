@@ -19,19 +19,17 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JOptionPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import blue.components.Knob;
 import blue.components.lines.LineBoundaryDialog;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import blue.utility.NumberUtilities;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JOptionPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * @author steven
@@ -63,6 +61,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
 
         cl = new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (!updating) {
                     updateKnobValue();
@@ -127,7 +126,6 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         value = (value * (knob.getMaximum() - knob.getMinimum()))
                 + knob.getMinimum();
         knob.setValue(value);
-
         updateValueDisplay();
 
     }
@@ -164,6 +162,10 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
 
         knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+
+        float newVal = (knob.getValue() - knob.getMinimum()) / 
+                (knob.getMaximum() - knob.getMinimum());
+        knobView.setVal(newVal);
         updateValueDisplay();
     }
 
@@ -187,6 +189,9 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
 
         knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+        float newVal = (knob.getValue() - knob.getMinimum()) / 
+                (knob.getMaximum() - knob.getMinimum());
+        knobView.setVal(newVal);
         updateValueDisplay();
     }
 
@@ -218,6 +223,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         knob.setRandomizable(randomizable);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getSource() == this.knob) {
             if (pce.getPropertyName().equals("updateValue")) {
@@ -237,6 +243,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
     }
 
+    @Override
     public void cleanup() {
         knob.removePropertyChangeListener(this);
     }

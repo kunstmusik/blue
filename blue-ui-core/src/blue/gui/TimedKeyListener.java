@@ -33,7 +33,7 @@ public class TimedKeyListener
         implements KeyListener,
         ActionListener {
 
-    private final TreeSet<Integer> set = new TreeSet<Integer>();
+    private final TreeSet<Integer> set = new TreeSet<>();
     private final Timer timer;
     private KeyEvent releaseEvent;
     private boolean gameModus = false;
@@ -66,6 +66,7 @@ public class TimedKeyListener
         return set.size();
     }
 
+    @Override
     public void keyPressed(KeyEvent e) {
         if (timer.isRunning()) {
             timer.stop();
@@ -82,6 +83,7 @@ public class TimedKeyListener
         }
     }
 
+    @Override
     public void keyReleased(KeyEvent e) {
         if (timer.isRunning()) {
             timer.stop();
@@ -92,10 +94,12 @@ public class TimedKeyListener
         }
     }
 
+    @Override
     public void keyTyped(KeyEvent e) {
         KeyTyped(e);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         timer.stop();
         fireKeyReleased(releaseEvent);

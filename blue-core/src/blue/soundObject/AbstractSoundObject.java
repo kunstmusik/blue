@@ -1,5 +1,7 @@
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.io.Serializable;
@@ -22,88 +24,122 @@ public abstract class AbstractSoundObject implements SoundObject, Serializable {
 
     protected Color backgroundColor = Color.DARK_GRAY;
 
-    transient Vector<SoundObjectListener> soundObjectListeners = null;
+    transient Vector<ScoreObjectListener> soundObjectListeners = null;
 
     public AbstractSoundObject() {
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.NAME);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.NAME);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setStartTime(float startTime) {
         this.startTime = startTime;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.START_TIME);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.START_TIME);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
+    @Override
     public float getStartTime() {
         return startTime;
     }
 
+    @Override
     public void setSubjectiveDuration(float subjectiveDuration) {
         this.subjectiveDuration = subjectiveDuration;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.DURATION);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.DURATION);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
+    @Override
     public float getSubjectiveDuration() {
         return subjectiveDuration;
     }
 
-    public Object clone() {
-        return ObjectUtilities.clone(this);
+    @Override
+    public float getMaxResizeRightDiff() {
+        return Float.MAX_VALUE;
     }
 
-    public void addSoundObjectListener(SoundObjectListener listener) {
+    @Override
+    public float getMaxResizeLeftDiff() {
+        return -getStartTime();
+    }
+    
+    @Override
+    public void resizeLeft(float newStartTime) {
+        float diff = startTime - newStartTime;
+        setStartTime(newStartTime);
+        setSubjectiveDuration(subjectiveDuration + diff);
+    }
+
+    @Override
+    public void resizeRight(float newEndTime) {
+        setSubjectiveDuration(newEndTime - startTime);
+    }
+
+    
+    @Override
+    public SoundObject clone() {
+        return (SoundObject)ObjectUtilities.clone(this);
+    }
+
+    @Override
+    public void addScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
-            soundObjectListeners = new Vector<SoundObjectListener>();
+            soundObjectListeners = new Vector<>();
         }
         soundObjectListeners.add(listener);
     }
 
-    public void removeSoundObjectListener(SoundObjectListener listener) {
+    @Override
+    public void removeScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             return;
         }
         soundObjectListeners.remove(listener);
     }
 
-    public void fireSoundObjectEvent(SoundObjectEvent sObjEvent) {
+    public void fireScoreObjectEvent(ScoreObjectEvent sObjEvent) {
         if (soundObjectListeners == null) {
             return;
         }
 
-        for (SoundObjectListener listener : soundObjectListeners) {
-            listener.soundObjectChanged(sObjEvent);
+        for (ScoreObjectListener listener : soundObjectListeners) {
+            listener.scoreObjectChanged(sObjEvent);
         }
     }
 
+    @Override
     public Color getBackgroundColor() {
         return backgroundColor;
     }
 
+    @Override
     public void setBackgroundColor(Color backgroundColor) {
         this.backgroundColor = backgroundColor;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.COLOR);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.COLOR);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 }

@@ -18,7 +18,7 @@ import javax.swing.table.TableModel;
  */
 public class LiveObjectSetListTableModel implements TableModel {
 
-    Vector<TableModelListener> tableListeners = new Vector<TableModelListener>();
+    Vector<TableModelListener> tableListeners = new Vector<>();
     private LiveObjectSetList liveObjectSetList;
 
     public void setLiveObjectSetList(LiveObjectSetList liveObjectSetList) {

@@ -34,10 +34,12 @@ public class Code implements Serializable {
         this.code = code;
     }
 
+    @Override
     public String toString() {
         return "Edit Code";
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

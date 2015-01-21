@@ -21,6 +21,7 @@
 package blue.orchestra;
 
 import blue.Tables;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
@@ -37,6 +38,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "GenericInstrument", position = 10)
 public class GenericInstrument extends AbstractInstrument implements
         Serializable {
 
@@ -94,6 +96,7 @@ public class GenericInstrument extends AbstractInstrument implements
     public void generateFTables(Tables tables) {
     }
 
+    @Override
     public String toString() {
         return this.name;
     }
@@ -164,15 +167,19 @@ public class GenericInstrument extends AbstractInstrument implements
         while (elements.hasMoreElements()) {
             Element node = elements.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("globalOrc")) {
-                instr.setGlobalOrc(node.getTextString());
-            } else if (nodeName.equals("globalSco")) {
-                instr.setGlobalSco(node.getTextString());
-            } else if (nodeName.equals("instrumentText")) {
-                instr.setText(node.getTextString());
-            } else if (nodeName.equals("opcodeList")) {
-                instr.opcodeList = OpcodeList.loadFromXML(node);
+            switch (nodeName) {
+                case "globalOrc":
+                    instr.setGlobalOrc(node.getTextString());
+                    break;
+                case "globalSco":
+                    instr.setGlobalSco(node.getTextString());
+                    break;
+                case "instrumentText":
+                    instr.setText(node.getTextString());
+                    break;
+                case "opcodeList":
+                    instr.opcodeList = OpcodeList.loadFromXML(node);
+                    break;
             }
         }
 

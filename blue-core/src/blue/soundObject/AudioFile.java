@@ -24,6 +24,7 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
+import blue.plugin.SoundObjectPlugin;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import javax.swing.JOptionPane;
  * @author Steven Yi
  *
  */
+@SoundObjectPlugin(displayName = "AudioFile", live=false, position = 10)
 public class AudioFile extends AbstractSoundObject implements Serializable,
         Cloneable {
 
@@ -82,7 +84,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
             throw new SoundObjectException(this, e);
         }
         if (tempNote != null) {
-            n.addNote(tempNote);
+            n.add(tempNote);
         }
 
         return n;
@@ -170,28 +172,35 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return powTwoSamples;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 

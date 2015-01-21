@@ -29,6 +29,7 @@ import javax.swing.undo.UndoManager;
  */
 public class NoStyleChangeUndoManager extends UndoManager {
 
+    @Override
     public synchronized void redo() throws CannotRedoException {
         try {
             super.redo();
@@ -40,6 +41,7 @@ public class NoStyleChangeUndoManager extends UndoManager {
         }
     }
 
+    @Override
     public synchronized void undo() throws CannotUndoException {
         try {
             while (getUndoPresentationName().equals("Undo style change")) {

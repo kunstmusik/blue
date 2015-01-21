@@ -31,6 +31,7 @@ public class ElementHolder implements Serializable {
 
     public boolean isRoot = false;
 
+    @Override
     public String toString() {
         return this.title;
     }

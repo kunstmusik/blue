@@ -20,18 +20,16 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-
 import pnuts.awt.PnutsLayout;
-import blue.soundObject.CeciliaModule;
 
 public class PropertiesPanel extends JComponent {
     private CeciliaModule ceciliaModule;
@@ -55,6 +53,7 @@ public class PropertiesPanel extends JComponent {
         ButtonGroup group = new ButtonGroup();
 
         ActionListener orchListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (initiatingObject) {
                     return;
@@ -72,6 +71,7 @@ public class PropertiesPanel extends JComponent {
         quad.addActionListener(orchListener);
 
         genSizeOptions.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (initiatingObject) {
                     return;

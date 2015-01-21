@@ -51,7 +51,7 @@ class CybilOperator {
         cybNoteList.index = startIndex;
 
         for (int i = startIndex; i < endIndex; i++) {
-            Note note = cybNoteList.notes.getNote(i);
+            Note note = cybNoteList.notes.get(i);
 
             float val = Float.parseFloat(note.getPField(pfield));
 
@@ -77,7 +77,7 @@ class CybilOperator {
         cybNoteList.index = startIndex;
 
         for (int i = startIndex; i < endIndex; i++) {
-            Note note = cybNoteList.notes.getNote(i);
+            Note note = cybNoteList.notes.get(i);
 
             float val = Float.parseFloat(note.getPField(pfield));
 
@@ -103,7 +103,7 @@ class CybilOperator {
         cybNoteList.index = startIndex;
 
         for (int i = startIndex; i < endIndex; i++) {
-            Note note = cybNoteList.notes.getNote(i);
+            Note note = cybNoteList.notes.get(i);
 
             float val = Float.parseFloat(note.getPField(pfield));
 
@@ -129,7 +129,7 @@ class CybilOperator {
         cybNoteList.index = startIndex;
 
         for (int i = startIndex; i < endIndex; i++) {
-            Note note = cybNoteList.notes.getNote(i);
+            Note note = cybNoteList.notes.get(i);
 
             float val = Float.parseFloat(note.getPField(pfield));
 

@@ -25,7 +25,6 @@ package blue.plaf;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
@@ -49,6 +48,7 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
      *            The component to get its border insets.
      * @return Always returns the same insets as defined in <code>insets</code>.
      */
+    @Override
     public Insets getBorderInsets(Component c) {
         return insets;
     }
@@ -69,6 +69,7 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
      * @param h
      *            The height.
      */
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         if (!(c instanceof JTextComponent)) {
             if (c.isEnabled()) {

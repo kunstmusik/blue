@@ -138,6 +138,7 @@ public class FTableConverterDialog extends javax.swing.JDialog implements
         GUI.setBlueLookAndFeel();
 
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 new FTableConverterDialog(new javax.swing.JFrame(), true)
                         .setVisible(true);
@@ -153,10 +154,12 @@ public class FTableConverterDialog extends javax.swing.JDialog implements
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

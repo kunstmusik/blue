@@ -37,7 +37,7 @@ public class ParameterList implements Serializable {
         }
     };
 
-    ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    ArrayList<Parameter> parameters = new ArrayList<>();
 
     transient Vector<ParameterListListener> paramListListeners = null;
 
@@ -135,7 +135,7 @@ public class ParameterList implements Serializable {
 
     public void addParameterListListener(ParameterListListener l) {
         if (paramListListeners == null) {
-            paramListListeners = new Vector<ParameterListListener>();
+            paramListListeners = new Vector<>();
         }
         paramListListeners.add(l);
     }
@@ -148,7 +148,7 @@ public class ParameterList implements Serializable {
 
     private void fireParameterAdded(Parameter param) {
         if (paramListListeners != null) {
-            Iterator<ParameterListListener> iter = new Vector<ParameterListListener>(paramListListeners).iterator();
+            Iterator<ParameterListListener> iter = new Vector<>(paramListListeners).iterator();
             while (iter.hasNext()) {
                 ParameterListListener listener = iter.next();
                 listener.parameterAdded(param);
@@ -160,7 +160,7 @@ public class ParameterList implements Serializable {
         if (paramListListeners != null) {
 			
 
-            Iterator<ParameterListListener> iter = new Vector<ParameterListListener>(paramListListeners).iterator();
+            Iterator<ParameterListListener> iter = new Vector<>(paramListListeners).iterator();
             while (iter.hasNext()) {
                 ParameterListListener listener = iter.next();
                 listener.parameterRemoved(param);
@@ -168,10 +168,12 @@ public class ParameterList implements Serializable {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         StrBuilder buffer = new StrBuilder();
 

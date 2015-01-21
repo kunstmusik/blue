@@ -19,16 +19,15 @@
  */
 package blue.ui.core.render;
 
-import blue.services.render.RenderTimeManager;
-import blue.services.render.RenderTimeManagerListener;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-
 import blue.noteProcessor.TempoMapper;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
 import blue.settings.PlaybackSettings;
 import blue.soundObject.PolyObject;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.jdesktop.core.animation.timing.TimingSource;
@@ -46,7 +45,7 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
     
     private static RenderTimeManagerImpl renderManager;
     private PropertyChangeSupport listeners = new PropertyChangeSupport(this);
-    private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<RenderTimeManagerListener>();
+    private ArrayList<RenderTimeManagerListener> renderListeners = new ArrayList<>();
     protected float renderStart = -1.0f;
     private float timePointer = 0.0f;
     private int timeAdjustCounter = 0;

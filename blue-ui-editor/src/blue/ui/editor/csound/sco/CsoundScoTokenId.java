@@ -4,7 +4,6 @@
  */
 package blue.ui.editor.csound.sco;
 
-import blue.ui.editor.csound.orc.*;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.api.lexer.TokenId;
 
@@ -49,6 +48,7 @@ public enum CsoundScoTokenId implements TokenId {
         return fixedText;
     }
 
+    @Override
     public String primaryCategory() {
         return primaryCategory;
     }

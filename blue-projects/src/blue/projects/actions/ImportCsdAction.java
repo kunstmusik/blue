@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.projects.recentProjects.RecentProjectsList;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.CSDUtility;

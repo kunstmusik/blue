@@ -19,15 +19,13 @@
  */
 package blue.soundObject.editor.pattern;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JComponent;
-import javax.swing.event.DocumentEvent;
-
 import blue.components.LabelledPanel;
 import blue.soundObject.pattern.Pattern;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
+import javax.swing.JComponent;
+import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 

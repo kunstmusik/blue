@@ -2,6 +2,7 @@
 build
 dist
 /nbproject/private
+rebel.xml
 */nbproject/private
 */nbproject/sqe.properties
 */nbproject/findbugs.settings
@@ -25,5 +26,5 @@ manual/docbook/index.xml
 tempCsd*.csd
 jython/release/modules/ext/cachedir/*
 jython/release/*.pyc
+*/nbproject/genfiles.properties
 /csound-manual/categories.pyc
-rebel.xml

@@ -66,6 +66,7 @@ public class SegmentEditor extends javax.swing.JPanel implements DurationSettabl
     private blue.soundObject.editor.jmask.TableEditor tableEditor;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         tableEditor.setDuration(duration);
     }

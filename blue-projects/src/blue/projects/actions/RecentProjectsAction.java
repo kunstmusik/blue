@@ -49,6 +49,7 @@ public class RecentProjectsAction extends CallableSystemAction {
     }
 
     /** {@inheritDoc} */
+    @Override
     protected boolean asynchronous() {
         return false;
     }
@@ -56,6 +57,7 @@ public class RecentProjectsAction extends CallableSystemAction {
     /** {@inheritDoc}
      * Overide to provide SubMenu for MRUFiles (Most Recently Used Files)
      */
+    @Override
     public JMenuItem getMenuPresenter() {
         JMenu menu = new MRUFilesMenu(getName());
         return menu;

@@ -20,15 +20,13 @@
 
 package blue.soundObject.editor.tracker;
 
+import blue.soundObject.TrackerObject;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JComponent;
-
-import blue.soundObject.TrackerObject;
 
 public class TracksHeader extends JComponent implements PropertyChangeListener {
 
@@ -68,6 +66,7 @@ public class TracksHeader extends JComponent implements PropertyChangeListener {
         }
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         if (tracker == null) {
             return;
@@ -109,6 +108,7 @@ public class TracksHeader extends JComponent implements PropertyChangeListener {
         g.drawLine(getWidth() - 1, 0, getWidth() - 1, h);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.tracker) {
             if (evt.getPropertyName().equals("steps")) {

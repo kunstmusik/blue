@@ -19,16 +19,14 @@
  */
 package blue.ui.core.mixer;
 
-import blue.mixer.*;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import javax.swing.JDialog;
-
 import blue.gui.DialogUtil;
+import blue.mixer.*;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.editor.blueSynthBuilder.BSBEditPanel;
 import java.awt.Frame;
+import java.util.HashMap;
+import java.util.Iterator;
+import javax.swing.JDialog;
 
 public class EffectEditorManager {
 

@@ -1,6 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
-import blue.score.layers.Layer;
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.GenericViewable;
 import blue.soundObject.SoundObject;
@@ -15,7 +15,7 @@ import java.awt.*;
  * @author steven yi
  * @version 1.0
  */
-
+@BarRendererPlugin(scoreObjectType = GenericViewable.class)
 public class GenericRenderer implements BarRenderer {
     protected int labelOffset = 5;
 
@@ -45,6 +45,7 @@ public class GenericRenderer implements BarRenderer {
         // this.normalBorder2 = bgColor.darker().darker();
     }
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
 
@@ -164,11 +165,8 @@ public class GenericRenderer implements BarRenderer {
 
     }
 
+    @Override
     public void cleanup(SoundObjectView sObjView) {
-    }
-
-    public Class getSoundObjectClass() {
-        return GenericViewable.class;
     }
 
 }

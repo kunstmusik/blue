@@ -53,16 +53,20 @@ public class Exponential implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("direction")) {
-                retVal.direction = XMLUtilities.readInt(node);
-            } else if (nodeName.equals("lambda")) {
-                retVal.lambda = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("lambdaTableEnabled")) {
-                retVal.lambdaTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                retVal.lambdaTable = Table.loadFromXML(node);
-            } 
+            switch (nodeName) {
+                case "direction":
+                    retVal.direction = XMLUtilities.readInt(node);
+                    break;
+                case "lambda":
+                    retVal.lambda = XMLUtilities.readDouble(node);
+                    break;
+                case "lambdaTableEnabled":
+                    retVal.lambdaTableEnabled = XMLUtilities.readBoolean(node);
+                    break; 
+                case "table":
+                    retVal.lambdaTable = Table.loadFromXML(node);
+                    break;
+            }
         }
 
         return retVal;

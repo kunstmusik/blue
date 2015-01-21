@@ -1,8 +1,10 @@
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
 import blue.utility.ScoreUtilities;
@@ -31,6 +33,7 @@ import java.util.Map;
  * @version 1.0
  */
 
+@SoundObjectPlugin(displayName = "External", live=true, position = 30)
 public class External extends AbstractSoundObject implements Serializable,
         Cloneable {
 //    private static BarRenderer renderer = new LetterRenderer("E");
@@ -238,10 +241,10 @@ public class External extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*
@@ -260,13 +263,16 @@ public class External extends AbstractSoundObject implements Serializable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("text")) {
-                external.setText(node.getTextString());
-            } else if (nodeName.equals("commandLine")) {
-                external.setCommandLine(node.getTextString());
-            } else if (nodeName.equals("syntaxType")) {
-                external.setSyntaxType(node.getTextString());
+            switch (nodeName) {
+                case "text":
+                    external.setText(node.getTextString());
+                    break;
+                case "commandLine":
+                    external.setCommandLine(node.getTextString());
+                    break;
+                case "syntaxType":
+                    external.setSyntaxType(node.getTextString());
+                    break;
             }
         }
 

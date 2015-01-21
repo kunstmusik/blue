@@ -20,18 +20,16 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
+import blue.soundObject.ceciliaModule.CToggle;
+import blue.soundObject.ceciliaModule.CeciliaObject;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Iterator;
-
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-
 import pnuts.awt.PnutsLayout;
-import blue.soundObject.CeciliaModule;
-import blue.soundObject.ceciliaModule.CToggle;
-import blue.soundObject.ceciliaModule.CeciliaObject;
 
 /**
  * @author Administrator
@@ -63,6 +61,7 @@ public class TogglePanel extends JComponent implements ActionListener {
         interfaceObjectMap.put(name, toggle);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         System.err.println(e.getActionCommand());
         JCheckBox checkBox = (JCheckBox) e.getSource();

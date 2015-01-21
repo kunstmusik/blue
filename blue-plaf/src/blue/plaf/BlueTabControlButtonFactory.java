@@ -121,6 +121,7 @@ public class BlueTabControlButtonFactory {
             return retValue;
         }
 
+        @Override
         public String getToolTipText() {
             if( getButtonId() == BlueTabControlButton.ID_MAXIMIZE_BUTTON )
                 return java.util.ResourceBundle.getBundle("blue/plaf/Bundle").getString("Tip_Maximize_Window");
@@ -202,18 +203,20 @@ public class BlueTabControlButtonFactory {
             count = 0;
         }
 
+        @Override
         protected void processMouseEvent(MouseEvent me) {
-            if (isEnabled() && me.getID() == me.MOUSE_PRESSED) {
+            if (isEnabled() && me.getID() == MouseEvent.MOUSE_PRESSED) {
                 startTimer();
-            } else if (me.getID() == me.MOUSE_RELEASED) {
+            } else if (me.getID() == MouseEvent.MOUSE_RELEASED) {
                 stopTimer();
             }
             super.processMouseEvent(me);
         }
 
+        @Override
         protected void processFocusEvent(FocusEvent fe) {
             super.processFocusEvent(fe);
-            if (fe.getID() == fe.FOCUS_LOST) {
+            if (fe.getID() == FocusEvent.FOCUS_LOST) {
                 stopTimer();
             }
         }
@@ -236,6 +239,7 @@ public class BlueTabControlButtonFactory {
             setToolTipText( java.util.ResourceBundle.getBundle("blue/plaf/Bundle").getString("Tip_Show_Opened_Documents_List") );
         }
 
+        @Override
         protected void processMouseEvent(MouseEvent me) {
             super.processMouseEvent(me);
             if (isEnabled() && me.getID() == me.MOUSE_PRESSED) {
@@ -254,9 +258,11 @@ public class BlueTabControlButtonFactory {
             return null;
         }
 
+        @Override
         void performAction( ActionEvent e ) {
         }
 
+        @Override
         public Icon getRolloverIcon() {
             if( forcePressedIcon )
                 return getPressedIcon();
@@ -264,6 +270,7 @@ public class BlueTabControlButtonFactory {
             return super.getRolloverIcon();
         }
 
+        @Override
         public Icon getIcon() {
             if( forcePressedIcon )
                 return getPressedIcon();

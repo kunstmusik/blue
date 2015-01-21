@@ -4,10 +4,7 @@
  */
 package blue.ui.editor.objectBuilder;
 
-import blue.ui.editor.csound.sco.*;
-import blue.ui.editor.csound.orc.*;
 import javax.swing.text.Document;
-import org.netbeans.api.lexer.Language;
 import org.netbeans.modules.editor.NbEditorDocument;
 import org.netbeans.modules.editor.NbEditorKit;
 

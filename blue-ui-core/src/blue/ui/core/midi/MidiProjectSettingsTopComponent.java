@@ -6,9 +6,6 @@ package blue.ui.core.midi;
 
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 
 /**
  * Top component which displays something.

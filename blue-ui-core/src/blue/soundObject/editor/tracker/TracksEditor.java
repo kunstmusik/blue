@@ -19,6 +19,15 @@
  */
 package blue.soundObject.editor.tracker;
 
+import blue.BlueSystem;
+import blue.soundObject.TrackerObject;
+import blue.soundObject.tracker.Column;
+import blue.soundObject.tracker.Track;
+import blue.soundObject.tracker.TrackList;
+import blue.soundObject.tracker.TrackerNote;
+import blue.ui.components.IconFactory;
+import blue.utility.GUI;
+import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -35,9 +44,9 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Vector;
-
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -70,17 +79,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
-
 import skt.swing.SwingUtil;
-import blue.BlueSystem;
-import blue.ui.components.IconFactory;
-import blue.soundObject.TrackerObject;
-import blue.soundObject.tracker.Column;
-import blue.soundObject.tracker.Track;
-import blue.soundObject.tracker.TrackList;
-import blue.soundObject.tracker.TrackerNote;
-import blue.utility.GUI;
-import blue.utility.ObjectUtilities;
 
 public class TracksEditor extends JPanel {
 
@@ -100,7 +99,7 @@ public class TracksEditor extends JPanel {
 
     private final JScrollPane trackEditorScrollPane;
 
-    private final ArrayList noteCopyBuffer = new ArrayList();
+    private final List<TrackerNote> noteCopyBuffer = new ArrayList<>();
 
     private Action[] keyboardNoteActions = null;
 
@@ -134,11 +133,13 @@ public class TracksEditor extends JPanel {
 
         jsp.getViewport().addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentMoved(ComponentEvent e) {
                 int x = e.getComponent().getX();
                 namePort.setLocation(x, 0);
             }
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 int w = e.getComponent().getWidth();
                 namePort.setSize(w, 20);
@@ -147,6 +148,7 @@ public class TracksEditor extends JPanel {
 
         jsp.getViewport().addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 namePort.setViewPosition(new Point(jsp.getViewport()
                         .getViewPosition().x, 0));
@@ -157,6 +159,7 @@ public class TracksEditor extends JPanel {
         this.add(topPanel, BorderLayout.NORTH);
 
         namePanel.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 int index = namePanel.getSelectedIndex();
 
@@ -193,6 +196,7 @@ public class TracksEditor extends JPanel {
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         snapButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 trackEditorScrollPane.setVisible(!trackEditorScrollPane
                         .isVisible());
@@ -202,6 +206,7 @@ public class TracksEditor extends JPanel {
         });
 
         trackListListener = new TableModelListener() {
+            @Override
             public void tableChanged(TableModelEvent e) {
                 if (trackList == null) {
                     return;
@@ -233,18 +238,22 @@ public class TracksEditor extends JPanel {
         popup.add(new DeleteAction());
 
         popup.addPopupMenuListener(new PopupMenuListener() {
+            @Override
             public void popupMenuCanceled(PopupMenuEvent e) {
             }
 
+            @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             }
 
+            @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 pAction.setEnabled(noteCopyBuffer.size() > 0);
             }
         });
 
         table.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isPopupTrigger()) {
                     popup.show(table, e.getX(), e.getY());
@@ -265,6 +274,7 @@ public class TracksEditor extends JPanel {
 
         table.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 namePanel.updateSize();
             }
@@ -273,27 +283,33 @@ public class TracksEditor extends JPanel {
 
         table.getColumnModel().addColumnModelListener(
                 new TableColumnModelListener() {
+                    @Override
                     public void columnAdded(TableColumnModelEvent e) {
                     }
 
+                    @Override
                     public void columnMarginChanged(ChangeEvent e) {
                         if (trackList != null) {
                             namePanel.updateLabelSizes();
                         }
                     }
 
+                    @Override
                     public void columnMoved(TableColumnModelEvent e) {
                     }
 
+                    @Override
                     public void columnRemoved(TableColumnModelEvent e) {
                     }
 
+                    @Override
                     public void columnSelectionChanged(ListSelectionEvent e) {
                     }
                 });
 
         table.getColumnModel().getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         int h = table.getRowHeight();
 
@@ -454,6 +470,7 @@ public class TracksEditor extends JPanel {
 
         }
 
+        @Override
         public Component getTableCellRendererComponent(JTable table,
                 Object value, boolean isSelected, boolean hasFocus, int row,
                 int column) {
@@ -505,7 +522,7 @@ public class TracksEditor extends JPanel {
 
     class TrackerNamePanel extends JComponent {
 
-        Vector listeners = null;
+        List<ChangeListener> listeners = null;
 
         ChangeEvent ce = null;
 
@@ -519,6 +536,7 @@ public class TracksEditor extends JPanel {
             this.setPreferredSize(new Dimension(20, 20));
 
             Action duplicateTrackAction = new AbstractAction() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (getSelectedIndex() >= 0) {
                         duplicateTrack();
@@ -528,6 +546,7 @@ public class TracksEditor extends JPanel {
             duplicateTrackAction.putValue(Action.NAME, "Duplicate");
 
             Action clearTrackAction = new AbstractAction() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (getSelectedIndex() >= 0) {
                         clearTrack();
@@ -537,6 +556,7 @@ public class TracksEditor extends JPanel {
             clearTrackAction.putValue(Action.NAME, "Clear");
 
             Action removeAction = new AbstractAction() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     if (getSelectedIndex() >= 0) {
                         removeTrack();
@@ -553,6 +573,7 @@ public class TracksEditor extends JPanel {
             popup.add(removeAction);
 
             this.addMouseListener(new MouseAdapter() {
+                @Override
                 public void mousePressed(MouseEvent e) {
                     Component c = getComponentAt(e.getX(), e.getY());
 
@@ -569,6 +590,7 @@ public class TracksEditor extends JPanel {
             });
 
             nameListener = new PropertyChangeListener() {
+                @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     if (!(evt.getSource() instanceof Track)
                             || !evt.getPropertyName().equals(Track.NAME)) {
@@ -648,6 +670,7 @@ public class TracksEditor extends JPanel {
             SwingUtilities.invokeLater(new Runnable() {
                 final int count = getComponentCount();
 
+                @Override
                 public void run() {
                     if (index < count) {
                         setSelected(getComponent(index), fireEvent);
@@ -662,6 +685,7 @@ public class TracksEditor extends JPanel {
 
                 SwingUtilities.invokeLater(new Runnable() {
 
+                    @Override
                     public void run() {
                         for (int i = 0; i < components.length; i++) {
                             if (components[i] == c) {
@@ -692,6 +716,7 @@ public class TracksEditor extends JPanel {
             }
 
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     removeAll();
 
@@ -748,6 +773,7 @@ public class TracksEditor extends JPanel {
 
         public void updateLabelSizes() {
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     if (trackList == null || getComponentCount() == 0) {
                         return;
@@ -793,7 +819,8 @@ public class TracksEditor extends JPanel {
 
         public void addChangeListener(ChangeListener cl) {
             if (listeners == null) {
-                listeners = new Vector();
+                listeners = Collections.synchronizedList(
+                        new ArrayList<ChangeListener>());
             }
 
             listeners.add(cl);
@@ -808,11 +835,11 @@ public class TracksEditor extends JPanel {
                 new ChangeEvent(this);
             }
 
-            for (Iterator it = listeners.iterator(); it.hasNext();) {
-                ChangeListener listener = (ChangeListener) it.next();
-                listener.stateChanged(ce);
+            synchronized(listeners) {
+                for(ChangeListener cl : listeners) {
+                    cl.stateChanged(ce);
+                }
             }
-
         }
 
     }
@@ -839,6 +866,7 @@ public class TracksEditor extends JPanel {
             normalBorder = textField.getBorder();
         }
 
+        @Override
         public Component getTableCellEditorComponent(JTable table,
                 Object value, boolean isSelected, int row, int column) {
             this.row = row;
@@ -852,6 +880,7 @@ public class TracksEditor extends JPanel {
                     row, column);
         }
 
+        @Override
         public boolean stopCellEditing() {
             if (row < 0 || column < 0 || trackList == null) {
                 return super.stopCellEditing();
@@ -884,6 +913,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_UP, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (trackList == null) {
                 return;
@@ -916,6 +946,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_DOWN, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (trackList == null) {
                 return;
@@ -948,6 +979,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (trackList == null) {
                 return;
@@ -976,6 +1008,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_SPACE, InputEvent.CTRL_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (trackList == null) {
                 return;
@@ -1022,6 +1055,7 @@ public class TracksEditor extends JPanel {
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (trackList == null) {
                 return;
@@ -1052,6 +1086,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_X, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1072,7 +1107,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add(ObjectUtilities.clone(note));
+                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
                 note.clear();
             }
 
@@ -1090,6 +1125,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_C, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1110,7 +1146,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add(ObjectUtilities.clone(note));
+                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
             }
         }
     }
@@ -1124,6 +1160,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_V, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1144,7 +1181,7 @@ public class TracksEditor extends JPanel {
                 return;
             }
 
-            TrackerNote firstNote = (TrackerNote) noteCopyBuffer.get(0);
+            TrackerNote firstNote = noteCopyBuffer.get(0);
 
             if (selectedTrack.getNumColumns() != firstNote.getNumFields()) {
                 JOptionPane
@@ -1156,7 +1193,7 @@ public class TracksEditor extends JPanel {
             }
 
             for (int i = 0; i < noteCopyBuffer.size(); i++) {
-                TrackerNote bufferNote = (TrackerNote) noteCopyBuffer.get(i);
+                TrackerNote bufferNote = noteCopyBuffer.get(i);
                 TrackerNote temp = selectedTrack
                         .getTrackerNote(i + selectedRow);
                 temp.copyValues(bufferNote);
@@ -1175,6 +1212,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_INSERT, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1208,6 +1246,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1241,6 +1280,7 @@ public class TracksEditor extends JPanel {
                     KeyEvent.VK_DELETE, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int selectedCol = table.getColumnModel().getSelectionModel()
                     .getLeadSelectionIndex();
@@ -1282,6 +1322,7 @@ public class TracksEditor extends JPanel {
             this.value = value;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (table.getSelectedRowCount() > 1) {
                 return;

@@ -26,6 +26,7 @@ import org.openide.windows.WindowManager;
 
 public final class OpenFtableConverterAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         FTableConverterDialog dlg = new FTableConverterDialog(
                 WindowManager.getDefault().getMainWindow(), true);

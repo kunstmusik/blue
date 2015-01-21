@@ -19,11 +19,25 @@
  */
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.CompileData;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.PresetGroup;
+import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
+import blue.soundObject.ObjectBuilder;
+import blue.soundObject.ObjectBuilderRegistry;
+import blue.soundObject.SoundObjectException;
+import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
@@ -34,23 +48,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import blue.BlueSystem;
-import blue.CompileData;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
-import blue.orchestra.blueSynthBuilder.PresetGroup;
-import blue.orchestra.editor.blueSynthBuilder.BSBInterfaceEditor;
-import blue.soundObject.NoteList;
-import blue.soundObject.ObjectBuilder;
-import blue.soundObject.ObjectBuilderRegistry;
-import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
-import blue.soundObject.editor.objectBuilder.ObjectBuilderCodeEditor;
-import blue.utility.GUI;
-import org.openide.util.Exceptions;
-
-public class ObjectBuilderEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = ObjectBuilder.class)
+public class ObjectBuilderEditor extends ScoreObjectEditor {
 
     private ObjectBuilder objectBuilder;
 
@@ -71,6 +70,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -96,6 +96,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -104,7 +105,8 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
 
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null || !(sObj instanceof ObjectBuilder)) {
             this.objectBuilder = null;
             System.err.println("[ERROR] ObjectBuilder::editSoundObject - "
@@ -148,7 +150,7 @@ public class ObjectBuilderEditor extends SoundObjectEditor {
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
         ObjectBuilderEditor objBuilderEditor = new ObjectBuilderEditor();
-        objBuilderEditor.editSoundObject(new ObjectBuilder());
+        objBuilderEditor.editScoreObject(new ObjectBuilder());
         GUI.showComponentAsStandalone(objBuilderEditor, "ObjectBuilder Editor",
                 true);
     }

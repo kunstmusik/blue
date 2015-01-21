@@ -19,12 +19,19 @@
  */
 package blue;
 
+import blue.event.PlayModeListener;
+import blue.projects.BlueProject;
+import blue.projects.BlueProjectManager;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
+import blue.settings.PlaybackSettings;
+import blue.ui.core.render.RealtimeRenderManager;
+import blue.utility.NumberUtilities;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -32,18 +39,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-
-import blue.event.PlayModeListener;
-import blue.projects.BlueProject;
-import blue.projects.BlueProjectManager;
-import blue.settings.PlaybackSettings;
-import blue.services.render.RenderTimeManager;
-import blue.ui.core.render.RealtimeRenderManager;
-import blue.services.render.RenderTimeManagerListener;
-import blue.utility.NumberUtilities;
-import javax.swing.JToolBar;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.ImageUtilities;
 import org.openide.util.Lookup;
@@ -125,6 +123,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         rewindButton.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 rewind();
             }
@@ -137,6 +136,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         playButton.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 renderProject();
             }
@@ -149,6 +149,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         stopButton.addActionListener(new java.awt.event.ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 stopRendering();
             }
@@ -176,6 +177,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         loopBox.setText("Loop");
         loopBox.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateLoopRendering(loopBox.isSelected());
             }
@@ -198,6 +200,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         renderTimeManager.addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String prop = evt.getPropertyName();
 
@@ -226,6 +229,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
                         getPropertyName())) {
@@ -352,10 +356,12 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         this.isUpdating = false;
     }
 
+    @Override
     public void playModeChanged(final int playMode) {
 
         SwingUtilities.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 if (playMode == PLAY_MODE_PLAY) {
                     playButton.setEnabled(false);
@@ -370,25 +376,28 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.data) {
             String propertyName = evt.getPropertyName();
-
-            if (propertyName.equals("renderStartTime")) {
-                playStartText.setText(evt.getNewValue().toString());
-            } else if (propertyName.equals("renderLoopTime")) {
-                float floatVal = Float.parseFloat(evt.getNewValue().toString());
-
-                if (floatVal < 0.0f) {
-                    playEndText.setText("");
-                } else {
-                    playEndText.setText(evt.getNewValue().toString());
-                }
-            } else if (propertyName.equals("loopRendering")) {
-                isUpdating = true;
-                Boolean val = (Boolean) evt.getNewValue();
-                loopBox.setSelected(val.booleanValue());
-                isUpdating = false;
+            switch (propertyName) {
+                case "renderStartTime":
+                    playStartText.setText(evt.getNewValue().toString());
+                    break;
+                case "renderLoopTime":
+                    float floatVal = Float.parseFloat(evt.getNewValue().toString());
+                    if (floatVal < 0.0f) {
+                        playEndText.setText("");
+                    } else {
+                        playEndText.setText(evt.getNewValue().toString());
+                    }
+                    break;
+                case "loopRendering":
+                    isUpdating = true;
+                    Boolean val = (Boolean) evt.getNewValue();
+                    loopBox.setSelected(val.booleanValue());
+                    isUpdating = false;
+                    break;
             }
         }
     }
@@ -431,6 +440,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             putValue(Action.SMALL_ICON, icon);
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             float startTime = data.getRenderStartTime();
 
@@ -471,6 +481,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             putValue(Action.SMALL_ICON, icon);
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             float startTime = data.getRenderStartTime();
             float newStartTime = 0.0f;

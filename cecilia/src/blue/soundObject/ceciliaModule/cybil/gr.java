@@ -20,10 +20,9 @@
 
 package blue.soundObject.ceciliaModule.cybil;
 
-import java.util.ArrayList;
-
 import blue.soundObject.ceciliaModule.CGraph;
 import blue.soundObject.ceciliaModule.CGraphPoint;
+import java.util.ArrayList;
 
 class gr extends CybilAlgorithm {
     CGraph cgraph = null;
@@ -33,6 +32,7 @@ class gr extends CybilAlgorithm {
         System.out.println(cgraph);
     }
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
 
         /*

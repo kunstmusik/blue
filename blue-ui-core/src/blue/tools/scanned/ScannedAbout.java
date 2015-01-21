@@ -2,7 +2,6 @@ package blue.tools.scanned;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;

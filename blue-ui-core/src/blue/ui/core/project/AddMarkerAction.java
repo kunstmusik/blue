@@ -9,13 +9,15 @@ import blue.MainToolBar;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.services.render.RenderTimeManager;
-import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.util.Lookup;
 
 public final class AddMarkerAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
 
@@ -32,7 +34,8 @@ public final class AddMarkerAction implements ActionListener {
         RenderTimeManager timeManager = Lookup.getDefault().lookup(
                 RenderTimeManager.class);
 
-        if (ScoreTopComponent.getDefault().isEditingRootScore()) {
+        ScorePath path = ScoreController.getInstance().getScorePath();
+        if (path.getLastLayerGroup() == null) {
             float markerTime = MainToolBar.getInstance().isRendering()
                     ? timeManager.getRenderTime() + timeManager.getRenderStartTime()
                     : data.getRenderStartTime();

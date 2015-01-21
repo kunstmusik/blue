@@ -18,6 +18,7 @@
             </test-dependencies>
             <public-packages>
                 <package>blue.ui.utilities</package>
+                <package>blue.ui.utilities.audio</package>
                 <package>org.wonderly.awt</package>
                 <package>skt.swing</package>
             </public-packages>

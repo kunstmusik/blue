@@ -4,7 +4,6 @@
  */
 package blue.ui.editor.clojure;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +47,7 @@ public class ClojureLanguageHierarchy extends LanguageHierarchy<ClojureTokenId> 
         return tokens;
     }
 
+    @Override
     protected synchronized Lexer<ClojureTokenId> createLexer(LexerRestartInfo<ClojureTokenId> info) {
         return new ClojureEditorLexer(info);
     }
@@ -66,6 +66,7 @@ public class ClojureLanguageHierarchy extends LanguageHierarchy<ClojureTokenId> 
     }
     
     
+    @Override
     protected String mimeType() {
         return "text/x-clojure";
     }

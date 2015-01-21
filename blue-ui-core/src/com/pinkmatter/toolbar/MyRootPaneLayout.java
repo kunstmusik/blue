@@ -25,6 +25,7 @@ public class MyRootPaneLayout implements LayoutManager2 {
         _toolbar = toolbar;
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
         int contentWidth = 0;
         int menuWidth = 0;
@@ -53,6 +54,7 @@ public class MyRootPaneLayout implements LayoutManager2 {
         return new Dimension(Math.max(contentWidth, menuWidth) + insets.left + insets.right, height);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
         int contentWidth = 0;
         int menuWidth = 0;
@@ -81,10 +83,12 @@ public class MyRootPaneLayout implements LayoutManager2 {
         return new Dimension(Math.max(contentWidth, menuWidth) + insets.left + insets.right, height);
     }
 
+    @Override
     public Dimension maximumLayoutSize(Container target) {
         return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
         JRootPane rootPane = (JRootPane) parent;
         Rectangle bounds = rootPane.getBounds();
@@ -127,23 +131,29 @@ public class MyRootPaneLayout implements LayoutManager2 {
         }
     }
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
+    @Override
     public void addLayoutComponent(Component comp, Object constraints) {
     }
 
+    @Override
     public float getLayoutAlignmentX(Container target) {
         return 0.0f;
     }
 
+    @Override
     public float getLayoutAlignmentY(Container target) {
         return 0.0f;
     }
 
+    @Override
     public void invalidateLayout(Container target) {
     }
     

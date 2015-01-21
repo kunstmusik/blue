@@ -47,7 +47,7 @@ import org.openide.util.actions.Presenter;
         id = "blue.ui.core.editor.actions.CodeRepositoryMenu",
 category = "Edit")
 @ActionRegistration(
-        displayName = "#codeRepositoryMenu")
+        displayName = "#codeRepositoryMenu", lazy = true)
 @ActionReferences({
     @ActionReference(
         path = "Editors/Popup", position = 1000)
@@ -78,7 +78,7 @@ public class CodeRepositoryMenu extends BaseAction implements Presenter.Popup {
 
     protected static void handleOpcodeDocCategory(JMenu menu, TreeNode category) {
 
-        ArrayList<ElementHolder> snippets = new ArrayList<ElementHolder>();
+        ArrayList<ElementHolder> snippets = new ArrayList<>();
         
         for(int i = 0; i < category.getChildCount(); i++) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) category.getChildAt(i);

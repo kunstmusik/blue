@@ -20,9 +20,15 @@
 
 package blue.ui.core.score.layers.soundObject;
 
+import blue.BlueSystem;
+import blue.score.TimeState;
+import blue.soundObject.AudioFile;
+import blue.soundObject.PolyObject;
+import blue.utility.SoundFileUtilities;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDragEvent;
@@ -30,14 +36,10 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-
-import blue.BlueSystem;
-import blue.score.TimeState;
-import blue.soundObject.AudioFile;
-import blue.soundObject.PolyObject;
-import blue.utility.SoundFileUtilities;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  * @author Steven Yi
@@ -66,6 +68,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      * 
      * @see java.awt.dnd.DropTargetListener#dragEnter(java.awt.dnd.DropTargetDragEvent)
      */
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         boolean isFile = dtde
                 .isDataFlavorSupported(DataFlavor.javaFileListFlavor);
@@ -89,6 +92,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      * 
      * @see java.awt.dnd.DropTargetListener#dragOver(java.awt.dnd.DropTargetDragEvent)
      */
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         // TODO Auto-generated method stub
 
@@ -99,6 +103,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      * 
      * @see java.awt.dnd.DropTargetListener#dropActionChanged(java.awt.dnd.DropTargetDragEvent)
      */
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
         // TODO Auto-generated method stub
 
@@ -109,6 +114,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      * 
      * @see java.awt.dnd.DropTargetListener#drop(java.awt.dnd.DropTargetDropEvent)
      */
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         try {
             Transferable tr = dtde.getTransferable();
@@ -213,7 +219,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
                 return;
             }
             dtde.rejectDrop();
-        } catch (Exception e) {
+        } catch (UnsupportedFlavorException | IOException | UnsupportedAudioFileException e) {
             e.printStackTrace();
             dtde.rejectDrop();
         }
@@ -225,6 +231,7 @@ public class ScoreTimelineDropTargetListener implements DropTargetListener {
      * 
      * @see java.awt.dnd.DropTargetListener#dragExit(java.awt.dnd.DropTargetEvent)
      */
+    @Override
     public void dragExit(DropTargetEvent dte) {
         // TODO Auto-generated method stub
 

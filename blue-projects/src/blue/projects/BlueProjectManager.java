@@ -42,7 +42,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
@@ -100,12 +99,11 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        for(int i = 0; i <  blueData.getScore().getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = blueData.getScore().getLayerGroup(i);
+        for(LayerGroup layerGroup : blueData.getScore()) {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
                 
-                if(pObj.getSize() == 0) {
+                if(pObj.size() == 0) {
                     pObj.newLayerAt(-1);
                 }
             }
@@ -158,10 +156,12 @@ public class BlueProjectManager {
     }
 
     public void setCurrentProject(BlueProject project) {
+        BlueProject previousProject = currentProject;
+        currentProject = project;
+
         if (!projects.contains(project)) {
             addProject(project);
         }
-        currentProject = project;
 
         if (currentProject != null) {
             BlueUndoManager.setUndoGroup(project.getUndoManager());
@@ -194,7 +194,7 @@ public class BlueProjectManager {
             
         }
 
-        fireUpdatedCurrentProject();
+        fireUpdatedCurrentProject(previousProject, currentProject);
 
     }
 
@@ -258,14 +258,15 @@ public class BlueProjectManager {
         }
     }
 
-    public synchronized void fireUpdatedCurrentProject() {
+    protected synchronized void fireUpdatedCurrentProject(BlueProject oldProject, 
+            BlueProject newProject) {
 
         if (listeners == null || listeners.size() == 0) {
             return;
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                CURRENT_PROJECT, null, currentProject);
+                CURRENT_PROJECT, oldProject, newProject);
 
         for (PropertyChangeListener pcl : listeners) {
             pcl.propertyChange(pce);

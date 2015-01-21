@@ -25,6 +25,7 @@ import java.awt.event.ActionListener;
 
 public final class ScannedSynthesisMatrixEditorAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         ScannedMatrixEditor scannedMatrixEditor = new ScannedMatrixEditor();
 

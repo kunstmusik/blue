@@ -20,20 +20,18 @@
 
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JComponent;
-
 import blue.SoundLayer;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
 import blue.score.TimeState;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
-import blue.ui.core.score.soundLayer.SoundLayerLayout;
 import blue.soundObject.PolyObject;
+import blue.ui.core.score.soundLayer.SoundLayerLayout;
+import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JComponent;
 
 public class AutomationLayerPanel extends JComponent implements
         PropertyChangeListener, LayerGroupListener {
@@ -83,8 +81,8 @@ public class AutomationLayerPanel extends JComponent implements
             return;
         }
 
-        for (int i = 0; i < pObj.getSize(); i++) {
-            SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
+        for (int i = 0; i < pObj.size(); i++) {
+            SoundLayer sLayer = pObj.get(i);
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
             paramPanel.setTimeState(timeState);
@@ -96,6 +94,7 @@ public class AutomationLayerPanel extends JComponent implements
         revalidate();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.pObj) {
             if (evt.getPropertyName().equals("heightIndex")) {
@@ -209,7 +208,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
+        SoundLayer sLayer = pObj.get(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
         paramPanel.setTimeState(timeState);

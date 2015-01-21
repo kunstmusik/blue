@@ -29,6 +29,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         diskSrText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.diskSampleRate = diskSrText.getText();
@@ -39,6 +40,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         diskKsmpsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.diskKsmps = diskKsmpsText.getText();
@@ -49,6 +51,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         diskNchnlsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.diskChannels = diskNchnlsText.getText();
@@ -59,6 +62,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         zeroDbFSText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.diskZeroDbFS = zeroDbFSText.getText();
@@ -69,6 +73,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         fileNameText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.fileName = fileNameText.getText();
@@ -79,6 +84,7 @@ public class DiskRenderSettingsPanel extends javax.swing.JPanel {
         diskAdvancedSettingsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.diskAdvancedSettings = diskAdvancedSettingsText.getText();

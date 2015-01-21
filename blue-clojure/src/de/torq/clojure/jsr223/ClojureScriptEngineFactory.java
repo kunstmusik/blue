@@ -1,12 +1,11 @@
 package de.torq.clojure.jsr223;
 
-import javax.script.ScriptException;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngine;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 
 public class ClojureScriptEngineFactory implements ScriptEngineFactory
 {

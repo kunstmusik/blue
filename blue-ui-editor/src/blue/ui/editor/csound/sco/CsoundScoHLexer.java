@@ -35,6 +35,7 @@ public class CsoundScoHLexer implements Lexer<CsoundScoTokenId> {
         tokenFactory = info.tokenFactory();
     }
 
+    @Override
     public org.netbeans.api.lexer.Token<CsoundScoTokenId> nextToken() {
 
         while (true) {
@@ -167,10 +168,12 @@ public class CsoundScoHLexer implements Lexer<CsoundScoTokenId> {
     }
     
 
+    @Override
     public Object state() {
         return null;
     }
 
+    @Override
     public void release() {
     }
 

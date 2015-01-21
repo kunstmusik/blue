@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 
 public final class RenderToDiskAndPlayAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
 

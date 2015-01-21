@@ -20,6 +20,18 @@
 
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
+import blue.soundObject.SoundObjectException;
+import blue.soundObject.TrackerObject;
+import blue.soundObject.editor.tracker.TracksEditor;
+import blue.soundObject.tracker.Track;
+import blue.soundObject.tracker.TrackList;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -27,7 +39,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -43,21 +54,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import skt.swing.SwingUtil;
-import blue.BlueSystem;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
-import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
-import blue.soundObject.TrackerObject;
-import blue.soundObject.editor.tracker.TracksEditor;
-import blue.soundObject.tracker.Track;
-import blue.soundObject.tracker.TrackList;
-import blue.utility.GUI;
 
-public class TrackerEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = TrackerObject.class)
+public class TrackerEditor extends ScoreObjectEditor {
 
     private static final String SHORTCUT_TEXT = "ctrl-space             clear or duplicate previous note\n"
             + "ctrl-shift-space       set to OFF note\n"
@@ -103,6 +103,7 @@ public class TrackerEditor extends SoundObjectEditor {
         JButton addButton = new JButton("+");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (tracker != null) {
                     Track t = new Track();
@@ -124,6 +125,7 @@ public class TrackerEditor extends SoundObjectEditor {
 
         JButton button = new JButton("Test");
         button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -132,6 +134,7 @@ public class TrackerEditor extends SoundObjectEditor {
 
         JButton helpButton = new JButton("[ ? ]");
         helpButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 showHelpText();
             }
@@ -142,6 +145,7 @@ public class TrackerEditor extends SoundObjectEditor {
         spinner = new JSpinner();
         spinner.setModel(new SpinnerNumberModel(16, 1, Integer.MAX_VALUE, 1));
         spinner.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (tracker != null) {
                     tracker.setSteps(((Integer) spinner.getValue()).intValue());
@@ -158,6 +162,7 @@ public class TrackerEditor extends SoundObjectEditor {
 
         useKeyboardNotes = new JCheckBox("Use Keyboard Notes");
         useKeyboardNotes.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 tracksEditor.useKeyboardNoteShortcuts(useKeyboardNotes
                         .isSelected());
@@ -167,6 +172,7 @@ public class TrackerEditor extends SoundObjectEditor {
         octaveSpinner = new JSpinner();
         octaveSpinner.setModel(new SpinnerNumberModel(0, -8, 8, 1));
         octaveSpinner.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (tracker != null) {
                     int oct = ((Integer) octaveSpinner.getValue()).intValue();
@@ -204,7 +210,8 @@ public class TrackerEditor extends SoundObjectEditor {
         return panel;
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[TrackerEditor::editSoundObject()] ERROR: null SoundObject");
@@ -271,6 +278,7 @@ public class TrackerEditor extends SoundObjectEditor {
                     KeyEvent.VK_T, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             testSoundObject();
         }
@@ -285,6 +293,7 @@ public class TrackerEditor extends SoundObjectEditor {
                     KeyEvent.VK_K, BlueSystem.getMenuShortcutKey()));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             useKeyboardNotes.doClick();
         }
@@ -300,6 +309,7 @@ public class TrackerEditor extends SoundObjectEditor {
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             SpinnerModel model = octaveSpinner.getModel();
             if (model.getNextValue() != null) {
@@ -318,6 +328,7 @@ public class TrackerEditor extends SoundObjectEditor {
                             | InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             SpinnerModel model = octaveSpinner.getModel();
             if (model.getPreviousValue() != null) {
@@ -333,7 +344,7 @@ public class TrackerEditor extends SoundObjectEditor {
         GUI.setBlueLookAndFeel();
         TrackerEditor trackerEditor = new TrackerEditor();
 
-        trackerEditor.editSoundObject(new TrackerObject());
+        trackerEditor.editScoreObject(new TrackerObject());
 
         GUI.showComponentAsStandalone(trackerEditor, "Tracker Editor", true);
     }

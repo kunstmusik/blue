@@ -80,17 +80,22 @@ public class UserDefinedOpcode implements Serializable {
             if (val == null) {
                 val = "";
             }
-
-            if (node.getName().equals("opcodeName")) {
-                retVal.opcodeName = val;
-            } else if (node.getName().equals("outTypes")) {
-                retVal.outTypes = val;
-            } else if (node.getName().equals("inTypes")) {
-                retVal.inTypes = val;
-            } else if (node.getName().equals("codeBody")) {
-                retVal.codeBody = val;
-            } else if (node.getName().equals("comments")) {
-                retVal.comments = val;
+            switch (node.getName()) {
+                case "opcodeName":
+                    retVal.opcodeName = val;
+                    break;
+                case "outTypes":
+                    retVal.outTypes = val;
+                    break;
+                case "inTypes":
+                    retVal.inTypes = val;
+                    break;
+                case "codeBody":
+                    retVal.codeBody = val;
+                    break;
+                case "comments":
+                    retVal.comments = val;
+                    break;
             }
         }
 
@@ -136,6 +141,7 @@ public class UserDefinedOpcode implements Serializable {
 
     }
 
+    @Override
     public String toString() {
         return opcodeName;
     }

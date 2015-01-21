@@ -25,6 +25,7 @@ import java.awt.event.ActionListener;
 
 public final class RenderStopProjectAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         MainToolBar mainToolBar = MainToolBar.getInstance();
 

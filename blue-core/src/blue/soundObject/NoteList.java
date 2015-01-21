@@ -13,21 +13,10 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
-public class NoteList extends ArrayList implements Cloneable {
+public class NoteList extends ArrayList<Note> implements Cloneable {
 
     public NoteList() {
         super();
-    }
-
-    public void addNote(Note note) {
-        if (note != null) {
-            super.add(note);
-        }
-        // this.sort();
-    }
-
-    public Note getNote(int i) {
-        return (Note) super.get(i);
     }
 
     public final void sort() {
@@ -41,6 +30,7 @@ public class NoteList extends ArrayList implements Cloneable {
         this.addAll(notes);
     }
 
+    @Override
     public final String toString() {
         if (this.size() == 0) {
             return "";
@@ -48,7 +38,7 @@ public class NoteList extends ArrayList implements Cloneable {
 
         StrBuilder tempScore = new StrBuilder();
 
-        String firstNote = this.getNote(0).toString();
+        String firstNote = this.get(0).toString();
 
         if (this.size() == 1) {
             return firstNote + "\n";
@@ -60,7 +50,7 @@ public class NoteList extends ArrayList implements Cloneable {
         int strSize = str[0].length();
 
         for (int i = 1; i < this.size(); i++) {
-            str[i] = this.getNote(i).toString();
+            str[i] = this.get(i).toString();
             strSize += str[i].length() + 1;
         }
 
@@ -71,6 +61,7 @@ public class NoteList extends ArrayList implements Cloneable {
         return tempScore.toString();
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

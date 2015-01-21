@@ -97,6 +97,7 @@ public class Installer extends ModuleInstall {
 
         windowTitlePropertyChangeListener = new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (WindowManager.getDefault().getMainWindow() != null) {
                     setWindowTitle();
@@ -112,6 +113,7 @@ public class Installer extends ModuleInstall {
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
+            @Override
             public void run() {
                 setWindowTitle();
                 backupFileSaver = new BackupFileSaver();

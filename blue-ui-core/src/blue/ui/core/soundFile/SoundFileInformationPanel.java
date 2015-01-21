@@ -1,9 +1,10 @@
 package blue.ui.core.soundFile;
 
+import blue.BlueSystem;
+import blue.gui.LabelledItemPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
-
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -13,9 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
-import blue.BlueSystem;
-import blue.gui.LabelledItemPanel;
 
 /**
  * <p>
@@ -67,6 +65,7 @@ public class SoundFileInformationPanel extends JComponent {
         ftablePanel.add(fTableText, BorderLayout.CENTER);
         ftablePanel.add(ftableCopyButton, BorderLayout.EAST);
         ftableCopyButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 fTableText.selectAll();
                 fTableText.copy();

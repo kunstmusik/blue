@@ -99,6 +99,7 @@ public class FTableGUI extends JComponent {
          */
         ftableTable.getTableHeader().setReorderingAllowed(false);
         ftableTable.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == 127) {
                     removeFTable();
@@ -199,6 +200,7 @@ public class FTableGUI extends JComponent {
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
 

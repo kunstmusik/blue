@@ -20,12 +20,11 @@
 
 package blue.ui.core.score.soundLayer;
 
+import blue.soundObject.PolyObject;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-
-import blue.soundObject.PolyObject;
 
 /**
  * 
@@ -43,16 +42,20 @@ public class SoundLayerLayout implements LayoutManager {
         this.pObj = pObj;
     }
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
         return minimumLayoutSize(parent);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
         int count = parent.getComponentCount();
 
@@ -75,6 +78,7 @@ public class SoundLayerLayout implements LayoutManager {
         return new Dimension(w, h);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
 
         int count = parent.getComponentCount();

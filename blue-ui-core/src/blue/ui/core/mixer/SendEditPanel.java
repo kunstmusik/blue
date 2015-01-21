@@ -13,7 +13,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.Locale;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -40,6 +39,7 @@ public class SendEditPanel extends javax.swing.JPanel implements
         amountSlider.setMaximum(100);
 
         amountSlider.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 float val = amountSlider.getValue() / 100.0f;
                 valueLabel.setText(format
@@ -51,6 +51,7 @@ public class SendEditPanel extends javax.swing.JPanel implements
         });
 
         channelComboBox.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (send != null) {
                     send.setSendChannel((String) channelComboBox
@@ -61,6 +62,7 @@ public class SendEditPanel extends javax.swing.JPanel implements
 
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         if (this.send != null) {
@@ -68,6 +70,7 @@ public class SendEditPanel extends javax.swing.JPanel implements
         }
     }
 
+    @Override
     public void removeNotify() {
         super.removeNotify();
 
@@ -179,6 +182,7 @@ public class SendEditPanel extends javax.swing.JPanel implements
     private javax.swing.JLabel valueLabel;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("level")) {
             updating = true;

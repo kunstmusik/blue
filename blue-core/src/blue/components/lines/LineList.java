@@ -23,9 +23,8 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-public class LineList extends ArrayList implements Serializable {
+public class LineList extends ArrayList<Line> implements Serializable {
 
     public static LineList loadFromXML(Element data) {
         LineList retVal = new LineList();
@@ -35,7 +34,7 @@ public class LineList extends ArrayList implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
 
-            retVal.addLine(Line.loadFromXML(node));
+            retVal.add(Line.loadFromXML(node));
         }
 
         return retVal;
@@ -44,22 +43,14 @@ public class LineList extends ArrayList implements Serializable {
     public Element saveAsXML() {
         Element retVal = new Element("lines");
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
+        for (Line line : this) {
             retVal.addElement(line.saveAsXML());
         }
 
         return retVal;
     }
 
-    public Line getLine(int index) {
-        return (Line) this.get(index);
-    }
-
-    public boolean addLine(Line line) {
-        return this.add(line);
-    }
-
+    @Override
     public String toString() {
         return "";
     }

@@ -53,6 +53,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
     private boolean randomizable = true;
 
     // OVERRIDE to handle parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;
@@ -102,19 +103,25 @@ public class BSBHSlider extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("minimum")) {
-                minVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("maximum")) {
-                maxVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("resolution")) {
-                slider.resolution = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("value")) {
-                slider.value = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("sliderWidth")) {
-                slider.setSliderWidth(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("randomizable")) {
-                slider.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "minimum":
+                    minVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "maximum":
+                    maxVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "resolution":
+                    slider.resolution = Float.parseFloat(node.getTextString());
+                    break;
+                case "value":
+                    slider.value = Float.parseFloat(node.getTextString());
+                    break;
+                case "sliderWidth":
+                    slider.setSliderWidth(Integer.parseInt(node.getTextString()));
+                    break;
+                case "randomizable":
+                    slider.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
         }
 

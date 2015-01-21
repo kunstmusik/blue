@@ -28,7 +28,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-
 import javax.swing.tree.TreePath;
 
 public class TransferableTreeNode implements Transferable {
@@ -44,14 +43,17 @@ public class TransferableTreeNode implements Transferable {
         path = tp;
     }
 
+    @Override
     public synchronized DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         return (flavor.getRepresentationClass() == TreePath.class);
     }
 
+    @Override
     public synchronized Object getTransferData(DataFlavor flavor)
             throws UnsupportedFlavorException, IOException {
         if (isDataFlavorSupported(flavor)) {

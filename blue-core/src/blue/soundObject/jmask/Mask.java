@@ -56,29 +56,37 @@ public class Mask implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("table")) {
-                Table t = Table.loadFromXML(node);
-                String tabInstance = node.getAttributeValue("tableId");
-
-                if (tabInstance.equals("highTable")) {
-                    retVal.highTable = t;
-                } else if (tabInstance.equals("lowTable")) {
-                    retVal.lowTable = t;
-                }
-
-            } else if (nodeName.equals("highTableEnabled")) {
-                retVal.highTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("lowTableEnabled")) {
-                retVal.lowTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("low")) {
-                retVal.low = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("high")) {
-                retVal.high = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("mapValue")) {
-                retVal.mapValue = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("enabled")) {
-                retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
+            switch (nodeName) {
+                case "table":
+                    Table t = Table.loadFromXML(node);
+                    String tabInstance = node.getAttributeValue("tableId");
+                    switch (tabInstance) {
+                        case "highTable":
+                            retVal.highTable = t;
+                            break;
+                        case "lowTable":
+                            retVal.lowTable = t;
+                            break;
+                    }
+                    break;
+                case "highTableEnabled":
+                    retVal.highTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "lowTableEnabled":
+                    retVal.lowTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "low":
+                    retVal.low = Double.parseDouble(node.getTextString());
+                    break;
+                case "high":
+                    retVal.high = Double.parseDouble(node.getTextString());
+                    break;
+                case "mapValue":
+                    retVal.mapValue = Double.parseDouble(node.getTextString());
+                    break;
+                case "enabled":
+                    retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
             }
 
         }
@@ -138,10 +146,12 @@ public class Mask implements Serializable {
 //        return new MaskEditor(this);
 //    }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

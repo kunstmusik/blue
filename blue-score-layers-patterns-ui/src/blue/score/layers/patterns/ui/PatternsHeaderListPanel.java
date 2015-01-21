@@ -19,27 +19,23 @@
  */
 package blue.score.layers.patterns.ui;
 
-import blue.BlueSystem;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
 import blue.soundObject.SoundObject;
-import blue.ui.core.score.layers.soundObject.SoundObjectSelectionBus;
 import blue.ui.utilities.LinearLayout;
 import blue.ui.utilities.SelectionModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
+import java.util.Collections;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JLabel;
@@ -50,6 +46,11 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
+import org.openide.util.Utilities;
+import org.openide.util.lookup.InstanceContent;
 import skt.swing.SwingUtil;
 
 /**
@@ -57,7 +58,7 @@ import skt.swing.SwingUtil;
  * @author stevenyi
  */
 public class PatternsHeaderListPanel extends JPanel implements 
-        LayerGroupListener, SelectionListener {
+        LayerGroupListener, LookupListener {
 
     private final PatternsLayerGroup layerGroup;
     
@@ -65,20 +66,24 @@ public class PatternsHeaderListPanel extends JPanel implements
 
     JPopupMenu menu;
 
+    private InstanceContent content;
 
-    public PatternsHeaderListPanel(PatternsLayerGroup patternsLayerGroup) {
+    Lookup.Result<SoundObject> result = null;
+
+    public PatternsHeaderListPanel(PatternsLayerGroup patternsLayerGroup, InstanceContent ic) {
+        this.content = ic;
         this.layerGroup = patternsLayerGroup;
         this.layerGroup.addLayerGroupListener(this);
         this.setLayout(new LinearLayout());
         this.setPreferredSize(new Dimension(30,
-                22 * patternsLayerGroup.getSize()));
+                22 * patternsLayerGroup.size()));
 
-        for (int i = 0; i < patternsLayerGroup.getSize(); i++) {
-            this.add(new PatternLayerPanel(
-                        (PatternLayer) patternsLayerGroup.getLayerAt(i)));
+        for (PatternLayer layer : patternsLayerGroup) {
+            this.add(new PatternLayerPanel(layer, ic));
         }
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -98,9 +103,9 @@ public class PatternsHeaderListPanel extends JPanel implements
                     return;
                 }
                         
-                layerRemoveAction.setEnabled(layerGroup.getSize() >= 2);
+                layerRemoveAction.setEnabled(layerGroup.size() >= 2);
                 pushUpAction.setEnabled(selection.getStartIndex() >= 1);
-                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.getSize() - 1);
+                pushDownAction.setEnabled(selection.getEndIndex() < layerGroup.size() - 1);
                 
                 super.show(invoker, x, y);
             }
@@ -113,6 +118,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         menu.add(pushDownAction);        
         
         this.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent me) {
                 PatternsHeaderListPanel.this.requestFocus();
 
@@ -138,9 +144,7 @@ public class PatternsHeaderListPanel extends JPanel implements
 
                         if (me.isShiftDown()) {
                             selection.setEnd(index);
-                            SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                    new SelectionEvent(null,
-                                    SelectionEvent.SELECTION_CLEAR));
+                            content.set(Collections.emptyList(), null);
                         } else {
                             selection.setAnchor(index);
                             ((PatternLayerPanel)c).editSoundObject();
@@ -164,6 +168,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         });
         
         selection.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateSelection();
             }
@@ -209,7 +214,7 @@ public class PatternsHeaderListPanel extends JPanel implements
 
         int w = getParent().getWidth();
 
-        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        int h = layerGroup.size() * Layer.LAYER_HEIGHT;
 
         this.setSize(w, h);
     }
@@ -217,8 +222,10 @@ public class PatternsHeaderListPanel extends JPanel implements
     @Override
     public void addNotify() {
         super.addNotify();
-        
-        SoundObjectSelectionBus.getInstance().addSelectionListener(this);
+
+        result = Utilities.actionsGlobalContext().lookupResult(SoundObject.class);
+        result.addLookupListener (this);
+        resultChanged(null);
     }
     
     @Override
@@ -226,7 +233,7 @@ public class PatternsHeaderListPanel extends JPanel implements
         if(this.layerGroup != null) {
             this.layerGroup.addLayerGroupListener(this);
         }
-        SoundObjectSelectionBus.getInstance().removeSelectionListener(this);
+        result.removeLookupListener(this);
     }
     
      /* LAYER GROUP LISTENER */
@@ -248,9 +255,9 @@ public class PatternsHeaderListPanel extends JPanel implements
     
      public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        PatternLayer sLayer = (PatternLayer)layerGroup.getLayerAt(index);
+        PatternLayer sLayer = layerGroup.get(index);
 
-        PatternLayerPanel panel = new PatternLayerPanel(sLayer);
+        PatternLayerPanel panel = new PatternLayerPanel(sLayer, content);
         
         this.add(panel, index);
         checkSize();
@@ -309,21 +316,19 @@ public class PatternsHeaderListPanel extends JPanel implements
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
-        SoundObject sObj = (SoundObject) e.getSelectedItem();
-        if(sObj == null) {
-            return;
-        }
-        
+    public void resultChanged(LookupEvent ev) {
+        Collection<? extends SoundObject> allEvents = result.allInstances();
         boolean found = false;
-        for(int i = 0; i < layerGroup.getSize(); i++) {
-            PatternLayer pLayer = (PatternLayer) layerGroup.getLayerAt(i);
-            if(pLayer.getSoundObject() == sObj) {
-                found = true;
-                break;
+        
+        if(!allEvents.isEmpty()) {
+            for(PatternLayer pLayer : layerGroup) {
+                if(allEvents.contains(pLayer.getSoundObject())) {
+                    found = true;
+                    break;
+                }
             }
-        }
-         
+        } 
+
         if(!found) {
             selection.clear();
         }
@@ -340,6 +345,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
@@ -362,15 +368,14 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_UP, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() - 1;
             index = index < 0 ? 0 : index;
 
             selection.setEnd(index);
             
-            SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                    new SelectionEvent(null,
-                                    SelectionEvent.SELECTION_CLEAR));
+            content.set(Collections.emptyList(), null);
         }
 
     }
@@ -384,6 +389,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, 0));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;
@@ -407,6 +413,7 @@ public class PatternsHeaderListPanel extends JPanel implements
                     KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK));
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             int index = selection.getLastIndexSet() + 1;
             int length = getComponents().length;
@@ -414,9 +421,7 @@ public class PatternsHeaderListPanel extends JPanel implements
 
             selection.setEnd(index);
             
-            SoundObjectSelectionBus.getInstance().selectionPerformed(
-                                    new SelectionEvent(null,
-                                    SelectionEvent.SELECTION_CLEAR));
+            content.set(Collections.emptyList(), null);
         }
 
     }
@@ -454,7 +459,7 @@ public class PatternsHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || end >= layerGroup.getSize() - 1) {
+            if (end < 0 || end >= layerGroup.size() - 1) {
                 return;
             }
 
@@ -497,7 +502,7 @@ public class PatternsHeaderListPanel extends JPanel implements
             int start = selection.getStartIndex();
             int end = selection.getEndIndex();
 
-            if (end < 0 || layerGroup.getSize() < 2) {
+            if (end < 0 || layerGroup.size() < 2) {
                 return;
             }
 

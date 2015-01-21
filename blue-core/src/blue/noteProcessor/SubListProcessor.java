@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,6 +15,7 @@ import electric.xml.Element;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="SubListProcessor", position = 60)
 public class SubListProcessor implements NoteProcessor, java.io.Serializable {
 
     int start = 1;
@@ -23,6 +25,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
     public SubListProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[sublist] start: " + start + " end: " + end;
         return "[sublist]";
@@ -53,7 +56,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
         }
         for (int i = 0; i < in.size(); i++) {
             if (i >= (start - 1) && i <= (end - 1)) {
-                tempList.addNote(in.getNote(i));
+                tempList.add(in.get(i));
             }
         }
         in.clear();
@@ -68,7 +71,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 " + i + " 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 " + i + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

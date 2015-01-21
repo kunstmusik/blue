@@ -19,25 +19,12 @@
  */
 package blue.automation;
 
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-
 import blue.Arrangement;
 import blue.BlueData;
 import blue.InstrumentAssignment;
 import blue.SoundLayer;
 import blue.mixer.Channel;
 import blue.mixer.ChannelList;
-import blue.mixer.ChannelListListener;
 import blue.mixer.Effect;
 import blue.mixer.EffectsChain;
 import blue.mixer.Mixer;
@@ -49,6 +36,18 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -65,12 +64,12 @@ import org.openide.NotifyDescriptor;
  * @author steven
  */
 public class AutomationManager implements ParameterListListener,
-        AutomatableCollectionListener, ChannelListListener, LayerGroupListener {
+        AutomatableCollectionListener, ObservableListListener<Channel>, LayerGroupListener {
 
     /**
      * cache of all parameters in project
      */
-    private ArrayList<Parameter> allParameters = new ArrayList<Parameter>();
+    private ArrayList<Parameter> allParameters = new ArrayList<>();
     BlueData data = null;
     Score score = null;
     ActionListener parameterActionListener;
@@ -80,7 +79,7 @@ public class AutomationManager implements ParameterListListener,
 
     private AutomationManager() {
         parameterActionListener = new ActionListener() {
-
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (data == null || selectedSoundLayer == null) {
                     return;
@@ -97,7 +96,7 @@ public class AutomationManager implements ParameterListListener,
         };
 
         renderTimeListener = new PropertyChangeListener() {
-
+            @Override
             public void propertyChange(PropertyChangeEvent pce) {
                 if (pce.getSource() == data) {
                     if (pce.getPropertyName().equals("renderStartTime")) {
@@ -135,11 +134,9 @@ public class AutomationManager implements ParameterListListener,
 
                 //TODO - This class needs further updating for generic 
                 //LayerGroup Design
-
                 Score score = data.getScore();
 
-                for (int i = 0; i < score.getLayerGroupCount(); i++) {
-                    LayerGroup layerGroup = score.getLayerGroup(i);
+                for (LayerGroup layerGroup : score) {
 
                     if (!(layerGroup instanceof PolyObject)) {
                         continue;
@@ -147,12 +144,11 @@ public class AutomationManager implements ParameterListListener,
 
                     PolyObject pObj = (PolyObject) layerGroup;
 
-                    for (int j = 0; j < pObj.getSize(); j++) {
-                        SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
-
+                    for (SoundLayer layer : pObj) {
                         if (layer == soundLayer) {
                             continue;
                         }
+
                         ParameterIdList automationParameters = layer.getAutomationParameters();
 
                         if (automationParameters.contains(uniqueId)) {
@@ -184,30 +180,34 @@ public class AutomationManager implements ParameterListListener,
                     ParameterList parameters = temp.getParameterList();
 
                     // parameterMap.put(temp, parameters);
-
                     parameters.removeParameterListListener(this);
                 }
             }
 
             Mixer mixer = this.data.getMixer();
 
+            for (ChannelList list : mixer.getChannelListGroups()) {
+                list.removeListener(this);
+                for (Channel c : list) {
+                    removeListenerFromChannel(c);
+                }
+            }
             ChannelList channels = mixer.getChannels();
-            channels.removeChannelListListener(this);
-            for (int i = 0; i < channels.size(); i++) {
-                removeListenerFromChannel(channels.getChannel(i));
+            channels.removeListener(this);
+            for (Channel c : channels) {
+                removeListenerFromChannel(c);
             }
 
             ChannelList subChannels = mixer.getSubChannels();
-            subChannels.removeChannelListListener(this);
+            subChannels.removeListener(this);
             for (int i = 0; i < subChannels.size(); i++) {
-                removeListenerFromChannel(subChannels.getChannel(i));
+                removeListenerFromChannel(subChannels.get(i));
             }
 
             removeListenerFromChannel(mixer.getMaster());
 
             if (this.score != null) {
-                for (int i = 0; i < score.getLayerGroupCount(); i++) {
-                    LayerGroup layerGroup = score.getLayerGroup(i);
+                for (LayerGroup layerGroup : score) {
                     layerGroup.removeLayerGroupListener(this);
                 }
             }
@@ -217,9 +217,7 @@ public class AutomationManager implements ParameterListListener,
 
         // menu = null;
         // dirty = false;
-
         allParameters.clear();
-
 
         if (data == null) {
             return;
@@ -245,35 +243,38 @@ public class AutomationManager implements ParameterListListener,
 
         Mixer mixer = data.getMixer();
 
+        for (ChannelList list : mixer.getChannelListGroups()) {
+            list.addListener(this);
+            for (Channel c : list) {
+                addListenerToChannel(c);
+            }
+        }
         ChannelList channels = mixer.getChannels();
-        channels.addChannelListListener(this);
-        for (int i = 0; i < channels.size(); i++) {
-            addListenerToChannel(channels.getChannel(i));
+        channels.addListener(this);
+        for (Channel c : channels) {
+            addListenerToChannel(c);
         }
 
         ChannelList subChannels = mixer.getSubChannels();
-        subChannels.addChannelListListener(this);
+        subChannels.addListener(this);
         for (int i = 0; i < subChannels.size(); i++) {
-            addListenerToChannel(subChannels.getChannel(i));
+            addListenerToChannel(subChannels.get(i));
         }
 
         addListenerToChannel(mixer.getMaster());
 
         // System.err.println(this);
-
         this.data = data;
 
         this.score = data.getScore();
 
-        for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : this.score) {
             layerGroup.addLayerGroupListener(this);
         }
 
         this.data.addPropertyChangeListener(renderTimeListener);
 
         // Build Map from Mixer Channels
-
     }
 
     private void addListenerToChannel(Channel channel) {
@@ -378,7 +379,7 @@ public class AutomationManager implements ParameterListListener,
                 JMenu channelsMenu = new JMenu("Channels");
 
                 for (int i = 0; i < channels.size(); i++) {
-                    channelsMenu.add(buildChannelMenu(channels.getChannel(i),
+                    channelsMenu.add(buildChannelMenu(channels.get(i),
                             soundLayer));
                 }
 
@@ -391,7 +392,7 @@ public class AutomationManager implements ParameterListListener,
             if (subChannels.size() > 0) {
                 JMenu subChannelsMenu = new JMenu("Sub-Channels");
                 for (int i = 0; i < subChannels.size(); i++) {
-                    subChannelsMenu.add(buildChannelMenu(subChannels.getChannel(
+                    subChannelsMenu.add(buildChannelMenu(subChannels.get(
                             i), soundLayer));
                 }
 
@@ -410,20 +411,17 @@ public class AutomationManager implements ParameterListListener,
 
         JMenuItem clearAll = new JMenuItem("Clear All");
         clearAll.addActionListener(new ActionListener() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Object retVal = DialogDisplayer.getDefault().notify(
                         new NotifyDescriptor.Confirmation(
-                        "Please Confirm Clearing All Parameter Data for this SoundLayer"));
+                                "Please Confirm Clearing All Parameter Data for this SoundLayer"));
 
                 if (retVal == NotifyDescriptor.YES_OPTION) {
 
                     ParameterIdList idList = selectedSoundLayer.getAutomationParameters();
 
-                    Iterator iter = new ArrayList(idList.getParameters()).iterator();
-
-                    while (iter.hasNext()) {
-                        String paramId = (String) iter.next();
+                    for (String paramId : idList.getParameters()) {
                         Parameter param = getParameter(paramId);
 
                         param.setAutomationEnabled(false);
@@ -437,9 +435,7 @@ public class AutomationManager implements ParameterListListener,
         clearAll.setEnabled(soundLayer.getAutomationParameters().size() > 0);
 
         // }
-
         // System.err.println(parameterMap);
-
         return menu;
     }
 
@@ -571,32 +567,22 @@ public class AutomationManager implements ParameterListListener,
         return retVal;
     }
 
+    @Override
     public void parameterAdded(Parameter param) {
         allParameters.add(param);
         // dirty = true;
     }
 
+    @Override
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
-        for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
 
-                for(int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer temp = (SoundLayer) pObj.getLayerAt(j);
-                    System.out.println("Layer: " + temp.getName());
-                    for(int k = 0; k < temp.getAutomationParameters().size(); k++) {
-                        System.out.println("ID: " + temp.getAutomationParameters().getParameterId(
-                                        k));
-                    }
-                }
-                
-                for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
-
+                for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
                     String paramId = param.getUniqueId();
@@ -608,15 +594,15 @@ public class AutomationManager implements ParameterListListener,
             }
         }
 
-
-
         // dirty = true;
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 
+    @Override
     public void automatableAdded(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
         params.addParameterListListener(this);
@@ -625,11 +611,12 @@ public class AutomationManager implements ParameterListListener,
         // dirty = true;
     }
 
+    @Override
     public void automatableRemoved(Automatable automatable) {
         ParameterList params = automatable.getParameterList();
         params.removeParameterListListener(this);
 
-        ArrayList removedParamIds = new ArrayList();
+        ArrayList<String> removedParamIds = new ArrayList<>();
 
         allParameters.removeAll(params.getParameters());
 
@@ -647,14 +634,28 @@ public class AutomationManager implements ParameterListListener,
             return null;
         }
 
-        for (Iterator iter = allParameters.iterator(); iter.hasNext();) {
-            Parameter param = (Parameter) iter.next();
-
+        for (Parameter param : allParameters) {
             if (param.getUniqueId().equals(paramId)) {
                 return param;
             }
         }
         return null;
+    }
+
+    @Override
+    public void listChanged(ObservableListEvent<Channel> listEvent) {
+        switch (listEvent.getType()) {
+            case ObservableListEvent.DATA_ADDED:
+                for (Channel channel : listEvent.getAffectedItems()) {
+                    channelAdded(channel);
+                }
+                break;
+            case ObservableListEvent.DATA_REMOVED:
+                for (Channel channel : listEvent.getAffectedItems()) {
+                    channelRemoved(channel);
+                }
+                break;
+        }
     }
 
     public void channelAdded(Channel channel) {
@@ -669,7 +670,7 @@ public class AutomationManager implements ParameterListListener,
         EffectsChain pre = channel.getPreEffects();
         pre.removeAutomatableCollectionListener(this);
 
-        ArrayList<String> removedParamIds = new ArrayList<String>();
+        ArrayList<String> removedParamIds = new ArrayList<>();
 
         for (int i = 0; i < pre.size(); i++) {
             ParameterList parameterList = ((Automatable) pre.getElementAt(i)).getParameterList();
@@ -712,19 +713,16 @@ public class AutomationManager implements ParameterListListener,
     }
 
     private void removeParameters(ArrayList<String> paramIds) {
-        if (paramIds == null || paramIds.size() == 0) {
+        if (paramIds == null || paramIds.isEmpty()) {
             return;
         }
 
-          for (int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
+        for (LayerGroup layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
-        
-                   for (int j = 0; j < pObj.getSize(); j++) {
-                    SoundLayer layer = (SoundLayer) pObj.getLayerAt(j);
 
+                for (SoundLayer layer : pObj) {
                     ParameterIdList automationParameters = layer.getAutomationParameters();
 
                     for (int k = automationParameters.size() - 1; k >= 0; k--) {
@@ -736,14 +734,14 @@ public class AutomationManager implements ParameterListListener,
                     }
                 }
             }
-          }
+        }
     }
 
     protected void updateValuesFromAutomations() {
-        Iterator iter = new ArrayList(allParameters).iterator();
+        Iterator<Parameter> iter = allParameters.iterator();
 
         while (iter.hasNext()) {
-            Parameter param = (Parameter) iter.next();
+            Parameter param = iter.next();
             if (param.isAutomationEnabled()) {
                 param.fireUpdateFromTimeChange();
             }
@@ -780,4 +778,5 @@ public class AutomationManager implements ParameterListListener,
 
         }
     }
+
 }

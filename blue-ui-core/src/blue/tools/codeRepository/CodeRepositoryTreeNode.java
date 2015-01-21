@@ -21,12 +21,12 @@
 package blue.tools.codeRepository;
 
 import java.util.Vector;
-
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 
 class CodeRepositoryTreeNode extends DefaultMutableTreeNode {
 
+    @Override
     public void insert(MutableTreeNode newChild, int childIndex) {
         ElementHolder elem = (ElementHolder) this.getUserObject();
 
@@ -53,6 +53,7 @@ class CodeRepositoryTreeNode extends DefaultMutableTreeNode {
         children.insertElementAt(newChild, childIndex);
     }
 
+    @Override
     public boolean isLeaf() {
         try {
             ElementHolder elem = (ElementHolder) this.getUserObject();
@@ -65,6 +66,7 @@ class CodeRepositoryTreeNode extends DefaultMutableTreeNode {
         }
     }
 
+    @Override
     public void setUserObject(Object obj) {
         if (obj instanceof String) {
             ElementHolder elem = (ElementHolder) this.getUserObject();

@@ -19,19 +19,16 @@
  */
 package blue.clojure.soundObject;
 
+import blue.plugin.BarRendererPlugin;
 import blue.ui.core.soundObject.renderer.LetterRenderer;
 
 /**
  *
  * @author stevenyi
  */
+@BarRendererPlugin(scoreObjectType = ClojureObject.class)
 public class ClojureObjectRenderer extends LetterRenderer {
     public ClojureObjectRenderer() {
         super("C");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return ClojureObject.class;
     }
 }

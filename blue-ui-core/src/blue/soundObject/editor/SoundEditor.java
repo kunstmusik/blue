@@ -1,12 +1,22 @@
 package blue.soundObject.editor;
 
 import blue.Arrangement;
-import blue.Arrangement;
+import blue.BlueSystem;
+import blue.CompileData;
+import blue.Tables;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
+import blue.soundObject.Sound;
+import blue.soundObject.SoundObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -18,18 +28,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
-
-import blue.BlueSystem;
-import blue.CompileData;
-import blue.Tables;
-import blue.Tables;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
-import blue.soundObject.Sound;
-import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -39,8 +37,8 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-
-public class SoundEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = Sound.class)
+public class SoundEditor extends ScoreObjectEditor {
 
     Sound sObj;
 
@@ -83,6 +81,7 @@ public class SoundEditor extends SoundObjectEditor {
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -110,6 +109,7 @@ public class SoundEditor extends SoundObjectEditor {
 
         actions.put("testSoundObject", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -118,7 +118,8 @@ public class SoundEditor extends SoundObjectEditor {
 
     }
 
-    public final void editSoundObject(SoundObject sObj) {
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
             editorLabel.setText("no editor available");

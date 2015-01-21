@@ -1,8 +1,10 @@
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.ScoreObject;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -80,7 +82,8 @@ public class Instance extends AbstractSoundObject implements Serializable {
      * this.sObj; inst.setName(this.getName()); return inst; }
      */
 
-    public Object clone() {
+    @Override
+    public SoundObject clone() {
         SoundObject librarySObj = this.getSoundObject();
 
         this.setSoundObject(null);
@@ -111,10 +114,10 @@ public class Instance extends AbstractSoundObject implements Serializable {
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*

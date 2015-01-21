@@ -2,7 +2,6 @@ package blue.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -48,6 +47,7 @@ public class LabelledRangeBar extends JComponent {
         slider.setValue(rangeEnd);
 
         slider.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (filter != null) {
                     display.setText(filter.filter(slider.getValue()));

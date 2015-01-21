@@ -65,28 +65,37 @@ public class BSBLineObject extends BSBObject {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("canvasWidth")) {
-                lineObj.setCanvasWidth(XMLUtilities.readInt(node));
-            } else if (nodeName.equals("canvasHeight")) {
-                lineObj.setCanvasHeight(XMLUtilities.readInt(node));
-            } else if (nodeName.equals("xMax")) {
-                lineObj.setXMax(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("commaSeparated")) {
-                boolean val = XMLUtilities.readBoolean(node);
-                if (val) {
-                    lineObj.setSeparatorType(SEPARATOR_TYPES[1]);
-                }
-            } else if (nodeName.equals("separatorType")) {
-                lineObj.setSeparatorType(node.getTextString());
-            } else if (nodeName.equals("relativeXValues")) {
-                lineObj.setRelativeXValues(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("lines")) {
-                lineObj.setLines(LineList.loadFromXML(node));
-            } else if (nodeName.equals("leadingZero")) {
-                lineObj.setLeadingZero(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("locked")) {
-                lineObj.setLocked(XMLUtilities.readBoolean(node));
+            switch (nodeName) {
+                case "canvasWidth":
+                    lineObj.setCanvasWidth(XMLUtilities.readInt(node));
+                    break;
+                case "canvasHeight":
+                    lineObj.setCanvasHeight(XMLUtilities.readInt(node));
+                    break;
+                case "xMax":
+                    lineObj.setXMax(XMLUtilities.readFloat(node));
+                    break;
+                case "commaSeparated":
+                    boolean val = XMLUtilities.readBoolean(node);
+                    if (val) {
+                        lineObj.setSeparatorType(SEPARATOR_TYPES[1]);
+                    }
+                    break;
+                case "separatorType":
+                    lineObj.setSeparatorType(node.getTextString());
+                    break;
+                case "relativeXValues":
+                    lineObj.setRelativeXValues(XMLUtilities.readBoolean(node));
+                    break;
+                case "lines":
+                    lineObj.setLines(LineList.loadFromXML(node));
+                    break;
+                case "leadingZero":
+                    lineObj.setLeadingZero(XMLUtilities.readBoolean(node));
+                    break;
+                case "locked":
+                    lineObj.setLocked(XMLUtilities.readBoolean(node));
+                    break;
             }
         }
 
@@ -115,12 +124,13 @@ public class BSBLineObject extends BSBObject {
 //        return new BSBLineObjectView(this);
 //    }
 
+    @Override
     public String[] getReplacementKeys() {
         String[] vals = new String[lines.size()];
         String objName = getObjectName();
 
         for (int i = 0; i < lines.size(); i++) {
-            Line l = lines.getLine(i);
+            Line l = lines.get(i);
             vals[i] = objName + "_" + l.getVarName();
         }
 

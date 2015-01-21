@@ -25,7 +25,6 @@ package blue.plaf;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
@@ -57,6 +56,7 @@ public class BlueTableHeaderBorder extends AbstractBorder {
      * @param h
      *            The height.
      */
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         g.translate(x, y);
 
@@ -77,6 +77,7 @@ public class BlueTableHeaderBorder extends AbstractBorder {
      *            The component to get its border insets.
      * @return Always returns the same insets as defined in <code>insets</code>.
      */
+    @Override
     public Insets getBorderInsets(Component c) {
         return insets;
     }

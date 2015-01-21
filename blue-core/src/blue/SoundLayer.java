@@ -31,10 +31,10 @@ package blue;
 import blue.automation.ParameterIdList;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
-import blue.score.layers.Layer;
+import blue.score.ScoreObject;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
-import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -43,7 +43,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-public final class SoundLayer implements java.io.Serializable, Layer {
+public final class SoundLayer extends ArrayList<SoundObject> 
+        implements ScoreObjectLayer<SoundObject> {
 
     private transient Vector<PropertyChangeListener> propListeners = null;
 
@@ -69,8 +70,6 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         }
 
     };
-
-    private ArrayList<SoundObject> soundObjects = new ArrayList<SoundObject>();
 
     private ParameterIdList automationParameters = new ParameterIdList();
 
@@ -111,7 +110,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     public void setName(String name) {
         String oldName = this.name;
-        this.name = name;
+        this.name = (name == null) ? "" : name;
         
         if(!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
@@ -127,22 +126,20 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         return automationParameters;
     }
 
-    public void addSoundObject(SoundObject sObj) {
-        soundObjects.add(sObj);
+    @Override
+    public boolean add(SoundObject sObj) {
+        super.add(sObj);
         fireSoundObjectAdded(sObj);
+        return true;
     }
 
-    public void removeSoundObject(SoundObject sObj) {
-        soundObjects.remove((soundObjects.indexOf(sObj)));
-        fireSoundObjectRemoved(sObj);
-    }
-
-    public ArrayList<SoundObject> getSoundObjects() {
-        return soundObjects;
-    }
-
-    public boolean contains(SoundObject sObj) {
-        return soundObjects.contains(sObj);
+    @Override
+    public boolean remove(ScoreObject sObj) {
+        if(super.remove(sObj)) {
+            fireSoundObjectRemoved((SoundObject)sObj);
+            return true;
+        }
+       return false; 
     }
 
     /**
@@ -150,7 +147,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
      */
 
     public float getMaxTime() {
-        return ScoreUtilities.getMaxTime(soundObjects);
+        return ScoreUtilities.getMaxTime(this);
     }
 
     public static SoundLayer loadFromXML(Element data,
@@ -180,7 +177,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         while (sObjects.hasMoreElements()) {
             Object obj = ObjectUtilities.loadFromXML(sObjects.next(),
                     objRefMap);
-            sLayer.addSoundObject((SoundObject) obj);
+            sLayer.add((SoundObject) obj);
         }
 
         Elements parameters = data.getElements("parameterId");
@@ -203,8 +200,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
         retVal.addElement(npc.saveAsXML());
 
-        for (Iterator iter = soundObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+        for (SoundObject sObj : this) {
             retVal.addElement(sObj.saveAsXML(objRefMap));
         }
 
@@ -216,6 +212,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         return retVal;
     }
 
+    @Override
     public Object clone() {
         SoundLayer sLayer = new SoundLayer();
 
@@ -224,9 +221,8 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         sLayer.setName(this.getName());
         sLayer.setNoteProcessorChain((NoteProcessorChain) this.npc.clone());
 
-        for (Iterator iter = this.soundObjects.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
-            sLayer.addSoundObject((SoundObject) sObj.clone());
+        for (SoundObject sObj : this) {
+            sLayer.add((SoundObject) sObj.clone());
         }
 
         for (Iterator iter = this.automationParameters.iterator(); iter
@@ -287,7 +283,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {
@@ -308,7 +304,7 @@ public final class SoundLayer implements java.io.Serializable, Layer {
 
     public void addSoundLayerListener(SoundLayerListener listener) {
         if (layerListeners == null) {
-            layerListeners = new Vector<SoundLayerListener>();
+            layerListeners = new Vector<>();
         }
 
         layerListeners.add(listener);
@@ -369,10 +365,9 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         
         NoteList notes = new NoteList();
         
-        Collections.sort(soundObjects, sObjComparator);
+        Collections.sort(this, sObjComparator);
 
-
-        for (SoundObject sObj : soundObjects) {
+        for (SoundObject sObj : this) {
             try {
             
                 float sObjStart = sObj.getStartTime();
@@ -420,5 +415,24 @@ public final class SoundLayer implements java.io.Serializable, Layer {
         
 
         return notes;
+    }
+
+    @Override
+    public int getLayerHeight() {
+        return LAYER_HEIGHT * (heightIndex + 1);    
+    }
+
+    @Override
+    public boolean accepts(ScoreObject object) {
+        return (object instanceof SoundObject);    
+    }
+
+    @Override
+    public boolean contains(ScoreObject object) {
+        if(!accepts(object)) {
+            return false;
+        }    
+
+        return super.contains(object);
     }
 }

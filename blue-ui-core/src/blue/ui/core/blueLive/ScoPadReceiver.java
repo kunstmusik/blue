@@ -64,6 +64,7 @@ public class ScoPadReceiver implements Receiver {
 
     /* MIDI Receiver Methods */
 
+    @Override
     public void send(MidiMessage message, long timeStamp) {
 
         if (message instanceof ShortMessage) {
@@ -129,6 +130,7 @@ public class ScoPadReceiver implements Receiver {
         }
     }
 
+    @Override
     public void close() {
         for (int i = 0; i < 128; i++) {
             notes[i].start = -1;

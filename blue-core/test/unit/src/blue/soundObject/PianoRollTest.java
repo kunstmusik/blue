@@ -19,11 +19,9 @@
  */
 package blue.soundObject;
 
-import blue.soundObject.pianoRoll.Scale;
-import blue.utility.ObjectUtilities;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

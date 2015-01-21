@@ -24,7 +24,6 @@ import java.awt.Color;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
@@ -42,6 +41,7 @@ public class SelectedNoteHighlighter extends JPanel {
 
         cl = new ComponentAdapter() {
 
+            @Override
             public void componentMoved(ComponentEvent arg0) {
                 int newY = pianoNoteView.getY();
                 if (newY != getY()) {

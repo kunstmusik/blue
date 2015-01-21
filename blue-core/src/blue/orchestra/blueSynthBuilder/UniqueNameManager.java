@@ -150,6 +150,7 @@ public class UniqueNameManager implements Serializable {
     // return newName;
     // }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof UniqueNameManager) {
             UniqueNameManager unm = (UniqueNameManager) obj;

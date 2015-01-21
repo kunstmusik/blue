@@ -1,5 +1,12 @@
 package blue.soundObject.editor;
 
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.NotationObject;
+import blue.soundObject.notation.NotationEditPoint;
+import blue.soundObject.notation.NotationNote;
+import blue.soundObject.notation.NotationStaffRenderer;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,7 +14,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -15,13 +21,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-
-import blue.soundObject.NotationObject;
-import blue.soundObject.SoundObject;
-import blue.soundObject.notation.NotationEditPoint;
-import blue.soundObject.notation.NotationNote;
-import blue.soundObject.notation.NotationStaffRenderer;
-import blue.ui.utilities.UiUtilities;
 
 /**
  * <p>
@@ -47,7 +46,8 @@ import blue.ui.utilities.UiUtilities;
 // left, right - changes cursor location (place in note array)
 // dot - adds dot, shift-dot removes dot
 // +/- - sharpens or flats
-public class NotationEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = NotationObject.class)
+public class NotationEditor extends ScoreObjectEditor {
     NotationObject nObj = null;
 
     NotationStaffRenderer nStaffRenderer = new NotationStaffRenderer();
@@ -79,6 +79,7 @@ public class NotationEditor extends SoundObjectEditor {
         nStaffRenderer.setRequestFocusEnabled(true);
 
         nStaffRenderer.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 nStaffRenderer.requestFocus();
                 if (UiUtilities.isRightMouseButton(e)) {
@@ -89,6 +90,7 @@ public class NotationEditor extends SoundObjectEditor {
         });
 
         nStaffRenderer.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 System.out.println(e.getKeyCode());
                 int keyCode = e.getKeyCode();
@@ -134,7 +136,8 @@ public class NotationEditor extends SoundObjectEditor {
         optionsMenu.show(this, x, y);
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.nObj = null;
             return;
@@ -176,12 +179,15 @@ class NotationOptionsMenu extends JPopupMenu implements ActionListener {
         super.show(nEditor, x, y);
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
-        if (command == "Bass Clef") {
+        switch (command) {
+            case "Bass Clef":
+                break;
+            case "Treble Clef":
 
-        } else if (command == "Treble Clef") {
-
+                break;
         }
     }
 

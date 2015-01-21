@@ -19,21 +19,21 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.Preset;
+import blue.orchestra.blueSynthBuilder.PresetGroup;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetContext;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
-
+import java.io.IOException;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-
-import blue.orchestra.blueSynthBuilder.Preset;
-import blue.orchestra.blueSynthBuilder.PresetGroup;
 
 /**
  * @author steven
@@ -49,6 +49,7 @@ public class PresetsTreeDropTarget implements DropTargetListener {
         target = new DropTarget(targetTree, this);
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         Point p = dtde.getLocation();
         DropTargetContext dtc = dtde.getDropTargetContext();
@@ -63,10 +64,12 @@ public class PresetsTreeDropTarget implements DropTargetListener {
 
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         dragEnter(dtde);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         Point pt = dtde.getLocation();
         DropTargetContext dtc = dtde.getDropTargetContext();
@@ -120,14 +123,16 @@ public class PresetsTreeDropTarget implements DropTargetListener {
                 }
             }
             dtde.rejectDrop();
-        } catch (Exception e) {
+        } catch (UnsupportedFlavorException | IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
     }
 

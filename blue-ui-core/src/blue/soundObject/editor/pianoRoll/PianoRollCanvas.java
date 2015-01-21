@@ -19,6 +19,12 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.BlueSystem;
+import blue.components.AlphaMarquee;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -37,7 +43,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Iterator;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -48,13 +53,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
-
-import blue.BlueSystem;
-import blue.components.AlphaMarquee;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.PianoNote;
 
 /**
  * @author steven
@@ -94,11 +92,13 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         cl = new ComponentAdapter() {
 
+            @Override
             public void componentMoved(ComponentEvent e) {
                 recalculateSize();
                 repaint();
             }
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 recalculateSize();
                 repaint();
@@ -107,6 +107,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         this.addContainerListener(new ContainerListener() {
 
+            @Override
             public void componentAdded(ContainerEvent e) {
                 if (e.getChild() instanceof PianoNoteView) {
                     e.getChild().addComponentListener(cl);
@@ -114,6 +115,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
             }
 
+            @Override
             public void componentRemoved(ContainerEvent e) {
                 if (e.getChild() instanceof PianoNoteView) {
                     e.getChild().removeComponentListener(cl);
@@ -150,6 +152,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         Action deleteNotes = new AbstractAction(BlueSystem
                 .getString("common.remove")) {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (noteBuffer.size() > 0) {
                     removeNotes();
@@ -161,6 +164,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("cut", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (noteBuffer.size() == 1) {
                     cut();
@@ -170,6 +174,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("copy", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (noteBuffer.size() == 1) {
                     copy();
@@ -186,6 +191,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("raisePixelSecond", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 raisePixelSecond();
             }
@@ -194,6 +200,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("lowerPixelSecond", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 lowerPixelSecond();
             }
@@ -202,6 +209,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("raiseHeight", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 raiseHeight();
             }
@@ -210,6 +218,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
         actionMap.put("lowerHeight", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 lowerHeight();
             }
@@ -273,6 +282,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         this.setPreferredSize(new Dimension(maxW, h));
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
 
@@ -364,8 +374,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         this.add(marquee, JLayeredPane.DRAG_LAYER);
         marquee.setVisible(false);
 
-        for (Iterator iter = p.getNotes().iterator(); iter.hasNext();) {
-            PianoNote note = (PianoNote) iter.next();
+        for (PianoNote note : p.getNotes()) {
             addNoteView(note);
         }
 
@@ -421,31 +430,36 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     /* EVENT LISTENER CODE */
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
         if (evt.getSource() == this.p) {
 
             String propertyName = evt.getPropertyName();
-
-            if (propertyName.equals("scale")
-                    || propertyName.equals("pchGenerationMethod")) {
-                recalculateSize();
-                revalidate();
-                repaint();
-            } else if (propertyName.equals("snapEnabled")
-                    || propertyName.equals("snapValue")) {
-                repaint();
-            } else if (propertyName.equals("timeValue")) {
-
-            } else if (propertyName.equals("pixelSecond")
-                    || propertyName.equals("noteHeight")) {
-                editPianoRoll(this.p);
+            switch (propertyName) {
+                case "scale":
+                case "pchGenerationMethod":
+                    recalculateSize();
+                    revalidate();
+                    repaint();
+                    break;
+                case "snapEnabled":
+                case "snapValue":
+                    repaint();
+                    break;
+                case "timeValue":
+                    break;
+                case "pixelSecond":
+                case "noteHeight":
+                    editPianoRoll(this.p);
+                    break;
             }
 
         }
 
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         // TODO Auto-generated method stub
 
@@ -464,10 +478,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     int maxUnitIncrement = 50;
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect,
             int orientation, int direction) {
         // Get the current position.
@@ -492,6 +508,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect,
             int orientation, int direction) {
 
@@ -504,10 +521,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         return p.getNoteHeight() * 5;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
         return false;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
     }

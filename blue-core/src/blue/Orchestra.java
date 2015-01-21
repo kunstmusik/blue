@@ -143,6 +143,7 @@ public final class Orchestra implements Cloneable, Serializable {
         }
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

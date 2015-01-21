@@ -4,7 +4,6 @@
  */
 package blue.ui.editor.csound.sco;
 
-import blue.ui.editor.csound.orc.*;
 import blue.ui.editor.csound.orc.actions.AddSemiColonLineCommentAction;
 import blue.ui.editor.csound.orc.actions.RemoveSemiColonLineCommentAction;
 import javax.swing.Action;

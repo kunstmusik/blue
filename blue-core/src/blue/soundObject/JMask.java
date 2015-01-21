@@ -19,9 +19,11 @@
  */
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.jmask.Field;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -31,6 +33,8 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+
+@SoundObjectPlugin(displayName = "JMask", live=true, position = 50)
 public class JMask extends AbstractSoundObject {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
@@ -129,10 +133,10 @@ public class JMask extends AbstractSoundObject {
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     public void setTimeBehavior(int timeBehavior) {
@@ -147,16 +151,19 @@ public class JMask extends AbstractSoundObject {
         this.field = field;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 
-    public Object clone() {
-        return ObjectUtilities.clone(this);
+    @Override
+    public SoundObject clone() {
+        return (SoundObject) ObjectUtilities.clone(this);
     }
 
     @Override

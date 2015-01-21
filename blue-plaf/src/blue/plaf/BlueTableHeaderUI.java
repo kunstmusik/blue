@@ -21,6 +21,7 @@ public class BlueTableHeaderUI extends BasicTableHeaderUI {
     return new BlueTableHeaderUI();
   }
  
+    @Override
   public void paint( Graphics g, JComponent c) {
     
     Graphics2D g2D = (Graphics2D)g;

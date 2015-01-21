@@ -240,9 +240,7 @@ public class BlueSystem {
             try {
                 Document doc = new Document(BlueSystem.class.getResourceAsStream("codeRepository.xml"));
                 doc.write(repository);
-            } catch (ParseException ex) {
-                ExceptionHandler.printStackTrace(ex);
-            } catch (IOException ex) {
+            } catch (    ParseException | IOException ex) {
                 ExceptionHandler.printStackTrace(ex);
             }
         }
@@ -482,6 +480,42 @@ public class BlueSystem {
 
         return path;
     }
+
+
+    /**
+     * Gets full path of file, checking if file is relative to current project
+     * directory  
+     * @param path
+     * @return
+     */
+    public static String getFullPath(String path) {
+        File f = new File(path);
+        if(f.isFile() && f.exists()) {
+            return path;
+        }
+        
+        File projectDir = BlueSystem.getCurrentProjectDirectory();
+        if (projectDir == null) {
+            return path;
+        }
+
+        String projectPath = null;
+
+        try {
+            projectPath = projectDir.getCanonicalPath();
+        } catch (IOException e) {
+            return path;
+        }
+
+        f = new File(projectPath + File.separator + path);
+
+        if(f.isFile() && f.exists()) {
+            return f.getAbsolutePath();
+        }
+
+        return path;
+    }
+
 
     /**
      * Tries to find file in project directory, then as absolute file name, or

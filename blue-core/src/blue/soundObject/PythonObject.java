@@ -19,9 +19,11 @@
  */
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.scripting.PythonProxy;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -36,6 +38,8 @@ import org.python.core.PyException;
  * @author steven yi
  * @version 1.0
  */
+
+@SoundObjectPlugin(displayName = "PythonObject", live=true, position = 110)
 public class PythonObject extends AbstractSoundObject implements Serializable,
         Cloneable, OnLoadProcessable {
 
@@ -132,10 +136,10 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*

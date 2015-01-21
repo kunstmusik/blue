@@ -19,6 +19,10 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.BlueSystem;
+import blue.gui.LabelledItemPanel;
+import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -26,11 +30,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Iterator;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -38,12 +42,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import blue.BlueSystem;
-import blue.gui.LabelledItemPanel;
-import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.PianoNote;
-import javax.swing.JScrollPane;
 
 /**
  * @author steven
@@ -82,6 +80,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         ActionListener timeActionListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!isUpdating) {
                     if (e.getSource() == frequencyOption) {
@@ -136,6 +135,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         baseFrequencyText.addFocusListener(new FocusAdapter() {
 
+            @Override
             public void focusLost(FocusEvent e) {
                 updateBaseFrequency();
             }
@@ -144,6 +144,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         baseFrequencyText.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 updateBaseFrequency();
             }
@@ -152,6 +153,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         transposition.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 updateTransposition();
             }
@@ -161,14 +163,17 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         noteTemplateText.getDocument().addDocumentListener(
                 new DocumentListener() {
 
+                    @Override
                     public void insertUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void removeUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void changedUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
@@ -183,6 +188,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         setAllNotesButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setAllNoteTemplates();
             }
@@ -191,6 +197,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         setSelectedNotesButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setSelectedNoteTemplates();
             }
@@ -200,14 +207,17 @@ public class PianoRollPropertiesEditor extends JScrollPane {
         instrumentIDText.getDocument().addDocumentListener(
                 new DocumentListener() {
 
+                    @Override
                     public void insertUpdate(DocumentEvent e) {
                         updateInstrumentId();
                     }
 
+                    @Override
                     public void removeUpdate(DocumentEvent e) {
                         updateInstrumentId();
                     }
 
+                    @Override
                     public void changedUpdate(DocumentEvent e) {
                         updateInstrumentId();
                     }
@@ -226,6 +236,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
          scalePanel.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (p != null) {
                     p.setScale(scalePanel.getScale());
@@ -257,8 +268,7 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         String noteTemplate = p.getNoteTemplate();
 
-        for (Iterator iter = p.getNotes().iterator(); iter.hasNext();) {
-            PianoNote note = (PianoNote) iter.next();
+        for (PianoNote note : p.getNotes()) {
             note.setNoteTemplate(noteTemplate);
         }
     }
@@ -270,8 +280,8 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         String noteTemplate = p.getNoteTemplate();
 
-        for (Iterator iter = noteBuffer.iterator(); iter.hasNext();) {
-            PianoNote note = ((PianoNoteView) iter.next()).getPianoNote();
+        for (PianoNoteView pianoNoteView : noteBuffer) {
+            PianoNote note = pianoNoteView.getPianoNote();
             note.setNoteTemplate(noteTemplate);
         }
     }

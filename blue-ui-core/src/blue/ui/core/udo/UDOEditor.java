@@ -59,6 +59,7 @@ public class UDOEditor extends javax.swing.JPanel {
         
          DocumentListener dl = new SimpleDocumentListener() {
 
+            @Override
             public void documentChanged(DocumentEvent e) {
                 updateValue(e.getDocument());
             }
@@ -76,6 +77,7 @@ public class UDOEditor extends javax.swing.JPanel {
 
         testOpcodeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testOpcode();
             }
@@ -99,6 +101,7 @@ public class UDOEditor extends javax.swing.JPanel {
 
         AbstractAction undoAction = new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (undo.canUndo()) {
                     undo.undo();
@@ -109,6 +112,7 @@ public class UDOEditor extends javax.swing.JPanel {
 
         AbstractAction redoAction = new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (undo.canRedo()) {
                     undo.redo();

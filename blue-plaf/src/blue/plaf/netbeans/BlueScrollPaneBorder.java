@@ -49,9 +49,9 @@
 
 package blue.plaf.netbeans;
 
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
-import java.awt.*;
 
 /** Scroll pane border for Metal look and feel
  *
@@ -61,6 +61,7 @@ class BlueScrollPaneBorder extends AbstractBorder {
 
     private static final Insets insets = new Insets(1, 1, 2, 2);
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y,
     int w, int h) {
         g.translate(x, y);
@@ -76,6 +77,7 @@ class BlueScrollPaneBorder extends AbstractBorder {
         g.translate(-x, -y);
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
         return insets;
     }

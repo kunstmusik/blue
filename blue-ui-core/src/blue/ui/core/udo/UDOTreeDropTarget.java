@@ -22,9 +22,11 @@ package blue.ui.core.udo;
 import blue.udo.UDOCategory;
 import blue.udo.UDOLibrary;
 import blue.udo.UserDefinedOpcode;
+import blue.utility.ListUtil;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetContext;
@@ -32,11 +34,9 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
-
+import java.io.IOException;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-
-import blue.utility.ListUtil;
 
 /**
  * @author steven
@@ -52,6 +52,7 @@ public class UDOTreeDropTarget implements DropTargetListener {
         target = new DropTarget(targetTree, this);
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         if (!dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR)
                 && !dtde.isDataFlavorSupported(TransferableUDO.UDO_CAT_FLAVOR)) {
@@ -74,10 +75,12 @@ public class UDOTreeDropTarget implements DropTargetListener {
 
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         dragEnter(dtde);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         Point pt = dtde.getLocation();
         DropTargetContext dtc = dtde.getDropTargetContext();
@@ -107,7 +110,7 @@ public class UDOTreeDropTarget implements DropTargetListener {
                     udoLibrary.addCategory(parentNode, udoCategory);
 
                     dtde.dropComplete(true);
-                } catch (Exception e) {
+                } catch (UnsupportedFlavorException | IOException e) {
                     dtde.dropComplete(false);
                 }
             } else {
@@ -151,7 +154,7 @@ public class UDOTreeDropTarget implements DropTargetListener {
                 }
 
                 dtde.dropComplete(true);
-            } catch (Exception e) {
+            } catch (UnsupportedFlavorException | IOException e) {
                 dtde.dropComplete(false);
             }
         } else {
@@ -159,9 +162,11 @@ public class UDOTreeDropTarget implements DropTargetListener {
         }
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
     }
 

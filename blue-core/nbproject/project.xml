@@ -105,6 +105,7 @@
                 <package>blue.udo</package>
                 <package>blue.undo</package>
                 <package>blue.upgrades</package>
+                <package>blue.util</package>
                 <package>blue.utility</package>
             </public-packages>
         </data>

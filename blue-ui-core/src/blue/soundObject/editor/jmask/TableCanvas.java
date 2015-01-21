@@ -55,6 +55,7 @@ public class TableCanvas extends JComponent {
     public TableCanvas() {        
         lineListener = new TableModelListener() {
 
+            @Override
             public void tableChanged(TableModelEvent e) {
                 repaint();
             }
@@ -82,6 +83,7 @@ public class TableCanvas extends JComponent {
     }
             
     
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -368,15 +370,19 @@ public class TableCanvas extends JComponent {
             tableEditor.addMouseMotionListener(this);
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
         }
 
+        @Override
         public void mouseEntered(MouseEvent e) {
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
             if (table == null) {
                 return;
@@ -412,6 +418,7 @@ public class TableCanvas extends JComponent {
 
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (table == null) {
                 return;
@@ -420,6 +427,7 @@ public class TableCanvas extends JComponent {
 
         }
 
+        @Override
         public void mouseDragged(MouseEvent e) {
             if (table == null) {
                 return;
@@ -468,6 +476,7 @@ public class TableCanvas extends JComponent {
             } 
         }
 
+        @Override
         public void mouseMoved(MouseEvent e) {
             if (table == null) {
                 return;
@@ -524,6 +533,7 @@ public class TableCanvas extends JComponent {
             this.table = table;
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             if (this.table != null) {
                 super.show(invoker, x, y);

@@ -20,10 +20,22 @@
 
 package blue.soundObject.editor;
 
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.PatternObject;
+import blue.soundObject.editor.pattern.PatternCanvas;
+import blue.soundObject.editor.pattern.PatternLayerEditPanel;
+import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
+import blue.soundObject.editor.pattern.PatternScoreEditor;
+import blue.soundObject.editor.pattern.PatternTimeBar;
+import blue.soundObject.pattern.Pattern;
+import blue.ui.components.IconFactory;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -32,21 +44,12 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import blue.ui.components.IconFactory;
-import blue.soundObject.PatternObject;
-import blue.soundObject.SoundObject;
-import blue.soundObject.editor.pattern.PatternCanvas;
-import blue.soundObject.editor.pattern.PatternLayerEditPanel;
-import blue.soundObject.editor.pattern.PatternObjectPropertiesPanel;
-import blue.soundObject.editor.pattern.PatternScoreEditor;
-import blue.soundObject.editor.pattern.PatternTimeBar;
-import blue.soundObject.pattern.Pattern;
-import blue.utility.GUI;
-
 /**
  * @author Steven Yi
  */
-public class PatternEditor extends SoundObjectEditor {
+
+@ScoreObjectEditorPlugin(scoreObjectType = Pattern.class)
+public class PatternEditor extends ScoreObjectEditor {
 
     private PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
 
@@ -65,6 +68,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         layerPanel.addListSelectionListener(new ListSelectionListener() {
 
+            @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) {
                     return;
@@ -85,13 +89,14 @@ public class PatternEditor extends SoundObjectEditor {
 
         setTimeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 props.setVisible(!props.isVisible());
             }
 
         });
 
-        JScrollPane scroll = new JScrollPane(canvas);
+        final JScrollPane scroll = new JScrollPane(canvas);
 
         scroll.setColumnHeaderView(timeBar);
         scroll.setCorner(JScrollPane.UPPER_RIGHT_CORNER, setTimeButton);
@@ -119,9 +124,21 @@ public class PatternEditor extends SoundObjectEditor {
 
         this.add(mainSplitPane, BorderLayout.CENTER);
 
+        layerPanel.getViewPort().addMouseWheelListener(new MouseWheelListener() {
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if(!e.isShiftDown()) {
+                    for(MouseWheelListener listener: scroll.getMouseWheelListeners()) {
+                        listener.mouseWheelMoved(e);
+                    }
+                }
+            }
+        });
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             return;
         }
@@ -146,7 +163,7 @@ public class PatternEditor extends SoundObjectEditor {
 
         PatternEditor patternEditor = new PatternEditor();
 
-        patternEditor.editSoundObject(new PatternObject());
+        patternEditor.editScoreObject(new PatternObject());
 
         GUI.showComponentAsStandalone(patternEditor, "Pattern Editor", true);
     }

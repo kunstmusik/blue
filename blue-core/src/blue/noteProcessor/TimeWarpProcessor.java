@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,6 +15,8 @@ import electric.xml.Element;
  * 
  * @author steven
  */
+
+@NoteProcessorPlugin(displayName="TimeWarpProcessor", position = 130)
 public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
 
     private String timeWarpString = "0 60";
@@ -38,7 +41,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
         float newStart, newEnd;
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 newStart = tm.beatsToSeconds(temp.getStartTime());
                 newEnd = tm.beatsToSeconds(temp.getStartTime()
@@ -56,6 +59,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[time warp]";
     }
@@ -81,7 +85,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " 1 3 4"));
+                n.add(Note.createNote("i1 " + i + " 1 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

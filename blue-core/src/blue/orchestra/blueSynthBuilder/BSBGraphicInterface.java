@@ -37,9 +37,9 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author steven
  *
  */
-public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
+public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
 
-    ArrayList<BSBObject> interfaceItems = new ArrayList<BSBObject>();
+    ArrayList<BSBObject> interfaceItems = new ArrayList<>();
 
     UniqueNameManager nameManager = new UniqueNameManager();
 
@@ -162,7 +162,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
     public void addBSBGraphicInterfaceListener(
             BSBGraphicInterfaceListener listener) {
         if (listeners == null) {
-            listeners = new Vector<BSBGraphicInterfaceListener>();
+            listeners = new Vector<>();
         }
 
         listeners.add(listener);
@@ -177,8 +177,8 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
 
     public void fireBSBObjectAdded(BSBObject bsbObj) {
         if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter
-                    = new Vector<BSBGraphicInterfaceListener>(listeners).iterator();
+            Iterator<BSBGraphicInterfaceListener> iter =
+                    new Vector<>(listeners).iterator();
 
             while (iter.hasNext()) {
                 BSBGraphicInterfaceListener listener = iter
@@ -190,8 +190,8 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
 
     public void fireBSBObjectRemoved(BSBObject bsbObj) {
         if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter
-                    = new Vector<BSBGraphicInterfaceListener>(listeners).iterator();
+            Iterator<BSBGraphicInterfaceListener> iter =
+                    new Vector<>(listeners).iterator();
 
             while (iter.hasNext()) {
                 BSBGraphicInterfaceListener listener = (BSBGraphicInterfaceListener) iter
@@ -202,7 +202,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
     }
 
     public ArrayList<String> getNames() {
-        ArrayList<String> names = new ArrayList<String>();
+        ArrayList<String> names = new ArrayList<>();
 
         for (int i = 0; i < size(); i++) {
             BSBObject bsbObj = getBSBObject(i);
@@ -216,6 +216,7 @@ public class BSBGraphicInterface implements Serializable, UniqueNameCollection {
         return names;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

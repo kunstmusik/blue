@@ -21,6 +21,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -31,6 +32,7 @@ import java.io.Serializable;
  * @author steven
  * 
  */
+@NoteProcessorPlugin(displayName="LineAddProcessor", position = 140)
 public class LineAddProcessor implements NoteProcessor, Serializable {
 
     private String lineAddString = "0 0";
@@ -56,7 +58,7 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
         }
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 oldVal = Float.parseFloat(temp.getPField(this.pfield));
                 addVal = tm.getValueForBeat(temp.getStartTime());
@@ -80,6 +82,7 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
         }
     }
 
+    @Override
     public String toString() {
         return "[line add]";
     }
@@ -89,7 +92,7 @@ public class LineAddProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " 1 3 4"));
+                n.add(Note.createNote("i1 " + i + " 1 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

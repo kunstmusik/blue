@@ -27,7 +27,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import org.openide.util.Exceptions;
@@ -68,13 +67,15 @@ public class BlueClojureClassLoader extends DynamicClassLoader {
         }
     }
     
+    @Override
     public Class defineClass(String name, byte[] bytes, Object srcForm) {
         Util.clearCache(rq, classCache);
         Class c = defineClass(name, bytes, 0, bytes.length);
-        classCache.put(name, new SoftReference(c, rq));
+        classCache.put(name, new SoftReference<Class>(c, rq));
         return c;
     }
 
+    @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         Reference<Class> cr = classCache.get(name);
         if (cr != null) {
@@ -88,14 +89,17 @@ public class BlueClojureClassLoader extends DynamicClassLoader {
         return super.findClass(name);
     }
 
+    @Override
     public void registerConstants(int id, Object[] val) {
         constantVals.put(id, val);
     }
 
+    @Override
     public Object[] getConstants(int id) {
         return constantVals.get(id);
     }
 
+    @Override
     public void addURL(URL url) {
         super.addURL(url);
     }

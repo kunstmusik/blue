@@ -38,7 +38,7 @@ public class PythonProxy {
     private static File libDir = null;
     
     private static ArrayList<PythonProxyListener> listeners = 
-            new ArrayList<PythonProxyListener>();
+            new ArrayList<>();
 
     public static void setLibDir(File newLibDir) {
         libDir = newLibDir;

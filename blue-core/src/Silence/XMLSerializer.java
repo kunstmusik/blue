@@ -73,7 +73,7 @@ public class XMLSerializer {
             xmlSerializer.clear();
             xmlSerializer.write(printWriter, deserialized, null);
             printWriter.close();
-        } catch (Exception x) {
+        } catch (IOException | IllegalAccessException | ClassNotFoundException | InstantiationException | InvocationTargetException x) {
             x.printStackTrace();
         }
     }
@@ -98,6 +98,7 @@ public class XMLSerializer {
         /**
          * Clears all elements.
          */
+        @Override
         public void clear() {
             listsForJavaHashCodes.clear();
             super.clear();
@@ -377,27 +378,7 @@ public class XMLSerializer {
                     return readStorableFields(bufferedReader, objectToRead);
                 }
             }
-        } catch (IOException x) {
-            x.printStackTrace();
-            System.out.println("Exception reading tag: " + startTag);
-            throw x;
-        } catch (ClassNotFoundException x) {
-            x.printStackTrace();
-            System.out.println("Exception reading tag: " + startTag);
-            throw x;
-        } catch (IllegalAccessException x) {
-            x.printStackTrace();
-            System.out.println("Exception reading tag: " + startTag);
-            throw x;
-        } catch (InstantiationException x) {
-            x.printStackTrace();
-            System.out.println("Exception reading tag: " + startTag);
-            throw x;
-        } catch (InvocationTargetException x) {
-            x.printStackTrace();
-            System.out.println("Exception reading tag: " + startTag);
-            throw x;
-        } catch (StringIndexOutOfBoundsException x) {
+        } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException | StringIndexOutOfBoundsException x) {
             x.printStackTrace();
             System.out.println("Exception reading tag: " + startTag);
             throw x;
@@ -532,7 +513,7 @@ public class XMLSerializer {
 
                             try {
                                 field.set(objectToRead, fieldValue);
-                            } catch (Exception e) {
+                            } catch (                    IllegalArgumentException | IllegalAccessException e) {
                                 System.err
                                         .println("Error - Unable to set value for object");
                                 System.out.println(field + " : " + objectToRead
@@ -543,19 +524,7 @@ public class XMLSerializer {
                     }
                 }
             }
-        } catch (IOException x) {
-            System.out.println("Exception in reading storable fields: " + line
-                    + ".");
-            throw x;
-        } catch (IllegalAccessException x) {
-            System.out.println("Exception in reading storable fields: " + line
-                    + ".");
-            throw x;
-        } catch (InstantiationException x) {
-            System.out.println("Exception in reading storable fields: " + line
-                    + ".");
-            throw x;
-        } catch (ClassNotFoundException x) {
+        } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException x) {
             System.out.println("Exception in reading storable fields: " + line
                     + ".");
             throw x;

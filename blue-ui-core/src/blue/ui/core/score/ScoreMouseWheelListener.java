@@ -53,6 +53,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
         this.timeState = timeState;
     }
 
+    @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 
         int shortcutKey = BlueSystem.getMenuShortcutKey();
@@ -75,6 +76,7 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
 
             SwingUtilities.invokeLater(new Runnable() {
 
+                @Override
                 public void run() {
                     int newVal = (int) (timeVal * timeState.getPixelSecond());
 

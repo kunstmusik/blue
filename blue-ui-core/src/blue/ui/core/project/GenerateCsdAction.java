@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.ui.utilities.FileChooserManager;
@@ -42,6 +41,7 @@ public final class GenerateCsdAction implements ActionListener {
 
     private static String FILE_GEN = "blueMainFrame.generateCSD";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
         int rValue = FileChooserManager.getDefault().showSaveDialog(FILE_GEN,mainWindow);
@@ -55,15 +55,15 @@ public final class GenerateCsdAction implements ActionListener {
                 temp = new File(temp.getAbsolutePath() + ".csd");
             }
             try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new FileWriter(temp)));
-                final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
-                        data, data.getRenderStartTime(), data.
-                        getRenderEndTime(), false, false);
+                try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                             new FileWriter(temp)))) {
+                    final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
+                            data, data.getRenderStartTime(), data.
+                            getRenderEndTime(), false, false);
 
-                out.print(renderResult.getCsdText());
-                out.flush();
-                out.close();
+                    out.print(renderResult.getCsdText());
+                    out.flush();
+                }
 
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                         "message.generateScore.success") + " " + temp.getName());

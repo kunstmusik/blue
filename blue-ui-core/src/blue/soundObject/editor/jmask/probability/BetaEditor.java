@@ -168,6 +168,7 @@ private void bTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN
     private javax.swing.JComboBox bTypeComboBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         aTableEditor.setDuration(duration);
         bTableEditor.setDuration(duration);

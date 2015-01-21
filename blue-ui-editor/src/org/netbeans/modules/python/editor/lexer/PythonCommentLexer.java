@@ -87,10 +87,12 @@ public class PythonCommentLexer implements Lexer<PythonCommentTokenId> {
         }
     }
 
+    @Override
     public Object state() {
         return state;
     }
 
+    @Override
     public Token<PythonCommentTokenId> nextToken() {
         switch (state) {
         case SEEN_NAME:
@@ -218,6 +220,7 @@ public class PythonCommentLexer implements Lexer<PythonCommentTokenId> {
         }
     }
 
+    @Override
     public void release() {
     }
 }

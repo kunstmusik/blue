@@ -1,12 +1,16 @@
 package blue.ui.core.orchestra;
 
-import blue.plugin.BluePlugin;
+import blue.orchestra.Instrument;
+import blue.orchestra.editor.InstrumentEditor;
+import blue.ui.nbutilities.lazyplugin.ClassAssociationProcessor;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
-
+import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,28 +22,24 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import blue.orchestra.Instrument;
-import blue.orchestra.editor.InstrumentEditor;
-import blue.ui.core.BluePluginManager;
-import java.util.ArrayList;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public final class InstrumentEditPanel extends JComponent {
 
     JPanel editPanel = new JPanel();
 
-    HashMap<Class, Class> instrEditorMap = new HashMap<Class, Class>();
-
-    HashMap<Class, InstrumentEditor> editors = new HashMap<Class, InstrumentEditor>();
+    HashMap<Class, LazyPlugin<InstrumentEditor>> instrEditorMap = new HashMap<>();
+    HashMap<Class, InstrumentEditor> instrEditorCache = new HashMap<>();
 
     CardLayout cardLayout = new CardLayout();
 
@@ -76,14 +76,17 @@ public final class InstrumentEditPanel extends JComponent {
         editPanel.add(new JPanel(), "none");
 
         commentPane.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
             public void insertUpdate(DocumentEvent e) {
                 updateComment();
             }
 
+            @Override
             public void removeUpdate(DocumentEvent e) {
                 updateComment();
             }
 
+            @Override
             public void changedUpdate(DocumentEvent e) {
                 updateComment();
             }
@@ -97,11 +100,15 @@ public final class InstrumentEditPanel extends JComponent {
 
         setEditingLibraryObject(false);
 
-        ArrayList<BluePlugin> plugins = BluePluginManager.getInstance().getPlugins(InstrumentEditor.class);
+        List<LazyPlugin<InstrumentEditor>> plugins = 
+                LazyPluginFactory.loadPlugins("blue/instrumentEditors",
+                        InstrumentEditor.class, 
+                        new ClassAssociationProcessor("instrumentType"));
 
-        for(BluePlugin plugin : plugins) {
-            instrEditorMap.put((Class)plugin.getProperty(BluePlugin.PROP_EDIT_CLASS),
-                    plugin.getPluginClass());
+        for (LazyPlugin<InstrumentEditor> plugin : plugins) {
+
+            instrEditorMap.put((Class)plugin.getMetaData("association"), 
+                    plugin);
         }
 
     }
@@ -133,34 +140,22 @@ public final class InstrumentEditPanel extends JComponent {
         commentPane.setEnabled(true);
         commentPane.setText(instr.getComment());
 
-
         Class instrClass = instr.getClass();
-        Class instrEditorClass = null;
+        InstrumentEditor instrEditor = instrEditorCache.get(instrClass);
 
-        for(Class c : instrEditorMap.keySet()) {
-            if(c.isAssignableFrom(instrClass)) {
-                instrEditorClass = instrEditorMap.get(c);
-                break;
+        if (instrEditor == null) {
+            for (Class c : instrEditorMap.keySet()) {
+                if (c.isAssignableFrom(instrClass)) {
+                    LazyPlugin<InstrumentEditor> plugin = instrEditorMap.get(c);
+                    instrEditor = plugin.getInstance();
+                    editPanel.add(instrEditor, instrEditor.getClass().getName());
+                    break;
+                }
             }
         }
 
-        InstrumentEditor instrEditor = editors.get(instrEditorClass);
-
-        if(instrEditor == null) {
-            try {
-                instrEditor = (InstrumentEditor) instrEditorClass.newInstance();
-            } catch (InstantiationException ex) {
-                Exceptions.printStackTrace(ex);
-            } catch (IllegalAccessException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-            editors.put(instrEditorClass, instrEditor);
-            editPanel.add(instrEditor, instrEditorClass.getName());
-        } 
-
-        cardLayout.show(editPanel, instrEditor.getClass().getCanonicalName());
+        cardLayout.show(editPanel, instrEditor.getClass().getName());
         instrEditor.editInstrument(instr);
-        
     }
 
 //    public static void main(String args[]) {
@@ -180,5 +175,4 @@ public final class InstrumentEditPanel extends JComponent {
 //            }
 //        });
 //    }
-
 }

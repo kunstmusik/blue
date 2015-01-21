@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Marker implements Serializable, Comparable {
+public class Marker implements Serializable, Comparable<Marker> {
 
     private float time = 0.0f;
 
@@ -111,9 +111,7 @@ public class Marker implements Serializable, Comparable {
         listeners.remove(pcl);
     }
 
-    public int compareTo(Object arg0) {
-        Marker b = (Marker) arg0;
-
+    public int compareTo(Marker b) {
         if (this.time > b.time) {
             return 1;
         } else if (this.time < b.time) {
@@ -122,6 +120,7 @@ public class Marker implements Serializable, Comparable {
         return 0;
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

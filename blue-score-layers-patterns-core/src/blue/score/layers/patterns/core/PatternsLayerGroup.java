@@ -34,29 +34,30 @@ import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author stevenyi
  */
-public class PatternsLayerGroup implements LayerGroup {
+public class PatternsLayerGroup extends ArrayList<PatternLayer> 
+        implements LayerGroup<PatternLayer> {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
-    private ArrayList<PatternLayer> patternLayers = new ArrayList<PatternLayer>();
     private int patternBeatsLength = 4;
     private String name = "Patterns Layer Group";
     private NoteProcessorChain npc = new NoteProcessorChain();
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
@@ -75,7 +76,7 @@ public class PatternsLayerGroup implements LayerGroup {
 
     @Override
     public boolean hasSoloLayers() {
-        for (PatternLayer layer : patternLayers) {
+        for (PatternLayer layer : this) {
             if (layer.isSolo()) {
                 return true;
             }
@@ -89,7 +90,7 @@ public class PatternsLayerGroup implements LayerGroup {
         NoteList noteList = new NoteList();
 
         if (processWithSolo) {
-            for (PatternLayer patternLayer : patternLayers) {
+            for (PatternLayer patternLayer : this) {
                 if (patternLayer.isSolo()) {
                     if (!patternLayer.isMuted()) {
                         noteList.merge(patternLayer.generateForCSD(compileData,
@@ -99,7 +100,7 @@ public class PatternsLayerGroup implements LayerGroup {
                 }
             }
         } else {
-            for (PatternLayer patternLayer : patternLayers) {
+            for (PatternLayer patternLayer : this) {
                 if (!patternLayer.isMuted()) {
                     noteList.merge(patternLayer.generateForCSD(compileData,
                             startTime, endTime,
@@ -133,10 +134,10 @@ public class PatternsLayerGroup implements LayerGroup {
             Note tempNote;
 
             for (int i = 0; i < nl.size(); i++) {
-                tempNote = nl.getNote(i);
+                tempNote = nl.get(i);
 
                 if (tempNote.getStartTime() >= 0) {
-                    buffer.addNote(tempNote);
+                    buffer.add(tempNote);
                 }
             }
             retVal = buffer;
@@ -149,10 +150,10 @@ public class PatternsLayerGroup implements LayerGroup {
             Note tempNote;
 
             for (int i = 0; i < retVal.size(); i++) {
-                tempNote = retVal.getNote(i);
+                tempNote = retVal.get(i);
 
                 if (tempNote.getStartTime() <= endTime) {
-                    buffer.addNote(tempNote);
+                    buffer.add(tempNote);
                 }
             }
             retVal = buffer;
@@ -173,7 +174,7 @@ public class PatternsLayerGroup implements LayerGroup {
             Element node = nodes.next();
             String nodeName = node.getName();
 
-            if ("patternLayers".equals(nodeName)) {
+            if ("this".equals(nodeName)) {
 
                 Elements patternNodes = node.getElements();
 
@@ -182,7 +183,7 @@ public class PatternsLayerGroup implements LayerGroup {
                     Element patternNode = patternNodes.next();
 
                     if ("patternLayer".equals(patternNode.getName())) {
-                        layerGroup.patternLayers.add(PatternLayer.loadFromXML(
+                        layerGroup.add(PatternLayer.loadFromXML(
                                 patternNode));
                     }
                 }
@@ -200,9 +201,9 @@ public class PatternsLayerGroup implements LayerGroup {
         Element root = new Element("patternsLayerGroup");
         root.setAttribute("name", name);
 
-        Element patternsNode = root.addElement("patternLayers");
+        Element patternsNode = root.addElement("this");
 
-        for (PatternLayer layer : patternLayers) {
+        for (PatternLayer layer : this) {
             patternsNode.addElement(layer.saveAsXML());
         }
 
@@ -212,20 +213,21 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public Layer newLayerAt(int index) {
+    public PatternLayer newLayerAt(int index) {
 
         PatternLayer patternLayer = new PatternLayer();
 
-        if (index < 0 || index >= patternLayers.size()) {
-            patternLayers.add(patternLayer);
+        int insertIndex = index;
+        if (index < 0 || index >= this.size()) {
+            insertIndex = this.size();
+            this.add(patternLayer);
         } else {
-            patternLayers.add(index, patternLayer);
+            this.add(index, patternLayer);
         }
 
         ArrayList<Layer> layers = new ArrayList<Layer>();
         layers.add(patternLayer);
 
-        int insertIndex = patternLayers.indexOf(patternLayer);
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_ADDED, insertIndex, insertIndex, layers);
 
@@ -240,10 +242,10 @@ public class PatternsLayerGroup implements LayerGroup {
         ArrayList<Layer> layers = new ArrayList<Layer>();
 
         for (int i = endIndex; i >= startIndex; i--) {
-            PatternLayer patternLayer = patternLayers.get(i);
+            PatternLayer patternLayer = this.get(i);
             patternLayer.clearListeners();
 
-            patternLayers.remove(i);
+            this.remove(i);
 
             layers.add(patternLayer);
         }
@@ -257,8 +259,8 @@ public class PatternsLayerGroup implements LayerGroup {
 
     @Override
     public void pushUpLayers(int startIndex, int endIndex) {
-        PatternLayer a = patternLayers.remove(startIndex - 1);
-        patternLayers.add(endIndex, a);
+        PatternLayer a = this.remove(startIndex - 1);
+        this.add(endIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, startIndex - 1, endIndex);
@@ -268,8 +270,8 @@ public class PatternsLayerGroup implements LayerGroup {
 
     @Override
     public void pushDownLayers(int startIndex, int endIndex) {
-        PatternLayer a = patternLayers.remove(endIndex + 1);
-        patternLayers.add(startIndex, a);
+        PatternLayer a = this.remove(endIndex + 1);
+        this.add(startIndex, a);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
                 LayerGroupDataEvent.DATA_CHANGED, -startIndex, -(endIndex + 1));
@@ -278,18 +280,8 @@ public class PatternsLayerGroup implements LayerGroup {
     }
 
     @Override
-    public int getSize() {
-        return patternLayers.size();
-    }
-
-    @Override
-    public Layer getLayerAt(int index) {
-        return patternLayers.get(index);
-    }
-
-    @Override
     public void onLoadComplete() {
-        for (PatternLayer layer : patternLayers) {
+        for (PatternLayer layer : this) {
             SoundObject sObj = layer.getSoundObject();
 
             if (sObj instanceof OnLoadProcessable) {
@@ -334,7 +326,7 @@ public class PatternsLayerGroup implements LayerGroup {
 
     public int getMaxPattern() {
         int max = 0;
-        for (PatternLayer layer : patternLayers) {
+        for (PatternLayer layer : this) {
             if (layer.getPatternData().getMaxSelected() > max) {
                 max = layer.getPatternData().getMaxSelected();
             }

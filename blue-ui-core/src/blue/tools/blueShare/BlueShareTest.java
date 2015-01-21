@@ -9,9 +9,10 @@ package blue.tools.blueShare;
  * @version 1.0
  */
 
+import java.io.IOException;
 import java.util.Vector;
-
 import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcException;
 
 public class BlueShareTest {
 
@@ -29,7 +30,7 @@ public class BlueShareTest {
             String result = (String) xrpc.execute(
                     "blueShare.getInstrumentList", v);
             System.out.println("result: " + result);
-        } catch (Exception e) {
+        } catch (XmlRpcException | IOException e) {
             System.err.println("error...");
         }
     }

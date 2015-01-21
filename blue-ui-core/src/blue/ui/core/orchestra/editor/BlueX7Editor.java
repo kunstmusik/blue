@@ -9,12 +9,22 @@ package blue.ui.core.orchestra.editor;
  * @version 1.0
  */
 
+import blue.BlueSystem;
+import blue.orchestra.BlueX7;
+import blue.orchestra.Instrument;
+import blue.orchestra.editor.InstrumentEditor;
+import blue.plugin.InstrumentEditorPlugin;
+import blue.ui.core.orchestra.editor.blueX7.AlgorithmCommonPanel;
+import blue.ui.core.orchestra.editor.blueX7.BlueX7ImportDialog;
+import blue.ui.core.orchestra.editor.blueX7.CsoundCodePanel;
+import blue.ui.core.orchestra.editor.blueX7.EnvelopeGeneratorPanel;
+import blue.ui.core.orchestra.editor.blueX7.LFOPanel;
+import blue.ui.core.orchestra.editor.blueX7.OperatorPanel;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -27,17 +37,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import blue.BlueSystem;
-import blue.orchestra.BlueX7;
-import blue.orchestra.Instrument;
-import blue.orchestra.editor.InstrumentEditor;
-import blue.ui.core.orchestra.editor.blueX7.AlgorithmCommonPanel;
-import blue.ui.core.orchestra.editor.blueX7.BlueX7ImportDialog;
-import blue.ui.core.orchestra.editor.blueX7.CsoundCodePanel;
-import blue.ui.core.orchestra.editor.blueX7.EnvelopeGeneratorPanel;
-import blue.ui.core.orchestra.editor.blueX7.LFOPanel;
-import blue.ui.core.orchestra.editor.blueX7.OperatorPanel;
-
+@InstrumentEditorPlugin(instrumentType = BlueX7.class)
 public class BlueX7Editor extends InstrumentEditor {
     AlgorithmCommonPanel common = new AlgorithmCommonPanel();
 
@@ -64,6 +64,7 @@ public class BlueX7Editor extends InstrumentEditor {
 
     public BlueX7Editor() {
         modPitchListener = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (isUpdatingData) {
                     return;
@@ -76,6 +77,7 @@ public class BlueX7Editor extends InstrumentEditor {
         };
 
         syncListener = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isUpdatingData) {
                     return;
@@ -88,6 +90,7 @@ public class BlueX7Editor extends InstrumentEditor {
         };
 
         importButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 importFromSysex();
             }
@@ -156,6 +159,7 @@ public class BlueX7Editor extends InstrumentEditor {
         editInstrument(this.blueX7);
     }
 
+    @Override
     public void editInstrument(Instrument instr) {
         if (instr == null || !(instr instanceof BlueX7)) {
             this.blueX7 = null;
@@ -193,9 +197,4 @@ public class BlueX7Editor extends InstrumentEditor {
 //                "BlueX7 GUI Test", true);
 //        blueX7Editor1.editInstrument(new BlueX7());
 //    }
-
-    @Override
-    public Class getInstrumentClass() {
-        return BlueX7.class;
-    }
 }

@@ -19,21 +19,19 @@
  */
 package blue.ui.core.score.noteProcessorChain;
 
+import blue.noteProcessor.Code;
+import blue.soundObject.pianoRoll.Scale;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.EventObject;
 import java.util.Vector;
-
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
-
-import blue.noteProcessor.Code;
-import blue.soundObject.pianoRoll.Scale;
 
 
 class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
@@ -67,10 +65,12 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         scaleEditor.addActionListener(this);
 
         textDelegate = new EditorDelegate() {
+            @Override
             public void setValue(Object value) {
                 textField.setText((value != null) ? value.toString() : "");
             }
 
+            @Override
             public Object getValue() {
                 return textField.getText();
             }
@@ -78,10 +78,12 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
 
         scaleDelegate = new EditorDelegate() {
 
+            @Override
             public void setValue(Object val) {
                 scaleEditor.setScale((Scale) val);
             }
 
+            @Override
             public Object getValue() {
                 return scaleEditor.getScale();
             }
@@ -90,10 +92,12 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
 
         codeDelegate = new EditorDelegate() {
 
+            @Override
             public void setValue(Object val) {
                 codeEditor.setCode((Code) val);
             }
 
+            @Override
             public Object getValue() {
                 return codeEditor.getCode();
             }
@@ -107,6 +111,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      * @see javax.swing.table.TableCellEditor#getTableCellEditorComponent(javax.swing.JTable,
      *      java.lang.Object, boolean, int, int)
      */
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int row, int column) {
         editor = getCellEditorComponent(value);
@@ -162,6 +167,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      * 
      * @see javax.swing.CellEditor#cancelCellEditing()
      */
+    @Override
     public void cancelCellEditing() {
         fireEditingCanceled();
     }
@@ -171,6 +177,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      * 
      * @see javax.swing.CellEditor#stopCellEditing()
      */
+    @Override
     public boolean stopCellEditing() {
         fireEditingStopped();
         return true;
@@ -181,6 +188,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      * 
      * @see javax.swing.CellEditor#getCellEditorValue()
      */
+    @Override
     public Object getCellEditorValue() {
         if (delegate == null) {
             return null;
@@ -188,18 +196,22 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
         return delegate.getValue();
     }
 
+    @Override
     public boolean isCellEditable(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public boolean shouldSelectCell(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public void addCellEditorListener(CellEditorListener l) {
         listeners.addElement(l);
     }
 
+    @Override
     public void removeCellEditorListener(CellEditorListener l) {
         listeners.remove(l);
     }
@@ -238,6 +250,7 @@ class PropertyEditProxyEditor implements TableCellEditor, ActionListener {
      * 
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         fireEditingStopped();
     }

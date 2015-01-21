@@ -19,16 +19,14 @@
  */
 package blue.ui.core.score.noteProcessorChain;
 
+import blue.BlueSystem;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import javax.swing.JOptionPane;
-
-import blue.BlueSystem;
 
 /**
  * @author steven
@@ -36,6 +34,7 @@ import blue.BlueSystem;
 public class ScaleSelector {
 
     static FilenameFilter fileNameFilter = new FilenameFilter() {
+        @Override
         public boolean accept(File dir, String name) {
             return name.toLowerCase().endsWith(".scl");
         }

@@ -12,6 +12,5 @@ import javax.swing.JComponent;
  */
 
 public abstract class InstrumentEditor extends JComponent {
-    public abstract Class getInstrumentClass();
     public abstract void editInstrument(Instrument instr);
 }

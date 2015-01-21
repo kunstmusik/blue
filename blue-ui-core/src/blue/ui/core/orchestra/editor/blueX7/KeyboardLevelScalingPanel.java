@@ -1,20 +1,18 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.gui.LabelledRangeBar;
+import blue.gui.LabelledRangeLabelFilter;
+import blue.orchestra.blueX7.Operator;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledRangeBar;
-import blue.gui.LabelledRangeLabelFilter;
-import blue.orchestra.blueX7.Operator;
 
 /**
  * <p>
@@ -67,6 +65,7 @@ public class KeyboardLevelScalingPanel extends JComponent {
                     "A6", "A#6", "B6", "C7", "C#7", "D7", "D#7", "E7", "F7",
                     "F#7", "G7", "G#7", "A7", "A#7", "B7", "C8" };
 
+            @Override
             public String filter(int val) {
                 if (val < KbdBreakPointName.length) {
                     return KbdBreakPointName[val];
@@ -103,6 +102,7 @@ public class KeyboardLevelScalingPanel extends JComponent {
         this.add(keybardRateScaling);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 checkData();
             }
@@ -114,6 +114,7 @@ public class KeyboardLevelScalingPanel extends JComponent {
         keybardRateScaling.addChangeListener(cl);
 
         ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 checkData();
             }

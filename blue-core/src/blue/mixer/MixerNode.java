@@ -1,5 +1,6 @@
 package blue.mixer;
 
+import blue.CompileData;
 import blue.automation.Parameter;
 import blue.udo.OpcodeList;
 import blue.udo.UserDefinedOpcode;
@@ -33,7 +34,7 @@ class MixerNode {
 
     public Channel channel;
 
-    public ArrayList children = new ArrayList();
+    public List<MixerNode> children = new ArrayList<>();
 
     public boolean generatesOutSignal = true;
 
@@ -43,8 +44,9 @@ class MixerNode {
 
     public int lastPostFaderSendIndex = -1;
 
-    public ArrayList outChannelNames = null;
+    public List<String> outChannelNames = null;
 
+    @Override
     public String toString() {
         return str(0);
     }
@@ -58,8 +60,7 @@ class MixerNode {
 
         retVal.append(name).append("\n");
 
-        for (int i = 0; i < children.size(); i++) {
-            MixerNode m = (MixerNode) children.get(i);
+        for (MixerNode m : children) {
             retVal.append(m.str(depth + 2));
         }
 
@@ -94,25 +95,25 @@ class MixerNode {
      * @return
      */
 
-    public static String getMixerCode(Mixer mixer, OpcodeList udos,
+    public static String getMixerCode(CompileData data, Mixer mixer, OpcodeList udos,
             EffectManager manager, MixerNode mixerNode, int nchnls) {
 
         StrBuilder buffer = new StrBuilder();
 
-        ArrayList nodes = new ArrayList();
+        List<MixerNode> nodes = new ArrayList<>();
         flattenToList(mixerNode, nodes);
         MixerNode.sortNodesList(nodes);
 
-        HashMap inputSignalCache = new HashMap();
+        Set<String> inputSignalCache = new HashSet<>();
 
         for (int i = 0; i < nodes.size(); i++) {
-            MixerNode tempNode = (MixerNode) nodes.get(i);
+            MixerNode tempNode = nodes.get(i);
 
             // Check if subChannel has no sources and do not generate
             // anything if not
             if (mixer.isSubChannel(tempNode.channel)
                     && !mixer.hasSubChannelDependency(tempNode.name)
-                    && !inputSignalCache.containsKey(tempNode.name)) {
+                    && !inputSignalCache.contains(tempNode.name)) {
                 continue;
             }
 
@@ -122,9 +123,9 @@ class MixerNode {
 
             for (int j = 0; j < nchnls; j++) {
                 if (j == 0) {
-                    signalChannels = mixer.getVar(tempNode.channel, j);
+                    signalChannels = mixer.getVar(data, tempNode.channel, j);
                 } else {
-                    signalChannels += ", " + mixer.getVar(tempNode.channel, j);
+                    signalChannels += ", " + mixer.getVar(data, tempNode.channel, j);
                 }
 
             }
@@ -150,7 +151,7 @@ class MixerNode {
             if (tempNode.generatesOutSignal) {
 
                 // apply fader value
-                applyFader(mixer, tempNode, nchnls, buffer);
+                applyFader(data, mixer, tempNode, nchnls, buffer);
 
                 // apply post-fader effects
 
@@ -176,10 +177,10 @@ class MixerNode {
 
                     String outChannelName = tempNode.channel.getOutChannel();
 
-                    inputSignalCache.put(outChannelName, null);
+                    inputSignalCache.add(outChannelName);
 
                     for (int j = 0; j < nchnls; j++) {
-                        String channelVar = mixer.getVar(tempNode.channel, j);
+                        String channelVar = mixer.getVar(data, tempNode.channel, j);
                         String outChannelVar = Mixer.getSubChannelVar(
                                 outChannelName, j);
 
@@ -196,17 +197,17 @@ class MixerNode {
         return buffer.toString();
     }
 
-    protected static void sortNodesList(ArrayList nodes) {
+    protected static void sortNodesList(List<MixerNode> nodes) {
         /* Master Node always at end, so start with one previous */
         int topIndex = nodes.size() - 2;
 
         while (topIndex >= 1) {
             int newIndex = topIndex;
 
-            MixerNode temp = (MixerNode) nodes.get(topIndex);
+            MixerNode temp = nodes.get(topIndex);
 
             for (int i = newIndex - 1; i >= 0; i--) {
-                MixerNode temp2 = (MixerNode) nodes.get(i);
+                MixerNode temp2 = nodes.get(i);
 
                 if (temp.getOutChannelNames().contains(temp2.name)) {
                     newIndex = i;
@@ -230,23 +231,20 @@ class MixerNode {
      * @param node
      * @param channels
      */
-    protected static void flattenToList(MixerNode node, ArrayList channels) {
+    protected static void flattenToList(MixerNode node, List<MixerNode> channels) {
         flattenToList(node, channels, 0);
     }
 
-    private static void flattenToList(MixerNode node, ArrayList channels,
+    private static void flattenToList(MixerNode node, List<MixerNode> channels,
             int depthCount) {
-        for (Iterator iter = node.children.iterator(); iter.hasNext();) {
-            MixerNode child = (MixerNode) iter.next();
+        for (MixerNode child : node.children) { 
 
             if (child.children.size() > 0) {
                 flattenToList(child, channels, depthCount + 1);
             }
         }
 
-        for (Iterator iter = node.children.iterator(); iter.hasNext();) {
-            MixerNode child = (MixerNode) iter.next();
-
+        for (MixerNode child : node.children) { 
             channels.add(child);
         }
 
@@ -264,7 +262,7 @@ class MixerNode {
      * @return
      */
     protected static boolean isValidOut(String channelName,
-            HashMap<String, Channel> subChannelCache) {
+            Map<String, Channel> subChannelCache) {
         if (channelName.equals(Channel.MASTER)) {
             return true;
         }
@@ -273,8 +271,8 @@ class MixerNode {
 
         Send[] sends = channel.getPreFaderSends();
 
-        for (int i = 0; i < sends.length; i++) {
-            if (isValidOut(sends[i].getSendChannel(), subChannelCache)) {
+        for (Send send : sends) {
+            if (isValidOut(send.getSendChannel(), subChannelCache)) {
                 return true;
             }
         }
@@ -283,8 +281,8 @@ class MixerNode {
 
             Send[] postSends = channel.getPostFaderSends();
 
-            for (int i = 0; i < postSends.length; i++) {
-                if (isValidOut(postSends[i].getSendChannel(), subChannelCache)) {
+            for (Send postSend : postSends) {
+                if (isValidOut(postSend.getSendChannel(), subChannelCache)) {
                     return true;
                 }
             }
@@ -298,7 +296,7 @@ class MixerNode {
     }
 
     protected static int indexOfLastValidSend(EffectsChain chain,
-            HashMap validOutCache) {
+            Map<String, Boolean> validOutCache) {
 
         int index = -1;
 
@@ -312,9 +310,9 @@ class MixerNode {
                     index = i;
                 } else {
 
-                    Boolean valid = (Boolean) validOutCache.get(send
+                    Boolean valid = validOutCache.get(send
                             .getSendChannel());
-                    if (valid.booleanValue()) {
+                    if (valid) {
                         index = i;
                     }
                 }
@@ -324,7 +322,7 @@ class MixerNode {
         return index;
     }
 
-    private static void applyFader(Mixer mixer, MixerNode node, int nchnls,
+    private static void applyFader(CompileData data, Mixer mixer, MixerNode node, int nchnls,
             StrBuilder buffer) {
         String modifier = null;
 
@@ -358,7 +356,7 @@ class MixerNode {
 
         if (modifier != null) {
             for (int i = 0; i < nchnls; i++) {
-                String sig = mixer.getVar(node.channel, i);
+                String sig = mixer.getVar(data, node.channel, i);
                 buffer.append(sig).append(" = ");
                 buffer.append(sig).append(" * ");
                 buffer.append(modifier).append("\n");
@@ -368,7 +366,7 @@ class MixerNode {
 
     private static void applyEffects(EffectsChain chain, OpcodeList udos,
             EffectManager manager, String signalChannels, StrBuilder buffer,
-            final int lastSendIndex, HashMap inputSignalCache) {
+            final int lastSendIndex, Set<String> inputSignalCache) {
 
         int lastIndex = lastSendIndex;
 
@@ -409,7 +407,7 @@ class MixerNode {
                     String[] parts = signalChannels.split(",");
                     String sendChannelName = send.getSendChannel();
 
-                    inputSignalCache.put(sendChannelName, null);
+                    inputSignalCache.add(sendChannelName);
 
                     for (int j = 0; j < parts.length; j++) {
 
@@ -450,7 +448,7 @@ class MixerNode {
         return NumberUtilities.formatFloat(multiplier);
     }
 
-    private static void configureNode(MixerNode node, HashMap validOutCache) {
+    private static void configureNode(MixerNode node, Map<String, Boolean> validOutCache) {
 
         boolean hasOutSignal = hasOutSignal(node.channel);
 
@@ -469,7 +467,7 @@ class MixerNode {
         if (outChannel.equals(Channel.MASTER)) {
             node.outChannelValid = true;
         } else {
-            Boolean valid = (Boolean) validOutCache.get(outChannel);
+            Boolean valid = validOutCache.get(outChannel);
             if (valid == null) {
                 System.err.println("ERROR: " + node.channel.getName() + " : "
                         + outChannel);
@@ -501,33 +499,32 @@ class MixerNode {
         masterNode.channel = mixer.getMaster();
         masterNode.name = Channel.MASTER;
 
-        HashMap validOutCache = getValidOutCache(mixer);
+        Map<String, Boolean> validOutCache = getValidOutCache(mixer);
 
         attachChildren(mixer, masterNode, validOutCache);
 
         return masterNode;
     }
 
-    protected static HashMap getValidOutCache(Mixer mixer) {
-        HashMap<String, Channel> subChannelCache = mixer.getSubChannelCache();
+    protected static Map<String, Boolean> getValidOutCache(Mixer mixer) {
+        Map<String, Channel> subChannelCache = mixer.getSubChannelCache();
 
-        HashMap validOutCache = new HashMap();
+        Map<String, Boolean> validOutCache = new HashMap<>();
 
         for (int i = 0; i < mixer.getSubChannels().size(); i++) {
             Channel subChannel = mixer.getSubChannel(i);
 
             boolean valid = isValidOut(subChannel.getName(), subChannelCache);
 
-            validOutCache.put(subChannel.getName(), Boolean.valueOf(valid));
+            validOutCache.put(subChannel.getName(), valid);
         }
 
         return validOutCache;
     }
 
     private static void attachChildren(final Mixer mixer, MixerNode node,
-            HashMap validOutCache) {
-        for (int i = 0; i < mixer.getChannels().size(); i++) {
-            Channel c = mixer.getChannels().getChannel(i);
+            Map<String, Boolean> validOutCache) {
+        for (Channel c : mixer.getAllSourceChannels()) {
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();
@@ -541,10 +538,9 @@ class MixerNode {
             }
         }
 
-        ArrayList temp = new ArrayList();
+        List<MixerNode> temp = new ArrayList<>();
 
-        for (int i = 0; i < mixer.getSubChannels().size(); i++) {
-            Channel c = mixer.getSubChannels().getChannel(i);
+        for (Channel c : mixer.getSubChannels()) {
 
             if (c.getOutChannel().equals(node.name)) {
                 MixerNode m = new MixerNode();
@@ -560,11 +556,9 @@ class MixerNode {
         }
 
         if (temp.size() > 0) {
-            Collections.sort(temp, new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    MixerNode node1 = (MixerNode) o1;
-                    MixerNode node2 = (MixerNode) o2;
-
+            Collections.sort(temp, new Comparator<MixerNode>() {
+                @Override
+                public int compare(MixerNode node1, MixerNode node2) {
                     if (mixer.sendsTo(node1.channel, node2.channel)) {
                         return -1;
                     } else if (mixer.sendsTo(node2.channel, node1.channel)) {
@@ -581,28 +575,26 @@ class MixerNode {
 
     }
 
-    public ArrayList getOutChannelNames() {
+    public List<String> getOutChannelNames() {
         if (outChannelNames == null) {
-            outChannelNames = new ArrayList();
+            outChannelNames = new ArrayList<>();
 
             Send[] preSends = this.channel.getPreFaderSends();
 
-            for (int i = 0; i < preSends.length; i++) {
-                String name = preSends[i].getSendChannel();
-
-                if (!outChannelNames.contains(name)) {
-                    outChannelNames.add(name);
+            for (Send preSend : preSends) {
+                String sendName = preSend.getSendChannel();
+                if (!outChannelNames.contains(sendName)) {
+                    outChannelNames.add(sendName);
                 }
             }
 
             if (generatesOutSignal) {
                 Send[] postSends = this.channel.getPostFaderSends();
 
-                for (int i = 0; i < postSends.length; i++) {
-                    String name = postSends[i].getSendChannel();
-
-                    if (!outChannelNames.contains(name)) {
-                        outChannelNames.add(name);
+                for (Send postSend : postSends) {
+                    String sendName = postSend.getSendChannel();
+                    if (!outChannelNames.contains(sendName)) {
+                        outChannelNames.add(sendName);
                     }
                 }
 

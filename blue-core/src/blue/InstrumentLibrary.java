@@ -42,7 +42,7 @@ public class InstrumentLibrary implements Serializable, TreeModel {
 
     InstrumentCategory rootInstrumentCategory = new InstrumentCategory();
 
-    transient Vector<TreeModelListener> listeners = new Vector<TreeModelListener>();
+    transient Vector<TreeModelListener> listeners = new Vector<>();
 
     public InstrumentLibrary() {
         this.rootInstrumentCategory.setRoot(true);

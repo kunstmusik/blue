@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.layers;
 
+import java.awt.Rectangle;
 import javax.swing.JComponent;
 
 /**
@@ -27,4 +28,5 @@ import javax.swing.JComponent;
  */
 public interface SelectionMarquee {
     public boolean intersects(JComponent comp);
+    public Rectangle getTranslatedRect(JComponent comp);
 }

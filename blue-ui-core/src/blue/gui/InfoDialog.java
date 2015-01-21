@@ -20,6 +20,9 @@
 
 package blue.gui;
 
+import blue.components.CaretPositionDisplayLabel;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,7 +30,6 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -36,10 +38,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
-
-import blue.components.CaretPositionDisplayLabel;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.GUI;
 import org.openide.windows.WindowManager;
 
 /**
@@ -121,6 +119,7 @@ public class InfoDialog {
 
             popup.add(new AbstractAction("Remove") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     int index = tabs.getSelectedIndex();
                     if (index >= 0) {
@@ -136,6 +135,7 @@ public class InfoDialog {
 
             tabs.addMouseListener(new MouseAdapter() {
 
+                @Override
                 public void mousePressed(MouseEvent e) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(tabs, e.getX(), e.getY());

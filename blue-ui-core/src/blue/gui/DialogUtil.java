@@ -23,7 +23,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -35,7 +34,7 @@ public class DialogUtil {
 
     private static int counter = 0;
 
-    private static ArrayList<JDialog> dialogs = new ArrayList<JDialog>();
+    private static ArrayList<JDialog> dialogs = new ArrayList<>();
 
     private static JMenuBar menuBar = null;
 
@@ -96,6 +95,7 @@ public class DialogUtil {
                         dialog.getRootPane().getActionMap().put(key,
                                 new AbstractAction() {
 
+                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         menuItem.doClick();
 

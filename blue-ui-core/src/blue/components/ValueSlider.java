@@ -199,6 +199,7 @@ public class ValueSlider extends JSlider {
 
         slider.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 System.out.println(slider.getFloat());
 
@@ -216,6 +217,7 @@ public class ValueSlider extends JSlider {
         // The application will exit when this frame is closed.
         frame.addWindowListener(new java.awt.event.WindowAdapter() {
 
+            @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
                 System.exit(0);
             }

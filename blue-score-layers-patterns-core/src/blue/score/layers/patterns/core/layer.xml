@@ -4,19 +4,70 @@
     
     <folder name="blue">
         
-<!--        <folder name="pluginProviders">
-            <file name="blue-score-layers-patterns-core-PatternsPluginProvider.instance">
-                <attr name="position" intvalue="30"/>
-            </file>
-        </folder>-->
-        
         <folder name="score">
             <folder name="layers">
                 <file name="blue-score-layers-patterns-core-PatternsLayerGroupProvider.instance">
                     <attr name="position" intvalue="100"/>
                 </file>
+
+
+                <folder name="patterns">
+                    <folder name="soundObjects">
+
+
+                        <file name="blue-soundObject-External.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-External.instance"/>
+                            <attr name="position" intvalue="100"/>
+                        </file>
+
+                        <file name="blue-soundObject-GenericScore.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-GenericScore.instance"/>
+                            <attr name="position" intvalue="200"/>
+                        </file>
+
+                        <file name="blue-soundObject-ObjectBuilder.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-ObjectBuilder.instance"/>
+                            <attr name="position" intvalue="300"/>
+                        </file>
+
+                        <file name="blue-soundObject-PatternObject.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-PatternObject.instance"/>
+                            <attr name="position" intvalue="400"/>
+                        </file>
+
+                        <file name="blue-soundObject-PianoRoll.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-PianoRoll.instance"/>
+                            <attr name="position" intvalue="500"/>
+                        </file>
+
+                        <file name="blue-soundObject-PythonObject.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-PythonObject.instance"/>
+                            <attr name="position" intvalue="600"/>
+                        </file>
+
+                        <file name="blue-soundObject-RhinoObject.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-RhinoObject.instance"/>
+                            <attr name="position" intvalue="700"/>
+                        </file>
+
+                        <file name="blue-soundObject-TrackerObject.shadow">
+                            <attr name="originalFile" 
+                                  stringvalue="blue/score/soundObjects/blue-soundObject-TrackerObject.instance"/>
+                            <attr name="position" intvalue="800"/>
+                        </file>
+
+                    </folder>
+                </folder>
             </folder>
         </folder>
+
     </folder>    
     
 </filesystem>

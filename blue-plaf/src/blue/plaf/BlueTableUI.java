@@ -24,6 +24,7 @@ import javax.swing.plaf.basic.BasicTableUI;
 
 public class BlueTableUI extends BasicTableUI {
 
+    @Override
     public void installUI(JComponent c) {
         // TODO Auto-generated method stub
         super.installUI(c);

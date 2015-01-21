@@ -3,30 +3,27 @@ package blue.ui.core.script.jython.console;
 import blue.BlueSystem;
 import blue.scripting.PythonProxy;
 import blue.scripting.PythonProxyListener;
+import blue.ui.core.script.jython.console.streams.ConsoleInputStream;
+import blue.ui.core.script.jython.console.streams.ConsoleOutputStream;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.Reader;
 import java.io.Writer;
-
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-
 import org.python.core.PyException;
 import org.python.util.InteractiveInterpreter;
-
-import blue.ui.core.script.jython.console.streams.ConsoleInputStream;
-import blue.ui.core.script.jython.console.streams.ConsoleOutputStream;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 /**
  * Code used from http://www.javaprogrammingforums.com/java-swing-tutorials/4907-java-tip-jul-29-2010-swing-console-component.html

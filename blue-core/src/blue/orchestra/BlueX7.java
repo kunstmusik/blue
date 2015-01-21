@@ -5,6 +5,7 @@ import blue.orchestra.blueX7.AlgorithmCommonData;
 import blue.orchestra.blueX7.EnvelopePoint;
 import blue.orchestra.blueX7.LFOData;
 import blue.orchestra.blueX7.Operator;
+import blue.plugin.InstrumentPlugin;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
@@ -34,6 +35,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "BlueX7", position = 40)
 public class BlueX7 extends AbstractInstrument implements Serializable {
 
     private static final String BLUEX7_HAS_BEEN_COMPILED = "blueX7.hasStaticTablesBeenCompiled";
@@ -293,15 +295,14 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         StrBuilder buffer = new StrBuilder();
 
         try {
-            // System.out.println("algText: dx7" + algNum + ".orc");
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    this.getClass().getClassLoader().getResourceAsStream(
-                            "blue/resources/blueX7/dx7" + algNum + ".orc")));
-            String line;
-            while ((line = br.readLine()) != null) {
-                buffer.append(line).append("\n");
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                         this.getClass().getClassLoader().getResourceAsStream(
+                                 "blue/resources/blueX7/dx7" + algNum + ".orc")))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    buffer.append(line).append("\n");
+                }
             }
-            br.close();
 
         } catch (IOException ioe) {
             System.err.println("[error] BlueX7::generateInstrument");
@@ -372,6 +373,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         return instrText;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

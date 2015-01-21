@@ -20,7 +20,6 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.utility.TextUtilities;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 

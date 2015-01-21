@@ -12,6 +12,58 @@ information.
 
 [CHANGE LOG]
 
+> Notes for 2.6.x<
+[release 2014.xx.xx]
+
+NEW
+
+* AudioLayers:   
+
+* Added link to Csound FLOSS Manual from Help Menu
+
+UPDATED
+
+* restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
+  cluster removed dependency on debugger module
+
+* Made using trackpad or scroll wheel on layer panels (left-hand side) scroll  
+  both the layer panels and the main content areas (implemented in main Score
+  editor, PatternsObject editor) 
+
+* Modified URL that is opened for "Report a Bug" and "Request a Feature" links
+  from the Help menu to go to the issue tracker at GitHub 
+  (http://www.github.com/kunstmusik/blue/issues)
+
+* Mixer: Reworked layout of channel panels to be more compact
+
+FIX
+
+* Redid font/theme handling so that --fontsize flag is respected (can be given
+  at commandline or put into blue/etc/blue.conf)
+
+* Fixed issue where after adding a new layer to a LayerGroup, if multiple empty
+  layers existed, the new layer would not function properly to show score object
+  changes 
+
+* Prevent resizing of Score Objects from left-hand side to have 0 duration when
+  snap is enabled
+
+* Issue #250 - setting minimum and maximum for BSB Knobs did not update the knob
+  view location when using truncate option
+
+* Audited score timeline actions for undoability
+
+* Issue #258 - fixed "Follow the Leader" ScoreObject action
+
+INTERNAL
+
+* Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
+  @InstrumentPlugin, @NoteProcessorPlugin)
+
+* Refactored all ScoreTimeline actions into separate Action classes; shortcut 
+  registration now done declaratively 
+
+
 >Notes for 2.5.14<
 [release 2014.05.13]
 
@@ -94,11 +146,10 @@ NEW
 * Examples: 
  
   * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
-	Example of using nGen from Blue (contributed by Menno Knevel)
+	  Example of using nGen from Blue (contributed by Menno Knevel)
 
   * Updated AthenaCL examples in soundObjects folder 
     (contributed by Menno Knevel)
-
 
 UPDATED
 

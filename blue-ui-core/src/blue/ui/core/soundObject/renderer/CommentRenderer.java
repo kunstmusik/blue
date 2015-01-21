@@ -1,16 +1,16 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
+import blue.soundObject.Comment;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.utilities.BlueGradientFactory;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-
-import blue.soundObject.Comment;
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import blue.ui.utilities.BlueGradientFactory;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -20,6 +20,7 @@ import blue.ui.utilities.BlueGradientFactory;
  * @version 1.0
  */
 
+@BarRendererPlugin(scoreObjectType = Comment.class)
 public class CommentRenderer implements BarRenderer {
     private static Font renderFont = new Font("Dialog", Font.ITALIC, 12);
 
@@ -41,6 +42,7 @@ public class CommentRenderer implements BarRenderer {
 
     protected static Color normalFontColor = Color.white;
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
         Graphics2D g = (Graphics2D) graphics;
@@ -101,10 +103,8 @@ public class CommentRenderer implements BarRenderer {
         }
     }
 
+    @Override
     public void cleanup(SoundObjectView sObjView) {
     }
 
-    public Class getSoundObjectClass() {
-        return Comment.class;
-    }
 }

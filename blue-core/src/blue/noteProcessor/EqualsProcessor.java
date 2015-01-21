@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -14,6 +15,7 @@ import electric.xml.Element;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="EqualsProcessor", position = 110)
 public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
 
     String value = "2.0";
@@ -23,6 +25,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
     public EqualsProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[add] pfield: " + pfield + " value: " + value;
         return "[equals]";
@@ -53,7 +56,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
         Note temp;
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 if (this.pfield == 3) {
                     // set the subjectiveDuration to the value
@@ -80,7 +83,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

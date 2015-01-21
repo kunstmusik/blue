@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -16,6 +17,7 @@ import java.io.Serializable;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="RandomAddProcessor", position = 40)
 public class RandomAddProcessor implements NoteProcessor, Serializable {
 
     int pfield = 4;
@@ -27,6 +29,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
     public RandomAddProcessor() {
     }
 
+    @Override
     public String toString() {
         return "[random add]";
     }
@@ -62,7 +65,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
         float fieldVal = 0f;
 
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
             try {
                 fieldVal = Float.parseFloat(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
@@ -87,13 +90,16 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("pfield")) {
-                rap.setPfield(node.getTextString());
-            } else if (node.getName().equals("min")) {
-                rap.setMin(node.getTextString());
-            } else if (node.getName().equals("max")) {
-                rap.setMax(node.getTextString());
+            switch (node.getName()) {
+                case "pfield":
+                    rap.setPfield(node.getTextString());
+                    break;
+                case "min":
+                    rap.setMin(node.getTextString());
+                    break;
+                case "max":
+                    rap.setMax(node.getTextString());
+                    break;
             }
         }
 
@@ -121,7 +127,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

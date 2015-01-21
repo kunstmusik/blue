@@ -22,8 +22,8 @@ package blue.soundObject;
 
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
+import blue.score.ScoreObject;
 import electric.xml.Element;
-import java.awt.Color;
 import java.util.Map;
 
 /**
@@ -49,7 +49,7 @@ import java.util.Map;
  * 
  * 
  */
-public interface SoundObject {
+public interface SoundObject extends ScoreObject {
 
     /**
      * SoundObject does not support applying time behaviors and is assumed to
@@ -121,41 +121,6 @@ public interface SoundObject {
     public NoteList generateForCSD(CompileData compileData, float startTime, 
             float endTime) throws SoundObjectException;
     
-    /**
-     * Sets the name of the SoundObject.
-     */
-    public void setName(String name);
-
-    /**
-     * Gets the name of the SoundObject;
-     */
-    public String getName();
-
-    /**
-     * Sets the start time of the SoundObject.
-     */
-    public void setStartTime(float startTime);
-
-    /**
-     * Gets the start time of the SoundObject.
-     */
-    public float getStartTime();
-
-    /**
-     * Sets the subjective duration of the SoundObject.
-     * 
-     * The subjective duration of the soundObject is the amount of time a
-     * SoundObject is assigned to last, irregardless of its contents.
-     */
-    public void setSubjectiveDuration(float subjectDuration);
-
-    /**
-     * Gets the subjective duration of the SoundObject.
-     * 
-     * The subjective duration of the soundObject is the amount of time a
-     * SoundObject is assigned to last, irregardless of its contents.
-     */
-    public float getSubjectiveDuration();
 
     /**
      * Gets the objective duration of the SoundObject.
@@ -178,11 +143,6 @@ public interface SoundObject {
      * For these SoundObjects you can return null here.
      */
     public float getObjectiveDuration();
-
-    /**
-     * Returns a close of this SoundObject.
-     */
-    public Object clone();
 
     /**
      * Returns a blue.soundObject.renderer.BarRenderer which renders the
@@ -223,31 +183,8 @@ public interface SoundObject {
      */
     public void setNoteProcessorChain(NoteProcessorChain chain);
 
-    /**
-     * Adds a SoundObjectListener to this SoundObject
-     * 
-     * @param listener
-     */
-    public void addSoundObjectListener(SoundObjectListener listener);
 
-    /**
-     * Removes a SoundObjectListener to this Soundobject
-     * 
-     * @param listener
-     */
-    public void removeSoundObjectListener(SoundObjectListener listener);
-
-    /**
-     * Gets background color for SoundObject
-     * 
-     * @return
-     */
-    public Color getBackgroundColor();
-
-    /**
-     * Sets background color for SoundObject
-     * 
-     * @param color
-     */
-    public void setBackgroundColor(Color color);
+    @Override
+    public SoundObject clone();
+    
 }

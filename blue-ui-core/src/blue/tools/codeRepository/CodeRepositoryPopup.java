@@ -20,14 +20,12 @@
 
 package blue.tools.codeRepository;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-
 import blue.BlueSystem;
 import blue.settings.GeneralSettings;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
     CodeRepositoryDialog repository;
@@ -63,6 +61,7 @@ class CodeRepositoryPopup extends JPopupMenu implements ActionListener {
         this.add(removeCode);
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == addGroup) {
             ElementHolder elem = new ElementHolder();

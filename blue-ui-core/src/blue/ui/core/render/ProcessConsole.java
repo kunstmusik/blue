@@ -20,26 +20,24 @@
 package blue.ui.core.render;
 
 import blue.BlueData;
+import blue.BlueSystem;
+import blue.automation.Parameter;
+import blue.event.PlayModeListener;
+import blue.noteProcessor.TempoMapper;
+import blue.score.ScoreGenerationException;
+import blue.services.render.CSDRenderService;
+import blue.services.render.CsdRenderResult;
+import blue.services.render.DiskRenderJob;
+import blue.services.render.DiskRenderService;
 import blue.services.render.RenderTimeManager;
+import blue.utility.FileUtilities;
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-
-
-//import blue.BlueMainFrame;
-import blue.BlueSystem;
-import blue.automation.Parameter;
-import blue.event.PlayModeListener;
-import blue.noteProcessor.TempoMapper;
-import blue.services.render.CSDRenderService;
-import blue.services.render.CsdRenderResult;
-import blue.services.render.DiskRenderJob;
-import blue.services.render.DiskRenderService;
-import blue.utility.FileUtilities;
-import java.awt.Color;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.openide.windows.IOColors;
@@ -67,7 +65,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
     transient public Process process = null;
     String commandLine = null;
     transient PrintWriter stdin = null;
-    ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
+    ArrayList<PlayModeListener> listeners = new ArrayList<>();
     StringBuffer buffer = null;
     private int lastExitValue = 0;
 
@@ -166,7 +164,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
             process.waitFor();
             destroy(true, true);
 
-        } catch (Exception e) {
+        } catch (ScoreGenerationException | IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -174,7 +172,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
     public static String[] splitCommandString(String in) {
         int mode = 0;
 
-        ArrayList<String> parts = new ArrayList<String>();
+        ArrayList<String> parts = new ArrayList<>();
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < in.length(); i++) {
@@ -474,6 +472,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
             this.reader = reader;
         }
 
+        @Override
         public void run() {
             float time;
 
@@ -509,10 +508,8 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
                     yield();
                 }
 
-            } catch (IOException e) {
+            } catch (    IOException | NullPointerException e) {
                 // e.printStackTrace ();
-            } catch (NullPointerException npe) {
-                // eat it
             }
 
             isCollecting = false;

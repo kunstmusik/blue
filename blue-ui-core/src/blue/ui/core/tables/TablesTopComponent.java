@@ -2,7 +2,6 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package blue.ui.core.tables;
 
 import blue.Tables;
@@ -14,66 +13,92 @@ import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.Utilities;
 
-/**
- * Top component which displays something.
- */
-final class TablesTopComponent extends TopComponent {
+@ConvertAsProperties(
+        dtd = "-//blue.ui.core.tables//Tables//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "TablesTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = true,
+        position = 400)
+@ActionID(category = "Window", id = "blue.ui.core.tables.TablesTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1350),
+    @ActionReference(path = "Shortcuts",
+            name = "D-4")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_TablesAction",
+        preferredID = "TablesTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_TablesAction=Tables",
+    "CTL_TablesTopComponent=Tables",
+    "HINT_TablesTopComponent=This is a Tables window"
+})
+public final class TablesTopComponent extends TopComponent {
 
     private static TablesTopComponent instance;
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    
-    private MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent("text/x-csound-sco");
-
-    private static final String PREFERRED_ID = "TablesTopComponent";
+    private MimeTypeEditorComponent tablesText = new MimeTypeEditorComponent(
+            "text/x-csound-sco");
 
     private Tables tables = null;
-    
+
     UndoManager undo = new UndoRedo.Manager();
 
     private TablesTopComponent() {
         initComponents();
-        setName(NbBundle.getMessage(TablesTopComponent.class, "CTL_TablesTopComponent"));
-        setToolTipText(NbBundle.getMessage(TablesTopComponent.class, "HINT_TablesTopComponent"));
+        setName(NbBundle.getMessage(TablesTopComponent.class,
+                "CTL_TablesTopComponent"));
+        setToolTipText(NbBundle.getMessage(TablesTopComponent.class,
+                "HINT_TablesTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                new PropertyChangeListener() {
 
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
-                    tables = null;
-                    reinitialize();
-                }
-            }
-        });
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (BlueProjectManager.CURRENT_PROJECT.equals(
+                                evt.getPropertyName())) {
+                            tables = null;
+                            reinitialize();
+                        }
+                    }
+                });
 
         reinitialize();
 
-        tablesText.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        tablesText.getDocument().addDocumentListener(
+                new SimpleDocumentListener() {
 
-            @Override
-            public void documentChanged(DocumentEvent e) {
-                if (tables != null) {
-                    tables.setTables(tablesText.getText());
-                }
-            }
-        });
-        
+                    @Override
+                    public void documentChanged(DocumentEvent e) {
+                        if (tables != null) {
+                            tables.setTables(tablesText.getText());
+                        }
+                    }
+                });
+
         tablesText.setUndoManager(undo);
         tablesText.getDocument().addUndoableEditListener(undo);
-        this.add(tablesText,BorderLayout.CENTER);
+        this.add(tablesText, BorderLayout.CENTER);
     }
 
-     private void reinitialize() {
+    private void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         if (project == null) {
             tablesText.setText("");
@@ -87,10 +112,10 @@ final class TablesTopComponent extends TopComponent {
         undo.discardAllEdits();
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -101,40 +126,11 @@ final class TablesTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
-     */
     public static synchronized TablesTopComponent getDefault() {
         if (instance == null) {
             instance = new TablesTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the TablesTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized TablesTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(TablesTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof TablesTopComponent) {
-            return (TablesTopComponent) win;
-        }
-        Logger.getLogger(TablesTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -147,15 +143,20 @@ final class TablesTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
-    /** replaces this in object stream */
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
+    }
+
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
+    }
+
+    /**
+     * replaces this in object stream
+     */
     @Override
     public Object writeReplace() {
         return new ResolvableHelper();
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 
     final static class ResolvableHelper implements Serializable {

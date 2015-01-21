@@ -23,21 +23,18 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.Instance;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin(scoreObjectType = Instance.class)
 public class InstanceRenderer extends LetterRenderer {
 
     public InstanceRenderer() {
         super("I");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return Instance.class;
     }
 
 }

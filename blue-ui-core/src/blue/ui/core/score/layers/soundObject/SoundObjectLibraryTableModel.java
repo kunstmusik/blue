@@ -19,11 +19,10 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
-import javax.swing.table.AbstractTableModel;
-
 import blue.BlueSystem;
 import blue.SoundObjectLibrary;
 import blue.soundObject.SoundObject;
+import javax.swing.table.AbstractTableModel;
 
 class SoundObjectLibraryTableModel extends AbstractTableModel {
 
@@ -42,6 +41,7 @@ class SoundObjectLibraryTableModel extends AbstractTableModel {
         this.sObjLib = sObjLib;
     }
 
+    @Override
     public String getColumnName(int i) {
         switch (i) {
             case 0:
@@ -54,10 +54,12 @@ class SoundObjectLibraryTableModel extends AbstractTableModel {
         return BlueSystem.getString("message.error");
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int column) {
         if (sObjLib == null) {
             return null;
@@ -79,10 +81,12 @@ class SoundObjectLibraryTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         return sObjLib.size();
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         if (c == 0) {
             return true;
@@ -90,6 +94,7 @@ class SoundObjectLibraryTableModel extends AbstractTableModel {
         return false;
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 0) {
             try {

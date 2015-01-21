@@ -140,7 +140,7 @@ public class TimeState implements Serializable, Cloneable {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector<PropertyChangeListener>();
+            listeners = new Vector<>();
         }
 
         listeners.add(pcl);
@@ -167,18 +167,23 @@ public class TimeState implements Serializable, Cloneable {
 
             String nodeName = e.getName();
             final String nodeText = e.getTextString();
-
-            if (nodeName.equals("pixelSecond")) {
-                timeState.pixelSecond = Integer.parseInt(nodeText);
-            } else if (nodeName.equals("snapEnabled")) {
-                timeState.snapEnabled = Boolean.valueOf(nodeText).
-                        booleanValue();
-            } else if (nodeName.equals("snapValue")) {
-                timeState.snapValue = Float.parseFloat(nodeText);
-            } else if (nodeName.equals("timeDisplay")) {
-                timeState.timeDisplay = Integer.parseInt(nodeText);
-            } else if (nodeName.equals("timeUnit")) {
-                timeState.timeUnit = Integer.parseInt(nodeText);
+            switch (nodeName) {
+                case "pixelSecond":
+                    timeState.pixelSecond = Integer.parseInt(nodeText);
+                    break;
+                case "snapEnabled":
+                    timeState.snapEnabled = Boolean.valueOf(nodeText).
+                            booleanValue();
+                    break;
+                case "snapValue":
+                    timeState.snapValue = Float.parseFloat(nodeText);
+                    break;
+                case "timeDisplay":
+                    timeState.timeDisplay = Integer.parseInt(nodeText);
+                    break;
+                case "timeUnit":
+                    timeState.timeUnit = Integer.parseInt(nodeText);
+                    break;
             }
         }
         

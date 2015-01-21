@@ -20,9 +20,8 @@
 
 package blue.tools.blueShare.instruments;
 
-import javax.swing.table.AbstractTableModel;
-
 import blue.BlueSystem;
+import javax.swing.table.AbstractTableModel;
 
 /**
  * @author steven
@@ -47,6 +46,7 @@ final class InstrumentManagementTableModel extends AbstractTableModel {
         return iOptions[index];
     }
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return BlueSystem.getString("propertyEditor.name");
@@ -56,10 +56,12 @@ final class InstrumentManagementTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         if (iOptions == null) {
             return null;
@@ -70,6 +72,7 @@ final class InstrumentManagementTableModel extends AbstractTableModel {
         return iOptions[row].getCategory();
     }
 
+    @Override
     public int getRowCount() {
         if (iOptions == null) {
             return 0;
@@ -77,10 +80,12 @@ final class InstrumentManagementTableModel extends AbstractTableModel {
         return iOptions.length;
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         return String.class;
     }

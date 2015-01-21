@@ -19,6 +19,7 @@
  */
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.utility.GUI;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -33,7 +34,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -42,8 +42,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.utility.GUI;
 
 /**
  * @author steven
@@ -82,6 +80,7 @@ public class FloatSlider extends JComponent {
 
         thumb.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentMoved(ComponentEvent e) {
                 if (!updatingValue && thumb.isEditingValue()) {
                     updateValue();
@@ -92,6 +91,7 @@ public class FloatSlider extends JComponent {
 
         this.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 updateThumb();
                 repaint();
@@ -100,6 +100,7 @@ public class FloatSlider extends JComponent {
 
         this.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 int x = e.getX();
                 int y = e.getY();
@@ -131,6 +132,7 @@ public class FloatSlider extends JComponent {
         thumb.setLocation(newX, newY);
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -216,6 +218,7 @@ public class FloatSlider extends JComponent {
     /**
      * @return Returns the name.
      */
+    @Override
     public String getName() {
         return name;
     }
@@ -224,6 +227,7 @@ public class FloatSlider extends JComponent {
      * @param name
      *            The name to set.
      */
+    @Override
     public void setName(String name) {
         this.name = name;
     }
@@ -309,28 +313,33 @@ class Thumb extends JComponent {
 
         this.addMouseListener(new MouseListener() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 // TODO Auto-generated method stub
 
             }
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 origin = e.getPoint();
                 setBorder(DOWN_BORDER);
                 setEditingValue(true);
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
                 origin = null;
                 setBorder(NORMAL_BORDER);
                 setEditingValue(false);
             }
 
+            @Override
             public void mouseEntered(MouseEvent e) {
                 // TODO Auto-generated method stub
 
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
                 // TODO Auto-generated method stub
 
@@ -340,11 +349,13 @@ class Thumb extends JComponent {
 
         this.addMouseMotionListener(new MouseMotionListener() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 moveThumb(e.getX(), e.getY());
 
             }
 
+            @Override
             public void mouseMoved(MouseEvent e) {
                 // TODO Auto-generated method stub
 
@@ -378,6 +389,7 @@ class Thumb extends JComponent {
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 

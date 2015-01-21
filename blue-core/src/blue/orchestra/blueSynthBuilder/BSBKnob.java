@@ -51,6 +51,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private boolean randomizable = true;
 
     // OVERRIDE to handle parameter name changes
+    @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {
             return;
@@ -107,17 +108,22 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("minimum")) {
-                minVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("maximum")) {
-                maxVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("value")) {
-                knob.value = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("knobWidth")) {
-                knob.setKnobWidth(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("randomizable")) {
-                knob.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "minimum":
+                    minVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "maximum":
+                    maxVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "value":
+                    knob.value = Float.parseFloat(node.getTextString());
+                    break;
+                case "knobWidth":
+                    knob.setKnobWidth(Integer.parseInt(node.getTextString()));
+                    break;
+                case "randomizable":
+                    knob.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
 
         }

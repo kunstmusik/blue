@@ -26,6 +26,7 @@ import blue.soundObject.NoteList;
 class sq extends CybilAlgorithm {
 
     // TODO - Need to implement
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
 
         String time = (String) args.get(args.size() - 1);
@@ -134,7 +135,7 @@ class sq extends CybilAlgorithm {
             }
 
             if (isTime) {
-                Note currentNote = notes.getNote(cybilNoteList.index);
+                Note currentNote = notes.get(cybilNoteList.index);
                 float startTime = currentNote.getStartTime();
                 float endTime = startTime + timeValue;
 
@@ -151,7 +152,7 @@ class sq extends CybilAlgorithm {
 
                         String strVal = Float.toString(val);
 
-                        currentNote = notes.getNote(cybilNoteList.index);
+                        currentNote = notes.get(cybilNoteList.index);
                         currentNote.setPField(strVal, cybilNoteList.pfield);
                         cybilNoteList.index++;
 
@@ -176,7 +177,7 @@ class sq extends CybilAlgorithm {
 
                         float val = getFloatValue(obj);
 
-                        Note currentNote = notes.getNote(cybilNoteList.index);
+                        Note currentNote = notes.get(cybilNoteList.index);
 
                         String strVal = Float.toString(val);
                         currentNote.setPField(strVal, cybilNoteList.pfield);

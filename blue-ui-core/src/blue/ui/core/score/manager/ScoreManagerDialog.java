@@ -24,7 +24,7 @@ import blue.score.Score;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import blue.score.layers.LayerGroupProviderManager;
-import blue.ui.core.score.layers.LayerGroupPanelProviderManager;
+import blue.ui.core.score.layers.LayerGroupUIProviderManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -323,7 +323,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         int start = selection.getMinSelectionIndex();
         int end = selection.getMaxSelectionIndex();
 
-        if (start < 0 || end >= score.getLayerGroupCount() - 1) {
+        if (start < 0 || end >= score.size() - 1) {
             return;
         }
         
@@ -441,7 +441,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             propertiesScrollPane.setViewportView(null);
             
         } else {
-            final LayerGroup layerGroup = score.getLayerGroup(rowIndex);
+            final LayerGroup layerGroup = score.get(rowIndex);
             
             layersTable.setModel(new LayersTableModel(layerGroup));
             
@@ -453,8 +453,8 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
             
             propertiesScrollPane.setViewportView(null);
             
-            LayerGroupPanelProviderManager manager = 
-                    LayerGroupPanelProviderManager.getInstance();
+            LayerGroupUIProviderManager manager = 
+                    LayerGroupUIProviderManager.getInstance();
             
             JComponent comp = manager.getLayerGroupPropertiesPanel(layerGroup);
             
@@ -542,19 +542,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(
-                    ScoreManagerDialog.class.getName()).log(
-                    java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(
-                    ScoreManagerDialog.class.getName()).log(
-                    java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(
-                    ScoreManagerDialog.class.getName()).log(
-                    java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(
                     ScoreManagerDialog.class.getName()).log(
                     java.util.logging.Level.SEVERE, null, ex);
@@ -566,6 +554,7 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
          */
         java.awt.EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 ScoreManagerDialog dialog = new ScoreManagerDialog(
                         new javax.swing.JFrame(), true);

@@ -19,12 +19,14 @@
  */
 package blue.soundObject;
 
+import blue.score.ScoreObjectEvent;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.orchestra.blueSynthBuilder.BSBCompilationUnit;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import blue.plugin.SoundObjectPlugin;
 import blue.scripting.PythonProxy;
 import blue.utilities.ProcessRunner;
 import blue.utility.FileUtilities;
@@ -38,6 +40,7 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
+@SoundObjectPlugin(displayName = "ObjectBuilder", live=true, position = 70)
 public class ObjectBuilder extends AbstractSoundObject {
 //    private static BarRenderer renderer = new LetterRenderer("O");
 
@@ -250,10 +253,10 @@ public class ObjectBuilder extends AbstractSoundObject {
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
-        SoundObjectEvent event = new SoundObjectEvent(this,
-                SoundObjectEvent.REPEAT_POINT);
+        ScoreObjectEvent event = new ScoreObjectEvent(this,
+                ScoreObjectEvent.REPEAT_POINT);
 
-        fireSoundObjectEvent(event);
+        fireScoreObjectEvent(event);
     }
 
     /*
@@ -277,19 +280,25 @@ public class ObjectBuilder extends AbstractSoundObject {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("code")) {
-                bsb.setCode(node.getTextString());
-            } else if (nodeName.equals("commandLine")) {
-                bsb.setCommandLine(node.getTextString());
-            } else if (nodeName.equals("isExternal")) {
-                bsb.setExternal(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("graphicInterface")) {
-                bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
-            } else if (nodeName.equals("presetGroup")) {
-                bsb.setPresetGroup(PresetGroup.loadFromXML(node));
-            } else if (nodeName.equals("syntaxType")) {
-                bsb.setSyntaxType(node.getTextString());
+            switch (nodeName) {
+                case "code":
+                    bsb.setCode(node.getTextString());
+                    break;
+                case "commandLine":
+                    bsb.setCommandLine(node.getTextString());
+                    break;
+                case "isExternal":
+                    bsb.setExternal(XMLUtilities.readBoolean(node));
+                    break;
+                case "graphicInterface":
+                    bsb.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
+                    break;
+                case "presetGroup":
+                    bsb.setPresetGroup(PresetGroup.loadFromXML(node));
+                    break;
+                case "syntaxType":
+                    bsb.setSyntaxType(node.getTextString());
+                    break;
             }
 
         }
@@ -367,6 +376,7 @@ public class ObjectBuilder extends AbstractSoundObject {
         this.syntaxType = syntaxType;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

@@ -23,9 +23,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventObject;
-import java.util.Vector;
-
+import java.util.List;
 import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
@@ -33,50 +34,56 @@ import javax.swing.table.TableCellEditor;
 
 public class ColorCellEditor implements TableCellEditor {
 
-    protected transient Vector listeners = null;
-
+    protected transient List<CellEditorListener> listeners = null;
     private ColorSelectionPanel panel = new ColorSelectionPanel();
 
     public ColorCellEditor() {
         panel.addPropertyChangeListener(new PropertyChangeListener() {
-
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("colorSelectionValue")) {
                     fireEditingStopped();
                 }
             }
-
         });
     }
 
+    @Override
     public Object getCellEditorValue() {
         return panel.getColor();
     }
 
+    @Override
     public boolean isCellEditable(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public boolean shouldSelectCell(EventObject anEvent) {
         return true;
     }
 
+    @Override
     public boolean stopCellEditing() {
         fireEditingStopped();
         return true;
     }
 
+    @Override
     public void cancelCellEditing() {
         fireEditingCanceled();
     }
 
+    @Override
     public void addCellEditorListener(CellEditorListener l) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = Collections.synchronizedList(
+                    new ArrayList<CellEditorListener>());
         }
         listeners.add(l);
     }
 
+    @Override
     public void removeCellEditorListener(CellEditorListener l) {
         if (listeners == null) {
             return;
@@ -90,9 +97,11 @@ public class ColorCellEditor implements TableCellEditor {
         }
 
         ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = (CellEditorListener) listeners.get(i);
-            listener.editingCanceled(ce);
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i--) {
+                CellEditorListener listener = listeners.get(i);
+                listener.editingCanceled(ce);
+            }
         }
     }
 
@@ -102,12 +111,15 @@ public class ColorCellEditor implements TableCellEditor {
         }
 
         ChangeEvent ce = new ChangeEvent(this);
-        for (int i = listeners.size() - 1; i >= 0; i--) {
-            CellEditorListener listener = (CellEditorListener) listeners.get(i);
-            listener.editingStopped(ce);
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i--) {
+                CellEditorListener listener = listeners.get(i);
+                listener.editingStopped(ce);
+            }
         }
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int row, int column) {
         panel.setColor((Color) value);

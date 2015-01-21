@@ -74,6 +74,7 @@ public class AlgorithmCommonData implements java.io.Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

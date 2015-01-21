@@ -27,7 +27,6 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import javax.swing.BorderFactory;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.border.Border;
@@ -53,6 +52,7 @@ public class LiveObjectRenderer extends JLabel implements TableCellRenderer {
         this.set = set;
     }
     
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int column) {
         

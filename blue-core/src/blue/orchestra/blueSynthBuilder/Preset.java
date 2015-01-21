@@ -30,7 +30,7 @@ import java.util.Iterator;
 /**
  * @author steven
  */
-public class Preset implements Serializable, Comparable {
+public class Preset implements Serializable, Comparable<Preset> {
 
     private String presetName = "";
 
@@ -160,6 +160,7 @@ public class Preset implements Serializable, Comparable {
         this.presetName = name;
     }
 
+    @Override
     public String toString() {
         return getPresetName();
     }
@@ -169,9 +170,7 @@ public class Preset implements Serializable, Comparable {
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object arg0) {
-        Preset b = (Preset) arg0;
-
+    public int compareTo(Preset b) {
         return this.getPresetName().compareTo(b.getPresetName());
     }
 

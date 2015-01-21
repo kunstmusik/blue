@@ -19,20 +19,18 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
+import blue.soundObject.pianoRoll.Scale;
 import java.awt.Color;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-
-import blue.soundObject.PianoRoll;
-import blue.soundObject.pianoRoll.PianoNote;
-import blue.soundObject.pianoRoll.Scale;
 
 /**
  * @author steven
@@ -40,7 +38,7 @@ import blue.soundObject.pianoRoll.Scale;
  */
 
 public class PianoNoteView extends JPanel implements PropertyChangeListener,
-        Comparable {
+        Comparable<PianoNoteView> {
     private static final int OCTAVES = 16;
 
     // private static Border NORMAL_BORDER = new LineBorder(Color.LIGHT_GRAY);
@@ -70,6 +68,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
 
         this.addHierarchyListener(new HierarchyListener() {
 
+            @Override
             public void hierarchyChanged(HierarchyEvent e) {
                 if (getParent() == null) {
                     removeAsListener();
@@ -166,6 +165,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
      * 
      * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == note) {
             updatePropertiesFromNote();
@@ -192,9 +192,7 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
     }
 
     @Override
-    public int compareTo(Object pianoNoteView) {
-        PianoNoteView a = (PianoNoteView) pianoNoteView;
-
+    public int compareTo(PianoNoteView a) {
         int x1 = this.getX();
         int x2 = a.getX();
 

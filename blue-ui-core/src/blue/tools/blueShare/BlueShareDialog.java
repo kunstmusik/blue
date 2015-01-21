@@ -1,13 +1,5 @@
 package blue.tools.blueShare;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-
-import javax.swing.JDialog;
-import javax.swing.JTabbedPane;
-
 import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
@@ -21,6 +13,12 @@ import blue.tools.blueShare.instruments.InstrumentImportPane;
 import blue.tools.blueShare.instruments.InstrumentManagementPane;
 import blue.utility.GUI;
 import electric.xml.Element;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import javax.swing.JDialog;
+import javax.swing.JTabbedPane;
 
 /**
  * <p>
@@ -67,6 +65,7 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
 
         this.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentHidden(ComponentEvent e) {
                 dispose();
             }
@@ -119,10 +118,12 @@ public class BlueShareDialog extends JDialog implements WindowSettingsSavable {
         return tabs;
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

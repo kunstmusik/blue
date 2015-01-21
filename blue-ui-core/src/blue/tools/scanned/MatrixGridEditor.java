@@ -1,5 +1,6 @@
 package blue.tools.scanned;
 
+import blue.BlueSystem;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -10,12 +11,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-
-import blue.BlueSystem;
 
 /**
  * <p>
@@ -67,6 +65,7 @@ public class MatrixGridEditor extends JComponent {
         }
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -126,12 +125,12 @@ public class MatrixGridEditor extends JComponent {
     public void loadMatrix(File matrixFile) {
         ArrayList temp = new ArrayList();
         try {
-            BufferedReader br = new BufferedReader(new FileReader(matrixFile));
-            String line;
-            while ((line = br.readLine()) != null) {
-                temp.add(line.trim());
+            try (BufferedReader br = new BufferedReader(new FileReader(matrixFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    temp.add(line.trim());
+                }
             }
-            br.close();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, BlueSystem
                     .getString("scanned.errorImportingMatrix")
@@ -214,31 +213,38 @@ class MatrixMouseListener implements MouseListener, MouseMotionListener {
         this.matrix = matrix;
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         processMousePressed(e);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         processMouseReleased(e);
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         processMouseDragged(e);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
         showPosition(e);
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
         if (matrix != null) {
             grid.locationLabel.setText("pos (x,x)");
         }
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 

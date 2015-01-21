@@ -23,21 +23,18 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.RhinoObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin(scoreObjectType = RhinoObject.class)
 public class RhinoObjectRenderer extends LetterRenderer {
 
     public RhinoObjectRenderer() {
         super("R");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return RhinoObject.class;
     }
 
 }

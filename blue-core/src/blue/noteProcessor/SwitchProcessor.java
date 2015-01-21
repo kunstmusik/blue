@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -24,12 +25,14 @@ import electric.xml.Element;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="SwitchProcessor", position = 120)
 public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
 
     int pfield1 = 4;
 
     int pfield2 = 5;
 
+    @Override
     public String toString() {
         return "[switch]";
     }
@@ -55,7 +58,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
         String tempPField;
         int pcount = 0;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             // validate necessary pfields are there
             pcount = temp.getPCount();
@@ -81,7 +84,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
+                n.add(Note.createNote("i1 " + (i * 2) + " 2 3 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

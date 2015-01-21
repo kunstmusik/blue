@@ -373,26 +373,6 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
     }
 
-    @Override
-    public List<DeviceInfo> getAudioInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getAudioOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     static class APIRunnerThread implements Runnable {
 
         private Csound csound;

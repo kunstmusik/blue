@@ -20,16 +20,14 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.BlueSystem;
+import blue.utility.GUI;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JToolBar;
-
-import blue.BlueSystem;
-import blue.utility.GUI;
 import org.openide.util.ImageUtilities;
 
 public class GrapherMenuBar extends JToolBar {
@@ -145,6 +143,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class ScatterGraphAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             // TODO Auto-generated method stub
 
@@ -153,6 +152,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class RandomGraphAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.generateRandomGraph();
@@ -162,6 +162,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final static class DrunkGraphAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             // TODO Auto-generated method stub
 
@@ -170,6 +171,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final static class GenerateSquareAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             // TODO Auto-generated method stub
 
@@ -178,6 +180,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class GenerateSineAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.generateSineGraph();
@@ -187,6 +190,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class ResetGraphAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.resetGraph();
@@ -196,6 +200,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class CutAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.copyGraph();
@@ -206,6 +211,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class CopyAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.copyGraph();
@@ -215,6 +221,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class PasteAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.pasteGraph();
@@ -224,6 +231,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class ExportAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             // TODO Auto-generated method stub
 
@@ -232,6 +240,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class ImportAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             // TODO Auto-generated method stub
 
@@ -240,6 +249,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class UpOneAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.moveUpGraph();
@@ -249,6 +259,7 @@ public class GrapherMenuBar extends JToolBar {
 
     private final class DownOneAction implements ActionListener {
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (grapher != null) {
                 grapher.moveDownGraph();

@@ -20,6 +20,12 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.BlueSystem;
+import blue.WindowSettingManager;
+import blue.WindowSettingsSavable;
+import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
+import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
+import electric.xml.Element;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -27,20 +33,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
-import blue.BlueSystem;
-import blue.WindowSettingManager;
-import blue.WindowSettingsSavable;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
-import electric.xml.Element;
 
 /**
  * @author Steven Yi
@@ -73,24 +71,28 @@ public class DropdownItemEditorDialog extends JDialog implements
         pushDownButton.setText(BlueSystem.getString("common.pushDown"));
 
         addButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addItem();
             }
         });
 
         removeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeItem();
             }
         });
 
         pushUpButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushUpItem();
             }
         });
 
         pushDownButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushDownItem();
             }
@@ -111,6 +113,7 @@ public class DropdownItemEditorDialog extends JDialog implements
                 .getString("menu.file.close.text"));
 
         closeButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 closeDialog();
             }
@@ -128,6 +131,7 @@ public class DropdownItemEditorDialog extends JDialog implements
                 "DropdownItemEditorDialog", this);
 
         this.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent arg0) {
                 if (table.getCellEditor() != null) {
                     table.getCellEditor().stopCellEditing();
@@ -180,10 +184,12 @@ public class DropdownItemEditorDialog extends JDialog implements
 
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }
@@ -234,6 +240,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return BlueSystem.getString("propertyEditor.name");
@@ -243,10 +250,12 @@ final class DropdownItemsTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         BSBDropdownItem item = (BSBDropdownItem) items.get(row);
 
@@ -261,6 +270,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         if (items != null) {
             return items.size();
@@ -268,14 +278,17 @@ final class DropdownItemsTableModel extends AbstractTableModel {
         return 0;
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         return true;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         return getValueAt(0, c).getClass();
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         try {
             String val = (String) value;

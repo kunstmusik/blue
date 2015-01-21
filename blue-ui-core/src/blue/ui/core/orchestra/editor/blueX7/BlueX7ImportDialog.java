@@ -1,12 +1,10 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
-import java.io.File;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-
 import blue.orchestra.BlueX7;
 import blue.ui.utilities.FileChooserManager;
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  * <p>

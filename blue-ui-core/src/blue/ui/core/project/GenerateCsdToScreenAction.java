@@ -33,6 +33,7 @@ import org.openide.windows.WindowManager;
 
 public final class GenerateCsdToScreenAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.generatingCSD"));
 

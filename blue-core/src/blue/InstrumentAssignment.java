@@ -28,7 +28,7 @@ import java.io.Serializable;
 /**
  * @author Steven Yi
  */
-public class InstrumentAssignment implements Serializable, Comparable {
+public class InstrumentAssignment implements Serializable, Comparable<InstrumentAssignment> {
 
     public String arrangementId = "";
 
@@ -121,9 +121,7 @@ public class InstrumentAssignment implements Serializable, Comparable {
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
-        InstrumentAssignment ia = (InstrumentAssignment) o;
-
+    public int compareTo(InstrumentAssignment ia) {
         try {
             int a = Integer.parseInt(this.arrangementId);
             int b = Integer.parseInt(ia.arrangementId);

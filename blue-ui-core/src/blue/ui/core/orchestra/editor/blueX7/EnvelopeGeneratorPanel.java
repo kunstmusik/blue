@@ -1,14 +1,12 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.orchestra.blueX7.EnvelopePoint;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
-import blue.orchestra.blueX7.EnvelopePoint;
 
 /**
  * <p>
@@ -62,6 +60,7 @@ public class EnvelopeGeneratorPanel extends JComponent implements PointListener 
         this.add(env, BorderLayout.CENTER);
     }
 
+    @Override
     public void updateLabels() {
         EnvelopePoint[] points = env.getPoints();
         for (int i = 0; i < 4; i++) {

@@ -19,9 +19,8 @@
  */
 package blue.soundObject.editor.jmask;
 
-import javax.swing.DefaultComboBoxModel;
-
 import blue.soundObject.jmask.Accumulator;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.SpinnerNumberModel;
 
 /**
@@ -62,6 +61,7 @@ public class AccumulatorEditor extends javax.swing.JPanel implements DurationSet
         lowTableEditor.setVisible(this.accumulator.isLowTableEnabled());
     }
     
+    @Override
     public void setDuration(double duration) {
         highTableEditor.setDuration(duration);
         lowTableEditor.setDuration(duration);

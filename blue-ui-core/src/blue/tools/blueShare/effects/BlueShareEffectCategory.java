@@ -47,6 +47,7 @@ public class BlueShareEffectCategory {
         return name;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }
