@@ -53,6 +53,8 @@ FIX
 
 * Audited score timeline actions for undoability
 
+* Issue #258 - fixed "Follow the Leader" ScoreObject action
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
