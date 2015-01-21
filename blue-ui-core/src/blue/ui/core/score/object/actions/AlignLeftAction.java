@@ -81,6 +81,7 @@ public final class AlignLeftAction extends AbstractAction implements ContextAwar
         for (ScoreObject scoreObj : selected) {
             scoreObj.setStartTime(farLeft);
             endingStartTimes[i] = farLeft;
+            i++;
         }
 
         BlueUndoManager.setUndoManager("score");

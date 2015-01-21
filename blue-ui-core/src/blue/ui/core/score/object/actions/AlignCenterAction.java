@@ -91,6 +91,7 @@ public final class AlignCenterAction extends AbstractAction implements ContextAw
             newEndTime = centerTime - (scoreObj.getSubjectiveDuration() / 2);
             scoreObj.setStartTime(newEndTime);
             endingStartTimes[i] = newEndTime;
+            i++;
         }
 
         BlueUndoManager.setUndoManager("score");

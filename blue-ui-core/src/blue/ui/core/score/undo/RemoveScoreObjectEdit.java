@@ -5,8 +5,8 @@
 package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
+import blue.score.layers.ScoreObjectLayer;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -15,26 +15,21 @@ import javax.swing.undo.CannotUndoException;
  * @author steven
  */
 public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
-    private SoundObject sObj;
 
-    private int soundLayerIndex;
-
-    private PolyObject pObj;
+    private final ScoreObject sObj;
+    private final ScoreObjectLayer layer;
 
     RemoveScoreObjectEdit nextEdit = null;
 
-    public RemoveScoreObjectEdit(PolyObject pObj, SoundObject sObj,
-            int soundLayerIndex) {
-
-        this.pObj = pObj;
+    public RemoveScoreObjectEdit(ScoreObjectLayer layer, ScoreObject sObj) {
+        this.layer = layer;
         this.sObj = sObj;
-        this.soundLayerIndex = soundLayerIndex;
     }
 
     @Override
     public void redo() throws CannotRedoException {
         super.redo();
-        this.pObj.removeSoundObject(sObj);
+        layer.remove(sObj);
         if (nextEdit != null) {
             nextEdit.redo();
         }
@@ -43,7 +38,7 @@ public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
     @Override
     public void undo() throws CannotUndoException {
         super.undo();
-        this.pObj.addSoundObject(soundLayerIndex, this.sObj);
+        layer.add(sObj);
         if (nextEdit != null) {
             nextEdit.undo();
         }
@@ -57,7 +52,11 @@ public class RemoveScoreObjectEdit extends AbstractUndoableEdit {
         return BlueSystem.getString("scoreGUI.action.removeSoundObjects");
     }
 
-    public void setNextEdit(RemoveScoreObjectEdit nextEdit) {
-        this.nextEdit = nextEdit;
+    public void appendNextEdit(RemoveScoreObjectEdit nextEdit) {
+        if (this.nextEdit != null) {
+            this.nextEdit.appendNextEdit(nextEdit);
+        } else {
+            this.nextEdit = nextEdit;
+        }
     }
 }

@@ -23,12 +23,14 @@ import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
+import blue.score.layers.ScoreObjectLayer;
+import blue.ui.core.score.undo.RemoveScoreObjectEdit;
+import blue.undo.BlueUndoManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.WeakHashMap;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.InstanceContent;
 
@@ -73,12 +75,11 @@ public class ScoreController {
 
     public void setScore(Score score) {
         ScorePath path = scorePaths.get(this.score);
-        if(path != null) {
+        if (path != null) {
             path.setScrollX(scrollPane.getHorizontalScrollBar().getValue());
             path.setScrollY(scrollPane.getVerticalScrollBar().getValue());
         }
 
-        
         this.score = score;
 
         path = scorePaths.get(score);
@@ -93,8 +94,8 @@ public class ScoreController {
 //            SwingUtilities.invokeLater(new Runnable() {
 //                @Override
 //                public void run() {
-                   scrollPane.getHorizontalScrollBar().setValue(fPath.getScrollX());
-                   scrollPane.getVerticalScrollBar().setValue(fPath.getScrollY());
+        scrollPane.getHorizontalScrollBar().setValue(fPath.getScrollX());
+        scrollPane.getVerticalScrollBar().setValue(fPath.getScrollY());
 //                }
 //            });
     }
@@ -105,7 +106,7 @@ public class ScoreController {
             throw new RuntimeException(
                     "Error: LayerGroup passed in without a Score");
         }
-       
+
         if (!path.containsLayerGroup(layerGroup)) {
             int scrollX = scrollPane.getHorizontalScrollBar().getValue();
             int scrollY = scrollPane.getVerticalScrollBar().getValue();
@@ -119,8 +120,8 @@ public class ScoreController {
 //            SwingUtilities.invokeLater(new Runnable() {
 //                @Override
 //                public void run() {
-                   scrollPane.getHorizontalScrollBar().setValue(path.getScrollX());
-                   scrollPane.getVerticalScrollBar().setValue(path.getScrollY());
+            scrollPane.getHorizontalScrollBar().setValue(path.getScrollX());
+            scrollPane.getVerticalScrollBar().setValue(path.getScrollY());
 //                }
 //            });
         }
@@ -204,8 +205,8 @@ public class ScoreController {
             return;
         }
 
-        Collection<? extends ScoreObject> scoreObjects = lookup.lookupAll(
-                ScoreObject.class);
+        Collection<? extends ScoreObject> scoreObjects = 
+                ScoreController.getInstance().getSelectedScoreObjects();
         Score score = lookup.lookup(Score.class);
 
         if (score == null) {
@@ -219,24 +220,34 @@ public class ScoreController {
 
         List<Layer> layers = getScorePath().getAllLayers();
 
+        RemoveScoreObjectEdit top = null;
         for (ScoreObject scoreObj : scoreObjects) {
 
-            boolean found = false;
-
+            RemoveScoreObjectEdit edit = null;
             for (Layer layer : layers) {
                 if (layer.remove(scoreObj)) {
-                    found = true;
+                    edit = new RemoveScoreObjectEdit(
+                            (ScoreObjectLayer) layer, scoreObj);
+                    System.out.println("EDITS: " + scoreObj + " : " + scoreObjects.size());
                     break;
                 }
             }
-            if (!found) {
+            if (edit == null) {
                 throw new RuntimeException(
                         "Error: Unable to find Layer to remove ScoreObject: Internal Error");
             }
 
-            //FIXME - add undoable edit here...
+            if (top == null) {
+                top = edit;
+            } else {
+                top.appendNextEdit(edit);
+            }
+
             content.remove(scoreObj);
         }
+
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(top);
 
     }
 

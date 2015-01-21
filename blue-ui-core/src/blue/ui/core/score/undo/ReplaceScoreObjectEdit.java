@@ -5,50 +5,73 @@
 package blue.ui.core.score.undo;
 
 import blue.BlueSystem;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
+import blue.score.ScoreObject;
+import blue.score.layers.ScoreObjectLayer;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
 
 /**
  * @author steven
- * 
+ *
  */
 public class ReplaceScoreObjectEdit extends AbstractUndoableEdit {
-    private SoundObject oldSObj;
 
-    private SoundObject newSObj;
+    private ScoreObject oldSObj;
 
-    private int soundLayerIndex;
+    private ScoreObject newSObj;
 
-    private PolyObject pObj;
+    private ScoreObjectLayer layer;
 
-    public ReplaceScoreObjectEdit(PolyObject pObj, SoundObject sObjOld,
-            SoundObject sObjNew, int soundLayerIndex) {
+    private ReplaceScoreObjectEdit nextEdit = null;
 
-        this.pObj = pObj;
+    public ReplaceScoreObjectEdit(ScoreObjectLayer layer, ScoreObject sObjOld,
+            ScoreObject sObjNew) {
+
+        this.layer = layer;
         this.oldSObj = sObjOld;
         this.newSObj = sObjNew;
-        this.soundLayerIndex = soundLayerIndex;
     }
 
     @Override
     public void redo() throws CannotRedoException {
         super.redo();
-        this.pObj.removeSoundObject(oldSObj);
-        this.pObj.addSoundObject(soundLayerIndex, this.newSObj);
+        this.layer.remove(oldSObj);
+        this.layer.add(this.newSObj);
+
+        if (nextEdit != null) {
+            nextEdit.redo();
+        }
     }
 
     @Override
     public void undo() throws CannotUndoException {
         super.undo();
-        this.pObj.removeSoundObject(newSObj);
-        this.pObj.addSoundObject(soundLayerIndex, this.oldSObj);
+        this.layer.remove(newSObj);
+        this.layer.add(this.oldSObj);
+
+        if (nextEdit != null) {
+            nextEdit.undo();
+        }
     }
 
     @Override
     public String getPresentationName() {
         return BlueSystem.getString("scoreGUI.action.replaceSoundObject");
     }
+
+    @Override
+    public boolean addEdit(UndoableEdit anEdit) {
+        if (anEdit instanceof ReplaceScoreObjectEdit) {
+            if (nextEdit == null) {
+                nextEdit = (ReplaceScoreObjectEdit) anEdit;
+                return true;
+            } else {
+                return nextEdit.addEdit(anEdit);
+            }
+        }
+        return false;
+    }
+
 }

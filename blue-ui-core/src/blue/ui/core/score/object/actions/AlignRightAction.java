@@ -80,6 +80,7 @@ public final class AlignRightAction extends AbstractAction implements ContextAwa
             float newTime = farRight - scoreObj.getSubjectiveDuration();
             scoreObj.setStartTime(newTime);
             endingStartTimes[i] = newTime;
+            i++;
         }
 
         BlueUndoManager.setUndoManager("score");

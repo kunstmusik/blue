@@ -20,8 +20,8 @@
 package blue.ui.core.score.object.actions;
 
 import blue.score.ScoreObject;
-import blue.soundObject.SoundObject;
-import blue.ui.core.score.ScoreTopComponent;
+import blue.ui.core.score.undo.SetColorEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -49,7 +49,6 @@ public final class SetColorAction extends AbstractAction
         implements ContextAwareAction {
 
     private final Collection<? extends ScoreObject> scoreObjects;
-    private final Collection<? extends SoundObject> soundObjects;
 
     public SetColorAction() {
         this(Utilities.actionsGlobalContext());
@@ -58,30 +57,40 @@ public final class SetColorAction extends AbstractAction
     public SetColorAction(Lookup lookup) {
         super(NbBundle.getMessage(SetColorAction.class, "CTL_SetColorAction"));
         scoreObjects = lookup.lookupAll(ScoreObject.class);
-        soundObjects = lookup.lookupAll(SoundObject.class);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
+        if (scoreObjects.size() > 0) {
 
             Color retVal = JColorChooser.showDialog(
                     WindowManager.getDefault().getMainWindow(), "Choose Color",
-                    soundObjects.iterator().next().getBackgroundColor());
+                    scoreObjects.iterator().next().getBackgroundColor());
 
+            SetColorEdit top = null;
             if (retVal != null) {
-                for (SoundObject sObj : soundObjects) {
+                for (ScoreObject sObj : scoreObjects) {
+                    Color old = sObj.getBackgroundColor();
                     sObj.setBackgroundColor(retVal);
+
+                    SetColorEdit edit = new SetColorEdit(sObj, old, retVal);
+                    if (top == null) {
+                        top = edit;
+                    } else {
+                        top.addEdit(edit);
+                    }
                 }
+
+                BlueUndoManager.setUndoManager("score");
+                BlueUndoManager.addEdit(top);
             }
         }
     }
 
     @Override
     public boolean isEnabled() {
-        return scoreObjects.size() == soundObjects.size() &&
-                scoreObjects.size() > 0;
+        return scoreObjects.size() > 0;
     }
 
     @Override

@@ -21,6 +21,8 @@ package blue.ui.core.score.object.actions;
 
 import blue.BlueSystem;
 import blue.score.ScoreObject;
+import blue.ui.core.score.undo.AlignEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
@@ -77,9 +79,23 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
                 }
             }
 
-            for (ScoreObject scoreObj : selected) {
-                scoreObj.setStartTime(scoreObj.getStartTime() + val);
+            int len = selected.size();
+            ScoreObject[] objects = selected.<ScoreObject>toArray(
+                    new ScoreObject[selected.size()]);
+            float[] startTimes = new float[len];
+            float[] endTimes = new float[len];
+
+            for (int i = 0; i < len; i++) {
+                ScoreObject scoreObj = objects[i];
+                startTimes[i] = scoreObj.getStartTime();
+                endTimes[i] = startTimes[i] + val;
+                scoreObj.setStartTime(endTimes[i]);
             }
+
+            AlignEdit edit = new AlignEdit(objects, startTimes, endTimes);
+
+            BlueUndoManager.setUndoManager("score");
+            BlueUndoManager.addEdit(edit);
 
         } catch (NumberFormatException nfe) {
             System.err.println(nfe.getMessage());

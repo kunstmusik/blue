@@ -3,6 +3,7 @@ package blue.ui.core.score.layers.soundObject;
 import blue.BlueSystem;
 import blue.gui.LabelledItemPanel;
 import blue.score.ScoreObject;
+import blue.ui.core.score.undo.ResizeScoreObjectEdit;
 import blue.ui.core.score.undo.StartTimeEdit;
 import blue.undo.BlueUndoManager;
 import java.awt.BorderLayout;
@@ -19,11 +20,10 @@ import javax.swing.JTextField;
 
 /**
  * Popup for quick entry of start time and duration, used by ScoreTimeCanvas
- * 
+ *
  * @author Steven Yi
  * @version 1.0
  */
-
 public class QuickTimeDialog extends JDialog {
 
     LabelledItemPanel itemPanel = new LabelledItemPanel();
@@ -93,28 +93,34 @@ public class QuickTimeDialog extends JDialog {
         if (scoreObj != null) {
             try {
                 float initialStart = scoreObj.getStartTime();
-                float initialSubjectiveDuration = scoreObj 
+                float initialSubjectiveDuration = scoreObj
                         .getSubjectiveDuration();
 
                 float newStart = Float.parseFloat(startText.getText());
                 float newSubjectiveDuration = Float.parseFloat(durText
                         .getText());
 
-                scoreObj.setStartTime(newStart);
-                scoreObj.setSubjectiveDuration(newSubjectiveDuration);
-
                 BlueUndoManager.setUndoManager("score");
 
+                StartTimeEdit edit = null;
                 if (initialStart != newStart) {
-                    BlueUndoManager.addEdit(new StartTimeEdit(initialStart,
-                            newStart, scoreObj));
+                    scoreObj.setStartTime(newStart);
+                    edit = new StartTimeEdit(initialStart,
+                            newStart, scoreObj);
+                    BlueUndoManager.addEdit(edit);
                 }
 
                 if (initialSubjectiveDuration != newSubjectiveDuration) {
-                    // FIXME
-//                    BlueUndoManager.addEdit(new ResizeSoundObjectEdit(sObjView
-//                            .getSoundObject(), initialSubjectiveDuration,
-//                            newSubjectiveDuration));
+                    scoreObj.setSubjectiveDuration(newSubjectiveDuration);
+                    ResizeScoreObjectEdit resizeEdit = new ResizeScoreObjectEdit(
+                            scoreObj, initialSubjectiveDuration,
+                            newSubjectiveDuration);
+
+                    if (edit != null) {
+                        edit.addEdit(resizeEdit);
+                    } else {
+                        BlueUndoManager.addEdit(resizeEdit);
+                    }
                 }
 
             } catch (NumberFormatException nfe) {
@@ -122,9 +128,11 @@ public class QuickTimeDialog extends JDialog {
                         .showMessageDialog(
                                 null,
                                 BlueSystem
-                                        .getString("scoreGUI.quickTimeDialog.notFloat.message"),
+                                .getString(
+                                        "scoreGUI.quickTimeDialog.notFloat.message"),
                                 BlueSystem
-                                        .getString("scoreGUI.quickTimeDialog.notFloat.title"),
+                                .getString(
+                                        "scoreGUI.quickTimeDialog.notFloat.title"),
                                 JOptionPane.ERROR_MESSAGE);
                 this.show();
                 startText.requestFocus();

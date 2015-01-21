@@ -51,10 +51,15 @@ FIX
 * Issue #250 - setting minimum and maximum for BSB Knobs did not update the knob
   view location when using truncate option
 
+* Audited score timeline actions for undoability
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
   @InstrumentPlugin, @NoteProcessorPlugin)
+
+* Refactored all ScoreTimeline actions into separate Action classes; shortcut 
+  registration now done declaratively 
 
 
 >Notes for 2.5.14<

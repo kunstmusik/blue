@@ -23,14 +23,16 @@ import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
 import blue.projects.BlueProjectManager;
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
+import blue.ui.core.score.undo.ReplaceScoreObjectEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -92,19 +94,32 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
 
         List<Instance> instances = new ArrayList<>();
-
+        ReplaceScoreObjectEdit top = null;
         for (SoundObject sObj : soundObjects) {
             SoundObject replacement = getReplacementObject(buffer, instances);
             replacement.setStartTime(sObj.getStartTime());
             replacement.setSubjectiveDuration(sObj.getSubjectiveDuration());
 
-            SoundLayer layer = (SoundLayer) findLayerForSoundObject(layers, sObj);
+            ScoreObjectLayer layer = (ScoreObjectLayer) findLayerForSoundObject(
+                    layers, sObj);
             layer.remove(sObj);
             layer.add(replacement);
+
+            ReplaceScoreObjectEdit edit = new ReplaceScoreObjectEdit(layer, sObj,
+                    replacement);
+
+            if (top == null) {
+                top = edit;
+            } else {
+                top.addEdit(edit);
+            }
         }
 
+        //FIXME - this part is not undoable...
         sObjLib.checkAndAddInstanceSoundObjects(instances);
 
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(top);
     }
 
     @Override

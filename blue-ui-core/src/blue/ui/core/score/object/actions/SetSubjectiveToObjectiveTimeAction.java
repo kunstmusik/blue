@@ -22,6 +22,8 @@ package blue.ui.core.score.object.actions;
 import blue.BlueSystem;
 import blue.score.ScoreObject;
 import blue.soundObject.SoundObject;
+import blue.ui.core.score.undo.ResizeScoreObjectEdit;
+import blue.undo.BlueUndoManager;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 import javax.swing.AbstractAction;
@@ -41,7 +43,7 @@ import org.openide.util.Utilities;
         id = "blue.ui.core.score.actions.SetSubjectiveToObjectiveTime")
 @ActionRegistration(
         displayName = "#CTL_SetSubjectiveToObjectiveTime")
-@Messages("CTL_SetSubjectiveToObjectiveTime=Set Subjective time to Objective Time")
+@Messages("CTL_SetSubjectiveToObjectiveTime=Set Subjective Time to Objective Time")
 @ActionReference(path = "blue/score/actions", position = 110, separatorAfter = 115)
 public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
         implements ContextAwareAction {
@@ -64,6 +66,7 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
     public void actionPerformed(ActionEvent e) {
 
         if (soundObjects.size() > 0 && scoreObjects.size() == soundObjects.size()) {
+            ResizeScoreObjectEdit top = null;
             for (SoundObject soundObject : soundObjects) {
 
                 if (soundObject.getObjectiveDuration() <= 0) {
@@ -76,8 +79,26 @@ public final class SetSubjectiveToObjectiveTimeAction extends AbstractAction
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                soundObject.setSubjectiveDuration(
-                        soundObject.getObjectiveDuration());
+                float oldTime = soundObject.getSubjectiveDuration();
+                float newTime = soundObject.getObjectiveDuration();
+
+                if (oldTime != newTime) {
+                    soundObject.setSubjectiveDuration(
+                            newTime);
+                    ResizeScoreObjectEdit edit = new ResizeScoreObjectEdit(
+                            soundObject, oldTime, newTime);
+
+                    if(top == null) {
+                        top = edit;
+                    } else {
+                        top.addEdit(edit);
+                    }
+                }
+            }
+            
+            if(top != null) {
+                BlueUndoManager.setUndoManager("score");
+                BlueUndoManager.addEdit(top);
             }
         }
 
