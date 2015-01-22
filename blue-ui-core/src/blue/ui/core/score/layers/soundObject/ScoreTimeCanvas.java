@@ -20,7 +20,6 @@
 package blue.ui.core.score.layers.soundObject;
 
 import blue.BlueData;
-import blue.BlueSystem;
 import blue.SoundLayer;
 import blue.SoundLayerListener;
 import blue.components.AlphaMarquee;
@@ -32,13 +31,10 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
-import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
-import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.utilities.ParentDispatchingMouseAdapter;
-import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -47,10 +43,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -60,7 +54,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
-import javax.swing.undo.UndoManager;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.InstanceContent;
 
@@ -184,106 +177,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 //            automationPanel.addSelectionDragRegion(sObjView.getStartTime(), 
 //                    sObjView.getStartTime() + sObjView.getSubjectiveDuration(), layerNum);
 //        }
-    }
-
-    // TODO - Respect snap values, Make Undoable
-    private void nudgeHorizontal(float timeValue) {
-//        if (mBuffer.size() == 0) {
-//            return;
-//        }
-//
-//        mBuffer.motionBufferObjects();
-//        
-//        setSelectionDragRegions();
-//
-//        if (timeValue < 0) {
-//            if(mBuffer.initialStartTimes[0] == 0) {
-//                return;
-//            }
-//            if (timeValue < -mBuffer.initialStartTimes[0]) {
-//                timeValue = -mBuffer.initialStartTimes[0];
-//            }
-//        }
-//
-//        for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-//
-//            float newStart = mBuffer.initialStartTimes[i] + timeValue;
-//
-//            SoundObject sObj = mBuffer.motionBuffer[i].getSoundObject();
-//
-//            sObj.setStartTime(newStart);
-//        }
-//        
-//        automationPanel.setMultiLineTranslation(timeValue);
-//        automationPanel.commitMultiLineDrag();
-//
-//        mBuffer.motionBufferObjects();
-    }
-
-    private void nudgeVertical(int amount) {
-//        if (mBuffer.size() == 0) {
-//            return;
-//        }
-//        
-//        mBuffer.motionBufferObjects();
-//
-//        
-//        if (amount < 0) { // MOVE UP
-//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-//                if (mBuffer.motionBuffer[i].getY() == 0) {
-//                    return;
-//                }
-//            }
-//
-//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-//                SoundObjectView sObjView = mBuffer.motionBuffer[i];
-//
-//                SoundObject sObj = sObjView.getSoundObject();
-//
-//                mBuffer.remove(sObjView);
-//
-//                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-//                int newIndex = currentIndex - 1;
-//
-//                getPolyObject().removeSoundObject(sObj);
-//                getPolyObject().addSoundObject(newIndex, sObj);
-//
-//                sObjView = soundObjectToViewMap.get(sObj);
-////                sObjView.select();
-//                mBuffer.add(sObjView);
-//            }
-//
-//        } else if (amount > 0) { // MOVE DOWN
-//
-//            int maxY = getPolyObject().getYForLayerNum(getPolyObject().getSize() - 1);
-//
-//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-//                if (mBuffer.motionBuffer[i].getY() == maxY) {
-//                    return;
-//                }
-//            }
-//
-//            for (int i = 0; i < mBuffer.motionBuffer.length; i++) {
-//                SoundObjectView sObjView = mBuffer.motionBuffer[i];
-//
-//                mBuffer.remove(sObjView);
-//
-//                SoundObject sObj = sObjView.getSoundObject();
-//
-//                int currentIndex = getPolyObject().getLayerNumForY(sObjView.getY());
-//                int newIndex = currentIndex + 1;
-//
-//                getPolyObject().removeSoundObject(sObj);
-//                getPolyObject().addSoundObject(newIndex, sObj);
-//
-//                sObjView = soundObjectToViewMap.get(sObj);
-//                sObjView.select();
-//                mBuffer.add(sObjView);
-//            }
-//
-//        }
-//
-//        mBuffer.motionBufferObjects();
     }
 
     public void reset() {
@@ -494,64 +387,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
     public SoundObjectView getViewForSoundObject(SoundObject sObj) {
         return this.soundObjectToViewMap.get(sObj);
-    }
-
-    /**
-     * *******************
-     */
-//    public void removeSoundObjects() {
-////        int size = mBuffer.size();
-//        SoundObjectView sObjView;
-//        RemoveSoundObjectEdit firstEdit = null;
-//        RemoveSoundObjectEdit lastEdit = null;
-//        RemoveSoundObjectEdit temp;
-//
-//        Collection<? extends SoundObject> selectedObjects
-//                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
-//
-//        for (SoundObject sObj : selectedObjects) {
-//            int sLayerIndex = getPolyObject().removeSoundObject(sObj);
-//
-//            if (firstEdit == null) {
-//                firstEdit = new RemoveSoundObjectEdit(getPolyObject(), sObj,
-//                        sLayerIndex);
-//                lastEdit = firstEdit;
-//            } else {
-//                temp = new RemoveSoundObjectEdit(getPolyObject(), sObj,
-//                        sLayerIndex);
-//                lastEdit.setNextEdit(temp);
-//                lastEdit = temp;
-//            }
-//        }
-//
-//        if (firstEdit != null) {
-//            BlueUndoManager.setUndoManager("score");
-//            BlueUndoManager.addEdit(firstEdit);
-//        }
-//
-//        content.set(Collections.emptyList(), null);
-//
-//        repaint();
-//    }
-
-    /* TODO - Remove this method and implement by events */
-    public void updateSoundObjectsLayerMap() {
-        int startIndex, endIndex;
-
-        Collection<? extends SoundObject> selectedObjects
-                = Utilities.actionsGlobalContext().lookupAll(SoundObject.class);
-
-        for (SoundObject sObj : selectedObjects) {
-//FIXME
-//            startIndex = getPolyObject().getLayerNumForY(mBuffer.sObjYValues[i]);
-//            endIndex = getPolyObject().getLayerNumForY(
-//                    mBuffer.motionBuffer[i].getY());
-//
-//            if (startIndex != endIndex) {
-//                getPolyObject().removeSoundObject(sObj);
-//                getPolyObject().addSoundObject(endIndex, sObj);
-//            }
-        }
     }
 
     /**
