@@ -55,6 +55,9 @@ FIX
 
 * Issue #258 - fixed "Follow the Leader" ScoreObject action
 
+* Issue #280 - Print out command line used to Output window when rendering to 
+  disk 
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
