@@ -58,6 +58,9 @@ FIX
 * Issue #280 - Print out command line used to Output window when rendering to 
   disk 
 
+* Rendering to disk with commandline runner would freeze up until process 
+  completed when render job canceled, instead of stopping render job
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 

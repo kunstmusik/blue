@@ -158,7 +158,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
                     BlueSystem.getCurrentProjectDirectory(), csd);
 
             commandLine += " \"" + temp.getAbsolutePath() + "\"";
-            //commandLine += " -L stdin";
+            commandLine += " -L stdin";
 
             execDisk(commandLine, job.getCurrentWorkingDirectory());
             process.waitFor();
@@ -286,7 +286,13 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
             throws IOException {
         destroy(false);
 
-
+        if (this.io != null) {
+            try {
+                this.io.getOut().reset();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
         io.getOut().append("[CommandlineRunner] - ").append(
                 BlueSystem.getString("processConsole.start") + "("
                 + commandLine + ").").append("\n");
