@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.SoundLayer;
 import blue.SoundObjectLibrary;
 import blue.projects.BlueProjectManager;
-import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
@@ -34,6 +33,7 @@ import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -169,25 +169,23 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
             sObj.setStartTime(sObj.getStartTime() + startTranslation);
 
-            ((ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex)).add(
-                    sObj);
-            // FIXME - fix undoable edits
-//            sCanvas.getPolyObject().addSoundObject(newLayerIndex, sObj);
+            ScoreObjectLayer<ScoreObject> layer = 
+                    (ScoreObjectLayer<ScoreObject>) allLayers.get(newLayerIndex);
+            layer.add(sObj);
 
-//            AddScoreObjectEdit tempEdit = new AddScoreObjectEdit(sCanvas
-//                    .getPolyObject(), sObj, newLayerIndex);
-//
-//            if (undoEdit == null) {
-//                undoEdit = tempEdit;
-//            } else {
-//                undoEdit.addSubEdit(tempEdit);
-//            }
+            AddScoreObjectEdit tempEdit = new AddScoreObjectEdit(layer, sObj);
+
+            if (undoEdit == null) {
+                undoEdit = tempEdit;
+            } else {
+                undoEdit.addSubEdit(tempEdit);
+            }
         }
 
         checkAndAddInstanceSoundObjects(sObjLib, instanceSoundObjects);
 
-//        BlueUndoManager.setUndoManager("score");
-//        BlueUndoManager.addEdit(undoEdit);
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(undoEdit);
     }
 
     @Override

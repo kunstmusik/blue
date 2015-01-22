@@ -22,11 +22,14 @@ package blue.ui.core.score.layers.soundObject.actions;
 import blue.SoundLayer;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.soundObject.ScoreTimeCanvas;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
 import blue.ui.utilities.FileChooserManager;
+import blue.undo.BlueUndoManager;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -110,7 +113,13 @@ public final class ImportSoundObjectAction extends AbstractAction
                     float startTime = (float) start / timeState.getPixelSecond();
                     tempSobj.setStartTime(startTime);
 
-                    ((SoundLayer)layer).add(tempSobj);
+                    ((SoundLayer) layer).add(tempSobj);
+
+                    AddScoreObjectEdit edit = new AddScoreObjectEdit(
+                            (ScoreObjectLayer)layer, tempSobj);
+
+                    BlueUndoManager.setUndoManager("score");
+                    BlueUndoManager.addEdit(edit);
 
                 } else {
                     JOptionPane.showMessageDialog(

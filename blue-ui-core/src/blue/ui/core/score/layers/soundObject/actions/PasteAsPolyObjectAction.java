@@ -27,11 +27,14 @@ import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
+import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Instance;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScorePath;
+import blue.ui.core.score.undo.AddScoreObjectEdit;
+import blue.undo.BlueUndoManager;
 import blue.utility.ScoreUtilities;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -76,7 +79,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
         ScoreController scoreController = ScoreController.getInstance();
         Score score = scoreController.getScore();
-        
+
         this.scoreObjects = scoreController.getScoreObjectBuffer().scoreObjects;
         this.layerIndexes = scoreController.getScoreObjectBuffer().layerIndexes;
         this.p = lookup.lookup(Point.class);
@@ -113,8 +116,8 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         }
 
         int numLayers = maxLayer - minLayer + 1;
-        
-        for(int i = 0; i < numLayers; i++) {
+
+        for (int i = 0; i < numLayers; i++) {
             pObj.newLayerAt(-1);
         }
 
@@ -122,7 +125,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             ScoreObject scoreObj = scoreObjects.get(i);
             int layerIndex = layerIndexes.get(i);
             SoundLayer layer = pObj.get(layerIndex - minLayer);
-            
+
             SoundObject clone = (SoundObject) scoreObj.clone();
             layer.add(clone);
 
@@ -137,7 +140,14 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         pObj.normalizeSoundObjects();
 
         pObj.setStartTime(start);
-        ((SoundLayer) scorePath.getGlobalLayerForY(p.y)).add(pObj);
+        final ScoreObjectLayer layer = (ScoreObjectLayer) scorePath.getGlobalLayerForY(
+                p.y);
+        layer.add(pObj);
+
+        AddScoreObjectEdit edit = new AddScoreObjectEdit(layer, pObj);
+
+        BlueUndoManager.setUndoManager("score");
+        BlueUndoManager.addEdit(edit);
     }
 
     @Override
