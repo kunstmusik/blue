@@ -110,6 +110,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 checkSize();
+                updateAudioClipYandHeight();
             }
         };
 
@@ -143,10 +144,10 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     public void addNotify() {
         super.addNotify();
 
-        if(layerGroup == null) {
+        if (layerGroup == null) {
             return;
         }
-        
+
         layerGroup.addLayerGroupListener(this);
         timeState.addPropertyChangeListener(this);
 
@@ -155,7 +156,7 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             layer.addAudioLayerListener(this);
         }
     }
-    
+
     @Override
     public void removeNotify() {
         super.removeNotify();
@@ -300,27 +301,16 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
 
     @Override
     public void paintNavigatorView(Graphics2D g2d) {
-//        int pixelSecond = timeState.getPixelSecond();
-//
-//        int patternBeatsLength = layerGroup.getAudioBeatsLength();
-//        int patternWidth = patternBeatsLength * pixelSecond;
-//        
-//        for (int i = 0; i < layerGroup.getSize(); i++) {
-//            int y = i * Layer.LAYER_HEIGHT;
-//            int x = 0; 
-//            AudioLayer layer = (AudioLayer) layerGroup.getLayerAt(i);
-//            AudioData data = layer.getAudioData();
-//
-//            g2d.setColor(PATTERN_COLOR);
-//
-//            for (int j = 0; x < getBounds().getMaxX(); j++) {
-//                x = (j * patternBeatsLength) * pixelSecond;
-//                if (data.isAudioSet(j)) {
-//                    //System.out.println("pattern set: " + j);
-//                    g2d.fillRect(x, y, patternWidth, Layer.LAYER_HEIGHT);
-//                }
-//            }
-//        }
+
+        Component[] components = getComponents();
+
+        for (Component c : components) {
+            AudioClipPanel component = (AudioClipPanel) c;
+            Rectangle r = component.getBounds();
+
+            g2d.setColor(component.getScoreObject().getBackgroundColor());
+            g2d.fillRect(r.x, r.y, r.width, r.height);
+        }
     }
 
     private void paintAudioLayersBackground(Graphics g) {
@@ -490,8 +480,8 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
         Component c = getComponentAt(p);
 
-        if(c instanceof ScoreObjectView) {
-            return (ScoreObjectView)c;
+        if (c instanceof ScoreObjectView) {
+            return (ScoreObjectView) c;
         }
         return null;
     }
