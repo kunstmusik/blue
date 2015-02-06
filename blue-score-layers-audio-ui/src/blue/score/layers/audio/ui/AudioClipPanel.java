@@ -178,7 +178,7 @@ public class AudioClipPanel extends JPanel
 
         g.translate(1, 2);
 
-        AudioWaveformUI.paintWaveForm((Graphics2D) g, this.getHeight(), waveData);
+        AudioWaveformUI.paintWaveForm(g, this.getHeight(), waveData);
 
         g.translate(-1, -2);
 
