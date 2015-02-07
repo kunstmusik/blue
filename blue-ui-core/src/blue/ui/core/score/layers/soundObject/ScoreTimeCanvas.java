@@ -127,8 +127,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.setFocusable(true);
 
-        this.addMouseWheelListener(new ScoreMouseWheelListener(
-                data.getScore().getTimeState()));
         final MouseAdapter mouseAdapter = new ParentDispatchingMouseAdapter(this);
 
         // This is here as the existing mouselisteners prevent bubbling up of

@@ -17,29 +17,32 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-package blue.ui.core.score.layers.soundObject;
+package blue.ui.core.score;
 
 import blue.BlueSystem;
-import blue.score.TimeState;
+import blue.score.layers.Layer;
+import blue.score.layers.ScoreObjectLayer;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import javax.swing.SwingUtilities;
 
 /**
  *
  * @author syi
  */
-public class ScoreMouseWheelListener implements MouseWheelListener {
+public class LayerHeightWheelListener implements MouseWheelListener {
 
     MouseWheelListener[] listeners;
-    private final TimeState timeState;
+    private final Component source;
 
-    public ScoreMouseWheelListener(TimeState timeState) {
-        this.timeState = timeState;        
+    public LayerHeightWheelListener(Component source) {
+        this.source = source;
     }
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-        final ScoreTimeCanvas sTimeCanvas = (ScoreTimeCanvas) e.getSource();
 
         int shortcutKey = BlueSystem.getMenuShortcutKey();
         
@@ -48,12 +51,25 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
             int value = e.getWheelRotation();
 
             value = (value > 0) ? 1 : -1;
+            Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), source);
             
-            sTimeCanvas.modifyLayerHeight(value, e.getY());
+            Layer layer = ScoreController.getInstance().getScorePath().getGlobalLayerForY(
+                    p.y);
+
+            if(layer instanceof ScoreObjectLayer) {
+                ScoreObjectLayer sLayer = (ScoreObjectLayer)layer;
+                int index = sLayer.getHeightIndex();
+                int newIndex = index + value;
+    
+                if(newIndex >= 0 && newIndex <= ScoreObjectLayer.HEIGHT_MAX_INDEX) {
+                    sLayer.setHeightIndex(newIndex);
+                }
+
+                e.consume();
+            }
             
-            e.consume();
         } else {
-             e.getComponent().getParent().dispatchEvent(e);
+           //  e.getComponent().getParent().dispatchEvent(e);
         }
     }
 }

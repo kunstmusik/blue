@@ -132,6 +132,7 @@ public final class ScoreTopComponent extends TopComponent
     volatile boolean checkingSize = false;
     AlphaMarquee marquee = new AlphaMarquee();
     ScoreMouseWheelListener mouseWheelListener;
+    LayerHeightWheelListener layerHeightWheelListener;;
     ScoreMouseListener listener = new ScoreMouseListener(this, content);
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
@@ -556,6 +557,8 @@ public final class ScoreTopComponent extends TopComponent
         }
 
         this.mouseWheelListener = new ScoreMouseWheelListener(scrollPane);
+        this.layerHeightWheelListener = new LayerHeightWheelListener(layerPanel);
+        layerPanel.addMouseWheelListener(layerHeightWheelListener);
 
         ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
     }

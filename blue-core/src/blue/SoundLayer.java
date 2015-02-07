@@ -83,8 +83,6 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private int heightIndex = 0;
 
-    public static int HEIGHT_MAX_INDEX = 9;
-
     // constructor
     public SoundLayer() {
         muted = false;
