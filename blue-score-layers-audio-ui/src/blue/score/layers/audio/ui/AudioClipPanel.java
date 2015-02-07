@@ -80,7 +80,7 @@ public class AudioClipPanel extends JPanel
         setForeground(Color.WHITE);
 
         reset();
-        this.setBorder(BorderFactory.createRaisedSoftBevelBorder());
+//        this.setBorder(BorderFactory.createRaisedSoftBevelBorder());
     }
 
     @Override
@@ -165,6 +165,20 @@ public class AudioClipPanel extends JPanel
 
         g.fillRect(0, 2, w, h - 4);
 
+        // DRAW WAVEFORM
+        g.setColor(waveColor);
+
+        g.translate(1, 2);
+
+        AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData);
+
+        g.translate(-1, -2);
+
+        g.setColor(fontColor);
+        g.drawString(audioClip.getName(), 5, 15);
+
+
+        // DRAW BORDERS
         g.setColor(border1);
         g.drawLine(0, 2, w - 1, 2);
         g.drawLine(0, 2, 0, h - 4);
@@ -174,16 +188,6 @@ public class AudioClipPanel extends JPanel
         g.drawLine(w - 1, h - 3, w - 1, 2);
 
 
-        g.setColor(waveColor);
-
-        g.translate(1, 2);
-
-        AudioWaveformUI.paintWaveForm(g, this.getHeight(), waveData);
-
-        g.translate(-1, -2);
-
-        g.setColor(fontColor);
-        g.drawString(audioClip.getName(), 5, 15);
     }
 
     @Override
