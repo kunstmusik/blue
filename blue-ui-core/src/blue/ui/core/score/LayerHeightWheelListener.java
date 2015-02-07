@@ -69,7 +69,7 @@ public class LayerHeightWheelListener implements MouseWheelListener {
             }
             
         } else {
-           //  e.getComponent().getParent().dispatchEvent(e);
+           source.getParent().dispatchEvent(e);
         }
     }
 }
