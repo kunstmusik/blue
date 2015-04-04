@@ -5,9 +5,11 @@ import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
+import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -25,6 +27,11 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
     float min = 0f;
 
     float max = 1f;
+    
+    boolean seedUsed = false;
+    
+    long seed = 0L;
+    
 
     public RandomAddProcessor() {
     }
@@ -58,11 +65,29 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
         this.max = Float.parseFloat(value);
     }
 
+    public String getSeedUsed() {
+        return Boolean.toString(seedUsed);
+    }
+
+    public void setSeedUsed(String seedUsed) {
+        this.seedUsed = Boolean.valueOf(seedUsed.trim().toLowerCase());
+    }
+
+    public String getSeed() {
+        return Long.toString(seed);
+    }
+
+    public void setSeed(String seed) {
+        this.seed = Long.parseLong(seed);
+    }
+    
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
         float range = max - min;
         float fieldVal = 0f;
+
+        Random r = seedUsed ? new Random(seed) : new Random();
 
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
@@ -77,7 +102,7 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
                         .getString("noteProcessorException.missingPfield"),
                         pfield);
             }
-            float randVal = (float) ((Math.random() * range) + min);
+            float randVal = (float) ((r.nextDouble() * range) + min);
 
             temp.setPField(Float.toString(fieldVal + randVal), pfield);
         }
@@ -100,6 +125,12 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
                 case "max":
                     rap.setMax(node.getTextString());
                     break;
+                case "seedUsed":
+                    rap.setSeedUsed(node.getTextString());
+                    break;
+                case "seed":
+                    rap.setSeed(node.getTextString());
+                    break;
             }
         }
 
@@ -118,6 +149,8 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
         retVal.addElement("pfield").setText(this.getPfield());
         retVal.addElement("min").setText(this.getMin());
         retVal.addElement("max").setText(this.getMax());
+        retVal.addElement("seedUsed").setText(this.getSeedUsed());
+        retVal.addElement("seed").setText(this.getSeed());
 
         return retVal;
     }

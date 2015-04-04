@@ -13,13 +13,16 @@ information.
 [CHANGE LOG]
 
 > Notes for 2.6.x<
-[release 2014.xx.xx]
+[release 2015.xx.xx]
 
 NEW
 
 * AudioLayers:   
 
 * Added link to Csound FLOSS Manual from Help Menu
+
+* Added seed value and useSeed to RandomAddProcessor and RandomMultiplyProcessor
+  [issue #302]
 
 UPDATED
 
