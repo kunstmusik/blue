@@ -22,6 +22,7 @@ package blue.ui.core.score.mouse;
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.BlueSystem;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.layers.soundObject.actions.PasteSoundObjectAction;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -40,7 +41,7 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE
+        if (ModeManager.getInstance().getMode() != ScoreMode.SCORE
                 || currentScoreObjectView != null
                 || (e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY
         
@@ -64,4 +65,8 @@ public class PasteClickMouseListener extends BlueMouseAdapter {
         content.remove(scoreTC.getTimeState());
     }
 
+    @Override
+    public boolean acceptsMode(ScoreMode mode) {
+        return mode == ScoreMode.SCORE;
+    }
 }

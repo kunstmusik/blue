@@ -23,6 +23,7 @@ import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreMode;
 import blue.utility.ScoreUtilities;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -209,4 +210,8 @@ public class ResizeScoreObjectsListener extends BlueMouseAdapter {
 //        selectedScoreObjects[0].setSubjectiveDuration(endTimes[0] - newStart);
     }
 
+    @Override
+    public boolean acceptsMode(ScoreMode mode) {
+        return mode == ScoreMode.SCORE;
+    }
 }

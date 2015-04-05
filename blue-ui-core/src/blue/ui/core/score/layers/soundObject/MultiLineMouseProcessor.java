@@ -28,6 +28,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.render.RealtimeRenderManager;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.ScoreUtilities;
 import java.awt.Component;
@@ -301,7 +302,7 @@ class MultiLineMouseProcessor extends MouseAdapter {
     }
 
     private boolean isMultiLineMode() {
-        return ModeManager.getInstance().getMode() == ModeManager.MODE_MULTI_LINE;
+        return ModeManager.getInstance().getMode() == ScoreMode.MULTI_LINE;
     }
 
     // MOUSE DRAGGING CODE

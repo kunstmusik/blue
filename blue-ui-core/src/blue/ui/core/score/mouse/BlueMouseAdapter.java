@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.mouse;
 
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.core.score.layers.LayerGroupPanel;
@@ -37,10 +38,12 @@ import org.openide.util.lookup.InstanceContent;
  * 
  * @author stevenyi
  */
-public class BlueMouseAdapter extends MouseAdapter {
+public abstract class BlueMouseAdapter extends MouseAdapter {
     
     public static LayerGroupPanel currentLayerGroupPanel = null;
     public static ScoreObjectView currentScoreObjectView = null;
     public static ScoreTopComponent scoreTC = null;
     public static InstanceContent content;
+    
+    public abstract boolean acceptsMode(ScoreMode mode);
 }

@@ -26,6 +26,7 @@ import blue.score.TimeState;
 import blue.score.layers.Layer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.MoveScoreObjectsEdit;
 import blue.undo.BlueUndoManager;
@@ -248,6 +249,11 @@ public class MoveScoreObjectsListener extends BlueMouseAdapter {
         startTimes = null;
         startLayerIndices = null;
         currentLayerIndices = null;
+    }
+    
+    @Override
+    public boolean acceptsMode(ScoreMode mode) {
+        return mode == ScoreMode.SCORE;
     }
 
 }

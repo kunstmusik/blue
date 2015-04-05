@@ -23,15 +23,9 @@ import java.util.Iterator;
 import java.util.Vector;
 
 public class ModeManager {
-    public static final int MODE_SCORE = 0;
-
-    public static final int MODE_SINGLE_LINE = 1;
-
-    public static final int MODE_MULTI_LINE = 2;
-
     private static ModeManager instance = null;
 
-    private int mode = MODE_SCORE;
+    private ScoreMode mode = ScoreMode.SCORE;
 
     private Vector listeners = null;
 
@@ -45,29 +39,29 @@ public class ModeManager {
         return instance;
     }
 
-    public int getMode() {
+    public ScoreMode getMode() {
         return mode;
     }
 
-    public void setMode(int mode) {
+    public void setMode(ScoreMode mode) {
         this.mode = mode;
         fireModeChanged(mode);
     }
 
     public void nextMode() {
-        if (mode < MODE_MULTI_LINE) {
-            mode++;
+        if (mode.ordinal() < ScoreMode.MULTI_LINE.ordinal()) {
+            mode = ScoreMode.values()[mode.ordinal() + 1];
         } else {
-            mode = MODE_SCORE;
+            mode = ScoreMode.SCORE;
         }
         fireModeChanged(mode);
     }
 
     public void previousMode() {
-        if (mode > MODE_SCORE) {
-            mode--;
+        if (mode.ordinal() > ScoreMode.SCORE.ordinal()) {
+            mode = ScoreMode.values()[mode.ordinal() - 1];;
         } else {
-            mode = MODE_MULTI_LINE;
+            mode = ScoreMode.MULTI_LINE;
         }
 
         fireModeChanged(mode);
@@ -87,7 +81,7 @@ public class ModeManager {
         }
     }
 
-    public void fireModeChanged(int mode) {
+    public void fireModeChanged(ScoreMode mode) {
         if (listeners != null) {
             Iterator iter = new Vector(listeners).iterator();
 

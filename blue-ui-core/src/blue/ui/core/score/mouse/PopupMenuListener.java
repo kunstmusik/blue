@@ -21,6 +21,7 @@ package blue.ui.core.score.mouse;
 
 import blue.plugin.ScoreMouseListenerPlugin;
 import blue.score.ScoreObject;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreTopComponent;
 import static blue.ui.core.score.mouse.BlueMouseAdapter.scoreTC;
 import blue.ui.utilities.UiUtilities;
@@ -108,4 +109,8 @@ public class PopupMenuListener extends BlueMouseAdapter {
         }
     }
 
+    @Override
+    public boolean acceptsMode(ScoreMode mode) {
+        return mode == ScoreMode.SCORE;
+    }
 }

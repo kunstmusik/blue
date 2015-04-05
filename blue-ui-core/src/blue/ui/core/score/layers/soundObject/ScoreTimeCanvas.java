@@ -31,6 +31,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
@@ -50,7 +51,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
@@ -592,7 +592,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     @Override
-    public void modeChanged(int mode) {
+    public void modeChanged(ScoreMode mode) {
         marquee.setVisible(false);
     }
 

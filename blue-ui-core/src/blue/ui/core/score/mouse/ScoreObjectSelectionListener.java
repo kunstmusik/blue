@@ -24,6 +24,7 @@ import blue.score.ScoreObject;
 import blue.soundObject.PolyObject;
 import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -42,7 +43,7 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
 
-        if (ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE) {
+        if (ModeManager.getInstance().getMode() != ScoreMode.SCORE) {
             return;
         }
 
@@ -96,5 +97,10 @@ public class ScoreObjectSelectionListener extends BlueMouseAdapter {
 
             }
         }
+    }
+    
+    @Override
+    public boolean acceptsMode(ScoreMode mode) {
+        return mode == ScoreMode.SCORE;
     }
 }

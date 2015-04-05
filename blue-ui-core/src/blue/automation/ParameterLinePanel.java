@@ -26,6 +26,7 @@ import blue.components.lines.LinePoint;
 import blue.score.TimeState;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GenericFileFilter;
@@ -273,7 +274,7 @@ public class ParameterLinePanel extends JComponent implements
         Color currentColor = null;
 
         ModeManager modeManager = ModeManager.getInstance();
-        boolean editing = (modeManager.getMode() == ModeManager.MODE_SINGLE_LINE);
+        boolean editing = (modeManager.getMode() == ScoreMode.SINGLE_LINE);
 //        boolean multiLineMode = (modeManager.getMode() == ModeManager.MODE_MULTI_LINE);
         boolean multiLineMode = !editing;
 
@@ -1099,8 +1100,8 @@ public class ParameterLinePanel extends JComponent implements
     }
 
     @Override
-    public void modeChanged(int mode) {
-        if (mode == ModeManager.MODE_SINGLE_LINE) {
+    public void modeChanged(ScoreMode mode) {
+        if (mode == ScoreMode.SINGLE_LINE) {
             addMouseListener(mouseListener);
             addMouseMotionListener(mouseListener);
             // addMouseWheelListener(wheelListener);
@@ -1154,7 +1155,7 @@ public class ParameterLinePanel extends JComponent implements
 
         @Override
         public void mousePressed(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1266,7 +1267,7 @@ public class ParameterLinePanel extends JComponent implements
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1307,7 +1308,7 @@ public class ParameterLinePanel extends JComponent implements
         
         @Override
         public void mouseDragged(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1401,7 +1402,7 @@ public class ParameterLinePanel extends JComponent implements
 
         @Override
         public void mouseMoved(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 

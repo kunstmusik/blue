@@ -149,7 +149,7 @@ public class ScoreMouseListener extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e
     ) {
-        if (ModeManager.getInstance().getMode() != ModeManager.MODE_SCORE) {
+        if (ModeManager.getInstance().getMode() != ScoreMode.SCORE) {
             return;
         }
 

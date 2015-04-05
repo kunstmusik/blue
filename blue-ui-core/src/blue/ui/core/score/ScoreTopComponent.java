@@ -560,7 +560,7 @@ public final class ScoreTopComponent extends TopComponent
         this.layerHeightWheelListener = new LayerHeightWheelListener(layerPanel);
         layerPanel.addMouseWheelListener(layerHeightWheelListener);
 
-        ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
+        ModeManager.getInstance().setMode(ScoreMode.SCORE);
     }
 
     // FIXME - this needs to be better done, perhaps hidden behind an interface
