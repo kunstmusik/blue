@@ -54,7 +54,7 @@ public class ScoreMouseListener extends MouseAdapter {
             .getPredefinedCursor(Cursor.MOVE_CURSOR);
     private final ScoreTopComponent scoreTC;
     private MouseAdapter currentGestureListener = null;
-    private MouseAdapter[] mouseListeners;
+    private BlueMouseAdapter[] mouseListeners;
 
     public ScoreMouseListener(ScoreTopComponent tc, InstanceContent content) {
         this.scoreTC = tc;
@@ -98,11 +98,14 @@ public class ScoreMouseListener extends MouseAdapter {
                 ScoreController.getInstance().getScorePath());
 
         MouseAdapter current = null;
+        ScoreMode mode = ModeManager.getInstance().getMode();
 
         try {
             for (int i = 0; i < mouseListeners.length && !e.isConsumed(); i++) {
-                current = mouseListeners[i];
-                current.mousePressed(e);
+                if(mouseListeners[i].acceptsMode(mode)) {
+                    current = mouseListeners[i];
+                    current.mousePressed(e);
+                }
             }
             currentGestureListener = e.isConsumed() ? current : null;
         } catch (Exception ex) {
