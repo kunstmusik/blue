@@ -433,4 +433,16 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
         return super.contains(object);
     }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
+    
+    
 }

@@ -238,4 +238,14 @@ public class PatternLayer implements Layer {
     public boolean remove(ScoreObject object) {
         return false;
     }
+    
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
 }

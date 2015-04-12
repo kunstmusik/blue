@@ -451,4 +451,13 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         return max;
     }
 
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
 }
