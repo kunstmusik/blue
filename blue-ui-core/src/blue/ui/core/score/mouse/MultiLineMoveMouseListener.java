@@ -131,11 +131,12 @@ class MultiLineMoveMouseListener extends BlueMouseAdapter {
     public void mouseReleased(MouseEvent e) {
         e.consume();
         if (SwingUtilities.isLeftMouseButton(e)) {
-            selection.endTranslation();
             AlphaMarquee marquee = scoreTC.getMarquee();
 
             marquee.startTime += selection.getTranslationTime();
             marquee.endTime += selection.getTranslationTime();
+            
+            selection.endTranslation();
         }
 
         timeState = null;
