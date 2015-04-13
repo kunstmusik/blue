@@ -21,7 +21,7 @@ id = "blue.ui.core.tools.OpenCsoundRCEditorAction")
 @ActionReferences({
     @ActionReference(path = "Menu/Tools", position = 87)
 })
-@Messages("CTL_OpenCsoundRCEditorAction=.csoundrc Editor")
+@Messages("CTL_OpenCsoundRCEditorAction=.csound6rc Editor")
 public final class OpenCsoundRCEditorAction implements ActionListener {
     
     @Override
