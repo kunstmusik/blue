@@ -72,8 +72,7 @@ public class ScoreMouseListener extends MouseAdapter {
     }
 
     @Override
-    public void mousePressed(MouseEvent e
-    ) {
+    public void mousePressed(MouseEvent e) {
         RealtimeRenderManager.getInstance().stopAuditioning();
 
         if (e.isConsumed()) {

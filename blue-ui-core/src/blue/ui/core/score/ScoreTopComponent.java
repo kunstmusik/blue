@@ -53,6 +53,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -561,6 +562,13 @@ public final class ScoreTopComponent extends TopComponent
         layerPanel.addMouseWheelListener(layerHeightWheelListener);
 
         ModeManager.getInstance().setMode(ScoreMode.SCORE);
+        
+        ModeManager.getInstance().addModeListener(new ModeListener() {
+            @Override
+            public void modeChanged(ScoreMode mode) {
+                getMarquee().setVisible(false);
+            }
+        });
     }
 
     // FIXME - this needs to be better done, perhaps hidden behind an interface
@@ -1010,5 +1018,18 @@ public final class ScoreTopComponent extends TopComponent
 
     public TimeState getTimeState() {
         return this.currentTimeState;
+    }
+    
+    public List<LayerGroupPanel> getLayerGroupPanels() {
+        List<LayerGroupPanel> lgPanels = new ArrayList<>();
+        
+        for(int i = 0; i < layerPanel.getComponentCount(); i++) {
+            Component c = layerPanel.getComponent(i);
+            
+            if(c instanceof LayerGroupPanel) {
+                lgPanels.add((LayerGroupPanel<LayerGroup>)c);
+            }
+        }
+        return lgPanels;
     }
 }

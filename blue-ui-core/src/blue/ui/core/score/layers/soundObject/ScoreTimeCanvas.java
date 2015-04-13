@@ -78,7 +78,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     AlphaMarquee marquee = new AlphaMarquee();
     Point start = new Point(0, 0);
     Point end;
-    MultiLineMouseProcessor multiLineMouse;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(marquee);
     JPanel sObjPanel = new JPanel();
     private final PropertyChangeListener heightListener;
@@ -101,8 +100,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         sObjPanel.setLayout(null);
 
         time = 3;
-
-        multiLineMouse = new MultiLineMouseProcessor(this);
 
         ModeManager.getInstance().addModeListener(this);
 
@@ -263,7 +260,6 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         this.timeState = timeState;
 
         dropTargetListener.setTimeState(timeState);
-        multiLineMouse.setTimeState(timeState);
 
         if (this.getPolyObject() != null) {
             timeState.addPropertyChangeListener(this);

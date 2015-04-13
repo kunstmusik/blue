@@ -1430,9 +1430,9 @@ public class ParameterLinePanel extends JComponent implements
     
     /* MULTILINE MODE */
     
-    public void addSelectionDragRegion(float startTime, float endTime) {
-        selectionList.add(new float[] {startTime, endTime});
-    }
+//    public void addSelectionDragRegion(float startTime, float endTime) {
+//        selectionList.add(new float[] {startTime, endTime});
+//    }
     
     public void setSelectionDragRegion(float startTime, float endTime) {
         if(selectionList.size() == 0) {
@@ -1442,10 +1442,12 @@ public class ParameterLinePanel extends JComponent implements
         float[] points = selectionList.get(0);
         points[0] = startTime;
         points[1] = endTime;
+        repaint();
     }
     
     public void clearSelectionDragRegions() {
         selectionList.clear();
+        repaint();
     }
     
     public void setMultiLineMouseTranslation(float transTime) {
@@ -1462,7 +1464,7 @@ public class ParameterLinePanel extends JComponent implements
                 processLineForSelectionDrag(param.getLine());
             }
         }
-        clearSelectionDragRegions();
+//        clearSelectionDragRegions();
         transTime = 0.0f;
     }    
 
