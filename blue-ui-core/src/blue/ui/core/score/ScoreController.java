@@ -42,7 +42,7 @@ public class ScoreController {
 
     private static ScoreController INSTANCE = null;
 
-    public static ScoreController getInstance() {
+    public static synchronized ScoreController getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new ScoreController();
         }
@@ -50,7 +50,7 @@ public class ScoreController {
     }
 
     private Lookup lookup;
-    private ScoreObjectBuffer buffer = new ScoreObjectBuffer();
+    private final ScoreObjectBuffer buffer = new ScoreObjectBuffer();
     private InstanceContent content;
     private Score score = null;
     WeakHashMap<Score, ScorePath> scorePaths = new WeakHashMap<>();

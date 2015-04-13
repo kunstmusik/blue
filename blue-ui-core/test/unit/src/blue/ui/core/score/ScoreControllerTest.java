@@ -24,6 +24,10 @@ import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
+import blue.undo.BlueUndoManager;
+import java.util.HashMap;
+import javax.swing.JScrollPane;
+import javax.swing.undo.UndoManager;
 import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -41,6 +45,7 @@ public class ScoreControllerTest {
     private ScoreController.ScoreObjectBuffer buffer;
     
     public ScoreControllerTest() {
+        BlueUndoManager.setUndoGroup(new HashMap<String, UndoManager>());
     }
 
     @Before
@@ -48,8 +53,11 @@ public class ScoreControllerTest {
         System.out.println("@Before setUp");
 
         this.scoreController = ScoreController.getInstance();
+        scoreController.setScrollPane(new JScrollPane());
+        
         InstanceContent content = new InstanceContent();
         Score score = new Score();
+        scoreController.setScore(score);
         PolyObject pObj = (PolyObject) score.get(0);
         SoundLayer layer1 = new SoundLayer();
         SoundLayer layer2 = new SoundLayer();
