@@ -106,7 +106,7 @@ public class Installer extends ModuleInstall {
                             ClassLoader.class);
                     UIManager.put("ClassLoader", cl);
                     UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
-                    UIManager.put("swing.boldMetal", "false");
+                    UIManager.put("swing.boldMetal", false);
                     MetalLookAndFeel.setCurrentTheme(new BlueTheme());
                     LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
                     UIManager.setLookAndFeel(plaf);
