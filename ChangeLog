@@ -42,6 +42,8 @@ UPDATED
 * Changed "Tools->.csoundrc Editor" to "Tools->.csound6rc Editor", to edit 
   .csound6rc instead of older .csoundrc
 
+* Added /usr/local/lib and /usr/lib to java.library.path for Linux [issue #304]
+
 FIX
 
 * Redid font/theme handling so that --fontsize flag is respected (can be given

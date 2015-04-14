@@ -9,7 +9,7 @@
 
   <property name="blue.manual.dir" value="build/manual"/>
   <property name="linux.java.lib.path" 
-              value="-J-Djava.library.path=/usr/lib/jni"/>
+              value="-J-Djava.library.path=/usr/lib/jni:/usr/local/lib:/usr/lib"/>
 
   <condition property="isWindows">
     <os family="windows" />
