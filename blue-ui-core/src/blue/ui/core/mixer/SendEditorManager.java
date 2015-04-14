@@ -19,7 +19,6 @@
  */
 package blue.ui.core.mixer;
 
-import blue.gui.DialogUtil;
 import blue.mixer.*;
 import java.awt.Frame;
 import java.util.HashMap;
@@ -77,7 +76,7 @@ public class SendEditorManager {
             dialog.setTitle("Send");
             dialog.pack();
 
-            DialogUtil.registerJDialog(dialog);
+            dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
 
             dialog.setSize(dialog.getWidth() + 5, dialog.getHeight() + 5);
             // dialog.setModal(true);

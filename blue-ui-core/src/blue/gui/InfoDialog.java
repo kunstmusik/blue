@@ -144,7 +144,7 @@ public class InfoDialog {
 
             });
 
-            DialogUtil.registerJDialog(dialog);
+            dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
         }
 
         tabs.add(title, new JScrollPane(new JTextArea(information)));

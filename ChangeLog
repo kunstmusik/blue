@@ -72,6 +72,11 @@ FIX
 * Issue #249 - Fixed editing of last automation and tempo point in popup "Edit
   Points" dialog
 
+* Issue #259 - Fixed forwarding of key events from Effects dialogs to main 
+  window, so users can now us shortcuts for rendering and other menu shortcuts
+  while editing effects
+  
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
