@@ -72,7 +72,7 @@ public class Segment implements Generator, Serializable, Quantizable,
         }
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         return table.getValue(time);
     }
 

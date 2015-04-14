@@ -19,8 +19,8 @@
  */
 package blue.soundObject;
 
+import blue.CompileData;
 import blue.score.ScoreObjectEvent;
-import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
@@ -30,11 +30,11 @@ import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Map;
+import java.util.Random;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-
-@SoundObjectPlugin(displayName = "JMask", live=true, position = 50)
+@SoundObjectPlugin(displayName = "JMask", live = true, position = 50)
 public class JMask extends AbstractSoundObject {
 
     private NoteProcessorChain npc = new NoteProcessorChain();
@@ -45,17 +45,22 @@ public class JMask extends AbstractSoundObject {
 
     float repeatPoint = -1.0f;
 
+    boolean seedUsed = false;
+
+    long seed = 0L;
+
     public JMask() {
         setName("JMask");
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
     public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
 
         Field temp = (Field) ObjectUtilities.clone(field);
-        
-        NoteList nl = temp.generateNotes(this.getSubjectiveDuration());
+
+        Random rnd = seedUsed ? new Random(seed) : new Random();
+
+        NoteList nl = temp.generateNotes(this.getSubjectiveDuration(), rnd);
 
         try {
             ScoreUtilities.applyNoteProcessorChain(nl, this.npc);
@@ -71,7 +76,6 @@ public class JMask extends AbstractSoundObject {
         return nl;
     }
 
-
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
@@ -83,7 +87,6 @@ public class JMask extends AbstractSoundObject {
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
-
     public float getRepeatPoint() {
         return repeatPoint;
     }
@@ -104,8 +107,16 @@ public class JMask extends AbstractSoundObject {
             Element node = nodes.next();
             String nodeName = node.getName();
 
-            if (nodeName.equals("field")) {
-                jmask.setField(Field.loadFromXML(node));
+            switch(nodeName) {
+                case "field":
+                    jmask.setField(Field.loadFromXML(node));
+                    break;
+                case "seed":
+                    jmask.setSeed(Long.parseLong(node.getTextString()));
+                    break;
+                case "seedUsed":
+                    jmask.setSeedUsed(Boolean.parseBoolean(node.getTextString()));
+                    break;
             }
         }
 
@@ -121,6 +132,8 @@ public class JMask extends AbstractSoundObject {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
+        retVal.addElement("seedUsed").setText(Boolean.toString(seedUsed));
+        retVal.addElement("seed").setText(Long.toString(seed));
         retVal.addElement(field.saveAsXML());
 
         return retVal;
@@ -151,6 +164,22 @@ public class JMask extends AbstractSoundObject {
         this.field = field;
     }
 
+    public boolean isSeedUsed() {
+        return seedUsed;
+    }
+
+    public void setSeedUsed(boolean seedUsed) {
+        this.seedUsed = seedUsed;
+    }
+
+    public long getSeed() {
+        return seed;
+    }
+
+    public void setSeed(long seed) {
+        this.seed = seed;
+    }
+
     @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
@@ -167,11 +196,11 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
+    public NoteList generateForCSD(CompileData compileData, float startTime,
             float endTime) throws SoundObjectException {
-        
-        NoteList nl = generateNotes(startTime, endTime);  
+
+        NoteList nl = generateNotes(startTime, endTime);
         return nl;
-        
+
     }
 }

@@ -73,10 +73,10 @@ public class Random implements Generator, Serializable, Quantizable,
 
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double range = max - min;
 
-        return min + (range * Math.random());
+        return min + (range * rnd.nextDouble());
     }
 
     public double getMax() {

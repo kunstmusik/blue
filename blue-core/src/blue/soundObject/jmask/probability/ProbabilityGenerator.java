@@ -28,7 +28,7 @@ public interface ProbabilityGenerator extends Serializable {
 
 //    public JComponent getEditor();
 
-    public double getValue(double time);
+    public double getValue(double time, java.util.Random rnd);
 
     public Element saveAsXML();
 }

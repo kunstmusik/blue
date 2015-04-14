@@ -28,7 +28,7 @@ public interface Generator {
 
     public Element saveAsXML();
 
-    public double getValue(double time);
+    public double getValue(double time, java.util.Random rnd);
 
 //    public JComponent getEditor();
 

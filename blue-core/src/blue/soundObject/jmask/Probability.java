@@ -88,8 +88,8 @@ public class Probability implements Generator, Serializable, Maskable,
         this.duration = duration;
     }
 
-    public double getValue(double time) {
-        return generators[selectedIndex].getValue(time / duration);
+    public double getValue(double time, java.util.Random rnd) {
+        return generators[selectedIndex].getValue(time / duration, rnd);
     }
 
     public ProbabilityGenerator[] getGenerators() {
