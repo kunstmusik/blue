@@ -544,7 +544,7 @@ public class ArrangementEditPanel extends JComponent
             }
 
             if (DragManager.getDragSource() != targetTable) {
-                dtde.acceptDrag(dtde.getDropAction());
+                dtde.acceptDrag(DnDConstants.ACTION_COPY);
 
             } else {
                 dtde.rejectDrag();

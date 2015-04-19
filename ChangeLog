@@ -82,6 +82,8 @@ FIX
 * Issue #285 - Generating Realtime CSD to Screen did not correctly set if API
   version of CSD should be generated or not  
 
+* Issue #273 - Dragging instrument from library to project should copy, not move
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
