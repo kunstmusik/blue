@@ -803,8 +803,9 @@ public class ArrangementEditPanel extends JComponent
                         convertToBSB.setEnabled(false);
                     }
 
-                    boolean bufferFull = !(CopyBuffer
-                            .getBufferedObject(CopyBuffer.INSTRUMENT) == null);
+                    Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
+                    boolean bufferFull = bufferedObj != null && 
+                            (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 

@@ -75,6 +75,9 @@ FIX
 * Issue #259 - Fixed forwarding of key events from Effects dialogs to main 
   window, so users can now us shortcuts for rendering and other menu shortcuts
   while editing effects
+
+* Issue #270 - User Instrument Library and Arrangement Panel should share the 
+  same copy buffer for copying/pasting instruments between the two panels
   
 
 INTERNAL
