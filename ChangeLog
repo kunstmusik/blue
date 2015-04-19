@@ -78,7 +78,9 @@ FIX
 
 * Issue #270 - User Instrument Library and Arrangement Panel should share the 
   same copy buffer for copying/pasting instruments between the two panels
-  
+
+* Issue #285 - Generating Realtime CSD to Screen did not correctly set if API
+  version of CSD should be generated or not  
 
 INTERNAL
 

@@ -66,7 +66,7 @@ public final class GenerateRealtimeCsdToScreenAction implements ActionListener {
              * .getString("message.generateScore.startingFromZero")); }
              */
 
-            boolean isApi = CommandlineRealtimeRenderServiceFactory.class == 
+            boolean isApi = CommandlineRealtimeRenderServiceFactory.class != 
                     RealtimeRenderSettings.getInstance().renderServiceFactory.getClass();
                     
 
