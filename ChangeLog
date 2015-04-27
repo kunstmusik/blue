@@ -84,6 +84,8 @@ FIX
 
 * Issue #273 - Dragging instrument from library to project should copy, not move
 
+* Issue #306 - Fixed BSB interface not updating after setting values from preset
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
