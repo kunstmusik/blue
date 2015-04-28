@@ -189,7 +189,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-    <condition property="fopCommand" value="d:\work\fop-1.1\fop.bat">
+    <condition property="fopCommand" value="c:\work\fop-1.1\fop.bat">
       <os family="windows"/>
     </condition>
 
