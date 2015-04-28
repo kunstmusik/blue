@@ -68,7 +68,7 @@ public class Constant implements Generator, Serializable, Accumulatable {
 
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         return value;
     }
 

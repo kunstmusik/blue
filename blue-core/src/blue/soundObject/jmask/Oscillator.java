@@ -154,7 +154,7 @@ public class Oscillator implements Generator, Serializable, Maskable,
 //        freqTable.setInitialPhase(phaseInit);
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double retVal = 0.0;
 
         double phase = getPhase(time);

@@ -115,7 +115,7 @@ public class Gaussian implements ProbabilityGenerator {
         return "Gaussian";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         // sigma = Standardabweichung
         // mu = Mittelwert
         // mu+-sigma -> 68.26% aller x
@@ -138,7 +138,7 @@ public class Gaussian implements ProbabilityGenerator {
         do {
             sum = 0;
             for (int i = 1; i <= 12; i++) {
-                sum += Math.random();
+                sum += rnd.nextDouble();
             }
             e = localSigma * (sum - 6.0) + localMu;
         } while ((e > 1.0) || (e < 0.0));

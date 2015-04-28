@@ -20,6 +20,7 @@
 package blue.ui.core.orchestra;
 
 import blue.BlueSystem;
+import blue.CopyBuffer;
 import blue.InstrumentLibrary;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
@@ -48,7 +49,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -72,8 +72,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
@@ -342,8 +340,6 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
     Object userObj;
 
-    Object bufferedObj;
-
     UserInstrumentLibrary instrGUI;
 
     JMenuItem addCategoryMenuItem = new JMenuItem(BlueSystem.getString(
@@ -558,11 +554,15 @@ class UserInstrumentTreePopup extends JPopupMenu {
             return;
         }
 
+        Object bufferedObj;
+
         if (userObj instanceof Instrument) {
             bufferedObj = ((Instrument) userObj).clone();
         } else {
             bufferedObj = ObjectUtilities.clone(userObj);
         }
+        
+        CopyBuffer.setBufferedObject(CopyBuffer.INSTRUMENT, userObj);
     }
 
     protected void pasteNode() {
@@ -570,6 +570,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
             return;
         }
 
+        Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
         if (bufferedObj instanceof Instrument) {
             addInstrument((Instrument) bufferedObj);
         } else {
@@ -658,7 +659,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
     }
 
     private void setBufferMenuItems() {
-        pasteMenuItem.setEnabled(bufferedObj != null);
+        pasteMenuItem.setEnabled(CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT) != null);
 
         if (userObj instanceof InstrumentCategory && ((InstrumentCategory) userObj).isRoot()) {
 

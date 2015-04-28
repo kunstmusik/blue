@@ -125,7 +125,7 @@ public class ItemList implements Generator, Serializable, TableModel,
         direction = 0;
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double retVal = 0.0;
 
         if (listItems.size() <= 1) {
@@ -163,7 +163,7 @@ public class ItemList implements Generator, Serializable, TableModel,
 
                     break;
                 case RANDOM:
-                    index = (int) (Math.random() * listItems.size());
+                    index = (int) (rnd.nextDouble() * listItems.size());
                     retVal = ((Double) listItems.get(index)).doubleValue();
 
                     break;

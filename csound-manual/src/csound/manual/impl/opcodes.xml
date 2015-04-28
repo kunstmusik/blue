@@ -1103,11 +1103,11 @@
       </opcode>
       <opcode>
         <name>flooper</name>
-        <signature>asig 	flooper	 kamp, kpitch, istart, idur, ifad, ifn</signature>
+        <signature>asig1[, asig2] 	flooper	 kamp, kpitch, istart, idur, ifad, ifn</signature>
       </opcode>
       <opcode>
         <name>flooper2</name>
-        <signature>asig 	flooper2	 kamp, kpitch, kloopstart, kloopend, kcrossfade, ifn \
+        <signature>asig1[,asig2] 	flooper2	 kamp, kpitch, kloopstart, kloopend, kcrossfade, ifn \
       [, istart, imode, ifenv, iskip]</signature>
       </opcode>
       <opcode>
@@ -1164,7 +1164,7 @@
         <name>loscilx</name>
         <signature>ar1 [, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9, ar10, ar11, ar12, ar13, ar14, \
       ar15, ar16] 	loscilx	 xamp, kcps, ifn \
-      [, iwsize, ibas, istrt, imod1, ibeg1, iend1]</signature>
+      [, iwsize, ibas, istrt, imod, ibeg, iend]</signature>
       </opcode>
       <opcode>
         <name>lphasor</name>
@@ -1755,6 +1755,10 @@
       <opcode>
         <name>mp3in</name>
         <signature>ar1, ar2 	mp3in	 ifilcod[, iskptim, iformat, iskipinit, ibufsize]</signature>
+      </opcode>
+      <opcode>
+        <name>mp3in</name>
+        <signature>ar1 	mp3in	 ifilcod[, iskptim, iformat, iskipinit, ibufsize]</signature>
       </opcode>
       <opcode>
         <name>soundin</name>
@@ -4418,7 +4422,7 @@
       </opcode>
       <opcode>
         <name>FLhvsBox</name>
-        <signature>ihandle 	FLhvsBox	 inumlinesX, inumlinesY, iwidth, iheight, ix, iy [, image]</signature>
+        <signature>ihandle 	FLhvsBox	 inumlinesX, inumlinesY, iwidth, iheight, ix, iy</signature>
       </opcode>
       <opcode>
         <name>FLhvsBox</name>

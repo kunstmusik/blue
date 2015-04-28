@@ -120,7 +120,7 @@ public class Weibull implements ProbabilityGenerator {
         return "Weibull";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
 
         double x, a, e; // t>1 -> max bei s
 
@@ -139,7 +139,7 @@ public class Weibull implements ProbabilityGenerator {
         }
 
         do {
-            x = Math.random();
+            x = rnd.nextDouble();
             a = 1.0 / (1.0 - x);
             e = localS * Math.pow(Math.log(a), (1.0 / localT));
         } while (e > 1);

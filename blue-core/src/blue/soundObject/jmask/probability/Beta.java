@@ -108,7 +108,7 @@ public class Beta implements ProbabilityGenerator {
         return "Beta";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double x1, x2, yps1, yps2, sum;
 
         double localA, localB;
@@ -126,8 +126,8 @@ public class Beta implements ProbabilityGenerator {
         }
         
         do {
-            x1 = Math.random();
-            x2 = Math.random();
+            x1 = rnd.nextDouble();
+            x2 = rnd.nextDouble();
             yps1 = Math.pow(x1, (1.0 / localA));
             yps2 = Math.pow(x2, (1.0 / localB));
             sum = yps1 + yps2;

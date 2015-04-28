@@ -430,7 +430,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (rowIndex == 0 && columnIndex == 0) {
             return false;
-        } else if (rowIndex == (size() - 1) && columnIndex == 0) {
+        } else if (rightBound && rowIndex == (size() - 1) && columnIndex == 0) {
             return false;
         }
 
@@ -500,11 +500,11 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
                 return;
             }
 
-            if (newValue < previous.getX()) {
+            if (previous != null && newValue < previous.getX()) {
                 newValue = previous.getX();
             }
 
-            if (rightBound && newValue > next.getX()) {
+            if (next != null && newValue > next.getX()) {
                 newValue = next.getX();
             }
 

@@ -45,10 +45,10 @@ public class Triangle implements ProbabilityGenerator {
         return "Triangle";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
 
-        double x1 = Math.random();
-        double x2 = Math.random();
+        double x1 = rnd.nextDouble();
+        double x2 = rnd.nextDouble();
 
         double retVal = (0.5 * (x1 + x2));
 

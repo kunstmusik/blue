@@ -63,9 +63,9 @@ public class Linear implements ProbabilityGenerator {
         return "Linear";
     }
 
-    public double getValue(double time) {
-        double x1 = Math.random();
-        double x2 = Math.random();
+    public double getValue(double time, java.util.Random rnd) {
+        double x1 = rnd.nextDouble();
+        double x2 = rnd.nextDouble();
 
         double retVal;
 

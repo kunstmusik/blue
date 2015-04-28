@@ -93,7 +93,7 @@ public class Exponential implements ProbabilityGenerator {
         return "Exponential";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double x;
         double localLambda;
         
@@ -106,7 +106,7 @@ public class Exponential implements ProbabilityGenerator {
         if (direction == BILATERAL) {
             double e;
             do {
-                x = 2.0 * Math.random();
+                x = 2.0 * rnd.nextDouble();
                 if (x > 1.0) {
                     x = 2.0 - x;
                     e = -Math.log(x);
@@ -118,7 +118,7 @@ public class Exponential implements ProbabilityGenerator {
             x = e;
         } else {
             do {
-                while ((x = Math.random()) == 0) {
+                while ((x = rnd.nextDouble()) == 0) {
                 }
                 x = -Math.log(x) / 7.0 / localLambda;
             } while (x > 1.0);

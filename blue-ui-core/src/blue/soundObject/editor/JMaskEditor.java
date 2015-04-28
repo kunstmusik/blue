@@ -33,35 +33,44 @@ import blue.soundObject.jmask.Parameter;
 import blue.ui.components.IconFactory;
 import blue.utility.GUI;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Rectangle2D;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import skt.swing.SwingUtil;
 
 @ScoreObjectEditorPlugin(scoreObjectType = JMask.class)
 public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
 
     EditorListPanel editorListPanel = new EditorListPanel();
-
     JMask jmask;
-
     Field field;
-
     JPopupMenu popup = new JPopupMenu();
+    JCheckBox useSeedCheckBox = new JCheckBox("Seed");
+    JSpinner seedSpinner = new JSpinner(new SpinnerNumberModel(0L, Long.MIN_VALUE,
+            Long.MAX_VALUE, 1L));
 
     public JMaskEditor() {
         this.setLayout(new BorderLayout());
@@ -74,7 +83,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         final Box topPanel = new Box(BoxLayout.X_AXIS);
         topPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.
                 createBevelBorder(BevelBorder.RAISED), new EmptyBorder(3, 3,
-                3, 3)));
+                        3, 3)));
         topPanel.add(new JLabel("JMask"));
         topPanel.add(Box.createHorizontalStrut(5));
         final JButton optionsButton = new JButton(IconFactory.getDownArrowIcon());
@@ -95,6 +104,30 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
             }
         });
 
+        useSeedCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(jmask != null) {
+                    jmask.setSeedUsed(useSeedCheckBox.isSelected());
+                }
+            }
+        });
+        
+        seedSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(jmask != null) {
+                    jmask.setSeed(((Number)seedSpinner.getValue()).longValue());
+                }
+            }
+        });
+        
+        seedSpinner.setMaximumSize(new Dimension(140,200));
+        seedSpinner.setPreferredSize(new Dimension(140,22));
+        
+        topPanel.add(useSeedCheckBox);
+        topPanel.add(seedSpinner);
+        topPanel.add(Box.createHorizontalStrut(5));
 
         JButton testButton = new JButton("Test");
         testButton.setFocusPainted(false);
@@ -134,9 +167,15 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
             return;
         }
 
-        editorListPanel.setJMask((JMask) sObj);
+        JMask jmask = (JMask) sObj;
+        this.jmask = null;
+        
+        useSeedCheckBox.setSelected(jmask.isSeedUsed());
+        seedSpinner.setValue(jmask.getSeed());
+        
+        editorListPanel.setJMask(jmask);
 
-        this.jmask = (JMask) sObj;
+        this.jmask = jmask;
         this.field = jmask.getField();
 
         updatePopup();
@@ -157,7 +196,7 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         if (notes != null) {
             InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
                     notes.toString(), BlueSystem.getString(
-                    "soundObject.generatedScore"));
+                            "soundObject.generatedScore"));
         }
     }
 

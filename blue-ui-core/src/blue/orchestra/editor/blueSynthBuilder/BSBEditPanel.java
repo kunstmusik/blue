@@ -354,9 +354,12 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
-        if (this.bsbInterface == bsbInterface) {
-            return;
-        }
+//      Commented out to fix issue with updating interface after setting preset
+//      However, the whole code for updating from presets needs to be fixed
+//      so that UI is only listening to changes from data model
+//        if (this.bsbInterface == bsbInterface) {
+//            return;
+//        }
 
         if (this.bsbInterface != null) {
             this.bsbInterface.getGridSettings().removePropertyChangeListener(

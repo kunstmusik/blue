@@ -544,7 +544,7 @@ public class ArrangementEditPanel extends JComponent
             }
 
             if (DragManager.getDragSource() != targetTable) {
-                dtde.acceptDrag(dtde.getDropAction());
+                dtde.acceptDrag(DnDConstants.ACTION_COPY);
 
             } else {
                 dtde.rejectDrag();
@@ -803,8 +803,9 @@ public class ArrangementEditPanel extends JComponent
                         convertToBSB.setEnabled(false);
                     }
 
-                    boolean bufferFull = !(CopyBuffer
-                            .getBufferedObject(CopyBuffer.INSTRUMENT) == null);
+                    Object bufferedObj = CopyBuffer.getBufferedObject(CopyBuffer.INSTRUMENT);
+                    boolean bufferFull = bufferedObj != null && 
+                            (bufferedObj instanceof Instrument);
                     pasteMenuItem.setEnabled(bufferFull);
                 }
 

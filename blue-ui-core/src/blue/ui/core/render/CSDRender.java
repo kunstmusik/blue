@@ -315,9 +315,9 @@ public class CSDRender extends CSDRenderService {
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
-        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
+//        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
 
-        if (generateMixer) {
+        if (mixerEnabled) {
             globalDur += mixer.getExtraRenderTime();
         }
         
@@ -337,7 +337,7 @@ public class CSDRender extends CSDRenderService {
 
         }
 
-        if (generateMixer) {
+        if (mixerEnabled) {
 
             //globalDur += mixer.getExtraRenderTime();
 

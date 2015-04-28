@@ -65,8 +65,8 @@ public class Parameter implements Serializable {
         return param;
     }
 
-    public double getValue(double time) {
-        double val = generator.getValue(time);
+    public double getValue(double time, java.util.Random rnd) {
+        double val = generator.getValue(time, rnd);
 
         if (mask != null && mask.isEnabled()) {
             val = mask.getValue(time, val);

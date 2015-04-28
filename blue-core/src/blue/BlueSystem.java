@@ -392,6 +392,10 @@ public class BlueSystem {
     }
 
     public static void saveUDOLibrary() {
+        if(udoLibrary == null) {
+            return;
+        }
+        
         String userInstrFileName = BlueSystem.getUserConfigurationDirectory()
                 + File.separator + "udoLibrary.xml";
 

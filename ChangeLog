@@ -39,6 +39,11 @@ UPDATED
 
 * Mixer: Reworked layout of channel panels to be more compact
 
+* Changed "Tools->.csoundrc Editor" to "Tools->.csound6rc Editor", to edit 
+  .csound6rc instead of older .csoundrc
+
+* Added /usr/local/lib and /usr/lib to java.library.path for Linux [issue #304]
+
 FIX
 
 * Redid font/theme handling so that --fontsize flag is respected (can be given
@@ -63,6 +68,23 @@ FIX
 
 * Rendering to disk with commandline runner would freeze up until process 
   completed when render job canceled, instead of stopping render job
+
+* Issue #249 - Fixed editing of last automation and tempo point in popup "Edit
+  Points" dialog
+
+* Issue #259 - Fixed forwarding of key events from Effects dialogs to main 
+  window, so users can now us shortcuts for rendering and other menu shortcuts
+  while editing effects
+
+* Issue #270 - User Instrument Library and Arrangement Panel should share the 
+  same copy buffer for copying/pasting instruments between the two panels
+
+* Issue #285 - Generating Realtime CSD to Screen did not correctly set if API
+  version of CSD should be generated or not  
+
+* Issue #273 - Dragging instrument from library to project should copy, not move
+
+* Issue #306 - Fixed BSB interface not updating after setting values from preset
 
 INTERNAL
 

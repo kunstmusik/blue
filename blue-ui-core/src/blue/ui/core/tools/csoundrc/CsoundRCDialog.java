@@ -185,7 +185,7 @@ public class CsoundRCDialog extends javax.swing.JDialog {
             
         } else {
             String home = System.getenv("HOME");
-            csrcFile = new File(home + File.separator + ".csoundrc");
+            csrcFile = new File(home + File.separator + ".csound6rc");
         }
         
         if (csrcFile.exists()) {

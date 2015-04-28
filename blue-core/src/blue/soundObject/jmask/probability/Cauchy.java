@@ -116,7 +116,7 @@ public class Cauchy implements ProbabilityGenerator {
         return "Cauchy";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         // alpha -> Bereich f�r 50% aller x
 
         double localAlpha, localMu;
@@ -138,7 +138,7 @@ public class Cauchy implements ProbabilityGenerator {
         {
             do {
                 // mu -> Mittelwert
-                x = Math.random();
+                x = rnd.nextDouble();
             } while (x == 0.5);
             e = localAlpha * Math.tan(x * Math.PI) + localMu;
         } while ((e > 1.0) || (e < 0.0));

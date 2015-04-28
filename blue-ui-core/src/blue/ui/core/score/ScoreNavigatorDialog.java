@@ -21,7 +21,6 @@ package blue.ui.core.score;
 
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
-import blue.gui.DialogUtil;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.utility.GUI;
 import electric.xml.Element;
@@ -117,7 +116,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
         });
 
-        DialogUtil.registerJDialog(this);
+        getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
     }
 
     public void setJScrollPane(JScrollPane jScrollPane) {
