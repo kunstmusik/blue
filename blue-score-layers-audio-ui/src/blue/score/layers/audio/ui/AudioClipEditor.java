@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package blue.score.layers.audio.ui;
 
 import blue.BlueSystem;
@@ -27,6 +26,8 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.score.layers.audio.core.AudioClip;
 import blue.soundObject.editor.ScoreObjectEditor;
+import blue.ui.utilities.SimpleDocumentListener;
+import javax.swing.event.DocumentEvent;
 
 /**
  *
@@ -38,38 +39,44 @@ public class AudioClipEditor extends ScoreObjectEditor {
     AudioClip audioClip = null;
 
     ScoreObjectListener listener;
-    
+
+    volatile boolean updating = false;
+
     /**
      * Creates new form AudioClipEditor
      */
     public AudioClipEditor() {
         initComponents();
-        
+
         listener = new ScoreObjectListener() {
 
             @Override
             public void scoreObjectChanged(ScoreObjectEvent event) {
-                if(event.getScoreObject() == audioClip) {
-                    switch(event.getPropertyChanged()) {
+                if (event.getScoreObject() == audioClip) {
+                    updating = true;
+                    switch (event.getPropertyChanged()) {
                         case ScoreObjectEvent.START_TIME:
                             startTextField.setText(
                                     Float.toString(audioClip.getStartTime()));
                             break;
                         case ScoreObjectEvent.DURATION:
                             durationTextField.setText(
-                                    Float.toString(audioClip.getSubjectiveDuration()));
+                                    Float.toString(
+                                            audioClip.getSubjectiveDuration()));
                             break;
                         case ScoreObjectEvent.OTHER:
                             if ("fileStartTime".equals(event.getNamedProperty())) {
 
-                            fileStartTextField.setText(
-                                    Float.toString(audioClip.getFileStartTime()));
+                                fileStartTextField.setText(
+                                        Float.toString(
+                                                audioClip.getFileStartTime()));
                             }
                             break;
-                    } 
+                    }
+                    updating = false;
                 }
             }
-            
+
         };
     }
 
@@ -109,8 +116,23 @@ public class AudioClipEditor extends ScoreObjectEditor {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel3.text")); // NOI18N
 
         startTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.startTextField.text")); // NOI18N
+        startTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                startTextFieldFocusLost(evt);
+            }
+        });
+        startTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                startTextFieldActionPerformed(evt);
+            }
+        });
 
         durationTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.durationTextField.text")); // NOI18N
+        durationTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                durationTextFieldFocusLost(evt);
+            }
+        });
         durationTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 durationTextFieldActionPerformed(evt);
@@ -155,6 +177,16 @@ public class AudioClipEditor extends ScoreObjectEditor {
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel5.text")); // NOI18N
 
         fileStartTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fileStartTextField.text")); // NOI18N
+        fileStartTextField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                fileStartTextFieldFocusLost(evt);
+            }
+        });
+        fileStartTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileStartTextFieldActionPerformed(evt);
+            }
+        });
 
         lengthTextField.setEditable(false);
         lengthTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.lengthTextField.text")); // NOI18N
@@ -221,9 +253,29 @@ public class AudioClipEditor extends ScoreObjectEditor {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void startTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_startTextFieldFocusLost
+        updateStart();
+    }//GEN-LAST:event_startTextFieldFocusLost
+
+    private void startTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startTextFieldActionPerformed
+        updateStart();
+    }//GEN-LAST:event_startTextFieldActionPerformed
+
     private void durationTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_durationTextFieldActionPerformed
-        // TODO add your handling code here:
+        updateDuration();
     }//GEN-LAST:event_durationTextFieldActionPerformed
+
+    private void durationTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_durationTextFieldFocusLost
+        updateDuration();
+    }//GEN-LAST:event_durationTextFieldFocusLost
+
+    private void fileStartTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileStartTextFieldActionPerformed
+        updateFileStart();
+    }//GEN-LAST:event_fileStartTextFieldActionPerformed
+
+    private void fileStartTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fileStartTextFieldFocusLost
+        updateFileStart();
+    }//GEN-LAST:event_fileStartTextFieldFocusLost
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -244,23 +296,95 @@ public class AudioClipEditor extends ScoreObjectEditor {
 
     @Override
     public void editScoreObject(ScoreObject sObj) {
-        if(audioClip != null) {
+        if (audioClip != null) {
             audioClip.removeScoreObjectListener(listener);
         }
 
-        AudioClip newClip = (AudioClip)sObj;
+        AudioClip newClip = (AudioClip) sObj;
         this.audioClip = null;
 
-        if(newClip != null) {
-        this.audioFileNameLabel.setText(BlueSystem.getRelativePath(
-                newClip.getAudioFile().getAbsolutePath()));
-        startTextField.setText(Float.toString(newClip.getStartTime()));
-        durationTextField.setText(Float.toString(newClip.getSubjectiveDuration()));
-        lengthTextField.setText(Float.toString(newClip.getAudioDuration()));
-        fileStartTextField.setText(Float.toString(newClip.getFileStartTime()));
-        newClip.addScoreObjectListener(listener);
+        if (newClip != null) {
+            updating = true;
+
+            this.audioFileNameLabel.setText(BlueSystem.getRelativePath(
+                    newClip.getAudioFile().getAbsolutePath()));
+            startTextField.setText(Float.toString(newClip.getStartTime()));
+            durationTextField.setText(Float.toString(
+                    newClip.getSubjectiveDuration()));
+            lengthTextField.setText(Float.toString(newClip.getAudioDuration()));
+            fileStartTextField.setText(
+                    Float.toString(newClip.getFileStartTime()));
+            newClip.addScoreObjectListener(listener);
+
+            updating = false;
         }
 
         this.audioClip = newClip;
     }
+
+    public void updateStart() {
+        if (updating) {
+            return;
+        }
+        String text = startTextField.getText();
+        if (text != null && audioClip != null) {
+            try {
+                float v = Float.parseFloat(text);
+                if (v < 0.0f) {
+                    audioClip.setStartTime(
+                            audioClip.getStartTime());
+                } else {
+                    audioClip.setStartTime(v);
+                }
+            } catch (Exception ex) {
+                audioClip.setStartTime(audioClip.getStartTime());
+            }
+        }
+    }
+
+    public void updateDuration() {
+        if (updating) {
+            return;
+        }
+
+        if (durationTextField.getText() != null && audioClip != null) {
+            try {
+                float v = Float.parseFloat(
+                        durationTextField.getText());
+                if (v < 0.0f || v > audioClip.getAudioDuration()) {
+                    audioClip.setSubjectiveDuration(
+                            audioClip.getSubjectiveDuration());
+                } else {
+                    audioClip.setSubjectiveDuration(v);
+                }
+            } catch (Exception ex) {
+                audioClip.setSubjectiveDuration(
+                        audioClip.getSubjectiveDuration());
+            }
+        }
+    }
+
+    public void updateFileStart() {
+        if (updating) {
+            return;
+        }
+        if (fileStartTextField.getText() != null && audioClip != null) {
+            updating = true;
+            try {
+                float v = Float.parseFloat(
+                        fileStartTextField.getText());
+                if (v < 0.0f || v >= audioClip.getAudioDuration()) {
+                    audioClip.setFileStartTime(
+                            audioClip.getFileStartTime());
+                } else {
+                    audioClip.setFileStartTime(v);
+                }
+            } catch (Exception ex) {
+                audioClip.setFileStartTime(
+                        audioClip.getFileStartTime());
+            }
+            updating = false;
+        }
+    }
+
 }

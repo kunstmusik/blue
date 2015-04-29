@@ -115,7 +115,7 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         fireScoreObjectEvent(event);
 
     }
-    
+
     @Override
     public float getStartTime() {
         return start;
@@ -123,11 +123,7 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 
     @Override
     public void setStartTime(float start) {
-        if(this.start == start) return;
-//        float old = this.start;
         this.start = start;
-
-//        firePropertyChangeEvent("startTime", old, start);
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.START_TIME);
@@ -142,10 +138,8 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 
     @Override
     public void setSubjectiveDuration(float duration) {
-        if(this.duration == duration) return;
-//        float old = this.duration;
-        this.duration = duration;
-//        firePropertyChangeEvent("subjectiveDuration", old, start);
+        this.duration = (float) Math.min(duration,
+                this.audioDuration - this.fileStartTime);
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.DURATION);
@@ -162,25 +156,25 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     public float getMaxResizeLeftDiff() {
         return (start < fileStartTime) ? -start : -fileStartTime;
     }
-    
+
     @Override
     public void resizeLeft(float newStartTime) {
 
-        if(newStartTime >= start + duration) {
+        if (newStartTime >= start + duration) {
             return;
-        } 
-        
+        }
+
         float diff = newStartTime - start;
         float maxFileStartDiff = -fileStartTime;
 
-        if(diff < maxFileStartDiff) {
+        if (diff < maxFileStartDiff) {
             diff = maxFileStartDiff;
         }
 
         float maxDurDiff = audioDuration - duration;
-        if(-diff > maxDurDiff) {
+        if (-diff > maxDurDiff) {
             diff = -maxDurDiff;
-        } 
+        }
 
         setFileStartTime(fileStartTime + diff);
         setStartTime(start + diff);
@@ -190,17 +184,17 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     @Override
     public void resizeRight(float newEndTime) {
 
-        if(newEndTime <= start) {
+        if (newEndTime <= start) {
             return;
         }
-        
+
         float newDur = newEndTime - start;
 
         newDur = (newDur > audioDuration) ? audioDuration : newDur;
-        
+
         setSubjectiveDuration(newDur);
     }
-    
+
     @Override
     public int compareTo(AudioClip o) {
         float diff = o.start - this.start;
@@ -259,7 +253,7 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 
         String colorStr = Integer.toString(getBackgroundColor().getRGB());
         root.addElement("backgroundColor").setText(colorStr);
-        
+
         return root;
     }
 
@@ -296,7 +290,8 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
                     break;
                 case "backgroundColor":
                     String colorStr = data.getTextString("backgroundColor");
-                    clip.setBackgroundColor(new Color(Integer.parseInt(colorStr)));
+                    clip.setBackgroundColor(
+                            new Color(Integer.parseInt(colorStr)));
                     break;
             }
         }
@@ -335,7 +330,6 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 //        }
 //        propListeners.remove(pcl);
 //    }
-
     @Override
     public ScoreObject clone() {
         return (ScoreObject) ObjectUtilities.clone(this);
@@ -359,10 +353,9 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     protected void fireScoreObjectEvent(ScoreObjectEvent event) {
         if (scoreObjListeners != null) {
             for (ScoreObjectListener listener : scoreObjListeners) {
-               listener.scoreObjectChanged(event);
+                listener.scoreObjectChanged(event);
             }
         }
     }
-
 
 }
