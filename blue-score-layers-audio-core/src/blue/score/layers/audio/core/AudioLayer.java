@@ -81,7 +81,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
             return false;
         }
         boolean retVal = super.remove(o);
-        if(retVal) {
+        if (retVal) {
             fireAudioClipRemoved((AudioClip) o);
         }
         return retVal;
@@ -230,7 +230,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
     protected int generateInstrumentForAudioLayer(CompileData compileData) {
 
         if (compileData.getCompilationVariable(this.uniqueId) != null) {
-            return (Integer)compileData.getCompilationVariable(this.uniqueId);
+            return (Integer) compileData.getCompilationVariable(this.uniqueId);
         }
 
         Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
@@ -241,13 +241,6 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
                 c = channel;
             }
         }
-
-        if (c == null) {
-            throw new RuntimeException(
-                    "Could not find channel for audioLayer: " + this.getUniqueId());
-        }
-
-        int channelId = assignments.get(c);
 
         GenericInstrument instr = new GenericInstrument();
         StringBuilder str = new StringBuilder();
@@ -267,10 +260,17 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
                     "[error] AudioLayer could not load instr text");
         }
 
-        String var1 = Mixer.getChannelVar(channelId, 0);
-        String var2 = Mixer.getChannelVar(channelId, 1);
+        if (c != null) {
+            int channelId = assignments.get(c);
 
-        instr.setText(getInstrumentText(var1, var2));
+            String var1 = Mixer.getChannelVar(channelId, 0);
+            String var2 = Mixer.getChannelVar(channelId, 1);
+
+            instr.setText(getInstrumentText(var1, var2));
+            System.out.println("Instr Text: " + instr.getText());
+        } else {
+            instr.setText(getInstrumentText("a1", "a2") + "\noutc a1, a2\n");
+        }
 
         int instrId = compileData.addInstrument(instr);
 
@@ -297,47 +297,50 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
                     float adjustedStart = startTime - clipStart;
                     float eventStart = clipStart - startTime;
-                    
+
                     if (adjustedStart < 0.0f) {
                         adjustedStart = 0.0f;
                     }
 
-                    if(eventStart < 0.0f) {
-                        eventStart = 0.0f; 
+                    if (eventStart < 0.0f) {
+                        eventStart = 0.0f;
                     }
 
                     n.setPField(Integer.toString(instrId), 1);
                     n.setStartTime(eventStart);
                     n.setSubjectiveDuration(clipDur - adjustedStart);
-                    n.setPField("\"" + clip.getAudioFile().getAbsolutePath() + "\"", 4);
+                    n.setPField(
+                            "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
+                            4);
                     n.setPField(Float.toString(adjustedStart), 5);
-                    
+
                     notes.add(n);
                 } else if (clipStart < endTime) {
 
                     float adjustedStart = startTime - clipStart;
                     float eventStart = clipStart - startTime;
                     float eventDur = clipDur - adjustedStart;
-                    
+
                     if (adjustedStart < 0.0f) {
                         adjustedStart = 0.0f;
                     }
 
-                    if(eventStart < 0.0f) {
-                        eventStart = 0.0f; 
+                    if (eventStart < 0.0f) {
+                        eventStart = 0.0f;
                     }
 
-                    if(adjustedStart + eventDur > adjustedEnd) {
+                    if (adjustedStart + eventDur > adjustedEnd) {
                         eventDur = adjustedEnd - eventStart;
                     }
-
 
                     n.setPField(Integer.toString(instrId), 1);
                     n.setStartTime(eventStart);
                     n.setSubjectiveDuration(eventDur);
-                    n.setPField("\"" + clip.getAudioFile().getAbsolutePath() + "\"", 4);
+                    n.setPField(
+                            "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
+                            4);
                     n.setPField(Float.toString(adjustedStart), 5);
-                    
+
                     notes.add(n);
                 }
             }
@@ -444,7 +447,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
         for (AudioClip clip : this) {
             float end = clip.getStartTime() + clip.getSubjectiveDuration();
-            if(end > max) {
+            if (end > max) {
                 max = end;
             }
         }
