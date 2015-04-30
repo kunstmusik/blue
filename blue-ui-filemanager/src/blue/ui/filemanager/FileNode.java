@@ -22,6 +22,7 @@ package blue.ui.filemanager;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
@@ -86,14 +87,16 @@ public class FileNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<File> toPopulate) {
-            toPopulate.addAll(Arrays.asList(file.listFiles(new FileFilter() {
-
+            List<File> files = Arrays.asList(file.listFiles(new FileFilter() {
+                
                 @Override
                 public boolean accept(File pathname) {
-                   return !pathname.getName().startsWith(".");
+                    return !pathname.getName().startsWith(".");
                 }
                 
-            })));
+            }));
+            Collections.sort(files);
+            toPopulate.addAll(files);
             return true;
         }
 
