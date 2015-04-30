@@ -157,7 +157,7 @@ public class AudioFileRenderer implements BarRenderer {
 
         g.translate(1, 2);
 
-        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, waveData);
+        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, waveData, 0);
 
         g.translate(-1, -2);
 

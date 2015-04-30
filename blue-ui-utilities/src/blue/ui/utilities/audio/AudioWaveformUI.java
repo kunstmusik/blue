@@ -30,7 +30,7 @@ import java.awt.Rectangle;
 public class AudioWaveformUI {
     
     public static void paintWaveForm(Graphics2D g, int sObjVisibleHeight,
-            AudioWaveformData waveForm) {
+            AudioWaveformData waveForm, int audioFileStartIndex) {
 
         if (waveForm.data == null) {
             return;
@@ -60,15 +60,11 @@ public class AudioWaveformUI {
             int yAdjust = j * channelHeight;
 
             for (int i = startX; i < endX; i++) {
-                index = i * 2;
+                index = (i + audioFileStartIndex) * 2;
 
                 if (index + 1 > waveForm.data[j].length) {
                     break;
                 }
-
-                // if(index + 1 > waveForm.data[j].length) {
-                // break;
-                // }
 
                 int y1 = (int) (middleZero - (waveForm.data[j][index] * middleZero))
                         + yAdjust;
