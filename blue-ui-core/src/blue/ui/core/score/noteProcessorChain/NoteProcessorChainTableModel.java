@@ -139,10 +139,10 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
     }
 
     private Method findSetMethod(Method getMethod, ArrayList a) {
-        String name = getMethod.getName().substring(3).toLowerCase();
+        String name = getMethod.getName().substring(3);
         for (int i = 0; i < a.size(); i++) {
             Method temp = (Method) a.get(i);
-            if (temp.getName().toLowerCase().indexOf(name) > -1) {
+            if (temp.getName().endsWith(name)) {
                 return temp;
             }
         }
