@@ -20,6 +20,7 @@
 package blue.score.layers.audio.core;
 
 import blue.CompileData;
+import blue.automation.ParameterIdList;
 import blue.mixer.Channel;
 import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
@@ -63,6 +64,8 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
     private String uniqueId;
 
     private static MessageFormat INSTR_TEXT = null;
+    
+    private ParameterIdList automationParameters = new ParameterIdList();
 
     public AudioLayer() {
         this.uniqueId = new VMID().toString();
@@ -144,6 +147,10 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
     public String getUniqueId() {
         return uniqueId;
     }
+    
+    public ParameterIdList getAutomationParameters() {
+        return automationParameters;
+    }
 
     public Element saveAsXML() {
         Element retVal = new Element("audioLayer");
@@ -157,6 +164,11 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
 
         for (AudioClip clip : this) {
             retVal.addElement(clip.saveAsXML());
+        }
+        
+        for (Iterator iter = automationParameters.iterator(); iter.hasNext();) {
+            String id = (String) iter.next();
+            retVal.addElement("parameterId").setText(id);
         }
 
         return retVal;
@@ -183,7 +195,16 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
-            layer.add(AudioClip.loadFromXML(nodes.next()));
+            Element node = nodes.next();
+            switch(node.getName()) {
+                case "audioClip":
+                    layer.add(AudioClip.loadFromXML(node));
+                    break;
+                case "parameterId":
+                    String id = node.getTextString();
+                    layer.automationParameters.addParameterId(id);
+                    break;
+            }            
         }
 
         return layer;

@@ -19,12 +19,10 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.score.layers.Layer;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.ui.components.IconFactory;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -103,6 +101,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         nameText = new javax.swing.JTextField();
         muteToggleButton = new javax.swing.JToggleButton();
         soloToggleButton = new javax.swing.JToggleButton();
+        automationButton = new javax.swing.JButton();
         otherMenuButton = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
@@ -166,6 +165,21 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         });
         jPanel2.add(soloToggleButton);
 
+        automationButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        automationButton.setText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.automationButton.text")); // NOI18N
+        automationButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.automationButton.toolTipText")); // NOI18N
+        automationButton.setFocusPainted(false);
+        automationButton.setFocusable(false);
+        automationButton.setMargin(new java.awt.Insets(5, 0, 4, 0));
+        automationButton.setMaximumSize(new java.awt.Dimension(19, 19));
+        automationButton.setPreferredSize(new java.awt.Dimension(16, 17));
+        automationButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                automationButtonActionPerformed(evt);
+            }
+        });
+        jPanel2.add(automationButton);
+
         otherMenuButton.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         otherMenuButton.setIcon(IconFactory.getDownArrowIcon());
         otherMenuButton.setToolTipText(org.openide.util.NbBundle.getMessage(AudioHeaderLayerPanel.class, "AudioHeaderLayerPanel.otherMenuButton.toolTipText")); // NOI18N
@@ -223,6 +237,15 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
+    private void automationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_automationButtonActionPerformed
+        
+
+//         JPopupMenu menu = AutomationManager.getInstance().getAutomationMenu(
+//                this.audioLayer);
+//
+//        menu.show(automationButton, 0, automationButton.getHeight());
+    }//GEN-LAST:event_automationButtonActionPerformed
+
     public void editName() {
         if (audioLayer == null) {
             return;
@@ -233,6 +256,7 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
         nameText.requestFocusInWindow();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton automationButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JToggleButton muteToggleButton;
