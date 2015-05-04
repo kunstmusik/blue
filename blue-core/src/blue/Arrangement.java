@@ -455,7 +455,8 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
         String transformed = replaceInstrumentId(ia, instrumentText);
 
-        transformed = convertBlueMixerOut(data, mixer, ia.arrangementId, transformed,
+        transformed = convertBlueMixerOut(data, mixer, ia.arrangementId,
+                transformed,
                 nchnls);
 
         buffer.append(transformed).append("\n");
@@ -546,22 +547,24 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
         Channel c = null;
 
-        
-        if (input.indexOf("blueMixerOut") < 0 && input.indexOf("blueMixerIn") < 0) {
+        if (!input.contains("blueMixerOut") && !input.contains("blueMixerIn")) {
             return input;
         }
 
-        for(Channel channel : mixer.getAllSourceChannels()) {
-            if(channel.getName().equals(arrangementId)) {
-                c = channel;
-                break;
+        if (mixer != null) {
+            for (Channel channel : mixer.getAllSourceChannels()) {
+                if (channel.getName().equals(arrangementId)) {
+                    c = channel;
+                    break;
+                }
+            }
+
+            if (c == null) {
+                throw new RuntimeException(
+                        "Unable to find channel for instrument: " + arrangementId);
             }
         }
 
-        if(c == null) {
-            throw new RuntimeException("Unable to find channel for instrument: " + arrangementId);
-        }
-        
         StrBuilder buffer = new StrBuilder();
         String[] lines = NEW_LINES.split(input);
 
@@ -576,7 +579,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 String noCommentLine = TextUtilities.stripSingleLineComments(
                         line);
 
-                if(!noCommentLine.contains("blueMixerIn")) {
+                if (!noCommentLine.contains("blueMixerIn")) {
                     buffer.append(line).append("\n");
                     continue;
                 }
@@ -595,7 +598,8 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 for (int i = 0; i < nchnls && i < args.length; i++) {
                     String arg = args[i];
 
-                    String var = Mixer.getChannelVar(data.getChannelIdAssignments().get(c), i);
+                    String var = Mixer.getChannelVar(
+                            data.getChannelIdAssignments().get(c), i);
 
                     buffer.append(arg).append(" = ");
                     buffer.append(var).append("\n");
@@ -654,10 +658,11 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                         for (int i = 0; i < nchnls && i < args.length; i++) {
                             String arg = args[i];
 
-                            String var = Mixer.getChannelVar(data.getChannelIdAssignments().get(c), i);
+                            String var = Mixer.getChannelVar(
+                                    data.getChannelIdAssignments().get(c), i);
 
                             buffer.append(var).append(" = ");
-                            
+
                             if (!blueMixerInFound) {
                                 buffer.append(var).append(" + ");
                             }
