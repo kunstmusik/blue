@@ -7,6 +7,7 @@ package blue.score.tempo;
 
 import blue.soundObject.PolyObject;
 import blue.ui.components.IconFactory;
+import blue.ui.core.score.ScoreController;
 import java.awt.Dimension;
 
 /**
@@ -33,7 +34,7 @@ public class TempoEditorControl extends javax.swing.JPanel {
     
     public void setPolyObject(PolyObject pObj) {
         this.pObj = pObj;
-        setVisible(this.pObj.isRoot());
+        setVisible(ScoreController.getInstance().getScorePath().getLastLayerGroup() == null);
     }
     
     public void setTempoVisible(boolean tempoVisible) {

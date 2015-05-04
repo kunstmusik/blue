@@ -31,6 +31,7 @@ import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.core.score.ModeListener;
 import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
@@ -204,7 +205,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
                     }
                 }
 
-                if (getPolyObject().isRoot()) {
+                if (ScoreController.getInstance().getScorePath().getLastLayerGroup() == null) {
                     BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
 
                     if (data != null) {
@@ -266,7 +267,7 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             pObj.addLayerGroupListener(this);
         }
 
-        this.automationPanel.setPolyObject(pObj, timeState);
+        this.automationPanel.setLayerGroup(pObj, timeState);
 
 //        content.set(Collections.emptyList(), null);
 

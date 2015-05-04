@@ -19,16 +19,18 @@
  */
 package blue.ui.core.score.layers.soundObject;
 
-import blue.SoundLayer;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
 import blue.score.TimeState;
+import blue.score.layers.AutomatableLayer;
 import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
-import blue.soundObject.PolyObject;
 import blue.ui.core.score.MultiLineScoreSelection;
 import blue.ui.core.score.MultiLineScoreSelectionListener;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.soundLayer.SoundLayerLayout;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
@@ -42,7 +44,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     SoundLayerLayout layout = new SoundLayerLayout();
 
-    private PolyObject pObj = null;
+    private LayerGroup layerGroup = null;
 
     private TimeState timeState = null;
 
@@ -52,15 +54,18 @@ public class AutomationLayerPanel extends JComponent implements
 
     MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
 
+    final ScorePath path;
+    
     public AutomationLayerPanel(AlphaMarquee marquee) {
         this.setLayout(layout);
         this.marquee = marquee;
+        path = ScoreController.getInstance().getScorePath();
     }
 
-    public void setPolyObject(PolyObject pObj, TimeState timeState) {
-        if (this.pObj != null && this.pObj.isRoot()) {
+    public void setLayerGroup(LayerGroup layerGroup, TimeState timeState) {
+        if (this.layerGroup != null && path.getLastLayerGroup() == null) {
             this.timeState.removePropertyChangeListener(this);
-            this.pObj.removeLayerGroupListener(this);
+            this.layerGroup.removeLayerGroupListener(this);
         }
 
         Component[] components = this.getComponents();
@@ -70,26 +75,26 @@ public class AutomationLayerPanel extends JComponent implements
             ((ParameterLinePanel) components[i]).cleanup();
         }
 
-        layout.setPolyObject(pObj);
+        layout.setPolyObject(layerGroup);
 
-        this.pObj = pObj;
+        this.layerGroup = layerGroup;
         this.timeState = timeState;
 
-        if (pObj != null && pObj.isRoot()) {
+        if (layerGroup != null && path.getLastLayerGroup() == null) {
             this.timeState.addPropertyChangeListener(this);
-            this.pObj.addLayerGroupListener(this);
+            this.layerGroup.addLayerGroupListener(this);
         }
 
         this.populate();
     }
 
     private void populate() {
-        if (pObj == null || !pObj.isRoot()) {
+        if (layerGroup == null || path.getLastLayerGroup() != null) {
             return;
         }
 
-        for (int i = 0; i < pObj.size(); i++) {
-            SoundLayer sLayer = pObj.get(i);
+        for (int i = 0; i < layerGroup.size(); i++) {
+            AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(i);
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
             paramPanel.setTimeState(timeState);
@@ -103,7 +108,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.pObj) {
+        if (evt.getSource() == this.layerGroup) {
             if (evt.getPropertyName().equals("heightIndex")) {
                 revalidate();
             }
@@ -161,7 +166,7 @@ public class AutomationLayerPanel extends JComponent implements
             ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
                     i);
 
-            if (selectedLayers != null && selectedLayers.contains(pObj.get(i))) {
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
                 paramLinePanel.setSelectionDragRegion(startTime, endTime);
             } else {
                 paramLinePanel.clearSelectionDragRegions();
@@ -261,7 +266,7 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        SoundLayer sLayer = pObj.get(index);
+        AutomatableLayer sLayer = (AutomatableLayer)layerGroup.get(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
         paramPanel.setTimeState(timeState);

@@ -27,6 +27,7 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.score.layers.AutomatableLayerGroup;
 import blue.score.layers.Layer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
@@ -54,12 +55,12 @@ import java.util.Vector;
 @SoundObjectPlugin(displayName = "PolyObject", live=false, position = 100)
 public class PolyObject extends ArrayList<SoundLayer> implements SoundObject, 
         ScoreObjectLayerGroup<SoundLayer>,
+        AutomatableLayerGroup,
         Serializable, Cloneable, GenericViewable {
 
     private transient Vector<LayerGroupListener> layerGroupListeners = null;
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
-    private boolean isRoot;
     protected float subjectiveDuration = 2.0f;
     protected float startTime = 0.0f;
     protected String name = "";
@@ -73,14 +74,13 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     public PolyObject() {
         setName("polyObject");
-        this.isRoot = false;
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
     public PolyObject(boolean isRoot) {
         setName("SoundObject Layer Group");
-        this.isRoot = isRoot;
+        timeBehavior = SoundObject.TIME_BEHAVIOR_NONE;
         this.setBackgroundColor(new Color(102, 102, 153));
     }
 
@@ -213,50 +213,50 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return max;
     }
 
-    protected float getAdjustedRenderStart(float renderStart) {
-        if (this.isRoot) {
-            return renderStart;
-        }
-
-        if (renderStart <= 0.0f || !isAdjustedTimeCalculateable()) {
-            return 0.0f;
-        }
-
-        float adjustedStart = renderStart - this.getStartTime();
-
-        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
-                getSoundObjects(
-                false));
-
-        float multiplier = getSubjectiveDuration() / internalDur;
-
-        return adjustedStart * multiplier;
-    }
-
-    protected float getAdjustedRenderEnd(float renderEnd) {
-        if (this.isRoot || renderEnd < 0.0f) {
-            return renderEnd;
-        }
-
-        if (renderEnd >= this.getStartTime() + this.getSubjectiveDuration()) {
-            return -1.0f;
-        }
-
-        if (!isAdjustedTimeCalculateable()) {
-            return -1.0f;
-        }
-
-        float adjustedEnd = renderEnd - this.getStartTime();
-
-        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
-                getSoundObjects(
-                false));
-
-        float multiplier = getSubjectiveDuration() / internalDur;
-
-        return adjustedEnd * multiplier;
-
-    }
+//    protected float getAdjustedRenderStart(float renderStart) {
+//        if (this.isRoot) {
+//            return renderStart;
+//        }
+//
+//        if (renderStart <= 0.0f || !isAdjustedTimeCalculateable()) {
+//            return 0.0f;
+//        }
+//
+//        float adjustedStart = renderStart - this.getStartTime();
+//
+//        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+//                getSoundObjects(
+//                false));
+//
+//        float multiplier = getSubjectiveDuration() / internalDur;
+//
+//        return adjustedStart * multiplier;
+//    }
+//
+//    protected float getAdjustedRenderEnd(float renderEnd) {
+//        if (this.isRoot || renderEnd < 0.0f) {
+//            return renderEnd;
+//        }
+//
+//        if (renderEnd >= this.getStartTime() + this.getSubjectiveDuration()) {
+//            return -1.0f;
+//        }
+//
+//        if (!isAdjustedTimeCalculateable()) {
+//            return -1.0f;
+//        }
+//
+//        float adjustedEnd = renderEnd - this.getStartTime();
+//
+//        float internalDur = ScoreUtilities.getMaxTimeWithEmptyCheck(
+//                getSoundObjects(
+//                false));
+//
+//        float multiplier = getSubjectiveDuration() / internalDur;
+//
+//        return adjustedEnd * multiplier;
+//
+//    }
 
     /* CSD GENERATION CODE */
     @Override
@@ -332,10 +332,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             throw new SoundObjectException(this, e);
         }
 
-        int timeBehavior = isRoot ? SoundObject.TIME_BEHAVIOR_NONE : this.
-                getTimeBehavior();
-
-        ScoreUtilities.applyTimeBehavior(nl, timeBehavior, this.
+        ScoreUtilities.applyTimeBehavior(nl, getTimeBehavior(), this.
                 getSubjectiveDuration(), this.getRepeatPoint());
 
         ScoreUtilities.setScoreStart(nl, startTime);
@@ -381,7 +378,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     public SoundObject clone() {
         PolyObject pObj = new PolyObject();
 
-        pObj.setRoot(this.isRoot());
         pObj.setName(this.getName());
         pObj.setStartTime(this.getStartTime());
         pObj.setSubjectiveDuration(this.getSubjectiveDuration());
@@ -430,17 +426,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     }
 
-    /**
-     * @return
-     */
-    public boolean isRoot() {
-        return isRoot;
-    }
-
-    public void setRoot(boolean val) {
-        isRoot = val;
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -460,10 +445,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
             Element node = nodes.next();
             String nodeName = node.getName();
             switch (nodeName) {
-                case "isRoot":
-                    pObj.setRoot(
-                            Boolean.valueOf(node.getTextString()).booleanValue());
-                    break;
                 case "heightIndex": {
                     int index = Integer.parseInt(node.getTextString());
                     // checking if using old heightIndex values
@@ -524,8 +505,6 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      */
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
-
-        retVal.addElement("isRoot").setText(Boolean.toString(this.isRoot()));
 
         retVal.addElement(XMLUtilities.writeInt("defaultHeightIndex",
                 defaultHeightIndex));

@@ -64,65 +64,65 @@ public class PolyObjectTest extends TestCase {
         assertFalse(pObj2.isScoreGenerationEmpty());
     }
 
-    public void testGetAdjustedRenderStart() {
-        PolyObject pObj = new PolyObject();
-        SoundLayer sLayer = new SoundLayer();
-        GenericScore genScore = new GenericScore();
-
-        genScore.setStartTime(0.0f);
-        genScore.setSubjectiveDuration(2.0f);
-
-        pObj.add(sLayer);
-        pObj.setRoot(true);
-        pObj.setStartTime(1.0f);
-        pObj.setSubjectiveDuration(2.0f);
-
-        sLayer.add(genScore);
-
-        assertEquals(1.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
-        assertEquals(2.0f, pObj.getAdjustedRenderStart(2.0f), .0001f);
-
-        pObj.setRoot(false);
-
-        assertEquals(0.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
-        assertEquals(1.0f, pObj.getAdjustedRenderStart(2.0f), .0001f);
-
-        genScore.setSubjectiveDuration(4.0f);
-
-        assertEquals(0.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
-        assertEquals(0.5f, pObj.getAdjustedRenderStart(2.0f), .0001f);
-    }
-
-    public void testGetAdjustedRenderEnd() {
-        PolyObject pObj = new PolyObject();
-        SoundLayer sLayer = new SoundLayer();
-        GenericScore genScore = new GenericScore();
-
-        genScore.setStartTime(0.0f);
-        genScore.setSubjectiveDuration(2.0f);
-
-        pObj.add(sLayer);
-        pObj.setRoot(true);
-        pObj.setStartTime(1.0f);
-        pObj.setSubjectiveDuration(2.0f);
-
-        sLayer.add(genScore);
-
-        assertEquals(1.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
-        assertEquals(2.0f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
-        assertEquals(-1.0f, pObj.getAdjustedRenderEnd(-1.0f), .0001f);
-
-        pObj.setRoot(false);
-
-        assertEquals(0.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
-        assertEquals(1.0f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
-
-        genScore.setSubjectiveDuration(4.0f);
-
-        assertEquals(0.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
-        assertEquals(0.5f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
-        assertEquals(-1.0f, pObj.getAdjustedRenderEnd(3.0f), .0001f);
-
-
-    }
+//    public void testGetAdjustedRenderStart() {
+//        PolyObject pObj = new PolyObject();
+//        SoundLayer sLayer = new SoundLayer();
+//        GenericScore genScore = new GenericScore();
+//
+//        genScore.setStartTime(0.0f);
+//        genScore.setSubjectiveDuration(2.0f);
+//
+//        pObj.add(sLayer);
+//        pObj.setRoot(true);
+//        pObj.setStartTime(1.0f);
+//        pObj.setSubjectiveDuration(2.0f);
+//
+//        sLayer.add(genScore);
+//
+//        assertEquals(1.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
+//        assertEquals(2.0f, pObj.getAdjustedRenderStart(2.0f), .0001f);
+//
+//        pObj.setRoot(false);
+//
+//        assertEquals(0.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
+//        assertEquals(1.0f, pObj.getAdjustedRenderStart(2.0f), .0001f);
+//
+//        genScore.setSubjectiveDuration(4.0f);
+//
+//        assertEquals(0.0f, pObj.getAdjustedRenderStart(1.0f), .0001f);
+//        assertEquals(0.5f, pObj.getAdjustedRenderStart(2.0f), .0001f);
+//    }
+//
+//    public void testGetAdjustedRenderEnd() {
+//        PolyObject pObj = new PolyObject();
+//        SoundLayer sLayer = new SoundLayer();
+//        GenericScore genScore = new GenericScore();
+//
+//        genScore.setStartTime(0.0f);
+//        genScore.setSubjectiveDuration(2.0f);
+//
+//        pObj.add(sLayer);
+//        pObj.setRoot(true);
+//        pObj.setStartTime(1.0f);
+//        pObj.setSubjectiveDuration(2.0f);
+//
+//        sLayer.add(genScore);
+//
+//        assertEquals(1.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
+//        assertEquals(2.0f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
+//        assertEquals(-1.0f, pObj.getAdjustedRenderEnd(-1.0f), .0001f);
+//
+//        pObj.setRoot(false);
+//
+//        assertEquals(0.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
+//        assertEquals(1.0f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
+//
+//        genScore.setSubjectiveDuration(4.0f);
+//
+//        assertEquals(0.0f, pObj.getAdjustedRenderEnd(1.0f), .0001f);
+//        assertEquals(0.5f, pObj.getAdjustedRenderEnd(2.0f), .0001f);
+//        assertEquals(-1.0f, pObj.getAdjustedRenderEnd(3.0f), .0001f);
+//
+//
+//    }
 }

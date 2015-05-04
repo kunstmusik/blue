@@ -228,7 +228,6 @@ public class ScoreController {
                 if (layer.remove(scoreObj)) {
                     edit = new RemoveScoreObjectEdit(
                             (ScoreObjectLayer) layer, scoreObj);
-                    System.out.println("EDITS: " + scoreObj + " : " + scoreObjects.size());
                     break;
                 }
             }

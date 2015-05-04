@@ -28,6 +28,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorChainMap;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.NoteProcessorDialog;
+import blue.ui.core.score.ScoreController;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -70,9 +71,11 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     private NoteProcessorChainMap npcMap;
 
     /** Creates new form SoundLayerPanel */
-    public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap, boolean automatable) {
+    public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap) {
         initComponents();
         setSelected(false);
+        
+        boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
         muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());

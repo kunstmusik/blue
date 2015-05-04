@@ -82,8 +82,6 @@ public final class ImportMidiAction implements ActionListener {
                         "message.error"), JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            pObj.setName("SoundObject Layer Group");
-            pObj.setRoot(true);
             tempData.getScore().add(pObj);
         } catch (NoteParseException e) {
             JOptionPane.showMessageDialog(mainWindow, BlueSystem.getString(

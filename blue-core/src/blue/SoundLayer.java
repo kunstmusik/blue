@@ -32,6 +32,7 @@ import blue.automation.ParameterIdList;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
 import blue.score.ScoreObject;
+import blue.score.layers.AutomatableLayer;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
@@ -44,7 +45,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public final class SoundLayer extends ArrayList<SoundObject> 
-        implements ScoreObjectLayer<SoundObject> {
+        implements ScoreObjectLayer<SoundObject>, AutomatableLayer {
 
     private transient Vector<PropertyChangeListener> propListeners = null;
 

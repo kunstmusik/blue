@@ -25,6 +25,7 @@ import blue.mixer.Channel;
 import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.score.ScoreObject;
+import blue.score.layers.AutomatableLayer;
 import static blue.score.layers.Layer.LAYER_HEIGHT;
 import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Note;
@@ -49,7 +50,8 @@ import java.util.Vector;
  * @author stevenyi
  *
  */
-public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer<AudioClip> {
+public class AudioLayer extends ArrayList<AudioClip> 
+    implements ScoreObjectLayer<AudioClip>, AutomatableLayer {
 
     private String name = "";
     private boolean muted = false;
