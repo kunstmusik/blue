@@ -29,6 +29,7 @@ import blue.score.layers.ScoreObjectLayer;
 import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
 import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
@@ -130,6 +131,9 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
                                 "Unable to load Score LayerGroup of type: " + node.getName());
                     }
                     score.add(layerGroup);
+                    if(layerGroup instanceof PolyObject) {
+                        ((PolyObject)layerGroup).setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+                    }
                     break;
             }
         }
