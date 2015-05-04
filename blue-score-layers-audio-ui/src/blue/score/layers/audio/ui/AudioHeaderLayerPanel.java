@@ -19,6 +19,8 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.automation.AutomationManager;
+import blue.mixer.Channel;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.ui.components.IconFactory;
 import java.awt.CardLayout;
@@ -46,35 +48,18 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
             BevelBorder.RAISED);
     private static final Border selectionBorder = BorderFactory.createBevelBorder(
             BevelBorder.RAISED, Color.GREEN, Color.GREEN.darker());
+    private final Channel channel;
 
     /**
      * Creates new form AudioHeaderLayerPanel
      */
-    public AudioHeaderLayerPanel(AudioLayer layer) {
+    public AudioHeaderLayerPanel(AudioLayer layer, Channel channel) {
         initComponents();
-//        Dimension d = new Dimension(100,
-//                (layer.getHeightIndex() + 1) * Layer.LAYER_HEIGHT);
-//        this.setPreferredSize(d);
-
-//        
-//        addMouseListener(new MouseAdapter() {
-//
-//            @Override
-//            public void mousePressed(MouseEvent e) {
-//                if(e.getClickCount() == 1) {
-//                    requestFocus();
-//                    editSoundObject();
-//                    e.consume();
-//                }
-//            }
-//            
-//            
-//        });
-
 
         setBorder(border);
 
         this.audioLayer = layer;
+        this.channel = channel;
 
         nameLabel.setText(audioLayer.getName());
         muteToggleButton.setSelected(audioLayer.isMuted());
@@ -238,12 +223,15 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_otherMenuButtonActionPerformed
 
     private void automationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_automationButtonActionPerformed
+        JPopupMenu menu = new JPopupMenu();
+        JMenu channelMenu = AutomationManager.getInstance().buildChannelMenu(
+                channel,
+                audioLayer.getAutomationParameters()
+        );
         
+        menu.add(channelMenu);
 
-//         JPopupMenu menu = AutomationManager.getInstance().getAutomationMenu(
-//                this.audioLayer);
-//
-//        menu.show(automationButton, 0, automationButton.getHeight());
+        menu.show(automationButton, 0, automationButton.getHeight());
     }//GEN-LAST:event_automationButtonActionPerformed
 
     public void editName() {

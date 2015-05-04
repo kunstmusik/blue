@@ -314,6 +314,7 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
+                <package>blue.automation</package>
                 <package>blue.gui</package>
                 <package>blue.soundObject.editor</package>
                 <package>blue.ui.core.score</package>

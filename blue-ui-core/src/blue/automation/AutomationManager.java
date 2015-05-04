@@ -73,7 +73,7 @@ public class AutomationManager implements ParameterListListener,
     BlueData data = null;
     Score score = null;
     ActionListener parameterActionListener;
-    private SoundLayer selectedSoundLayer = null;
+    private ParameterIdList selectedParamIdList = null;
     private static AutomationManager instance = null;
     PropertyChangeListener renderTimeListener;
 
@@ -81,7 +81,7 @@ public class AutomationManager implements ParameterListListener,
         parameterActionListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                if (data == null || selectedSoundLayer == null) {
+                if (data == null || selectedParamIdList == null) {
                     return;
                 }
 
@@ -89,9 +89,9 @@ public class AutomationManager implements ParameterListListener,
 
                 Parameter param = (Parameter) menuItem.getClientProperty("param");
 
-                parameterSelected(selectedSoundLayer, param);
+                parameterSelected(selectedParamIdList, param);
 
-                selectedSoundLayer = null;
+                selectedParamIdList = null;
             }
         };
 
@@ -121,9 +121,7 @@ public class AutomationManager implements ParameterListListener,
      * @param soundLayer
      * @param param
      */
-    private void parameterSelected(SoundLayer soundLayer, Parameter param) {
-        ParameterIdList paramIdList = soundLayer.getAutomationParameters();
-
+    private void parameterSelected(ParameterIdList paramIdList, Parameter param) {
         String uniqueId = param.getUniqueId();
 
         if (param.isAutomationEnabled()) {
@@ -145,7 +143,7 @@ public class AutomationManager implements ParameterListListener,
                     PolyObject pObj = (PolyObject) layerGroup;
 
                     for (SoundLayer layer : pObj) {
-                        if (layer == soundLayer) {
+                        if (layer.getAutomationParameters() == paramIdList) {
                             continue;
                         }
 
@@ -313,8 +311,8 @@ public class AutomationManager implements ParameterListListener,
         }
     }
 
-    public JPopupMenu getAutomationMenu(SoundLayer soundLayer) {
-        this.selectedSoundLayer = soundLayer;
+    public JPopupMenu getAutomationMenu(ParameterIdList paramIdList) {
+        this.selectedParamIdList = paramIdList;
 
         // if (menu == null || dirty) {
         JPopupMenu menu = new JPopupMenu();
@@ -323,8 +321,6 @@ public class AutomationManager implements ParameterListListener,
         JMenu instrRoot = new JMenu("Instrument");
 
         Arrangement arrangement = data.getArrangement();
-
-        ParameterIdList paramIdList = soundLayer.getAutomationParameters();
 
         for (int i = 0; i < arrangement.size(); i++) {
             InstrumentAssignment ia = arrangement.getInstrumentAssignment(i);
@@ -380,7 +376,7 @@ public class AutomationManager implements ParameterListListener,
 
                 for (int i = 0; i < channels.size(); i++) {
                     channelsMenu.add(buildChannelMenu(channels.get(i),
-                            soundLayer));
+                            paramIdList));
                 }
 
                 mixerRoot.add(channelsMenu);
@@ -393,7 +389,7 @@ public class AutomationManager implements ParameterListListener,
                 JMenu subChannelsMenu = new JMenu("Sub-Channels");
                 for (int i = 0; i < subChannels.size(); i++) {
                     subChannelsMenu.add(buildChannelMenu(subChannels.get(
-                            i), soundLayer));
+                            i), paramIdList));
                 }
 
                 mixerRoot.add(subChannelsMenu);
@@ -402,7 +398,7 @@ public class AutomationManager implements ParameterListListener,
             // add master channel
             Channel master = mixer.getMaster();
 
-            mixerRoot.add(buildChannelMenu(master, soundLayer));
+            mixerRoot.add(buildChannelMenu(master, paramIdList));
 
             menu.add(mixerRoot);
         }
@@ -419,7 +415,7 @@ public class AutomationManager implements ParameterListListener,
 
                 if (retVal == NotifyDescriptor.YES_OPTION) {
 
-                    ParameterIdList idList = selectedSoundLayer.getAutomationParameters();
+                    ParameterIdList idList = selectedParamIdList;
 
                     for (String paramId : idList.getParameters()) {
                         Parameter param = getParameter(paramId);
@@ -432,20 +428,19 @@ public class AutomationManager implements ParameterListListener,
         });
         menu.add(clearAll);
 
-        clearAll.setEnabled(soundLayer.getAutomationParameters().size() > 0);
+        clearAll.setEnabled(selectedParamIdList.size() > 0);
 
         // }
         // System.err.println(parameterMap);
         return menu;
     }
 
-    private JMenu buildChannelMenu(Channel channel, SoundLayer soundLayer) {
+    public JMenu buildChannelMenu(Channel channel, ParameterIdList paramIdList) {
+        this.selectedParamIdList = paramIdList;
 
         JMenu retVal = new JMenu();
 
         retVal.setText(channel.getName());
-
-        ParameterIdList paramIdList = soundLayer.getAutomationParameters();
 
         // pre effects
         EffectsChain preEffects = channel.getPreEffects();

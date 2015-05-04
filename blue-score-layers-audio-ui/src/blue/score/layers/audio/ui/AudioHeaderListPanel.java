@@ -21,6 +21,8 @@ package blue.score.layers.audio.ui;
 
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
+import blue.mixer.Channel;
+import blue.mixer.Mixer;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
@@ -59,14 +61,17 @@ public class AudioHeaderListPanel extends JPanel implements
     JPopupMenu menu;
     
     AudioHeaderListLayout layout = new AudioHeaderListLayout();
+    private final Mixer mixer;
     
-    public AudioHeaderListPanel(AudioLayerGroup audioLayerGroup) {
+    public AudioHeaderListPanel(AudioLayerGroup audioLayerGroup, Mixer mixer) {
         this.layerGroup = audioLayerGroup;
+        this.mixer = mixer;
         this.setLayout(layout);
         layout.setAudioLayerGroup(audioLayerGroup);
         
         for (AudioLayer layer : layerGroup) {
-            this.add(new AudioHeaderLayerPanel(layer));
+            Channel c = mixer.findChannelById(layer.getUniqueId());
+            this.add(new AudioHeaderLayerPanel(layer, c));
         }
         
         selection.addChangeListener(new ChangeListener() {
@@ -247,7 +252,8 @@ public class AudioHeaderListPanel extends JPanel implements
             
             @Override
             public void run() {
-                AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer);
+                Channel c = mixer.findChannelById(sLayer.getUniqueId());
+                AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer, c);
                 
                 add(panel, index);
                 checkSize();

@@ -164,6 +164,19 @@ public class Mixer implements Serializable {
 
         return allChannels;
     }
+    
+    public Channel findChannelById(String id) {
+        if (id == null) return null;
+        
+        for (ChannelList list : channelListGroups) {
+            for(Channel c : list) {
+                if(id.equals(c.getAssociation())) {
+                   return c;
+                }
+            }
+        }
+        return null;
+    }
 
     public ChannelList getChannels() {
         return channels;

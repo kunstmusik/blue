@@ -48,7 +48,8 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
     public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         if (layerGroup instanceof AudioLayerGroup) {
-            return new AudioHeaderListPanel((AudioLayerGroup) layerGroup);
+            return new AudioHeaderListPanel((AudioLayerGroup) layerGroup,
+            data.getMixer());
         }
         return null;
     }

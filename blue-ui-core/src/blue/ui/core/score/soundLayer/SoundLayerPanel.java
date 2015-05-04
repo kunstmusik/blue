@@ -446,7 +446,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private void automationButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_automationButtonActionPerformed
         JPopupMenu menu = AutomationManager.getInstance().getAutomationMenu(
-                this.sLayer);
+                this.sLayer.getAutomationParameters());
 
         menu.show(automationButton, 0, automationButton.getHeight());
 
