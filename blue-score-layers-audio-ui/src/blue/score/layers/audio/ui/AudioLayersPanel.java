@@ -225,12 +225,20 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == timeState) {
-            if (evt.getPropertyName().equals("pixelSecond")) {
-                checkSize();
-                transform.setToIdentity();
-                transform.setToScale(timeState.getPixelSecond(), 1.0);
-                reverseTransform.setToIdentity();
-                reverseTransform.setToScale(1 / timeState.getPixelSecond(), 1.0);
+            String prop = evt.getPropertyName();
+            switch (prop) {
+                case "pixelSecond":
+                    checkSize();
+                    transform.setToIdentity();
+                    transform.setToScale(timeState.getPixelSecond(), 1.0);
+                    reverseTransform.setToIdentity();
+                    reverseTransform.setToScale(1 / timeState.getPixelSecond(),
+                            1.0);
+                break;
+                case "snapEnabled":
+                case "snapValue":
+                    repaint();
+                    break;
             }
         }
     }
@@ -257,46 +265,6 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
             }
 
         }
-//        if (marquee.intersects(this)) {
-//
-//            Rectangle rect = marquee.getTranslatedRect(this);
-//            int top = rect.y;
-//            int bottom = top + rect.height;
-//
-//            double start = rect.x / (double) timeState.getPixelSecond();
-//            double end = (rect.x + rect.width) / (double) timeState.getPixelSecond();
-//
-//            int y = 0;
-//
-//            for (int i = 0; i < layerGroup.getSize(); i++) {
-//                AudioLayer layer = layerGroup.getLayerAt(i);
-//                int layerHeight = layer.getAudioLayerHeight();
-//
-//                if (y <= bottom && (y + layerHeight) >= top) {
-//
-//                    for (AudioClip clip : layer) {
-//                        if (clip.getStartTime() <= end
-//                                && (clip.getStartTime() + clip.getSubjectiveDuration()) >= start) {
-//                            selectedClips.add(clip);
-//                            clipPanelMap.get(clip).setSelected(true);
-//                        } else {
-//                            clipPanelMap.get(clip).setSelected(false);
-//                        }
-//                    }
-//                } else {
-//                    for (AudioClip clip : layer) {
-//                        clipPanelMap.get(clip).setSelected(false);
-//                    }
-//                }
-//
-//                y += layerHeight;
-//            }
-//        }
-//        //TODO - this could be smarter by calculating affected area and repainting
-//        // only the union of all changed clips
-//        repaint();
-//
-//        // ignore as this panel does not handle this event
     }
 
     @Override
@@ -330,6 +298,25 @@ public class AudioLayersPanel extends JPanel implements LayerGroupListener,
         }
 
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
+        
+        if (timeState.isSnapEnabled()) {
+            int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
+
+            int x = 0;
+            if (snapPixels <= 0) {
+                return;
+            }
+
+            int height = g.getClipBounds().height;
+            float snapValue = timeState.getSnapValue();
+            int pixelSecond = timeState.getPixelSecond();
+            float time;
+            for (int i = 0; x < width; i++) {
+                x = (int) ((i * snapValue) * pixelSecond);
+                g.drawLine(x, 0, x, height);
+            }
+
+        }
     }
 
 //    private void paintAudioClips(Graphics g) {
