@@ -287,6 +287,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
         for (AudioClip clip : this) {
 
             float clipStart = clip.getStartTime();
+            float clipFileStart = clip.getFileStartTime();
             float clipDur = clip.getSubjectiveDuration();
             float clipEnd = clipStart + clipDur;
 
@@ -312,7 +313,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
                     n.setPField(
                             "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
                             4);
-                    n.setPField(Float.toString(adjustedStart), 5);
+                    n.setPField(Float.toString(adjustedStart + clipFileStart), 5);
 
                     notes.add(n);
                 } else if (clipStart < endTime) {
@@ -339,7 +340,7 @@ public class AudioLayer extends ArrayList<AudioClip> implements ScoreObjectLayer
                     n.setPField(
                             "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
                             4);
-                    n.setPField(Float.toString(adjustedStart), 5);
+                    n.setPField(Float.toString(adjustedStart + clipFileStart), 5);
 
                     notes.add(n);
                 }
