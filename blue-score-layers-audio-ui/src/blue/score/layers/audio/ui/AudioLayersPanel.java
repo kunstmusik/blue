@@ -80,8 +80,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     double destPts[] = new double[4];
     Map<AudioClip, AudioClipPanel> clipPanelMap = new HashMap<>();
     private final InstanceContent content;
-    AutomationLayerPanel automationPanel = new AutomationLayerPanel(new AlphaMarquee());
-    
+    AutomationLayerPanel automationPanel = new AutomationLayerPanel(
+            new AlphaMarquee());
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState, InstanceContent content) {
         this.setLayout(null);
@@ -136,10 +136,10 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         this.addMouseListener(mouseAdapter);
         this.addMouseMotionListener(mouseAdapter);
         this.addMouseWheelListener(mouseAdapter);
-        
+
         automationPanel.setLayerGroup(layerGroup, timeState);
         automationPanel.setSize(getSize());
-        
+
         this.add(automationPanel, MODAL_LAYER);
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -251,7 +251,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
                     reverseTransform.setToIdentity();
                     reverseTransform.setToScale(1 / timeState.getPixelSecond(),
                             1.0);
-                break;
+                    break;
                 case "snapEnabled":
                 case "snapValue":
                     repaint();
@@ -313,7 +313,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         }
 
         g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
-        
+
         if (timeState.isSnapEnabled()) {
             int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
 
@@ -374,7 +374,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
         AudioClipPanel panel = new AudioClipPanel(clip, timeState);
         panel.setBounds(panel.getX(), y, panel.getWidth(), height);
-        add(panel, 0);
+        add(panel, DEFAULT_LAYER);
         clipPanelMap.put(clip, panel);
     }
 
@@ -404,10 +404,10 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     @Override
     public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
-        for(int i = 0; i < getComponentCount(); i++) {
-            Component c = getComponent(i);
-            if (c instanceof ScoreObjectView && c.contains(p)) {
-                return (ScoreObjectView)c;
+        for (Component c : getComponentsInLayer(DEFAULT_LAYER)) {
+            if (c instanceof ScoreObjectView && c.contains(p.x - c.getX(),
+                    p.y - c.getY())) {
+                return (ScoreObjectView) c;
             }
         }
         return null;
