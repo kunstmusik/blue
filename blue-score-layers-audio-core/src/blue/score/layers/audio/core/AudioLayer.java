@@ -50,8 +50,8 @@ import java.util.Vector;
  * @author stevenyi
  *
  */
-public class AudioLayer extends ArrayList<AudioClip> 
-    implements ScoreObjectLayer<AudioClip>, AutomatableLayer {
+public class AudioLayer extends ArrayList<AudioClip>
+        implements ScoreObjectLayer<AudioClip>, AutomatableLayer {
 
     private String name = "";
     private boolean muted = false;
@@ -66,7 +66,7 @@ public class AudioLayer extends ArrayList<AudioClip>
     private String uniqueId;
 
     private static MessageFormat INSTR_TEXT = null;
-    
+
     private ParameterIdList automationParameters = new ParameterIdList();
 
     public AudioLayer() {
@@ -149,7 +149,7 @@ public class AudioLayer extends ArrayList<AudioClip>
     public String getUniqueId() {
         return uniqueId;
     }
-    
+
     public ParameterIdList getAutomationParameters() {
         return automationParameters;
     }
@@ -167,7 +167,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         for (AudioClip clip : this) {
             retVal.addElement(clip.saveAsXML());
         }
-        
+
         for (Iterator iter = automationParameters.iterator(); iter.hasNext();) {
             String id = (String) iter.next();
             retVal.addElement("parameterId").setText(id);
@@ -198,7 +198,7 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-            switch(node.getName()) {
+            switch (node.getName()) {
                 case "audioClip":
                     layer.add(AudioClip.loadFromXML(node));
                     break;
@@ -206,7 +206,7 @@ public class AudioLayer extends ArrayList<AudioClip>
                     String id = node.getTextString();
                     layer.automationParameters.addParameterId(id);
                     break;
-            }            
+            }
         }
 
         return layer;
@@ -305,7 +305,8 @@ public class AudioLayer extends ArrayList<AudioClip>
         NoteList notes = new NoteList();
 
         int instrId = generateInstrumentForAudioLayer(compileData);
-        float adjustedEnd = endTime - startTime;
+        boolean usesEndTime = endTime > startTime;
+        float adjustedEndTime = endTime - startTime;
 
         for (AudioClip clip : this) {
 
@@ -314,60 +315,35 @@ public class AudioLayer extends ArrayList<AudioClip>
             float clipDur = clip.getSubjectiveDuration();
             float clipEnd = clipStart + clipDur;
 
+            if (clipEnd <= startTime
+                    || (usesEndTime && clipStart >= endTime)) {
+                continue;
+            }
+
             Note n = Note.createNote(5);
 
-            if (clipEnd > startTime) {
-                if (endTime <= startTime) {
+            float adjustedStart = clipStart - startTime;
+            float adjustedEnd = clipEnd - startTime;
 
-                    float adjustedStart = startTime - clipStart;
-                    float eventStart = clipStart - startTime;
+            float newStart = Math.max(adjustedStart, 0.0f);
+            float newClipFileStart
+                    = clipFileStart + Math.max(startTime - clipStart, 0.0f);
+            float newEnd = clipEnd - startTime;
 
-                    if (adjustedStart < 0.0f) {
-                        adjustedStart = 0.0f;
-                    }
+            float newDuration
+                    = (usesEndTime && newEnd > adjustedEndTime)
+                            ? adjustedEndTime - newStart
+                            : (newEnd - newStart);
 
-                    if (eventStart < 0.0f) {
-                        eventStart = 0.0f;
-                    }
+            n.setPField(Integer.toString(instrId), 1);
+            n.setStartTime(newStart);
+            n.setSubjectiveDuration(newDuration);
+            n.setPField(
+                    "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
+                    4);
+            n.setPField(Float.toString(newClipFileStart), 5);
 
-                    n.setPField(Integer.toString(instrId), 1);
-                    n.setStartTime(eventStart);
-                    n.setSubjectiveDuration(clipDur - adjustedStart);
-                    n.setPField(
-                            "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
-                            4);
-                    n.setPField(Float.toString(adjustedStart + clipFileStart), 5);
-
-                    notes.add(n);
-                } else if (clipStart < endTime) {
-
-                    float adjustedStart = startTime - clipStart;
-                    float eventStart = clipStart - startTime;
-                    float eventDur = clipDur - adjustedStart;
-
-                    if (adjustedStart < 0.0f) {
-                        adjustedStart = 0.0f;
-                    }
-
-                    if (eventStart < 0.0f) {
-                        eventStart = 0.0f;
-                    }
-
-                    if (adjustedStart + eventDur > adjustedEnd) {
-                        eventDur = adjustedEnd - eventStart;
-                    }
-
-                    n.setPField(Integer.toString(instrId), 1);
-                    n.setStartTime(eventStart);
-                    n.setSubjectiveDuration(eventDur);
-                    n.setPField(
-                            "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
-                            4);
-                    n.setPField(Float.toString(adjustedStart + clipFileStart), 5);
-
-                    notes.add(n);
-                }
-            }
+            notes.add(n);
 
         }
         return notes;
