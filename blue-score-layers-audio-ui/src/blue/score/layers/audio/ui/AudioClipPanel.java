@@ -36,8 +36,8 @@ import java.awt.Graphics2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -66,7 +66,7 @@ public class AudioClipPanel extends JPanel
     protected static Color selectedBorder2 = selectedBgColor.darker().darker();
 
     protected static Color selectedFontColor = Color.darkGray;
-    
+
     Lookup.Result<AudioClip> result = null;
 
     AudioWaveformData waveData = null;
@@ -75,7 +75,7 @@ public class AudioClipPanel extends JPanel
         this.audioClip = audioClip;
         this.timeState = timeState;
 
-        setOpaque(true);
+        setOpaque(false);
         setBackground(Color.DARK_GRAY);
         setForeground(Color.WHITE);
 
@@ -129,7 +129,7 @@ public class AudioClipPanel extends JPanel
     private boolean isBright(Color c) {
         return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
     }
-    
+
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics;
@@ -155,12 +155,12 @@ public class AudioClipPanel extends JPanel
             fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
         }
 
-        if(isBright(bgColor)) {
+        if (isBright(bgColor)) {
             waveColor = bgColor.brighter().brighter();
         } else {
             waveColor = bgColor.darker().darker();
         }
-                
+
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
 
         g.fillRect(0, 2, w, h - 4);
@@ -170,14 +170,14 @@ public class AudioClipPanel extends JPanel
 
         g.translate(1, 2);
 
-        int audioFileStart = (int)audioClip.getFileStartTime() * timeState.getPixelSecond();
-        AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData, audioFileStart);
+        int audioFileStart = (int) audioClip.getFileStartTime() * timeState.getPixelSecond();
+        AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData,
+                audioFileStart);
 
         g.translate(-1, -2);
 
         g.setColor(fontColor);
         g.drawString(audioClip.getName(), 5, 15);
-
 
         // DRAW BORDERS
         g.setColor(border1);
@@ -188,7 +188,6 @@ public class AudioClipPanel extends JPanel
         g.drawLine(0, h - 3, w, h - 3);
         g.drawLine(w - 1, h - 3, w - 1, 2);
 
-
     }
 
     @Override
@@ -196,14 +195,14 @@ public class AudioClipPanel extends JPanel
         if (evt.getSource() == this.timeState) {
             switch (evt.getPropertyName()) {
                 case "pixelSecond": {
-                    if(timeState.getPixelSecond() != waveData.pixelSeconds) {
+                    if (timeState.getPixelSecond() != waveData.pixelSeconds) {
                         updateWaveformData();
                     }
                     reset();
                     break;
                 }
             }
-        } 
+        }
     }
 
     private void updateWaveformData() {
@@ -211,7 +210,7 @@ public class AudioClipPanel extends JPanel
         waveData = waveformCache.getAudioWaveformData(
                 absFilePath,
                 timeState.getPixelSecond());
-        
+
         if (waveData.percentLoadingComplete < 1.0) {
             waveformCache.addAudioWaveformListener(
                     new AudioWaveformListener(absFilePath, this));
@@ -220,9 +219,9 @@ public class AudioClipPanel extends JPanel
 
     protected void reset() {
         int pixelSecond = timeState.getPixelSecond();
-        double x = audioClip.getStartTime() * pixelSecond;
-        double width = audioClip.getSubjectiveDuration() * pixelSecond;
-        setBounds((int) x, getY(), (int) width, getHeight());
+            double x = audioClip.getStartTime() * pixelSecond;
+            double width = audioClip.getSubjectiveDuration() * pixelSecond;
+            setBounds((int) x, getY(), (int) width, getHeight());
     }
 
     @Override

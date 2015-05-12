@@ -297,38 +297,42 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     }
 
     private void paintAudioLayersBackground(Graphics g) {
-        int width = this.getWidth();
+        Rectangle bounds = g.getClipBounds();
+        int bottom = bounds.y + bounds.height;
 
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width, this.getHeight());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
         int y = 0;
         g.setColor(Color.DARK_GRAY);
-        g.drawLine(0, 0, width, 0);
+        g.drawLine(0, 0, bounds.width, 0);
 
         for (AudioLayer layer : layerGroup) {
             y += layer.getAudioLayerHeight();
 
-            g.drawLine(0, y, width, y);
+            if(y > bottom) {
+                break;
+            } else if (y < bounds.y) {
+                continue;
+            }
+            g.drawLine(bounds.x, y, bounds.x + bounds.width, y);
         }
 
-        g.drawLine(0, getHeight() - 1, width, getHeight() - 1);
+        g.drawLine(bounds.x, getHeight() - 1, bounds.width, getHeight() - 1);
 
         if (timeState.isSnapEnabled()) {
             int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
-
             int x = 0;
             if (snapPixels <= 0) {
                 return;
             }
-
-            int height = g.getClipBounds().height;
+            
             float snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
-            float time;
-            for (int i = 0; x < width; i++) {
+            
+            for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
-                g.drawLine(x, 0, x, height);
+                g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
             }
 
         }
@@ -348,14 +352,11 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 
     @Override
     public void audioClipAdded(final AudioLayer source, final AudioClip clip) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Rectangle rect = getAudioLayerRect(source);
-                addClipPanel(clip, timeState, rect.y, rect.height);
-                checkSize();
-                repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+            Rectangle rect = getAudioLayerRect(source);
+            addClipPanel(clip, timeState, rect.y, rect.height);
+            checkSize();
+            repaint();
         });
     }
 
