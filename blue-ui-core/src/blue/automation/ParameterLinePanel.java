@@ -29,7 +29,6 @@ import blue.ui.core.score.ModeManager;
 import blue.ui.core.score.ScoreMode;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
-import blue.utility.GenericFileFilter;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -51,6 +50,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -129,11 +129,11 @@ public class ParameterLinePanel extends JComponent implements
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        fcm.addFilter(FILE_BPF_IMPORT, new GenericFileFilter(
-                "bpf", "Break Point File"));
+        fcm.addFilter(FILE_BPF_IMPORT, new ExtensionFilter(
+                "Break Point File", "*.bpf"));
 
-        fcm.addFilter(FILE_BPF_EXPORT, new GenericFileFilter(
-                "bpf", "Break Point File"));
+        fcm.addFilter(FILE_BPF_EXPORT, new ExtensionFilter(
+                "Break Point File", "*.bpf"));
 
         fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
         fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");
@@ -1558,13 +1558,12 @@ public class ParameterLinePanel extends JComponent implements
                 @Override
                 public void actionPerformed(ActionEvent arg0) {
                     if (line != null && line.size() > 0) {
-                        int retVal = FileChooserManager.getDefault().showSaveDialog(
+                        File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_EXPORT, SwingUtilities
                                         .getRoot(ParameterLinePanel.this));
 
-                        if (retVal == JFileChooser.APPROVE_OPTION) {
-                            File f = FileChooserManager.getDefault()
-                                    .getSelectedFile(FILE_BPF_EXPORT);
+                        if (retVal != null) {
+                            File f = retVal;
 
                             try {
                                 try (PrintWriter out = new PrintWriter(
@@ -1595,13 +1594,12 @@ public class ParameterLinePanel extends JComponent implements
                 @Override
                 public void actionPerformed(ActionEvent arg0) {
                     if (line != null && line.size() > 0) {
-                        int retVal = FileChooserManager.getDefault().showSaveDialog(
+                        File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_IMPORT, SwingUtilities
                                         .getRoot(ParameterLinePanel.this));
 
-                        if (retVal == JFileChooser.APPROVE_OPTION) {
-                            File f = FileChooserManager.getDefault()
-                                    .getSelectedFile(FILE_BPF_IMPORT);
+                        if (retVal != null) {
+                            File f = retVal;
 
                             if (!line.importBPF(f)) {
                                 JOptionPane.showMessageDialog(SwingUtilities

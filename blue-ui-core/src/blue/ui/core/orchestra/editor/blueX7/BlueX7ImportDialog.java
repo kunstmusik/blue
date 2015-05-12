@@ -3,7 +3,7 @@ package blue.ui.core.orchestra.editor.blueX7;
 import blue.orchestra.BlueX7;
 import blue.ui.utilities.FileChooserManager;
 import java.io.File;
-import javax.swing.JFileChooser;
+import java.util.List;
 import javax.swing.JOptionPane;
 
 /**
@@ -36,14 +36,14 @@ public class BlueX7ImportDialog {
 
     public static void importFromDX7File(BlueX7 blueX7) {
 
-        int retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
         byte[] sysex;
 
-        if (retVal != JFileChooser.APPROVE_OPTION) {
+        if (retVal.isEmpty()) {
             return;
         }
 
-        File temp = FileChooserManager.getDefault().getSelectedFile(FILE_IMPORT);
+        File temp = retVal.get(0);
         sysex = BlueX7SysexReader.fileToByteArray(temp);
 
         if (sysex == null) {

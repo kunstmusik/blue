@@ -38,7 +38,6 @@ import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.undo.BlueUndoManager;
-import blue.utility.GenericFileFilter;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -70,6 +69,7 @@ import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -90,7 +90,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -239,8 +238,8 @@ public class ArrangementEditPanel extends JComponent
                 .getDefaultDirectory()
                 + File.separator + "default.binstr");
 
-        FileFilter presetFilter = new GenericFileFilter("binstr",
-                "blue Instrument File");
+        ExtensionFilter presetFilter = new ExtensionFilter(
+                "blue Instrument File", "*.binstr");
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_DIALOG, presetFilter);
@@ -669,15 +668,14 @@ public class ArrangementEditPanel extends JComponent
                         @Override
                         public void actionPerformed(ActionEvent e) {
 
-                            int retVal = FileChooserManager.getDefault().showOpenDialog(
+                            List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                                     IMPORT_DIALOG,
                                     SwingUtilities.getRoot(SwingUtilities
                                             .getRoot(ArrangementEditPanel.this)));
 
-                            if (retVal == JFileChooser.APPROVE_OPTION) {
+                            if (!retVal.isEmpty()) {
 
-                                File f = FileChooserManager.getDefault()
-                                .getSelectedFile(IMPORT_DIALOG);
+                                File f = retVal.get(0);
                                 Document doc;
 
                                 try {
@@ -727,14 +725,13 @@ public class ArrangementEditPanel extends JComponent
                             Instrument instr = arrangement.getInstrument(
                                     selectedRow);
 
-                            int retVal = FileChooserManager.getDefault().showSaveDialog(
+                            File retVal = FileChooserManager.getDefault().showSaveDialog(
                                     EXPORT_DIALOG, SwingUtilities
                                     .getRoot(ArrangementEditPanel.this));
 
-                            if (retVal == JFileChooser.APPROVE_OPTION) {
+                            if (retVal != null) {
 
-                                File f = FileChooserManager.getDefault()
-                                .getSelectedFile(EXPORT_DIALOG);
+                                File f = retVal;
 
                                 if (f.exists()) {
                                     int overWrite = JOptionPane

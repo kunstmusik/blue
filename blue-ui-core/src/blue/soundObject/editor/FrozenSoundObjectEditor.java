@@ -132,11 +132,11 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.setCurrentDirectory(this, BlueSystem.getCurrentProjectDirectory());
-        int retVal = fcm.showSaveDialog(this, WindowManager.getDefault().
+        File retVal = fcm.showSaveDialog(this, WindowManager.getDefault().
                 getMainWindow());
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            File dest = fcm.getSelectedFile(this);
+        if (retVal != null) {
+            File dest = retVal;
 
             if (dest.exists()) {
 

@@ -79,13 +79,12 @@ public final class ExportAction extends AbstractAction
 
         if (scoreObjects.size() == 1 && soundObjects.size() == 1) {
 
-            int retVal = FileChooserManager.getDefault().showSaveDialog(
+            File retVal = FileChooserManager.getDefault().showSaveDialog(
                     EXPORT_DIALOG, WindowManager.getDefault().getMainWindow());
 
-            if (retVal == JFileChooser.APPROVE_OPTION) {
+            if (retVal != null) {
 
-                File f = FileChooserManager.getDefault().getSelectedFile(
-                        EXPORT_DIALOG);
+                File f = retVal;
 
                 if (f.exists()) {
                     int overWrite = JOptionPane.showConfirmDialog(

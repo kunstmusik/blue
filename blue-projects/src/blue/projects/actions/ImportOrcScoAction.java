@@ -26,25 +26,25 @@ import blue.projects.BlueProjectManager;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.CSDUtility;
-import blue.utility.GenericFileFilter;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileFilter;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
 public final class ImportOrcScoAction implements ActionListener {
 
-    FileFilter orcFilter = new GenericFileFilter("orc",
-            "Csound ORC File (*.orc)");
+    ExtensionFilter orcFilter = new ExtensionFilter(
+            "Csound ORC File (*.orc)", "*.orc");
 
-    FileFilter scoFilter = new GenericFileFilter("sco",
-            "Csound SCO File (*.sco)");
+    ExtensionFilter scoFilter = new ExtensionFilter(
+            "Csound SCO File (*.sco)", "*.sco");
 
     public ImportOrcScoAction() {
         FileChooserManager fcm = FileChooserManager.getDefault();
@@ -72,27 +72,27 @@ public final class ImportOrcScoAction implements ActionListener {
 
     public void importOrcSco() {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
-        int rValue = FileChooserManager.getDefault().showOpenDialog(orcFilter,
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(orcFilter,
                 mainWindow);
 
-        if (rValue != JFileChooser.APPROVE_OPTION) {
+        if (rValue.isEmpty()) {
             StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                     "message.actionCancelled"));
             return;
         }
 
-        File orcFile = FileChooserManager.getDefault().getSelectedFile(orcFilter);
+        File orcFile = rValue.get(0);
 
         rValue = FileChooserManager.getDefault().showOpenDialog(scoFilter,
                 mainWindow);
 
-        if (rValue != JFileChooser.APPROVE_OPTION) {
+        if (rValue.isEmpty()) {
             StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                     "message.actionCancelled"));
             return;
         }
 
-        File scoFile = FileChooserManager.getDefault().getSelectedFile(scoFilter);
+        File scoFile = rValue.get(0);
 
         final Object[] values = {BlueSystem.getString("csd.import1"),
             BlueSystem.getString("csd.import2"),

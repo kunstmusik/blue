@@ -29,7 +29,6 @@ import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
-import blue.utility.GenericFileFilter;
 import blue.utility.ObjectUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
@@ -46,9 +45,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -301,15 +301,14 @@ public class PresetsManagerDialog extends JDialog implements
                         return;
                     }
 
-                    int retVal = FileChooserManager.getDefault().showOpenDialog(
+                    List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                             IMPORT_DIALOG, PresetsManagerDialog.this);
 
-                    if (retVal == JFileChooser.APPROVE_OPTION) {
+                    if (!retVal.isEmpty()) {
 
                         PresetGroup group = (PresetGroup) userObj;
 
-                        File f = FileChooserManager.getDefault()
-                                .getSelectedFile(IMPORT_DIALOG);
+                        File f = retVal.get(0);
                         Document doc;
 
                         try {
@@ -352,13 +351,12 @@ public class PresetsManagerDialog extends JDialog implements
                         return;
                     }
 
-                    int retVal = FileChooserManager.getDefault().showSaveDialog(
+                    File retVal = FileChooserManager.getDefault().showSaveDialog(
                             EXPORT_DIALOG, PresetsManagerDialog.this);
 
-                    if (retVal == JFileChooser.APPROVE_OPTION) {
+                    if (retVal != null) {
 
-                        File f = FileChooserManager.getDefault()
-                                .getSelectedFile(EXPORT_DIALOG);
+                        File f = retVal;
 
                         if (f.exists()) {
                             int overWrite = JOptionPane
@@ -419,8 +417,8 @@ public class PresetsManagerDialog extends JDialog implements
                     .getDefaultDirectory()
                     + File.separator + "default.preset");
 
-            FileFilter presetFilter = new GenericFileFilter("preset",
-                    "Preset file");
+            ExtensionFilter presetFilter = new ExtensionFilter(
+                    "Preset file", "*.preset");
 
             FileChooserManager.getDefault().addFilter(IMPORT_DIALOG, presetFilter);
             FileChooserManager.getDefault().setDialogTitle(IMPORT_DIALOG, "Import Presets");

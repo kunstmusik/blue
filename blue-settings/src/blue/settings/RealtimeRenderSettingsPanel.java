@@ -782,12 +782,11 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_midiDriverComboActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        int retVal = FileChooserManager.getDefault().showOpenDialog(
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                 getClass(), this);
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(
-                    getClass());
+        if (!retVal.isEmpty()) {
+            File f = retVal.get(0);
 
             try {
                 String path = f.getCanonicalPath();

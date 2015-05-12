@@ -27,12 +27,13 @@ import blue.settings.GeneralSettings;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import blue.utility.midi.MidiImportUtilities;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -46,8 +47,7 @@ public final class ImportMidiAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), false);
         fcm.addFilter(this.getClass(),
-                new GenericFileFilter(new String[] {"mid", "midi" },
-                "MIDI File (*.mid, *.midi)"));
+                new ExtensionFilter("MIDI File (*.mid, *.midi)", "*.mid", "*.midi"));
         fcm.setSelectedFile(this.getClass(),
                 GeneralSettings.getInstance().getDefaultDirectory());
         fcm.setDialogTitle(this.getClass(), "Select MIDI File");
@@ -63,14 +63,14 @@ public final class ImportMidiAction implements ActionListener {
 
     public void importMidiFile() {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
-        int rValue = FileChooserManager.getDefault().showOpenDialog(this.getClass(), mainWindow);
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(this.getClass(), mainWindow);
 
-        if (rValue != JFileChooser.APPROVE_OPTION) {
+        if (rValue.size() == 0) {
             StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                     "message.actionCancelled"));
             return;
         }
-        File midiFile = FileChooserManager.getDefault().getSelectedFile(this.getClass());
+        File midiFile = rValue.get(0);
 
         BlueData tempData = new BlueData();
 

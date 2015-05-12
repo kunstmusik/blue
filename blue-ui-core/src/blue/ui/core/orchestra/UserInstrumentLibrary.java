@@ -415,14 +415,13 @@ class UserInstrumentTreePopup extends JPopupMenu {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                int retVal = FileChooserManager.getDefault().showOpenDialog(
+                List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                         IMPORT_DIALOG,
                         SwingUtilities.getRoot(instrGUI));
 
-                if (retVal == JFileChooser.APPROVE_OPTION) {
+                if (!retVal.isEmpty()) {
 
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            IMPORT_DIALOG);
+                    File f = retVal.get(0);
                     Document doc;
 
                     try {
@@ -460,14 +459,13 @@ class UserInstrumentTreePopup extends JPopupMenu {
                     return;
                 }
 
-                int retVal = FileChooserManager.getDefault().showSaveDialog(
+                File retVal = FileChooserManager.getDefault().showSaveDialog(
                         EXPORT_DIALOG,
                         SwingUtilities.getRoot(instrGUI));
 
-                if (retVal == JFileChooser.APPROVE_OPTION) {
+                if (retVal != null) {
 
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            EXPORT_DIALOG);
+                    File f = retVal;
 
                     if (f.exists()) {
                         int overWrite = JOptionPane.showConfirmDialog(

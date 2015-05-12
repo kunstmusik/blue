@@ -33,6 +33,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -185,10 +186,10 @@ public class AudioFileEditor extends ScoreObjectEditor {
     }
 
     protected void selectFile() {
-        int rValue = FileChooserManager.getDefault().showOpenDialog(this, this);
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(this, this);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File temp = FileChooserManager.getDefault().getSelectedFile(this);
+        if (!rValue.isEmpty()) {
+            File temp = rValue.get(0);
             if (temp.exists() && temp.isFile()) {
                 try {
                     String absFilePath = temp.getCanonicalPath();

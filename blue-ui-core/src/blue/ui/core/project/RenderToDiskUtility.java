@@ -136,15 +136,12 @@ public class RenderToDiskUtility {
             String fileName = "";
 
             if (props.askOnRender || props.fileName.trim().length() == 0) {
-                int retVal = FileChooserManager.getDefault().showSaveDialog(
+                File retVal = FileChooserManager.getDefault().showSaveDialog(
                         FILE_CHOOSER_ID,
                         WindowManager.getDefault().getMainWindow());
 
-                if (retVal == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_CHOOSER_ID);
-
-                    fileName = f.getCanonicalPath();
+                if (retVal != null) {
+                    fileName = retVal.getCanonicalPath();
                 } else {
                     return null;
                 }

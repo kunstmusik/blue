@@ -32,11 +32,11 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
@@ -310,14 +310,14 @@ class CFilePanel extends JComponent {
         FileChooserManager.getDefault().setDialogTitle(FILE_MANAGER_GROUP, BlueSystem
                 .getString("ceciliaModule.chooseFile"));
 
-        int retVal = FileChooserManager.getDefault()
+        List<File> retVal = FileChooserManager.getDefault()
                 .showOpenDialog(FILE_MANAGER_GROUP, null);
 
-        if (retVal != JFileChooser.APPROVE_OPTION) {
+        if (retVal.isEmpty()) {
             return;
         }
 
-        File temp = FileChooserManager.getDefault().getSelectedFile(FILE_MANAGER_GROUP);
+        File temp = retVal.get(0);
 
         if (cfilein != null) {
             String path;

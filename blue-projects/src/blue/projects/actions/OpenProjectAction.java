@@ -15,7 +15,6 @@ import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import blue.utility.TextUtilities;
 import electric.xml.Document;
 import java.awt.event.ActionEvent;
@@ -25,9 +24,11 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -46,7 +47,7 @@ public final class OpenProjectAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), true);
         fcm.addFilter(this.getClass(),
-                new GenericFileFilter("blue", "blue Project File (*.blue)"));
+                new ExtensionFilter("blue Project File (*.blue)", "*.blue"));
         fcm.setSelectedFile(this.getClass(),
                 new File(
                         GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
@@ -56,14 +57,12 @@ public final class OpenProjectAction implements ActionListener {
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        int rValue = fcm.showOpenDialog(this.getClass(),
+        List<File> rValue = fcm.showOpenDialog(this.getClass(),
                 WindowManager.getDefault().getMainWindow());
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File[] tempFiles = fcm.getSelectedFiles(this.getClass());
-
+        if (rValue.size() > 0) {
             BlueProjectManager projectManager = BlueProjectManager.getInstance();
 
-            for (File temp : tempFiles) {
+            for (File temp : rValue) {
 
                 if (temp.getName().trim().endsWith(".patterns")) {
 //                    openPatternsFile(temp);
@@ -85,8 +84,8 @@ public final class OpenProjectAction implements ActionListener {
                 }
             }
 
-        } else if (rValue == JFileChooser.CANCEL_OPTION) {
-            StatusDisplayer.getDefault().setStatusText("Open File Cancelled");
+        } else {
+            StatusDisplayer.getDefault().setStatusText("No files selected.");
         }
 
     }

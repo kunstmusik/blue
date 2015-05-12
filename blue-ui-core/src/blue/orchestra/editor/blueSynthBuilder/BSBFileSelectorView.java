@@ -79,12 +79,11 @@ public class BSBFileSelectorView extends BSBObjectView {
                     }
                 }
 
-                int rValue = FileChooserManager.getDefault().showOpenDialog(
+                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_SELECTOR_ID, null);
 
-                if (rValue == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_SELECTOR_ID);
+                if (!rValue.isEmpty()) {
+                    File f = rValue.get(0);
 
                     try {
                         String absFilePath = f.getCanonicalPath();

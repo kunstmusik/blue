@@ -22,16 +22,15 @@ package blue.ui.core.mixer;
 import blue.mixer.*;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import electric.xml.Document;
 import electric.xml.Element;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.swing.JFileChooser;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 import org.openide.windows.WindowManager;
 
 public class EffectsUtil {
@@ -47,8 +46,8 @@ public class EffectsUtil {
                 .getDefaultDirectory()
                 + File.separator + "default.effect");
 
-        FileFilter presetFilter = new GenericFileFilter("effect",
-                "blue Effect File");
+        ExtensionFilter presetFilter = new ExtensionFilter(
+                "blue Effect File", "*.effect");
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
         fcm.addFilter(IMPORT_DIALOG, presetFilter);
@@ -60,12 +59,12 @@ public class EffectsUtil {
         fcm.setSelectedFile(EXPORT_DIALOG, defaultFile);
     }
     public static void exportEffect(Effect effect) {
-        int retVal = FileChooserManager.getDefault().showSaveDialog(EXPORT_DIALOG,
+        File retVal = FileChooserManager.getDefault().showSaveDialog(EXPORT_DIALOG,
                 WindowManager.getDefault().getMainWindow());
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
+        if (retVal != null) {
 
-            File f = FileChooserManager.getDefault().getSelectedFile(EXPORT_DIALOG);
+            File f = retVal;
 
             if (f.exists()) {
                 int overWrite = JOptionPane
@@ -95,14 +94,14 @@ public class EffectsUtil {
     }
 
     public static Effect importEffect() {
-        int retVal = FileChooserManager.getDefault().showOpenDialog(IMPORT_DIALOG,
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(IMPORT_DIALOG,
                 WindowManager.getDefault().getMainWindow());
 
         Effect effect = null;
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
+        if (!retVal.isEmpty()) {
 
-            File f = FileChooserManager.getDefault().getSelectedFile(IMPORT_DIALOG);
+            File f = retVal.get(0);
             Document doc;
 
             try {

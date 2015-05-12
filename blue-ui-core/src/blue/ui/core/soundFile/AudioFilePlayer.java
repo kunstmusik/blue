@@ -27,10 +27,11 @@ package blue.ui.core.soundFile;
 
 import blue.BlueSystem;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -62,10 +63,9 @@ public class AudioFilePlayer extends javax.swing.JPanel {
 
     static {
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new GenericFileFilter(new String[]{"aiff", "aif"},
-                "AIFF file (.aif, aiff)"));
+                new ExtensionFilter("AIFF file (.aif, aiff)", "*.aif", "*.aiff"));
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new GenericFileFilter("wav", "WAV file (.wav)"));
+                new ExtensionFilter("WAV file (.wav)", "*.wav"));
     }
 
     /** Creates new form AudioFilePlayer */
@@ -324,12 +324,11 @@ public class AudioFilePlayer extends javax.swing.JPanel {
     }//GEN-LAST:event_playStopButtonActionPerformed
 
     private void selectFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFileButtonActionPerformed
-        int rValue = FileChooserManager.getDefault().showOpenDialog(
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                 this.getClass(), null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(this.
-                    getClass());
+        if (!rValue.isEmpty()) {
+            File f = rValue.get(0);
             setSoundFile(f);
         }
         

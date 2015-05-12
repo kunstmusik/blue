@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -185,10 +186,10 @@ public class ScannedMatrixEditor extends JComponent {
 
     public void loadMatrix() {
         final FileChooserManager fcm = FileChooserManager.getDefault();
-        int rValue = fcm.showOpenDialog(FILE_LOAD, null);
+        List<File> rValue = fcm.showOpenDialog(FILE_LOAD, null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File temp = fcm.getSelectedFile(FILE_LOAD);
+        if (!rValue.isEmpty()) {
+            File temp = rValue.get(0);
             matrixGridEditor.loadMatrix(temp);
         }
     }
@@ -199,11 +200,11 @@ public class ScannedMatrixEditor extends JComponent {
         }
         final FileChooserManager fcm = FileChooserManager.getDefault();
 
-        int rValue = fcm.showSaveDialog(FILE_SAVE, null);
+        File rValue = fcm.showSaveDialog(FILE_SAVE, null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
+        if (rValue != null) {
             try {
-                File temp = fcm.getSelectedFile(FILE_SAVE);
+                File temp = rValue;
                 try (PrintWriter out = new PrintWriter(new FileWriter(temp))) {
                     int val = 0;
                     for (int i = 0; i < matrixGridEditor.matrix.length; i++) {

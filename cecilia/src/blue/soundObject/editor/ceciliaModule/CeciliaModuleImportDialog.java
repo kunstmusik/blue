@@ -23,20 +23,21 @@ package blue.soundObject.editor.ceciliaModule;
 import blue.BlueSystem;
 import blue.soundObject.ceciliaModule.ModuleDefinition;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import blue.utility.TextUtilities;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
 
 public class CeciliaModuleImportDialog {
     private static final String FILE_IMPORT = "ceciliaModuleImportDialog";
 
-    private static final GenericFileFilter fileFilter;
+    private static final ExtensionFilter fileFilter;
 
     static {
-        fileFilter = new GenericFileFilter("bcm", "blue Cecilia Module (*.bcm)");
+        fileFilter = new ExtensionFilter("blue Cecilia Module (*.bcm)", "*.bcm");
         FileChooserManager.getDefault().setDialogTitle(FILE_IMPORT, BlueSystem
                 .getString("ceciliaModule.openFileTitle"));
         String libFolder = BlueSystem.getLibDir() + File.separator
@@ -50,13 +51,13 @@ public class CeciliaModuleImportDialog {
 
     public static ModuleDefinition importCeciliaModule() {
 
-        int retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(FILE_IMPORT, null);
 
-        if (retVal != JFileChooser.APPROVE_OPTION) {
+        if (retVal.isEmpty()) {
             return null;
         }
 
-        File temp = FileChooserManager.getDefault().getSelectedFile(FILE_IMPORT);
+        File temp = retVal.get(0);
         return convertCeciliaModule(temp);
 
     }

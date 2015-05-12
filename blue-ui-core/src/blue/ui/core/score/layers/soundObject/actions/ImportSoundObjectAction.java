@@ -36,6 +36,7 @@ import electric.xml.Element;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JFileChooser;
@@ -85,13 +86,12 @@ public final class ImportSoundObjectAction extends AbstractAction
 
         ScoreTimeCanvas sCanvas = (ScoreTimeCanvas) lGroupPanel;
 
-        int retVal = FileChooserManager.getDefault().showOpenDialog(
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                 IMPORT_DIALOG, WindowManager.getDefault().getMainWindow());
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
+        if (!retVal.isEmpty()) {
 
-            File f = FileChooserManager.getDefault().getSelectedFile(
-                    IMPORT_DIALOG);
+            File f = retVal.get(0);
             Document doc;
 
             try {

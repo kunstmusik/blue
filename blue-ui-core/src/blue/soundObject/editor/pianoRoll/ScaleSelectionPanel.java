@@ -30,11 +30,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.List;
 import java.util.Vector;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
@@ -65,13 +66,12 @@ public class ScaleSelectionPanel extends JComponent {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                int rValue = FileChooserManager.getDefault().showOpenDialog(
+                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_CHOOSER_ID,
                         null);
 
-                if (rValue == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_CHOOSER_ID);
+                if (!rValue.isEmpty()) {
+                    File f = rValue.get(0);
 
                     if (!f.exists()) {
                         return;
@@ -121,7 +121,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         fcm.setDialogTitle(FILE_CHOOSER_ID, BlueSystem.getString(
                 "pianoRoll.selectScalaFile"));
-        fcm.addFilter(FILE_CHOOSER_ID, new ScalaFileFilter());
+        fcm.addFilter(FILE_CHOOSER_ID, new ExtensionFilter("Scala File (*.scl)", "*.scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();

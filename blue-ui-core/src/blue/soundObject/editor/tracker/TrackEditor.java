@@ -7,7 +7,6 @@
 package blue.soundObject.editor.tracker;
 
 import blue.BlueSystem;
-import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
 import blue.soundObject.pianoRoll.Scale;
 import blue.soundObject.tracker.Column;
 import blue.soundObject.tracker.Track;
@@ -20,7 +19,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import javax.swing.JFileChooser;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
@@ -812,10 +812,10 @@ public class TrackEditor extends javax.swing.JPanel {
             return;
         }
 
-        int rValue = FileChooserManager.getDefault().showOpenDialog(FILE_CHOOSER_ID, null);
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(FILE_CHOOSER_ID, null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(FILE_CHOOSER_ID);
+        if (!rValue.isEmpty()) {
+            File f = rValue.get(0);
 
             if (!f.exists()) {
                 return;
@@ -901,7 +901,7 @@ public class TrackEditor extends javax.swing.JPanel {
 
         fcm.setDialogTitle(FILE_CHOOSER_ID, BlueSystem
                 .getString("pianoRoll.selectScalaFile"));
-        fcm.addFilter(FILE_CHOOSER_ID, new ScalaFileFilter());
+        fcm.addFilter(FILE_CHOOSER_ID, new ExtensionFilter("Scala File (*.scl)", "*.scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();
