@@ -26,6 +26,9 @@ NEW
 
 UPDATED
 
+* Moved to using Java 8. NOTE: Java 8 JDK or JRE is now required for running 
+  Blue.
+
 * restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
   cluster removed dependency on debugger module
 
