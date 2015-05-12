@@ -188,10 +188,6 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
 
         this.pObj = pObj;
 
-        if (pObj != null) {
-            this.pObj.addLayerGroupListener(this);
-        }
-
         this.populate();
     }
 
@@ -246,15 +242,23 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
         this.npcMap = npcMap;
     }
 
+    @Override 
+    public void addNotify() {
+        super.addNotify();
+        
+        if(this.pObj != null) {
+            this.pObj.addLayerGroupListener(this);
+            
+        }
+    }
+    
     @Override
     public void removeNotify() {
         super.removeNotify();
         
         if(this.pObj != null) {
             this.pObj.removeLayerGroupListener(this);
-            this.pObj = null;
         }
-
     }
     
     /* LAYER GROUP LISTENER */
