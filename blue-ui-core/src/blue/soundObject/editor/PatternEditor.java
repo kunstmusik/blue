@@ -48,7 +48,7 @@ import javax.swing.event.ListSelectionListener;
  * @author Steven Yi
  */
 
-@ScoreObjectEditorPlugin(scoreObjectType = Pattern.class)
+@ScoreObjectEditorPlugin(scoreObjectType = PatternObject.class)
 public class PatternEditor extends ScoreObjectEditor {
 
     private PatternLayerEditPanel layerPanel = new PatternLayerEditPanel();
