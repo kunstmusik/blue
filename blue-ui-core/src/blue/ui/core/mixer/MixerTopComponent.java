@@ -30,13 +30,8 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
-import java.awt.Component;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
@@ -86,12 +81,11 @@ public final class MixerTopComponent extends TopComponent
 
     private Integer dividerLocationReset;
     private final ObservableListListener<ChannelList> listChangeListener;
+    
+    MixerChannelsColumnHeader header;
 
     private MixerTopComponent() {
         initComponents();
-
-        ((JScrollPane) jSplitPane1.getLeftComponent()).setBorder(null);
-        ((JScrollPane) jSplitPane1.getRightComponent()).setBorder(null);
 
         setName(NbBundle.getMessage(MixerTopComponent.class,
                 "CTL_MixerTopComponent"));
@@ -116,30 +110,6 @@ public final class MixerTopComponent extends TopComponent
                         }
                     }
                 });
-
-        jSplitPane1.addComponentListener(new ComponentListener() {
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-            }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-                if (dividerLocationReset != null) {
-                    jSplitPane1.setLastDividerLocation(dividerLocationReset);
-                    jSplitPane1.setDividerLocation(dividerLocationReset);
-                    dividerLocationReset = null;
-                }
-            }
-
-            @Override
-            public void componentHidden(ComponentEvent e) {
-            }
-        });
 
         channelGroupsPanel.setLayout(new ChannelListLayout());
 
@@ -175,6 +145,8 @@ public final class MixerTopComponent extends TopComponent
             }
 
         };
+        header = new MixerChannelsColumnHeader(channelGroupsPanel);
+        jScrollPane1.setColumnHeaderView(header);
 
         reinitialize();
     }
@@ -197,6 +169,7 @@ public final class MixerTopComponent extends TopComponent
             }
 
             channelGroupsPanel.add(channelsPanel);
+            channelGroupsPanel.add(subChannelsPanel);
 
             setMixer(data.getMixer());
             setArrangement(data.getArrangement());
@@ -249,6 +222,8 @@ public final class MixerTopComponent extends TopComponent
 
         EffectEditorManager.getInstance().clear();
         SendEditorManager.getInstance().clear();
+        
+        header.setMixer(mixer);
     }
 
     public void setArrangement(Arrangement arrangement) {
@@ -367,15 +342,13 @@ public final class MixerTopComponent extends TopComponent
     private void initComponents() {
 
         channelsPanel = new blue.ui.core.mixer.ChannelListPanel();
+        subChannelsPanel = new blue.ui.core.mixer.SubChannelListPanel();
         enabled = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         extraRenderText = new javax.swing.JTextField();
         masterPanel = new blue.ui.core.mixer.ChannelPanel();
-        jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         channelGroupsPanel = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        subChannelsPanel = new blue.ui.core.mixer.SubChannelListPanel();
 
         org.openide.awt.Mnemonics.setLocalizedText(enabled, org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.enabled.text")); // NOI18N
         enabled.addActionListener(new java.awt.event.ActionListener() {
@@ -401,29 +374,22 @@ public final class MixerTopComponent extends TopComponent
         masterPanel.setBorder(null);
         masterPanel.setMaster(true);
 
-        jSplitPane1.setDividerLocation(400);
-
+        channelGroupsPanel.setBackground(new java.awt.Color(0, 0, 0));
         channelGroupsPanel.setLayout(null);
         jScrollPane1.setViewportView(channelGroupsPanel);
-
-        jSplitPane1.setLeftComponent(jScrollPane1);
-
-        jScrollPane2.setViewportView(subChannelsPanel);
-
-        jSplitPane1.setRightComponent(jScrollPane2);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(enabled)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 188, Short.MAX_VALUE)
                         .addComponent(jLabel1))
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 393, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(extraRenderText)
@@ -443,7 +409,7 @@ public final class MixerTopComponent extends TopComponent
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
                         .addContainerGap())
-                    .addComponent(jSplitPane1)))
+                    .addComponent(jScrollPane1)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -469,8 +435,6 @@ public final class MixerTopComponent extends TopComponent
     private javax.swing.JTextField extraRenderText;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JSplitPane jSplitPane1;
     private blue.ui.core.mixer.ChannelPanel masterPanel;
     private blue.ui.core.mixer.SubChannelListPanel subChannelsPanel;
     // End of variables declaration//GEN-END:variables
@@ -500,40 +464,40 @@ public final class MixerTopComponent extends TopComponent
 
     void writeProperties(java.util.Properties p) {
         p.setProperty("version", "1.0");
-        p.setProperty("dividerLocation",
-                Integer.toString(jSplitPane1.getDividerLocation()));
+//        p.setProperty("dividerLocation",
+//                Integer.toString(jSplitPane1.getDividerLocation()));
     }
 
     void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        if (p.containsKey("dividerLocation")) {
-            dividerLocationReset = Integer.parseInt(p.getProperty(
-                    "dividerLocation"));
-        }
+//        String version = p.getProperty("version");
+//        if (p.containsKey("dividerLocation")) {
+//            dividerLocationReset = Integer.parseInt(p.getProperty(
+//                    "dividerLocation"));
+//        }
     }
 
-    /**
-     * replaces this in object stream
-     */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper(jSplitPane1.getDividerLocation());
-    }
+//    /**
+//     * replaces this in object stream
+//     */
+//    @Override
+//    public Object writeReplace() {
+////        return new ResolvableHelper(jSplitPane1.getDividerLocation());
+//    }
 
-    final static class ResolvableHelper implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-        private final int dividerLocation;
-
-        private ResolvableHelper(int dividerLocation) {
-            this.dividerLocation = dividerLocation;
-        }
-
-        public Object readResolve() {
-            MixerTopComponent mtc = MixerTopComponent.getDefault();
-            mtc.jSplitPane1.setDividerLocation(dividerLocation);
-
-            return mtc;
-        }
-    }
+//    final static class ResolvableHelper implements Serializable {
+//
+//        private static final long serialVersionUID = 1L;
+//        private final int dividerLocation;
+//
+//        private ResolvableHelper(int dividerLocation) {
+//            this.dividerLocation = dividerLocation;
+//        }
+//
+//        public Object readResolve() {
+//            MixerTopComponent mtc = MixerTopComponent.getDefault();
+////            mtc.jSplitPane1.setDividerLocation(dividerLocation);
+//
+//            return mtc;
+//        }
+//    }
 }

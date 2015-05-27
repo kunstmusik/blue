@@ -71,6 +71,8 @@ public class Mixer implements Serializable {
     public Mixer() {
         this.channelListGroups = new ObservableArrayList<>();
         master.setName(MASTER_CHANNEL);
+        channels.setListName("Orchestra");
+        subChannels.setListName("SubChannels");
     }
 
     public static Mixer loadFromXML(Element data) throws Exception {
@@ -93,9 +95,13 @@ public class Mixer implements Serializable {
                     switch (listType) {
                         case "channels":
                             mixer.setChannels(ChannelList.loadFromXML(node));
+                            mixer.getChannels().setListName("Orchestra");
+                            mixer.getChannels().setListNameEditSupported(false);
                             break;
                         case "subChannels":
                             mixer.setSubChannels(ChannelList.loadFromXML(node));
+                            mixer.getSubChannels().setListName("SubChannels");
+                            mixer.getSubChannels().setListNameEditSupported(false);
                             break;
                     }
                     break;

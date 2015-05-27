@@ -22,6 +22,8 @@ package blue.mixer;
 import blue.util.ObservableArrayList;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,11 +44,39 @@ public class ChannelList extends ObservableArrayList<Channel>
      */
     private String association = null;
 
+    private String listName = "";
+    private boolean listNameEditSupported = true;
+    
+    private PropertyChangeSupport propSupport = new PropertyChangeSupport(this);
     /**
      * Creates a new instance of ChannelList
      */
     public ChannelList() {
     }
+
+    public String getListName() {
+        return listName;
+    }
+
+    public void setListName(String listName) {
+        if(!listNameEditSupported) {
+            throw new RuntimeException("Error: Attempted to edit Channel List name for "
+                    + "group that does not support it.");
+        }
+        String oldListName = this.listName;
+        this.listName = listName;
+        propSupport.firePropertyChange("listName", oldListName, listName);
+    }
+
+    public boolean isListNameEditSupported() {
+        return listNameEditSupported;
+    }
+
+    public void setListNameEditSupported(boolean listNameEditSupported) {
+        this.listNameEditSupported = listNameEditSupported;
+    }
+    
+    
 
     public static ChannelList loadFromXML(Element data) throws Exception {
         ChannelList channels = new ChannelList();
@@ -56,6 +86,11 @@ public class ChannelList extends ObservableArrayList<Channel>
         String associationVal = data.getAttributeValue("association");
         if (associationVal != null && !"null".equals(associationVal)) {
             channels.setAssociation(data.getAttributeValue("association"));
+        }
+        
+        String listName = data.getAttributeValue("listName");
+        if(listName != null && !"null".equals(listName)) {
+            channels.setListName(listName);
         }
 
         while (nodes.hasMoreElements()) {
@@ -75,6 +110,10 @@ public class ChannelList extends ObservableArrayList<Channel>
 
         if (association != null) {
             retVal.setAttribute("association", association);
+        }
+        
+        if (listName != null) {
+            retVal.setAttribute("listName", listName);
         }
 
         for (Channel channel : this) {
@@ -165,4 +204,11 @@ public class ChannelList extends ObservableArrayList<Channel>
         return EqualsBuilder.reflectionEquals(this, obj, false);
     }
     
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        propSupport.addPropertyChangeListener(pcl);
+    }
+    
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        propSupport.removePropertyChangeListener(pcl);
+    }
 }

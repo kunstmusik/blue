@@ -137,7 +137,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
             }
         });
 
-        this.setMinimumSize(new Dimension(0, 0));
+        this.setMinimumSize(new Dimension(50, 0));
     }
 
     public void setChannelList(ChannelList channels) {
@@ -218,6 +218,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
         ChannelPanel cPanel = createChannelPanel(channel);
 
         this.add(cPanel);
+        this.revalidate();
     }
 
     private void removeSubChannnel() {

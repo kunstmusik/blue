@@ -60,7 +60,9 @@ public class ChannelOutComboBoxModel implements ComboBoxModel,
     }
 
     public void clearListeners() {
-        this.channels.removeListener(this);
+        if(this.channels != null) {
+            this.channels.removeListener(this);
+        }
         this.channels = null;
     }
 

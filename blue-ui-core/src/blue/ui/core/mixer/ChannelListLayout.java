@@ -35,11 +35,11 @@ class ChannelListLayout implements LayoutManager {
     public Dimension minimumLayoutSize(Container parent) {
         int count = parent.getComponentCount();
         if (count == 0) {
-            return new Dimension(0, 0);
+            return new Dimension(widthAdjustment, 0);
         }
 
         if (parent.getParent() == null) {
-            return new Dimension(0, 0);
+            return new Dimension(widthAdjustment, 0);
         }
 
         Component topHeightComponent = parent;
