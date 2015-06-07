@@ -24,6 +24,8 @@ NEW
 * Added seed value and useSeed to RandomAddProcessor and RandomMultiplyProcessor
   [issue #302]
 
+* Issue #313 - added Test button to PianoRoll
+
 UPDATED
 
 * Moved to using Java 8. NOTE: Java 8 JDK or JRE is now required for running 
