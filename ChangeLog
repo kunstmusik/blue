@@ -40,7 +40,12 @@ UPDATED
   from the Help menu to go to the issue tracker at GitHub 
   (http://www.github.com/kunstmusik/blue/issues)
 
-* Mixer: Reworked layout of channel panels to be more compact
+* Mixer: 
+
+  * Reworked layout of channel panels to be more compact
+
+  * Double-click to edit ChannelList names as well as Channel names (for those
+  channels and lists that support it)
 
 * Changed "Tools->.csoundrc Editor" to "Tools->.csound6rc Editor", to edit 
   .csound6rc instead of older .csoundrc
