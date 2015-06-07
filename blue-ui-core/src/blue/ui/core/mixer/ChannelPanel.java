@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.mixer;
 
 import blue.BlueSystem;
@@ -50,7 +49,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.windows.WindowManager;
 
 /**
- * 
+ *
  * @author Steven Yi
  * @author Michael Bechard
  */
@@ -61,7 +60,9 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
     boolean updating = false;
 
-    /** Creates new form ChannelPanel */
+    /**
+     * Creates new form ChannelPanel
+     */
     public ChannelPanel() {
         initComponents();
 
@@ -74,7 +75,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 }
             }
         });
-        
+
         levelValueField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -82,14 +83,14 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 switchLevelValueView(false);
             }
         });
-        
+
         levelValueField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
                 switchLevelValueView(false);
             }
         });
-        
+
         Dimension miniScrollDim = new Dimension(9, 55);
 
         preScroll.getVerticalScrollBar().setPreferredSize(miniScrollDim);
@@ -131,11 +132,11 @@ public class ChannelPanel extends javax.swing.JPanel implements
     private void setLevelValueFromField() {
         try {
             float val = Float.parseFloat(levelValueField.getText());
-            
+
             //validate the value
             val = Math.max(val, -96.0f);
             val = Math.min(val, 12.0f);
-            
+
             //set widgets
             channel.setLevel(val);
 //            levelSlider.setValue(getSliderValFromChannel());
@@ -143,26 +144,27 @@ public class ChannelPanel extends javax.swing.JPanel implements
         } catch (NumberFormatException ex) {
         }
     }
-    
+
     private void switchLevelValueView(boolean toTextField) {
         String compName;
-        
+
         if (toTextField) {
             compName = "levelField";
-            MessageFormat fmt = new MessageFormat("{0,number,##.####}", Locale.ENGLISH);
-            levelValueField.setText(fmt.format(new Object[] { new Float(channel.getLevel()) }));
+            MessageFormat fmt = new MessageFormat("{0,number,##.####}",
+                    Locale.ENGLISH);
+            levelValueField.setText(fmt.format(new Object[]{new Float(
+                channel.getLevel())}));
             //levelValueField.setText(NumberUtilities.formatFloat(channel.getLevel()));
-        }
-        else {
+        } else {
             compName = "levelLabel";
             levelLabel.setText(channel.getLevel() + " dB");
         }
-        
+
         //switch components
-        CardLayout cardLayout = (CardLayout)levelValuePanel.getLayout();
+        CardLayout cardLayout = (CardLayout) levelValuePanel.getLayout();
         cardLayout.show(levelValuePanel, compName);
     }
-    
+
     public Channel getChannel() {
         return this.channel;
     }
@@ -178,6 +180,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         postList.setModel(channel.getPostEffects());
 
         channelNameLabel.setText(channel.getName());
+        channelNameLabel.setToolTipText(channel.getName());
         outputList.setSelectedItem(channel.getOutChannel());
 
         int levelVal = getSliderValFromChannel(channel);
@@ -200,10 +203,10 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 levelVal = (int) (channel.getLevel() * 10);
             }
         }
-        
+
         return levelVal;
     }
-    
+
     public void setSubChannel(boolean val) {
         subChannel = val;
     }
@@ -543,15 +546,13 @@ public class ChannelPanel extends javax.swing.JPanel implements
     }// GEN-LAST:event_preListMouseClicked
 
     private void channelNameLabelMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_channelNameLabelMouseClicked
-        if (subChannel && evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2
+                && (subChannel || channel.getAssociation() != null)) {
             editChannelName();
         }
     }// GEN-LAST:event_channelNameLabelMouseClicked
 
-    /**
-     * 
-     */
-    private void editChannelName() {
+    private void editSubChannelName() {
         boolean finished = false;
         String originalName = channel.getName();
 
@@ -570,15 +571,15 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 if (!isValidChannelName(retVal)) {
                     JOptionPane.showMessageDialog(this,
                             "Error: Channel names may only contain letters, "
-                                    + "numbers, or underscores", BlueSystem
-                                    .getString("common.error"),
+                            + "numbers, or underscores", BlueSystem
+                            .getString("common.error"),
                             JOptionPane.ERROR_MESSAGE);
                     finished = false;
                 } else if (retVal.equals(Channel.MASTER)
                         || subChannels.isChannelNameInUse(retVal)) {
                     JOptionPane.showMessageDialog(this,
                             "Error: Channel Name already in use", BlueSystem
-                                    .getString("common.error"),
+                            .getString("common.error"),
                             JOptionPane.ERROR_MESSAGE);
                     finished = false;
                 } else {
@@ -588,6 +589,25 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
             } else {
                 finished = true;
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private void editChannelName() {
+        if (subChannel) {
+            editSubChannelName();
+        } else {
+            String originalName = channel.getName();
+            String retVal = JOptionPane.showInputDialog(this,
+                    "Please Enter Channel Name", originalName);
+
+            if (retVal != null && retVal.trim().length() > 0
+                    && !retVal.equals(originalName)) {
+                retVal = retVal.trim();
+                channel.setName(retVal);
             }
         }
     }
@@ -612,6 +632,9 @@ public class ChannelPanel extends javax.swing.JPanel implements
         switch (prop) {
             case Channel.NAME:
                 channelNameLabel.setText(channel.getName());
+                channelNameLabel.setToolTipText(channel.getName());
+                channelNameLabel.invalidate();
+                channelNameLabel.repaint();
                 break;
             case Channel.LEVEL:
                 updating = true;
@@ -623,6 +646,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 }
                 levelSlider.setValue(levelVal);
                 levelLabel.setText(channel.getLevel() + " dB");
+                levelLabel.invalidate();
+                levelLabel.repaint();
                 updating = false;
                 break;
         }

@@ -71,7 +71,7 @@ public class SubChannelListPanel extends JComponent implements Scrollable,
 
     /** Creates a new instance of ChanelListPanel */
     public SubChannelListPanel() {
-        this.setLayout(new ChannelListLayout(50));
+        this.setLayout(new ChannelListLayout(90));
 
         this.addContainerListener(new ContainerListener() {
 

@@ -31,25 +31,34 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
+import org.openide.windows.WindowManager;
 
 /**
  *
  * @author stevenyi
  */
-public class MixerChannelsColumnHeader extends JPanel implements ObservableListListener{
+public class MixerChannelsColumnHeader extends JPanel implements ObservableListListener {
+
+    private static final int CHANNEL_STRIP_WIDTH = 90;
 
     Mixer mixer = null;
+
     static final class NamePanelBorder implements Border {
+
         private static final Insets insets = new Insets(0, 5, 0, 0);
+
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            g.setColor(new Color(255,255,255, 32));
+            g.setColor(new Color(255, 255, 255, 32));
             g.drawLine(0, 0, 0, height);
         }
 
@@ -62,26 +71,48 @@ public class MixerChannelsColumnHeader extends JPanel implements ObservableListL
         public boolean isBorderOpaque() {
             return true;
         }
-        
+
     }
-    
-    static final class NamePanel extends JLabel implements 
+
+    static final class NamePanel extends JLabel implements
             PropertyChangeListener, ObservableListListener<Channel> {
+
         private final ChannelList list;
         private final int widthAdjust;
 
         public NamePanel(ChannelList list, int widthAdjust) {
             this.list = list;
             this.widthAdjust = widthAdjust;
-            
+
             setBackground(getBackground().darker().darker());
             setOpaque(true);
             setBorder(new NamePanelBorder());
+
+            this.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() >= 2
+                            && list.isListNameEditSupported() &&
+                            list.getAssociation() != null) {
+                        String originalName = list.getListName();
+                        String retVal = JOptionPane.showInputDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                "Please Enter Channel List Name", originalName);
+
+                        if (retVal != null && retVal.trim().length() > 0
+                                && !retVal.equals(originalName)) {
+                            retVal = retVal.trim();
+                            list.setListName(retVal);
+                        }
+                    }
+                }
+            });
         }
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(list.size() * 90 + widthAdjust, 22);
+            return new Dimension(list.size() * CHANNEL_STRIP_WIDTH + widthAdjust,
+                    22);
         }
 
         @Override
@@ -103,9 +134,11 @@ public class MixerChannelsColumnHeader extends JPanel implements ObservableListL
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if("listName".equals(evt.getPropertyName())) {
+            if ("listName".equals(evt.getPropertyName())) {
                 setText(list.getListName());
                 setToolTipText(list.getListName());
+                invalidate();
+                repaint();
             }
         }
 
@@ -113,18 +146,17 @@ public class MixerChannelsColumnHeader extends JPanel implements ObservableListL
         public void listChanged(ObservableListEvent<Channel> listEvent) {
             setSize(getPreferredSize());
         }
-     
-        
+
     }
-    
+
     public MixerChannelsColumnHeader(JComponent channelGroupsPanel) {
         setPreferredSize(new Dimension(channelGroupsPanel.getWidth(), 22));
         setSize(new Dimension(400, 22));
         setLayout(new ChannelListLayout());
         setBackground(Color.BLACK);
-        
+
         channelGroupsPanel.addComponentListener(new ComponentAdapter() {
-            
+
             @Override
             public void componentResized(ComponentEvent e) {
                 Dimension d = new Dimension(channelGroupsPanel.getWidth(), 22);
@@ -132,36 +164,35 @@ public class MixerChannelsColumnHeader extends JPanel implements ObservableListL
                 setSize(d);
                 invalidate();
             }
-            
+
         });
     }
-    
-    
+
     @Override
     public void listChanged(ObservableListEvent listEvent) {
         rebuildUI();
     }
-    
+
     protected void rebuildUI() {
         this.removeAll();
         for (ChannelList list : mixer.getChannelListGroups()) {
             this.add(new NamePanel(list, 0));
         }
         this.add(new NamePanel(mixer.getChannels(), 0));
-        this.add(new NamePanel(mixer.getSubChannels(), 50));
+        this.add(new NamePanel(mixer.getSubChannels(), CHANNEL_STRIP_WIDTH));
         repaint();
     }
-    
+
     public void setMixer(Mixer mixer) {
-        if(this.mixer != null) {
+        if (this.mixer != null) {
             this.mixer.getChannelListGroups().removeListener(this);
         }
-        
+
         this.mixer = mixer;
-        
+
         this.mixer.getChannelListGroups().addListener(this);
-        
+
         rebuildUI();
-        
+
     }
 }

@@ -30,8 +30,12 @@ import blue.score.layers.ScoreObjectLayerGroup;
 import blue.soundObject.*;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.rmi.dgc.VMID;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -41,7 +45,9 @@ import java.util.Vector;
  */
 public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjectLayerGroup<AudioLayer> {
 
-    private transient Vector<LayerGroupListener> layerGroupListeners = null;
+    private transient List<LayerGroupListener> layerGroupListeners = null;
+    private transient List<PropertyChangeListener> propListeners = null;
+
     private String name = "Audio Layer Group";
 
     private String uniqueId;
@@ -57,7 +63,13 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
     @Override
     public void setName(String name) {
-        this.name = name;
+        String oldName = this.name;
+        this.name = (name == null) ? "" : name;
+
+        if (!this.name.equals(oldName)) {
+            firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
+                    oldName, name));
+        }
     }
 
     @Override
@@ -283,5 +295,40 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
             }
         }
         return -1;
+    }
+
+    /* Property Change Event Code */
+    private void firePropertyChangeEvent(PropertyChangeEvent pce) {
+        if (propListeners == null) {
+            return;
+        }
+
+        Iterator<PropertyChangeListener> iter = new Vector<>(propListeners).iterator();
+
+        while (iter.hasNext()) {
+            PropertyChangeListener listener = (PropertyChangeListener) iter
+                    .next();
+
+            listener.propertyChange(pce);
+        }
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            propListeners = new Vector<PropertyChangeListener>();
+        }
+
+        if (propListeners.contains(pcl)) {
+            return;
+        }
+
+        propListeners.add(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        if (propListeners == null) {
+            return;
+        }
+        propListeners.remove(pcl);
     }
 }

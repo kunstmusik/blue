@@ -35,6 +35,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -59,7 +60,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
 
     public static final String OUT_CHANNEL = "outChannel";
 
-    private transient Vector<PropertyChangeListener> listeners;
+    private transient List<PropertyChangeListener> listeners;
 
     private EffectsChain preEffects = new EffectsChain();
 

@@ -32,12 +32,16 @@ import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.audio.core.AudioLayer;
 import blue.score.layers.audio.core.AudioLayerGroup;
+import blue.score.layers.audio.ui.bindings.AudioLayerChannelBinding;
+import blue.score.layers.audio.ui.bindings.AudioLayerGroupBinding;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This class adds logic to check for changes to AudioLayerGroups and
@@ -51,8 +55,13 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
     protected BlueProject currentProject = null;
     protected ObservableListListener<LayerGroup> scoreListener;
     protected LayerGroupListener layerGroupListener;
+    
+    protected Map<AudioLayerGroup, AudioLayerGroupBinding> layerGroupBindings;
+    protected Map<AudioLayer, AudioLayerChannelBinding> layerBindings;
 
     public BlueProjectPropertyChangeListener() {
+        layerGroupBindings = new HashMap<>();
+        layerBindings = new HashMap<>();
 
         layerGroupListener = new LayerGroupListener() {
 
@@ -74,6 +83,9 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                             Channel channel = new Channel();
                             channel.setAssociation(aLayer.getUniqueId());
                             list.add(channel);
+                            
+                            layerBindings.put(aLayer, 
+                                    new AudioLayerChannelBinding(aLayer, channel));
                         }
 
                         break;
@@ -88,6 +100,11 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                                     break;
                                 }
                             }
+                            
+                            if(layerBindings.containsKey(aLayer)) {
+                                layerBindings.get(aLayer).clearBinding();
+                                layerBindings.remove(aLayer);
+                            }   
                         }
                         break;
                     case LayerGroupDataEvent.DATA_CHANGED: {
@@ -125,11 +142,20 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                                 channelGroups.add(channels);
                                 channels.setAssociation(
                                         alg.getUniqueId());
+                                channels.setListName(alg.getName());
+                                channels.setListNameEditSupported(true);
+                                
+                                layerGroupBindings.put(alg, 
+                                        new AudioLayerGroupBinding(alg, channels));
 
                                 for (AudioLayer layer : alg) {
                                     Channel channel = new Channel();
                                     channel.setAssociation(layer.getUniqueId());
                                     channels.add(channel);
+                                    
+                                    layerBindings.put(layer, 
+                                            new AudioLayerChannelBinding(layer,
+                                                    channel));
                                 }
                             }
                         }
@@ -143,13 +169,27 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                                 String uniqueId = alg.getUniqueId();
                                 alg.removeLayerGroupListener(layerGroupListener);
 
+                                if(layerGroupBindings.containsKey(alg)) {
+                                    AudioLayerGroupBinding binding = layerGroupBindings.get(alg);
+                                    binding.clearBinding();
+                                    layerGroupBindings.remove(alg);
+                                }
+        
                                 for (ChannelList list : channelGroups) {
                                     if (uniqueId.equals(list.getAssociation())) {
                                         channelGroups.remove(list);
+                                        
                                         break;
                                     }
                                 }
-
+                                for (AudioLayer layer : alg) {
+                                    if(layerBindings.containsKey(layer)) {
+                                        AudioLayerChannelBinding binding = layerBindings.get(layer);
+                                        binding.clearBinding();
+                                        layerBindings.remove(layer);
+                                    }
+                                }
+                               
                             }
                         }
                         break;
@@ -229,6 +269,16 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
             if (oldProject != null) {
                 detachListeners(oldProject);
             }
+            
+            for(AudioLayerGroupBinding binding: layerGroupBindings.values()) {
+                binding.clearBinding();
+            }
+            layerGroupBindings.clear();
+            
+            for(AudioLayerChannelBinding binding: layerBindings.values()) {
+                binding.clearBinding();
+            }
+            layerBindings.clear();
 
             if (newProject != null) {
                 synchronizeAudioLayersAndMixer(newProject.getData());
@@ -260,10 +310,27 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         }
 
         Score score = project.getData().getScore();
+        Mixer mixer = project.getData().getMixer();
 
         for (LayerGroup lg : score) {
             if (lg instanceof AudioLayerGroup) {
+                AudioLayerGroup alg = (AudioLayerGroup)lg;
+                ChannelList channelList = findChannelListForAudioLayerGroup(mixer, alg);
+                
                 lg.addLayerGroupListener(layerGroupListener);
+                
+                AudioLayerGroupBinding binding = new AudioLayerGroupBinding(alg, channelList);
+                layerGroupBindings.put(alg, binding);
+                
+                for(AudioLayer layer : alg) {
+                    Channel channel = ChannelList.findChannelByAssociation(channelList, 
+                            layer.getUniqueId());
+                    
+                    if(channel != null) {
+                        layerBindings.put(layer, new AudioLayerChannelBinding(layer, channel));
+                    }
+                    
+                }
             }
         }
         score.addListener(scoreListener);
@@ -279,7 +346,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         }
         return null;
     }
-
+    
     private void synchronizeAudioLayersAndMixer(BlueData data) {
         // TODO - Implement
     }

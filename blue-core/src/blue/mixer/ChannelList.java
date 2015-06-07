@@ -76,8 +76,6 @@ public class ChannelList extends ObservableArrayList<Channel>
         this.listNameEditSupported = listNameEditSupported;
     }
     
-    
-
     public static ChannelList loadFromXML(Element data) throws Exception {
         ChannelList channels = new ChannelList();
 
@@ -211,4 +209,19 @@ public class ChannelList extends ObservableArrayList<Channel>
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
         propSupport.removePropertyChangeListener(pcl);
     }
+
+    public static Channel findChannelByAssociation(ChannelList list, String uniqueId) {
+        if(uniqueId == null) {
+            return null;
+        }
+        
+        for(Channel channel : list) {
+            if(uniqueId.equals(channel.getAssociation())) {
+                return channel;
+            }
+        }
+        
+        return null;
+    }
+
 }
