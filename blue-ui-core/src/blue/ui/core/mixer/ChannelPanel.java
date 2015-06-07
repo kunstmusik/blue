@@ -561,7 +561,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         while (!finished) {
 
-            String retVal = JOptionPane.showInputDialog(this,
+            String retVal = JOptionPane.showInputDialog(
+                    WindowManager.getDefault().getMainWindow(),
                     "Please Enter SubChannel Name", originalName);
 
             if (retVal != null && retVal.trim().length() > 0
@@ -601,7 +602,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
             editSubChannelName();
         } else {
             String originalName = channel.getName();
-            String retVal = JOptionPane.showInputDialog(this,
+            String retVal = JOptionPane.showInputDialog(
+                    WindowManager.getDefault().getMainWindow(),
                     "Please Enter Channel Name", originalName);
 
             if (retVal != null && retVal.trim().length() > 0
