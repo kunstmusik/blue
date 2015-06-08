@@ -46,8 +46,9 @@ public class ChannelList extends ObservableArrayList<Channel>
 
     private String listName = "";
     private boolean listNameEditSupported = true;
-    
-    private PropertyChangeSupport propSupport = new PropertyChangeSupport(this);
+
+    private transient PropertyChangeSupport propSupport = null;
+
     /**
      * Creates a new instance of ChannelList
      */
@@ -59,13 +60,16 @@ public class ChannelList extends ObservableArrayList<Channel>
     }
 
     public void setListName(String listName) {
-        if(!listNameEditSupported) {
-            throw new RuntimeException("Error: Attempted to edit Channel List name for "
+        if (!listNameEditSupported) {
+            throw new RuntimeException(
+                    "Error: Attempted to edit Channel List name for "
                     + "group that does not support it.");
         }
         String oldListName = this.listName;
         this.listName = listName;
-        propSupport.firePropertyChange("listName", oldListName, listName);
+        if (propSupport != null) {
+            propSupport.firePropertyChange("listName", oldListName, listName);
+        }
     }
 
     public boolean isListNameEditSupported() {
@@ -75,7 +79,7 @@ public class ChannelList extends ObservableArrayList<Channel>
     public void setListNameEditSupported(boolean listNameEditSupported) {
         this.listNameEditSupported = listNameEditSupported;
     }
-    
+
     public static ChannelList loadFromXML(Element data) throws Exception {
         ChannelList channels = new ChannelList();
 
@@ -85,9 +89,9 @@ public class ChannelList extends ObservableArrayList<Channel>
         if (associationVal != null && !"null".equals(associationVal)) {
             channels.setAssociation(data.getAttributeValue("association"));
         }
-        
+
         String listName = data.getAttributeValue("listName");
-        if(listName != null && !"null".equals(listName)) {
+        if (listName != null && !"null".equals(listName)) {
             channels.setListName(listName);
         }
 
@@ -109,7 +113,7 @@ public class ChannelList extends ObservableArrayList<Channel>
         if (association != null) {
             retVal.setAttribute("association", association);
         }
-        
+
         if (listName != null) {
             retVal.setAttribute("listName", listName);
         }
@@ -129,9 +133,8 @@ public class ChannelList extends ObservableArrayList<Channel>
         this.association = association;
     }
 
-
     public void checkOrCreate(String channelName) {
-        for(Channel channel : this) {
+        for (Channel channel : this) {
             if (channel.getName().equals(channelName)) {
                 return;
             }
@@ -201,26 +204,32 @@ public class ChannelList extends ObservableArrayList<Channel>
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj, false);
     }
-    
+
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        if (propSupport == null) {
+            propSupport = new PropertyChangeSupport(this);
+        }
+
         propSupport.addPropertyChangeListener(pcl);
     }
-    
+
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        propSupport.removePropertyChangeListener(pcl);
+        if (propSupport != null) {
+            propSupport.removePropertyChangeListener(pcl);
+        }
     }
 
     public static Channel findChannelByAssociation(ChannelList list, String uniqueId) {
-        if(uniqueId == null) {
+        if (uniqueId == null) {
             return null;
         }
-        
-        for(Channel channel : list) {
-            if(uniqueId.equals(channel.getAssociation())) {
+
+        for (Channel channel : list) {
+            if (uniqueId.equals(channel.getAssociation())) {
                 return channel;
             }
         }
-        
+
         return null;
     }
 
