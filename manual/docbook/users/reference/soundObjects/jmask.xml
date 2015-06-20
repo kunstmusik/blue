@@ -147,7 +147,8 @@ with CMask is suggested.</para>
             </tbody>
         </tgroup>
     </table>
-    
+
+    <para>JMask also supports the use of a seed value.  When enabling the use of seeding, the seed value will be used to initialize the pseudo-random number generator used in randomized operations.  This allows the user to set a seed and get consistently reproducible results. The default is to use the system time to seed the random number generator, thus giving different results each render.</para>
 </section>
 
 <section id="jmaskInterface">
@@ -294,9 +295,7 @@ with CMask is suggested.</para>
     options allowable for each Parameter.  Currently, documentation is omitted
     for each Parameter's GUI as they correspond in feature and parameters as
     CMask, and the user is encouraged to consult the CMask manual for more 
-    information on editing each Parameter. (This section will be expanded for
-    the next release of blue.)
-    </para>
+    information on editing each Parameter.</para>
     
     
     
