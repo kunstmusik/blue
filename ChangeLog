@@ -96,6 +96,9 @@ FIX
 
 * Issue #306 - Fixed BSB interface not updating after setting values from preset
 
+* Automations - adjusted menu to show "More..." sub-menus when there are more 
+  automations available than can fit on the screen
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
