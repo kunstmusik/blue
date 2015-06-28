@@ -39,6 +39,8 @@ import blue.soundObject.PolyObject;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.awt.Color;
+import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -48,9 +50,11 @@ import java.util.Iterator;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.windows.WindowManager;
 
 /**
  * Controller to handle synchronizing of UI with time, directing single edits in
@@ -333,9 +337,16 @@ public class AutomationManager implements ParameterListListener,
                     continue;
                 }
 
-                JMenu instrMenu = new JMenu();
+                        
+                final JMenu instrMenu = new JMenu();
                 instrMenu.setText(ia.arrangementId + ") " + ia.instr.getName());
 
+
+                int itemsMax = (Toolkit.getDefaultToolkit().getScreenSize().height - 80) / 
+                        instrMenu.getPreferredSize().height;
+                int count = 0;
+                JMenu currentMenu = instrMenu;
+                
                 for (int j = 0; j < params.size(); j++) {
                     Parameter param = params.getParameter(j);
                     JMenuItem paramItem = new JMenuItem();
@@ -354,7 +365,13 @@ public class AutomationManager implements ParameterListListener,
                     paramItem.putClientProperty("instr", ia.instr);
                     paramItem.putClientProperty("param", param);
 
-                    instrMenu.add(paramItem);
+                    currentMenu.add(paramItem);
+                    if(++count >= itemsMax) {
+                        count = 0;
+                        JMenu moreMenu = new JMenu("More...");
+                        currentMenu.add(moreMenu);
+                        currentMenu = moreMenu;
+                    }
                 }
                 instrRoot.add(instrMenu);
             }
