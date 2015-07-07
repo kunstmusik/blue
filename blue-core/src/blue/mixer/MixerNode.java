@@ -385,6 +385,7 @@ class MixerNode {
                 if (effect.isEnabled()) {
 
                     UserDefinedOpcode udo = effect.generateUDO(udos);
+                    udo.commentText = effect.getName();
 
                     String effectName = udos.getNameOfEquivalentCopy(udo);
 

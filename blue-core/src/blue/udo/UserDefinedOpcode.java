@@ -31,6 +31,8 @@ public class UserDefinedOpcode implements Serializable {
 
     public String opcodeName = "newOpcode";
 
+    public transient String commentText = null;
+
     public String outTypes = "";
 
     public String inTypes = "";
@@ -119,7 +121,13 @@ public class UserDefinedOpcode implements Serializable {
 
         buffer.append("\topcode ").append(opcodeName);
         buffer.append(",").append(outTypes);
-        buffer.append(",").append(inTypes).append("\n");
+        buffer.append(",").append(inTypes);
+       
+        if(commentText != null) {
+            buffer.append(" ; ").append(commentText);
+        }
+        
+        buffer.append("\n");
 
         // if(inArgs.trim().length() > 0) {
         // buffer.append(inArgs).append(" xin\n");
