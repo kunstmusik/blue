@@ -148,6 +148,7 @@ public final class InstrumentEditPanel extends JComponent {
                 if (c.isAssignableFrom(instrClass)) {
                     LazyPlugin<InstrumentEditor> plugin = instrEditorMap.get(c);
                     instrEditor = plugin.getInstance();
+                    instrEditorCache.put(instrClass, instrEditor);
                     editPanel.add(instrEditor, instrEditor.getClass().getName());
                     break;
                 }

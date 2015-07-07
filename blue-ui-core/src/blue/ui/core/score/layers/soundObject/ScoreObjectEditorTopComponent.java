@@ -235,11 +235,13 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         }
 
         ScoreObjectEditor editor = editors.get(sObjToEdit.getClass());
+        System.out.println("EDITOR: " + editor);
         if (editor == null) {
             for (Class c : sObjEditorMap.keySet()) {
                 if (c.isAssignableFrom(sObjToEdit.getClass())) {
                     LazyPlugin<ScoreObjectEditor> plugin = sObjEditorMap.get(c);
                     editor = plugin.getInstance();
+                    editors.put(sObjToEdit.getClass(), editor);
                     editPanel.add(editor, editor.getClass().getName());
                     break;
                 }
