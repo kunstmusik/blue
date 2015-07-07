@@ -19,28 +19,24 @@
  */
 package blue.gui;
 
-import blue.components.CaretPositionDisplayLabel;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.UiUtilities;
 import blue.utility.GUI;
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -51,35 +47,45 @@ import org.openide.windows.WindowManager;
  * @version 1.0
  */
 public class InfoDialog {
-    
+
     private static JPanel infoPanel = null;
     private static JDialog dialog = null;
-    
+
     private static JTabbedPane tabs = null;
-    
+
     private static JPopupMenu popup = null;
-    
-    private static MimeTypeEditorComponent infoText
-            = new MimeTypeEditorComponent("text/plain");
-    
-    public static final void showInformationDialog(Component parent,
+
+    private static MimeTypeEditorComponent infoText = null;
+
+    public static synchronized final void showInformationDialog(Component parent,
             String information, String title) {
-        
+
+        if (infoText == null) {
+            try {
+                SwingUtilities.invokeAndWait(()
+                        -> infoText = new MimeTypeEditorComponent("text/plain"));
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (InvocationTargetException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
         infoText.setText(information);
         infoText.getJEditorPane().getCaret().setDot(0);
-        
+
         final JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent));
         dlg.getContentPane().add(infoText);
         dlg.setModal(true);
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dlg.setTitle(title);
         dlg.setSize(new Dimension(760, 400));
-        
+
         GUI.centerOnScreen(dlg);
         dlg.show();
         infoText.setText("");
     }
-    
+
     public static final void showInformationDialogTabs(String information,
             String title) {
         if (dialog == null) {
@@ -88,57 +94,57 @@ public class InfoDialog {
             dialog.setTitle("Information");
             tabs = new JTabbedPane();
             dialog.getContentPane().add(tabs);
-            
+
             dialog.setSize(640, 480);
-            
+
             GUI.centerOnScreen(dialog);
-            
+
             popup = new JPopupMenu();
-            
+
             popup.add(new AbstractAction("Remove") {
-                
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     int index = tabs.getSelectedIndex();
                     if (index >= 0) {
                         tabs.remove(index);
-                        
+
                         if (tabs.getTabCount() == 0) {
                             dialog.setVisible(false);
                         }
                     }
                 }
-                
+
             });
-            
+
             tabs.addMouseListener(new MouseAdapter() {
-                
+
                 @Override
                 public void mousePressed(MouseEvent e) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(tabs, e.getX(), e.getY());
                     }
                 }
-                
+
             });
-            
+
             dialog.getRootPane().putClientProperty("SeparateWindow",
                     Boolean.TRUE);
         }
-        
+
         tabs.add(title, new JScrollPane(new JTextArea(information)));
         tabs.setSelectedIndex(tabs.getTabCount() - 1);
         dialog.setVisible(true);
-        
+
     }
-    
+
     public static boolean infoTabsHasTabs() {
         if (tabs == null) {
             return false;
         }
         return tabs.getTabCount() > 0;
     }
-    
+
     public static void showInfoTabsDialog() {
         if (dialog != null) {
             dialog.setVisible(!dialog.isVisible());
