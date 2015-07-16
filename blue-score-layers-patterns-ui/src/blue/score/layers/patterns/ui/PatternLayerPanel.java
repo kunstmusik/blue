@@ -21,7 +21,6 @@ package blue.score.layers.patterns.ui;
 
 import blue.BlueSystem;
 import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
 import blue.plugin.BluePlugin;
 import blue.score.layers.Layer;
 import blue.score.layers.patterns.core.PatternLayer;
