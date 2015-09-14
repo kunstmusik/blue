@@ -174,7 +174,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             Element node = nodes.next();
             String nodeName = node.getName();
 
-            if ("this".equals(nodeName)) {
+            if ("patternLayers".equals(nodeName)) {
 
                 Elements patternNodes = node.getElements();
 
@@ -201,7 +201,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
         Element root = new Element("patternsLayerGroup");
         root.setAttribute("name", name);
 
-        Element patternsNode = root.addElement("this");
+        Element patternsNode = root.addElement("patternLayers");
 
         for (PatternLayer layer : this) {
             patternsNode.addElement(layer.saveAsXML());
