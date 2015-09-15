@@ -62,8 +62,13 @@ public class InfoDialog {
 
         if (infoText == null) {
             try {
-                SwingUtilities.invokeAndWait(()
-                        -> infoText = new MimeTypeEditorComponent("text/plain"));
+                if (SwingUtilities.isEventDispatchThread()) {
+                    infoText = new MimeTypeEditorComponent("text/plain");
+                } else {
+                    SwingUtilities.invokeAndWait(()
+                            -> infoText = new MimeTypeEditorComponent(
+                                    "text/plain"));
+                }
             } catch (InterruptedException ex) {
                 Exceptions.printStackTrace(ex);
             } catch (InvocationTargetException ex) {
@@ -82,7 +87,7 @@ public class InfoDialog {
         dlg.setSize(new Dimension(760, 400));
 
         GUI.centerOnScreen(dlg);
-        dlg.show();
+        dlg.setVisible(true);
         infoText.setText("");
     }
 
