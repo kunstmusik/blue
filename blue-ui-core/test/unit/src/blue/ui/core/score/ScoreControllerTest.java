@@ -105,11 +105,9 @@ public class ScoreControllerTest {
         scoreController.copyScoreObjects();
 
         assertEquals(2, buffer.scoreObjects.size());
-        assertEquals(2, buffer.layers.size());
         assertEquals(2, buffer.layerIndexes.size());
 
         assertEquals(buffer.layerIndexes.get(0), buffer.layerIndexes.get(1));
-        assertEquals(buffer.layers.get(0), buffer.layers.get(1));
 
     }
 

@@ -187,7 +187,6 @@ public class ScoreController {
             }
             int layerIndex = layers.indexOf(foundLayer);
             buffer.scoreObjects.add(scoreObject);
-            buffer.layers.add(foundLayer);
             indexes.add(layerIndex);
 
             if (layerIndex < layerMin) {
@@ -308,12 +307,10 @@ public class ScoreController {
     public static class ScoreObjectBuffer {
 
         public final List<ScoreObject> scoreObjects = new ArrayList<>();
-        public final List<Layer> layers = new ArrayList<>();
         public final List<Integer> layerIndexes = new ArrayList<>();
 
         public void clear() {
             scoreObjects.clear();
-            layers.clear();
             layerIndexes.clear();
         }
 
