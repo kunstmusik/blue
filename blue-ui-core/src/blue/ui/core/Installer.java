@@ -192,6 +192,8 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
+
+        Platform.setImplicitExit(false); 
         // Initialize JavaFX by using this call
         new JFXPanel();
 //        Platform.runLater(()

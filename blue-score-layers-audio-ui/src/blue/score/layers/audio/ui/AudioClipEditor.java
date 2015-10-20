@@ -19,15 +19,19 @@
  */
 package blue.score.layers.audio.ui;
 
-import blue.BlueSystem;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
-import blue.score.ScoreObjectEvent;
-import blue.score.ScoreObjectListener;
 import blue.score.layers.audio.core.AudioClip;
 import blue.soundObject.editor.ScoreObjectEditor;
-import blue.ui.utilities.SimpleDocumentListener;
-import javax.swing.event.DocumentEvent;
+import java.awt.BorderLayout;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -36,48 +40,41 @@ import javax.swing.event.DocumentEvent;
 @ScoreObjectEditorPlugin(scoreObjectType = AudioClip.class)
 public class AudioClipEditor extends ScoreObjectEditor {
 
-    AudioClip audioClip = null;
-
-    ScoreObjectListener listener;
-
-    volatile boolean updating = false;
-
+    AudioClipEditorController controller = null;
     /**
      * Creates new form AudioClipEditor
      */
     public AudioClipEditor() {
-        initComponents();
+        this.setLayout(new BorderLayout());
 
-        listener = new ScoreObjectListener() {
+        JFXPanel panel = new JFXPanel();
+        this.add(panel, BorderLayout.CENTER);
+        final CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
 
-            @Override
-            public void scoreObjectChanged(ScoreObjectEvent event) {
-                if (event.getScoreObject() == audioClip) {
-                    updating = true;
-                    switch (event.getPropertyChanged()) {
-                        case ScoreObjectEvent.START_TIME:
-                            startTextField.setText(
-                                    Float.toString(audioClip.getStartTime()));
-                            break;
-                        case ScoreObjectEvent.DURATION:
-                            durationTextField.setText(
-                                    Float.toString(
-                                            audioClip.getSubjectiveDuration()));
-                            break;
-                        case ScoreObjectEvent.OTHER:
-                            if ("fileStartTime".equals(event.getNamedProperty())) {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "AudioClipEditor.fxml"));
 
-                                fileStartTextField.setText(
-                                        Float.toString(
-                                                audioClip.getFileStartTime()));
-                            }
-                            break;
-                    }
-                    updating = false;
-                }
+            try {
+                loader.load();
+                controller = loader.getController();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
             }
-
-        };
+            final Scene scene = new Scene(loader.getRoot());
+            Node root = loader.getRoot();
+            root.setStyle("-fx-base: rgba(38, 51, 76, 1.0);"
+                    + "-fx-background: rgba(38, 51, 76, 1.0);"
+                    + "-fx-control-inner-background: black");
+            panel.setScene(scene);
+            latch.countDown();
+        });
+        
+        try {
+            latch.await();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     /**
@@ -89,302 +86,25 @@ public class AudioClipEditor extends ScoreObjectEditor {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel6 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        audioFileNameLabel = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        startTextField = new javax.swing.JTextField();
-        durationTextField = new javax.swing.JTextField();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        fileStartTextField = new javax.swing.JTextField();
-        lengthTextField = new javax.swing.JTextField();
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel6.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(audioFileNameLabel, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.audioFileNameLabel.text")); // NOI18N
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jPanel1.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel2.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel3.text")); // NOI18N
-
-        startTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.startTextField.text")); // NOI18N
-        startTextField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                startTextFieldFocusLost(evt);
-            }
-        });
-        startTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                startTextFieldActionPerformed(evt);
-            }
-        });
-
-        durationTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.durationTextField.text")); // NOI18N
-        durationTextField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                durationTextFieldFocusLost(evt);
-            }
-        });
-        durationTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                durationTextFieldActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(startTextField))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(15, 15, 15)
-                        .addComponent(durationTextField)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(startTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(durationTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jPanel2.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel4.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.jLabel5.text")); // NOI18N
-
-        fileStartTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.fileStartTextField.text")); // NOI18N
-        fileStartTextField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                fileStartTextFieldFocusLost(evt);
-            }
-        });
-        fileStartTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fileStartTextFieldActionPerformed(evt);
-            }
-        });
-
-        lengthTextField.setEditable(false);
-        lengthTextField.setText(org.openide.util.NbBundle.getMessage(AudioClipEditor.class, "AudioClipEditor.lengthTextField.text")); // NOI18N
-        lengthTextField.setEnabled(false);
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5)
-                    .addComponent(jLabel4))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileStartTextField)
-                    .addComponent(lengthTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 185, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(fileStartTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(lengthTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(audioFileNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(0, 0, 0)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+            .addGap(0, 522, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(audioFileNameLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(117, Short.MAX_VALUE))
+            .addGap(0, 239, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void startTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_startTextFieldFocusLost
-        updateStart();
-    }//GEN-LAST:event_startTextFieldFocusLost
-
-    private void startTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startTextFieldActionPerformed
-        updateStart();
-    }//GEN-LAST:event_startTextFieldActionPerformed
-
-    private void durationTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_durationTextFieldActionPerformed
-        updateDuration();
-    }//GEN-LAST:event_durationTextFieldActionPerformed
-
-    private void durationTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_durationTextFieldFocusLost
-        updateDuration();
-    }//GEN-LAST:event_durationTextFieldFocusLost
-
-    private void fileStartTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileStartTextFieldActionPerformed
-        updateFileStart();
-    }//GEN-LAST:event_fileStartTextFieldActionPerformed
-
-    private void fileStartTextFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fileStartTextFieldFocusLost
-        updateFileStart();
-    }//GEN-LAST:event_fileStartTextFieldFocusLost
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel audioFileNameLabel;
-    private javax.swing.JTextField durationTextField;
-    private javax.swing.JTextField fileStartTextField;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JTextField lengthTextField;
-    private javax.swing.JTextField startTextField;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void editScoreObject(ScoreObject sObj) {
-        if (audioClip != null) {
-            audioClip.removeScoreObjectListener(listener);
-        }
-
         AudioClip newClip = (AudioClip) sObj;
-        this.audioClip = null;
-
-        if (newClip != null) {
-            updating = true;
-
-            this.audioFileNameLabel.setText(BlueSystem.getRelativePath(
-                    newClip.getAudioFile().getAbsolutePath()));
-            startTextField.setText(Float.toString(newClip.getStartTime()));
-            durationTextField.setText(Float.toString(
-                    newClip.getSubjectiveDuration()));
-            lengthTextField.setText(Float.toString(newClip.getAudioDuration()));
-            fileStartTextField.setText(
-                    Float.toString(newClip.getFileStartTime()));
-            newClip.addScoreObjectListener(listener);
-
-            updating = false;
-        }
-
-        this.audioClip = newClip;
+        controller.setAudioClip(newClip);
     }
-
-    public void updateStart() {
-        if (updating) {
-            return;
-        }
-        String text = startTextField.getText();
-        if (text != null && audioClip != null) {
-            try {
-                float v = Float.parseFloat(text);
-                if (v < 0.0f) {
-                    audioClip.setStartTime(
-                            audioClip.getStartTime());
-                } else {
-                    audioClip.setStartTime(v);
-                }
-            } catch (Exception ex) {
-                audioClip.setStartTime(audioClip.getStartTime());
-            }
-        }
-    }
-
-    public void updateDuration() {
-        if (updating) {
-            return;
-        }
-
-        if (durationTextField.getText() != null && audioClip != null) {
-            try {
-                float v = Float.parseFloat(
-                        durationTextField.getText());
-                if (v < 0.0f || v > audioClip.getAudioDuration()) {
-                    audioClip.setSubjectiveDuration(
-                            audioClip.getSubjectiveDuration());
-                } else {
-                    audioClip.setSubjectiveDuration(v);
-                }
-            } catch (Exception ex) {
-                audioClip.setSubjectiveDuration(
-                        audioClip.getSubjectiveDuration());
-            }
-        }
-    }
-
-    public void updateFileStart() {
-        if (updating) {
-            return;
-        }
-        if (fileStartTextField.getText() != null && audioClip != null) {
-            updating = true;
-            try {
-                float v = Float.parseFloat(
-                        fileStartTextField.getText());
-                if (v < 0.0f || v >= audioClip.getAudioDuration()) {
-                    audioClip.setFileStartTime(
-                            audioClip.getFileStartTime());
-                } else {
-                    audioClip.setFileStartTime(v);
-                }
-            } catch (Exception ex) {
-                audioClip.setFileStartTime(
-                        audioClip.getFileStartTime());
-            }
-            updating = false;
-        }
-    }
-
 }

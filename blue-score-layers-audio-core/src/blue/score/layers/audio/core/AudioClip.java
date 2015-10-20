@@ -27,13 +27,17 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.beans.property.FloatProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleFloatProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -46,25 +50,42 @@ import org.openide.util.Exceptions;
  */
 public class AudioClip implements ScoreObject, Serializable, Comparable<AudioClip> {
 
-    String name = "";
-    File audioFile = null;
+    private StringProperty name = new SimpleStringProperty();
+    private FloatProperty start = new SimpleFloatProperty();
+    private FloatProperty duration = new SimpleFloatProperty();
+    private ObjectProperty<Color> color = new SimpleObjectProperty<>(
+            Color.DARK_GRAY);
+
+    private ObjectProperty<File> audioFile = new SimpleObjectProperty<>();
     int numChannels = 0;
     float audioDuration = 0.0f;
-    float fileStartTime = 0.0f;
-    float start = 0.0f;
-    float duration = 0.0f;
-    Color backgroundColor = Color.DARK_GRAY;
+
+    private FloatProperty fileStartTime = new SimpleFloatProperty(0.0f);
+    private FloatProperty fadeIn = new SimpleFloatProperty(0.0f);
+    private FloatProperty fadeOut = new SimpleFloatProperty(0.0f);
 
     transient List<ScoreObjectListener> scoreObjListeners = null;
 //    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
+        name.addListener((obs, old, newVal) -> { 
+            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.NAME));
+        });
+        start.addListener((obs, old, newVal) -> { 
+            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.START_TIME));
+        });
+        duration.addListener((obs, old, newVal) -> { 
+            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.DURATION));
+        });
+        color.addListener((obs, old, newVal) -> { 
+            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.COLOR));
+        });
     }
 
     protected void readAudioFileProperties() {
         AudioFileFormat aFormat;
         try {
-            aFormat = AudioSystem.getAudioFileFormat(audioFile);
+            aFormat = AudioSystem.getAudioFileFormat(audioFile.get());
             AudioFormat format = aFormat.getFormat();
 
             numChannels = format.getChannels();
@@ -77,16 +98,91 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         }
     }
 
+    public void setName(String value) {
+        name.set(value);
+    }
+
+    public String getName() {
+        return name.get();
+    }
+
+    public StringProperty nameProperty() {
+        return name;
+    }
+
+    public void setStart(float value) {
+        start.set(value);
+    }
+
+    public float getStart() {
+        return start.get();
+    }
+
+    public FloatProperty startProperty() {
+        return start;
+    }
+
+    public void setDuration(float value) {
+        duration.set(value);
+    }
+
+    public float getDuration() {
+        return duration.get();
+    }
+
+    public FloatProperty durationProperty() {
+        return duration;
+    }
+
+    public void setFileStartTime(float value) {
+        fileStartTime.set(value);
+    }
+
+    public float getFileStartTime() {
+        return fileStartTime.get();
+    }
+
+    public FloatProperty fileStartTimeProperty() {
+        return fileStartTime;
+    }
+
+    public void setFadeIn(float value) {
+        fadeIn.set(value);
+    }
+
+    public float getFadeIn() {
+        return fadeIn.get();
+    }
+
+    public FloatProperty fadeInProperty() {
+        return fadeIn;
+    }
+
+    public void setFadeOut(float value) {
+        fadeOut.set(value);
+    }
+
+    public float getFadeOut() {
+        return fadeOut.get();
+    }
+
+    public FloatProperty fadeOutProperty() {
+        return fadeOut;
+    }
+
     // GETTERS/SETTERS 
     public File getAudioFile() {
-        return audioFile;
+        return audioFile.get();
     }
 
     public void setAudioFile(File audioFile) {
-        File old = this.audioFile;
-        this.audioFile = audioFile;
+        this.audioFile.set(audioFile);
         readAudioFileProperties();
-        duration = audioDuration;
+        duration.set(audioDuration);
+    }
+
+    public ObjectProperty<File> audioFileProperty() {
+        return this.audioFile;
     }
 
     public float getAudioDuration() {
@@ -94,145 +190,107 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     }
 
     public void setAudioDuration(float originalDuration) {
-        this.audioDuration = originalDuration;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.OTHER, "audioDuration");
-
-        fireScoreObjectEvent(event);
-    }
-
-    public float getFileStartTime() {
-        return fileStartTime;
-    }
-
-    public void setFileStartTime(float fileStartTime) {
-        this.fileStartTime = fileStartTime;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.OTHER, "fileStartTime");
-
-        fireScoreObjectEvent(event);
-
+        setDuration(originalDuration);
     }
 
     @Override
     public float getStartTime() {
-        return start;
+        return getStart();
     }
 
     @Override
     public void setStartTime(float start) {
-        this.start = start;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.START_TIME);
-
-        fireScoreObjectEvent(event);
+        setStart(start);
     }
 
     @Override
     public float getSubjectiveDuration() {
-        return duration;
+        return getDuration();
     }
 
     @Override
     public void setSubjectiveDuration(float duration) {
-        this.duration = (float) Math.min(duration,
-                this.audioDuration - this.fileStartTime);
+        float dur = Math.min(duration,
+                getAudioDuration() - getFileStartTime());
 
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.DURATION);
-
-        fireScoreObjectEvent(event);
+        setDuration(dur);
     }
 
     @Override
     public float getMaxResizeRightDiff() {
-        return audioDuration - (fileStartTime + duration);
+        return audioDuration - (getFileStartTime() + getDuration());
     }
 
     @Override
     public float getMaxResizeLeftDiff() {
-        return (start < fileStartTime) ? -start : -fileStartTime;
+        return (getStart() < getFileStartTime()) ? -getStart() : -getFileStartTime();
     }
 
     @Override
     public void resizeLeft(float newStartTime) {
 
-        if (newStartTime >= start + duration) {
+        if (newStartTime >= getStart() + getDuration()) {
             return;
         }
 
-        float diff = newStartTime - start;
-        float maxFileStartDiff = -fileStartTime;
+        float diff = newStartTime - getStart();
+        float maxFileStartDiff = -getFileStartTime();
 
         if (diff < maxFileStartDiff) {
             diff = maxFileStartDiff;
         }
 
-        float maxDurDiff = audioDuration - duration;
+        float maxDurDiff = getAudioDuration() - getDuration();
         if (-diff > maxDurDiff) {
             diff = -maxDurDiff;
         }
 
-        setFileStartTime(fileStartTime + diff);
-        setStartTime(start + diff);
-        setSubjectiveDuration(duration - diff);
+        setFileStartTime(getFileStartTime() + diff);
+        setStartTime(getStart() + diff);
+        setSubjectiveDuration(getDuration() - diff);
     }
 
     @Override
     public void resizeRight(float newEndTime) {
 
-        if (newEndTime <= start) {
+        if (newEndTime <= getStart()) {
             return;
         }
 
-        float newDur = newEndTime - start;
+        float newDur = newEndTime - getStart();
 
-        newDur = (newDur > audioDuration) ? audioDuration : newDur;
+        newDur = (newDur > getAudioDuration()) ? getAudioDuration() : newDur;
 
         setSubjectiveDuration(newDur);
     }
 
     @Override
     public int compareTo(AudioClip o) {
-        float diff = o.start - this.start;
+        float diff = o.getStart() - this.getStart();
         if (diff != 0) {
             return (int) diff;
         }
 
-        return (int) (o.duration - this.duration);
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(String name) {
-        this.name = name;
-
-        ScoreObjectEvent event = new ScoreObjectEvent(this,
-                ScoreObjectEvent.NAME);
-
-        fireScoreObjectEvent(event);
+        return (int) (o.getDuration() - this.getDuration());
     }
 
     @Override
     public Color getBackgroundColor() {
-        return this.backgroundColor;
+        return this.color.get();
     }
 
     @Override
     public void setBackgroundColor(Color color) {
-        this.backgroundColor = color;
+        this.color.set(color);
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
                 ScoreObjectEvent.COLOR);
 
         fireScoreObjectEvent(event);
+    }
+
+    public ObjectProperty<Color> backgroundColorProperty() {
+        return color;
     }
 
     public int getNumChannels() {
@@ -243,13 +301,15 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
     public Element saveAsXML() {
         Element root = new Element("audioClip");
 
-        root.addElement("name").setText(name);
-        root.addElement("audioFile").setText(audioFile.getAbsolutePath());
-        root.addElement(XMLUtilities.writeInt("numChannels", numChannels));
-        root.addElement(XMLUtilities.writeFloat("audioDuration", audioDuration));
-        root.addElement(XMLUtilities.writeFloat("fileStart", fileStartTime));
-        root.addElement(XMLUtilities.writeFloat("start", start));
-        root.addElement(XMLUtilities.writeFloat("duration", duration));
+        root.addElement("name").setText(getName());
+        root.addElement("audioFile").setText(getAudioFile().getAbsolutePath());
+        root.addElement(XMLUtilities.writeInt("numChannels", getNumChannels()));
+        root.addElement(XMLUtilities.writeFloat("audioDuration", getAudioDuration()));
+        root.addElement(XMLUtilities.writeFloat("fileStart", getFileStartTime()));
+        root.addElement(XMLUtilities.writeFloat("start", getStart()));
+        root.addElement(XMLUtilities.writeFloat("duration", getDuration()));
+        root.addElement(XMLUtilities.writeFloat("fadeIn", getFadeIn()));
+        root.addElement(XMLUtilities.writeFloat("fadeOut", getFadeOut()));
 
         String colorStr = Integer.toString(getBackgroundColor().getRGB());
         root.addElement("backgroundColor").setText(colorStr);
@@ -268,30 +328,36 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 
             switch (node.getName()) {
                 case "name":
-                    clip.name = nodeText;
+                    clip.setName(nodeText);
                     break;
                 case "audioFile":
-                    clip.audioFile = new File(nodeText);
+                    clip.setAudioFile(new File(nodeText));
                     break;
                 case "numChannels":
                     clip.numChannels = XMLUtilities.readInt(node);
                     break;
                 case "audioDuration":
-                    clip.audioDuration = XMLUtilities.readFloat(node);
+                    clip.setAudioDuration(XMLUtilities.readFloat(node));
                     break;
                 case "fileStart":
-                    clip.fileStartTime = XMLUtilities.readFloat(node);
+                    clip.setFileStartTime(XMLUtilities.readFloat(node));
                     break;
                 case "start":
-                    clip.start = XMLUtilities.readFloat(node);
+                    clip.setStart(XMLUtilities.readFloat(node));
                     break;
                 case "duration":
-                    clip.duration = XMLUtilities.readFloat(node);
+                    clip.setDuration(XMLUtilities.readFloat(node));
                     break;
                 case "backgroundColor":
                     String colorStr = data.getTextString("backgroundColor");
                     clip.setBackgroundColor(
                             new Color(Integer.parseInt(colorStr)));
+                    break;
+                case "fadeIn":
+                    clip.setFadeIn(XMLUtilities.readFloat(node));
+                    break;
+                case "fadeOut":
+                    clip.setFadeOut(XMLUtilities.readFloat(node));
                     break;
             }
         }

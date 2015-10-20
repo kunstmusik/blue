@@ -39,9 +39,9 @@ public class AudioClipTest {
     public void setUp() {
         instance = new AudioClip();
         instance.audioDuration = 10.0f;
-        instance.duration = 5.0f;
-        instance.start = 10.0f;
-        instance.fileStartTime = 5.0f;
+        instance.setDuration(5.0f);
+        instance.setStart(10.0f);
+        instance.setFileStartTime(5.0f);
     }
 
     @After
@@ -57,15 +57,15 @@ public class AudioClipTest {
         float newStartTime = 5.0f;
         instance.resizeLeft(newStartTime);
 
-        assertEquals(5.0, instance.start, 0.001);
-        assertEquals(0.0, instance.fileStartTime, 0.001);
-        assertEquals(10.0, instance.duration, 0.001);
+        assertEquals(5.0, instance.getStart(), 0.001);
+        assertEquals(0.0, instance.getFileStartTime(), 0.001);
+        assertEquals(10.0, instance.getDuration(), 0.001);
 
         instance.resizeLeft(4.0f);
 
-        assertEquals(5.0, instance.start, 0.001);
-        assertEquals(0.0, instance.fileStartTime, 0.001);
-        assertEquals(10.0, instance.duration, 0.001);
+        assertEquals(5.0, instance.getStart(), 0.001);
+        assertEquals(0.0, instance.getFileStartTime(), 0.001);
+        assertEquals(10.0, instance.getDuration(), 0.001);
     }
 
     /**
@@ -77,16 +77,16 @@ public class AudioClipTest {
         instance.setFileStartTime(0.0f);
         instance.resizeRight(newEndTime);
 
-        assertEquals(10.0, instance.start, 0.001);
-        assertEquals(0.0, instance.fileStartTime, 0.001);
-        assertEquals(10.0, instance.duration, 0.001);
+        assertEquals(10.0, instance.getStart(), 0.001);
+        assertEquals(0.0, instance.getFileStartTime(), 0.001);
+        assertEquals(10.0, instance.getDuration(), 0.001);
     }
 
 
     @Test
     public void testGetMaxResizeRightDiff() {
         assertEquals(0.0, instance.getMaxResizeRightDiff(), 0.001);
-        instance.fileStartTime = 0.0f;
+        instance.setFileStartTime(0.0f);
         assertEquals(5.0, instance.getMaxResizeRightDiff(), 0.001);
     }
        
@@ -94,14 +94,14 @@ public class AudioClipTest {
     public void testGetMaxResizeLeftDiff() {
 
         assertEquals(-5.0, instance.getMaxResizeLeftDiff(), 0.001);
-        instance.fileStartTime = 0.0f;
+        instance.setFileStartTime(0.0f);
         assertEquals(0.0, instance.getMaxResizeLeftDiff(), 0.001);
-        instance.fileStartTime = 3.0f;
-        instance.start = 1.0f;
+        instance.setFileStartTime(3.0f);
+        instance.setStart(1.0f);
         assertEquals(-1.0, instance.getMaxResizeLeftDiff(), 0.001);
 
-        instance.fileStartTime = 2.0f;
-        instance.start = 3.0f;
+        instance.setFileStartTime(2.0f);
+        instance.setStart(3.0f);
         assertEquals(-2.0, instance.getMaxResizeLeftDiff(), 0.001);
     }
 }
