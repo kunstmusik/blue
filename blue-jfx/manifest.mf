@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: true
+OpenIDE-Module: blue.jfx
+OpenIDE-Module-Localizing-Bundle: blue/jfx/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

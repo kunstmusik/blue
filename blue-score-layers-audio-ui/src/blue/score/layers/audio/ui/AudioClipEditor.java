@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.jfx.BlueFX;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.score.layers.audio.core.AudioClip;
@@ -62,10 +63,11 @@ public class AudioClipEditor extends ScoreObjectEditor {
                 Exceptions.printStackTrace(ex);
             }
             final Scene scene = new Scene(loader.getRoot());
+            BlueFX.style(scene);
             Node root = loader.getRoot();
-            root.setStyle("-fx-base: rgba(38, 51, 76, 1.0);"
-                    + "-fx-background: rgba(38, 51, 76, 1.0);"
-                    + "-fx-control-inner-background: black");
+//            root.setStyle("-fx-base: rgba(38, 51, 76, 1.0);"
+//                    + "-fx-background: rgba(38, 51, 76, 1.0);"
+//                    + "-fx-control-inner-background: black");
             panel.setScene(scene);
             latch.countDown();
         });

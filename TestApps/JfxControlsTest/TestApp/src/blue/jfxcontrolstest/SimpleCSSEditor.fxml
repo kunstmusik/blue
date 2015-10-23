@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="230.0" prefWidth="385.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="blue.jfxcontrolstest.SimpleCSSEditorController">
+   <children>
+      <TextArea fx:id="textArea" layoutX="14.0" layoutY="14.0" prefHeight="156.0" prefWidth="355.0" AnchorPane.bottomAnchor="58.0" AnchorPane.leftAnchor="16.0" AnchorPane.rightAnchor="16.0" AnchorPane.topAnchor="16.0" />
+      <Button fx:id="setButton" layoutX="311.0" layoutY="190.0" mnemonicParsing="false" onAction="#setStyles" text="Set" AnchorPane.bottomAnchor="14.0" AnchorPane.rightAnchor="16.0" />
+      <Button fx:id="getButton" layoutX="282.0" layoutY="190.0" mnemonicParsing="false" onAction="#getStyles" text="Get" AnchorPane.bottomAnchor="14.0" AnchorPane.rightAnchor="63.0" />
+   </children>
+</AnchorPane>

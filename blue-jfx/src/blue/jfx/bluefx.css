@@ -1,0 +1,5 @@
+.root {
+  -fx-base: rgba(38, 51, 76, 1.0);
+  -fx-background: rgba(38, 51, 76, 1.0);
+  -fx-control-inner-background: black;
+}

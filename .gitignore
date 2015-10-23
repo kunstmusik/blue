@@ -28,3 +28,5 @@ jython/release/modules/ext/cachedir/*
 jython/release/*.pyc
 */nbproject/genfiles.properties
 /csound-manual/categories.pyc
+/TestApps/JfxControlsTest/nbproject/private/
+/TestApps/JfxControlsTest/TestApp/nbproject/private/
