@@ -26,7 +26,9 @@ import javafx.scene.Scene;
  * @author stevenyi
  */
 public class BlueFX {
+
     public static void style(Scene scene) {
-        scene.getStylesheets().add(BlueFX.class.getResource("bluefx.css").toExternalForm());
-    }    
+        scene.getStylesheets().add(
+                BlueFX.class.getResource("bluefx.css").toExternalForm());
+    }
 }
