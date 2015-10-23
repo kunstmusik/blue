@@ -28,6 +28,8 @@ NEW
 
 UPDATED
 
+* BlueSynthBuilder - Replaced Knob with new style implemented with JavaFX
+
 * Moved to using Java 8. NOTE: Java 8 JDK or JRE is now required for running 
   Blue.
 

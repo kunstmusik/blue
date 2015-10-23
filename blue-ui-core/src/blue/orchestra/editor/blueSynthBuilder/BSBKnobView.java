@@ -19,17 +19,23 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.components.Knob;
 import blue.components.lines.LineBoundaryDialog;
+import blue.jfx.BlueFX;
+import blue.jfx.controls.Knob;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import blue.utility.NumberUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
 import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.util.Exceptions;
 
 /**
  * @author steven
@@ -43,6 +49,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
     private static final int VALUE_HEIGHT = 14;
     BSBKnob knob;
     Knob knobView;
+    JFXPanel knobPanel;
     ValuePanel valuePanel = new ValuePanel();
 
     ChangeListener cl;
@@ -57,7 +64,23 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         this.knob = knob;
         this.setBSBObject(this.knob);
 
-        knobView = new Knob(knob.getKnobWidth());
+        knobPanel = new JFXPanel();
+        final CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+
+            knobView = new Knob();
+
+            final Scene scene = new Scene(knobView);
+            BlueFX.style(scene);
+            knobPanel.setScene(scene);
+            latch.countDown();
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        }
 
         cl = new ChangeListener() {
 
@@ -69,8 +92,13 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             }
         };
 
-        knobView.setPreferredSize(new Dimension(knob.getKnobWidth(), knob.getKnobWidth()));
-        knobView.addChangeListener(cl);
+        knobPanel.setPreferredSize(new Dimension(knob.getKnobWidth(),
+                knob.getKnobWidth()));
+        knobView.valueProperty().addListener(o -> {
+            if(!updating) {
+                updateKnobValue();
+            }
+        });
 
         valuePanel.setPreferredSize(new Dimension(knob.getKnobWidth(),
                 VALUE_HEIGHT));
@@ -82,7 +110,8 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
 
                 if ("value".equals(evt.getPropertyName())) {
                     try {
-                        float val = Float.parseFloat(valuePanel.getPendingValue());
+                        float val = Float.parseFloat(
+                                valuePanel.getPendingValue());
 
                         BSBKnob knob = BSBKnobView.this.knob;
 
@@ -90,7 +119,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
                             float range = knob.getMaximum() - knob.getMinimum();
                             float newVal = (val - knob.getMinimum()) / range;
 
-                            knobView.setVal(newVal);
+                            knobView.setValue(newVal);
                             knob.setValue(val);
                             updateValueDisplay();
                         }
@@ -111,7 +140,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         this.setSize(knob.getKnobWidth(), knob.getKnobWidth() + VALUE_HEIGHT);
 
         this.setLayout(new BorderLayout());
-        this.add(knobView, BorderLayout.CENTER);
+        this.add(knobPanel, BorderLayout.CENTER);
         this.add(valuePanel, BorderLayout.SOUTH);
 
         updateValueDisplay();
@@ -122,7 +151,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
     }
 
     protected void updateKnobValue() {
-        float value = knobView.getValue();
+        float value = (float)knobView.getValue();
         value = (value * (knob.getMaximum() - knob.getMinimum()))
                 + knob.getMinimum();
         knob.setValue(value);
@@ -163,9 +192,9 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
 
         knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
 
-        float newVal = (knob.getValue() - knob.getMinimum()) / 
-                (knob.getMaximum() - knob.getMinimum());
-        knobView.setVal(newVal);
+        float newVal = (knob.getValue() - knob.getMinimum())
+                / (knob.getMaximum() - knob.getMinimum());
+        knobView.setValue(newVal);
         updateValueDisplay();
     }
 
@@ -189,9 +218,9 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         }
 
         knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
-        float newVal = (knob.getValue() - knob.getMinimum()) / 
-                (knob.getMaximum() - knob.getMinimum());
-        knobView.setVal(newVal);
+        float newVal = (knob.getValue() - knob.getMinimum())
+                / (knob.getMaximum() - knob.getMinimum());
+        knobView.setValue(newVal);
         updateValueDisplay();
     }
 
@@ -202,8 +231,8 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
     public void setKnobWidth(int knobWidth) {
         Dimension d = new Dimension(knobWidth, knobWidth);
 
-        knobView.setPreferredSize(d);
-        knobView.setSize(d);
+        knobPanel.setPreferredSize(d);
+        knobPanel.setSize(d);
 
         d = new Dimension(knobWidth, knobWidth + valuePanel.getHeight());
 

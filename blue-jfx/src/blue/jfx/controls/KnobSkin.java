@@ -129,9 +129,21 @@ public class KnobSkin extends SkinBase<Knob>{
         gc.setStroke(Color.ALICEBLUE.brighter().brighter().brighter());
         gc.setLineWidth(2.0);
         gc.strokeLine(radius, 0, radius, radius - innerRadius - 1);
+        gc.setFill(Color.BLACK);
+        gc.fillOval(width * 0.25, width * 0.25, width * 0.5, width * 0.5);
+        gc.setFill(Color.ALICEBLUE);
+        double notchWidth = width / 10.0;
+        double notchAdj = notchWidth / 2.0;
+        gc.fillRoundRect(radius - notchAdj, (width * .25) - notchAdj, notchWidth,
+                (width * .25) + notchWidth,
+                notchWidth, notchWidth);
+        gc.setStroke(Color.BLACK);
+        gc.strokeRoundRect(radius - notchAdj, (width * .25) - notchAdj,
+                notchWidth, (width * .25) + notchWidth,
+                notchWidth, notchWidth);
         c.rotateProperty().bind(
                 percent.multiply(ARC_LENGTH).subtract(135.0));
-       
+     
         getChildren().addAll(trackBG, track, c);
         
     }
