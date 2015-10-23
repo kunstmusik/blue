@@ -27,9 +27,11 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.awt.Color;
+import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.FloatProperty;
@@ -48,7 +50,7 @@ import org.openide.util.Exceptions;
  *
  * @author stevenyi
  */
-public class AudioClip implements ScoreObject, Serializable, Comparable<AudioClip> {
+public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioClip> {
 
     private StringProperty name = new SimpleStringProperty();
     private FloatProperty start = new SimpleFloatProperty();
@@ -68,17 +70,21 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
 //    transient List<PropertyChangeListener> propListeners = null;
 
     public AudioClip() {
-        name.addListener((obs, old, newVal) -> { 
-            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.NAME));
+        name.addListener((obs, old, newVal) -> {
+            fireScoreObjectEvent(new ScoreObjectEvent(this,
+                    ScoreObjectEvent.NAME));
         });
-        start.addListener((obs, old, newVal) -> { 
-            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.START_TIME));
+        start.addListener((obs, old, newVal) -> {
+            fireScoreObjectEvent(new ScoreObjectEvent(this,
+                    ScoreObjectEvent.START_TIME));
         });
-        duration.addListener((obs, old, newVal) -> { 
-            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.DURATION));
+        duration.addListener((obs, old, newVal) -> {
+            fireScoreObjectEvent(new ScoreObjectEvent(this,
+                    ScoreObjectEvent.DURATION));
         });
-        color.addListener((obs, old, newVal) -> { 
-            fireScoreObjectEvent(new ScoreObjectEvent(this, ScoreObjectEvent.COLOR));
+        color.addListener((obs, old, newVal) -> {
+            fireScoreObjectEvent(new ScoreObjectEvent(this,
+                    ScoreObjectEvent.COLOR));
         });
     }
 
@@ -304,7 +310,8 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
         root.addElement("name").setText(getName());
         root.addElement("audioFile").setText(getAudioFile().getAbsolutePath());
         root.addElement(XMLUtilities.writeInt("numChannels", getNumChannels()));
-        root.addElement(XMLUtilities.writeFloat("audioDuration", getAudioDuration()));
+        root.addElement(XMLUtilities.writeFloat("audioDuration",
+                getAudioDuration()));
         root.addElement(XMLUtilities.writeFloat("fileStart", getFileStartTime()));
         root.addElement(XMLUtilities.writeFloat("start", getStart()));
         root.addElement(XMLUtilities.writeFloat("duration", getDuration()));
@@ -422,6 +429,30 @@ public class AudioClip implements ScoreObject, Serializable, Comparable<AudioCli
                 listener.scoreObjectChanged(event);
             }
         }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeUTF(getName());
+        out.writeFloat(getStart());
+        out.writeFloat(getSubjectiveDuration());
+        out.writeObject(getBackgroundColor());
+        out.writeObject(getAudioFile());
+        out.writeFloat(getFileStartTime());
+        out.writeFloat(getFadeIn());
+        out.writeFloat(getFadeOut());
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        setName(in.readUTF());
+        setStart(in.readFloat());
+        setSubjectiveDuration(in.readFloat());
+        setBackgroundColor((Color) in.readObject());
+        setAudioFile((File) in.readObject());
+        setFileStartTime(in.readFloat());
+        setFadeIn(in.readFloat());
+        setFadeOut(in.readFloat());
     }
 
 }
