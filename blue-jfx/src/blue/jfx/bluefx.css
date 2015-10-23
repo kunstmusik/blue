@@ -1,5 +1,69 @@
 .root {
-  -fx-base: rgba(38, 51, 76, 1.0);
-  -fx-background: rgba(38, 51, 76, 1.0);
-  -fx-control-inner-background: black;
+
+    /* METAL COLORS */
+    primary1: rgb(198,226,255);
+    primary2: rgb(153,153,204);
+    primary3: rgb(204, 204, 255);
+    secondary1: rgb(102, 177, 253);
+    secondary2: rgb(63, 102, 150);
+    secondary3: rgb(38, 51, 76);
+    
+    /*-fx-base: rgb(38, 51, 76);*/
+    /*-fx-background: rgb(38, 51, 76);*/
+    -fx-base: secondary3;
+    -fx-background: secondary3;
+    -fx-control-inner-background: black;
+    -fx-font-size: 12px;
+    -fx-font-family: "sans-serif";
+}
+
+
+.scroll-bar:horizontal .track,
+.scroll-bar:vertical .track {
+    -fx-background-color:transparent;
+    -fx-border-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-border-radius:2em;
+}
+
+.scroll-bar:horizontal .increment-button ,
+.scroll-bar:horizontal .decrement-button {
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 0 10 0;
+}
+
+.scroll-bar:vertical .increment-button ,
+.scroll-bar:vertical .decrement-button {
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 10 0 0;
+
+}
+
+.scroll-bar:horizontal .increment-arrow,
+.scroll-bar:horizontal .decrement-arrow {
+    -fx-shape: " ";	
+    -fx-padding:1 0 1 0;
+}
+
+.scroll-bar:vertical .increment-arrow,
+.scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " ";	
+    -fx-padding:0 1 0 1;
+}
+
+/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: primary2;
+    -fx-background-insets: 2 0 2 0;
+    -fx-background-radius: 2em;
+}
+
+.scroll-bar:vertical .thumb {
+    /*-fx-background-color:derive(black,90%);*/
+    -fx-background-color: primary2;
+    -fx-background-insets: 0 2 0 2;
+    -fx-background-radius: 2em;
+
 }
