@@ -5,11 +5,14 @@
  */
 package blue.jfxcontrolstest;
 
-import blue.jfx.controls.Knob;
 import blue.jfx.BlueFX;
+import blue.jfx.controls.Knob;
 import javafx.application.Application;
-import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -21,7 +24,14 @@ public class BlueJFXControlsApplication extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        Node root = new Knob();
+
+        TabPane root = new TabPane();
+        root.getTabs().add(new Tab("Knob", new Knob()));
+
+        ScrollPane pane = new ScrollPane();
+        pane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        pane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        root.getTabs().add(new Tab("ScrollPane", pane));
         
         Scene scene = new Scene(new BorderPane(root));
         BlueFX.style(scene);
