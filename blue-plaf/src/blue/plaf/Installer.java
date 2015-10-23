@@ -26,6 +26,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.logging.Logger;
+import javafx.scene.text.Font;
 import javax.swing.BorderFactory;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
@@ -50,7 +51,7 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-
+        System.setProperty("awt.useSystemAAFontSettings","lcd");
         // Initiate TimingFramework
 //        TimingSource source = new SwingTimerTimingSource(30, TimeUnit.MILLISECONDS);
 //        Animator.setDefaultTimingSource(source); // shared timing source
@@ -95,13 +96,14 @@ public class Installer extends ModuleInstall {
                 try {
                     Integer in = (Integer) UIManager.get("customFontSize"); //NOI18N
                     UIManager.getDefaults().clear();
-                   
+
                     if (in == null || in <= 11) {
-                        UIManager.put("customFontSize", 12);
+                        UIManager.put("customFontSize",
+                                (int) Math.ceil(Font.getDefault().getSize())
+                        );
                     } else {
                         UIManager.put("customFontSize", in.intValue());
                     }
-                    
                     ClassLoader cl = Lookup.getDefault().lookup(
                             ClassLoader.class);
                     UIManager.put("ClassLoader", cl);
