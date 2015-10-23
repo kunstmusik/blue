@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.jfxcontrolstest;
+package blue.jfx.controls;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.DoubleBinding;
@@ -98,8 +98,7 @@ public class KnobSkin extends SkinBase<Knob>{
 
         double width = snapSize(w);
         double radius = width / 2;
-        double innerRadius = radius * 3 / 5;
-        System.out.println(width + ":" + radius + " : " + innerRadius);
+        double innerRadius = snapSize(radius * 0.5);
         
         Ellipse outer = new Ellipse(radius, radius, radius, radius);
         Ellipse inner = new Ellipse(radius, radius, innerRadius, innerRadius);
@@ -129,7 +128,7 @@ public class KnobSkin extends SkinBase<Knob>{
         GraphicsContext gc = c.getGraphicsContext2D();
         gc.setStroke(Color.ALICEBLUE.brighter().brighter().brighter());
         gc.setLineWidth(2.0);
-        gc.strokeLine(radius, 0, radius, radius - innerRadius);
+        gc.strokeLine(radius, 0, radius, radius - innerRadius - 1);
         c.rotateProperty().bind(
                 percent.multiply(ARC_LENGTH).subtract(135.0));
        

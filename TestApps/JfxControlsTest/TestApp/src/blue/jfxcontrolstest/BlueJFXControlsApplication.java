@@ -5,6 +5,7 @@
  */
 package blue.jfxcontrolstest;
 
+import blue.jfx.controls.Knob;
 import blue.jfx.BlueFX;
 import javafx.application.Application;
 import javafx.scene.Node;
