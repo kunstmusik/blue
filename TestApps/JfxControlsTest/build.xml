@@ -5,4 +5,8 @@
 <project name="JfxControlsTest" basedir=".">
     <description>Builds the module suite JfxControlsTest.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <target name="build" depends="suite.build">
+       <ant antfile="build.xml" target="netbeans" dir="../../blue-jfx"/>
+    </target>
 </project>
