@@ -15,8 +15,23 @@
     -fx-control-inner-background: black;
     -fx-font-size: 12px;
     -fx-font-family: "sans-serif";
+
+    /*-fx-focus-color: rgba(204,204,255, 60);*/
+    /*-fx-faint-focus-color: rgba(204,204,255,34);*/
+    -fx-accent: primary2;
+    -fx-focus-color: primary1;
+    -fx-faint-focus-color: rgba(198,226,255,0.1);
 }
 
+/* REMOVE FOCUS */
+
+/*.button:focused {
+    -fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; 
+    -fx-background-insets: 0, 1, 2;
+    -fx-background-radius: 5, 4, 3;
+}*/
+
+/* SCROLLBAR */
 
 .scroll-bar:horizontal .track,
 .scroll-bar:vertical .track {
