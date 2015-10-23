@@ -51,7 +51,7 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        System.setProperty("awt.useSystemAAFontSettings","lcd");
+//        System.setProperty("awt.useSystemAAFontSettings","lcd");
         // Initiate TimingFramework
 //        TimingSource source = new SwingTimerTimingSource(30, TimeUnit.MILLISECONDS);
 //        Animator.setDefaultTimingSource(source); // shared timing source
@@ -98,8 +98,8 @@ public class Installer extends ModuleInstall {
                     UIManager.getDefaults().clear();
 
                     if (in == null || in <= 11) {
-                        UIManager.put("customFontSize",
-                                (int) Math.ceil(Font.getDefault().getSize())
+                        UIManager.put("customFontSize", 12
+//                                (int) Math.ceil(Font.getDefault().getSize())
                         );
                     } else {
                         UIManager.put("customFontSize", in.intValue());

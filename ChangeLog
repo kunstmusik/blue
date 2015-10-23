@@ -59,10 +59,6 @@ UPDATED
 * Issue #287 - added name of effect in generated CSD as part of generated UDO
   for effect
 
-* Default font size set to System's default font (was previously set to 12)
-
-* Text anti-aliasing set program-wide
-
 FIX
 
 * Redid font/theme handling so that --fontsize flag is respected (can be given
