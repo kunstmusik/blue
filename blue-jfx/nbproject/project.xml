@@ -8,6 +8,7 @@
             <module-dependencies/>
             <public-packages>
                 <package>blue.jfx</package>
+                <package>blue.jfx.binding</package>
                 <package>blue.jfx.controls</package>
             </public-packages>
         </data>
