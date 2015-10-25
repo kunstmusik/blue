@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.jfx.binding.FloatBinder;
 import blue.score.layers.audio.core.AudioClip;
 import java.net.URL;
 import java.util.ResourceBundle;

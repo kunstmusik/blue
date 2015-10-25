@@ -23,6 +23,14 @@
     -fx-faint-focus-color: rgba(198,226,255,0.1);
 }
 
+.text-input:focused {
+    -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border),
+        linear-gradient(from 0px 0px to 0px 5px, derive(-fx-control-inner-background, -9%), -fx-control-inner-background);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 3, 2;
+}
+
+
 /* REMOVE FOCUS */
 
 /*.button:focused {

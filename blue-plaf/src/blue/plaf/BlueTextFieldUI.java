@@ -38,7 +38,9 @@ public class BlueTextFieldUI extends BasicTextFieldUI {
 
     @Override
     protected void paintBackground(Graphics g) {
-        super.paintBackground(g);
+        g.setColor(myComponent.getBackground());
+        g.fillRoundRect(0, 0, myComponent.getWidth(), myComponent.getHeight(), 4, 4);
+
 //        Color c = BlueLookAndFeel.getControlShadow().darker();
 //        g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 64));
 //        g.drawLine(0, 1, myComponent.getWidth() - 1, 1);

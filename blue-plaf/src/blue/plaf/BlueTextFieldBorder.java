@@ -39,7 +39,7 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
     /**
      * The border insets.
      */
-    private static final Insets insets = new Insets(1, 2, 1, 2);
+    private static final Insets insets = new Insets(4, 8, 4, 8);
 
     /**
      * Gets the border insets for a given component.
@@ -74,24 +74,24 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
         if (!(c instanceof JTextComponent)) {
             if (c.isEnabled()) {
 //                BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
-                g.setColor(BlueLookAndFeel.getControlShadow());
-                g.drawRect(x, y, w -1, h -1);
+                g.setColor(BlueLookAndFeel.getControlShadow().darker());
+                g.drawRoundRect(x, y, w -1, h -1, 4, 4);
             } else {
 //                BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
                 g.setColor(BlueLookAndFeel.getControlShadow().darker());
-                g.drawRect(x, y, w -1, h -1);
+                g.drawRoundRect(x, y, w -1, h -1, 4, 4);
             }
             return;
         }
 
         if (c.isEnabled() && ((JTextComponent) c).isEditable()) {
 //            BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
-            g.setColor(BlueLookAndFeel.getControlShadow());
-            g.drawRect(x, y, w -1, h -1);
+            g.setColor(BlueLookAndFeel.getControlShadow().darker());
+            g.drawRoundRect(x, y, w -1, h -1, 4, 4);
         } else {
 //            BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
             g.setColor(BlueLookAndFeel.getControlShadow().darker());
-            g.drawRect(x, y, w -1, h -1);
+            g.drawRoundRect(x, y, w -1, h -1, 4, 4);
         }
     }
 }

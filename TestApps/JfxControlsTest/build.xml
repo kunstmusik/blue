@@ -8,5 +8,6 @@
 
     <target name="build" depends="suite.build">
        <ant antfile="build.xml" target="netbeans" dir="../../blue-jfx"/>
+       <ant antfile="build.xml" target="netbeans" dir="../../blue-plaf"/>
     </target>
 </project>
