@@ -6,12 +6,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 
-
-<ScrollPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="blue.score.layers.audio.ui.AudioClipEditorController" fitToWidth="true" >
+<ScrollPane fitToWidth="true" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="blue.score.layers.audio.ui.AudioClipEditorController">
    <content>
       <AnchorPane prefHeight="242.0" prefWidth="531.0">
          <children>
-            <GridPane layoutX="14.920731544494629" layoutY="8.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+            <GridPane hgap="5.0" layoutX="14.920731544494629" layoutY="8.0" vgap="5.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
                <columnConstraints>
                   <ColumnConstraints fillWidth="false" hgrow="NEVER" minWidth="100.0" />
                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
@@ -20,11 +19,11 @@
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                </rowConstraints>
                <children>
                   <Label text="Audio File" />
@@ -33,7 +32,7 @@
                   <Label text="Duration" GridPane.rowIndex="2" />
                   <Label text="File Start" GridPane.rowIndex="4" />
                   <Label text="Duration" GridPane.rowIndex="5" />
-                  <Label text="File Properties" GridPane.rowIndex="3" />
+                  <Label prefHeight="30.0" text="File Properties" GridPane.rowIndex="3" />
                   <Label text="Fade In" GridPane.rowIndex="6" />
                   <Label text="Fade Out" GridPane.rowIndex="7" />
                   <TextField fx:id="startTimeText" prefHeight="26.0" prefWidth="278.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
