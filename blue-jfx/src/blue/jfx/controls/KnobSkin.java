@@ -123,7 +123,7 @@ public class KnobSkin extends SkinBase<Knob> {
         trackBG.setRotate(-135.0);
         trackBG.setStroke(getSkinnable().getTrackBackgroundColor());
         trackBG.setStrokeType(StrokeType.INSIDE);
-        trackBG.setFill(trackColor.darker());
+        trackBG.setFill(getSkinnable().getTrackBackgroundColor().darker());
 
         Arc mask = new Arc(radius, radius, radius + 2, radius + 2, -270, -270);
         mask.setType(ArcType.ROUND);

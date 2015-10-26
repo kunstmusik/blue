@@ -41,10 +41,12 @@ public class BlueJFXControlsApplication extends Application {
         hbox.setSpacing(10.0);
         
         Knob knob = new Knob();
-        knob.setStyle("-fx-track-fill: purple;");
+        knob.setStyle("-fx-track-fill: purple;"
+                + "-fx-track-background-fill: #333344;");
 
         Knob knob2 = new Knob();
-        knob2.setStyle("-fx-track-fill: green;");
+        knob2.setStyle("-fx-track-fill: green;"
+                + "-fx-track-background-fill: purple;");
         hbox.getChildren().addAll(new Knob(), knob, knob2);
         
         root.getTabs().add(new Tab("Knobs", hbox));
@@ -69,7 +71,7 @@ public class BlueJFXControlsApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-        SimpleCSSEditor.editCSS(root);
+        //SimpleCSSEditor.editCSS(root);
     }
 
     /**
