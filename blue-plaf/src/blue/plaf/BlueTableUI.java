@@ -35,7 +35,7 @@ public class BlueTableUI extends BasicTableUI {
         super.installUI(c);
 
         c.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-        ((JTable)c).setRowHeight(25);
+        ((JTable)c).setRowHeight(24);
     }
 
 }

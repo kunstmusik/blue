@@ -5,8 +5,10 @@
 package blue.plaf;
 
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 
@@ -24,6 +26,8 @@ public class BlueTableHeaderUI extends BasicTableHeaderUI {
     public void installUI(JComponent c) {
         super.installUI(c); //To change body of generated methods, choose Tools | Templates.
         super.header.setPreferredSize(new Dimension(100, 23));
+
+        header.setFont(header.getFont().deriveFont(Font.BOLD));
     }
 
 
