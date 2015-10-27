@@ -61,7 +61,13 @@ public class BlueTableHeaderBorder extends AbstractBorder {
 //        g.translate(x, y);
 
         g.setColor(MetalLookAndFeel.getControl().brighter());
-        g.drawRect(x, y, w -1 , h -1);
+        g.drawRect(x, y, w -3 , h -1);
+
+        g.setColor(MetalLookAndFeel.getControl());
+        g.drawRect(w - 2, y, w - 2, h - 1 );
+
+        g.setColor(MetalLookAndFeel.getControl().darker());
+        g.drawRect(w - 1, y, w - 1, h - 1 );
         
 //        g.setColor(MetalLookAndFeel.getControlHighlight());
 //        g.drawLine(w - 1, 0, w - 1, h - 1);

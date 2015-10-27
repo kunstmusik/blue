@@ -93,3 +93,22 @@
     -fx-background-radius: 2em;
 
 }
+
+/* The column header row is made up of a number of column-header, one for each
+   TableColumn, and a 'filler' area that extends from the right-most column
+   to the edge of the tableview, or up to the 'column control' button. */
+.table-view .column-header,
+.tree-table-view .column-header,
+.table-view .filler,
+.tree-table-view .filler,
+.table-view > .column-header-background > .show-hide-columns-button,
+.tree-table-view > .column-header-background > .show-hide-columns-button,
+.table-view:constrained-resize .filler,
+.tree-table-view:constrained-resize .filler {
+    -fx-background-color: -fx-box-border, -fx-inner-border, -fx-body-color;
+    -fx-background-insets: 0, 0 1 1 0, 1 2 2 1;
+    -fx-font-weight: normal;
+    -fx-size: 2em;
+    -fx-text-fill: -fx-selection-bar-text;
+    -fx-padding: 0.166667em;
+}

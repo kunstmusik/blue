@@ -27,7 +27,7 @@ public class BlueTableHeaderUI extends BasicTableHeaderUI {
         super.installUI(c); //To change body of generated methods, choose Tools | Templates.
         super.header.setPreferredSize(new Dimension(100, 23));
 
-        header.setFont(header.getFont().deriveFont(Font.BOLD));
+//        header.setFont(header.getFont().deriveFont(Font.BOLD));
     }
 
 
