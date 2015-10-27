@@ -5,6 +5,7 @@
  */
 package blue.jfxcontrolstest;
 
+import blue.plaf.SwingPropertiesTest;
 import javafx.application.Platform;
 import org.openide.modules.ModuleInstall;
 

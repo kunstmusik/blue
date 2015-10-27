@@ -5,7 +5,6 @@
  */
 package blue.jfxcontrolstest;
 
-import com.sun.javafx.css.StyleManager;
 import java.io.IOException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;

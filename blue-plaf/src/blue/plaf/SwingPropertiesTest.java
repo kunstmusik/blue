@@ -44,7 +44,8 @@ public class SwingPropertiesTest extends JComponent {
         UIDefaults ui = UIManager.getLookAndFeelDefaults();
 
         Set a = ui.keySet();
-        java.util.List b = Arrays.asList(a.toArray());
+        java.util.List b = Arrays.asList(a.stream().map(Object::toString).toArray());
+        
 
         Collections.sort(b);
 

@@ -24,12 +24,12 @@ public class BlueTableHeaderUI extends BasicTableHeaderUI {
     @Override
   public void paint( Graphics g, JComponent c) {
     
-    Graphics2D g2D = (Graphics2D)g;
+//    Graphics2D g2D = (Graphics2D)g;
     
-    GradientPaint gp = BlueGradientFactory.getGradientPaint(c.getBackground());
+//    GradientPaint gp = BlueGradientFactory.getGradientPaint(c.getBackground());
                                             
-    g2D.setPaint( gp);
-    g2D.fillRect( 0,0, c.getWidth(),c.getHeight());
+//    g2D.setPaint( gp);
+//    g2D.fillRect( 0,0, c.getWidth(),c.getHeight());
     
     super.paint( g, c);
   }

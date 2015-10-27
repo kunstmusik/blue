@@ -38,7 +38,7 @@ public class BlueTableHeaderBorder extends AbstractBorder {
     /**
      * The border insets.
      */
-    protected Insets insets = new Insets(2, 2, 2, 0);
+    protected Insets insets = new Insets(10, 10, 10, 10);
 
     /**
      * Draws a simple 3d border for the given component.
@@ -58,16 +58,19 @@ public class BlueTableHeaderBorder extends AbstractBorder {
      */
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
-        g.translate(x, y);
+//        g.translate(x, y);
 
-        g.setColor(MetalLookAndFeel.getControlHighlight());
-        g.drawLine(w - 1, 0, w - 1, h - 1);
-        g.drawLine(1, h - 1, w - 1, h - 1);
-        g.setColor(MetalLookAndFeel.getControlDarkShadow());
-        g.drawLine(0, 0, w - 2, 0);
-        g.drawLine(0, 0, 0, h - 2);
+        g.setColor(MetalLookAndFeel.getControl().brighter());
+        g.drawRect(x, y, w -1 , h -1);
+        
+//        g.setColor(MetalLookAndFeel.getControlHighlight());
+//        g.drawLine(w - 1, 0, w - 1, h - 1);
+//        g.drawLine(1, h - 1, w - 1, h - 1);
+//        g.setColor(MetalLookAndFeel.getControlDarkShadow());
+//        g.drawLine(0, 0, w - 2, 0);
+//        g.drawLine(0, 0, 0, h - 2);
 
-        g.translate(-x, -y);
+//        g.translate(-x, -y);
     }
 
     /**

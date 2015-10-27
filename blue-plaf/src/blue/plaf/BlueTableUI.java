@@ -20,6 +20,7 @@
 package blue.plaf;
 
 import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.plaf.basic.BasicTableUI;
 
 public class BlueTableUI extends BasicTableUI {
@@ -30,6 +31,7 @@ public class BlueTableUI extends BasicTableUI {
         super.installUI(c);
 
         c.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        ((JTable)c).setRowHeight(28);
     }
 
 }

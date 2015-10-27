@@ -11,6 +11,8 @@ import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.UIDefaults;
 import javax.swing.border.AbstractBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
@@ -131,11 +133,18 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
           
             
             "Table.gridColor", new javax.swing.plaf.ColorUIResource(
-                Color.darkGray),
+                getCurrentTheme().getControl()),
             
             "SplitPane.highlight", table.getColor("controlShadow"),
             "SplitPane.darkShadow", table.getColor("window"),
             "SplitPane.dividerSize", new Integer(5),
+
+            "Table.cellNoFocusBorder", new EmptyBorder(7,3,7,3),
+
+            "Table.focusSelectedCellHighlightBorder", BorderFactory.createCompoundBorder(
+            new LineBorder(getCurrentTheme().getFocusColor()),new EmptyBorder(6,2,6,2)),
+            "Table.focusCellHighlightBorder", new EmptyBorder(7,3,7,3),
+//            "Table.rowHeight", 28,
 
             "TableHeader.cellBorder", new BlueTableBorder(),
 
