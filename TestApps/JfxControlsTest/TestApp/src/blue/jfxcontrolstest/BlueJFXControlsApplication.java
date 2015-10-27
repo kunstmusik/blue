@@ -126,6 +126,7 @@ public class BlueJFXControlsApplication extends Application {
         SwingUtilities.invokeLater(() -> { 
             DefaultTableModel tm = new DefaultTableModel(v, labels);
             JTable table = new JTable(tm);
+            table.updateUI();
 //            table.setRowHeight(28);
             swingNode.setContent(
                 new JScrollPane(table));
