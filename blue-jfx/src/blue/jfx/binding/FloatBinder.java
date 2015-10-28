@@ -22,6 +22,7 @@ package blue.jfx.binding;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
+import javafx.application.Platform;
 import javafx.beans.property.FloatProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.control.TextField;
@@ -31,7 +32,7 @@ import javafx.scene.control.TextField;
  * @author stevenyi
  */
 public class FloatBinder<T> {
-    
+
     AtomicBoolean committing = new AtomicBoolean(false);
     private final WeakReference<TextField> textField;
     private WeakReference<FloatProperty> floatProperty = null;
@@ -42,24 +43,28 @@ public class FloatBinder<T> {
     public FloatBinder(TextField tf) {
         this(tf, null);
     }
-    
+
     public FloatBinder(TextField tf, BiFunction<T, Float, Float> filter) {
         this.textField = new WeakReference<>(tf);
         this.filter = filter;
 
         tf.focusedProperty().addListener((obs, o, n) -> {
             if (o && !n) {
-                updateValueFromTextFieldOrReset();
+                Platform.runLater(
+                        () -> updateValueFromTextFieldOrReset());
             }
         });
         tf.setOnAction(evt -> {
-            updateValueFromTextFieldOrReset();
+            Platform.runLater(
+                    () -> updateValueFromTextFieldOrReset());
         });
 
         cl = (obs, oldVal, newVal) -> {
             TextField text = textField.get();
-            if(text != null) {
-                text.setText(newVal.toString());
+            if (text != null) {
+                Platform.runLater(()
+                        -> text.setText(newVal.toString())
+                );
             }
         };
     }
@@ -68,7 +73,7 @@ public class FloatBinder<T> {
         FloatProperty fp;
         TextField tf;
 
-        if (floatProperty == null 
+        if (floatProperty == null
                 || (fp = floatProperty.get()) == null
                 || (tf = textField.get()) == null) {
             return;
@@ -81,7 +86,7 @@ public class FloatBinder<T> {
                 if (filter != null) {
                     f = filter.apply(bean.get(), f);
                 }
-                if(f != null) {
+                if (f != null) {
                     fp.setValue(f);
                 } else {
                     tf.setText(fp.getValue().toString());
@@ -107,7 +112,9 @@ public class FloatBinder<T> {
         }
 
         this.floatProperty = null;
-        tf.setText(prop.getValue().toString());
+        Platform.runLater(
+                () -> tf.setText(prop.getValue().toString())
+        );
 
         this.floatProperty = new WeakReference<>(prop);
         prop.addListener(cl);
@@ -118,5 +125,4 @@ public class FloatBinder<T> {
 //    public void setFilter(BiFunction<T, Float, Float> filter) {
 //        this.filter = filter;
 //    }
-
 }
