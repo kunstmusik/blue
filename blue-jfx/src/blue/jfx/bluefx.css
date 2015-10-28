@@ -8,16 +8,12 @@
     secondary2: rgb(63, 102, 150);
     secondary3: rgb(38, 51, 76);
     
-    /*-fx-base: rgb(38, 51, 76);*/
-    /*-fx-background: rgb(38, 51, 76);*/
     -fx-base: secondary3;
     -fx-background: secondary3;
     -fx-control-inner-background: black;
     -fx-font-size: 12px;
     -fx-font-family: "sans-serif";
 
-    /*-fx-focus-color: rgba(204,204,255, 60);*/
-    /*-fx-faint-focus-color: rgba(204,204,255,34);*/
     -fx-accent: primary2;
     -fx-focus-color: primary1;
     -fx-faint-focus-color: rgba(198,226,255,0.1);
