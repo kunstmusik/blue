@@ -19,7 +19,6 @@
  */
 package blue.jfx.controls;
 
-import com.sun.javafx.css.converters.ColorConverter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +26,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.css.CssMetaData;
 import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.StyleConverter;
 import javafx.css.Styleable;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleableProperty;
@@ -141,7 +141,7 @@ public class Knob extends Control {
 
 		private static final CssMetaData<Knob, Color> TRACK_BACKGROUND_FILL
 			= new CssMetaData<Knob, Color>("-fx-track-background-fill",
-				ColorConverter.getInstance(), Color.DARKGRAY) {
+				                    StyleConverter.getColorConverter(), Color.DARKGRAY) {
 				@Override
 				public boolean isSettable(Knob control) {
 					return control.trackBackgroundColor == null || !control.trackBackgroundColor.isBound();
@@ -155,7 +155,7 @@ public class Knob extends Control {
 
 		private static final CssMetaData<Knob, Color> TRACK_FILL
 			= new CssMetaData<Knob, Color>("-fx-track-fill",
-				ColorConverter.getInstance(), Color.ALICEBLUE) {
+				                    StyleConverter.getColorConverter(), Color.ALICEBLUE) {
 				@Override
 				public boolean isSettable(Knob control) {
 					return control.trackColor == null || !control.trackColor.isBound();
