@@ -61,10 +61,10 @@ public class BlueJFXControlsApplication extends Application {
         
         root.getTabs().add(new Tab("Knobs", hbox));
         
-        ScrollPane pane = new ScrollPane();
-        pane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        pane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        root.getTabs().add(new Tab("ScrollPane", pane));
+//        ScrollPane pane = new ScrollPane();
+//        pane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+//        pane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+//        root.getTabs().add(new Tab("ScrollPane", pane));
         
         setupTextFieldsTest(root);
         
