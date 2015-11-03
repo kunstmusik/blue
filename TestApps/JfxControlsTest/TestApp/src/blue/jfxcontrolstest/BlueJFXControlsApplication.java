@@ -14,8 +14,8 @@ import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -28,11 +28,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import org.openide.LifecycleManager;
 
 /**
  *
@@ -67,14 +69,15 @@ public class BlueJFXControlsApplication extends Application {
 //        root.getTabs().add(new Tab("ScrollPane", pane));
         
         setupTextFieldsTest(root);
-        
+        setupButtonsTest(root);
         setTablesTest(root);
         
         Scene scene = new Scene(new BorderPane(root));
         BlueFX.style(scene);
         stage.setScene(scene);
         stage.show();
-
+    
+        stage.onHiddenProperty().addListener(a -> LifecycleManager.getDefault().exit());
         //SimpleCSSEditor.editCSS(root);
     }
     
@@ -89,6 +92,19 @@ public class BlueJFXControlsApplication extends Application {
         gp.setHgap(5.0);
         gp.setPadding(new Insets(5, 5, 5, 5));
         root.getTabs().add(new Tab("Text Fields", new BorderPane(gp)));
+    }
+
+    private void setupButtonsTest(TabPane root) {
+        SwingNode swingNode = new SwingNode();
+        SwingUtilities.invokeLater(() -> swingNode.setContent(new JButton(
+                "Text 2")));
+        GridPane gp = new GridPane();
+        gp.addRow(0, new Label("JavaFX"), new Button("Text 1"));
+        gp.addRow(1, new Label("Swing"), swingNode);
+        gp.setVgap(5.0);
+        gp.setHgap(5.0);
+        gp.setPadding(new Insets(5, 5, 5, 5));
+        root.getTabs().add(new Tab("Buttons", new BorderPane(gp)));
     }
     
     private void setTablesTest(TabPane root) {
