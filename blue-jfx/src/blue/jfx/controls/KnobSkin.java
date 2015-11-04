@@ -90,18 +90,18 @@ public class KnobSkin extends SkinBase<Knob> {
                 knob.setValue(newValue);
             }
         });
-        knob.setOnScroll((e) -> {
-            double valueAdjust = 0.002 * e.getDeltaY() * knob.getRange();
-            double newValue = knob.getValue() + valueAdjust;
-
-            if (newValue < knob.getMin()) {
-                knob.setValue(knob.getMin());
-            } else if (newValue > knob.getMax()) {
-                knob.setValue(knob.getMax());
-            } else {
-                knob.setValue(newValue);
-            }
-        });
+//        knob.setOnScroll((e) -> {
+//            double valueAdjust = 0.002 * e.getDeltaY() * knob.getRange();
+//            double newValue = knob.getValue() + valueAdjust;
+//
+//            if (newValue < knob.getMin()) {
+//                knob.setValue(knob.getMin());
+//            } else if (newValue > knob.getMax()) {
+//                knob.setValue(knob.getMax());
+//            } else {
+//                knob.setValue(newValue);
+//            }
+//        });
     }
 
     private void initComponents(double w) {
