@@ -106,7 +106,7 @@ public class Knob extends Control {
 
 	/* CSS STYLEABLE PROPERTIES */
 	public Color getTrackBackgroundColor() {
-		return (trackBackgroundColor == null) ? Color.DARKGRAY : trackBackgroundColor.get();
+		return (trackBackgroundColor == null) ? Color.rgb(0, 0, 0, 0.25) : trackBackgroundColor.get();
 	}
 
 	public void setTrackBackgroundColor(Color trackBackgroundColor) {
@@ -122,7 +122,7 @@ public class Knob extends Control {
 	}
 
 	public Color getTrackColor() {
-		return trackColor == null ? Color.ALICEBLUE : trackColor.get();
+		return trackColor == null ? Color.rgb(63, 102, 150) : trackColor.get();
 	}
 
 	public void setTrackColor(Color trackColor) {
