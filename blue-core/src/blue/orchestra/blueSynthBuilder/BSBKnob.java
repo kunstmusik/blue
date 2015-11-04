@@ -36,15 +36,11 @@ import electric.xml.Elements;
 public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         Randomizable {
 
-    public static final float defaultMinimum = 0.0f;
-
-    public static final float defaultMaximum = 1.0f;
-
     float value = 0.0f;
 
-    float minimum = defaultMinimum;
+    float minimum = 0.0f;
 
-    float maximum = defaultMaximum;
+    float maximum = 1.0f;
 
     int knobWidth = 60;
 
@@ -129,7 +125,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         }
 
         // set min and max values
-        if (minVal > BSBKnob.defaultMaximum) {
+        if (minVal > 1.0f) {
             knob.maximum = maxVal;
             knob.minimum = minVal;
         } else {
