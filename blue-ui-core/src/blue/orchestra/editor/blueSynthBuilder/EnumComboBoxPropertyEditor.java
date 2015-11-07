@@ -18,9 +18,9 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import com.l2fprod.common.beans.editor.*;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.JComboBox;
-import sun.rmi.runtime.Log;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -47,6 +47,7 @@ public class EnumComboBoxPropertyEditor extends ComboBoxPropertyEditor {
     /* (non-Javadoc)
      * @see com.l2fprod.common.beans.editor.ComboBoxPropertyEditor#setValue(java.lang.Object)
      */
+    @Override
     public void setValue(Object value) {
 
         JComboBox box = (JComboBox) editor;
@@ -66,11 +67,8 @@ public class EnumComboBoxPropertyEditor extends ComboBoxPropertyEditor {
 
                 this.setAvailableValues(array);
 
-            } catch (java.lang.NoSuchMethodException exp) {
-                exp.printStackTrace();
-            } catch (java.lang.IllegalAccessException exp) {
-                exp.printStackTrace();
-            } catch (java.lang.reflect.InvocationTargetException exp) {
+            } catch (NoSuchMethodException | IllegalAccessException | 
+                    InvocationTargetException exp) {
                 exp.printStackTrace();
             }
 
