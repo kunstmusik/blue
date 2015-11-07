@@ -19,6 +19,7 @@
  */
 package blue.jfx.binding;
 
+import blue.jfx.BlueFX;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -50,19 +51,19 @@ public class FloatBinder<T> {
 
         tf.focusedProperty().addListener((obs, o, n) -> {
             if (o && !n) {
-                Platform.runLater(
+                BlueFX.runOnFXThread(
                         () -> updateValueFromTextFieldOrReset());
             }
         });
         tf.setOnAction(evt -> {
-            Platform.runLater(
+            BlueFX.runOnFXThread(
                     () -> updateValueFromTextFieldOrReset());
         });
 
         cl = (obs, oldVal, newVal) -> {
             TextField text = textField.get();
             if (text != null) {
-                Platform.runLater(()
+                BlueFX.runOnFXThread(()
                         -> text.setText(newVal.toString())
                 );
             }
