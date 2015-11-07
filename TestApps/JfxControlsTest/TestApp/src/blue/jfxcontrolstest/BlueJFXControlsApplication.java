@@ -7,6 +7,7 @@ package blue.jfxcontrolstest;
 
 import blue.jfx.BlueFX;
 import blue.jfx.controls.Knob;
+import blue.jfx.controls.ValuePanel;
 import java.util.Vector;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -48,7 +49,23 @@ public class BlueJFXControlsApplication extends Application {
         TabPane root = new TabPane();
         
         root.getTabs().add(new Tab("Knob", new Knob()));
+        root.getTabs().add(new Tab("ValuePanel", new ValuePanel()));
         
+        setupKnobs(root);
+        setupTextFieldsTest(root);
+        setupButtonsTest(root);
+        setTablesTest(root);
+        
+        Scene scene = new Scene(new BorderPane(root));
+        BlueFX.style(scene);
+        stage.setScene(scene);
+        stage.show();
+    
+        stage.onHiddenProperty().addListener(a -> LifecycleManager.getDefault().exit());
+        //SimpleCSSEditor.editCSS(root);
+    }
+
+    private void setupKnobs(TabPane root) {
         HBox hbox = new HBox();
         hbox.setSpacing(10.0);
         
@@ -62,23 +79,6 @@ public class BlueJFXControlsApplication extends Application {
         hbox.getChildren().addAll(new Knob(), knob, knob2);
         
         root.getTabs().add(new Tab("Knobs", hbox));
-        
-//        ScrollPane pane = new ScrollPane();
-//        pane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-//        pane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-//        root.getTabs().add(new Tab("ScrollPane", pane));
-        
-        setupTextFieldsTest(root);
-        setupButtonsTest(root);
-        setTablesTest(root);
-        
-        Scene scene = new Scene(new BorderPane(root));
-        BlueFX.style(scene);
-        stage.setScene(scene);
-        stage.show();
-    
-        stage.onHiddenProperty().addListener(a -> LifecycleManager.getDefault().exit());
-        //SimpleCSSEditor.editCSS(root);
     }
     
     private void setupTextFieldsTest(TabPane root) {

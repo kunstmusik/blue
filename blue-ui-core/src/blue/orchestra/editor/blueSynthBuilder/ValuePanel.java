@@ -76,7 +76,8 @@ public class ValuePanel extends JPanel {
     }
 
     public void setValue(String value) {
-        valueDisplay.setText(value);
+        valueDisplay.setText("<html>" + value + "</html>");
+        valueField.setText(value);
         valueDisplay.setToolTipText(value);
     }
     
@@ -85,13 +86,13 @@ public class ValuePanel extends JPanel {
     }
 
     protected void editField() {
-        String strVal = valueDisplay.getText();
+//        String strVal = valueDisplay.getText();
 
-        valueField.setText(strVal);
+//        valueField.setText(strVal);
         cards.show(this, "edit");
 
         valueField.requestFocus();
-        valueField.setCaretPosition(strVal.length());
+        valueField.setCaretPosition(valueField.getText().length());
         valueField.moveCaretPosition(0);
     }
 
