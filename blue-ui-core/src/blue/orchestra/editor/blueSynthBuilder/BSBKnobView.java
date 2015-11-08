@@ -75,6 +75,14 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             
             knobView = new Knob();
             valuePanel = new ValuePanel();
+            valuePanel.setValidator(v ->  {
+                try {
+                    float f = Float.parseFloat(v);
+                    return (f >= knob.getMinimum() && f <= knob.getMaximum());
+                } catch (NumberFormatException nfe) {
+                    return false;
+                }
+            });
 
             pane.setCenter(knobView);
             pane.setBottom(valuePanel);
@@ -90,10 +98,17 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
 
             knobView.setValue(val);
 
-            knobView.valueProperty().addListener(o -> {
+            knobView.valueProperty().addListener((obs, o, n) -> {
                 if(!updating) {
                     updateKnobValue();
                 }
+            });
+
+            valuePanel.valueProperty().addListener((obs, o, n) -> {
+                float newVal = (Float.parseFloat(n) - knob.getMinimum())
+                        / (knob.getMaximum() - knob.getMinimum());
+
+                knobView.setValue(newVal); 
             });
 
         });

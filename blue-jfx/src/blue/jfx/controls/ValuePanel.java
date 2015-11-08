@@ -40,30 +40,15 @@ public class ValuePanel extends TextField {
         }
         
     };
-//    TextField textField = new TextField();
-//    Label label = new Label();
+
     Predicate<String> validator = null;
 
     public ValuePanel() {
 
-//        label.setStyle("    -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border),\n" +
-//"        linear-gradient(from 0px 0px to 0px 5px, derive(-fx-control-inner-background, -9%), -fx-control-inner-background);\n" +
-//"    -fx-background-insets: 0, 1;\n" +
-//"    -fx-background-radius: 3, 2;"
-//                + "    -fx-padding: 0.333333em 0.583em 0.333333em 0.583em; /* 4 7 4 7 */");
-//        label.setTextOverrun(OverrunStyle.CLIP);
-//        label.textProperty().bind(text);
-//        text.setValue("value");
-//
-//        getChildren().addAll(label, textField);
-//        textField.setVisible(false); 
-//        this.setStyle("-fx-background-color: darkgray;");
         this.getStyleClass().add("value-panel");
         this.setEditable(false);
         this.setOnMouseClicked(e -> {
             if (!this.isEditable() && e.getClickCount() >= 2) {
-//                label.setVisible(false);
-//                textField.setVisible(true);
                 this.setEditable(true);
                 textProperty().unbind();
                 this.setText(value.getValue());
@@ -75,8 +60,6 @@ public class ValuePanel extends TextField {
         this.setOnAction(e -> updateTextFromTextField());
         this.focusedProperty().addListener((obs, o, n) -> {
             if (o && !n) {
-//                label.setVisible(true);
-//                textField.setVisible(false);
                 textProperty().unbind();
                 this.setText(value.get());
                 this.setEditable(false);
@@ -84,21 +67,17 @@ public class ValuePanel extends TextField {
             }
         });
 
-//        widthProperty().addListener((obs, o, n) -> {
-//            textField.setPrefWidth(n.doubleValue());
-//            label.setPrefWidth(n.doubleValue());
-//        });
         textProperty().bind(value);
     }
 
     private void updateTextFromTextField() {
         String newValue = this.getText();
+
+        textProperty().unbind();
+
         if (validator == null || validator.test(newValue)) {
             value.setValue(newValue);
-        }
-
-//        label.setVisible(true);
-//        textField.setVisible(false);
+        } 
         this.setEditable(false);
         textProperty().bind(value);
     }
