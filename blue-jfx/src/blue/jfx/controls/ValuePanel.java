@@ -23,7 +23,6 @@ import blue.jfx.BlueFX;
 import java.util.function.Predicate;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Pos;
 import javafx.scene.control.TextField;
 
 /**
