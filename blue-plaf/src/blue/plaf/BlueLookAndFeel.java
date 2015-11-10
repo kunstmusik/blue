@@ -172,6 +172,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             
             "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
             "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
+            "Spinner.background", Color.BLACK,
         };
 
         table.putDefaults(defaults);

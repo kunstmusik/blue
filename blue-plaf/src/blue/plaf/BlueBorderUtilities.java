@@ -54,6 +54,10 @@ public class BlueBorderUtilities {
     private static Border textFieldBorder;
 
     /**
+     * Cached spinner border instance.
+     */
+    private static Border spinnerBorder;
+    /**
      * Cached toggle botton border instance.
      */
     private static Border toggleButtonBorder;

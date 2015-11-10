@@ -30,9 +30,9 @@ import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 
 /**
- * This is a simple 3d border class used for text fields.
+ * Modified text field border to look closer to JavaFX
  * 
- * @author Taoufik Romdhane
+ * @author Steven Yi
  */
 public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
 
