@@ -17,7 +17,9 @@ information.
 
 NEW
 
-* AudioLayers:   
+* AudioLayers: Initial release. New LayerGroup type for working with AudioFiles 
+  strictly by GUI. Each Audio Layer is bound to a mixer channel. Use is modeled
+  after common DAW idioms for working with audio clips.  
 
 * Added link to Csound FLOSS Manual from Help Menu
 
