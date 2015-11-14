@@ -270,8 +270,8 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         try {
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
-                    this.getClass().getClassLoader().getResourceAsStream(
-                            "blue/score/layers/audio/core/playback_instrument.orc")))) {
+                    this.getClass().getResourceAsStream(
+                            "playback_instrument.orc")))) {
                         String line;
                         while ((line = br.readLine()) != null) {
                             str.append(line).append("\n");

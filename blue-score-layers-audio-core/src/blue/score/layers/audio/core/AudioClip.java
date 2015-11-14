@@ -64,7 +64,11 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
 
     private FloatProperty fileStartTime = new SimpleFloatProperty(0.0f);
     private FloatProperty fadeIn = new SimpleFloatProperty(0.0f);
+    private ObjectProperty<FadeType> fadeInType = new SimpleObjectProperty<>(
+            FadeType.LINEAR);
     private FloatProperty fadeOut = new SimpleFloatProperty(0.0f);
+    private ObjectProperty<FadeType> fadeOutType = new SimpleObjectProperty<>(
+            FadeType.LINEAR);
 
     transient List<ScoreObjectListener> scoreObjListeners = null;
 //    transient List<PropertyChangeListener> propListeners = null;
@@ -303,6 +307,30 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         return numChannels;
     }
 
+    public FadeType getFadeInType() {
+        return this.fadeInType.getValue();
+    }
+
+    public void setFadeInType(FadeType fadeType) {
+       this.fadeInType.setValue(fadeType);
+    }
+
+    public ObjectProperty<FadeType> fadeInTypeProperty() {
+        return fadeInType;
+    }
+    
+    public FadeType getFadeOutType() {
+        return this.fadeOutType.getValue();
+    }
+
+    public void setFadeOutType(FadeType fadeType) {
+       this.fadeOutType.setValue(fadeType);
+    }
+
+    public ObjectProperty<FadeType> fadeOutTypeProperty() {
+        return fadeOutType;
+    }
+
     //XML Methods 
     public Element saveAsXML() {
         Element root = new Element("audioClip");
@@ -316,7 +344,9 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         root.addElement(XMLUtilities.writeFloat("start", getStart()));
         root.addElement(XMLUtilities.writeFloat("duration", getDuration()));
         root.addElement(XMLUtilities.writeFloat("fadeIn", getFadeIn()));
+        root.addElement("fadeInType").setText(getFadeInType().toString());
         root.addElement(XMLUtilities.writeFloat("fadeOut", getFadeOut()));
+        root.addElement("fadeOutType").setText(getFadeOutType().toString());
 
         String colorStr = Integer.toString(getBackgroundColor().getRGB());
         root.addElement("backgroundColor").setText(colorStr);
@@ -363,8 +393,14 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
                 case "fadeIn":
                     clip.setFadeIn(XMLUtilities.readFloat(node));
                     break;
+                case "fadeInType":
+                    clip.setFadeInType(FadeType.fromString(nodeText));
+                    break;
                 case "fadeOut":
                     clip.setFadeOut(XMLUtilities.readFloat(node));
+                    break;
+                case "fadeOutType":
+                    clip.setFadeOutType(FadeType.fromString(nodeText));
                     break;
             }
         }

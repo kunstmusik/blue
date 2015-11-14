@@ -19,12 +19,16 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.jfx.BlueFX;
+import blue.jfx.binding.ChoiceBinder;
 import blue.jfx.binding.FloatBinder;
 import blue.score.layers.audio.core.AudioClip;
+import blue.score.layers.audio.core.FadeType;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
 
 /**
@@ -48,6 +52,10 @@ public class AudioClipEditorController implements Initializable {
     private TextField fadeInText;
     @FXML
     private TextField fadeOutText;
+    @FXML
+    private ChoiceBox<FadeType> fadeInChoiceBox;
+    @FXML
+    private ChoiceBox<FadeType> fadeOutChoiceBox;
 
     private AudioClip audioClip;
 
@@ -56,6 +64,8 @@ public class AudioClipEditorController implements Initializable {
     FloatBinder<AudioClip> fileStartBinder;
     FloatBinder<AudioClip> fadeInBinder;
     FloatBinder<AudioClip> fadeOutBinder;
+    ChoiceBinder<FadeType> fadeInTypeBinder;
+    ChoiceBinder<FadeType> fadeOutTypeBinder;
 
     /**
      * Initializes the controller class.
@@ -102,17 +112,34 @@ public class AudioClipEditorController implements Initializable {
                     return val;
                 }
         );
+
+        fadeInChoiceBox.getItems().addAll(FadeType.values());
+        fadeOutChoiceBox.getItems().addAll(FadeType.values());
+      
+        fadeInTypeBinder = new ChoiceBinder<>(fadeInChoiceBox);
+        fadeOutTypeBinder = new ChoiceBinder<>(fadeOutChoiceBox);
+        
     }
 
     public void setAudioClip(AudioClip audioClip) {
-        audioDurationText.setText(Float.toString(audioClip.getAudioDuration()));
-        audioFileText.setText(audioClip.getAudioFile().getAbsolutePath());
 
-        startTimeBinder.setFloatProperty(audioClip, audioClip.startProperty());
-        durationBinder.setFloatProperty(audioClip, audioClip.durationProperty());
-        fileStartBinder.setFloatProperty(audioClip,
-                audioClip.fileStartTimeProperty());
-        fadeInBinder.setFloatProperty(audioClip, audioClip.fadeInProperty());
-        fadeOutBinder.setFloatProperty(audioClip, audioClip.fadeOutProperty());
+        BlueFX.runOnFXThread(() -> {
+            audioDurationText.setText(Float.toString(
+                    audioClip.getAudioDuration()));
+            audioFileText.setText(audioClip.getAudioFile().getAbsolutePath());
+
+            startTimeBinder.setFloatProperty(audioClip,
+                    audioClip.startProperty());
+            durationBinder.setFloatProperty(audioClip,
+                    audioClip.durationProperty());
+            fileStartBinder.setFloatProperty(audioClip,
+                    audioClip.fileStartTimeProperty());
+            fadeInBinder.setFloatProperty(audioClip, audioClip.fadeInProperty());
+            fadeOutBinder.setFloatProperty(audioClip,
+                    audioClip.fadeOutProperty());
+
+            fadeInTypeBinder.setObjectProperty(audioClip.fadeInTypeProperty());
+            fadeOutTypeBinder.setObjectProperty(audioClip.fadeOutTypeProperty());
+        });
     }
 }

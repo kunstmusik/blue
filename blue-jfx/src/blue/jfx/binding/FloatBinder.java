@@ -113,7 +113,7 @@ public class FloatBinder<T> {
         }
 
         this.floatProperty = null;
-        Platform.runLater(
+        BlueFX.runOnFXThread(
                 () -> tf.setText(prop.getValue().toString())
         );
 
