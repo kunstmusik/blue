@@ -667,7 +667,8 @@
       </opcode>
       <opcode>
         <name>mandol</name>
-        <signature>ares 	mandol	 kamp, kfreq, kpluck, kdetune, kgain, ksize, ifn [, iminfreq]</signature>
+        <signature>ares 	mandol	 kamp, kfreq, kpluck, kdetune, kgain, ksize \
+    [, ifn] [, iminfreq]</signature>
       </opcode>
       <opcode>
         <name>marimba</name>
@@ -900,6 +901,14 @@
       <opcode>
         <name>gausstrig</name>
         <signature>kres 	gausstrig	 kamp, kcps, kdev [, imode] [, ifrst1]</signature>
+      </opcode>
+      <opcode>
+        <name> getseed</name>
+        <signature>ians	 getseed</signature>
+      </opcode>
+      <opcode>
+        <name> getseed</name>
+        <signature>kans	 getseed</signature>
       </opcode>
       <opcode>
         <name>jitter</name>
@@ -1534,7 +1543,8 @@
       </opcode>
       <opcode>
         <name>wgbow</name>
-        <signature>ares 	wgbow	 kamp, kfreq, kpres, krat, kvibf, kvamp, ifn [, iminfreq]</signature>
+        <signature>ares 	wgbow	 kamp, kfreq, kpres, krat, kvibf, kvamp \
+    [, ifn] [, iminfreq]</signature>
       </opcode>
       <opcode>
         <name>wgbowedbar</name>
@@ -1543,17 +1553,18 @@
       </opcode>
       <opcode>
         <name>wgbrass</name>
-        <signature>ares 	wgbrass	 kamp, kfreq, ktens, iatt, kvibf, kvamp, ifn [, iminfreq]</signature>
+        <signature>ares 	wgbrass	 kamp, kfreq, ktens, iatt, kvibf, kvamp \
+    [, ifn] [, iminfreq]</signature>
       </opcode>
       <opcode>
         <name>wgclar</name>
-        <signature>ares 	wgclar	 kamp, kfreq, kstiff, iatt, idetk, kngain, kvibf, kvamp, ifn \
-      [, iminfreq]</signature>
+        <signature>ares 	wgclar	 kamp, kfreq, kstiff, \
+    iatt, idetk, kngain, kvibf, kvamp [, ifn] [, iminfreq]</signature>
       </opcode>
       <opcode>
         <name>wgflute</name>
-        <signature>ares 	wgflute	 kamp, kfreq, kjet, iatt, idetk, kngain, kvibf, kvamp, ifn \
-      [, iminfreq] [, ijetrf] [, iendrf]</signature>
+        <signature>ares 	wgflute	 kamp, kfreq, kjet, iatt,
+    idetk, kngain, kvibf, kvamp [, ifn] [, iminfreq] [, ijetrf] [, iendrf]</signature>
       </opcode>
       <opcode>
         <name>wgpluck</name>
@@ -1675,23 +1686,23 @@
     <opcodeGroup name="Signal Input">
       <opcode>
         <name>diskin</name>
-        <signature>ar1 [, ar2 [, ar3 [, ... arN]]] 	diskin	 ifilcod, kpitch [, iskiptim] \
-      [, iwraparound] [, iformat] [, iskipinit]</signature>
+        <signature>ar1 [, ar2 [, ar3 [, ... arN]]] 	diskin	 ifilcod[, kpitch[, iskiptim \
+      [, iwraparound[, iformat[, iskipinit]]]]]</signature>
       </opcode>
       <opcode>
         <name>diskin</name>
-        <signature>ar1[] 	diskin	 ifilcod, kpitch[, iskiptim \
-      [, iwraparound] [, iformat] [, iskipinit]</signature>
+        <signature>ar1[] 	diskin	 ifilcod[, kpitch[, iskiptim \
+      [, iwraparound[, iformat[, iskipinit]]]]]</signature>
       </opcode>
       <opcode>
         <name>diskin2</name>
-        <signature>a1[, a2[, ... aN]] 	diskin2	 ifilcod, kpitch[, iskiptim \
-      [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
+        <signature>a1[, a2[, ... aN]] 	diskin2	 ifilcod[, kpitch[, iskiptim \
+      [, iwrap[, iformat[, iwsize[, ibufsize[, iskipinit]]]]]]]</signature>
       </opcode>
       <opcode>
         <name>diskin2</name>
-        <signature>ar1[] 	diskin2	 ifilcod, kpitch[, iskiptim \
-      [, iwrap[, iformat [, iwsize[, ibufsize[, iskipinit]]]]]]</signature>
+        <signature>ar1[] 	diskin2	 ifilcod[, kpitch[, iskiptim \
+      [, iwrap[, iformat[, iwsize[, ibufsize[, iskipinit]]]]]]]</signature>
       </opcode>
       <opcode>
         <name>in</name>
@@ -1946,38 +1957,6 @@
         <signature>itype, imode, ictltype, idflt, imin, imax 	chnparams</signature>
       </opcode>
       <opcode>
-        <name>chnrecv</name>
-        <signature>ival 	chnrecv	 Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnrecv</name>
-        <signature>kval 	chnrecv	 Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnrecv</name>
-        <signature>aval 	chnrecv	 Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnrecv</name>
-        <signature>Sval 	chnrecv	 Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnsend</name>
-        <signature>chnsend	 ival, Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnsend</name>
-        <signature>chnsend	 kval, Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnsend</name>
-        <signature>chnsend	 aval, Sname</signature>
-      </opcode>
-      <opcode>
-        <name>chnsend</name>
-        <signature>chnsend	 Sval, Sname</signature>
-      </opcode>
-      <opcode>
         <name>chnset</name>
         <signature>chnset	 ival, Sname</signature>
       </opcode>
@@ -2082,6 +2061,10 @@
         <signature>ir 	mp3len	 ifilcod</signature>
       </opcode>
     </opcodeGroup>
+    <opcode>
+      <name>websocket</name>
+      <signature>xout1[, xout2, xout3, ..., xoutN] 	websocket	 iport, xin1[, xin2, xin3, ..., xinN]</signature>
+    </opcode>
   </opcodeGroup>
   <opcodeGroup name="Signal Modifiers">
     <opcodeGroup name="Amplitude Modifiers">
@@ -2767,7 +2750,7 @@
         </opcode>
         <opcode>
           <name>svfilter</name>
-          <signature>alow, ahigh, aband 	svfilter	  asig, kcf, kq [, iscl]</signature>
+          <signature>alow, ahigh, aband 	svfilter	  asig, kcf, kq [, iscl] [, iskip]</signature>
         </opcode>
         <opcode>
           <name>tbvcf</name>
@@ -3324,15 +3307,15 @@
     <opcodeGroup name="Realtime Performance Control">
       <opcode>
         <name>active</name>
-        <signature>ir 	active	 insnum [,iopt]</signature>
+        <signature>ir 	active	 insnum [,iopt [,inorel]]</signature>
       </opcode>
       <opcode>
         <name>active</name>
-        <signature>ir 	active	 Sinsname [,iopt]</signature>
+        <signature>ir 	active	 Sinsname [,iopt [,inorel]]</signature>
       </opcode>
       <opcode>
         <name>active</name>
-        <signature>kres 	active	 kinsnum [,iopt]</signature>
+        <signature>kres 	active	 kinsnum [,iopt [,inorel]]</signature>
       </opcode>
       <opcode>
         <name>cpumeter</name>
@@ -5791,6 +5774,10 @@
         <signature>fsig 	tab2pvs	 tvar|karr[][,ihopsize, iwinsize, iwintype]</signature>
       </opcode>
       <opcode>
+        <name>tabifd</name>
+        <signature>ffr,fphs 	tabifd	 ktimpt, kamp, kpitch, ifftsize, ihopsize, iwintype,ifn</signature>
+      </opcode>
+      <opcode>
         <name>tradsyn</name>
         <signature>asig 	tradsyn	 fin, kscal, kpitch, kmaxtracks, ifn</signature>
       </opcode>
@@ -6410,7 +6397,7 @@
     </opcode>
     <opcode>
       <name>OSCsend</name>
-      <signature>OSCsend	 kwhen, ihost, iport, idestination, itype [, kdata1, kdata2, ...]</signature>
+      <signature>OSCsend	 kwhen, ihost, iport, idestination, itype [, xdata1, xdata2, ...]</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Network">
@@ -6944,8 +6931,20 @@ inum_parm, kupdate</signature>
         <signature>kout[] 	fft	 kin[]</signature>
       </opcode>
       <opcode>
+        <name>framebuffer</name>
+        <signature>kout[] 	framebuffer	 ain, isize</signature>
+      </opcode>
+      <opcode>
+        <name>framebuffer</name>
+        <signature>aout 	framebuffer	 kin, isize</signature>
+      </opcode>
+      <opcode>
         <name>fftinv</name>
         <signature>kout[] 	fftinv	 kin[]</signature>
+      </opcode>
+      <opcode>
+        <name>olabuffer</name>
+        <signature>aout 	olabuffer	 kin, ioverlap</signature>
       </opcode>
       <opcode>
         <name>rfft</name>
