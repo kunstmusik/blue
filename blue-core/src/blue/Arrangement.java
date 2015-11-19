@@ -316,7 +316,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         this.arrangement = arrangement;
     }
 
-    public String generateGlobalOrc() {
+    public String generateGlobalOrc(CompileData data) {
         StrBuilder retVal = new StrBuilder();
 
         ArrayList<Instrument> instruments = new ArrayList<>();
@@ -335,7 +335,15 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 String globalOrc = instr.generateGlobalOrc();
 
                 if (globalOrc != null) {
-                    String transformed = replaceInstrumentId(ia, globalOrc);
+
+                    String assignmentId;
+
+                    if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+                        assignmentId = ia.arrangementId;
+                    }
+
+                    String transformed = replaceInstrumentId(assignmentId,
+                            globalOrc);
                     retVal.append(transformed);
                     retVal.append("\n");
                 }
@@ -347,7 +355,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return retVal.toString();
     }
 
-    public String generateGlobalSco() {
+    public String generateGlobalSco(CompileData data) {
         StrBuilder retVal = new StrBuilder();
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
@@ -364,7 +372,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
             if (globalSco != null) {
 
-                String transformed = replaceInstrumentId(ia, globalSco);
+                String assignmentId;
+
+                if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+                    assignmentId = ia.arrangementId;
+                }
+                
+                String transformed = replaceInstrumentId(assignmentId, globalSco);
 
                 retVal.append(transformed);
                 retVal.append("\n");
@@ -408,6 +422,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
             if (alwaysOnInstr != null) {
                 alwaysOnInstruments.add(alwaysOnInstr);
+                data.addInstrSourceId(alwaysOnInstr, ia.arrangementId);
             }
         }
     }
@@ -453,7 +468,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
         String instrumentText = instr.generateInstrument();
 
-        String transformed = replaceInstrumentId(ia, instrumentText);
+        String assignmentId;
+
+        if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+            assignmentId = ia.arrangementId;
+        }
+
+        String transformed = replaceInstrumentId(assignmentId, instrumentText);
 
         transformed = convertBlueMixerOut(data, mixer, ia.arrangementId,
                 transformed,
@@ -523,19 +544,19 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
-    private String replaceInstrumentId(InstrumentAssignment ia, String input) {
+    private String replaceInstrumentId(String arrangementId, String input) {
         String replacementId = "";
         try {
-            replacementId += Integer.parseInt(ia.arrangementId);
+            replacementId += Integer.parseInt(arrangementId);
         } catch (NumberFormatException nfe) {
-            replacementId = "\"" + ia.arrangementId + "\"";
+            replacementId = "\"" + arrangementId + "\"";
         }
 
         String transformed = TextUtilities.replaceAll(input, "<INSTR_ID>",
                 replacementId);
 
         transformed = TextUtilities.replaceAll(transformed, "<INSTR_NAME>",
-                ia.arrangementId);
+                arrangementId);
 
         return transformed;
     }
@@ -649,27 +670,24 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                         }
                     }
 
+                } else if (mixer == null || !mixer.isEnabled()) {
+                    buffer.append(line.replaceAll("blueMixerOut", "outc"));
+                    buffer.append("\n");
                 } else {
+                    for (int i = 0; i < nchnls && i < args.length; i++) {
+                        String arg = args[i];
 
-                    if (mixer == null || !mixer.isEnabled()) {
-                        buffer.append(line.replaceAll("blueMixerOut", "outc"));
-                        buffer.append("\n");
-                    } else {
-                        for (int i = 0; i < nchnls && i < args.length; i++) {
-                            String arg = args[i];
+                        String var = Mixer.getChannelVar(
+                                data.getChannelIdAssignments().get(c), i);
 
-                            String var = Mixer.getChannelVar(
-                                    data.getChannelIdAssignments().get(c), i);
+                        buffer.append(var).append(" = ");
 
-                            buffer.append(var).append(" = ");
-
-                            if (!blueMixerInFound) {
-                                buffer.append(var).append(" + ");
-                            }
-
-                            buffer.append(arg).append("\n");
-
+                        if (!blueMixerInFound) {
+                            buffer.append(var).append(" + ");
                         }
+
+                        buffer.append(arg).append("\n");
+
                     }
                 }
 

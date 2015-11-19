@@ -39,6 +39,7 @@ public class CompileData {
     private final Arrangement arrangement;
     private final Tables tables;
     private final Map<Channel, Integer> channelIdAssignments;
+    private final Map<Instrument, String> instrSourceId;
 
     public static CompileData createEmptyCompileData() {
         CompileData compileData = new CompileData(
@@ -50,6 +51,7 @@ public class CompileData {
         this.arrangement = arrangement;
         this.tables = tables;
         channelIdAssignments = new HashMap<>();
+        instrSourceId = new HashMap<>();
     }
 
     /** 
@@ -92,5 +94,20 @@ public class CompileData {
   
     public Map<Channel, Integer> getChannelIdAssignments() {
         return channelIdAssignments;
+    }
+
+    /** Used to associate a source arrangmentId with an instr.  The instr should
+     * be one that is generated for always-on instr text. arrangementId is the 
+     * arrangementId of the original instr, and used to replace <INSTR_ID>.
+     * 
+     * @param instr
+     * @param sourceId 
+     */
+    public void addInstrSourceId(Instrument instr, String sourceId) {
+        instrSourceId.put(instr, sourceId);
+    }
+
+    public String getInstrSourceId(Instrument instr) {
+        return instrSourceId.get(instr);
     }
 }

@@ -100,10 +100,6 @@ public class CSDRender extends CSDRenderService {
         CompileData compileData = new CompileData(arrangement, tables);
         // SKIPPING ANYTHING RELATED TO SCORE
 
-        String globalSco = globalOrcSco.getGlobalSco() + "\n";
-        globalSco += arrangement.generateGlobalSco() + "\n";
-        globalSco = preprocessSco(globalSco, totalDur, 0, 0, null);
-
         boolean mixerEnabled = data.getMixer().isEnabled();
         Mixer mixer = null;
         if (mixerEnabled) {
@@ -118,6 +114,10 @@ public class CSDRender extends CSDRenderService {
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
         arrangement.preGenerateOrchestra(compileData, mixer, nchnls, alwaysOnInstruments);
+
+        String globalSco = globalOrcSco.getGlobalSco() + "\n";
+        globalSco += arrangement.generateGlobalSco(compileData) + "\n";
+        globalSco = preprocessSco(globalSco, totalDur, 0, 0, null);
 
 
         NoteList generatedNotes = null;
@@ -293,8 +293,18 @@ public class CSDRender extends CSDRenderService {
         System.out.println("<RENDER_START> = " + renderStartTime);
         System.out.println("<PROCESSING_START> = " + processingStart);
 
+
+        int nchnls = getNchnls(data, isRealTime);
+
+        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
+
+//        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
+        
+        arrangement.preGenerateOrchestra(compileData, mixer, nchnls,
+                alwaysOnInstruments);
+
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
-        globalSco += arrangement.generateGlobalSco() + "\n";
+        globalSco += arrangement.generateGlobalSco(compileData) + "\n";
         globalSco = preprocessSco(globalSco, totalDur, renderStartTime,
                 processingStart, tempoMapper);
 
@@ -311,20 +321,10 @@ public class CSDRender extends CSDRenderService {
 
         System.out.println("Global Duration = " + globalDur);
 
-        int nchnls = getNchnls(data, isRealTime);
-
-        ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
-
-//        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
-
         if (mixerEnabled) {
             globalDur += mixer.getExtraRenderTime();
         }
         
-        arrangement.preGenerateOrchestra(compileData, mixer, nchnls,
-                alwaysOnInstruments);
-
-
         for (Instrument instrument : alwaysOnInstruments) {
             int instrId = arrangement.addInstrumentAtEnd(instrument);
 
@@ -636,7 +636,7 @@ public class CSDRender extends CSDRenderService {
         score.append("\n");
         score.append(
                 CommandProcessor.processCommandBlocks(
-                        arrangement.generateGlobalOrc())).append("\n");
+                        arrangement.generateGlobalOrc(compileData))).append("\n");
         score.append("\n");
         score.append(udos.toString()).append("\n");
         score.append("\n");
