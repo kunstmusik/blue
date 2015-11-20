@@ -110,6 +110,8 @@ FIX
   generated always-on instruments use the ID/name of the original instrument 
   rather than the generated one 
 
+* Redid BlueLive trigger mechanism to use sample-accurate, synchronous 
+  processing of time for repeats to remove jitter
 
 INTERNAL
 

@@ -40,6 +40,7 @@ public class LiveData implements Serializable {
     private LiveObjectSetList liveObjectSets = new LiveObjectSetList();
     private boolean commandLineEnabled = false;
     private boolean commandLineOverride = false;
+    private boolean repeatEnabled = false;
 
     public String getCommandLine() {
         return commandLine;
@@ -124,6 +125,9 @@ public class LiveData implements Serializable {
                 case "liveObjectSetList":
                     liveObjectSetsNode = node;
                     break;
+                case "repeatEnabled":
+                    liveData.setRepeatEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
 
         }
@@ -168,6 +172,8 @@ public class LiveData implements Serializable {
 
         retVal.addElement(XMLUtilities.writeInt("repeat", repeat));
         retVal.addElement(XMLUtilities.writeInt("tempo", tempo));
+        retVal.addElement(XMLUtilities.writeBoolean("repeatEnabled",
+                repeatEnabled));
 
         return retVal;
     }
@@ -187,4 +193,14 @@ public class LiveData implements Serializable {
     public void setCommandLineOverride(boolean commandLineOverride) {
         this.commandLineOverride = commandLineOverride;
     }
+
+    public boolean isRepeatEnabled() {
+        return repeatEnabled;
+    }
+
+    public void setRepeatEnabled(boolean repeatEnabled) {
+        this.repeatEnabled = repeatEnabled;
+    }
+
+    
 }

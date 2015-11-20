@@ -162,42 +162,28 @@ public final class BlueLiveTopComponent extends TopComponent
         liveObjectsTable.setRowHeight(24);
         liveObjectsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         liveObjectsTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (!e.getValueIsAdjusting()) {
-                            if (data == null) {
-                                return;
-                            }
-                            int row = liveObjectsTable.getSelectedRow();
-                            int column = liveObjectsTable.getSelectedColumn();
-
-                            final LiveObject lObj = (LiveObject) model.getValueAt(
-                                    row, column);
-
-                            if (lObj != null) {
-                                SwingUtilities.invokeLater(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        content.set(Collections.singleton(
-                                                        lObj.getSoundObject()),
-                                                null);
-                                    }
-                                });
-                            } else {
-                                SwingUtilities.invokeLater(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        content.set(Collections.emptyList(),
-                                                null);
-                                    }
-                                });
-                            }
-
+                (ListSelectionEvent e) -> {
+                    if (!e.getValueIsAdjusting()) {
+                        if (data == null) {
+                            return;
                         }
+                        int row = liveObjectsTable.getSelectedRow();
+                        int column = liveObjectsTable.getSelectedColumn();
+
+                        final LiveObject lObj = (LiveObject) model.getValueAt(
+                                row, column);
+
+                        if (lObj != null) {
+                            SwingUtilities.invokeLater(() -> {
+                                content.set(Collections.singleton(
+                                        lObj.getSoundObject()), null);
+                            });
+                        } else {
+                            SwingUtilities.invokeLater(() -> {
+                                content.set(Collections.emptyList(), null);
+                            });
+                        }
+
                     }
                 });
 
@@ -234,29 +220,25 @@ public final class BlueLiveTopComponent extends TopComponent
                 ListSelectionModel.SINGLE_SELECTION);
 
         liveObjectSetListTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (!e.getValueIsAdjusting()) {
-                            if (data == null) {
-                                return;
-                            }
-
-                            int row = liveObjectSetListTable.getSelectedRow();
-
-                            if (row < 0) {
-                                return;
-                            }
-
-                            final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(
-                                    row);
-
-                            if (lObjSet != null) {
-                                model.setEnabled(lObjSet);
-                            }
-
+                (ListSelectionEvent e) -> {
+                    if (!e.getValueIsAdjusting()) {
+                        if (data == null) {
+                            return;
                         }
+
+                        int row = liveObjectSetListTable.getSelectedRow();
+
+                        if (row < 0) {
+                            return;
+                        }
+
+                        final LiveObjectSet lObjSet = data.getLiveData().getLiveObjectSets().get(
+                                row);
+
+                        if (lObjSet != null) {
+                            model.setEnabled(lObjSet);
+                        }
+
                     }
                 });
 
@@ -307,16 +289,16 @@ public final class BlueLiveTopComponent extends TopComponent
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
-                    @Override
-                    public void documentChanged(DocumentEvent e) {
-                        if (data == null) {
-                            return;
-                        }
+            @Override
+            public void documentChanged(DocumentEvent e) {
+                if (data == null) {
+                    return;
+                }
 
-                        data.getLiveData().setCommandLine(
-                                commandLineText.getText());
-                    }
-                });
+                data.getLiveData().setCommandLine(
+                        commandLineText.getText());
+            }
+        });
 
         midiManager = MidiInputManager.getInstance();
 
@@ -344,14 +326,10 @@ public final class BlueLiveTopComponent extends TopComponent
                 Double.POSITIVE_INFINITY, 1.0));
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            reinitialize();
-                        }
+                (PropertyChangeEvent evt) -> {
+                    if (BlueProjectManager.CURRENT_PROJECT.equals(
+                            evt.getPropertyName())) {
+                        reinitialize();
                     }
                 });
 
@@ -474,6 +452,8 @@ public final class BlueLiveTopComponent extends TopComponent
             this.enableAdvancedFlags.setSelected(liveData.isCommandLineEnabled());
             this.completeOverride.setSelected(liveData.isCommandLineOverride());
 
+            this.repeatButton.setSelected(liveData.isRepeatEnabled());
+            
             commandLineText.setEnabled(liveData.isCommandLineEnabled());
 
 //            liveObjectsTable.getColumnModel().getColumn(2).setMaxWidth(100);
@@ -1007,19 +987,19 @@ public final class BlueLiveTopComponent extends TopComponent
 //            return;
 //        }
 
-        if (repeatButton.isSelected()) {
-            if (performanceThread == null) {
-                performanceThread = new PerformanceThread();
-                performanceThread.start();
-            }
-        } else {
-            if (performanceThread != null) {
-                performanceThread.turnOff();
-                performanceThread = null;
-            }
+//        if (repeatButton.isSelected()) {
+//            if (performanceThread == null) {
+//                performanceThread = new PerformanceThread();
+//                performanceThread.start();
+//            }
+//        } else if (performanceThread != null) {
+//            performanceThread.turnOff();
+//            performanceThread = null;
+//        }
+
+        if(data != null) {
+            data.getLiveData().setRepeatEnabled(repeatButton.isSelected());
         }
-
-
     }//GEN-LAST:event_repeatButtonActionPerformed
 
     private void tempoSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tempoSpinnerStateChanged
@@ -1260,7 +1240,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 JMenuItem temp = new JMenuItem();
                 temp.setText(
                         BlueSystem.getString("soundLayerPopup.addNew") + " " + BlueSystem.getShortClassName(
-                                entry.getValue()));
+                        entry.getValue()));
                 temp.putClientProperty("sObjClass", entry.getKey());
                 temp.setActionCommand(entry.getValue());
                 temp.addActionListener(this);

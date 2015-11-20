@@ -31,4 +31,7 @@ public interface RealtimeRenderService {
 
     void passToStdin(String text);
 
+    void addBinding(CsoundBinding binding);
+
+    void removeBinding(CsoundBinding binding);
 }

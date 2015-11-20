@@ -25,6 +25,7 @@ import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
+import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.settings.RealtimeRenderSettings;
@@ -179,6 +180,7 @@ public final class RealtimeRenderManager {
             currentBlueLiveRenderService.addPlayModeListener(blueLiveListener);
         }
 
+        currentBlueLiveRenderService.addBinding(new BlueLiveBinding(data));
         currentBlueLiveRenderService.setData(data);
         try {
             currentBlueLiveRenderService.renderForBlueLive();
@@ -188,6 +190,12 @@ public final class RealtimeRenderManager {
                     soe);
         }
 
+    }
+
+    public void addBlueLiveBinding(CsoundBinding binding) {
+        if(currentBlueLiveRenderService != null) {
+            currentBlueLiveRenderService.addBinding(binding);
+        }
     }
 
     public void auditionSoundObjects(BlueData data, SoundObject[] soundObjects) {

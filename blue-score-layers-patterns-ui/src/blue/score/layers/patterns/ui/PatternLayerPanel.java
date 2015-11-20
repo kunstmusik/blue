@@ -26,7 +26,6 @@ import blue.soundObject.SoundObject;
 import blue.ui.components.IconFactory;
 import blue.ui.core.score.ScoreController;
 import blue.ui.core.score.layers.soundObject.ScoreObjectEditorTopComponent;
-import blue.utility.ObjectUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -347,9 +346,9 @@ public class PatternLayerPanel extends javax.swing.JPanel
 
     private void setSObjFromBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setSObjFromBufferMenuItemActionPerformed
         ScoreController controller = ScoreController.getInstance();
-        Collection<? extends ScoreObject> selected = controller.getSelectedScoreObjects();
-        if (selected.size() == 1) {
-            ScoreObject scoreObj = selected.iterator().next();
+        ScoreController.ScoreObjectBuffer buffer = controller.getScoreObjectBuffer();
+        if (buffer.scoreObjects.size() == 1) {
+            ScoreObject scoreObj = buffer.scoreObjects.get(0);
             if(!(scoreObj instanceof SoundObject)) {
                return; 
             }

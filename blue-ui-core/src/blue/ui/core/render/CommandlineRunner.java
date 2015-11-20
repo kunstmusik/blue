@@ -7,6 +7,7 @@ import blue.event.PlayModeListener;
 import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
+import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
@@ -29,7 +30,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.NotificationDisplayer;
-import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
@@ -235,6 +235,16 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             Note note = (Note) iter.next();
             console.passToStdin(note.toString());
         }
+    }
+
+    @Override
+    public void addBinding(CsoundBinding binding) {
+        // no-op, commandline runner does not support bindings
+    }
+
+    @Override
+    public void removeBinding(CsoundBinding binding) {
+        // no-op, commandline runner does not support bindings
     }
 
     class RunProxy implements Runnable {

@@ -14,7 +14,7 @@ import blue.event.PlayModeListener;
 import blue.noteProcessor.TempoMapper;
 import blue.orchestra.blueSynthBuilder.StringChannel;
 import blue.services.render.CSDRenderService;
-import blue.services.render.DeviceInfo;
+import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.JCheckBox;
@@ -386,6 +385,16 @@ public class APIRunner implements RealtimeRenderService, PlayModeListener {
             notifyPlayModeListeners(playMode);
         }
 
+    }
+
+    @Override
+    public void addBinding(CsoundBinding binding) {
+        // no-op for now, not sure if Csound 5 should continue to be supported
+    }
+
+    @Override
+    public void removeBinding(CsoundBinding binding) {
+        // no-op for now, not sure if Csound 5 should continue to be supported
     }
 
     static class APIRunnerThread implements Runnable {
