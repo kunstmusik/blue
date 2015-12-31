@@ -53,6 +53,7 @@
       <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
+      <zipfileset file="blue64.exe.manifest" filemode="755" prefix="${app.name}/bin"/>
     </zip>
     <delete dir="${dist.dir}/blue"/>
     <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
@@ -138,10 +139,10 @@
       <arg value="${build.launcher.dir}\bin\${app.name}.exe"/>
       <arg value="${app.name}.ico"/>
     </exec>
-    <!--<exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
       <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
-    </exec>-->
-    <delete file="build/launcher/bin/${app.name}64.exe"/>
+    </exec>
+    <!--<delete file="build/launcher/bin/${app.name}64.exe"/>-->
   </target>
 
 
@@ -159,7 +160,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-     <condition property="xsltCmd" value="c:\bin\xsltproc.exe">
+     <condition property="xsltCmd" value="c:\msys64\mingw64\bin\xsltproc.exe">
       <os family="windows"/>
     </condition>
 
@@ -189,7 +190,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-    <condition property="fopCommand" value="c:\work\fop-1.1\fop.bat">
+    <condition property="fopCommand" value="c:\bin\fop-2.0\fop.bat">
       <os family="windows"/>
     </condition>
 
