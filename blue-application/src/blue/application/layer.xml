@@ -56,6 +56,7 @@
     </folder>
     
     <folder name="Menu">
+        <file name="Edit_hidden"/>
         <folder name="File">
             <file name="Separator3.instance_hidden"/>
             <file name="Separator4.instance_hidden"/>
@@ -125,9 +126,13 @@
             <file name="CloseAllButThisAction.shadow_hidden"/>
             <file name="CloseAllDocumentsAction.shadow_hidden"/>
             <file name="DocumentsAction.shadow_hidden"/>
+            <file name="GroupsMenuAction.shadow_hidden"/>
             <file name="ProgressListAction.shadow_hidden"/>
             <file name="Separator4.instance_hidden"/>
             <file name="SwitchToRecentDocumentAction.shadow_hidden"/>
+            <folder name="Tools">
+                <file name="ProgressListAction.shadow_hidden"/>
+            </folder>
         </folder>
     </folder>
     <folder name="Toolbars">
