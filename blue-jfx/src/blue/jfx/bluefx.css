@@ -11,7 +11,16 @@
     -fx-base: secondary3;
     -fx-background: secondary3;
     -fx-control-inner-background: black;
+    /* using 12 px is a hack to match Swing's font size.  This deals with a
+     problem that Blue Synth Builder uses pixels and font size of 12 as a default.
+     This will not work for High DPI aware screens at all.  In the future, this
+    should really use ems or pts.  Swing code could be based on 
+    Font.getDefault().getSize(), or simply removed and JFX code only used. 
+    
+    JEP 263 may also address all of these issues; more research is required. 
+    */
     -fx-font-size: 12px;
+
     -fx-font-family: "sans-serif";
 
     -fx-accent: primary2;

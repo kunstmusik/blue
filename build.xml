@@ -23,7 +23,7 @@
 
   <condition property="confReplacementString"
                value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
-               else="-J-Xms256m -J-Xmx768m">
+               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false">
     <os family="mac"/>
   </condition>
 
@@ -53,7 +53,6 @@
       <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
-      <zipfileset file="blue64.exe.manifest" filemode="755" prefix="${app.name}/bin"/>
     </zip>
     <delete dir="${dist.dir}/blue"/>
     <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
