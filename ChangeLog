@@ -53,6 +53,9 @@ UPDATED
   * Double-click to edit ChannelList names as well as Channel names (for those
   channels and lists that support it)
 
+  * Updated mixer generation code to use "+=" and "*=" for easier to read 
+  output and better performance when running Csound multicore
+
 * Changed "Tools->.csoundrc Editor" to "Tools->.csound6rc Editor", to edit 
   .csound6rc instead of older .csoundrc
 

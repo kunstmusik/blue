@@ -184,8 +184,8 @@ class MixerNode {
                         String outChannelVar = Mixer.getSubChannelVar(
                                 outChannelName, j);
 
-                        buffer.append(outChannelVar).append("\tsum\t");
-                        buffer.append(outChannelVar).append(", ");
+                        buffer.append(outChannelVar).append("\t+=\t");
+//                        buffer.append(outChannelVar).append(", ");
                         buffer.append(channelVar).append("\n");
                     }
 
@@ -357,8 +357,8 @@ class MixerNode {
         if (modifier != null) {
             for (int i = 0; i < nchnls; i++) {
                 String sig = mixer.getVar(data, node.channel, i);
-                buffer.append(sig).append(" = ");
-                buffer.append(sig).append(" * ");
+                buffer.append(sig).append(" *= ");
+//                buffer.append(sig).append(" * ");
                 buffer.append(modifier).append("\n");
             }
         }
@@ -415,8 +415,7 @@ class MixerNode {
                         String subVar = Mixer.getSubChannelVar(sendChannelName,
                                 j);
 
-                        buffer.append(subVar).append("\tsum\t").append(subVar);
-                        buffer.append(", ");
+                        buffer.append(subVar).append("\t+=\t");
 
                         Parameter levelParam = send.getLevelParameter();
 
