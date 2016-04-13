@@ -139,7 +139,8 @@
       <arg value="${app.name}.ico"/>
     </exec>
     <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
-      <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
+      <arg value="${build.launcher.dir}\bin\${app.name}64.exe"/>
+      <arg value="${app.name}.ico"/>
     </exec>
     <!--<delete file="build/launcher/bin/${app.name}64.exe"/>-->
   </target>
