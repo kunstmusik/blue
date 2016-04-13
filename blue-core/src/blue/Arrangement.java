@@ -659,11 +659,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                             String var = Mixer.getSubChannelVar(subChannelName,
                                     i - 1);
 
-                            buffer.append(var).append(" = ");
+			    buffer.append(var);
 
                             if (!blueMixerInFound) {
-                                buffer.append(var).append(" + ");
-                            }
+				buffer.append(" += ");
+                            } else {
+				buffer.append(" = ");
+			    }
 
                             buffer.append(arg).append("\n");
 
@@ -680,13 +682,15 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                         String var = Mixer.getChannelVar(
                                 data.getChannelIdAssignments().get(c), i);
 
-                        buffer.append(var).append(" = ");
+                        buffer.append(var);
 
-                        if (!blueMixerInFound) {
-                            buffer.append(var).append(" + ");
-                        }
+			if (!blueMixerInFound) {
+			    buffer.append(" += ");
+			} else {
+			    buffer.append(" = ");
+			}
 
-                        buffer.append(arg).append("\n");
+			buffer.append(arg).append("\n");
 
                     }
                 }
