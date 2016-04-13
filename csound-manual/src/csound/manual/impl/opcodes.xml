@@ -417,14 +417,6 @@
         <signature>kout 	gainslider	 kindex</signature>
       </opcode>
       <opcode>
-        <name>jspline</name>
-        <signature>ares 	jspline	 xamp, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
-        <name>jspline</name>
-        <signature>kres 	jspline	 kamp, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
         <name>line</name>
         <signature>ares 	line	 ia, idur, ib</signature>
       </opcode>
@@ -488,14 +480,6 @@
         <name>lpsholdp</name>
         <signature>ksig 	lpsholdp	  kphase, kvalue0, ktime0  [, kvalue1] [, ktime1] \
       [, kvalue2] [, ktime2] [...]</signature>
-      </opcode>
-      <opcode>
-        <name>rspline</name>
-        <signature>ares 	rspline	 xrangeMin, xrangeMax, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
-        <name>rspline</name>
-        <signature>kres 	rspline	 krangeMin, krangeMax, kcpsMin, kcpsMax</signature>
       </opcode>
       <opcode>
         <name>scale</name>
@@ -2081,6 +2065,10 @@
         <signature>ar 	compress	 aasig, acsig, kthresh, kloknee, khiknee, kratio, katt, krel, ilook</signature>
       </opcode>
       <opcode>
+        <name>compress2</name>
+        <signature>ar 	compress2	 aasig, acsig, kthresh, kloknee, khiknee, kratio, katt, krel, ilook</signature>
+      </opcode>
+      <opcode>
         <name>dam</name>
         <signature>ares 	dam	 asig, kthreshold, icomp1, icomp2, irtime, iftime</signature>
       </opcode>
@@ -2528,7 +2516,8 @@
       </opcode>
       <opcode>
         <name>interp</name>
-        <signature>ares 	interp	 ksig [, iskip] [, imode]</signature>
+        <signature>ares 	interp	 ksig [, iskip] [, imode]
+    [, ivalue]</signature>
       </opcode>
       <opcode>
         <name>ntrpol</name>
@@ -2557,6 +2546,10 @@
       <opcode>
         <name>k</name>
         <signature>k	(x) (a-rate args only)</signature>
+      </opcode>
+      <opcode>
+        <name>S</name>
+        <signature>S	(x) (control-rate or init-rate arg)</signature>
       </opcode>
       <opcode>
         <name>samphold</name>
@@ -2719,6 +2712,26 @@
         <opcode>
           <name>moogvcf2</name>
           <signature>ares 	moogvcf2	 asig, xfco, xres [,iscale, iskip]</signature>
+        </opcode>
+        <opcode>
+          <name>mvchpf</name>
+          <signature>asig 	mvchpf	 ain, xcf[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>mvclpf1</name>
+          <signature>asig 	mvclpf1	 ain, xcf, xres[,istor]</signature>
+        </opcode>
+        <opcode>
+          <name>mvclpf2</name>
+          <signature>asig 	mvclpf2	 ain, xcf, xres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>mvclpf3</name>
+          <signature>asig 	mvclpf3	 ain, xcf, xres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>mvclpf4</name>
+          <signature>asig1,asig2,asig3,asig4 	mvclpf4	 ain, xcf, xres[, istor]</signature>
         </opcode>
         <opcode>
           <name>reson</name>
@@ -3450,6 +3463,18 @@
         <signature>ktrig 	changed	 kvar1 [, kvar2,..., kvarN]</signature>
       </opcode>
       <opcode>
+        <name>changed2</name>
+        <signature>ktrig 	changed2	 kvar1 [, kvar2,..., kvarN]</signature>
+      </opcode>
+      <opcode>
+        <name>changed2</name>
+        <signature>ktrig 	changed2	 karr[]</signature>
+      </opcode>
+      <opcode>
+        <name>changed2</name>
+        <signature>ktrig 	changed2	 aarr[]</signature>
+      </opcode>
+      <opcode>
         <name>checkbox</name>
         <signature>kres 	checkbox	 knum</signature>
       </opcode>
@@ -3668,7 +3693,11 @@
     <opcodeGroup name="Time Reading">
       <opcode>
         <name>date</name>
-        <signature>ir 	date</signature>
+        <signature>ir[, inano] 	date</signature>
+      </opcode>
+      <opcode>
+        <name>date</name>
+        <signature>kr[, knano] 	date</signature>
       </opcode>
       <opcode>
         <name>dates</name>
@@ -3765,7 +3794,7 @@
     </opcode>
     <opcode>
       <name>JackoInit </name>
-      <signature>JackoInit 	SclientName, ServerName</signature>
+      <signature>JackoInit 	ServerName, SclientName</signature>
     </opcode>
     <opcode>
       <name>JackoMidiInConnect </name>
@@ -3877,6 +3906,10 @@
       <opcode>
         <name>fillarray</name>
         <signature>karray[] 	fillarray	 ival1, ival2,.....ivaln</signature>
+      </opcode>
+      <opcode>
+        <name>fillarray</name>
+        <signature>karray 	fillarray	 ival1, ival2,.....ivaln</signature>
       </opcode>
       <opcode>
         <name>ftchnls</name>
@@ -4169,6 +4202,14 @@
       <opcode>
         <name>ftloadk</name>
         <signature>ftloadk	 &quot;filename&quot;, ktrig, iflag, ifn1 [, ifn2] [...]</signature>
+      </opcode>
+      <opcode>
+        <name>ftsamplebank</name>
+        <signature>iNumberOfFile 	ftsamplebank	 SDirectory, iFirstTableNumber, iTrigger, iSkipTime, iFormat, iChannel,</signature>
+      </opcode>
+      <opcode>
+        <name>ftsamplebank</name>
+        <signature>kNumberOfFile 	ftsamplebank	 SDirectory, kFirstTableNumber, kTrigger, kSkipTime, kFormat, kChannel,</signature>
       </opcode>
       <opcode>
         <name>ftsave</name>
@@ -5645,6 +5686,10 @@
         <signature>kcent 	pvscent	 fsig</signature>
       </opcode>
       <opcode>
+        <name>pvsceps</name>
+        <signature>keps[] 	pvsceps	 fsig[, icoefs]</signature>
+      </opcode>
+      <opcode>
         <name>pvscross</name>
         <signature>fsig 	pvscross	 fsrc, fdest, kamp1, kamp2</signature>
       </opcode>
@@ -6410,6 +6455,10 @@
       <signature>asig 	sockrecv	 iport, ilength</signature>
     </opcode>
     <opcode>
+      <name>sockrecv</name>
+      <signature>ksig 	sockrecv	 iport, ilength</signature>
+    </opcode>
+    <opcode>
       <name>sockrecvs</name>
       <signature>asigl, asigr 	sockrecvs	 iport, ilength</signature>
     </opcode>
@@ -6853,6 +6902,10 @@
   </opcodeGroup>
   <opcodeGroup name="Miscellaneous">
     <opcode>
+      <name>directory</name>
+      <signature>SFiles[] 	directory	 SDirectory[, SExtention]</signature>
+    </opcode>
+    <opcode>
       <name>fareylen</name>
       <signature>kfl 	fareylen	 kfn</signature>
     </opcode>
@@ -6955,8 +7008,24 @@ inum_parm, kupdate</signature>
         <signature>kout[] 	rifft	 kin[]</signature>
       </opcode>
       <opcode>
+        <name>unwrap</name>
+        <signature>kout[] 	unwrap	 kin[] </signature>
+      </opcode>
+      <opcode>
         <name>window</name>
         <signature>kout[] 	window	 kin[][, koff, itype]</signature>
+      </opcode>
+    </opcodeGroup>
+  </opcodeGroup>
+  <opcodeGroup name="Arrays">
+    <opcodeGroup name=" Cepstrum">
+      <opcode>
+        <name>ceps</name>
+        <signature>keps[] 	ceps	 kmags[][, icoefs]</signature>
+      </opcode>
+      <opcode>
+        <name>cepsinv</name>
+        <signature>kenv 	cepsinv	 keps[]</signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
@@ -7009,5 +7078,51 @@ inum_parm, kupdate</signature>
       <name>ihandle,a1[,a2,...] faustgen</name>
       <signature>ihandle,a1[,a2,...] faustgen	 SCode[,ain1,...] </signature>
     </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="Array opcodes">
+    <opcode>
+      <name>getcol</name>
+      <signature>kout[] 	getcol	kin[],kcol</signature>
+    </opcode>
+    <opcode>
+      <name>getrow</name>
+      <signature>kout[] 	getrow	kin[],krow</signature>
+    </opcode>
+    <opcode>
+      <name>setcol</name>
+      <signature>kout[] 	setcol	kin[],kcol</signature>
+    </opcode>
+    <opcode>
+      <name>setrow</name>
+      <signature>kout[] 	setrow	kin[],krow</signature>
+    </opcode>
+    <opcode>
+      <name>shiftin</name>
+      <signature>kout[] 	shiftin	 asig</signature>
+    </opcode>
+    <opcode>
+      <name>shiftout</name>
+      <signature>asig 	shiftout	 kIn[][, ioff]</signature>
+    </opcode>
+  </opcodeGroup>
+  <opcodeGroup name="ignal Generators">
+    <opcodeGroup name="Random (Noise) Generators">
+      <opcode>
+        <name>jspline</name>
+        <signature>ares 	jspline	 xamp, kcpsMin, kcpsMax</signature>
+      </opcode>
+      <opcode>
+        <name>jspline</name>
+        <signature>kres 	jspline	 kamp, kcpsMin, kcpsMax</signature>
+      </opcode>
+      <opcode>
+        <name>rspline</name>
+        <signature>ares 	rspline	 xrangeMin, xrangeMax, kcpsMin, kcpsMax</signature>
+      </opcode>
+      <opcode>
+        <name>rspline</name>
+        <signature>kres 	rspline	 krangeMin, krangeMax, kcpsMin, kcpsMax</signature>
+      </opcode>
+    </opcodeGroup>
   </opcodeGroup>
 </CsoundOpcodes>
