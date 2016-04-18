@@ -57,13 +57,13 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
     public void mouseWheelMoved(MouseWheelEvent e) {
 
         int shortcutKey = BlueSystem.getMenuShortcutKey();
-
+		    
         if (e.isAltDown()) {
             
             if(timeState == null) {
                 return;
             }
-            int value = e.getWheelRotation();
+            double value = e.getPreciseWheelRotation();
 
             final int xLoc = e.getX();
             final float timeVal = xLoc / (float) timeState.getPixelSecond();
@@ -92,26 +92,24 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
             e.consume();
         } else if (e.isShiftDown()) {
 
-            int value = e.getWheelRotation();
+            double value = e.getPreciseWheelRotation();
 
-            value = (value > 0) ? 1 : -1;
+//            value = (value > 0) ? 1 : -1;
 
             JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
 
             scrollBar.setValue(
-                    scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+                    scrollBar.getValue() + (int)(value * scrollBar.getBlockIncrement()));
 
             e.consume();
         } else {
 
-            int value = e.getWheelRotation();
-
-            value = (value > 0) ? 1 : -1;
+            double value = e.getPreciseWheelRotation();
 
             JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
 
             scrollBar.setValue(
-                    scrollBar.getValue() + (value * scrollBar.getBlockIncrement()));
+                    scrollBar.getValue() + (int)(value * scrollBar.getBlockIncrement()));
 
             e.consume();
         }

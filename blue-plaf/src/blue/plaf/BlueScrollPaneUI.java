@@ -51,10 +51,10 @@ public class BlueScrollPaneUI extends MetalScrollPaneUI {
         public void mouseWheelMoved(MouseWheelEvent e) {
             
             if (scrollpane.isWheelScrollingEnabled() &&
-                e.getWheelRotation() != 0) {
+                e.getPreciseWheelRotation() != 0) {
                 
                 JScrollBar toScroll = scrollpane.getVerticalScrollBar();
-                int direction = e.getWheelRotation() < 0 ? -1 : 1;
+                int direction = e.getPreciseWheelRotation() < 0 ? -1 : 1;
                 int orientation = SwingConstants.VERTICAL;
                 
                 // find which scrollbar to scroll, or return if none
@@ -82,7 +82,7 @@ public class BlueScrollPaneUI extends MetalScrollPaneUI {
                     // Component with the wheel.  To make for more accurate
                     // low-speed scrolling, we limit scrolling to the block
                     // increment if the wheel was only rotated one click.
-                    boolean limitScroll = Math.abs(e.getWheelRotation()) == 1;
+                    boolean limitScroll = Math.abs(e.getPreciseWheelRotation()) <= 1;
 
                     // Check if we should use the visibleRect trick
                     Object fastWheelScroll = toScroll.getClientProperty(

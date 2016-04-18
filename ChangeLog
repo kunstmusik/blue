@@ -116,6 +116,8 @@ FIX
 * Redid BlueLive trigger mechanism to use sample-accurate, synchronous 
   processing of time for repeats to remove jitter
 
+* Windows: Fixed trackpad scrolling 
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
