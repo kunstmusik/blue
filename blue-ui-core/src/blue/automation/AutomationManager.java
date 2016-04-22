@@ -36,10 +36,10 @@ import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.soundObject.PolyObject;
+import blue.ui.utilities.MenuScroller;
 import blue.util.ObservableListEvent;
 import blue.util.ObservableListListener;
 import java.awt.Color;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,11 +50,9 @@ import java.util.Iterator;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.windows.WindowManager;
 
 /**
  * Controller to handle synchronizing of UI with time, directing single edits in
@@ -323,6 +321,7 @@ public class AutomationManager implements ParameterListListener,
 
         // Build Instrument Menu
         JMenu instrRoot = new JMenu("Instrument");
+	MenuScroller.setScrollerFor(instrRoot);
 
         Arrangement arrangement = data.getArrangement();
 
@@ -339,14 +338,10 @@ public class AutomationManager implements ParameterListListener,
 
                         
                 final JMenu instrMenu = new JMenu();
+		MenuScroller.setScrollerFor(instrMenu);
+
                 instrMenu.setText(ia.arrangementId + ") " + ia.instr.getName());
 
-
-                int itemsMax = (Toolkit.getDefaultToolkit().getScreenSize().height - 80) / 
-                        instrMenu.getPreferredSize().height;
-                int count = 0;
-                JMenu currentMenu = instrMenu;
-                
                 for (int j = 0; j < params.size(); j++) {
                     Parameter param = params.getParameter(j);
                     JMenuItem paramItem = new JMenuItem();
@@ -365,13 +360,7 @@ public class AutomationManager implements ParameterListListener,
                     paramItem.putClientProperty("instr", ia.instr);
                     paramItem.putClientProperty("param", param);
 
-                    currentMenu.add(paramItem);
-                    if(++count >= itemsMax) {
-                        count = 0;
-                        JMenu moreMenu = new JMenu("More...");
-                        currentMenu.add(moreMenu);
-                        currentMenu = moreMenu;
-                    }
+                    instrMenu.add(paramItem);
                 }
                 instrRoot.add(instrMenu);
             }
@@ -384,7 +373,7 @@ public class AutomationManager implements ParameterListListener,
 
         if (mixer.isEnabled()) {
             JMenu mixerRoot = new JMenu("Mixer");
-
+	    MenuScroller.setScrollerFor(mixerRoot);
             // add channels
             ChannelList channels = mixer.getChannels();
 
@@ -465,6 +454,7 @@ public class AutomationManager implements ParameterListListener,
         if (preEffects.size() > 0) {
             JMenu preMenu = new JMenu("Pre-Effects");
             retVal.add(preMenu);
+	    MenuScroller.setScrollerFor(preMenu);
 
             for (int i = 0; i < preEffects.size(); i++) {
                 Automatable automatable = (Automatable) preEffects.getElementAt(
@@ -474,6 +464,7 @@ public class AutomationManager implements ParameterListListener,
 
                 if (params.size() > 0) {
                     JMenu effectMenu = new JMenu();
+		    MenuScroller.setScrollerFor(effectMenu);
 
                     if (automatable instanceof Effect) {
                         effectMenu.setText(((Effect) automatable).getName());
@@ -531,6 +522,7 @@ public class AutomationManager implements ParameterListListener,
 
         if (postEffects.size() > 0) {
             JMenu postMenu = new JMenu("Post-Effects");
+	    MenuScroller.setScrollerFor(postMenu);
             retVal.add(postMenu);
 
             for (int i = 0; i < postEffects.size(); i++) {
@@ -541,6 +533,7 @@ public class AutomationManager implements ParameterListListener,
 
                 if (params.size() > 0) {
                     JMenu effectMenu = new JMenu();
+		    MenuScroller.setScrollerFor(effectMenu);
 
                     if (automatable instanceof Effect) {
                         effectMenu.setText(((Effect) automatable).getName());
