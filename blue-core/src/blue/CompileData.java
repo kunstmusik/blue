@@ -19,8 +19,13 @@
  */
 package blue;
 
+import blue.automation.Automatable;
+import blue.automation.ParameterList;
 import blue.mixer.Channel;
 import blue.orchestra.Instrument;
+import blue.orchestra.blueSynthBuilder.StringChannel;
+import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +45,8 @@ public class CompileData {
     private final Tables tables;
     private final Map<Channel, Integer> channelIdAssignments;
     private final Map<Instrument, String> instrSourceId;
+    private boolean handleParametersAndChannels = true;
+    
 
     public static CompileData createEmptyCompileData() {
         CompileData compileData = new CompileData(
@@ -47,19 +54,60 @@ public class CompileData {
         return compileData;
     }
     
+    private ArrayList<StringChannel> stringChannels = null;
+    private ArrayList originalParameters = null;
+    private StringChannelNameManager scnm = null;
+
+    
     public CompileData(Arrangement arrangement, Tables tables) {
         this.arrangement = arrangement;
         this.tables = tables;
         channelIdAssignments = new HashMap<>();
         instrSourceId = new HashMap<>();
+        setHandleParametersAndChannels(false);
     }
 
+    public CompileData(Arrangement arrangement, Tables tables, ArrayList<StringChannel> stringChannels, ArrayList originalParameters, StringChannelNameManager scnm) {
+        this.arrangement = arrangement;
+        this.tables = tables;
+        this.stringChannels = stringChannels;
+        this.originalParameters = originalParameters;
+        this.scnm = scnm;
+        
+        channelIdAssignments = new HashMap<>();
+        instrSourceId = new HashMap<>();
+        setHandleParametersAndChannels(true);
+    }
+
+    public void setHandleParametersAndChannels(boolean handleParametersAndChannels) {
+        this.handleParametersAndChannels = handleParametersAndChannels;
+    }
+
+    
+    
     /** 
      * Adds and instrument to the Arrangement 
      * @return instrument id that was assigned
      */
     
     public int addInstrument(Instrument instrument) {
+        if(handleParametersAndChannels && stringChannels != null && originalParameters != null) {
+            if(instrument instanceof Automatable) {
+                Automatable auto = (Automatable) instrument;
+                ArrayList<StringChannel> tempStringChannels = auto.getStringChannels();
+                if(tempStringChannels != null) {
+                    stringChannels.addAll(tempStringChannels);
+                    
+                    for(StringChannel sChan : tempStringChannels) {
+                        sChan.setChannelName(scnm.getUniqueStringChannel());
+                    }
+                }
+                ParameterList paramList = auto.getParameterList();
+                if(paramList != null) {
+                    originalParameters.addAll(paramList.getParameters());
+                }
+            }
+        }
         return arrangement.addInstrument(instrument);
     }
 

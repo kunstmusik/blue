@@ -49,6 +49,8 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
     private BSBCodeEditor codeEditor = new BSBCodeEditor();
 
     private EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
+        
+    JLabel label = new JLabel("[ Blue Synth Builder ]");
 
     public BlueSynthBuilderEditor() {
         JTabbedPane tabs = new JTabbedPane();
@@ -56,12 +58,14 @@ public class BlueSynthBuilderEditor extends InstrumentEditor {
         tabs.add(BlueSystem.getString("instrument.code"), codeEditor);
         tabs.add(BlueSystem.getString("instrument.udo"), udoPanel);
 
-        JLabel label = new JLabel("[ Blue Synth Builder ]");
-
         this.setLayout(new BorderLayout());
         this.add(label, BorderLayout.NORTH);
         this.add(tabs, BorderLayout.CENTER);
 
+    }
+    
+    public void setLabelText(String labelText) {
+        this.label.setText(labelText);
     }
 
     @Override

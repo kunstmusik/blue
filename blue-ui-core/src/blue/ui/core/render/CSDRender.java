@@ -61,8 +61,10 @@ public class CSDRender extends CSDRenderService {
     protected synchronized CsdRenderResult generateCSDForBlueLiveImpl(
             BlueData data, boolean usingAPI) {
 
+        StringChannelNameManager scnm = new StringChannelNameManager();
+
         ArrayList<StringChannel> stringChannels = getStringChannels(
-                data.getArrangement());
+                data.getArrangement(), scnm);
 
         ParameterHelper.clearCompilationVarNames(data);
 
@@ -108,7 +110,7 @@ public class CSDRender extends CSDRenderService {
         }
 
         boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
-        
+
         int nchnls = getNchnls(data, true);
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
@@ -118,7 +120,6 @@ public class CSDRender extends CSDRenderService {
         String globalSco = globalOrcSco.getGlobalSco() + "\n";
         globalSco += arrangement.generateGlobalSco(compileData) + "\n";
         globalSco = preprocessSco(globalSco, totalDur, 0, 0, null);
-
 
         NoteList generatedNotes = null;
 
@@ -140,7 +141,6 @@ public class CSDRender extends CSDRenderService {
         if (generateMixer) {
 
             clearUnusedMixerChannels(mixer, arrangement);
-
 
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(compileData,
                     nchnls));
@@ -185,8 +185,10 @@ public class CSDRender extends CSDRenderService {
     protected CsdRenderResult generateCSDImpl(BlueData data,
             float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
 
+        StringChannelNameManager scnm = new StringChannelNameManager();
+
         ArrayList<StringChannel> stringChannels = getStringChannels(
-                data.getArrangement());
+                data.getArrangement(), scnm);
 
         ParameterHelper.clearCompilationVarNames(data);
 
@@ -207,13 +209,26 @@ public class CSDRender extends CSDRenderService {
 //                    data.getArrangement(), data.getMixer());
 //        }
 
-        assignParameterNames(originalParameters);
-
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
-        CompileData compileData = new CompileData(arrangement, tables);
+        CompileData compileData = new CompileData(arrangement, tables, 
+                stringChannels, originalParameters, scnm);
+
+        NoteList generatedNotes;
+        try {
+            generatedNotes = data.getScore().generateForCSD(compileData,
+                    startTime, endTime);
+            System.out.println("TESTING");
+        } catch (ScoreGenerationException ex) {
+            throw new RuntimeException(ex);
+        }
+        
+        compileData.setHandleParametersAndChannels(false);
+
+        assignParameterNames(originalParameters);
+
         Mixer mixer = null;
         boolean mixerEnabled = data.getMixer().isEnabled();
 
@@ -244,14 +259,6 @@ public class CSDRender extends CSDRenderService {
 
         // generating ftables
         arrangement.generateFTables(tables);
-
-        NoteList generatedNotes;
-        try {
-            generatedNotes = data.getScore().generateForCSD(compileData,
-                    startTime, endTime);
-        } catch (ScoreGenerationException ex) {
-            throw new RuntimeException(ex);
-        }
 
         String ftables = tables.getTables();
 
@@ -293,13 +300,11 @@ public class CSDRender extends CSDRenderService {
         System.out.println("<RENDER_START> = " + renderStartTime);
         System.out.println("<PROCESSING_START> = " + processingStart);
 
-
         int nchnls = getNchnls(data, isRealTime);
 
         ArrayList<Instrument> alwaysOnInstruments = new ArrayList<>();
 
 //        boolean generateMixer = mixerEnabled && (hasInstruments || mixer.hasSubChannelDependencies());
-        
         arrangement.preGenerateOrchestra(compileData, mixer, nchnls,
                 alwaysOnInstruments);
 
@@ -324,7 +329,7 @@ public class CSDRender extends CSDRenderService {
         if (mixerEnabled) {
             globalDur += mixer.getExtraRenderTime();
         }
-        
+
         for (Instrument instrument : alwaysOnInstruments) {
             int instrId = arrangement.addInstrumentAtEnd(instrument);
 
@@ -340,7 +345,6 @@ public class CSDRender extends CSDRenderService {
         if (mixerEnabled) {
 
             //globalDur += mixer.getExtraRenderTime();
-
             clearUnusedMixerChannels(mixer, arrangement);
 
             globalOrcSco.appendGlobalOrc(mixer.getInitStatements(
@@ -394,9 +398,9 @@ public class CSDRender extends CSDRenderService {
         return renderResult;
     }
 
-    private ArrayList<StringChannel> getStringChannels(Arrangement arrangement) {
+    private ArrayList<StringChannel> getStringChannels(Arrangement arrangement,
+                    StringChannelNameManager scnm) {
         ArrayList<StringChannel> params = new ArrayList<>();
-        StringChannelNameManager scnm = new StringChannelNameManager();
 
         for (int i = 0; i < arrangement.size(); i++) {
             InstrumentAssignment ia = arrangement.getInstrumentAssignment(i);
@@ -588,7 +592,7 @@ public class CSDRender extends CSDRenderService {
         score.append("</CsScore>\n\n");
     }
 
-    private void appendCsInstruments(CompileData compileData, BlueData data, 
+    private void appendCsInstruments(CompileData compileData, BlueData data,
             OpcodeList udos, Arrangement arrangement, GlobalOrcSco globalOrcSco,
             StrBuilder score, Mixer mixer, boolean isRealTime) {
 
@@ -793,7 +797,7 @@ public class CSDRender extends CSDRenderService {
                 paramScore.append(instrId).append("\t");
                 paramScore.append(
                         NumberUtilities.formatFloat(start - renderStart)).append(
-                                "\t");
+                        "\t");
                 paramScore.append(".0001\t");
                 paramScore.append(NumberUtilities.formatFloat(endVal)).append(
                         "\n");
@@ -1090,7 +1094,7 @@ public class CSDRender extends CSDRenderService {
         return mapper;
     }
 
-     private void assignChannelIds(CompileData compileData, Mixer mixer) {
+    private void assignChannelIds(CompileData compileData, Mixer mixer) {
 
         Map<Channel, Integer> assignments = compileData.getChannelIdAssignments();
         int i = 0;

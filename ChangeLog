@@ -30,6 +30,13 @@ NEW
 
 UPDATED
 
+* Sound - modified to use BlueSynthBuilder object as backing instrument. Extends 
+  single-use instrument idea of previous Sound object to work with an interface 
+  modifiable in realtime, similar to Kyma-style objects.
+
+* Added "Paste BSB as Sound" action to score timeline popup menu to paste a BSB
+  Object from the copy buffer into the Score as a Sound soundObject
+
 * BlueSynthBuilder - Replaced Knob with new style implemented with JavaFX
 
 * Moved to using Java 8. NOTE: Java 8 JDK or JRE is now required for running 
