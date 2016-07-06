@@ -503,7 +503,7 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                 for (int i = 0; i < parameters.size(); i++) {
                     param = (Parameter) parameters.get(i);
-                    String varName = param.getCompilationVarName();
+//                    String varName = param.getCompilationVarName();
 
                     if (blueData == null) {
                         value = param.getValue(currentTime);
@@ -519,8 +519,8 @@ public class CS6RealtimeRenderService implements RealtimeRenderService, PlayMode
 
                 for (StringChannel strChannel : stringChannels) {
                     if (strChannel.isDirty()) {
-                        System.out.println(
-                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
+//                        System.out.println(
+//                                "Setting Channel: " + strChannel.getChannelName() + " : " + strChannel.getValue());
                         csound.SetChannel(strChannel.getChannelName(),
                                 strChannel.getValue());
                     }
