@@ -7,6 +7,7 @@ package blue.ui.core.render;
  * @author steven yi
  * @version 1.0
  */
+import blue.automation.ParameterNameManager;
 import blue.Arrangement;
 import blue.BlueConstants;
 import blue.BlueData;
@@ -78,7 +79,7 @@ public class CSDRender extends CSDRenderService {
         if (usingAPI) {
             originalParameters = ParameterHelper.getAllParameters(
                     data.getArrangement(), data.getMixer());
-            assignParameterNames(originalParameters);
+            assignParameterNames(originalParameters, new ParameterNameManager());
         }
 
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
@@ -186,6 +187,7 @@ public class CSDRender extends CSDRenderService {
             float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
 
         StringChannelNameManager scnm = new StringChannelNameManager();
+        ParameterNameManager pnm = new ParameterNameManager();
 
         ArrayList<StringChannel> stringChannels = getStringChannels(
                 data.getArrangement(), scnm);
@@ -208,26 +210,26 @@ public class CSDRender extends CSDRenderService {
 //            originalParameters = ParameterHelper.getActiveParameters(
 //                    data.getArrangement(), data.getMixer());
 //        }
+        assignParameterNames(originalParameters, pnm);
 
         Arrangement arrangement = (Arrangement) data.getArrangement().clone();
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
         CompileData compileData = new CompileData(arrangement, tables, 
-                stringChannels, originalParameters, scnm);
+                stringChannels, originalParameters, scnm, pnm);
 
         NoteList generatedNotes;
         try {
             generatedNotes = data.getScore().generateForCSD(compileData,
                     startTime, endTime);
-            System.out.println("TESTING");
         } catch (ScoreGenerationException ex) {
             throw new RuntimeException(ex);
         }
         
         compileData.setHandleParametersAndChannels(false);
 
-        assignParameterNames(originalParameters);
+//        assignParameterNames(originalParameters);
 
         Mixer mixer = null;
         boolean mixerEnabled = data.getMixer().isEnabled();
@@ -911,15 +913,10 @@ public class CSDRender extends CSDRenderService {
         return buffer.toString();
     }
 
-    private void assignParameterNames(ArrayList parameters) {
-        Object[] varNum = new Object[1];
-
+    private void assignParameterNames(ArrayList parameters, ParameterNameManager pnm) {
         for (int i = 0; i < parameters.size(); i++) {
             Parameter param = (Parameter) parameters.get(i);
-            varNum[0] = Integer.toString(i);
-            String varName = PARAM_VAR_NAME.format(varNum);
-
-            param.setCompilationVarName(varName);
+            param.setCompilationVarName(pnm.getUniqueParamName());
         }
     }
 

@@ -20,7 +20,9 @@
 package blue;
 
 import blue.automation.Automatable;
+import blue.automation.Parameter;
 import blue.automation.ParameterList;
+import blue.automation.ParameterNameManager;
 import blue.mixer.Channel;
 import blue.orchestra.Instrument;
 import blue.orchestra.blueSynthBuilder.StringChannel;
@@ -57,6 +59,7 @@ public class CompileData {
     private ArrayList<StringChannel> stringChannels = null;
     private ArrayList originalParameters = null;
     private StringChannelNameManager scnm = null;
+    private ParameterNameManager pnm;
 
     
     public CompileData(Arrangement arrangement, Tables tables) {
@@ -67,12 +70,16 @@ public class CompileData {
         setHandleParametersAndChannels(false);
     }
 
-    public CompileData(Arrangement arrangement, Tables tables, ArrayList<StringChannel> stringChannels, ArrayList originalParameters, StringChannelNameManager scnm) {
+    public CompileData(Arrangement arrangement, Tables tables, 
+            ArrayList<StringChannel> stringChannels, 
+            ArrayList originalParameters, StringChannelNameManager scnm,
+            ParameterNameManager pnm) {
         this.arrangement = arrangement;
         this.tables = tables;
         this.stringChannels = stringChannels;
         this.originalParameters = originalParameters;
         this.scnm = scnm;
+        this.pnm = pnm;
         
         channelIdAssignments = new HashMap<>();
         instrSourceId = new HashMap<>();
@@ -105,6 +112,9 @@ public class CompileData {
                 ParameterList paramList = auto.getParameterList();
                 if(paramList != null) {
                     originalParameters.addAll(paramList.getParameters());
+                    for(Parameter param : paramList.getParameters()) {
+                        param.setCompilationVarName(pnm.getUniqueParamName());
+                    }
                 }
             }
         }
