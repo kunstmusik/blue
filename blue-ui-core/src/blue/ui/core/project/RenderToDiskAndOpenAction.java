@@ -32,7 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.windows.WindowManager;
 
-public final class RenderToDiskAndPlayAction implements ActionListener {
+public final class RenderToDiskAndOpenAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -42,22 +42,24 @@ public final class RenderToDiskAndPlayAction implements ActionListener {
             BlueData data = project.getData();
 
             if (data != null) {
-                RenderToDiskUtility.getInstance().renderToDisk(data,
+                RenderToDiskUtility.getInstance().renderToDisk(data, 
                         f -> {
                             DiskRenderSettings settings = 
                                     DiskRenderSettings.getInstance();
 
-                            if (settings.externalPlayCommandEnabled) {
-                                String command = settings.externalPlayCommand;
-                                command = command.replaceAll("\\$outfile",
-                                        f.getAbsolutePath());
+                                String command = settings.externalOpenCommand;
+//                                command = command.replaceAll("\\$outfile",
+//                                        f.getAbsolutePath());
 
                                 try {
-
                                     if (System.getProperty("os.name").indexOf(
                                     "Windows") >= 0) {
+                                        String p = f.getAbsolutePath().replace("\\", "\\\\");
+                                        command = command.replaceAll("\\$outfile", p);
                                         Runtime.getRuntime().exec(command);
                                     } else {
+                                        command = command.replaceAll("\\$outfile",
+                                        f.getAbsolutePath());
                                         String[] cmdArray = ProcessConsole.
                                         splitCommandString(command);
                                         Runtime.getRuntime().exec(cmdArray);
@@ -75,20 +77,7 @@ public final class RenderToDiskAndPlayAction implements ActionListener {
                                             getLocalizedMessage());
                                     ex.printStackTrace();
                                 }
-                            } else {
-                                SwingUtilities.invokeLater(
-                                        new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        AudioFilePlayerTopComponent tc
-                                                = (AudioFilePlayerTopComponent) WindowManager.getDefault().
-                                                findTopComponent(
-                                                        "AudioFilePlayerTopComponent");
-                                        tc.setAudioFile(f);
-                                    }
-                                });
-                            }
-
+                            
                         });
             }
 

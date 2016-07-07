@@ -49,6 +49,7 @@ public class DiskRenderSettings implements Serializable {
     private static final String DITHER_OUTPUT = "ditherOutput";
     private static final String EXTERNAL_PLAY_COMMAND = "externalPlayCommand";
     private static final String EXTERNAL_PLAY_COMMAND_ENABLED = "externalPlayCommandEnabled";
+    private static final String EXTERNAL_OPEN_COMMAND = "externalOpenCommand";
     private static final String FILE_FORMAT = "fileFormat";
     private static final String FILE_FORMAT_ENABLED = "fileFormatEnabled";
     private static final String NOTE_AMPS_ENABLED = "noteAmpsEnabled";
@@ -79,6 +80,7 @@ public class DiskRenderSettings implements Serializable {
     public boolean rewriteHeader = false;
     public boolean externalPlayCommandEnabled = false;
     public String externalPlayCommand = "command $outfile";
+    public String externalOpenCommand = "command $outfile";
     public boolean displaysDisabled = true;
     public String advancedSettings = "";
     public boolean useZeroDbFS = true;
@@ -138,6 +140,10 @@ public class DiskRenderSettings implements Serializable {
             instance.externalPlayCommand = prefs.get(
                     PREFIX + EXTERNAL_PLAY_COMMAND,
                     "command $outfile");
+            instance.externalOpenCommand = prefs.get(
+                    PREFIX + EXTERNAL_OPEN_COMMAND,
+                    "command $outfile");
+
 
             instance.fileFormatEnabled = prefs.getBoolean(
                     PREFIX + FILE_FORMAT_ENABLED, true);
@@ -194,6 +200,7 @@ public class DiskRenderSettings implements Serializable {
         prefs.putBoolean(PREFIX + EXTERNAL_PLAY_COMMAND_ENABLED,
                 externalPlayCommandEnabled);
         prefs.put(PREFIX + EXTERNAL_PLAY_COMMAND, externalPlayCommand);
+        prefs.put(PREFIX + EXTERNAL_OPEN_COMMAND, externalOpenCommand);
 
         prefs.putBoolean(PREFIX + FILE_FORMAT_ENABLED, fileFormatEnabled);
         prefs.put(PREFIX + FILE_FORMAT, fileFormat);

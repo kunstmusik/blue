@@ -28,6 +28,10 @@ NEW
 
 * Issue #313 - added Test button to PianoRoll
 
+* Issue #279 - added "Render to Disk and Open" action; will use command 
+  configured in program options for disk render to open the rendered file after
+  rendering (e.g., render and open with Audacity)
+
 UPDATED
 
 * Sound - modified to use BlueSynthBuilder object as backing instrument. Extends 

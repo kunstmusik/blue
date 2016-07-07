@@ -89,6 +89,13 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
+            <file name="blue-ui-core-project-RenderToDiskAndOpenAction.instance">
+                <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
+                <attr name="delegate" newvalue="blue.ui.core.project.RenderToDiskAndOpenAction"/>
+                <attr name="displayName" bundlevalue="blue.ui.core.project.Bundle#CTL_RenderToDiskAndOpenAction"/>
+                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
             <file name="blue-ui-core-project-ToggleLoopRenderingAction.instance">
                 <attr name="SystemFileSystem.localizingBundle" stringvalue="blue.ui.core.Bundle"/>
                 <attr name="delegate" newvalue="blue.ui.core.project.ToggleLoopRenderingAction"/>
@@ -160,6 +167,10 @@
             <file name="blue-ui-core-project-RenderToDiskAndPlayAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAndPlayAction.instance"/>
                 <attr name="position" intvalue="1610"/>
+            </file>
+            <file name="blue-ui-core-project-RenderToDiskAndOpenAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Project/blue-ui-core-project-RenderToDiskAndOpenAction.instance"/>
+                <attr name="position" intvalue="1613"/>
             </file>
         </folder>
 

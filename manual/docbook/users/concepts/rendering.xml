@@ -91,6 +91,20 @@
       
     </simplesect>    
     
+    <simplesect>
+      <title>Render to Disk and Open</title>
+
+      <para>
+        The Render to Disk and Open option will use the project's Disk Render
+        Options from its project properties to generate a soundfile on disk and
+        after finishing, open the generated file using the configured command
+        with the program options. This command may differ from the external 
+        command to use with "Render to Disk and Play". To use this option,
+        you can use the "File-&gt;Render to Disk and Open" menu option.
+      </para>
+      
+    </simplesect>  
+    
   </section>
 
 

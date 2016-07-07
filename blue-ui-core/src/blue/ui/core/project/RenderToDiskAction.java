@@ -35,7 +35,7 @@ public final class RenderToDiskAction implements ActionListener {
             BlueData data = project.getData();
 
             if(data != null) {
-                RenderToDiskUtility.getInstance().renderToDisk(data, false);
+                RenderToDiskUtility.getInstance().renderToDisk(data, null);
             }
 
         }

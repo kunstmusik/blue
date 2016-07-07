@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.awt.HtmlBrowser.URLDisplayer;
@@ -59,6 +58,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         nchnlsText.getDocument().addDocumentListener(changeListener);
 
         externalCommandText.getDocument().addDocumentListener(changeListener);
+        externalOpenCommandText.getDocument().addDocumentListener(changeListener);
 
         advancedText.getDocument().addDocumentListener(changeListener);
         zeroDBFSText.getDocument().addDocumentListener(changeListener);
@@ -115,6 +115,9 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
         jButton1 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         renderServiceComboBox = new javax.swing.JComboBox();
+        jPanel8 = new javax.swing.JPanel();
+        jLabel7 = new javax.swing.JLabel();
+        externalOpenCommandText = new javax.swing.JTextField();
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.jPanel2.border.title_1"))); // NOI18N
 
@@ -490,7 +493,31 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(jLabel6)
                 .addComponent(renderServiceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(20, Short.MAX_VALUE))
+    );
+
+    jPanel8.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.jPanel8.border.title"))); // NOI18N
+
+    org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.jLabel7.text")); // NOI18N
+
+    externalOpenCommandText.setText(org.openide.util.NbBundle.getMessage(DiskRenderSettingsPanel.class, "DiskRenderSettingsPanel.externalOpenCommandText.text")); // NOI18N
+
+    javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+    jPanel8.setLayout(jPanel8Layout);
+    jPanel8Layout.setHorizontalGroup(
+        jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel8Layout.createSequentialGroup()
+            .addGap(27, 27, 27)
+            .addComponent(jLabel7)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(externalOpenCommandText, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+            .addContainerGap())
+    );
+    jPanel8Layout.setVerticalGroup(
+        jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+            .addComponent(jLabel7)
+            .addComponent(externalOpenCommandText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
 
     javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -506,18 +533,21 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addContainerGap())
     );
     layout.setVerticalGroup(
         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(layout.createSequentialGroup()
             .addGap(14, 14, 14)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -635,6 +665,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
         externalCommandBox.setSelected(settings.externalPlayCommandEnabled);
         externalCommandText.setText(settings.externalPlayCommand);
+        externalOpenCommandText.setText(settings.externalOpenCommand);
 
         fileFormatCBox.setSelected(settings.fileFormatEnabled);
         fileFormatCombo.setSelectedItem(settings.fileFormat);
@@ -671,6 +702,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
 
         settings.externalPlayCommandEnabled = externalCommandBox.isSelected();
         settings.externalPlayCommand = externalCommandText.getText();
+        settings.externalOpenCommand = externalOpenCommandText.getText();
 
         settings.fileFormatEnabled = fileFormatCBox.isSelected();
         settings.fileFormat = fileFormatCombo.getSelectedItem().toString();
@@ -710,6 +742,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox ditherOutputCBox;
     private javax.swing.JCheckBox externalCommandBox;
     private javax.swing.JTextField externalCommandText;
+    private javax.swing.JTextField externalOpenCommandText;
     private javax.swing.JCheckBox fileFormatCBox;
     private javax.swing.JComboBox fileFormatCombo;
     private javax.swing.JButton jButton1;
@@ -720,6 +753,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -727,6 +761,7 @@ final class DiskRenderSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
     private javax.swing.JTextField ksmpsText;
     private javax.swing.JTextField nchnlsText;
     private javax.swing.JCheckBox noteAmpCBox;
