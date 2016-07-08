@@ -19,6 +19,7 @@
  */
 package blue.score.layers.audio.ui;
 
+import blue.ui.utilities.RedispatchMouseAdapter;
 import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
@@ -33,9 +34,13 @@ import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
@@ -48,7 +53,8 @@ import org.openide.windows.WindowManager;
  */
 public class AudioClipPanel extends JPanel
         implements PropertyChangeListener, ScoreObjectListener,
-        ScoreObjectView<AudioClip>, LookupListener {
+        ScoreObjectView<AudioClip>, LookupListener,
+        ChangeListener<Number> {
 
     protected static final AudioWaveformCache waveformCache
             = AudioWaveformCache.getInstance();
@@ -70,6 +76,60 @@ public class AudioClipPanel extends JPanel
 
     AudioWaveformData waveData = null;
 
+    MouseAdapter mouseAdapter = new RedispatchMouseAdapter() {
+        boolean active = false;
+        int startX = 0;
+        private float initialStartTime = 0.0f;
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (active) {
+                int xDiff = e.getX() - startX;
+
+                if (xDiff == 0) {
+                    audioClip.setFileStartTime(initialStartTime);
+                } else {
+                    float newTime = initialStartTime
+                            - ((float) xDiff / timeState.getPixelSecond());
+                    newTime = Math.max(0.0f, newTime);
+                    newTime = Math.min(audioClip.getAudioDuration() - audioClip.getDuration(), newTime);
+                    audioClip.setFileStartTime(newTime);
+                }
+
+                e.consume();
+            } else {
+                redispatchEvent(e);
+            }
+        }
+
+        @Override
+
+        public void mouseReleased(MouseEvent e) {
+            if (active) {
+                e.consume();
+                active = false;
+                startX = -1;
+                initialStartTime = -1.0f;
+            } else {
+                redispatchEvent(e);
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (e.isAltDown()) {
+                active = true;
+                startX = e.getX();
+                initialStartTime = audioClip.getFileStartTime();
+                e.consume();
+            } else {
+                redispatchEvent(e);
+                active = false;
+            }
+        }
+
+    };
+
     public AudioClipPanel(AudioClip audioClip, TimeState timeState) {
         this.audioClip = audioClip;
         this.timeState = timeState;
@@ -87,27 +147,38 @@ public class AudioClipPanel extends JPanel
         super.addNotify();
 
         audioClip.addScoreObjectListener(this);
+        audioClip.fileStartTimeProperty().addListener(this);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
                 "ScoreTopComponent");
-        result = scoreTopComponent.getLookup().lookupResult(AudioClip.class);
+        result
+                = scoreTopComponent.getLookup().lookupResult(AudioClip.class
+                );
 
         result.addLookupListener(this);
 
         Collection<? extends AudioClip> soundObjects = result.allInstances();
         setSelected(soundObjects.contains(this.audioClip));
         updateWaveformData();
+
+        this.addMouseListener(mouseAdapter);
+        this.addMouseMotionListener(mouseAdapter);
     }
 
     @Override
     public void removeNotify() {
         audioClip.removeScoreObjectListener(this);
+        audioClip.fileStartTimeProperty().removeListener(this);
+
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
         result = null;
 
         this.waveData = null;
+
+        this.removeMouseListener(mouseAdapter);
+        this.removeMouseMotionListener(mouseAdapter);
 
         super.removeNotify();
     }
@@ -218,9 +289,9 @@ public class AudioClipPanel extends JPanel
 
     protected void reset() {
         int pixelSecond = timeState.getPixelSecond();
-            double x = audioClip.getStartTime() * pixelSecond;
-            double width = audioClip.getSubjectiveDuration() * pixelSecond;
-            setBounds((int) x, getY(), (int) width, getHeight());
+        double x = audioClip.getStartTime() * pixelSecond;
+        double width = audioClip.getSubjectiveDuration() * pixelSecond;
+        setBounds((int) x, getY(), (int) width, getHeight());
     }
 
     @Override
@@ -246,5 +317,10 @@ public class AudioClipPanel extends JPanel
                     break;
             }
         }
+    }
+
+    @Override
+    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+        repaint();
     }
 }

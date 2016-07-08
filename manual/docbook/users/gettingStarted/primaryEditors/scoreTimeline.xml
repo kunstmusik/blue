@@ -280,7 +280,8 @@
         to time 3.0, both the start of the clip and audio file start will be set to 3.0.  This
         means that 3.0 beats into the project, the audio clip will start rendering from 3.0
         seconds into the file.  If you drag from the right hand side, it will alter the duration
-        of the audio clip. 
+        of the audio clip. If you hold down the alt key, then press and drag the mouse, you can
+        alter just the file start time.
       </para>
       
       <para>
