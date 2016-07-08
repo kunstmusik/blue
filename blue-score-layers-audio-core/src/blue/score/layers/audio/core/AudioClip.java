@@ -312,19 +312,19 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
     }
 
     public void setFadeInType(FadeType fadeType) {
-       this.fadeInType.setValue(fadeType);
+        this.fadeInType.setValue(fadeType);
     }
 
     public ObjectProperty<FadeType> fadeInTypeProperty() {
         return fadeInType;
     }
-    
+
     public FadeType getFadeOutType() {
         return this.fadeOutType.getValue();
     }
 
     public void setFadeOutType(FadeType fadeType) {
-       this.fadeOutType.setValue(fadeType);
+        this.fadeOutType.setValue(fadeType);
     }
 
     public ObjectProperty<FadeType> fadeOutTypeProperty() {
@@ -476,7 +476,9 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         out.writeObject(getAudioFile());
         out.writeFloat(getFileStartTime());
         out.writeFloat(getFadeIn());
+        out.writeObject(getFadeInType());
         out.writeFloat(getFadeOut());
+        out.writeObject(getFadeOutType());
     }
 
     @Override
@@ -488,7 +490,9 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         setAudioFile((File) in.readObject());
         setFileStartTime(in.readFloat());
         setFadeIn(in.readFloat());
+        setFadeInType((FadeType) in.readObject());
         setFadeOut(in.readFloat());
+        setFadeOutType((FadeType) in.readObject());
     }
 
 }
