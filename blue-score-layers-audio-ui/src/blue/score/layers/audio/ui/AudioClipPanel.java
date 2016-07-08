@@ -240,7 +240,7 @@ public class AudioClipPanel extends JPanel
 
         g.translate(1, 2);
 
-        int audioFileStart = (int) audioClip.getFileStartTime() * timeState.getPixelSecond();
+        int audioFileStart = (int) (audioClip.getFileStartTime() * timeState.getPixelSecond());
         AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData,
                 audioFileStart);
 
