@@ -232,11 +232,11 @@ public class AudioLayer extends ArrayList<AudioClip>
                         new InputStreamReader(
                                 this.getClass().getClassLoader().getResourceAsStream(
                                         "blue/score/layers/audio/core/playback_instrument.orc")))) {
-                                    String line;
-                                    while ((line = br.readLine()) != null) {
-                                        str.append(line).append("\n");
-                                    }
-                                }
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        str.append(line).append("\n");
+                    }
+                }
 
             } catch (IOException ioe) {
                 throw new RuntimeException(
@@ -272,11 +272,11 @@ public class AudioLayer extends ArrayList<AudioClip>
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
                     this.getClass().getResourceAsStream(
                             "playback_instrument.orc")))) {
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            str.append(line).append("\n");
-                        }
-                    }
+                String line;
+                while ((line = br.readLine()) != null) {
+                    str.append(line).append("\n");
+                }
+            }
 
         } catch (IOException ioe) {
             throw new RuntimeException(
@@ -320,7 +320,7 @@ public class AudioLayer extends ArrayList<AudioClip>
                 continue;
             }
 
-            Note n = Note.createNote(5);
+            Note n = Note.createNote(9);
 
             float adjustedStart = clipStart - startTime;
             float adjustedEnd = clipEnd - startTime;
@@ -342,6 +342,11 @@ public class AudioLayer extends ArrayList<AudioClip>
                     "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
                     4);
             n.setPField(Float.toString(newClipFileStart), 5);
+            
+            n.setPField(Integer.toString(clip.getFadeInType().ordinal()), 6);
+            n.setPField(Float.toString(clip.getFadeIn()), 7);
+            n.setPField(Integer.toString(clip.getFadeOutType().ordinal()), 8);
+            n.setPField(Float.toString(clip.getFadeOut()), 9);
 
             notes.add(n);
 

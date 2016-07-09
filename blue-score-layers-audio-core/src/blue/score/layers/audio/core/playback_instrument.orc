@@ -1,6 +1,10 @@
 
 Saudio_file = p4
 istart = p5
+ifadeInType = p6
+ifadeInTime = p7
+ifadeOutType = p8
+ifadeOutTime = p9
 
 ichannels filenchnls Saudio_file
 
