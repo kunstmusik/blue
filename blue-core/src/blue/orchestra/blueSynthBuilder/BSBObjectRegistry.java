@@ -25,23 +25,24 @@ package blue.orchestra.blueSynthBuilder;
 public class BSBObjectRegistry {
 
     public static BSBObjectEntry[] getBSBObjects() {
-        return new BSBObjectEntry[] {
-                new BSBObjectEntry("Knob", BSBKnob.class),
-                new BSBObjectEntry("Horizontal Slider", BSBHSlider.class),
-                new BSBObjectEntry("Horizontal Slider Bank",
-                        BSBHSliderBank.class),
-                new BSBObjectEntry("Vertical Slider", BSBVSlider.class),
-                new BSBObjectEntry("Vertical Slider Bank", BSBVSliderBank.class),
-                new BSBObjectEntry("CheckBox", BSBCheckBox.class),
-                new BSBObjectEntry("Label", BSBLabel.class),
-                // new BSBObjectEntry("Tabbed Pane", BSBTabbedPane.class),
-                new BSBObjectEntry("Dropdown List", BSBDropdown.class),
-                new BSBObjectEntry("SubChannel Dropdown List",
-                        BSBSubChannelDropdown.class),
-                new BSBObjectEntry("File Selector", BSBFileSelector.class),
-                new BSBObjectEntry("XY Controller", BSBXYController.class),
-                new BSBObjectEntry("Line Object", BSBLineObject.class),
-                new BSBObjectEntry("Text Field", BSBTextField.class) };
+        return new BSBObjectEntry[]{
+            new BSBObjectEntry("Knob", BSBKnob.class),
+            new BSBObjectEntry("Horizontal Slider", BSBHSlider.class),
+            new BSBObjectEntry("Horizontal Slider Bank",
+            BSBHSliderBank.class),
+            new BSBObjectEntry("Vertical Slider", BSBVSlider.class),
+            new BSBObjectEntry("Vertical Slider Bank", BSBVSliderBank.class),
+            new BSBObjectEntry("CheckBox", BSBCheckBox.class),
+            new BSBObjectEntry("Label", BSBLabel.class),
+            // new BSBObjectEntry("Tabbed Pane", BSBTabbedPane.class),
+            new BSBObjectEntry("Dropdown List", BSBDropdown.class),
+            new BSBObjectEntry("SubChannel Dropdown List",
+            BSBSubChannelDropdown.class),
+            new BSBObjectEntry("File Selector", BSBFileSelector.class),
+            new BSBObjectEntry("XY Controller", BSBXYController.class),
+            new BSBObjectEntry("Line Object", BSBLineObject.class),
+            new BSBObjectEntry("Text Field", BSBTextField.class),
+            new BSBObjectEntry("Value", BSBValue.class)};
     }
 
 }

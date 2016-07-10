@@ -321,6 +321,9 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         int maxH = 1;
 
         for (BSBObjectViewHolder viewHolder : objectViews) {
+            if(!isEditing && viewHolder.isEditModeOnly()) {
+                continue;
+            }
             int newW = viewHolder.getX() + viewHolder.getWidth();
             int newH = viewHolder.getY() + viewHolder.getHeight();
 
@@ -349,6 +352,8 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         for (BSBObjectViewHolder viewHolder : objectViews) {
             viewHolder.setEditing(isEditing);
         }
+        recalculateSize();
+        revalidate();
         repaint();
     }
 

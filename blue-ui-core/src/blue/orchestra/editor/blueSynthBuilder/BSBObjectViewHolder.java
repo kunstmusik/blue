@@ -216,8 +216,11 @@ public class BSBObjectViewHolder extends JLayeredPane {
         if (isEditing) {
             this.add(mouseCapturePanel, DRAG_LAYER);
             // this.setSelected(false);
+            
+            setVisible(true);
         } else {
             this.remove(mouseCapturePanel);
+            setVisible(!isEditModeOnly());
         }
 
     }
@@ -248,6 +251,10 @@ public class BSBObjectViewHolder extends JLayeredPane {
      */
     public boolean isSelected() {
         return selected;
+    }
+    
+    public boolean isEditModeOnly() {
+        return objectView instanceof EditModeOnly;
     }
 
 }

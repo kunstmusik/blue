@@ -34,6 +34,7 @@ import blue.orchestra.blueSynthBuilder.BSBTabbedPane;
 import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
+import blue.orchestra.blueSynthBuilder.BSBValue;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
 
 /**
@@ -98,6 +99,8 @@ public class BSBObjectEditorFactory {
             return new BSBVSliderBankView((BSBVSliderBank)bsbObject);
         } else if (bsbObject instanceof BSBXYController) {
             return new BSBXYControllerView((BSBXYController)bsbObject);
+        } else if (bsbObject instanceof BSBValue) {
+            return new BSBValueView((BSBValue)bsbObject);
         }
         
         return null;

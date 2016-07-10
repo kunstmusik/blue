@@ -32,6 +32,10 @@ NEW
   configured in program options for disk render to open the rendered file after
   rendering (e.g., render and open with Audacity)
 
+* BlueSynthBuilder: added new BSBValue object that has a default value and may
+  be automated; the widget only appears during edit mode and is hidden during
+  performance mode
+
 UPDATED
 
 * Sound - modified to use BlueSynthBuilder object as backing instrument. Extends 
