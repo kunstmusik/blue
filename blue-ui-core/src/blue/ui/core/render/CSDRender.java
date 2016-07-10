@@ -382,6 +382,11 @@ public class CSDRender extends CSDRenderService {
             }
         }
 
+        String tempGlobalOrc = compileData.getGlobalOrc();
+        if(tempGlobalOrc != null && tempGlobalOrc.length() > 0) {
+            globalOrcSco.appendGlobalOrc(tempGlobalOrc);
+        }
+        
         StrBuilder csd = new StrBuilder();
         appendProjectInfo(data, csd);
 

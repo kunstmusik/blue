@@ -302,6 +302,28 @@ public class AudioLayer extends ArrayList<AudioClip>
     }
 
     NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws SoundObjectException {
+        
+        if(compileData.getCompilationVariable("BLUE_FADE_UDO") == null) {
+            StringBuilder str = new StringBuilder();
+            try {
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(
+                                this.getClass().getClassLoader().getResourceAsStream(
+                                        "blue/score/layers/audio/core/blue_fade.udo")))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        str.append(line).append("\n");
+                    }
+                }
+                compileData.appendGlobalOrc(str.toString());
+            } catch (IOException ioe) {
+                throw new RuntimeException(
+                        "[error] AudioLayer could not load blue_fade.udo");
+            }
+            
+            compileData.setCompilationVariable("BLUE_FADE_UDO", new Object());
+        }
+        
         NoteList notes = new NoteList();
 
         int instrId = generateInstrumentForAudioLayer(compileData);
@@ -343,9 +365,15 @@ public class AudioLayer extends ArrayList<AudioClip>
                     4);
             n.setPField(Float.toString(newClipFileStart), 5);
             
-            n.setPField(Integer.toString(clip.getFadeInType().ordinal()), 6);
+            int fadeType = clip.getFadeInType().ordinal();
+            if (fadeType == 4) { fadeType = 5; }
+            
+            n.setPField(Integer.toString(fadeType), 6);
             n.setPField(Float.toString(clip.getFadeIn()), 7);
-            n.setPField(Integer.toString(clip.getFadeOutType().ordinal()), 8);
+            
+            fadeType = clip.getFadeOutType().ordinal();
+            if (fadeType == 4) { fadeType = 5; }
+            n.setPField(Integer.toString(fadeType), 8);
             n.setPField(Float.toString(clip.getFadeOut()), 9);
 
             notes.add(n);
