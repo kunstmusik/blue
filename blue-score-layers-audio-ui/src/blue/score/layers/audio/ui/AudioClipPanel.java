@@ -32,8 +32,10 @@ import blue.ui.utilities.audio.AudioWaveformData;
 import blue.ui.utilities.audio.AudioWaveformListener;
 import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -42,6 +44,7 @@ import java.util.Collection;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.LookupEvent;
 import org.openide.util.LookupListener;
@@ -62,6 +65,7 @@ public class AudioClipPanel extends JPanel
     private final AudioClip audioClip;
     private final TimeState timeState;
     boolean selected = false;
+    boolean showFadeHandles = false;
 
     protected static Color selectedBgColor = new Color(255, 255, 255, 128);
 
@@ -72,14 +76,72 @@ public class AudioClipPanel extends JPanel
 
     protected static Color selectedFontColor = Color.darkGray;
 
+    protected static Color fadeLightColor = new Color(255, 255, 255, 64);
+    protected static Color fadeDarkColor = new Color(0, 0, 0, 64);
+
     Lookup.Result<AudioClip> result = null;
 
     AudioWaveformData waveData = null;
+
+    private final FadeHandle leftFadeHandle;
+    private final FadeHandle rightFadeHandle;
+    ChangeListener<Number> fadeListener = (obs, o, n) -> {
+        updateFadeHandleLocations();
+        repaint();
+    };
+    
+    MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            Point p = SwingUtilities.convertPoint((Component) e.getSource(), 
+                    e.getPoint(), AudioClipPanel.this);
+            if(!AudioClipPanel.this.contains(p)) {
+                leftFadeHandle.setVisible(false);
+                rightFadeHandle.setVisible(false);
+            }
+        }
+        
+    };
 
     MouseAdapter mouseAdapter = new RedispatchMouseAdapter() {
         boolean active = false;
         int startX = 0;
         private float initialStartTime = 0.0f;
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            Color bgColor;
+            if (selected) {
+                bgColor = selectedFontColor;
+            } else {
+                bgColor = audioClip.getBackgroundColor();
+
+                bgColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
+            }
+
+            leftFadeHandle.setBackground(bgColor);
+            rightFadeHandle.setBackground(bgColor);
+            leftFadeHandle.setVisible(true);
+            rightFadeHandle.setVisible(true);
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            
+            if (!leftFadeHandle.isAdjustingFade() &&
+                    !leftFadeHandle.contains(
+                            SwingUtilities.convertPoint(AudioClipPanel.this, 
+                                    e.getPoint(), leftFadeHandle)
+                    ) &&
+                    !rightFadeHandle.isAdjustingFade() &&
+                    !rightFadeHandle.contains(
+                            SwingUtilities.convertPoint(AudioClipPanel.this, 
+                                    e.getPoint(), rightFadeHandle))) {
+                leftFadeHandle.setVisible(false);
+                rightFadeHandle.setVisible(false);
+            }
+        }
 
         @Override
         public void mouseDragged(MouseEvent e) {
@@ -137,9 +199,35 @@ public class AudioClipPanel extends JPanel
         setOpaque(false);
         setBackground(Color.DARK_GRAY);
         setForeground(Color.WHITE);
+        setLayout(null);
+
+        leftFadeHandle = new FadeHandle(audioClip, timeState, true);
+        leftFadeHandle.setSize(5, 5);
+        leftFadeHandle.setVisible(false);
+        rightFadeHandle = new FadeHandle(audioClip, timeState, false);
+        rightFadeHandle.setSize(5, 5);
+        rightFadeHandle.setVisible(false);
+        this.add(leftFadeHandle);
+        this.add(rightFadeHandle);
 
         reset();
+        updateFadeHandleLocations();
+
 //        this.setBorder(BorderFactory.createRaisedSoftBevelBorder());
+    }
+
+    protected void updateFadeHandleLocations() {
+        int leftHandleX
+                = (int) (audioClip.getFadeIn() * timeState.getPixelSecond());
+        int rightHandleX
+                = (int) (audioClip.getFadeOut() * timeState.getPixelSecond());
+
+        rightHandleX = getWidth() - rightHandleX - 5;
+
+        leftFadeHandle.setLocation(leftHandleX, 2);
+        leftFadeHandle.addMouseListener(releaseOutsideAdapter);
+        rightFadeHandle.setLocation(rightHandleX, 2);
+        rightFadeHandle.addMouseListener(releaseOutsideAdapter);
     }
 
     @Override
@@ -148,6 +236,8 @@ public class AudioClipPanel extends JPanel
 
         audioClip.addScoreObjectListener(this);
         audioClip.fileStartTimeProperty().addListener(this);
+        audioClip.fadeInProperty().addListener(fadeListener);
+        audioClip.fadeOutProperty().addListener(fadeListener);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -170,6 +260,8 @@ public class AudioClipPanel extends JPanel
     public void removeNotify() {
         audioClip.removeScoreObjectListener(this);
         audioClip.fileStartTimeProperty().removeListener(this);
+        audioClip.fadeInProperty().removeListener(fadeListener);
+        audioClip.fadeOutProperty().removeListener(fadeListener);
 
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
@@ -211,18 +303,21 @@ public class AudioClipPanel extends JPanel
         Color border2;
         Color fontColor;
         Color waveColor;
+        Color fadeColor;
 
         if (isSelected()) {
             bgColor = selectedBgColor;
             border1 = selectedBorder1;
             border2 = selectedBorder2;
             fontColor = selectedFontColor;
+            fadeColor = fadeDarkColor;
         } else {
             bgColor = audioClip.getBackgroundColor();
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
 
             fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
+            fadeColor = isBright(bgColor) ? fadeDarkColor : fadeLightColor;
         }
 
         if (isBright(bgColor)) {
@@ -243,6 +338,22 @@ public class AudioClipPanel extends JPanel
         int audioFileStart = (int) (audioClip.getFileStartTime() * timeState.getPixelSecond());
         AudioWaveformUI.paintWaveForm(g, this.getHeight() - 4, waveData,
                 audioFileStart);
+
+        // paint fades
+        if (audioClip.getFadeIn() > 0.0f) {
+            g.setColor(fadeColor);
+            g.fillPolygon(new int[]{0, 0, leftFadeHandle.getX()},
+                    new int[]{this.getHeight() - 4, 0, 0},
+                    3);
+        }
+
+        if (audioClip.getFadeOut() > 0.0f) {
+            g.setColor(fadeColor);
+            g.fillPolygon(new int[]{rightFadeHandle.getX() + 5,
+                getWidth() - 2, getWidth() - 2},
+                    new int[]{0, 0, this.getHeight() - 4},
+                    3);
+        }
 
         g.translate(-1, -2);
 
