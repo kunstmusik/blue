@@ -48,6 +48,7 @@ public class CompileData {
     private final Map<Channel, Integer> channelIdAssignments;
     private final Map<Instrument, String> instrSourceId;
     private boolean handleParametersAndChannels = true;
+    private StringBuilder globalOrc;
     
 
     public static CompileData createEmptyCompileData() {
@@ -67,6 +68,7 @@ public class CompileData {
         this.tables = tables;
         channelIdAssignments = new HashMap<>();
         instrSourceId = new HashMap<>();
+        globalOrc = new StringBuilder();
         setHandleParametersAndChannels(false);
     }
 
@@ -83,6 +85,7 @@ public class CompileData {
         
         channelIdAssignments = new HashMap<>();
         instrSourceId = new HashMap<>();
+        globalOrc = new StringBuilder();
         setHandleParametersAndChannels(true);
     }
 
@@ -167,5 +170,15 @@ public class CompileData {
 
     public String getInstrSourceId(Instrument instr) {
         return instrSourceId.get(instr);
+    }
+    
+    public void appendGlobalOrc(String orcText) {
+        if(orcText != null) {
+            globalOrc.append(orcText).append("\n");
+        }
+    }
+    
+    public String getGlobalOrc() {
+        return globalOrc.toString();
     }
 }
