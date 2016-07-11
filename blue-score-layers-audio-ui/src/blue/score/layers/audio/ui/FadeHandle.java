@@ -21,9 +21,8 @@ package blue.score.layers.audio.ui;
 
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
-import blue.ui.utilities.RedispatchMouseAdapter;
+import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
@@ -40,34 +39,40 @@ public class FadeHandle extends JPanel {
 
     boolean adjustingFade = false;
 
-    private final MouseAdapter mouseAdapter = new RedispatchMouseAdapter() {
+    private final MouseAdapter mouseAdapter = new MouseAdapter() {
         float max = 0.0f;
         float startFade;
         int startX;
-        Cursor cursor;
 
         @Override
         public void mouseEntered(MouseEvent e) {
-            cursor = getCursor();
-            if(fadeIn) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            Component pane = SwingUtilities.getRootPane(FadeHandle.this).getGlassPane();
+
+            if (fadeIn) {
+                pane.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
             } else {
-                setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+                pane.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
             }
+            pane.setVisible(true);
+
             e.consume();
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-            setCursor(cursor);
+            if (!adjustingFade) {
+                Component pane = SwingUtilities.getRootPane(FadeHandle.this).getGlassPane();
+                pane.setCursor(null);
+                pane.setVisible(false);
+            }
             e.consume();
         }
 
         @Override
         public void mouseMoved(MouseEvent e) {
-             e.consume();
+            e.consume();
         }
-        
+
         @Override
         public void mousePressed(MouseEvent e) {
             max = fadeIn ? audioClip.getDuration() - audioClip.getFadeOut()
@@ -81,6 +86,11 @@ public class FadeHandle extends JPanel {
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            if(adjustingFade && !FadeHandle.this.contains(e.getPoint())) {
+                Component pane = SwingUtilities.getRootPane(FadeHandle.this).getGlassPane();
+                pane.setCursor(null);
+                pane.setVisible(false);
+            }
             adjustingFade = false;
             e.consume();
         }
@@ -91,7 +101,7 @@ public class FadeHandle extends JPanel {
                 float timeAdj = (e.getXOnScreen() - startX)
                         / (float) timeState.getPixelSecond();
                 float newFade = fadeIn ? startFade + timeAdj : startFade - timeAdj;
-                
+
                 newFade = Math.max(0.0f, newFade);
                 newFade = Math.min(max, newFade);
 
@@ -104,6 +114,11 @@ public class FadeHandle extends JPanel {
             }
         }
 
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            e.consume();
+        }
+
     };
     private final boolean fadeIn;
 
@@ -114,6 +129,12 @@ public class FadeHandle extends JPanel {
         setSize(5, 5);
         this.addMouseListener(mouseAdapter);
         this.addMouseMotionListener(mouseAdapter);
+
+        if (fadeIn) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+        } else {
+            setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+        }
     }
 
     public boolean isAdjustingFade() {

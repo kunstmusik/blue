@@ -151,7 +151,7 @@ public class ScoreMouseListener extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e
     ) {
-        if (ModeManager.getInstance().getMode() != ScoreMode.SCORE) {
+        if (e.isConsumed() || ModeManager.getInstance().getMode() != ScoreMode.SCORE) {
             return;
         }
 
@@ -181,7 +181,9 @@ public class ScoreMouseListener extends MouseAdapter {
                 scorePanel.setCursor(MOVE_CURSOR);
             }
         } else {
-            scorePanel.setCursor(NORMAL_CURSOR);
+            if(scorePanel.getCursor() != NORMAL_CURSOR) {
+                scorePanel.setCursor(NORMAL_CURSOR);
+            }
         }
 
     }
