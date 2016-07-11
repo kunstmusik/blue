@@ -223,7 +223,7 @@ public class AudioClipPanel extends JPanel
                 = (int) (audioClip.getFadeOut() * timeState.getPixelSecond());
 
         rightHandleX = getWidth() - rightHandleX - 5;
-
+        
         leftFadeHandle.setLocation(leftHandleX, 2);
         leftFadeHandle.addMouseListener(releaseOutsideAdapter);
         rightFadeHandle.setLocation(rightHandleX, 2);
@@ -403,6 +403,7 @@ public class AudioClipPanel extends JPanel
         double x = audioClip.getStartTime() * pixelSecond;
         double width = audioClip.getSubjectiveDuration() * pixelSecond;
         setBounds((int) x, getY(), (int) width, getHeight());
+        updateFadeHandleLocations();
     }
 
     @Override
