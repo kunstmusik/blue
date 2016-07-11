@@ -470,10 +470,10 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeUTF(getName());
+        out.writeObject(getAudioFile());
         out.writeFloat(getStart());
         out.writeFloat(getSubjectiveDuration());
         out.writeObject(getBackgroundColor());
-        out.writeObject(getAudioFile());
         out.writeFloat(getFileStartTime());
         out.writeFloat(getFadeIn());
         out.writeObject(getFadeInType());
@@ -484,10 +484,10 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         setName(in.readUTF());
+        setAudioFile((File) in.readObject());
         setStart(in.readFloat());
         setSubjectiveDuration(in.readFloat());
         setBackgroundColor((Color) in.readObject());
-        setAudioFile((File) in.readObject());
         setFileStartTime(in.readFloat());
         setFadeIn(in.readFloat());
         setFadeInType((FadeType) in.readObject());
