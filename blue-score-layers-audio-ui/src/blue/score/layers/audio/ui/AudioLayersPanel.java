@@ -297,28 +297,23 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     }
 
     private void paintAudioLayersBackground(Graphics g) {
-        Rectangle bounds = g.getClipBounds();
-        int bottom = bounds.y + bounds.height;
+        int width = getWidth();
+        int height = getHeight();
 
         g.setColor(Color.BLACK);
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        g.fillRect(0, 0, width, height);
+
 
         int y = 0;
         g.setColor(Color.DARK_GRAY);
-        g.drawLine(0, 0, bounds.width, 0);
+        g.drawLine(0, 0, width, 0);
 
         for (AudioLayer layer : layerGroup) {
             y += layer.getAudioLayerHeight();
-
-            if(y > bottom) {
-                break;
-            } else if (y < bounds.y) {
-                continue;
-            }
-            g.drawLine(bounds.x, y, bounds.x + bounds.width, y);
+            g.drawLine(0, y, width, y);
         }
 
-        g.drawLine(bounds.x, getHeight() - 1, bounds.width, getHeight() - 1);
+        g.drawLine(0, getHeight() - 1, width, height - 1);
 
         if (timeState.isSnapEnabled()) {
             int snapPixels = (int) (timeState.getSnapValue() * timeState.getPixelSecond());
@@ -332,7 +327,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
             
             for (int i = 0; x < getWidth(); i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
-                g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
+                g.drawLine(x, 0, x, height);
             }
 
         }
