@@ -408,37 +408,6 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         return clip;
     }
 
-//    private void firePropertyChangeEvent(String param, Object oldValue, Object newValue) {
-//        if (propListeners == null) {
-//            return;
-//        }
-//
-//        PropertyChangeEvent pce = new PropertyChangeEvent(this, param,
-//                oldValue, newValue);
-//
-//        for (PropertyChangeListener listener : propListeners) {
-//           listener.propertyChange(pce);
-//        }
-//    }
-//
-//    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-//        if (propListeners == null) {
-//            propListeners = new ArrayList<PropertyChangeListener>();
-//        }
-//
-//        if (propListeners.contains(pcl)) {
-//            return;
-//        }
-//
-//        propListeners.add(pcl);
-//    }
-//
-//    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-//        if (propListeners == null) {
-//            return;
-//        }
-//        propListeners.remove(pcl);
-//    }
     @Override
     public ScoreObject clone() {
         return (ScoreObject) ObjectUtilities.clone(this);
