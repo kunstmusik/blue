@@ -4,7 +4,7 @@
     
   Author: Steven Yi
   Version: 0.1
-  Date: 2016.07.09
+  Date: 2016.07.12
     
   fade types:
     0 - linear
@@ -34,16 +34,15 @@ ifadeOutSamps = int(ifadeOutTime * sr)
 idurSamps = int(idur * sr)
 ifadeOutStartSamps = idurSamps - ifadeOutSamps
 
-;kfadeInType init ifadeInType
-;kfadeOutType init ifadeOutType
-
 ;; STATES: 
 ;;   0 = no fades (outputs 1.0)
 ;;   1 = fade in
 ;;   2 = sustain
 ;;   3 = fade out
 ;;   4 = end (0.0)
-kstate init (ifadeInTime == 0 && ifadeOutTime == 0) ? 0 : 1
+
+kstate init (ifadeInTime == 0 && ifadeOutTime == 0) ? 0 : (ifadeInTime <= 0) ? 2 : 1  
+
 asig init 1.0
 kval init 0
 kval2 init 0
@@ -52,29 +51,33 @@ ktime init 0
 kinCoef init 0
 koutCoef init 0
 
-if (ifadeInType == 0) then
-  kinCoef = (1.0 - $GAIN_COEF_SMALL) / ifadeInSamps
-elseif (ifadeInType == 1) then ;; equal-power 
-elseif (ifadeInType == 2) then ;; symmetric
-elseif (ifadeInType < 5) then ;; fast (3 or 4)
-  kinCoef init ampdb(60 / ifadeInSamps)
-  kval init 0.001 ;; could use ampdb(-60) here... 
-elseif (ifadeInType < 7) then ;; slow (5 or 6)
-  kinCoef init ampdb(1 / ifadeInSamps)
-  kinCoef2 init ampdb(80 / ifadeInSamps)
-  kval init ampdb(-1)
-  kval2 init ampdb(-80)
+if (ifadeInTime > 0) then
+  if (ifadeInType == 0) then
+    kinCoef = (1.0 - $GAIN_COEF_SMALL) / ifadeInSamps
+  elseif (ifadeInType == 1) then ;; equal-power 
+  elseif (ifadeInType == 2) then ;; symmetric
+  elseif (ifadeInType < 5) then ;; fast (3 or 4)
+    kinCoef init ampdb(60 / ifadeInSamps)
+    kval init 0.001 ;; could use ampdb(-60) here... 
+  elseif (ifadeInType < 7) then ;; slow (5 or 6)
+    kinCoef init ampdb(1 / ifadeInSamps)
+    kinCoef2 init ampdb(80 / ifadeInSamps)
+    kval init ampdb(-1)
+    kval2 init ampdb(-80)
+  endif
 endif
 
-if (ifadeOutType == 0) then ;; linear
-  koutCoef = -(1.0 - $GAIN_COEF_SMALL) / ifadeOutSamps
-elseif (ifadeOutType == 1) then ;; equal-power 
-elseif (ifadeOutType == 2) then  ;; symmetric
-elseif (ifadeOutType < 5) then  ;; fast (3 or 4)
-  koutCoef init ampdb(-60 / ifadeOutSamps)
-elseif (ifadeOutType < 7) then  ;; slow (5 or 6)
-  koutCoef init ampdb(-1 / ifadeOutSamps)
-  koutCoef2 init ampdb(-80 / ifadeOutSamps) 
+if (ifadeOutTime > 0) then
+  if (ifadeOutType == 0) then ;; linear
+    koutCoef = -(1.0 - $GAIN_COEF_SMALL) / ifadeOutSamps
+  elseif (ifadeOutType == 1) then ;; equal-power 
+  elseif (ifadeOutType == 2) then  ;; symmetric
+  elseif (ifadeOutType < 5) then  ;; fast (3 or 4)
+    koutCoef init ampdb(-60 / ifadeOutSamps)
+  elseif (ifadeOutType < 7) then  ;; slow (5 or 6)
+    koutCoef init ampdb(-1 / ifadeOutSamps)
+    koutCoef2 init ampdb(-80 / ifadeOutSamps) 
+  endif
 endif
 
 kcount = 0
@@ -82,6 +85,8 @@ kcount = 0
 until (kcount >= ksmps) do
   if (kstate == 0) then
     ;; pass
+    kcount += 1
+    ktime += 1 
   elseif (kstate == 1) then
     ;; doing linear for now
     if(ktime >= ifadeInSamps) then
@@ -115,7 +120,7 @@ until (kcount >= ksmps) do
     endif
   elseif (kstate == 2) then
     if(ktime >= ifadeOutStartSamps) then
-      kstate = 3
+      kstate = (ifadeOutTime > 0) ? 3 : 4
       kval = $GAIN_COEF_UNITY
       kval2 = $GAIN_COEF_UNITY
       kfadeStep = 0
@@ -135,6 +140,7 @@ until (kcount >= ksmps) do
         ; FIXME - should adjust values as in ardour
         asig[kcount] = cos((kfadeStep / ifadeOutSamps) * $M_PI_2)
       elseif (ifadeOutType == 2) then ;; symmetric
+
       elseif (ifadeOutType < 5) then ;; fast
         asig[kcount] = (ifadeOutType == 3) ? kval : $INVERSE_POWER(kval)
         kval *= koutCoef
@@ -154,8 +160,8 @@ until (kcount >= ksmps) do
     
   elseif (kstate == 4) then
     asig[kcount] = $GAIN_COEF_ZERO
-      kcount += 1
-      ktime += 1 
+    kcount += 1
+    ktime += 1 
   endif
 
 od
