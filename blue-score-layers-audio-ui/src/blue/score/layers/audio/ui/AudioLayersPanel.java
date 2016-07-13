@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JLayeredPane;
@@ -82,6 +83,13 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     private final InstanceContent content;
     AutomationLayerPanel automationPanel = new AutomationLayerPanel(
             new AlphaMarquee());
+    
+    BiConsumer<AudioClip, Float> splitHandler = (ac, time) -> {
+        int layerNum = layerGroup.getLayerNumForScoreObject(ac);
+        AudioLayer layer = layerGroup.get(layerNum);
+        
+        AudioLayerGroupUtils.splitAudioClip(layer, ac, time);
+    };
 
     public AudioLayersPanel(AudioLayerGroup layerGroup, TimeState timeState, InstanceContent content) {
         this.setLayout(null);
@@ -368,7 +376,7 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
     }
 
     private void addClipPanel(AudioClip clip, TimeState timeState, int y, int height) {
-        AudioClipPanel panel = new AudioClipPanel(clip, timeState);
+        AudioClipPanel panel = new AudioClipPanel(clip, timeState, splitHandler);
         panel.setBounds(panel.getX(), y, panel.getWidth(), height);
         add(panel, DEFAULT_LAYER);
         clipPanelMap.put(clip, panel);

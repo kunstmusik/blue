@@ -33,6 +33,7 @@ import blue.ui.utilities.audio.AudioWaveformListener;
 import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -41,6 +42,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.function.BiConsumer;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javax.swing.JPanel;
@@ -85,22 +87,25 @@ public class AudioClipPanel extends JPanel
 
     private final FadeHandle leftFadeHandle;
     private final FadeHandle rightFadeHandle;
+    
+    private final BiConsumer<AudioClip, Float> splitHandler;
+    
     ChangeListener<Number> fadeListener = (obs, o, n) -> {
         updateFadeHandleLocations();
         repaint();
     };
-    
+
     MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
-            Point p = SwingUtilities.convertPoint((Component) e.getSource(), 
+            Point p = SwingUtilities.convertPoint((Component) e.getSource(),
                     e.getPoint(), AudioClipPanel.this);
-            if(!AudioClipPanel.this.contains(p)) {
+            if (!AudioClipPanel.this.contains(p)) {
                 leftFadeHandle.setVisible(false);
                 rightFadeHandle.setVisible(false);
             }
         }
-        
+
     };
 
     MouseAdapter mouseAdapter = new RedispatchMouseAdapter() {
@@ -128,23 +133,45 @@ public class AudioClipPanel extends JPanel
 
         @Override
         public void mouseExited(MouseEvent e) {
-            
-            if (!leftFadeHandle.isAdjustingFade() &&
-                    !leftFadeHandle.contains(
-                            SwingUtilities.convertPoint(AudioClipPanel.this, 
+
+            if (!leftFadeHandle.isAdjustingFade()
+                    && !leftFadeHandle.contains(
+                            SwingUtilities.convertPoint(AudioClipPanel.this,
                                     e.getPoint(), leftFadeHandle)
-                    ) &&
-                    !rightFadeHandle.isAdjustingFade() &&
-                    !rightFadeHandle.contains(
-                            SwingUtilities.convertPoint(AudioClipPanel.this, 
+                    )
+                    && !rightFadeHandle.isAdjustingFade()
+                    && !rightFadeHandle.contains(
+                            SwingUtilities.convertPoint(AudioClipPanel.this,
                                     e.getPoint(), rightFadeHandle))) {
                 leftFadeHandle.setVisible(false);
                 rightFadeHandle.setVisible(false);
+
+                Component pane = SwingUtilities.getRootPane(AudioClipPanel.this)
+                        .getGlassPane();
+
+                pane.setCursor(null);
+                pane.setVisible(false);
+
             }
         }
 
         @Override
-        public void mouseDragged(MouseEvent e) {
+        public void mouseMoved(MouseEvent e) {
+            Component pane = SwingUtilities.getRootPane(AudioClipPanel.this).getGlassPane();
+
+            if (e.isAltDown() && e.isShiftDown()) {
+                pane.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+                pane.setVisible(true);
+            } else {
+                pane.setCursor(null);
+                pane.setVisible(false);
+            }
+            this.redispatchEvent(e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e
+        ) {
             if (active) {
                 int xDiff = e.getX() - startX;
 
@@ -166,7 +193,8 @@ public class AudioClipPanel extends JPanel
 
         @Override
 
-        public void mouseReleased(MouseEvent e) {
+        public void mouseReleased(MouseEvent e
+        ) {
             if (active) {
                 e.consume();
                 active = false;
@@ -178,11 +206,17 @@ public class AudioClipPanel extends JPanel
         }
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        public void mousePressed(MouseEvent e
+        ) {
             if (e.isAltDown()) {
-                active = true;
-                startX = e.getX();
-                initialStartTime = audioClip.getFileStartTime();
+                if (e.isShiftDown()) {
+                    float time = e.getX() / (float) timeState.getPixelSecond();
+                    splitHandler.accept(audioClip, time);
+                } else {
+                    active = true;
+                    startX = e.getX();
+                    initialStartTime = audioClip.getFileStartTime();
+                }
                 e.consume();
             } else {
                 redispatchEvent(e);
@@ -192,9 +226,11 @@ public class AudioClipPanel extends JPanel
 
     };
 
-    public AudioClipPanel(AudioClip audioClip, TimeState timeState) {
+    public AudioClipPanel(AudioClip audioClip, TimeState timeState,
+            BiConsumer<AudioClip, Float> splitHandler) {
         this.audioClip = audioClip;
         this.timeState = timeState;
+        this.splitHandler = splitHandler;
 
         setOpaque(false);
         setBackground(Color.DARK_GRAY);
@@ -223,7 +259,7 @@ public class AudioClipPanel extends JPanel
                 = (int) (audioClip.getFadeOut() * timeState.getPixelSecond());
 
         rightHandleX = getWidth() - rightHandleX - 5;
-        
+
         leftFadeHandle.setLocation(leftHandleX, 2);
         leftFadeHandle.addMouseListener(releaseOutsideAdapter);
         rightFadeHandle.setLocation(rightHandleX, 2);

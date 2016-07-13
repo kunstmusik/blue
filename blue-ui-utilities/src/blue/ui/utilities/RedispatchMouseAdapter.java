@@ -21,6 +21,7 @@ package blue.ui.utilities;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -39,7 +40,10 @@ public class RedispatchMouseAdapter extends MouseAdapter {
         
     protected void redispatchEvent(AWTEvent e) {
         if(e.getSource() instanceof Component) {
-            ((Component)e.getSource()).getParent().dispatchEvent(e);
+            Container c = ((Component)e.getSource()).getParent();
+            if(c != null) {
+                c.dispatchEvent(e);
+            }
         }
     }
     
