@@ -342,14 +342,13 @@ public class AudioLayer extends ArrayList<AudioClip>
                 continue;
             }
 
-            Note n = Note.createNote(9);
+            Note n = Note.createNote(11);
 
             float adjustedStart = clipStart - startTime;
             float adjustedEnd = clipEnd - startTime;
 
+            float startOffset = Math.max(startTime - clipStart, 0.0f);
             float newStart = Math.max(adjustedStart, 0.0f);
-            float newClipFileStart
-                    = clipFileStart + Math.max(startTime - clipStart, 0.0f);
             float newEnd = clipEnd - startTime;
 
             float newDuration
@@ -363,18 +362,22 @@ public class AudioLayer extends ArrayList<AudioClip>
             n.setPField(
                     "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
                     4);
-            n.setPField(Float.toString(newClipFileStart), 5);
+            n.setPField(Float.toString(clipFileStart), 5);
+            
+            n.setPField(Float.toString(startOffset), 6);
+            n.setPField(Float.toString(clipDur), 7);
+
             
             int fadeType = clip.getFadeInType().ordinal();
             if (fadeType == 4) { fadeType = 5; }
             
-            n.setPField(Integer.toString(fadeType), 6);
-            n.setPField(Float.toString(clip.getFadeIn()), 7);
+            n.setPField(Integer.toString(fadeType), 8);
+            n.setPField(Float.toString(clip.getFadeIn()), 9);
             
             fadeType = clip.getFadeOutType().ordinal();
             if (fadeType == 4) { fadeType = 5; }
-            n.setPField(Integer.toString(fadeType), 8);
-            n.setPField(Float.toString(clip.getFadeOut()), 9);
+            n.setPField(Integer.toString(fadeType), 10);
+            n.setPField(Float.toString(clip.getFadeOut()), 11);
 
             notes.add(n);
 
