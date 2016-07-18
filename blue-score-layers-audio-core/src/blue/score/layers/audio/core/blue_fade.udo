@@ -128,16 +128,18 @@ endop
 opcode calc_symmetric, k, kii[]i[]
   kcounter, ilen, ipoints[], icoefs[] xin
 
+  kout init 0
+
+  if(lenarray:i(ipoints) <= 0 || lenarray:i(icoefs) <= 0) goto skip
 
   kpointsIndx init 2
   kcoefIndx init 0 
-
-
+  
   ka init icoefs[0]
   kb init icoefs[1]
   kc init icoefs[2]
   kd init icoefs[3]
-  
+
   ktime = kcounter / ilen
 
   until (ktime <= ipoints[kpointsIndx]) do
@@ -153,6 +155,7 @@ opcode calc_symmetric, k, kii[]i[]
   ktime3 = ktime2 * ktime
   kout = ka + (ktime * kb) + (ktime2 * kc) + (ktime3 * kd)
 
+skip:
   xout kout
 
 endop
@@ -250,7 +253,6 @@ if (istate == 1) then
     iinCoef init ampdb(60 / ifadeInSamps)
     ;; could use ampdb(-60) instead of 0.001 here ... 
     kval init 0.001 * pow(iinCoef, itime) 
-    print 0.001 * pow(iinCoef, itime)
   elseif (ifadeInType < 7) then ;; slow (5 or 6)
     iinCoef init ampdb(1 / ifadeInSamps)
     iinCoef2 init ampdb(80 / ifadeInSamps)
