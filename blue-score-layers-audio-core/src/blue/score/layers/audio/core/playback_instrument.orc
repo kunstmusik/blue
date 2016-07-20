@@ -12,19 +12,44 @@ ifileStart = istart + ioffset
 
 ichannels filenchnls Saudio_file
 
-aenv blue_fade ioffset, iclipDur, ifadeInTime, ifadeInType, ifadeOutTime, ifadeOutType
+aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, ifadeInType, ifadeOutTime, ifadeOutType
 
 if (ichannels == 1) then
   
-{0}  diskin2 Saudio_file, 1, ifileStart
-{0} *= aenv
+a0  diskin2 Saudio_file, 1, ifileStart
+a0 *= aenv
+
+kindx = 0
+while (kindx < ksmps) do
+  if(ainv[kindx] == 0.0) then
+    {0}[kindx] = a0[kindx]
+  else 
+    {0}[kindx] = {0}[kindx] * ainv[kindx] + a0[kindx] 
+  endif
+  kindx += 1
+od
+
+
 
 elseif (ichannels == 2) then
 
-{0}, {1}  diskin2 Saudio_file, 1, ifileStart
+a0, a1  diskin2 Saudio_file, 1, ifileStart
 
-{0} *= aenv
-{1} *= aenv
+a0 *= aenv
+a1 *= aenv
+
+kindx = 0
+while (kindx < ksmps) do
+  if(ainv[kindx] == 0.0) then
+    {0}[kindx] = a0[kindx]
+    {1}[kindx] = a1[kindx]
+  else 
+    {0}[kindx] = {0}[kindx] * ainv[kindx] + a0[kindx] 
+    {1}[kindx] = {1}[kindx] * ainv[kindx] + a1[kindx] 
+  endif
+  kindx += 1
+od
+
 
 else
 

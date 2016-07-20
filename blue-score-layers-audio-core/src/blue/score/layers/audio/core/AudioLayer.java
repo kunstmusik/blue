@@ -290,9 +290,10 @@ public class AudioLayer extends ArrayList<AudioClip>
             String var2 = Mixer.getChannelVar(channelId, 1);
 
             instr.setText(getInstrumentText(var1, var2));
-            System.out.println("Instr Text: " + instr.getText());
+//            System.out.println("Instr Text: " + instr.getText());
         } else {
-            instr.setText(getInstrumentText("a1", "a2") + "\noutc a1, a2\n");
+            throw new RuntimeException("Error: could not find Mixer Channels for Audio layer");
+//            instr.setText(getInstrumentText("a1", "a2") + "\noutc a1, a2\n");
         }
 
         int instrId = compileData.addInstrument(instr);

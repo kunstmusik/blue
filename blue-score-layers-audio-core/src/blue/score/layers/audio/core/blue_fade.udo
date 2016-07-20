@@ -179,15 +179,13 @@ endop
     1 - constant power
     2 - symmetric
     3 - fast (linear dB)
-    4 - inverse fast 
-    5 - slow (modified linear dB)
-    6 - inverse slow 
+    4 - slow (modified linear dB)
 
   inverse curves are inverse power curves of the fast and slow 
   curves, generated using sum of squares 
 
 */
-opcode blue_fade, a, iiiiii
+opcode blue_fade, aa, iiiiii
 ioffset, iclipDur, ifadeInTime, ifadeInType, \
          ifadeOutTime, ifadeOutType xin
 
@@ -212,6 +210,7 @@ initDone = 0
 ;;   4 = end (0.0)
 itime       init (ioffset * sr)
 asig        init 1.0
+ainverse    init 0.0
 kval        init 0
 kval2       init 0
 kfadeStep   init 0
@@ -247,15 +246,17 @@ if (istate == 1) then
     kval init (1.0 - $GAIN_COEF_SMALL) * (ioffset / ifadeInTime)
   elseif (ifadeInType == 1) then ;; equal-power 
   elseif (ifadeInType == 2) then ;; symmetric
-    iSymInPoints[] = i_symmetric_fade_inc
-    iSymInCoefs[] = calc_cubic_coefficients(iSymInPoints) 
-  elseif (ifadeInType < 5) then ;; fast (3 or 4)
+    iSymInCoefs[] = calc_cubic_coefficients(i_symmetric_fade_inc) 
+    iSymInInvCoefs[] = calc_cubic_coefficients(i_symmetric_fade_dec) 
+  elseif (ifadeInType == 3) then ;; fast 
     iinCoef init ampdb(60 / ifadeInSamps)
     ;; could use ampdb(-60) instead of 0.001 here ... 
     kval init 0.001 * pow(iinCoef, itime) 
-  elseif (ifadeInType < 7) then ;; slow (5 or 6)
+  elseif (ifadeInType == 4) then ;; slow 
     iinCoef init ampdb(1 / ifadeInSamps)
     iinCoef2 init ampdb(80 / ifadeInSamps)
+
+    ;; FIXME - this starting value is wrong...
     kval init ampdb(-1) * pow(iinCoef, itime)
     kval2 init ampdb(-80) * pow(iinCoef2, itime)
   endif
@@ -276,18 +277,19 @@ if (ifadeOutTime > 0) then
     endif
   elseif (ifadeOutType == 1) then ;; equal-power 
   elseif (ifadeOutType == 2) then  ;; symmetric
-    iSymOutPoints[] = i_symmetric_fade_dec
-    iSymOutCoefs[] = calc_cubic_coefficients(iSymOutPoints) 
-  elseif (ifadeOutType < 5) then  ;; fast (3 or 4)
+    iSymOutCoefs[] = calc_cubic_coefficients(i_symmetric_fade_dec) 
+    iSymOutInvCoefs[] = calc_cubic_coefficients(i_symmetric_fade_inc) 
+  elseif (ifadeOutType == 3) then  ;; fast 
     ioutCoef init ampdb(-60 / ifadeOutSamps)
     if(imidStart == 1) then
       kval = pow(ioutCoef, ifadeStep) 
     endif
-  elseif (ifadeOutType < 7) then  ;; slow (5 or 6)
+  elseif (ifadeOutType == 4) then  ;; slow 
     ioutCoef init ampdb(-1 / ifadeOutSamps)
     ioutCoef2 init ampdb(-80 / ifadeOutSamps) 
     if (imidStart == 1) then
-      kval init pow(ioutCoef, ifadeStep) 
+      ;; FIXME - this starting value is wrong...
+      kval  init pow(ioutCoef, ifadeStep) 
       kval2 init pow(ioutCoef2, ifadeStep)
     endif 
   endif
@@ -302,30 +304,39 @@ while (kcount < ksmps) do
     ;; pass
     kcount += 1
     ktime += 1 
+
   elseif (kstate == 1) then
-    ;; doing linear for now
     if(ktime >= ifadeInSamps) then
       kstate = 2
       kval = $GAIN_COEF_UNITY
+
     else
       if(ifadeInType == 0) then      ;; linear
         asig[kcount] = kval
+        ainverse[kcount] = 1 - kval
         kval += iinCoef
+
       elseif (ifadeInType == 1) then ;; equal-power
         ; FIXME - should adjust values as in ardour
-        asig[kcount] = sin((kfadeStep / ifadeInSamps) * $M_PI_2)
-      elseif (ifadeInType == 2) then ;; symmetric
-        asig[kcount] = calc_symmetric(kfadeStep, ifadeInSamps, iSymInPoints, iSymInCoefs)
+        karg = (kfadeStep / ifadeInSamps) * $M_PI_2
+        asig[kcount] = sin(karg)
+        ainverse[kcount] = cos(karg)
 
-      elseif (ifadeInType < 5) then ;; fast (3 or 4)
-        asig[kcount] = (ifadeInType == 3) ? kval : $INVERSE_POWER(kval)
+      elseif (ifadeInType == 2) then ;; symmetric
+        asig[kcount] = calc_symmetric(kfadeStep, ifadeInSamps, i_symmetric_fade_inc, iSymInCoefs)
+        ainverse[kcount] = calc_symmetric(kfadeStep, ifadeInSamps, i_symmetric_fade_dec, iSymInInvCoefs)
+
+      elseif (ifadeInType == 3) then ;; fast
+        asig[kcount] =  kval 
+        ainverse[kcount] = $INVERSE_POWER(kval)
         kval *= iinCoef
 
-      elseif (ifadeInType < 7) then ;; slow (5 or 6)
+      elseif (ifadeInType == 4) then ;; slow 
         kpercent = kfadeStep / ifadeInSamps
         kv = dbamp(kval) * kpercent + dbamp(kval2) * (1 - kpercent)
         kv = ampdb(kv) 
-        asig[kcount] = (ifadeInType == 5) ? kv : $INVERSE_POWER(kv) 
+        asig[kcount] = kv 
+        ainverse[kcount] = $INVERSE_POWER(kv) 
         kval *= iinCoef
         kval2 *= iinCoef2
       endif
@@ -334,6 +345,7 @@ while (kcount < ksmps) do
       ktime += 1
       kfadeStep += 1
     endif
+
   elseif (kstate == 2) then
     if(ktime >= ifadeOutStartSamps) then
       kstate = (ifadeOutTime > 0) ? 3 : 4
@@ -343,29 +355,41 @@ while (kcount < ksmps) do
     endif
     
     asig[kcount] = $GAIN_COEF_UNITY
+    ainverse[kcount] = $GAIN_COEF_ZERO 
     kcount += 1
     ktime += 1    
+
   elseif (kstate == 3) then
     if(ktime >= idurSamps) then
       kstate = 4
+
     else
       if (ifadeOutType == 0) then
         asig[kcount] = kval
+        ainverse[kcount] = 1 - kval
         kval += ioutCoef
+
       elseif (ifadeOutType == 1) then
         ; FIXME - should adjust values as in ardour
-        asig[kcount] = cos((kfadeStep / ifadeOutSamps) * $M_PI_2)
-      elseif (ifadeOutType == 2) then ;; symmetric
-        asig[kcount] = calc_symmetric(kfadeStep, ifadeOutSamps, iSymOutPoints, iSymOutCoefs)
+        karg = (kfadeStep / ifadeOutSamps) * $M_PI_2
+        asig[kcount] = cos(karg)
+        ainverse[kcount] = sin(karg)
 
-      elseif (ifadeOutType < 5) then ;; fast
-        asig[kcount] = (ifadeOutType == 3) ? kval : $INVERSE_POWER(kval)
+      elseif (ifadeOutType == 2) then ;; symmetric
+        asig[kcount] = calc_symmetric(kfadeStep, ifadeOutSamps, i_symmetric_fade_dec, iSymOutCoefs)
+        ainverse[kcount] = calc_symmetric(kfadeStep, ifadeOutSamps, i_symmetric_fade_inc, iSymOutInvCoefs)
+
+      elseif (ifadeOutType == 3) then ;; fast
+        asig[kcount] =  kval 
+        ainverse[kcount] = $INVERSE_POWER(kval)
         kval *= ioutCoef
-      elseif (ifadeOutType < 7) then ;; slow
+
+      elseif (ifadeOutType == 4) then ;; slow
         kpercent = kfadeStep / ifadeOutSamps
         kv = dbamp(kval) * (1 - kpercent) + dbamp(kval2) * kpercent 
         kv = ampdb(kv)
-        asig[kcount] = (ifadeOutType == 5) ? kv : $INVERSE_POWER(kv) 
+        asig[kcount] = kv 
+        ainverse[kcount] = $INVERSE_POWER(kv) 
         kval *= ioutCoef
         kval2 *= ioutCoef2
       endif
@@ -377,12 +401,13 @@ while (kcount < ksmps) do
     
   elseif (kstate == 4) then
     asig[kcount] = $GAIN_COEF_ZERO
+    ainverse[kcount] = $GAIN_COEF_UNITY 
     kcount += 1
     ktime += 1 
   endif
 
 od
 
-xout asig
+xout asig, ainverse
 
 endop

@@ -219,6 +219,14 @@ public class CSDRender extends CSDRenderService {
         CompileData compileData = new CompileData(arrangement, tables, 
                 stringChannels, originalParameters, scnm, pnm);
 
+        Mixer mixer = null;
+        boolean mixerEnabled = data.getMixer().isEnabled();
+
+        if (mixerEnabled) {
+            mixer = (Mixer) data.getMixer().clone();
+            assignChannelIds(compileData, mixer);
+        }
+        
         NoteList generatedNotes;
         try {
             generatedNotes = data.getScore().generateForCSD(compileData,
@@ -231,13 +239,7 @@ public class CSDRender extends CSDRenderService {
 
 //        assignParameterNames(originalParameters);
 
-        Mixer mixer = null;
-        boolean mixerEnabled = data.getMixer().isEnabled();
 
-        if (mixerEnabled) {
-            mixer = (Mixer) data.getMixer().clone();
-            assignChannelIds(compileData, mixer);
-        }
 
         // get parameters
         //ArrayList parameters;

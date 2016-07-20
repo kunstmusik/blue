@@ -2,7 +2,7 @@
 <CsInstruments>
 sr=44100
 ksmps=32
-nchnls=1
+nchnls=2
 0dbfs=1
 
 #include "blue_fade.udo"
@@ -16,13 +16,13 @@ ifadeInType = p8
 ifadeInTime = p9
 ifadeOutType = p10
 ifadeOutTime = p11
-aenv = blue_fade(ioffset, iclipDur, ifadeInTime, 
-                 ifadeInType, ifadeOutTime, ifadeOutType)
+aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, \
+                 ifadeInType, ifadeOutTime, ifadeOutType
 /*aout = vco2:a(iamp, ipch)*/
 /*aout = aout * aenv*/
 /*aout = moogladder(aout, 2000, .3)*/
-aout = aenv
-outc(aout, aout)
+/*aout = aenv*/
+outc(aenv, ainv)
 endin
 </CsInstruments>
 <CsScore>
@@ -73,10 +73,6 @@ s 40
 $score_test(3)
 s 40
 $score_test(4)
-s 40
-$score_test(5)
-s 40
-$score_test(6)
 s 40
 
 </CsScore>
