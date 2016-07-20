@@ -76,7 +76,7 @@ public class AudioClipPanel extends JPanel
 
     protected static Color selectedBorder2 = selectedBgColor.darker().darker();
 
-    protected static Color selectedFontColor = Color.darkGray;
+    protected static Color selectedFontColor = Color.black;
 
     protected static Color fadeLightColor = new Color(255, 255, 255, 64);
     protected static Color fadeDarkColor = new Color(0, 0, 0, 64);
@@ -347,19 +347,23 @@ public class AudioClipPanel extends JPanel
             border2 = selectedBorder2;
             fontColor = selectedFontColor;
             fadeColor = fadeDarkColor;
+            waveColor = bgColor.brighter().brighter();
         } else {
-            bgColor = audioClip.getBackgroundColor();
+            Color bg = audioClip.getBackgroundColor();
+            bgColor = new Color(bg.getRed(), bg.getGreen(),
+                                bg.getBlue(), 194);
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
 
             fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
             fadeColor = isBright(bgColor) ? fadeDarkColor : fadeLightColor;
-        }
-
-        if (isBright(bgColor)) {
-            waveColor = bgColor.brighter().brighter();
-        } else {
-            waveColor = bgColor.darker().darker();
+            waveColor = bg;
+            
+            if (isBright(bg)) {
+                waveColor = waveColor.darker().darker();                
+            } else {
+                waveColor = waveColor.brighter().brighter();
+            }
         }
 
         g.setPaint(BlueGradientFactory.getGradientPaint(bgColor));
