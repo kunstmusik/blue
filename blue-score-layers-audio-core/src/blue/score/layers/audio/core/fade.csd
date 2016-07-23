@@ -24,6 +24,29 @@ aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, \
 /*aout = aenv*/
 outc(aenv, ainv)
 endin
+
+
+instr 2
+ipch = cps2pch(p4,12)
+iamp = ampdbfs(p5)
+ioffset = p6
+iclipDur = p7
+ifadeInType = p8
+ifadeInTime = p9
+ifadeOutType = p10
+ifadeOutTime = p11
+ichan = p12
+aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, \
+                 ifadeInType, ifadeOutTime, ifadeOutType
+
+adummy init 0
+if(ichan == 0) then
+  outc(anv)
+else
+  outc(adummy, aenv)
+endif
+endin
+
 </CsInstruments>
 <CsScore>
 ;i1 0 2 8.00 -12 0 2 0 0 0 0
@@ -64,20 +87,35 @@ i1 ^+2.0 0.5 8.00 -12 3.5 4.0 $a 1 $a 1
 
 #
 
-$score_test(0)
-s 40 
-$score_test(1)
-s 40
-$score_test(2)
-s 40
-$score_test(3)
-s 40
-$score_test(4)
-s 40
+/*$score_test(0)*/
+/*s 40 */
+/*$score_test(1)*/
+/*s 40*/
+/*$score_test(2)*/
+/*s 40*/
+/*$score_test(3)*/
+/*s 40*/
+/*$score_test(4)*/
+/*s 40*/
 
 
-/*i1 0.0 0.75 8.00 -12 3.25 4.0 3 1 3 1 */
-/*i1 4.0 0.75 8.00 -12 3.25 4.0 4 1 4 1 */
+i2 0.00 4    8.00 -12 0.0 4.0 3 1 3 1 0
+i2 0.75 3.25 8.00 -12 .75 4.0 3 1 3 1 1 
+
+s
+
+i2 0.00 4    8.00 -12 0.0 4.0 4 1 4 1 0
+i2 0.75 3.25 8.00 -12 .75 4.0 4 1 4 1 1
+
+s
+
+i2 0.00 1    8.00 -12 3.0  4.0 3 1 3 1 0
+i2 0.25 0.75 8.00 -12 3.25 4.0 3 1 3 1 1
+
+s
+
+i2 0.00 1    8.00 -12 3.0  4.0 4 1 4 1 0
+i2 0.25 0.75 8.00 -12 3.25 4.0 4 1 4 1 1
 
 </CsScore>
 </CsoundSynthesizer>
