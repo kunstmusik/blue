@@ -250,13 +250,11 @@ if (istate == 1) then
     iSymInInvCoefs[] = calc_cubic_coefficients(i_symmetric_fade_dec) 
   elseif (ifadeInType == 3) then ;; fast 
     iinCoef init ampdb(60 / ifadeInSamps)
-    ;; could use ampdb(-60) instead of 0.001 here ... 
     kval init 0.001 * pow(iinCoef, itime) 
   elseif (ifadeInType == 4) then ;; slow 
     iinCoef init ampdb(1 / ifadeInSamps)
     iinCoef2 init ampdb(80 / ifadeInSamps)
 
-    ;; FIXME - this starting value is wrong...
     kval init ampdb(-1) * pow(iinCoef, itime)
     kval2 init ampdb(-80) * pow(iinCoef2, itime)
   endif
@@ -282,13 +280,12 @@ if (ifadeOutTime > 0) then
   elseif (ifadeOutType == 3) then  ;; fast 
     ioutCoef init ampdb(-60 / ifadeOutSamps)
     if(imidStart == 1) then
-      kval = pow(ioutCoef, ifadeStep) 
+      kval init pow(ioutCoef, ifadeStep) 
     endif
   elseif (ifadeOutType == 4) then  ;; slow 
     ioutCoef init ampdb(-1 / ifadeOutSamps)
     ioutCoef2 init ampdb(-80 / ifadeOutSamps) 
     if (imidStart == 1) then
-      ;; FIXME - this starting value is wrong...
       kval  init pow(ioutCoef, ifadeStep) 
       kval2 init pow(ioutCoef2, ifadeStep)
     endif 
@@ -317,7 +314,6 @@ while (kcount < ksmps) do
         kval += iinCoef
 
       elseif (ifadeInType == 1) then ;; equal-power
-        ; FIXME - should adjust values as in ardour
         karg = (kfadeStep / ifadeInSamps) * $M_PI_2
         asig[kcount] = sin(karg)
         ainverse[kcount] = cos(karg)
