@@ -272,24 +272,25 @@
       </para>
 
       <para>
-        Once an audio clip is on the timeline, you can modify its properties in a few ways.
-        First, you can click and drag it to move it in time.  If you click and drag from 
-        the left hand side, you will alter both the audio clip's start time, as well as 
-        the audio clip's file start time.  For example, if a clip was added that started
-        at time 0.0 and had an audio file start of 0.0, if you drag from the left hand side
-        to time 3.0, both the start of the clip and audio file start will be set to 3.0.  This
-        means that 3.0 beats into the project, the audio clip will start rendering from 3.0
-        seconds into the file.  If you drag from the right hand side, it will alter the duration
-        of the audio clip. If you hold down alt+shift, then press within an AudioClip,
-        you will split the AudioClip into parts. If you hold down the alt key, 
-        then press and drag the mouse, you can alter just the file start time.
+        Once an audio clip is on the timeline, you can modify its properties in
+        a few ways.  First, you can click and drag it to move it in time.  If
+        you click and drag from the left hand side, you will alter both the
+        audio clip's start time, as well as the audio clip's file start time.
+        For example, if a clip was added that started at time 0.0 and had an
+        audio file start of 0.0, if you drag from the left hand side to time
+        3.0, both the start of the clip and audio file start will be set to
+        3.0.  This means that 3.0 beats into the project, the audio clip will
+        start rendering from 3.0 seconds into the file.  If you drag from the
+        right hand side, it will alter the duration of the audio clip. If you
+        hold down alt+shift, then press within an AudioClip, you will split the
+        AudioClip into parts. If you hold down the alt key, then press and drag
+        the mouse, you can alter just the file start time.
       </para>
       
       <para>
-        If you have a single Audio clip selected, you can edit the properties 
-        of the
-        clip by using the ScoreObject Property Window. This window can be
-        opened from the menu "Windows -&gt; Sound Object Properties" or by
+        If you have a single Audio clip selected, you can edit the properties
+        of the clip by using the ScoreObject Property Window. This window can
+        be opened from the menu "Windows -&gt; Sound Object Properties" or by
         using the shortcut "F3". 
       </para>
 
@@ -304,6 +305,19 @@
         the docked window.)
       </para>
       
+      <para>
+        Audio clips can have fades enabled.  Like Ardour, upon which much of
+        the audio layer system is based, all fades are crossfades.  Clips will
+        crossfade with signals that are already in the bus, with the first clip
+        crossfading with silence.  Fade types and durations may bet set within
+        the clip's editor panel.  The clip duration may be visually modified by
+        mousing over the clip, pressing with the mouse on either the fade-in or
+        fade-out handle that appears after mousing over the clip, then dragging
+        and releasing to update the fade's duration.  The fade type may also be
+        modified by right clicking within a fade area and choosing the fade
+        type using the popup menu. 
+      </para>
+
     </simplesect>
 
 

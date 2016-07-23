@@ -208,7 +208,21 @@ public class AudioClipPanel extends JPanel
         @Override
         public void mousePressed(MouseEvent e
         ) {
-            if (e.isAltDown()) {
+            if (SwingUtilities.isRightMouseButton(e)) {
+                int x = e.getX();
+                if(x < leftFadeHandle.getX()) {
+                    FadeTypePopup popup = FadeTypePopup.getInstance();
+                    popup.setup(audioClip, true);
+                    popup.show(AudioClipPanel.this, x, e.getY());
+                } else if (x > rightFadeHandle.getX() - rightFadeHandle.getWidth()) {
+                    FadeTypePopup popup = FadeTypePopup.getInstance();
+                    popup.setup(audioClip, false);
+                    popup.show(AudioClipPanel.this, x, e.getY());
+                } else {
+                    redispatchEvent(e);
+                    active = false;
+                }
+            } else if (e.isAltDown()) {
                 if (e.isShiftDown()) {
                     float time = e.getX() / (float) timeState.getPixelSecond();
                     splitHandler.accept(audioClip, time);
