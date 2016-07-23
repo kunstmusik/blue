@@ -309,7 +309,7 @@
         Audio clips can have fades enabled.  Like Ardour, upon which much of
         the audio layer system is based, all fades are crossfades.  Clips will
         crossfade with signals that are already in the bus, with the first clip
-        crossfading with silence.  Fade types and durations may bet set within
+        crossfading with silence.  Fade types and durations may be set within
         the clip's editor panel.  The clip duration may be visually modified by
         mousing over the clip, pressing with the mouse on either the fade-in or
         fade-out handle that appears after mousing over the clip, then dragging
