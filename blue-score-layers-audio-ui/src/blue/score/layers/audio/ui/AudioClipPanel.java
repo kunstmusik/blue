@@ -24,6 +24,7 @@ import blue.score.ScoreObjectEvent;
 import blue.score.ScoreObjectListener;
 import blue.score.TimeState;
 import blue.score.layers.audio.core.AudioClip;
+import blue.score.layers.audio.core.FadeType;
 import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.ScoreTopComponent;
 import blue.ui.utilities.BlueGradientFactory;
@@ -87,9 +88,9 @@ public class AudioClipPanel extends JPanel
 
     private final FadeHandle leftFadeHandle;
     private final FadeHandle rightFadeHandle;
-    
+
     private final BiConsumer<AudioClip, Float> splitHandler;
-    
+
     ChangeListener<Number> fadeListener = (obs, o, n) -> {
         updateFadeHandleLocations();
         repaint();
@@ -210,7 +211,7 @@ public class AudioClipPanel extends JPanel
         ) {
             if (SwingUtilities.isRightMouseButton(e)) {
                 int x = e.getX();
-                if(x < leftFadeHandle.getX()) {
+                if (x < leftFadeHandle.getX()) {
                     FadeTypePopup popup = FadeTypePopup.getInstance();
                     popup.setup(audioClip, true);
                     popup.show(AudioClipPanel.this, x, e.getY());
@@ -342,6 +343,45 @@ public class AudioClipPanel extends JPanel
         return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
     }
 
+    private void paintFade(Graphics g, int xOffset, FadeType fadeType, float fadeTime, boolean fadeIn) {
+
+        int len = (int) (fadeTime * timeState.getPixelSecond());
+        double dlen = (double) len;
+
+        if (len < 2) {
+            return;
+        }
+
+        int[] polyX = new int[len + 3];
+        int[] polyY = new int[len + 3];
+        int h = getHeight() - 4;
+
+        if(fadeIn) {
+            polyX[len] = xOffset + len;
+            polyY[len] = 0;
+            polyX[len + 1] = xOffset;
+            polyY[len + 1] = 0;
+            polyX[len + 2] = xOffset;
+            polyY[len + 2] = h;
+        } else {
+            polyX[len] = xOffset + len;
+            polyY[len] = h;
+            polyX[len + 1] = xOffset + len;
+            polyY[len + 1] = 0;
+            polyX[len + 2] = xOffset;
+            polyY[len + 2] = 0;
+        }
+
+        for (int i = 0; i < len; i++) {
+            double x = i / dlen;
+            double fadeY = FadeRenderer.getValue(x, fadeType, fadeIn);
+            polyX[i] = i + xOffset;
+            polyY[i] = (int) ((1.0 - fadeY) * h);
+        }
+
+        g.fillPolygon(polyX, polyY, len + 3);
+    }
+
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics;
@@ -365,16 +405,16 @@ public class AudioClipPanel extends JPanel
         } else {
             Color bg = audioClip.getBackgroundColor();
             bgColor = new Color(bg.getRed(), bg.getGreen(),
-                                bg.getBlue(), 194);
+                    bg.getBlue(), 194);
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
 
             fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
             fadeColor = isBright(bgColor) ? fadeDarkColor : fadeLightColor;
             waveColor = bg;
-            
+
             if (isBright(bg)) {
-                waveColor = waveColor.darker().darker();                
+                waveColor = waveColor.darker().darker();
             } else {
                 waveColor = waveColor.brighter().brighter();
             }
@@ -396,17 +436,21 @@ public class AudioClipPanel extends JPanel
         // paint fades
         if (audioClip.getFadeIn() > 0.0f) {
             g.setColor(fadeColor);
-            g.fillPolygon(new int[]{0, 0, leftFadeHandle.getX()},
-                    new int[]{this.getHeight() - 4, 0, 0},
-                    3);
+            paintFade(graphics, 0, audioClip.getFadeInType(), 
+                    audioClip.getFadeIn(), true);
+//            g.fillPolygon(new int[]{0, 0, leftFadeHandle.getX()},
+//                    new int[]{this.getHeight() - 4, 0, 0},
+//                    3);
         }
 
         if (audioClip.getFadeOut() > 0.0f) {
             g.setColor(fadeColor);
-            g.fillPolygon(new int[]{rightFadeHandle.getX() + 5,
-                getWidth() - 2, getWidth() - 2},
-                    new int[]{0, 0, this.getHeight() - 4},
-                    3);
+            paintFade(graphics, rightFadeHandle.getX() + 5, 
+                    audioClip.getFadeOutType(), audioClip.getFadeOut(), false);
+//            g.fillPolygon(new int[]{rightFadeHandle.getX() + 5,
+//                getWidth() - 2, getWidth() - 2},
+//                    new int[]{0, 0, this.getHeight() - 4},
+//                    3);
         }
 
         g.translate(-1, -2);
