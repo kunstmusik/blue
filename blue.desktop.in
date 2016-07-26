@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Blue
+Comment=Blue Integrated Music Environment
+Exec=/bin/sh "DESKTOPDIR/blue"
+Icon=DESKTOPDIR/blueIcon.png
+Categories=Application;Multimedia
+Version=1.0
+Type=Application
+Terminal=0
+

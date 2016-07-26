@@ -53,6 +53,8 @@
       <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
+      <zipfileset file="blue.desktop.in" filemode="755" prefix="${app.name}/bin"/>
+      <zipfileset file="install_desktop_starter.sh" filemode="755" prefix="${app.name}/bin"/>
     </zip>
     <delete dir="${dist.dir}/blue"/>
     <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
