@@ -96,6 +96,10 @@ public class AudioClipPanel extends JPanel
         repaint();
     };
 
+    ChangeListener<FadeType> fadeTypeListener = (obs, o, n) -> {
+        repaint();
+    };
+
     MouseAdapter releaseOutsideAdapter = new MouseAdapter() {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -288,7 +292,9 @@ public class AudioClipPanel extends JPanel
         audioClip.addScoreObjectListener(this);
         audioClip.fileStartTimeProperty().addListener(this);
         audioClip.fadeInProperty().addListener(fadeListener);
+        audioClip.fadeInTypeProperty().addListener(fadeTypeListener);
         audioClip.fadeOutProperty().addListener(fadeListener);
+        audioClip.fadeOutTypeProperty().addListener(fadeTypeListener);
         timeState.addPropertyChangeListener(this);
 
         ScoreTopComponent scoreTopComponent = (ScoreTopComponent) WindowManager.getDefault().findTopComponent(
@@ -312,7 +318,9 @@ public class AudioClipPanel extends JPanel
         audioClip.removeScoreObjectListener(this);
         audioClip.fileStartTimeProperty().removeListener(this);
         audioClip.fadeInProperty().removeListener(fadeListener);
+        audioClip.fadeInTypeProperty().removeListener(fadeTypeListener);
         audioClip.fadeOutProperty().removeListener(fadeListener);
+        audioClip.fadeOutTypeProperty().removeListener(fadeTypeListener);
 
         timeState.removePropertyChangeListener(this);
         result.removeLookupListener(this);
