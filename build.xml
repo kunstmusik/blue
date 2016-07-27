@@ -69,7 +69,7 @@
     <property name="zipName" value="${app.name}_OSX_${blueVersion}.zip"/>
 
     <!-- Replace the icns file. -->
-    <copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="${app.name}.icns" overwrite="true"/>
+    <copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="imageSrc/${app.name}.icns" overwrite="true"/>
 
     <copy file="ChangeLog" tofile="${dist.dir}/${app.name}.app/ChangeLog" overwrite="true">
       <filterset>
@@ -138,7 +138,7 @@
     <echo message="Replacing icon of Windows launcher executable."/>
     <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
       <arg value="${build.launcher.dir}\bin\${app.name}.exe"/>
-      <arg value="${app.name}.ico"/>
+      <arg value="imageSrc\${app.name}.ico"/>
     </exec>
     <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
       <arg value="${build.launcher.dir}\bin\${app.name}64.exe"/>
