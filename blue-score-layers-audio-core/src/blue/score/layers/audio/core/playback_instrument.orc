@@ -16,40 +16,26 @@ aenv, ainv blue_fade ioffset, iclipDur, ifadeInTime, ifadeInType, ifadeOutTime, 
 
 if (ichannels == 1) then
   
-a0  diskin2 Saudio_file, 1, ifileStart
-a0 *= aenv
+    a0  diskin2 Saudio_file, 1, ifileStart
 
-kindx = 0
-while (kindx < ksmps) do
-  if(ainv[kindx] == 0.0) then
-    {0}[kindx] = a0[kindx]
-  else 
-    {0}[kindx] = {0}[kindx] * ainv[kindx] + a0[kindx] 
-  endif
-  kindx += 1
-od
-
+    if (aenv[0] == 1 && aenv[ksmps-1] == 1) then
+        {0} = a0
+    else
+        {0} = {0} * ainv + a0 * aenv
+    endif
 
 
 elseif (ichannels == 2) then
 
-a0, a1  diskin2 Saudio_file, 1, ifileStart
+    a0, a1  diskin2 Saudio_file, 1, ifileStart
 
-a0 *= aenv
-a1 *= aenv
-
-kindx = 0
-while (kindx < ksmps) do
-  if(ainv[kindx] == 0.0) then
-    {0}[kindx] = a0[kindx]
-    {1}[kindx] = a1[kindx]
-  else 
-    {0}[kindx] = {0}[kindx] * ainv[kindx] + a0[kindx] 
-    {1}[kindx] = {1}[kindx] * ainv[kindx] + a1[kindx] 
-  endif
-  kindx += 1
-od
-
+    if (aenv[0] == 1 && aenv[ksmps-1] == 1) then
+        {0} = a0
+        {1} = a1
+    else
+        {0} = {0} * ainv + a0 * aenv 
+        {1} = {1} * ainv + a1 * aenv 
+    endif
 
 else
 
