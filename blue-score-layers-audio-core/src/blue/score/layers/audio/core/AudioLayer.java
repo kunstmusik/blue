@@ -370,13 +370,10 @@ public class AudioLayer extends ArrayList<AudioClip>
 
             
             int fadeType = clip.getFadeInType().ordinal();
-            if (fadeType == 4) { fadeType = 5; }
-            
             n.setPField(Integer.toString(fadeType), 8);
             n.setPField(Float.toString(clip.getFadeIn()), 9);
             
             fadeType = clip.getFadeOutType().ordinal();
-            if (fadeType == 4) { fadeType = 5; }
             n.setPField(Integer.toString(fadeType), 10);
             n.setPField(Float.toString(clip.getFadeOut()), 11);
 
