@@ -62,6 +62,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
     private boolean randomizable = true;
 
+    // OVERRIDE TO HANDLE NAME CHANGES AND MULTIPLE PARAMETERS
     @Override
     public void setObjectName(String objectName) {
         if (objectName == null || objectName.equals(getObjectName())) {

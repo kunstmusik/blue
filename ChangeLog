@@ -141,6 +141,9 @@ FIX
 * Issue #267 - reset BSB Object property sheet when setting automation enabled
   is cancelled
 
+* Issue #255 - fixed Automatable BSB objects that did not update parameters 
+  correctly when objectName was changed
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 

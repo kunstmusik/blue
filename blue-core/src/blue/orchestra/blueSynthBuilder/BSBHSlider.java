@@ -52,45 +52,6 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     private boolean randomizable = true;
 
-    // OVERRIDE to handle parameter name changes
-    @Override
-    public void setObjectName(String objectName) {
-        if (objectName == null || objectName.equals(getObjectName())) {
-            return;
-        }
-
-        if (unm != null) {
-            if (objectName != null && objectName.length() != 0
-                    && !unm.isUnique(objectName)) {
-                return;
-            }
-        }
-
-        String oldName = this.getObjectName();
-
-        boolean doInitialize = false;
-
-        if (parameters != null && automationAllowed) {
-            if (objectName == null || objectName.length() == 0) {
-                parameters.removeParameter(oldName);
-            } else {
-                Parameter param = parameters.getParameter(oldName);
-
-                if (param == null) {
-                    doInitialize = true;
-                } else {
-                    param.setName(objectName);
-                }
-            }
-        }
-
-        super.setObjectName(objectName);
-
-        if (doInitialize) {
-            initializeParameters();
-        }
-    }
-
     public static BSBObject loadFromXML(Element data) {
         BSBHSlider slider = new BSBHSlider();
         float minVal = 0;

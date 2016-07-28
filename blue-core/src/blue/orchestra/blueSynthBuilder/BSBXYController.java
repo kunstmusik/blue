@@ -50,7 +50,7 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     boolean randomizable = true;
 
-    // OVERRIDE to handle parameter name changes
+    // OVERRIDE to handle parameter name changes and multiple parameters
     @Override
     public void setObjectName(String objectName) {
         String oldName = this.getObjectName();
