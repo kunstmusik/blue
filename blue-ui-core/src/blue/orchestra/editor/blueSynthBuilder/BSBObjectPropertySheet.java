@@ -59,7 +59,12 @@ public class BSBObjectPropertySheet extends JComponent implements
             public void propertyChange(PropertyChangeEvent evt) {
                 if (objectView != null) {
                     Property prop = (Property) evt.getSource();
-                    prop.writeToObject(objectView);
+
+                    try {
+                        prop.writeToObject(objectView);
+                    } catch (Exception pve) {
+                        bsbObjectChanged(objectView.getBSBObject());
+                    }
                 }
             }
         };

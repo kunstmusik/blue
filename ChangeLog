@@ -138,6 +138,9 @@ FIX
 
 * Fixed BSB parameter var name generation when project has >= 1000 params
 
+* Issue #267 - reset BSB Object property sheet when setting automation enabled
+  is cancelled
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
