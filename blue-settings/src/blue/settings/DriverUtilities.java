@@ -468,7 +468,7 @@ public class DriverUtilities {
         ProcessRunner pc = new ProcessRunner();
         String retVal = null;
         String portType = "audio";
-        String subType = isInput ? "input" : "output";
+        String subType = isInput ? "output" : "input";
         String prepend = isInput ? "adc:" : "dac:";
 
         String path = System.getenv("PATH");
