@@ -22,7 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.util.Set;
 
 
 /**
@@ -47,12 +47,10 @@ public class UniqueNameManager implements Serializable {
     }
 
     public boolean isUniquelyNamed(BSBObject bsbObj) {
-        ArrayList names = collection.getNames();
-
-        return isUniquelyNamed(bsbObj, names);
+        return isUniquelyNamed(bsbObj, collection.getNames());
     }
 
-    private boolean isUniquelyNamed(BSBObject bsbObj, ArrayList names) {
+    private boolean isUniquelyNamed(BSBObject bsbObj, Set<String> names) {
         String[] keys = bsbObj.getReplacementKeys();
 
         for (int i = 0; i < keys.length; i++) {
@@ -76,7 +74,7 @@ public class UniqueNameManager implements Serializable {
         vals[0] = getPrefix(currentName);
         vals[1] = new Integer(nameIndex);
 
-        ArrayList<String> names = collection.getNames();
+        Set<String> names = collection.getNames();
 
         BSBObject clone = (BSBObject) bsbObj.clone();
 
@@ -108,24 +106,11 @@ public class UniqueNameManager implements Serializable {
     }
 
     public boolean isUnique(String name) {
-        ArrayList<String> names = collection.getNames();
-        return isUnique(name, names);
+        return isUnique(name, collection.getNames());
     }
 
-    private boolean isUnique(String name, ArrayList<String> names) {
-        if (name == null) {
-            return true;
-        }
-
-        for (int i = 0; i < names.size(); i++) {
-            String temp = names.get(i);
-
-            if (temp != null && temp.length() != 0 && temp.equals(name)) {
-                return false;
-            }
-        }
-
-        return true;
+    private boolean isUnique(String name, Set<String> names) {
+        return (name == null) || !names.contains(name);
     }
 
     //

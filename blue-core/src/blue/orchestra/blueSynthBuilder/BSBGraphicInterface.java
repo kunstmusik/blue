@@ -26,7 +26,9 @@ import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -201,8 +203,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         }
     }
 
-    public ArrayList<String> getNames() {
-        ArrayList<String> names = new ArrayList<>();
+    public Set<String> getNames() {
+        Set<String> names = new HashSet<>();
 
         for (int i = 0; i < size(); i++) {
             BSBObject bsbObj = getBSBObject(i);
