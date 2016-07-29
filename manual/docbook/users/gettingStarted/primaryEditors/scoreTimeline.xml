@@ -306,7 +306,7 @@
       </para>
       
       <para>
-        Audio clips can have fades enabled.  Like Ardour, upon which much of
+        Audio clips support fades.  Like Ardour, upon which much of
         the audio layer system is based, all fades are crossfades.  Clips will
         crossfade with signals that are already in the bus, with the first clip
         crossfading with silence.  Fade types and durations may be set within
@@ -316,6 +316,12 @@
         and releasing to update the fade's duration.  The fade type may also be
         modified by right clicking within a fade area and choosing the fade
         type using the popup menu. 
+      </para>
+
+      <para>For more information about Fades, please see Ardour's manual entry
+        on <ulink
+          url="http://manual.ardour.org/editing-and-arranging/create-region-fades-and-crossfades/">Region
+          Fades and Crossfades</ulink>.  
       </para>
 
     </simplesect>
