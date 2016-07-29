@@ -361,10 +361,10 @@ public class MixerNodeTest extends TestCase {
         String out = MixerNode.getMixerCode(data, mixer, opcodeList, manager, node,
                 nchnls);
 
-        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_0_0\n"
-                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_0_1\n"
-                + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluesub_subChannel1_0\n"
-                + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluesub_subChannel1_1\n";
+        String expected = "ga_bluesub_subChannel1_0\t+=\tga_bluemix_0_0\n"
+                + "ga_bluesub_subChannel1_1\t+=\tga_bluemix_0_1\n"
+                + "ga_bluesub_Master_0\t+=\tga_bluesub_subChannel1_0\n"
+                + "ga_bluesub_Master_1\t+=\tga_bluesub_subChannel1_1\n";
 
         assertEquals(expected, out);
     }
@@ -386,14 +386,14 @@ public class MixerNodeTest extends TestCase {
         String out = MixerNode.getMixerCode(data, mixer, opcodeList, manager, node,
                 nchnls);
 
-        String expected = "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_1_0\n"
-                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_1_1\n"
-                + "ga_bluesub_subChannel1_0\tsum\tga_bluesub_subChannel1_0, ga_bluemix_2_0\n"
-                + "ga_bluesub_subChannel1_1\tsum\tga_bluesub_subChannel1_1, ga_bluemix_2_1\n"
-                + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluemix_0_0\n"
-                + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluemix_0_1\n"
-                + "ga_bluesub_Master_0\tsum\tga_bluesub_Master_0, ga_bluesub_subChannel1_0\n"
-                + "ga_bluesub_Master_1\tsum\tga_bluesub_Master_1, ga_bluesub_subChannel1_1\n";
+        String expected = "ga_bluesub_subChannel1_0\t+=\tga_bluemix_1_0\n"
+                + "ga_bluesub_subChannel1_1\t+=\tga_bluemix_1_1\n"
+                + "ga_bluesub_subChannel1_0\t+=\tga_bluemix_2_0\n"
+                + "ga_bluesub_subChannel1_1\t+=\tga_bluemix_2_1\n"
+                + "ga_bluesub_Master_0\t+=\tga_bluemix_0_0\n"
+                + "ga_bluesub_Master_1\t+=\tga_bluemix_0_1\n"
+                + "ga_bluesub_Master_0\t+=\tga_bluesub_subChannel1_0\n"
+                + "ga_bluesub_Master_1\t+=\tga_bluesub_subChannel1_1\n";
 
         assertEquals(expected, out);
     }
