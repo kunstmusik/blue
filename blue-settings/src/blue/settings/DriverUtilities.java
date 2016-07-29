@@ -106,16 +106,45 @@ public class DriverUtilities {
     /* MIDI DEVICE LISTING METHODS */
     protected static List<DeviceInfo> getMidiDevicesAlsa(boolean isInput) {
 
-        List<DeviceInfo> devices = new ArrayList<>();
+        List<DeviceInfo> devices = null;
 
         String portType = isInput ? "R" : "W";
 
         File f = new File("/proc/asound/seq/clients");
-        String values;
 
         try {
-            values = TextUtilities.getTextFromFile(f);
-            String[] lines = values.split("\\r?\\n");
+            String values = TextUtilities.getTextFromFile(f);
+            devices = parseAlsaMidiDevices(values, portType);
+        } catch (IOException | NumberFormatException ex) {
+//            ex.printStackTrace();
+            return null;
+        }
+        return devices;
+    }
+
+
+    protected static List<DeviceInfo> getMidiDevicesGeneric(String csoundCommand,
+            String driver, DiskRenderService service, boolean isInput) {
+
+        int csVersion = service.getCsoundVersion(csoundCommand);
+        if (csVersion < 5) {
+            return null;
+        }
+
+        String output = getCsoundMidiOutput(csoundCommand, driver, service, isInput);
+        return parseCsoundMidiOutput(output, isInput);
+    }
+
+    protected static List<DeviceInfo> parseAlsaMidiDevices(String seqClients, String portType) {
+
+        if(seqClients == null || seqClients.isEmpty() || 
+                portType == null || portType.isEmpty()) {
+            return null;
+        }
+
+        List<DeviceInfo> devices = new ArrayList<>();
+
+            String[] lines = seqClients.split("\\r?\\n");
 
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i].trim();
@@ -166,24 +195,7 @@ public class DriverUtilities {
 
                 }
             }
-        } catch (IOException | NumberFormatException ex) {
-//            ex.printStackTrace();
-            return null;
-        }
-        return devices;
-    }
-
-
-    protected static List<DeviceInfo> getMidiDevicesGeneric(String csoundCommand,
-            String driver, DiskRenderService service, boolean isInput) {
-
-        int csVersion = service.getCsoundVersion(csoundCommand);
-        if (csVersion < 5) {
-            return null;
-        }
-
-        String output = getCsoundMidiOutput(csoundCommand, driver, service, isInput);
-        return parseCsoundMidiOutput(output, isInput);
+            return devices;
     }
 
 

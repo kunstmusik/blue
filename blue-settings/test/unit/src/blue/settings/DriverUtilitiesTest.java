@@ -20,6 +20,7 @@
 package blue.settings;
 
 import blue.services.render.DeviceInfo;
+import blue.utilities.TextUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -146,6 +147,20 @@ public class DriverUtilitiesTest {
         info = v.get(0);
         assertEquals("dac:system:capture_", info.getDeviceId());
         assertEquals("system:capture_ (12 channels)", info.toString());
+    }
+
+    @Test
+    public void testParseAlsaMidiDevices() {
+        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("", "R"));
+        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("a", ""));
+
+        String seqClients = TextUtilities.getTextFromSystemResource("blue/settings/test_seq_clients_alsa.txt");
+
+        List<DeviceInfo> drivers = DriverUtilities.parseAlsaMidiDevices(seqClients, "R");
+        assertEquals(5, drivers.size());
+        for(DeviceInfo d : drivers) {
+            System.out.println(d + " :" + d.getDeviceId());
+        }
     }
 
 //    @Test
