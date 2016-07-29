@@ -366,7 +366,6 @@ while (kcount < ksmps) do
         kval += ioutCoef
 
       elseif (ifadeOutType == 1) then
-        ; FIXME - should adjust values as in ardour
         karg = (kfadeStep / ifadeOutSamps) * $M_PI_2
         asig[kcount] = cos(karg)
         ainverse[kcount] = sin(karg)
