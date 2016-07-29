@@ -88,10 +88,6 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         return retVal;
     }
 
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBFileSelectorView(this);
-//    }
-
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         String fileNameValue = fileName.replace('\\', '/');
         
@@ -168,5 +164,11 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         return stringChannel;
     }
     
-    
+    @Override
+    public Object clone() {
+        BSBFileSelector clone = (BSBFileSelector) super.clone();
+        clone.stringChannel = new StringChannel();
+        clone.addPropertyChangeListener(clone.stringChannel);
+        return clone;
+    }
 }

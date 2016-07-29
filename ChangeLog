@@ -144,6 +144,9 @@ FIX
 * Issue #255 - fixed Automatable BSB objects that did not update parameters 
   correctly when objectName was changed
 
+* Issue #251 - fixed issue where copy/pasted BSBFileSelector would not update
+  correctly within Csound even though UI was updating
+
 INTERNAL
 
 * Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
