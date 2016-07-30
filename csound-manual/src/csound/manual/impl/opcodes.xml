@@ -900,7 +900,16 @@
       </opcode>
       <opcode>
         <name>jitter2</name>
-        <signature>kout 	jitter2	 ktotamp, kamp1, kcps1, kamp2, kcps2, kamp3, kcps3</signature>
+        <signature>kout 	jitter2	 ktotamp, kamp1, kcps1,
+    kamp2, kcps2, kamp3, kcps3[ , iopt]</signature>
+      </opcode>
+      <opcode>
+        <name>jspline</name>
+        <signature>ares 	jspline	 xamp, kcpsMin, kcpsMax</signature>
+      </opcode>
+      <opcode>
+        <name>jspline</name>
+        <signature>kres 	jspline	 kamp, kcpsMin, kcpsMax</signature>
       </opcode>
       <opcode>
         <name>linrand</name>
@@ -1013,6 +1022,14 @@
       <opcode>
         <name>rnd31</name>
         <signature>kx 	rnd31	 kscl, krpow [, iseed]</signature>
+      </opcode>
+      <opcode>
+        <name>rspline</name>
+        <signature>ares 	rspline	 xrangeMin, xrangeMax, kcpsMin, kcpsMax</signature>
+      </opcode>
+      <opcode>
+        <name>rspline</name>
+        <signature>kres 	rspline	 krangeMin, krangeMax, kcpsMin, kcpsMax</signature>
       </opcode>
       <opcode>
         <name>seed</name>
@@ -1938,7 +1955,7 @@
       </opcode>
       <opcode>
         <name>chnparams</name>
-        <signature>itype, imode, ictltype, idflt, imin, imax 	chnparams</signature>
+        <signature>itype, imode, ictltype, idflt, imin, imax 	chnparams	 Sname</signature>
       </opcode>
       <opcode>
         <name>chnset</name>
@@ -2704,6 +2721,22 @@
         <opcode>
           <name>moogladder</name>
           <signature>asig 	moogladder	 ain, acf, ares[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder2</name>
+          <signature>asig 	moogladder2	 ain, kcf, kres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder2</name>
+          <signature>asig 	moogladder2	 ain, acf, kres[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder2</name>
+          <signature>asig 	moogladder2	 ain, kcf, ares[, istor]</signature>
+        </opcode>
+        <opcode>
+          <name>moogladder2</name>
+          <signature>asig 	moogladder2	 ain, acf, ares[, istor]</signature>
         </opcode>
         <opcode>
           <name>moogvcf</name>
@@ -5478,6 +5511,10 @@
       <signature>ksignal 	inletkid 	Sname, SinstanceID</signature>
     </opcode>
     <opcode>
+      <name>inletv </name>
+      <signature>array 	inletv 	Sname</signature>
+    </opcode>
+    <opcode>
       <name>outleta </name>
       <signature>outleta 	Sname, asignal</signature>
     </opcode>
@@ -5492,6 +5529,10 @@
     <opcode>
       <name>outletkid </name>
       <signature>outletkid 	Sname, SinstanceID, ksignal</signature>
+    </opcode>
+    <opcode>
+      <name>outletv </name>
+      <signature>outletv 	Sname, array</signature>
     </opcode>
   </opcodeGroup>
   <opcodeGroup name="Spectral Processing">
@@ -5925,9 +5966,24 @@
         <signature>kcent 	centroid	 asig, ktrig, ifftsize</signature>
       </opcode>
       <opcode>
+        <name>filescal</name>
+        <signature>asig[,asig2] 	filescal	 ktimescal, kamp, kpitch, Sfile, klock [,ifftsize, idecim, ithresh]
+      </signature>
+      </opcode>
+      <opcode>
         <name>mincer</name>
         <signature>asig 	mincer	 atimpt, kamp, kpitch, ktab, klock[,ifftsize,idecim]
       </signature>
+      </opcode>
+      <opcode>
+        <name>mp3scal</name>
+        <signature>asig, asig2, ktime 	mp3scal	 Sfile,ktimescal,kpitch, kamp [,iskip,ifftsize, idecim, ilock]
+      </signature>
+      </opcode>
+      <opcode>
+        <name>paulstretch</name>
+        <signature>asig 	paulstretch	 istretch, iwindowsize, ift
+    </signature>
       </opcode>
       <opcode>
         <name>temposcal</name>
@@ -6978,6 +7034,26 @@ inum_parm, kupdate</signature>
         <signature>kout[] 	rect2pol	 kin[]</signature>
       </opcode>
     </opcodeGroup>
+    <opcodeGroup name=" Discrete Cosine Transform">
+      <opcode>
+        <name>dct</name>
+        <signature>kout[] 	dct	 kin[]</signature>
+      </opcode>
+      <opcode>
+        <name>dct</name>
+        <signature>iout[] 	dct	 iin[]</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" Inverse Discrete Cosine Transform">
+      <opcode>
+        <name>dctinv</name>
+        <signature>kout[] 	dctinv	 kin[]</signature>
+      </opcode>
+      <opcode>
+        <name>dctinv</name>
+        <signature>iout[] 	dctinv	 iin[]</signature>
+      </opcode>
+    </opcodeGroup>
     <opcodeGroup name=" Fast Fourier Transform">
       <opcode>
         <name>fft</name>
@@ -7032,7 +7108,7 @@ inum_parm, kupdate</signature>
   <opcodeGroup name="Array Opcodes">
     <opcode>
       <name>copya2ftab</name>
-      <signature>copya2ftab	 tab, kftbl</signature>
+      <signature>copya2ftab	 kftbl, tab</signature>
     </opcode>
     <opcode>
       <name>copyf2array</name>
@@ -7104,25 +7180,5 @@ inum_parm, kupdate</signature>
       <name>shiftout</name>
       <signature>asig 	shiftout	 kIn[][, ioff]</signature>
     </opcode>
-  </opcodeGroup>
-  <opcodeGroup name="ignal Generators">
-    <opcodeGroup name="Random (Noise) Generators">
-      <opcode>
-        <name>jspline</name>
-        <signature>ares 	jspline	 xamp, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
-        <name>jspline</name>
-        <signature>kres 	jspline	 kamp, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
-        <name>rspline</name>
-        <signature>ares 	rspline	 xrangeMin, xrangeMax, kcpsMin, kcpsMax</signature>
-      </opcode>
-      <opcode>
-        <name>rspline</name>
-        <signature>kres 	rspline	 krangeMin, krangeMax, kcpsMin, kcpsMax</signature>
-      </opcode>
-    </opcodeGroup>
   </opcodeGroup>
 </CsoundOpcodes>
