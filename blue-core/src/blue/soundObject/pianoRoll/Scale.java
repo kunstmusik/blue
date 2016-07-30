@@ -193,26 +193,27 @@ public class Scale implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("scaleName")) {
-                scale.scaleName = node.getTextString();
-            } else if (nodeName.equals("baseFrequency")) {
-                scale.baseFrequency = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("octave")) {
-                scale.octave = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("ratios")) {
-                Elements ratioNodes = node.getElements();
-
-                scale.ratios = new float[ratioNodes.size()];
-
-                int i = 0;
-
-                while (ratioNodes.hasMoreElements()) {
-                    Element ratioNode = ratioNodes.next();
-                    scale.ratios[i] = Float.parseFloat(ratioNode
-                            .getTextString());
-                    i++;
-                }
+            switch (nodeName) {
+                case "scaleName":
+                    scale.scaleName = node.getTextString();
+                    break;
+                case "baseFrequency":
+                    scale.baseFrequency = Float.parseFloat(node.getTextString());
+                    break;
+                case "octave":
+                    scale.octave = Float.parseFloat(node.getTextString());
+                    break;
+                case "ratios":
+                    Elements ratioNodes = node.getElements();
+                    scale.ratios = new float[ratioNodes.size()];
+                    int i = 0;
+                    while (ratioNodes.hasMoreElements()) {
+                        Element ratioNode = ratioNodes.next();
+                        scale.ratios[i] = Float.parseFloat(ratioNode
+                                .getTextString());
+                        i++;
+                    }
+                    break;
 
             }
         }
@@ -276,14 +277,17 @@ public class Scale implements Serializable {
         this.baseFrequency = scale.baseFrequency;
     }
     
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
     }
     
+    @Override
     public String toString() {
         return getScaleName();
     }

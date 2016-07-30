@@ -26,7 +26,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
@@ -56,6 +55,7 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
         repaint();
     }
 
+    @Override
     public boolean intersects(JComponent c) {
         int marqueeLeft = this.getX();
         int marqueeRight = marqueeLeft + this.getWidth();
@@ -76,6 +76,7 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
         return false;
     }
 
+    @Override
     public void paint(Graphics g) {
         if (GeneralSettings.getInstance().isAlphaEnabled()) {
             g.setColor(alphaWhite);
@@ -84,5 +85,10 @@ public class AlphaMarquee extends JComponent implements SelectionMarquee {
 
         g.setColor(Color.white);
         g.drawRect(0, 0, this.getWidth() - 1, this.getHeight() - 1);
+    }
+
+    @Override
+    public Rectangle getTranslatedRect(JComponent comp) {
+        return SwingUtilities.convertRectangle(getParent(), this.getBounds(), comp);
     }
 }

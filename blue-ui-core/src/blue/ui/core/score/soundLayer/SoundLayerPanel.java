@@ -20,6 +20,15 @@
 
 package blue.ui.core.score.soundLayer;
 
+import blue.SoundLayer;
+import blue.automation.AutomationManager;
+import blue.automation.Parameter;
+import blue.automation.ParameterIdList;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorChainMap;
+import blue.ui.components.IconFactory;
+import blue.ui.core.score.NoteProcessorDialog;
+import blue.ui.core.score.ScoreController;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -27,7 +36,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -36,15 +44,6 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import blue.SoundLayer;
-import blue.automation.AutomationManager;
-import blue.automation.Parameter;
-import blue.automation.ParameterIdList;
-import blue.ui.components.IconFactory;
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorChainMap;
-import blue.ui.core.score.NoteProcessorDialog;
 
 /**
  * 
@@ -72,9 +71,11 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
     private NoteProcessorChainMap npcMap;
 
     /** Creates new form SoundLayerPanel */
-    public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap, boolean automatable) {
+    public SoundLayerPanel(SoundLayer soundLayer, NoteProcessorChainMap npcMap) {
         initComponents();
         setSelected(false);
+        
+        boolean automatable = ScoreController.getInstance().getScorePath().getLastLayerGroup() == null;
 
         muteToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.ORANGE.darker());
         soloToggleButton.putClientProperty("BlueToggleButton.selectColorOverride", Color.GREEN.darker());
@@ -448,7 +449,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
     private void automationButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_automationButtonActionPerformed
         JPopupMenu menu = AutomationManager.getInstance().getAutomationMenu(
-                this.sLayer);
+                this.sLayer.getAutomationParameters());
 
         menu.show(automationButton, 0, automationButton.getHeight());
 
@@ -572,19 +573,23 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
         updating = false;
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         updateParameterPanel();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.sLayer) {
             String propName = evt.getPropertyName();
-
-            if (propName.equals("heightIndex")) {
-                revalidate();
-            } else if (propName.equals("name")) {
-                nameText.setText(sLayer.getName());
-                nameLabel.setText(sLayer.getName());
+            switch (propName) {
+                case "heightIndex":
+                    revalidate();
+                    break;
+                case "name":
+                    nameText.setText(sLayer.getName());
+                    nameLabel.setText(sLayer.getName());
+                    break;
             }
         }
     }
@@ -633,6 +638,7 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
             JMenu layerHeightMenu = new JMenu("Layer Height");
 
             ActionListener al = new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     if (soundLayer == null) {
                         return;

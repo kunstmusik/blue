@@ -20,18 +20,17 @@
 
 package blue;
 
-import blue.settings.GeneralSettings;
-import java.awt.Window;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import blue.utility.XMLUtilities;
 import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
+import java.awt.Window;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * 
@@ -42,9 +41,9 @@ public class WindowSettingManager {
 
     private static final String SETTINGS_FILE_NAME = "windowSettings.xml";
 
-    private HashMap windows = new HashMap();
+    private HashMap<String,Window> windows = new HashMap<>();
 
-    private HashMap settings = new HashMap();
+    private HashMap<String,Element> settings = new HashMap<>();
 
     private WindowSettingManager() {
         load();
@@ -93,8 +92,7 @@ public class WindowSettingManager {
 
         Element root = doc.setRoot("windowSettings");
 
-        for (Iterator it = settings.values().iterator(); it.hasNext();) {
-            Element node = (Element) it.next();
+        for (Element node : settings.values()) {
             root.addElement(node);
         }
 
@@ -103,10 +101,10 @@ public class WindowSettingManager {
         String settingsFile = userDir + File.separator + SETTINGS_FILE_NAME;
 
         try {
-            FileOutputStream out = new FileOutputStream(settingsFile);
-            doc.write(out);
-            out.flush();
-            out.close();
+            try (FileOutputStream out = new FileOutputStream(settingsFile)) {
+                doc.write(out);
+                out.flush();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,9 +117,9 @@ public class WindowSettingManager {
      * have had previous states saved, so that their settings are not lost.
      */
     private void updateSettings() {
-        for (Iterator it = windows.keySet().iterator(); it.hasNext();) {
-            String key = (String) it.next();
-            Window w = (Window) windows.get(key);
+        for (Map.Entry<String,Window> entry : windows.entrySet()) {
+            String key = entry.getKey();
+            Window w = entry.getValue();
 
             Element node;
 
@@ -155,7 +153,7 @@ public class WindowSettingManager {
         if (settings.containsKey(windowName)) {
             if (window instanceof WindowSettingsSavable) {
                 WindowSettingsSavable savable = (WindowSettingsSavable) window;
-                savable.loadWindowSettings((Element) settings.get(windowName));
+                savable.loadWindowSettings(settings.get(windowName));
             }
         }
 
@@ -178,19 +176,23 @@ public class WindowSettingManager {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("x")) {
-                int x = Integer.parseInt(node.getTextString());
-                window.setLocation(x, window.getY());
-            } else if (nodeName.equals("y")) {
-                int y = Integer.parseInt(node.getTextString());
-                window.setLocation(window.getX(), y);
-            } else if (nodeName.equals("width")) {
-                int w = Integer.parseInt(node.getTextString());
-                window.setSize(w, window.getHeight());
-            } else if (nodeName.equals("height")) {
-                int h = Integer.parseInt(node.getTextString());
-                window.setSize(window.getWidth(), h);
+            switch (nodeName) {
+                case "x":
+                    int x = Integer.parseInt(node.getTextString());
+                    window.setLocation(x, window.getY());
+                    break;
+                case "y":
+                    int y = Integer.parseInt(node.getTextString());
+                    window.setLocation(window.getX(), y);
+                    break;
+                case "width":
+                    int w = Integer.parseInt(node.getTextString());
+                    window.setSize(w, window.getHeight());
+                    break;
+                case "height":
+                    int h = Integer.parseInt(node.getTextString());
+                    window.setSize(window.getWidth(), h);
+                    break;
             }
         }
     }

@@ -25,6 +25,7 @@ import blue.soundObject.NoteList;
 
 class ma extends CybilAlgorithm {
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
         String ranType = (String) args.get(0);
         boolean isInteger = ranType.equals("i");
@@ -50,7 +51,7 @@ class ma extends CybilAlgorithm {
             }
         } else {
             if (isTime) {
-                Note currentNote = notes.getNote(cybilNoteList.index);
+                Note currentNote = notes.get(cybilNoteList.index);
                 float startTime = currentNote.getStartTime();
                 float endTime = startTime + timeValue;
 
@@ -77,7 +78,7 @@ class ma extends CybilAlgorithm {
                     if (cybilNoteList.index >= notes.size()) {
                         break;
                     }
-                    currentNote = notes.getNote(cybilNoteList.index);
+                    currentNote = notes.get(cybilNoteList.index);
 
                 }
 
@@ -94,7 +95,7 @@ class ma extends CybilAlgorithm {
                     String strVal = isInteger ? Integer.toString((int) val)
                             : Double.toString(val);
 
-                    Note currentNote = notes.getNote(cybilNoteList.index);
+                    Note currentNote = notes.get(cybilNoteList.index);
                     currentNote.setPField(strVal, cybilNoteList.pfield);
                     cybilNoteList.index++;
 

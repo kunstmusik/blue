@@ -1,20 +1,18 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.gui.LabelledRangeBar;
+import blue.orchestra.blueX7.Operator;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledRangeBar;
-import blue.orchestra.blueX7.Operator;
 
 /**
  * <p>
@@ -55,12 +53,12 @@ public class OscilatorPanel extends JComponent {
     public OscilatorPanel() {
         setOscilatorLabel();
 
-        Vector<String> items = new Vector<String>(2);
+        Vector<String> items = new Vector<>(2);
         items.add("Ratio");
         items.add("Fixed (Hz)");
         modeCombo = new JComboBox(items);
 
-        items = new Vector<String>(2);
+        items = new Vector<>(2);
         items.add("Off");
         items.add("On");
         syncCombo = new JComboBox(items);
@@ -80,6 +78,7 @@ public class OscilatorPanel extends JComponent {
         this.add(detune);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 checkData();
             }
@@ -90,6 +89,7 @@ public class OscilatorPanel extends JComponent {
         detune.addChangeListener(cl);
 
         ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 checkData();
             }

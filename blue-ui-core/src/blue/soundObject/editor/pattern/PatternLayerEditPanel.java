@@ -1,5 +1,7 @@
 package blue.soundObject.editor.pattern;
 
+import blue.soundObject.PatternObject;
+import blue.soundObject.pattern.Pattern;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -8,7 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -17,9 +18,6 @@ import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
-
-import blue.soundObject.PatternObject;
-import blue.soundObject.pattern.Pattern;
 
 /**
  * <p>
@@ -82,21 +80,25 @@ public class PatternLayerEditPanel extends JComponent implements
         bottomPanel.setLayout(new GridLayout());
 
         buttonUp.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushUpLayer();
             }
         });
         buttonDown.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushDownLayer();
             }
         });
         buttonAdd.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addLayer();
             }
         });
         buttonRemove.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeLayer();
             }
@@ -152,6 +154,7 @@ public class PatternLayerEditPanel extends JComponent implements
         setTableColumnSizes();
     }
 
+    @Override
     public void adjustmentValueChanged(AdjustmentEvent ae) {
         posSync.setLocation(0, ae.getValue());
         lView.setViewPosition(posSync);
@@ -211,5 +214,9 @@ public class PatternLayerEditPanel extends JComponent implements
         }
 
         return pattern.getPattern(selected);
+    }
+
+    public JViewport getViewPort() {
+        return lView;
     }
 }

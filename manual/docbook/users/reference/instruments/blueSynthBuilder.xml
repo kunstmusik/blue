@@ -329,6 +329,13 @@ instruments:</para>
               (without quotes) at compilation time
             </entry>
         </row>
+        <row>
+            <entry>Value</entry>
+            <entry>objectName</entry>
+            <entry>Generates using its default value or values from automation.
+                Widget is only visible during edit mode.  
+            </entry>
+        </row>
     </tbody>
     </tgroup>
 </table>

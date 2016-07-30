@@ -22,7 +22,6 @@ package blue.ui.utilities;
 
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 

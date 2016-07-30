@@ -30,6 +30,11 @@ i1	1.5	0.5	97.00755
 <para>(The p2 and p3 times above are post-processing for a 2 second duration
 soundObject with time behavior set to scale.)</para> 
 
+<para>If seedUsed is set to "true", the random number generator will be 
+    initialized using the given seed value.  The seed value must be a valid 
+    long integer value (-2^63, 2^63-1).
+</para>
+
 <para>The above is an example of random values, and because it is random, the 
   results will be different on another processing pass.
 </para>

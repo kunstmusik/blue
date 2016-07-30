@@ -1,21 +1,22 @@
 package blue.soundObject.editor;
 
-import blue.*;
+import blue.BlueSystem;
+import blue.CompileData;
+import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.Instance;
+import blue.soundObject.NoteList;
+import blue.soundObject.SoundObject;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
-import blue.gui.InfoDialog;
-import blue.soundObject.Instance;
-import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
 import org.openide.util.Exceptions;
 
 /**
@@ -25,8 +26,8 @@ import org.openide.util.Exceptions;
  * @author steven yi
  * @version 1.0
  */
-
-public class InstanceEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = Instance.class)
+public class InstanceEditor extends ScoreObjectEditor {
 
     Instance instance;
 
@@ -57,6 +58,7 @@ public class InstanceEditor extends SoundObjectEditor {
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -71,7 +73,8 @@ public class InstanceEditor extends SoundObjectEditor {
 
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             instance = null;
             return;

@@ -19,10 +19,9 @@
  */
 package blue.soundObject.editor.jmask;
 
+import blue.soundObject.jmask.Oscillator;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.SpinnerNumberModel;
-
-import blue.soundObject.jmask.Oscillator;
 
 /**
  * 
@@ -231,6 +230,7 @@ private void frequencyTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt
     private blue.soundObject.editor.jmask.TableEditor tableEditor;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         tableEditor.setDuration(duration);
     }

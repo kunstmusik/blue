@@ -39,12 +39,13 @@ public class InstrumentCategory implements Serializable {
 
     private String categoryName = "New Instrument Category";
 
-    private List<InstrumentCategory> subCategories = new Vector<InstrumentCategory>();
+    private List<InstrumentCategory> subCategories = new Vector<>();
 
-    private List<Instrument> instruments = new Vector<Instrument>();
+    private List<Instrument> instruments = new Vector<>();
 
     private boolean isRoot = false;
 
+    @Override
     public String toString() {
         return this.getCategoryName();
     }

@@ -40,13 +40,13 @@ public class MixerTest extends TestCase {
         for (int i = 0; i < 3; i++) {
             Channel channel = new Channel();
             channel.setName(Integer.toString(i + 1));
-            mixer.getChannels().addChannel(channel);
+            mixer.getChannels().add(channel);
         }
 
         for (int i = 0; i < 3; i++) {
             Channel channel = new Channel();
             channel.setName("SubChannel" + i);
-            mixer.getSubChannels().addChannel(channel);
+            mixer.getSubChannels().add(channel);
         }
 
         Mixer clone = (Mixer) ObjectUtilities.clone(mixer);

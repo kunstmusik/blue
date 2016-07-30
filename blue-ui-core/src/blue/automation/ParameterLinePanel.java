@@ -19,6 +19,19 @@
  */
 package blue.automation;
 
+import blue.components.AlphaMarquee;
+import blue.components.lines.Line;
+import blue.components.lines.LineEditorDialog;
+import blue.components.lines.LinePoint;
+import blue.score.TimeState;
+import blue.ui.core.score.ModeListener;
+import blue.ui.core.score.ModeManager;
+import blue.ui.core.score.ScoreMode;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.NumberUtilities;
+import blue.utility.ObjectUtilities;
+import blue.utility.ScoreUtilities;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -37,7 +50,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
-
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -53,21 +66,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
-import blue.components.AlphaMarquee;
-import blue.components.lines.Line;
-import blue.components.lines.LineEditorDialog;
-import blue.components.lines.LinePoint;
-import blue.score.TimeState;
-import blue.soundObject.PolyObject;
-import blue.ui.core.score.ModeListener;
-import blue.ui.core.score.ModeManager;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.GenericFileFilter;
-import blue.utility.NumberUtilities;
-import blue.utility.ObjectUtilities;
-import blue.utility.ScoreUtilities;
 import org.openide.util.Exceptions;
 
 /**
@@ -103,7 +101,7 @@ public class ParameterLinePanel extends JComponent implements
 
     AlphaMarquee marquee;
 
-    ArrayList<float[]> selectionList = new ArrayList<float[]>();
+    ArrayList<float[]> selectionList = new ArrayList<>();
 
     float mouseDownInitialTime = -1.0f;
 
@@ -123,6 +121,7 @@ public class ParameterLinePanel extends JComponent implements
         ModeManager.getInstance().addModeListener(this);
 
         lineListener = new TableModelListener() {
+            @Override
             public void tableChanged(TableModelEvent e) {
                 repaint();
             }
@@ -130,11 +129,11 @@ public class ParameterLinePanel extends JComponent implements
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        fcm.addFilter(FILE_BPF_IMPORT, new GenericFileFilter(
-                "bpf", "Break Point File"));
+        fcm.addFilter(FILE_BPF_IMPORT, new ExtensionFilter(
+                "Break Point File", "*.bpf"));
 
-        fcm.addFilter(FILE_BPF_EXPORT, new GenericFileFilter(
-                "bpf", "Break Point File"));
+        fcm.addFilter(FILE_BPF_EXPORT, new ExtensionFilter(
+                "Break Point File", "*.bpf"));
 
         fcm.setDialogTitle(FILE_BPF_IMPORT, "Import BPF File");
         fcm.setDialogTitle(FILE_BPF_EXPORT, "Export BPF File");
@@ -241,6 +240,7 @@ public class ParameterLinePanel extends JComponent implements
      * 
      * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
      */
+    @Override
     public void tableChanged(TableModelEvent e) {
         repaint();
     }
@@ -256,6 +256,7 @@ public class ParameterLinePanel extends JComponent implements
         repaint();
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -273,7 +274,7 @@ public class ParameterLinePanel extends JComponent implements
         Color currentColor = null;
 
         ModeManager modeManager = ModeManager.getInstance();
-        boolean editing = (modeManager.getMode() == ModeManager.MODE_SINGLE_LINE);
+        boolean editing = (modeManager.getMode() == ScoreMode.SINGLE_LINE);
 //        boolean multiLineMode = (modeManager.getMode() == ModeManager.MODE_MULTI_LINE);
         boolean multiLineMode = !editing;
 
@@ -564,11 +565,11 @@ public class ParameterLinePanel extends JComponent implements
     }
     
     private void processLineForSelectionDrag(Line line) {
-        ArrayList<LinePoint> points = new ArrayList<LinePoint>();
+        ArrayList<LinePoint> points = new ArrayList<>();
 
-        for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
+        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
 
-            LinePoint lp = (LinePoint) iter.next();
+            LinePoint lp = iter.next();
 
             if (line.isFirstLinePoint(lp)) {
                 continue;
@@ -584,8 +585,8 @@ public class ParameterLinePanel extends JComponent implements
             }
         }
 
-        for (Iterator iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = (LinePoint) iterator.next();
+        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
+            LinePoint lp = iterator.next();
 
             lp.setLocation(lp.getX() + transTime, lp.getY());
             line.addLinePoint(lp);
@@ -614,11 +615,11 @@ public class ParameterLinePanel extends JComponent implements
             return;
         }
         
-        ArrayList<LinePoint> points = new ArrayList<LinePoint>();
+        ArrayList<LinePoint> points = new ArrayList<>();
 
-        for (Iterator iter = line.getPointsIterator(); iter.hasNext();) {
+        for (Iterator<LinePoint> iter = line.iterator(); iter.hasNext();) {
 
-            LinePoint lp = (LinePoint) iter.next();
+            LinePoint lp = iter.next();
 
             if (line.isFirstLinePoint(lp)) {
                 continue;
@@ -640,8 +641,8 @@ public class ParameterLinePanel extends JComponent implements
         float newRange = newSelectionEndTime - newSelectionStartTime;
                 
 
-        for (Iterator iterator = points.iterator(); iterator.hasNext();) {
-            LinePoint lp = (LinePoint) iterator.next();
+        for (Iterator<LinePoint> iterator = points.iterator(); iterator.hasNext();) {
+            LinePoint lp = iterator.next();
 
             float newX = (lp.getX() - oldStart);
             newX = (newX / oldRange) * newRange;
@@ -1049,10 +1050,12 @@ public class ParameterLinePanel extends JComponent implements
         ModeManager.getInstance().removeModeListener(this);
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         // ignore - not used by parameterIdList
     }
 
+    @Override
     public void intervalAdded(ListDataEvent e) {
         if (e.getSource() == parameterIdList) {
             String paramId = parameterIdList.getParameterId(e.getIndex0());
@@ -1067,6 +1070,7 @@ public class ParameterLinePanel extends JComponent implements
         }
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         if (e.getSource() == parameterIdList) {
 
@@ -1095,8 +1099,9 @@ public class ParameterLinePanel extends JComponent implements
         }
     }
 
-    public void modeChanged(int mode) {
-        if (mode == ModeManager.MODE_SINGLE_LINE) {
+    @Override
+    public void modeChanged(ScoreMode mode) {
+        if (mode == ScoreMode.SINGLE_LINE) {
             addMouseListener(mouseListener);
             addMouseMotionListener(mouseListener);
             // addMouseWheelListener(wheelListener);
@@ -1113,6 +1118,7 @@ public class ParameterLinePanel extends JComponent implements
         repaint();
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
         int index = e.getFirstIndex();
 
@@ -1135,17 +1141,21 @@ public class ParameterLinePanel extends JComponent implements
             this.lineCanvas = lineCanvas;
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
         }
 
+        @Override
         public void mouseEntered(MouseEvent e) {
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1255,8 +1265,9 @@ public class ParameterLinePanel extends JComponent implements
 //            return start;
 //        }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1295,8 +1306,9 @@ public class ParameterLinePanel extends JComponent implements
             return retVal;
         }
         
+        @Override
         public void mouseDragged(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1388,8 +1400,9 @@ public class ParameterLinePanel extends JComponent implements
             repaint();
         }
 
+        @Override
         public void mouseMoved(MouseEvent e) {
-            if (ModeManager.getInstance().getMode() != ModeManager.MODE_SINGLE_LINE) {
+            if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
 
@@ -1417,9 +1430,9 @@ public class ParameterLinePanel extends JComponent implements
     
     /* MULTILINE MODE */
     
-    public void addSelectionDragRegion(float startTime, float endTime) {
-        selectionList.add(new float[] {startTime, endTime});
-    }
+//    public void addSelectionDragRegion(float startTime, float endTime) {
+//        selectionList.add(new float[] {startTime, endTime});
+//    }
     
     public void setSelectionDragRegion(float startTime, float endTime) {
         if(selectionList.size() == 0) {
@@ -1429,10 +1442,12 @@ public class ParameterLinePanel extends JComponent implements
         float[] points = selectionList.get(0);
         points[0] = startTime;
         points[1] = endTime;
+        repaint();
     }
     
     public void clearSelectionDragRegions() {
         selectionList.clear();
+        repaint();
     }
     
     public void setMultiLineMouseTranslation(float transTime) {
@@ -1449,7 +1464,7 @@ public class ParameterLinePanel extends JComponent implements
                 processLineForSelectionDrag(param.getLine());
             }
         }
-        clearSelectionDragRegions();
+//        clearSelectionDragRegions();
         transTime = 0.0f;
     }    
 
@@ -1511,6 +1526,7 @@ public class ParameterLinePanel extends JComponent implements
 
             editPointsAction = new AbstractAction("Edit Points") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     Component root = SwingUtilities.getRoot(getInvoker());
 
@@ -1525,6 +1541,7 @@ public class ParameterLinePanel extends JComponent implements
 
             paramItemListener = new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     JMenuItem menuItem = (JMenuItem) e.getSource();
                     Parameter param = (Parameter) menuItem
@@ -1538,23 +1555,23 @@ public class ParameterLinePanel extends JComponent implements
 
             exportBPF = new AbstractAction("Export BPF") {
 
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     if (line != null && line.size() > 0) {
-                        int retVal = FileChooserManager.getDefault().showSaveDialog(
+                        File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_EXPORT, SwingUtilities
                                         .getRoot(ParameterLinePanel.this));
 
-                        if (retVal == JFileChooser.APPROVE_OPTION) {
-                            File f = FileChooserManager.getDefault()
-                                    .getSelectedFile(FILE_BPF_EXPORT);
+                        if (retVal != null) {
+                            File f = retVal;
 
                             try {
-                                PrintWriter out = new PrintWriter(
-                                        new FileWriter(f));
-                                out.print(line.exportBPF());
+                                try (PrintWriter out = new PrintWriter(
+                                             new FileWriter(f))) {
+                                    out.print(line.exportBPF());
 
-                                out.flush();
-                                out.close();
+                                    out.flush();
+                                }
 
                                 JOptionPane.showMessageDialog(SwingUtilities
                                         .getRoot(ParameterLinePanel.this),
@@ -1574,15 +1591,15 @@ public class ParameterLinePanel extends JComponent implements
 
             importBPF = new AbstractAction("Import BPF") {
 
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     if (line != null && line.size() > 0) {
-                        int retVal = FileChooserManager.getDefault().showSaveDialog(
+                        File retVal = FileChooserManager.getDefault().showSaveDialog(
                                 FILE_BPF_IMPORT, SwingUtilities
                                         .getRoot(ParameterLinePanel.this));
 
-                        if (retVal == JFileChooser.APPROVE_OPTION) {
-                            File f = FileChooserManager.getDefault()
-                                    .getSelectedFile(FILE_BPF_IMPORT);
+                        if (retVal != null) {
+                            File f = retVal;
 
                             if (!line.importBPF(f)) {
                                 JOptionPane.showMessageDialog(SwingUtilities
@@ -1629,6 +1646,7 @@ public class ParameterLinePanel extends JComponent implements
             this.line = line;
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             if (paramList != null) {
                 repopulate();

@@ -40,6 +40,7 @@ public class NoteParseException extends Exception {
         this.lineNum = lineNum;
     }
 
+    @Override
     public String getMessage() {
         String errorMessage = "NoteParseException";
 

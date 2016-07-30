@@ -5,13 +5,8 @@
     <folder name="blue">
         <folder name="score">
             <folder name="layers">
-                <folder name="panelProviders">
-                    <file name="blue-score-layers-patterns-ui-PatternsLayerGroupPanelProvider.instance">
-                        <attr name="position" intvalue="200"/>
-                    </file>
-                </folder>
-                <folder name="headerPanelProviders">
-                    <file name="blue-score-layers-patterns-ui-PatternsLayerGroupHeaderPanelProvider.instance">
+                <folder name="uiProviders">
+                    <file name="blue-score-layers-patterns-ui-PatternsLayerGroupUIProvider.instance">
                         <attr name="position" intvalue="200"/>
                     </file>
                 </folder>

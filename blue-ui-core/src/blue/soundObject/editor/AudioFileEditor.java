@@ -20,11 +20,20 @@
 
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.LabelledItemPanel;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.AudioFile;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
+import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -38,15 +47,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
-
-import blue.BlueSystem;
-import blue.gui.LabelledItemPanel;
-import blue.soundObject.AudioFile;
-import blue.soundObject.SoundObject;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.utility.GUI;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
@@ -56,7 +56,8 @@ import org.openide.awt.UndoRedo;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class AudioFileEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = AudioFile.class) 
+public class AudioFileEditor extends ScoreObjectEditor {
 
     JTextField audioFileName = new JTextField();
 
@@ -96,6 +97,7 @@ public class AudioFileEditor extends SoundObjectEditor {
         findAudioFile.setText("...");
         findAudioFile.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectFile();
             }
@@ -184,16 +186,14 @@ public class AudioFileEditor extends SoundObjectEditor {
     }
 
     protected void selectFile() {
-        int rValue = FileChooserManager.getDefault().showOpenDialog(this, this);
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(this, this);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File temp = FileChooserManager.getDefault().getSelectedFile(this);
+        if (!rValue.isEmpty()) {
+            File temp = rValue.get(0);
             if (temp.exists() && temp.isFile()) {
                 try {
                     String absFilePath = temp.getCanonicalPath();
                     String relPath = BlueSystem.getRelativePath(absFilePath);
-
-                    System.out.println("Rel Path: " + relPath);
 
                     af.setSoundFileName(relPath);
                     setAudioFileInfo(relPath);
@@ -208,7 +208,8 @@ public class AudioFileEditor extends SoundObjectEditor {
 
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[AudioFileEditor::editSoundObject()] ERROR: null object passed in");
@@ -366,7 +367,7 @@ public class AudioFileEditor extends SoundObjectEditor {
 
         GUI.showComponentAsStandalone(afe, "Audio File Editor Test", true);
 
-        afe.editSoundObject(new AudioFile());
+        afe.editScoreObject(new AudioFile());
 
     }
 }

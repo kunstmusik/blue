@@ -1,11 +1,16 @@
 package blue.tools.blueShare.effects;
 
+import blue.BlueSystem;
+import blue.mixer.Effect;
+import blue.tools.blueShare.BlueShareRemoteCaller;
+import blue.tools.blueShare.NamePasswordPanel;
+import blue.ui.core.mixer.EffectsLibrary;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -16,18 +21,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-
-import blue.BlueSystem;
-import blue.event.SelectionEvent;
-import blue.mixer.Effect;
-import blue.ui.core.mixer.EffectsLibrary;
-import blue.tools.blueShare.BlueShareRemoteCaller;
-import blue.tools.blueShare.NamePasswordPanel;
+import org.apache.xmlrpc.XmlRpcException;
 
 /**
  * <p>
@@ -148,6 +146,7 @@ public class EffectExportPane extends JComponent {
 
         submitButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 submitEffect();
             }
@@ -155,6 +154,7 @@ public class EffectExportPane extends JComponent {
 
         effectLibraryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
 
                 TreePath path = effectLibraryTree.getSelectionPath();
@@ -233,7 +233,7 @@ public class EffectExportPane extends JComponent {
 
             BlueShareRemoteCaller.submitEffect(username, password, categoryId,
                     name, description, effectText);
-        } catch (Exception e) {
+        } catch (IOException | XmlRpcException e) {
             JOptionPane.showMessageDialog(null, BlueSystem
                     .getString("blueShare.effect.errorSubmittingEffect")
                     + "\n\n" + e.getLocalizedMessage(), BlueSystem

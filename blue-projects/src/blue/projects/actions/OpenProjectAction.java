@@ -4,9 +4,9 @@
  */
 package blue.projects.actions;
 
-import blue.projects.*;
 import blue.BlueData;
 import blue.BlueSystem;
+import blue.projects.*;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
@@ -15,7 +15,6 @@ import blue.soundObject.AudioFile;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import blue.utility.TextUtilities;
 import electric.xml.Document;
 import java.awt.event.ActionEvent;
@@ -25,9 +24,11 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -46,24 +47,22 @@ public final class OpenProjectAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), true);
         fcm.addFilter(this.getClass(),
-                new GenericFileFilter("blue", "blue Project File (*.blue)"));
+                new ExtensionFilter("blue Project File (*.blue)", "*.blue"));
         fcm.setSelectedFile(this.getClass(),
                 new File(
-                GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
+                        GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
     }
 
     public void actionPerformed(ActionEvent e) {
 
         FileChooserManager fcm = FileChooserManager.getDefault();
 
-        int rValue = fcm.showOpenDialog(this.getClass(),
+        List<File> rValue = fcm.showOpenDialog(this.getClass(),
                 WindowManager.getDefault().getMainWindow());
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File[] tempFiles = fcm.getSelectedFiles(this.getClass());
-
+        if (rValue.size() > 0) {
             BlueProjectManager projectManager = BlueProjectManager.getInstance();
 
-            for (File temp : tempFiles) {
+            for (File temp : rValue) {
 
                 if (temp.getName().trim().endsWith(".patterns")) {
 //                    openPatternsFile(temp);
@@ -85,10 +84,9 @@ public final class OpenProjectAction implements ActionListener {
                 }
             }
 
-        } else if (rValue == JFileChooser.CANCEL_OPTION) {
-            StatusDisplayer.getDefault().setStatusText("Open File Cancelled");
+        } else {
+            StatusDisplayer.getDefault().setStatusText("No files selected.");
         }
-
 
     }
 
@@ -157,8 +155,6 @@ public final class OpenProjectAction implements ActionListener {
 //                            iLibrary);
 //                }
 //            }
-
-
             BlueProject project;
 
             if (wasTempFile) {
@@ -171,8 +167,8 @@ public final class OpenProjectAction implements ActionListener {
 
             BlueProjectManager projectManager = BlueProjectManager.getInstance();
             projectManager.setCurrentProject(project);
-            
-            if(!temp.getAbsolutePath().endsWith("~")) {
+
+            if (!temp.getAbsolutePath().endsWith("~")) {
                 RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
             }
 //            this.blueDataFileArray.add(bdf);
@@ -180,7 +176,6 @@ public final class OpenProjectAction implements ActionListener {
             temp = null;
 
             // StatusBar.updateStatus(selected.getName() + " opened.");
-
             checkDependencies(tempData);
 
         } catch (FileNotFoundException fe) {
@@ -196,7 +191,8 @@ public final class OpenProjectAction implements ActionListener {
 
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
-            StatusDisplayer.getDefault().setStatusText("Error: Could not open " + temp.
+            StatusDisplayer.getDefault().setStatusText(
+                    "Error: Could not open " + temp.
                     toString());
         }
 
@@ -204,22 +200,19 @@ public final class OpenProjectAction implements ActionListener {
 
     private static void checkDependencies(BlueData tempData) {
         Score score = tempData.getScore();
-        
+
         ArrayList filesList = new ArrayList();
 
-        for(int i = 0; i < score.getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = score.getLayerGroup(i);
-            
-            if(!(layerGroup instanceof PolyObject)) {
+        for (LayerGroup layerGroup : score) {
+
+            if (!(layerGroup instanceof PolyObject)) {
                 continue;
             }
-            
-            PolyObject pObj = (PolyObject)layerGroup;
-            
+
+            PolyObject pObj = (PolyObject) layerGroup;
+
             checkAudioFiles(pObj, filesList);
         }
-        
-        
 
         if (filesList.size() > 0) {
             if (dependencyDialog == null) {
@@ -249,15 +242,14 @@ public final class OpenProjectAction implements ActionListener {
                 }
 
                 System.out.println(map);
-                
-                for(int i = 0; i < score.getLayerGroupCount(); i++) {
-                    LayerGroup layerGroup = score.getLayerGroup(i);
 
-                    if(!(layerGroup instanceof PolyObject)) {
+                for (LayerGroup layerGroup : score) {
+
+                    if (!(layerGroup instanceof PolyObject)) {
                         continue;
                     }
 
-                    PolyObject pObj = (PolyObject)layerGroup;
+                    PolyObject pObj = (PolyObject) layerGroup;
 
                     reconcileAudioFiles(pObj, map);
                 }
@@ -276,7 +268,7 @@ public final class OpenProjectAction implements ActionListener {
                 if (soundFileName == null) {
                     continue;
                 }
-                
+
                 if (BlueSystem.findFile(soundFileName) == null) {
                     if (!filesList.contains(soundFileName)) {
                         filesList.add(soundFileName);

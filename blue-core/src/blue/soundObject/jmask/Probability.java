@@ -51,13 +51,15 @@ public class Probability implements Generator, Serializable, Maskable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("selectedIndex")) {
-                retVal.setSelectedIndex(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("probabilityGenerator")) {
-                retVal.generators[generatorIndex] = (ProbabilityGenerator) ObjectUtilities
-                        .loadFromXML(node);
-                generatorIndex++;
+            switch (nodeName) {
+                case "selectedIndex":
+                    retVal.setSelectedIndex(Integer.parseInt(node.getTextString()));
+                    break;
+                case "probabilityGenerator":
+                    retVal.generators[generatorIndex] = (ProbabilityGenerator) ObjectUtilities
+                            .loadFromXML(node);
+                    generatorIndex++;
+                    break;
             }
         }
 
@@ -86,8 +88,8 @@ public class Probability implements Generator, Serializable, Maskable,
         this.duration = duration;
     }
 
-    public double getValue(double time) {
-        return generators[selectedIndex].getValue(time / duration);
+    public double getValue(double time, java.util.Random rnd) {
+        return generators[selectedIndex].getValue(time / duration, rnd);
     }
 
     public ProbabilityGenerator[] getGenerators() {
@@ -103,10 +105,12 @@ public class Probability implements Generator, Serializable, Maskable,
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

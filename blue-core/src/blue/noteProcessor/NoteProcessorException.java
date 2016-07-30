@@ -58,6 +58,7 @@ public class NoteProcessorException extends Exception {
      * @return Message describing why the noteProcessor couldn't execute. Should
      *         be a readable message, digestable by the user.
      */
+    @Override
     public String getMessage() {
         if (this.message == null) {
             return null;

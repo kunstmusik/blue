@@ -20,32 +20,30 @@
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import javax.swing.JDialog;
-
-import blue.gui.DialogUtil;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.editor.blueSynthBuilder.BSBEditPanel;
 import java.awt.Frame;
+import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.WeakHashMap;
+import javax.swing.JDialog;
 
 public class EffectEditorManager {
 
     private static EffectEditorManager manager = null;
 
-    private HashMap map = new HashMap();
-
-    private EffectEditorManager() {
-
-    }
+    private Map<Effect, WeakReference<JDialog>> map = new WeakHashMap<>();
+    
+    private EffectEditorManager() {}
 
     public void clear() {
 
-        for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-            JDialog dialog = (JDialog) iter.next();
-            dialog.setVisible(false);
-            dialog.dispose();
+        for (WeakReference<JDialog> ref : map.values()) {
+            JDialog dialog = ref.get();
+            if(dialog != null) {
+                dialog.setVisible(false);
+                dialog.dispose();
+            }
         }
         map.clear();
     }
@@ -64,29 +62,34 @@ public class EffectEditorManager {
     }
 
     public void openEffectEditor(Frame root, Effect effect) {
-        Object val = map.get(effect);
-
-        if (val == null) {
-            JDialog dialog = new JDialog(root);
+        JDialog dialog = null;
+        
+        WeakReference<JDialog> ref = map.get(effect);
+        if(ref != null) {
+            dialog = ref.get();
+        }
+                
+        if (dialog == null) {
+            dialog = new JDialog(root);
 
             BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-                .getBSBObjects());
+                    .getBSBObjects());
             editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
 
             dialog.getContentPane().add(editPanel);
             dialog.setTitle(effect.getName());
             dialog.pack();
 
-            DialogUtil.registerJDialog(dialog);
-
             dialog.setSize(dialog.getWidth() + 5, dialog.getHeight() + 5);
             // dialog.setModal(true);
+            
+            dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
 
             dialog.setVisible(true);
 
-            map.put(effect, dialog);
+            map.put(effect, new WeakReference(dialog));
         } else {
-            ((JDialog) val).setVisible(true);
+            dialog.setVisible(true);
         }
 
     }
@@ -99,7 +102,7 @@ public class EffectEditorManager {
             dialog.getContentPane().removeAll();
 
             BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-                .getBSBObjects());
+                    .getBSBObjects());
             editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
 
             dialog.getContentPane().add(editPanel);

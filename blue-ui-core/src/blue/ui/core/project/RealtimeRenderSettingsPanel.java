@@ -28,6 +28,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
 
         srText.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
+            @Override
             public void documentChanged(DocumentEvent e) {
                 if (projectProperties != null) {
                     projectProperties.sampleRate = srText.getText();
@@ -38,6 +39,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         ksmpsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.ksmps = ksmpsText.getText();
@@ -48,6 +50,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         nchnlsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.channels = nchnlsText.getText();
@@ -58,6 +61,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         zeroDbFSText.getDocument().addDocumentListener(
                 new blue.ui.utilities.SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.zeroDbFS = zeroDbFSText.getText();
@@ -68,6 +72,7 @@ public class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         advancedSettingsText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (projectProperties != null) {
                             projectProperties.advancedSettings = advancedSettingsText.getText();

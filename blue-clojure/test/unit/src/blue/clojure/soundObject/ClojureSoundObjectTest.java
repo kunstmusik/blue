@@ -24,8 +24,8 @@ import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -48,7 +48,7 @@ public class ClojureSoundObjectTest {
         instance.setClojureCode("(def score \"i1 0 2 3 5\")");
         NoteList result = instance.generateForCSD(compileData, startTime,
                 endTime);
-        assertEquals(result.getNote(0).getPField(5), "5");
+        assertEquals(result.get(0).getPField(5), "5");
     }
 
     /**
@@ -63,7 +63,7 @@ public class ClojureSoundObjectTest {
 
         Element result = instance.saveAsXML(objRefMap);
         ClojureObject instance2 = (ClojureObject)ClojureObject.loadFromXML(result, null);
-        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, null));
+        assertTrue(EqualsBuilder.reflectionEquals(instance, instance2, (String)null));
     }
 
 }

@@ -1,10 +1,10 @@
 package blue.soundObject.editor.pianoRoll;
 
 import java.io.File;
-
 import javax.swing.filechooser.FileFilter;
 
 public final class ScalaFileFilter extends FileFilter {
+    @Override
     public boolean accept(File f) {
         if (f.isDirectory()) {
             return true;
@@ -17,6 +17,7 @@ public final class ScalaFileFilter extends FileFilter {
         return false;
     }
 
+    @Override
     public String getDescription() {
         return "Scala File (*.scl)";
     }

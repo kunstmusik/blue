@@ -111,23 +111,27 @@ public class Pattern implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "patternName":
+                    name = node.getTextString();
+                    break;
+                case "patternScore":
+                    score = node.getTextString();
+                    break;
+                case "muted":
+                    muted = node.getTextString().equals("true");
+                    break;
+                case "solo":
+                    solo = node.getTextString().equals("true");
+                    break;
+                case "values":
+                    String valStr = node.getTextString();
+                    values = new boolean[valStr.length()];
+                    for (int i = 0; i < valStr.length(); i++) {
 
-            if (nodeName.equals("patternName")) {
-                name = node.getTextString();
-            } else if (nodeName.equals("patternScore")) {
-                score = node.getTextString();
-            } else if (nodeName.equals("muted")) {
-                muted = node.getTextString().equals("true");
-            } else if (nodeName.equals("solo")) {
-                solo = node.getTextString().equals("true");
-            } else if (nodeName.equals("values")) {
-                String valStr = node.getTextString();
-                values = new boolean[valStr.length()];
-
-                for (int i = 0; i < valStr.length(); i++) {
-                    values[i] = (valStr.charAt(i) == '1');
-                }
-
+                        values[i] = (valStr.charAt(i) == '1');
+                    }
+                    break;
             }
         }
 
@@ -144,10 +148,12 @@ public class Pattern implements Serializable {
     /**
      * @see java.lang.Object#equals(Object)
      */
+    @Override
     public boolean equals(Object object) {
         return EqualsBuilder.reflectionEquals(this, object);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

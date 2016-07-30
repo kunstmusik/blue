@@ -19,21 +19,18 @@
  */
 package blue.projects;
 
+import blue.utility.GUI;
+import com.l2fprod.common.swing.BaseDialog;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
-import blue.utility.GUI;
-
-import com.l2fprod.common.swing.BaseDialog;
 
 public class AudioFileDependencyDialog extends BaseDialog {
 
@@ -53,6 +50,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
 
         table.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 int row = table.getSelectedRow();
 
@@ -149,6 +147,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
         // return columnIndex == 1;
         // }
 
+        @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex != 1) {
                 return;
@@ -158,6 +157,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
             fireTableCellUpdated(rowIndex, columnIndex);
         }
 
+        @Override
         public String getColumnName(int column) {
             if (column == 0) {
                 return "Original File";

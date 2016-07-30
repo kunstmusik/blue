@@ -28,7 +28,6 @@ import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
-
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -58,6 +57,7 @@ public class CodeRepositoryDragSource implements DragSourceListener,
     }
 
     // Drag gesture handler
+    @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         TreePath path = sourceTree.getSelectionPath();
         if ((path == null) || (path.getPathCount() <= 1)) {
@@ -85,20 +85,25 @@ public class CodeRepositoryDragSource implements DragSourceListener,
     }
 
     // Drag event handlers
+    @Override
     public void dragEnter(DragSourceDragEvent dsde) {
 
     }
 
+    @Override
     public void dragExit(DragSourceEvent dse) {
     }
 
+    @Override
     public void dragOver(DragSourceDragEvent dsde) {
 
     }
 
+    @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
         if (dsde.getDropSuccess()) {
             // Remove the node only if the drop was successful.

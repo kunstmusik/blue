@@ -38,9 +38,7 @@ public class BSBGraphicInterfaceTest extends TestCase {
 
             try {
                 bsbObj = (BSBObject) class1.newInstance();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (    InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
 

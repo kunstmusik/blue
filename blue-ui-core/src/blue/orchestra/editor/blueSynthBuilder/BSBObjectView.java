@@ -19,10 +19,9 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import javax.swing.JComponent;
-
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectListener;
+import javax.swing.JComponent;
 
 /**
  * @author steven

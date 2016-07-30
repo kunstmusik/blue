@@ -52,13 +52,16 @@ public class BSBDropdown extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("bsbDropdownItemList")) {
-                dropDown.setDropdownItems(BSBDropdownItemList.loadFromXML(node));
-            } else if (nodeName.equals("selectedIndex")) {
-                dropDown.setSelectedIndex(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("randomizable")) {
-                dropDown.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "bsbDropdownItemList":
+                    dropDown.setDropdownItems(BSBDropdownItemList.loadFromXML(node));
+                    break;
+                case "selectedIndex":
+                    dropDown.setSelectedIndex(Integer.parseInt(node.getTextString()));
+                    break;
+                case "randomizable":
+                    dropDown.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
         }
 

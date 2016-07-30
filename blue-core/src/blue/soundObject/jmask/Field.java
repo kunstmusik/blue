@@ -109,7 +109,7 @@ public class Field implements Serializable, ListModel {
         return retVal;
     }
 
-    public NoteList generateNotes(final double duration) {
+    public NoteList generateNotes(final double duration, java.util.Random rnd) {
         NoteList nl = new NoteList();
 
         double xt = 0.0;
@@ -123,14 +123,14 @@ public class Field implements Serializable, ListModel {
 
             Note n = Note.createNote(numFields);
 
-            double p1 = getParameter(0).getValue(xt);
+            double p1 = getParameter(0).getValue(xt, rnd);
             p1 = p1 < 1.0 ? 1.0 : Utilities.round(p1, 0);
 
             n.setPField(NumberUtilities.formatDouble(p1), 1);
             n.setPField(NumberUtilities.formatDouble(xt), 2);
 
             for (int i = 3; i < numFields + 1; i++) {
-                double val = getParameter(i - 1).getValue(xt);
+                double val = getParameter(i - 1).getValue(xt, rnd);
 
                 if (i == 3 && val < 0) {
                     n.setPField(NumberUtilities.formatDouble(-val), i);
@@ -141,14 +141,14 @@ public class Field implements Serializable, ListModel {
 
             }
 
-            double p2 = getParameter(1).getValue(xt);
+            double p2 = getParameter(1).getValue(xt, rnd);
             if (p2 == 0.0) {
                 System.err.println("[JMask] - WARNING: p2 = 0 !");
             }
 
             xt += p2;
 
-            nl.addNote(n);
+            nl.add(n);
         }
 
         return nl;
@@ -259,10 +259,12 @@ public class Field implements Serializable, ListModel {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

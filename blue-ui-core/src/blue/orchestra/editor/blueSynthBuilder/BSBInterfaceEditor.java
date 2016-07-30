@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -41,10 +40,8 @@ import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import com.l2fprod.common.propertysheet.Property;
 import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
-import com.l2fprod.common.propertysheet.PropertyRendererRegistry;
 import com.l2fprod.common.propertysheet.PropertySheet;
 import com.l2fprod.common.propertysheet.PropertySheetPanel;
-import com.l2fprod.common.swing.renderer.DefaultCellRenderer;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
@@ -89,6 +86,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         editBox.addEditModeListener(bsbEditPanel);
         editBox.addEditModeListener(new EditModeListener() {
 
+            @Override
             public void setEditing(boolean isEditing) {
                 rightBar.setVisible(isEditing);
             }
@@ -96,6 +94,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         });
         editBox.addEditModeListener(new EditModeListener() {
 
+            @Override
             public void setEditing(boolean isEditing) {
                 if (!isUpdating && gInterface != null) {
                     gInterface.setEditEnabled(isEditing);
@@ -183,6 +182,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                         .getMenuShortcutKey()), "switchEditMode");
         this.getActionMap().put("switchEditMode", new AbstractAction() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 editBox.doClick();
             }
@@ -228,6 +228,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
      * 
      * @see blue.orchestra.editor.blueSynthBuilder.PresetListener#presetSelected(blue.orchestra.blueSynthBuilder.Preset)
      */
+    @Override
     public void presetSelected(Preset preset) {
         if (gInterface != null) {
             preset.setInterfaceValues(gInterface);

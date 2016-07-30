@@ -21,8 +21,6 @@
 package blue.settings;
 
 import blue.ProjectProperties;
-import blue.settings.GeneralSettings;
-import blue.settings.RealtimeRenderSettings;
 
 /**
  *

@@ -19,26 +19,6 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.Iterator;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JLayeredPane;
-import javax.swing.KeyStroke;
-
 import blue.BlueSystem;
 import blue.components.AlphaMarquee;
 import blue.event.EditModeListener;
@@ -49,10 +29,30 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
+import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.DOT;
+import static blue.orchestra.blueSynthBuilder.GridSettings.GridStyle.LINE;
 import blue.ui.utilities.UiUtilities;
+import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.Iterator;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JLayeredPane;
+import javax.swing.KeyStroke;
 
 /**
  * @author steven
@@ -62,27 +62,16 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         EditModeListener, PropertyChangeListener {
 
     protected static final BSBObjectEditPopup bsbObjPopup = new BSBObjectEditPopup();
-
     private final BSBEditPanelPopup popup;
-
     private BSBEditPanelNonEditPopup nonEditPopup;
-
     private boolean isEditing = false;
-
     private BSBGraphicInterface bsbInterface = null;
-
     private final GroupMovementSelectionList selectionList = new GroupMovementSelectionList();
-
     SelectionEvent clearSelection;
-
-    private final ArrayList copyBuffer = new ArrayList();
-
+    private final ArrayList<BSBObject> copyBuffer = new ArrayList<>();
     int copyX, copyY;
-
-    ArrayList objectViews = new ArrayList();
-
+    ArrayList<BSBObjectViewHolder> objectViews = new ArrayList<>();
     ComponentListener cl;
-
     private final AlphaMarquee marquee = new AlphaMarquee();
 
     public BSBEditPanel(BSBObjectEntry[] bsbObjectEntries) {
@@ -92,12 +81,13 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 SelectionEvent.SELECTION_CLEAR);
 
         cl = new ComponentAdapter() {
-
+            @Override
             public void componentMoved(ComponentEvent e) {
                 recalculateSize();
 
             }
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 recalculateSize();
             }
@@ -112,7 +102,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         this.addSelectionListener(selectionList);
 
         this.addMouseListener(new MouseAdapter() {
-
+            @Override
             public void mousePressed(MouseEvent e) {
                 requestFocus();
 
@@ -153,19 +143,16 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 }
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
 
                 if (marquee.isVisible()) {
 
-                    for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-                        BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
-
+                    for (BSBObjectViewHolder viewHolder : objectViews) {
                         if (marquee.intersects(viewHolder)) {
                             selectionPerformed(new SelectionEvent(viewHolder,
                                     SelectionEvent.SELECTION_ADD));
                         }
-
-                        // if(viewHolder.)
                     }
 
                     marquee.setVisible(false);
@@ -176,7 +163,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
-
+            @Override
             public void mouseDragged(MouseEvent e) {
                 if (isEditing() && marquee.isVisible()) {
                     marquee.setDragPoint(e.getPoint());
@@ -211,7 +198,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                 InputEvent.SHIFT_DOWN_MASK), "right10");
 
         actionMap.put("cut", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     cut();
@@ -220,7 +207,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("copy", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     copy();
@@ -229,7 +216,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("delete", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     removeSelectedBSBObjects();
@@ -238,7 +225,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("up", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -249,7 +236,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("up10", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -260,7 +247,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("down", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -271,7 +258,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("down10", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -282,7 +269,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("left", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -293,7 +280,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("left10", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -304,7 +291,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("right", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -315,7 +302,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         });
 
         actionMap.put("right10", new AbstractAction() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (isEditing() && selectionList.size() > 0) {
                     GridSettings gridSettings = bsbInterface.getGridSettings();
@@ -333,8 +320,10 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         int maxW = 1;
         int maxH = 1;
 
-        for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-            BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
+        for (BSBObjectViewHolder viewHolder : objectViews) {
+            if(!isEditing && viewHolder.isEditModeOnly()) {
+                continue;
+            }
             int newW = viewHolder.getX() + viewHolder.getWidth();
             int newH = viewHolder.getY() + viewHolder.getHeight();
 
@@ -357,20 +346,25 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         return isEditing;
     }
 
+    @Override
     public void setEditing(boolean isEditing) {
         this.isEditing = isEditing;
-        for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-            BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
+        for (BSBObjectViewHolder viewHolder : objectViews) {
             viewHolder.setEditing(isEditing);
         }
+        recalculateSize();
+        revalidate();
         repaint();
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
-        if (this.bsbInterface == bsbInterface) {
-            return;
-        }
+//      Commented out to fix issue with updating interface after setting preset
+//      However, the whole code for updating from presets needs to be fixed
+//      so that UI is only listening to changes from data model
+//        if (this.bsbInterface == bsbInterface) {
+//            return;
+//        }
 
         if (this.bsbInterface != null) {
             this.bsbInterface.getGridSettings().removePropertyChangeListener(
@@ -383,8 +377,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         clearBSBObjects();
 
         if (bsbInterface != null) {
-            for (Iterator iter = bsbInterface.iterator(); iter.hasNext();) {
-                BSBObject bsbObj = (BSBObject) iter.next();
+            for (BSBObject bsbObj : bsbInterface) {
                 addBSBObject(bsbObj, false);
             }
             this.selectionList.setGridSettings(bsbInterface.getGridSettings());
@@ -414,8 +407,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         this.add(marquee, JLayeredPane.DRAG_LAYER);
         marquee.setVisible(false);
 
-        for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-            BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
+        for (BSBObjectViewHolder viewHolder : objectViews) {
             viewHolder.removeSelectionListener(this);
             viewHolder.setGroupMovementListener(null);
             viewHolder.removeComponentListener(cl);
@@ -461,13 +453,13 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
         return viewHolder;
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         BSBObjectViewHolder selectedItem = (BSBObjectViewHolder) e.getSelectedItem();
 
         switch (e.getSelectionType()) {
             case SelectionEvent.SELECTION_CLEAR:
-                for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-                    BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
+                for (BSBObjectViewHolder viewHolder : objectViews) {
                     viewHolder.setSelected(false);
                 }
 
@@ -477,8 +469,7 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
                     return;
                 }
 
-                for (Iterator iter = objectViews.iterator(); iter.hasNext();) {
-                    BSBObjectViewHolder viewHolder = (BSBObjectViewHolder) iter.next();
+                for (BSBObjectViewHolder viewHolder : objectViews) {
                     viewHolder.setSelected(viewHolder == selectedItem);
                 }
 
@@ -545,11 +536,10 @@ public class BSBEditPanel extends JLayeredPane implements SelectionListener,
 
         selectionPerformed(clearSelection);
 
-        for (Iterator iter = copyBuffer.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = (BSBObject) iter.next();
-            bsbObj = (BSBObject) bsbObj.clone();
+        for(BSBObject bsbObj : copyBuffer) {
+            BSBObject clone = (BSBObject) bsbObj.clone();
 
-            BSBObjectViewHolder viewHolder = addBSBObject(bsbObj);
+            BSBObjectViewHolder viewHolder = addBSBObject(clone);
 
             viewHolder.setLocation(viewHolder.getX() + offSetX,
                     viewHolder.getY() + offSetY);

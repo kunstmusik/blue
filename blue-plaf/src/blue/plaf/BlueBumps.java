@@ -7,7 +7,6 @@
 
 package blue.plaf;
 
-import blue.plaf.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -20,7 +19,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.util.Enumeration;
 import java.util.Vector;
-
 import javax.swing.Icon;
 
 /**
@@ -71,11 +69,10 @@ class BlueBumps implements Icon {
             return buffer;
         }
         BumpBuffer result = null;
-
-        Enumeration elements = buffers.elements();
+        Enumeration<BumpBuffer> elements = buffers.elements();
 
         while (elements.hasMoreElements()) {
-            BumpBuffer aBuffer = (BumpBuffer) elements.nextElement();
+            BumpBuffer aBuffer = elements.nextElement();
             if (aBuffer.hasSameConfiguration(gc, aTopColor, aShadowColor,
                     aBackColor)) {
                 result = aBuffer;

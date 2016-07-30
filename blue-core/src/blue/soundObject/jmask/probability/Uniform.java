@@ -46,8 +46,8 @@ public class Uniform implements ProbabilityGenerator {
         return "Uniform";
     }
 
-    public double getValue(double time) {
-        return Math.random();
+    public double getValue(double time, java.util.Random rnd) {
+        return rnd.nextDouble();
     }
 
 }

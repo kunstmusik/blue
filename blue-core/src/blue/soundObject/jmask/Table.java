@@ -45,7 +45,7 @@ public class Table extends AbstractTableModel implements Serializable {
 
     public static final String[] TYPES = {"Off", "On", "Cosine"};
 
-    ArrayList<TablePoint> points = new ArrayList<TablePoint>();
+    ArrayList<TablePoint> points = new ArrayList<>();
 
     private double min = 0.0;
 
@@ -251,6 +251,7 @@ public class Table extends AbstractTableModel implements Serializable {
         removePoint(points.indexOf(selectedPoint));
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return Double.class;
     }
@@ -259,6 +260,7 @@ public class Table extends AbstractTableModel implements Serializable {
         return 2;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         if (columnIndex == 0) {
             return "Time";
@@ -280,10 +282,12 @@ public class Table extends AbstractTableModel implements Serializable {
         return new Double(tp.getValue());
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (!(aValue instanceof Double)) {
             return;
@@ -353,26 +357,30 @@ public class Table extends AbstractTableModel implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "min":
+                    retVal.min = Double.parseDouble(node.getTextString());
+                    break;
+                case "max":
+                    retVal.max = Double.parseDouble(node.getTextString());
+                    break;
+                case "interpolationType":
+                    retVal.setInterpolationType(Integer.parseInt(node.getTextString()));
+                    break;
+                case "interpolation":
+                    retVal.interpolation = Double.parseDouble(node.getTextString());
+                    break;
+                case "points":
+                    Elements pointNodes = node.getElements();
+                    while (pointNodes.hasMoreElements()) {
+                        Element pointNode = pointNodes.next();
+                        String pointNodeName = pointNode.getName();
 
-            if (nodeName.equals("min")) {
-                retVal.min = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("max")) {
-                retVal.max = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("interpolationType")) {
-                retVal.setInterpolationType(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("interpolation")) {
-                retVal.interpolation = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("points")) {
-                Elements pointNodes = node.getElements();
-
-                while (pointNodes.hasMoreElements()) {
-                    Element pointNode = pointNodes.next();
-                    String pointNodeName = pointNode.getName();
-
-                    if (pointNodeName.equals("point")) {
-                        retVal.points.add(TablePoint.loadFromXML(pointNode));
+                        if (pointNodeName.equals("point")) {
+                            retVal.points.add(TablePoint.loadFromXML(pointNode));
+                        }
                     }
-                }
+                    break;
             }
 
         }
@@ -401,10 +409,12 @@ public class Table extends AbstractTableModel implements Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj, false, this.getClass());
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

@@ -65,8 +65,8 @@ public class Parameter implements Serializable {
         return param;
     }
 
-    public double getValue(double time) {
-        double val = generator.getValue(time);
+    public double getValue(double time, java.util.Random rnd) {
+        double val = generator.getValue(time, rnd);
 
         if (mask != null && mask.isEnabled()) {
             val = mask.getValue(time, val);
@@ -142,16 +142,20 @@ public class Parameter implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("generator")) {
-                parameter.generator = (Generator) ObjectUtilities
-                        .loadFromXML(node);
-            } else if (nodeName.equals("mask")) {
-                parameter.mask = Mask.loadFromXML(node);
-            } else if (nodeName.equals("quantizer")) {
-                parameter.quantizer = Quantizer.loadFromXML(node);
-            } else if (nodeName.equals("accumulator")) {
-                parameter.accumulator = Accumulator.loadFromXML(node);
+            switch (nodeName) {
+                case "generator":
+                    parameter.generator = (Generator) ObjectUtilities
+                            .loadFromXML(node);
+                    break;
+                case "mask":
+                    parameter.mask = Mask.loadFromXML(node);
+                    break;
+                case "quantizer":
+                    parameter.quantizer = Quantizer.loadFromXML(node);
+                    break;
+                case "accumulator":
+                    parameter.accumulator = Accumulator.loadFromXML(node);
+                    break;
             }
         }
 
@@ -180,10 +184,12 @@ public class Parameter implements Serializable {
         return retVal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

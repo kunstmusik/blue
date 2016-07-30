@@ -169,7 +169,7 @@ public class blueSHARC {
             buffer.append("aLeft 	=	aout * krtl\n");
             buffer.append("aRight	=	aout * krtr\n\n");
             buffer.append("\touts 	aLeft, aRight");
-        } catch (Exception e) {
+        } catch (IOException | NumberFormatException e) {
             e.printStackTrace();
             buffer = new StringBuffer("error");
         }
@@ -214,12 +214,12 @@ public class blueSHARC {
             }
 
             XMLSerializer xmlSer = new XMLSerializer();
-            PrintWriter out = new PrintWriter(new FileWriter(
-                    "C:\\WINDOWS\\Desktop\\SHARC.blue"));
-            xmlSer.write(out, data);
-            out.flush();
-            out.close();
-        } catch (Exception e) {
+            try (PrintWriter out = new PrintWriter(new FileWriter(
+                         "C:\\WINDOWS\\Desktop\\SHARC.blue"))) {
+                xmlSer.write(out, data);
+                out.flush();
+            }
+        } catch (IOException | IllegalAccessException e) {
             e.printStackTrace();
             System.exit(1);
         }

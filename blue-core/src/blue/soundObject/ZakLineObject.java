@@ -7,6 +7,7 @@
 package blue.soundObject;
 
 import blue.components.lines.Line;
+import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
@@ -18,6 +19,8 @@ import java.util.Map;
  *
  * @author mbechard
  */
+
+@SoundObjectPlugin(displayName = "ZakLineObject", live=false, position = 150)
 public class ZakLineObject extends AbstractLineObject implements Serializable {
 
     /** Creates a new instance of ZakLineObject */
@@ -53,7 +56,7 @@ public class ZakLineObject extends AbstractLineObject implements Serializable {
             Element node = lines.next();
             if (node.getName().equals("zakline")) {
                 Line l = Line.loadFromXML(node);
-                lObj.getLines().addLine(l);
+                lObj.getLines().add(l);
             }
         }
 

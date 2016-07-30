@@ -19,43 +19,31 @@
  */
 package blue.ui.core.score;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
+import blue.BlueData;
+import blue.Marker;
+import blue.MarkersList;
+import blue.score.TimeState;
+import blue.services.render.RenderTimeManager;
+import blue.services.render.RenderTimeManagerListener;
+import blue.settings.PlaybackSettings;
+import blue.soundObject.PolyObject;
+import blue.ui.utilities.BlueGradientFactory;
+import blue.ui.utilities.UiUtilities;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
-import blue.BlueData;
-import blue.Marker;
-import blue.MarkersList;
-import blue.score.TimeState;
-import blue.settings.PlaybackSettings;
-import blue.services.render.RenderTimeManager;
-import blue.soundObject.PolyObject;
-import blue.services.render.RenderTimeManagerListener;
-import blue.ui.utilities.BlueGradientFactory;
-import blue.ui.utilities.UiUtilities;
-import java.awt.*;
-import javax.swing.JPanel;
-import javax.swing.LookAndFeel;
-import javax.swing.UIManager;
 import org.openide.util.Lookup;
 
 /**
@@ -98,6 +86,7 @@ public final class TimeBar extends JPanel implements
 
             int start;
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (!rootTimeline) {
                     return;
@@ -141,6 +130,7 @@ public final class TimeBar extends JPanel implements
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 if (!rootTimeline) {
                     return;
@@ -173,6 +163,7 @@ public final class TimeBar extends JPanel implements
         renderTimeManager.addRenderTimeManagerListener(this);
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         
         Graphics2D g2d = (Graphics2D)g;
@@ -404,6 +395,7 @@ public final class TimeBar extends JPanel implements
      * 
      * @see java.beans.PropertyChangeListener#propertyChange(java.beans.PropertyChangeEvent)
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String prop = evt.getPropertyName();
 
@@ -442,6 +434,7 @@ public final class TimeBar extends JPanel implements
         }
     }
 
+    @Override
     public void tableChanged(TableModelEvent e) {
         if (e.getType() == TableModelEvent.DELETE ||
                 e.getType() == TableModelEvent.INSERT) {
@@ -500,10 +493,12 @@ public final class TimeBar extends JPanel implements
 
             this.addMouseListener(new MouseAdapter() {
 
+                @Override
                 public void mousePressed(MouseEvent e) {
                     originX = e.getX();
                 }
 
+                @Override
                 public void mouseReleased(MouseEvent e) {
                     originX = -1;
                     if (!PlayMarker.this.isVisible()) {
@@ -516,6 +511,7 @@ public final class TimeBar extends JPanel implements
 
             this.addMouseMotionListener(new MouseMotionAdapter() {
 
+                @Override
                 public void mouseDragged(MouseEvent e) {
                     if (originX >= 0) {
                         PlayMarker playMarker = PlayMarker.this;
@@ -550,10 +546,12 @@ public final class TimeBar extends JPanel implements
             });
         }
 
+        @Override
         public String getToolTipText() {
             return marker.getName() + " [" + marker.getTime() + "]";
         }
 
+        @Override
         public void paintComponent(Graphics g) {
 
             Graphics2D g2d = (Graphics2D) g;
@@ -570,6 +568,7 @@ public final class TimeBar extends JPanel implements
 
         }
 
+        @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getSource() == marker) {
                 if (evt.getPropertyName().equals("time")) {

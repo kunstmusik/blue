@@ -19,13 +19,11 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-
 import blue.components.lines.LineList;
 import blue.components.lines.LineListTable;
-
 import com.l2fprod.common.swing.BaseDialog;
+import java.awt.BorderLayout;
+import java.awt.Container;
 
 public class LineListEditorDialog extends BaseDialog {
 

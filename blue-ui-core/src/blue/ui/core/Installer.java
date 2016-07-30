@@ -35,11 +35,15 @@ import blue.scripting.PythonProxy;
 import blue.ui.core.blueLive.BlueLiveToolBar;
 import blue.ui.core.midi.MidiInputEngine;
 import blue.ui.core.render.RealtimeRenderManager;
+import blue.ui.utilities.FileChooserManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
-import java.util.Locale;
 import java.util.logging.Logger;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Group;
+import javafx.scene.Scene;
 import javax.swing.SwingUtilities;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
@@ -57,11 +61,12 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     BackupFileSaver backupFileSaver;
-    private boolean textDefaultsInitialized = false;
+
     private PropertyChangeListener windowTitlePropertyChangeListener;
-    private TempFileCleaner tempFileCleaner = new TempFileCleaner();
-    private static final Logger logger = Logger.getLogger(Installer.class.getName());
-    
+    private final TempFileCleaner tempFileCleaner = new TempFileCleaner();
+    private static final Logger logger = Logger.getLogger(
+            Installer.class.getName());
+
     Result<LayerGroupProvider> result = null;
     private LookupListener lookupListener;
 
@@ -69,7 +74,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
         Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         System.setProperty("jffi.unsafe.disabled", "true");
-        
+
 //        System.setProperty("netbeans.winsys.no_toolbars", "true");
 //
 //        SwingUtilities.invokeLater(new Runnable() {
@@ -92,11 +97,11 @@ public class Installer extends ModuleInstall {
 //                frame.getRootPane().getLayeredPane().add(panel, 0);
 //            }
 //        });
-
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
         windowTitlePropertyChangeListener = new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (WindowManager.getDefault().getMainWindow() != null) {
                     setWindowTitle();
@@ -104,14 +109,14 @@ public class Installer extends ModuleInstall {
             }
         };
 
-
-
-        BlueProjectManager.getInstance().addPropertyChangeListener(windowTitlePropertyChangeListener);
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                windowTitlePropertyChangeListener);
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 tempFileCleaner);
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
+            @Override
             public void run() {
                 setWindowTitle();
                 backupFileSaver = new BackupFileSaver();
@@ -121,7 +126,7 @@ public class Installer extends ModuleInstall {
                 t.start();
             }
         });
-        
+
         PythonProxy.setLibDir(InstalledFileLocator.getDefault().
                 locate("pythonLib", "jython", false));
 
@@ -150,33 +155,35 @@ public class Installer extends ModuleInstall {
 //                }.start();
 //            }
 //        });
-
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                MidiInputManager.getInstance().addReceiver(MidiInputEngine.getInstance());
+                MidiInputManager.getInstance().addReceiver(
+                        MidiInputEngine.getInstance());
             }
         });
-        
+
         OSCManager oscManager = OSCManager.getInstance();
         OSCActions.installActions(oscManager);
         oscManager.start();
-                
+
         Lookup lkp = Lookups.forPath("blue/score/layers");
         result = lkp.lookupResult(LayerGroupProvider.class);
         result.addLookupListener(lookupListener);
-        
-        LayerGroupProviderManager.getInstance().updateProviders(result.allInstances());
-        
+
+        LayerGroupProviderManager.getInstance().updateProviders(
+                result.allInstances());
+
         lookupListener = new LookupListener() {
 
             @Override
             public void resultChanged(LookupEvent ev) {
-                LayerGroupProviderManager.getInstance().updateProviders(result.allInstances());
+                LayerGroupProviderManager.getInstance().updateProviders(
+                        result.allInstances());
             }
         };
-        
+
         //        for(LayerGroupPanelProvider provider : lkp.lookupAll(
         //                LayerGroupPanelProvider.class)) {
         //            JComponent comp = provider.getLayerGroupPanel(layerGroup, timeState, data);
@@ -185,17 +192,27 @@ public class Installer extends ModuleInstall {
         //                return comp;
         //            }
         //        }
-        
-        
+
+        Platform.setImplicitExit(false); 
+        // Initialize JavaFX by using this call
+        new JFXPanel();
+//        Platform.runLater(()
+//                -> jfxPanel.setScene(new Scene(new Group())));
+
+//        FileChooserManager.getDefault().setJFXPanel(jfxPanel);
+//        WindowManager.getDefault().invokeWhenUIReady(()
+//                -> WindowManager.getDefault().getMainWindow().add(jfxPanel));
     }
 
     @Override
     public void uninstalled() {
         ParameterTimeManagerFactory.setInstance(null);
-        BlueProjectManager.getInstance().removePropertyChangeListener(windowTitlePropertyChangeListener);
+        BlueProjectManager.getInstance().removePropertyChangeListener(
+                windowTitlePropertyChangeListener);
         BlueProjectManager.getInstance().removePropertyChangeListener(
                 tempFileCleaner);
-        MidiInputManager.getInstance().removeReceiver(MidiInputEngine.getInstance());
+        MidiInputManager.getInstance().removeReceiver(
+                MidiInputEngine.getInstance());
 
         RealtimeRenderManager.getInstance().stopAuditioning();
         RealtimeRenderManager.getInstance().shutdown();
@@ -218,9 +235,9 @@ public class Installer extends ModuleInstall {
                 title += proj.getDataFile().getName();
             }
         }
-        
+
         final String t = title;
-        
+
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -228,7 +245,7 @@ public class Installer extends ModuleInstall {
                 WindowManager.getDefault().getMainWindow().setTitle(t);
             }
         });
-        
+
     }
 
     @Override
@@ -248,10 +265,10 @@ public class Installer extends ModuleInstall {
         BlueLiveToolBar.getInstance().stopRendering();
 
         result.removeLookupListener(lookupListener);
-        
+
         RealtimeRenderManager.getInstance().stopRendering();
         RealtimeRenderManager.getInstance().stopBlueLiveRendering();
-        
+
         super.close();
     }
 

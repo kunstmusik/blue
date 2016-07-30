@@ -28,52 +28,125 @@ import blue.mixer.ChannelList;
 import blue.mixer.Mixer;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.util.ObservableListEvent;
+import blue.util.ObservableListListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.logging.Logger;
-import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
 
 /**
  * Top component which displays something.
  */
-final class MixerTopComponent extends TopComponent
+@ConvertAsProperties(dtd = "-//blue.ui.core.mixer//Mixer//EN",
+        autostore = false)
+@TopComponent.Description(
+        preferredID = "MixerTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "output", openAtStartup = false,
+        position = 200)
+@ActionID(category = "Window", id = "blue.ui.core.mixer.MixerTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 600),
+    @ActionReference(path = "Shortcuts", name = "S-F5")
+})
+
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_MixerAction",
+        preferredID = "MixerTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_MixerAction=Mixer",
+    "CTL_MixerTopComponent=Mixer",
+    "HINT_MixerTopComponent=This is a Mixer window"
+})
+
+public final class MixerTopComponent extends TopComponent
         implements ArrangementListener {
 
     private static MixerTopComponent instance;
-
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "MixerTopComponent";
 
     // DATA
     private Mixer mixer;
 
     private Arrangement arrangement;
 
+    private Integer dividerLocationReset;
+    private final ObservableListListener<ChannelList> listChangeListener;
+    
+    MixerChannelsColumnHeader header;
+
     private MixerTopComponent() {
         initComponents();
 
-        ((JScrollPane) jSplitPane1.getLeftComponent()).setBorder(null);
-        ((JScrollPane) jSplitPane1.getRightComponent()).setBorder(null);
-
-        setName(NbBundle.getMessage(MixerTopComponent.class, "CTL_MixerTopComponent"));
-        setToolTipText(NbBundle.getMessage(MixerTopComponent.class, "HINT_MixerTopComponent"));
+        setName(NbBundle.getMessage(MixerTopComponent.class,
+                "CTL_MixerTopComponent"));
+        setToolTipText(NbBundle.getMessage(MixerTopComponent.class,
+                "HINT_MixerTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+        BlueProjectManager.getInstance().addPropertyChangeListener(
+                new PropertyChangeListener() {
 
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
-                    reinitialize();
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (BlueProjectManager.CURRENT_PROJECT.equals(
+                                evt.getPropertyName())) {
+                            SwingUtilities.invokeLater(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    reinitialize();
+                                }
+                            });
+                        }
+                    }
+                });
+
+        channelGroupsPanel.setLayout(new ChannelListLayout());
+
+        this.listChangeListener = new ObservableListListener<ChannelList>() {
+
+            @Override
+            public void listChanged(ObservableListEvent<ChannelList> listEvent) {
+                int index = listEvent.getStartIndex();
+                int index2 = listEvent.getEndIndex();
+
+                switch (listEvent.getType()) {
+                    case ObservableListEvent.DATA_ADDED:
+
+                        for (ChannelList list : listEvent.getAffectedItems()) {
+                            ChannelListPanel panel = new ChannelListPanel();
+                            channelGroupsPanel.add(panel, index);
+
+                            panel.setChannelList(list,
+                                    mixer.getSubChannels());
+                            panel.revalidate();
+                            index++;
+                        }
+                        break;
+                    case ObservableListEvent.DATA_REMOVED:
+                        for (int i = 0; i <= index2 - index2; i++) {
+                            channelGroupsPanel.remove(index);
+                        }
+                        break;
+                    case ObservableListEvent.DATA_CHANGED:
+                        reinitialize();
+                        break;
                 }
             }
-        });
+
+        };
+        header = new MixerChannelsColumnHeader(channelGroupsPanel);
+        jScrollPane1.setColumnHeaderView(header);
 
         reinitialize();
     }
@@ -81,12 +154,29 @@ final class MixerTopComponent extends TopComponent
     protected void reinitialize() {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
         BlueData data = null;
+
+        channelGroupsPanel.removeAll();
+
         if (project != null) {
             data = project.getData();
+
+            for (ChannelList list : data.getMixer().getChannelListGroups()) {
+                ChannelListPanel panel = new ChannelListPanel();
+                channelGroupsPanel.add(panel);
+
+                panel.setChannelList(list, data.getMixer().getSubChannels());
+                panel.revalidate();
+            }
+
+            channelGroupsPanel.add(channelsPanel);
+            channelGroupsPanel.add(subChannelsPanel);
 
             setMixer(data.getMixer());
             setArrangement(data.getArrangement());
         }
+
+        channelGroupsPanel.revalidate();
+        channelGroupsPanel.repaint();
     }
 
     protected void updateExtraRenderValue() {
@@ -101,11 +191,17 @@ final class MixerTopComponent extends TopComponent
 
             mixer.setExtraRenderTime(value);
         } catch (NumberFormatException nfe) {
-            extraRenderText.setText(Float.toString(mixer.getExtraRenderTime()));
+            extraRenderText.setText(Float.toString(
+                    mixer.getExtraRenderTime()));
         }
     }
 
     public void setMixer(Mixer mixer) {
+
+        if (this.mixer != null) {
+            this.mixer.getChannelListGroups().removeListener(listChangeListener);
+        }
+
         this.mixer = null;
 
         enabled.setSelected(mixer.isEnabled());
@@ -113,7 +209,8 @@ final class MixerTopComponent extends TopComponent
 
         extraRenderText.setText(Float.toString(mixer.getExtraRenderTime()));
 
-        channelsPanel.setChannelList(mixer.getChannels(), mixer.getSubChannels());
+        channelsPanel.setChannelList(mixer.getChannels(),
+                mixer.getSubChannels());
         subChannelsPanel.setChannelList(mixer.getSubChannels());
 
         masterPanel.clear();
@@ -121,8 +218,12 @@ final class MixerTopComponent extends TopComponent
 
         this.mixer = mixer;
 
+        this.mixer.getChannelListGroups().addListener(listChangeListener);
+
         EffectEditorManager.getInstance().clear();
         SendEditorManager.getInstance().clear();
+        
+        header.setMixer(mixer);
     }
 
     public void setArrangement(Arrangement arrangement) {
@@ -138,6 +239,7 @@ final class MixerTopComponent extends TopComponent
         arrangement.addArrangementListener(this);
     }
 
+    @Override
     public void arrangementChanged(ArrangementEvent arrEvt) {
         switch (arrEvt.getType()) {
             case ArrangementEvent.UPDATE:
@@ -175,7 +277,7 @@ final class MixerTopComponent extends TopComponent
         if (oldIdCount == 0 && newIdCount == 1) {
             // rename old channel
             for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.getChannel(i);
+                Channel channel = channels.get(i);
 
                 if (channel.getName().equals(oldId)) {
                     channel.setName(newId);
@@ -185,10 +287,10 @@ final class MixerTopComponent extends TopComponent
         } else if (oldIdCount == 0 && newIdCount > 1) {
             // remove old channel, use current channel for newId
             for (int i = 0; i < channels.size(); i++) {
-                Channel channel = channels.getChannel(i);
+                Channel channel = channels.get(i);
 
                 if (channel.getName().equals(oldId)) {
-                    channels.removeChannel(channel);
+                    channels.remove(channel);
                     break;
                 }
             }
@@ -196,10 +298,10 @@ final class MixerTopComponent extends TopComponent
             // create new channel
             Channel channel = new Channel();
             channel.setName(newId);
-            channels.addChannel(channel);
+            channels.add(channel);
         } // else if(oldIdCount > 0 && newIdCount > 1) {
-    // do neither, as channels exist for both before and after
-    // }
+        // do neither, as channels exist for both before and after
+        // }
 
     }
 
@@ -231,27 +333,22 @@ final class MixerTopComponent extends TopComponent
         channelsPanel.sort();
     }
 
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        channelsPanel = new blue.ui.core.mixer.ChannelListPanel();
+        subChannelsPanel = new blue.ui.core.mixer.SubChannelListPanel();
         enabled = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         extraRenderText = new javax.swing.JTextField();
         masterPanel = new blue.ui.core.mixer.ChannelPanel();
-        jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
-        channelsPanel = new blue.ui.core.mixer.ChannelListPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        subChannelsPanel = new blue.ui.core.mixer.SubChannelListPanel();
-
-        jScrollPane3.setBorder(null);
+        channelGroupsPanel = new javax.swing.JPanel();
 
         org.openide.awt.Mnemonics.setLocalizedText(enabled, org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.enabled.text")); // NOI18N
         enabled.addActionListener(new java.awt.event.ActionListener() {
@@ -263,77 +360,56 @@ final class MixerTopComponent extends TopComponent
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.jLabel1.text")); // NOI18N
 
         extraRenderText.setText(org.openide.util.NbBundle.getMessage(MixerTopComponent.class, "MixerTopComponent.extraRenderText.text")); // NOI18N
-        extraRenderText.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                extraRenderTextActionPerformed(evt);
-            }
-        });
         extraRenderText.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 extraRenderTextFocusLost(evt);
+            }
+        });
+        extraRenderText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                extraRenderTextActionPerformed(evt);
             }
         });
 
         masterPanel.setBorder(null);
         masterPanel.setMaster(true);
 
-        jSplitPane1.setDividerLocation(400);
-
-        jScrollPane1.setViewportView(channelsPanel);
-
-        jSplitPane1.setLeftComponent(jScrollPane1);
-
-        jScrollPane2.setViewportView(subChannelsPanel);
-
-        jSplitPane1.setRightComponent(jScrollPane2);
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(enabled)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 539, Short.MAX_VALUE)
-                        .addComponent(jLabel1))
-                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 755, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(extraRenderText)
-                    .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(extraRenderText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(enabled))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE)
-                        .addGap(0, 0, 0))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 392, Short.MAX_VALUE)
-                        .addContainerGap())))
-        );
-
-        jScrollPane3.setViewportView(jPanel1);
+        channelGroupsPanel.setBackground(new java.awt.Color(0, 0, 0));
+        channelGroupsPanel.setLayout(null);
+        jScrollPane1.setViewportView(channelGroupsPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 838, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(enabled)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 188, Short.MAX_VALUE)
+                        .addComponent(jLabel1))
+                    .addComponent(jScrollPane1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(extraRenderText)
+                    .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(extraRenderText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1)
+                    .addComponent(enabled))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(masterPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addComponent(jScrollPane1)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -353,53 +429,27 @@ final class MixerTopComponent extends TopComponent
     }//GEN-LAST:event_extraRenderTextFocusLost
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel channelGroupsPanel;
     private blue.ui.core.mixer.ChannelListPanel channelsPanel;
     private javax.swing.JCheckBox enabled;
     private javax.swing.JTextField extraRenderText;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JSplitPane jSplitPane1;
     private blue.ui.core.mixer.ChannelPanel masterPanel;
     private blue.ui.core.mixer.SubChannelListPanel subChannelsPanel;
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Gets default instance. Do not use directly: reserved for *.settings files only,
-     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-     * To obtain the singleton instance, use {@link #findInstance}.
+     * Gets default instance. Do not use directly: reserved for *.settings files
+     * only, i.e. deserialization routines; otherwise you could get a
+     * non-deserialized instance. To obtain the singleton instance, use
+     * {@link #findInstance}.
      */
     public static synchronized MixerTopComponent getDefault() {
         if (instance == null) {
             instance = new MixerTopComponent();
         }
         return instance;
-    }
-
-    /**
-     * Obtain the MixerTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized MixerTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(MixerTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof MixerTopComponent) {
-            return (MixerTopComponent) win;
-        }
-        Logger.getLogger(MixerTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
@@ -412,31 +462,42 @@ final class MixerTopComponent extends TopComponent
         // TODO add custom code on component closing
     }
 
-    /** replaces this in object stream */
-    @Override
-    public Object writeReplace() {
-        return new ResolvableHelper(jSplitPane1.getDividerLocation());
+    void writeProperties(java.util.Properties p) {
+        p.setProperty("version", "1.0");
+//        p.setProperty("dividerLocation",
+//                Integer.toString(jSplitPane1.getDividerLocation()));
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
+    void readProperties(java.util.Properties p) {
+//        String version = p.getProperty("version");
+//        if (p.containsKey("dividerLocation")) {
+//            dividerLocationReset = Integer.parseInt(p.getProperty(
+//                    "dividerLocation"));
+//        }
     }
 
-    final static class ResolvableHelper implements Serializable {
+//    /**
+//     * replaces this in object stream
+//     */
+//    @Override
+//    public Object writeReplace() {
+////        return new ResolvableHelper(jSplitPane1.getDividerLocation());
+//    }
 
-        private static final long serialVersionUID = 1L;
-        private final int dividerLocation;
-
-        private ResolvableHelper(int dividerLocation) {
-            this.dividerLocation = dividerLocation;
-        }
-
-        public Object readResolve() {
-            MixerTopComponent mtc = MixerTopComponent.getDefault();
-            mtc.jSplitPane1.setDividerLocation(dividerLocation);
-
-            return mtc;
-        }
-    }
+//    final static class ResolvableHelper implements Serializable {
+//
+//        private static final long serialVersionUID = 1L;
+//        private final int dividerLocation;
+//
+//        private ResolvableHelper(int dividerLocation) {
+//            this.dividerLocation = dividerLocation;
+//        }
+//
+//        public Object readResolve() {
+//            MixerTopComponent mtc = MixerTopComponent.getDefault();
+////            mtc.jSplitPane1.setDividerLocation(dividerLocation);
+//
+//            return mtc;
+//        }
+//    }
 }

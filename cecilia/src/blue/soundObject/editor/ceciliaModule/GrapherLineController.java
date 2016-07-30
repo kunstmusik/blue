@@ -20,22 +20,19 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
+import blue.utility.TextUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-
 import org.wonderly.awt.Packer;
-
-import blue.soundObject.CeciliaModule;
-import blue.utility.TextUtilities;
 
 /**
  * Contains line info panel and display controller
@@ -80,6 +77,7 @@ public class GrapherLineController extends JComponent implements ActionListener 
         this.grapherIndex = 0;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         Object obj = e.getSource();
         if (obj instanceof JCheckBox) {

@@ -6,13 +6,11 @@
 
 package blue.components.lines;
 
+import blue.BlueSystem;
 import java.awt.Color;
 import java.util.Iterator;
-
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
-
-import blue.BlueSystem;
 
 /**
  * Class extracted from LineTable file, originally written by Steven Yi
@@ -53,7 +51,7 @@ public class LineListTableModel extends AbstractTableModel {
         line.setColor(LineColors.getColor(lines.size()));
 
         if (index < 0 || index == lines.size() - 1) {
-            lines.addLine(line);
+            lines.add(line);
             int row = lines.size() - 1;
             fireTableRowsInserted(row, row);
         } else {
@@ -71,7 +69,7 @@ public class LineListTableModel extends AbstractTableModel {
             boolean found = true;
 
             for (int j = 0; j < lines.size() && found; j++) {
-                Line l = lines.getLine(j);
+                Line l = lines.get(j);
 
                 if ((!l.isZak()) && l.getVarName().equals(lineName)) {
                     found = false;
@@ -91,10 +89,12 @@ public class LineListTableModel extends AbstractTableModel {
         return lineNum;
     }
 
+    @Override
     public int getColumnCount() {
         return 5;
     }
 
+    @Override
     public int getRowCount() {
         if (lines == null) {
             return 0;
@@ -102,12 +102,13 @@ public class LineListTableModel extends AbstractTableModel {
         return lines.size();
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (lines == null) {
             return null;
         }
 
-        Line line = lines.getLine(rowIndex);
+        Line line = lines.get(rowIndex);
 
         switch (columnIndex) {
             case 0:
@@ -124,12 +125,14 @@ public class LineListTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         // return c != 0;
         return true;
     }
 
-    public Class getColumnClass(int c) {
+    @Override
+    public Class<? extends Object> getColumnClass(int c) {
         switch (c) {
             case 0:
                 return Color.class;
@@ -144,8 +147,9 @@ public class LineListTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
-        Line line = lines.getLine(row);
+        Line line = lines.get(row);
         float fval;
         String retVal;
 
@@ -223,6 +227,7 @@ public class LineListTableModel extends AbstractTableModel {
         return true;
     }
 
+    @Override
     public String getColumnName(int column) {
         String retVal;
 

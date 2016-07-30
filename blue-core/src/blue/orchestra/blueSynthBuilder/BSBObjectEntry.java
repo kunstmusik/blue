@@ -35,6 +35,7 @@ public class BSBObjectEntry {
         this.bsbObjectClass = bsbObjectClass;
     }
 
+    @Override
     public String toString() {
         return this.label;
     }

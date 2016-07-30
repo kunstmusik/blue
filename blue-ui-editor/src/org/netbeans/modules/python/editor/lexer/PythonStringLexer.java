@@ -74,10 +74,12 @@ public class PythonStringLexer implements Lexer<PythonStringTokenId> {
         assert (info.state() == null); // passed argument always null
     }
 
+    @Override
     public Object state() {
         return null;
     }
 
+    @Override
     public Token<PythonStringTokenId> nextToken() {
         boolean inWord = false;
         while (true) {
@@ -281,6 +283,7 @@ public class PythonStringLexer implements Lexer<PythonStringTokenId> {
         }
     }
 
+    @Override
     public void release() {
     }
 }

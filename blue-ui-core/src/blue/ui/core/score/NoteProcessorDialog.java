@@ -20,14 +20,12 @@
 
 package blue.ui.core.score;
 
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorChainMap;
+import com.l2fprod.common.swing.BaseDialog;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Frame;
-
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorChainMap;
-
-import com.l2fprod.common.swing.BaseDialog;
 import org.openide.windows.WindowManager;
 
 public class NoteProcessorDialog extends BaseDialog {

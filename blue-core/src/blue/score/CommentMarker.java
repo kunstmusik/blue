@@ -45,6 +45,7 @@ public final class CommentMarker extends JComponent {
         this.setMinimumSize(d);
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         int w = 10;
         int h = 10;

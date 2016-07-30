@@ -3,6 +3,7 @@ package blue.orchestra;
 import Silence.XMLSerializer;
 import blue.Tables;
 import blue.utility.ObjectUtilities;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EventListener;
 import javax.swing.ListModel;
@@ -51,6 +52,7 @@ public class InstrumentList extends ArrayList implements ListModel {
         }
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }
@@ -134,7 +136,7 @@ public class InstrumentList extends ArrayList implements ListModel {
         try {
             xmlSer.write(new java.io.PrintWriter(System.out, true),
                     new InstrumentList());
-        } catch (Exception e) {
+        } catch (IOException | IllegalAccessException e) {
 
         }
     }

@@ -20,15 +20,22 @@
 package blue.plaf;
 
 import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableUI;
 
 public class BlueTableUI extends BasicTableUI {
 
+    public static ComponentUI createUI(JComponent c) {
+        return new BlueTableUI();
+    }
+    
+    @Override
     public void installUI(JComponent c) {
-        // TODO Auto-generated method stub
         super.installUI(c);
 
         c.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        ((JTable)c).setRowHeight(24);
     }
 
 }

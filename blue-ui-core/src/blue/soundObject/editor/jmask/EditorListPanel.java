@@ -19,30 +19,27 @@
  */
 package blue.soundObject.editor.jmask;
 
-import blue.soundObject.SoundObjectEvent;
+import blue.soundObject.JMask;
+import blue.score.ScoreObjectEvent;
+import blue.score.ScoreObjectListener;
+import blue.soundObject.jmask.Field;
+import blue.soundObject.jmask.Generator;
+import blue.soundObject.jmask.Parameter;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
-
 import javax.swing.JComponent;
+import javax.swing.Scrollable;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import blue.soundObject.SoundObjectListener;
-import blue.soundObject.JMask;
-import blue.soundObject.jmask.Field;
-import blue.soundObject.jmask.Generator;
-import blue.soundObject.jmask.Parameter;
-import java.util.Vector;
-import javax.swing.Scrollable;
 
 /**
  * 
  * @author steven
  */
 public class EditorListPanel extends JComponent implements
-        ParameterEditListener, ListDataListener, Scrollable, SoundObjectListener {
+        ParameterEditListener, ListDataListener, Scrollable, ScoreObjectListener {
 
     JMask jMask = null;
     Field field = null;
@@ -53,10 +50,12 @@ public class EditorListPanel extends JComponent implements
 
         this.addContainerListener(new ContainerListener() {
 
+            @Override
             public void componentAdded(ContainerEvent e) {
                 EditorListPanel.this.setSize(EditorListPanel.this.getPreferredSize());
             }
 
+            @Override
             public void componentRemoved(ContainerEvent e) {
                 EditorListPanel.this.setSize(EditorListPanel.this.getPreferredSize());
             }
@@ -84,13 +83,14 @@ public class EditorListPanel extends JComponent implements
 
         field.addListDataListener(this);
         
-        jMask.addSoundObjectListener(this);
+        jMask.addScoreObjectListener(this);
         
         this.jMask = jMask;
 
         revalidate();
     }
 
+    @Override
     public void parameterEdit(int editType, int parameterNum,
             Generator generator) {
         int index = parameterNum - 1;
@@ -121,6 +121,7 @@ public class EditorListPanel extends JComponent implements
     }
 
     // List Data Events
+    @Override
     public void intervalAdded(ListDataEvent e) {
         int index = e.getIndex0();
 
@@ -139,6 +140,7 @@ public class EditorListPanel extends JComponent implements
 
     }
 
+    @Override
     public void intervalRemoved(ListDataEvent e) {
         int index = e.getIndex0();
 
@@ -151,6 +153,7 @@ public class EditorListPanel extends JComponent implements
         revalidate();
     }
 
+    @Override
     public void contentsChanged(ListDataEvent e) {
         for(int index = e.getIndex0(); index <= e.getIndex1(); index++) {
             ParameterEditor pEditor = (ParameterEditor) this.getComponent(index);
@@ -186,7 +189,7 @@ public class EditorListPanel extends JComponent implements
         }
 
         if (this.jMask != null) {
-            this.jMask.removeSoundObjectListener(this);
+            this.jMask.removeScoreObjectListener(this);
         }
 
         this.field = null;
@@ -202,8 +205,9 @@ public class EditorListPanel extends JComponent implements
         }
     }
 
-    public void soundObjectChanged(SoundObjectEvent event) {
-        if(event.getPropertyChanged() == SoundObjectEvent.DURATION) {            
+    @Override
+    public void scoreObjectChanged(ScoreObjectEvent event) {
+        if(event.getPropertyChanged() == ScoreObjectEvent.DURATION) {            
             for (int i = 0; i < getComponentCount(); i++) {
                 ParameterEditor pEditor = (ParameterEditor) getComponent(i);
                 pEditor.setDuration(this.jMask.getSubjectiveDuration());
@@ -211,22 +215,27 @@ public class EditorListPanel extends JComponent implements
         }
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
         return new Dimension(0, 0);
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
         return 20;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
         return 20;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
         return true;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
     }

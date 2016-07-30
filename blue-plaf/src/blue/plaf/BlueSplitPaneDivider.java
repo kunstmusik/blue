@@ -13,7 +13,6 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Rectangle;
-
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JButton;
@@ -85,6 +84,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
         }
     }
 
+    @Override
     public void paint(Graphics g) {
         if (splitPane.hasFocus()) {
             g.setColor(primaryControlColor);
@@ -112,6 +112,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
      * Creates and return an instance of JButton that can be used to collapse
      * the left component in the metal split pane.
      */
+    @Override
     protected JButton createLeftOneTouchButton() {
         JButton b = new JButton() {
             // Sprite buffer for the arrow image of the left button
@@ -121,9 +122,11 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
                     { 2, 1, 1, 1, 1, 1, 1, 1, 0 },
                     { 0, 3, 3, 3, 3, 3, 3, 3, 3 } };
 
+            @Override
             public void setBorder(Border b) {
             }
 
+            @Override
             public void paint(Graphics g) {
                 JSplitPane splitPane = getSplitPaneFromSuper();
                 if (splitPane != null) {
@@ -182,7 +185,8 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
             }
 
             // Don't want the button to participate in focus traversable.
-            public boolean isFocusTraversable() {
+            @Override
+            public boolean isFocusable() {
                 return false;
             }
         };
@@ -197,6 +201,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
      * Creates and return an instance of JButton that can be used to collapse
      * the right component in the metal split pane.
      */
+    @Override
     protected JButton createRightOneTouchButton() {
         JButton b = new JButton() {
             // Sprite buffer for the arrow image of the right button
@@ -204,9 +209,11 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
                     { 0, 1, 1, 1, 1, 1, 1, 3 }, { 0, 0, 1, 1, 1, 1, 3, 0 },
                     { 0, 0, 0, 1, 1, 3, 0, 0 }, { 0, 0, 0, 0, 3, 0, 0, 0 } };
 
+            @Override
             public void setBorder(Border border) {
             }
 
+            @Override
             public void paint(Graphics g) {
                 JSplitPane splitPane = getSplitPaneFromSuper();
                 if (splitPane != null) {
@@ -265,7 +272,8 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
             }
 
             // Don't want the button to participate in focus traversable.
-            public boolean isFocusTraversable() {
+            @Override
+            public boolean isFocusable() {
                 return false;
             }
         };
@@ -356,11 +364,11 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
      */
 
     int getOneTouchSizeFromSuper() {
-        return super.ONE_TOUCH_SIZE;
+        return BasicSplitPaneDivider.ONE_TOUCH_SIZE;
     }
 
     int getOneTouchOffsetFromSuper() {
-        return super.ONE_TOUCH_OFFSET;
+        return BasicSplitPaneDivider.ONE_TOUCH_OFFSET;
     }
 
     int getOrientationFromSuper() {

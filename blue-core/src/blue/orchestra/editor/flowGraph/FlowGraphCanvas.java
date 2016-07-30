@@ -33,6 +33,7 @@ public class FlowGraphCanvas extends JPanel {
         this.addMouseListener(new FlowGraphCanvasMouseListener(fGPanel));
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g.create();
 

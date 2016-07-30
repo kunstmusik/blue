@@ -40,6 +40,7 @@ public class CurrentProjectsAction extends JMenuItem implements
     static {
         al = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem item = (JMenuItem) e.getSource();
                 Object obj = item.getClientProperty("project");
@@ -52,6 +53,7 @@ public class CurrentProjectsAction extends JMenuItem implements
         };
     }
 
+    @Override
     public JComponent[] getMenuPresenters() {
 
         BlueProjectManager manager = BlueProjectManager.getInstance();
@@ -81,6 +83,7 @@ public class CurrentProjectsAction extends JMenuItem implements
         return items;
     }
 
+    @Override
     public JComponent[] synchMenuPresenters(JComponent[] items) {
         return getMenuPresenters();
     }

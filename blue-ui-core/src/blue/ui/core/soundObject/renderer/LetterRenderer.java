@@ -1,12 +1,11 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import blue.soundObject.SoundObject;
 
 /**
  * <p>
@@ -25,7 +24,6 @@ import blue.soundObject.SoundObject;
  * @author unascribed
  * @version 1.0
  */
-
 public abstract class LetterRenderer extends GenericRenderer {
 
     private static Font miniFont = new Font("Dialog", Font.BOLD, 10);
@@ -37,6 +35,7 @@ public abstract class LetterRenderer extends GenericRenderer {
         this.labelOffset = 13;
     }
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
         super.render(graphics, sObjView, pixelSeconds);
@@ -75,7 +74,4 @@ public abstract class LetterRenderer extends GenericRenderer {
         g.drawString(letter, 3, 12);
 
     }
-
-    @Override
-    public abstract Class getSoundObjectClass();
 }

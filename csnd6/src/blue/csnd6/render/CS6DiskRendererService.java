@@ -85,19 +85,24 @@ public class CS6DiskRendererService implements DiskRenderService {
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
         CsoundArgVList argsList = new CsoundArgVList();
+        ioProvider.getOut().append("Render Command (");
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("\"") && args[i].endsWith("\"")) {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
             argsList.Append(args[i]);
+            ioProvider.getOut().append(" ").append(args[i]);
         }
 
         if (currentWorkingDirectory != null) {
             String sfdir = "--env:SFDIR=" + currentWorkingDirectory.getAbsolutePath();
             argsList.Append(sfdir);
+            ioProvider.getOut().append(" ").append(sfdir);
         }
 
+        ioProvider.getOut().append(" )\n");
+        
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 
         if (retVal != 0) {
@@ -316,6 +321,7 @@ public class CS6DiskRendererService implements DiskRenderService {
         notifyPlayModeListeners(PlayModeListener.PLAY_MODE_PLAY);
 
         CsoundArgVList argsList = new CsoundArgVList();
+        ioProvider.getOut().append("Render Command (");
 
         String args[] = job.getArgs();
         for (int i = 0; i < args.length; i++) {
@@ -323,14 +329,18 @@ public class CS6DiskRendererService implements DiskRenderService {
                 args[i] = args[i].substring(1, args[i].length() - 1);
             }
             argsList.Append(args[i]);
+            ioProvider.getOut().append(" ").append(args[i]);
         }
 
         if (job.getCurrentWorkingDirectory() != null) {
             String sfdir = "--env:SFDIR=" + job.getCurrentWorkingDirectory().getAbsolutePath();
             argsList.Append(sfdir);
+            ioProvider.getOut().append(" ").append(sfdir);
         }
 
         argsList.Append(csdPath);
+
+        ioProvider.getOut().append(" " + csdPath + " )\n");
 
         int retVal = csound.Compile(argsList.argc(), argsList.argv());
 

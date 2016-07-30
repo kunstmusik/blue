@@ -17,9 +17,18 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.score;
 
+import blue.BlueSystem;
+import blue.noteProcessor.NoteProcessor;
+import blue.noteProcessor.NoteProcessorChain;
+import blue.noteProcessor.NoteProcessorChainMap;
+import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
+import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
+import blue.ui.nbutilities.lazyplugin.LazyPlugin;
+import blue.ui.nbutilities.lazyplugin.LazyPluginFactory;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -29,9 +38,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -46,24 +56,13 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-
-import blue.BlueSystem;
-import blue.noteProcessor.NoteProcessor;
-import blue.noteProcessor.NoteProcessorChain;
-import blue.noteProcessor.NoteProcessorChainMap;
-import blue.ui.core.BluePluginManager;
-
-import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTable;
-import blue.ui.core.score.noteProcessorChain.NoteProcessorChainTableModel;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
-import java.util.HashMap;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.Exceptions;
 
 /**
  * @author steven
  */
-
 public class NoteProcessorChainEditor extends JComponent {
 
     private NoteProcessorPopup noteProcPopup = new NoteProcessorPopup(this);
@@ -101,9 +100,9 @@ public class NoteProcessorChainEditor extends JComponent {
         Border titledBorder1 = new TitledBorder(
                 border1,
                 " "
-                        + BlueSystem
-                                .getString("soundObjectProperties.noteProcessors.title")
-                        + " ");
+                + BlueSystem
+                .getString("soundObjectProperties.noteProcessors.title")
+                + " ");
 
         Border border2 = BorderFactory.createCompoundBorder(titledBorder1,
                 BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -130,11 +129,13 @@ public class NoteProcessorChainEditor extends JComponent {
 
         npcTable.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent me) {
                 npcModel.setCurrentNoteProcessor(npcTable.getSelectedRow());
                 updateHilightRows();
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
                 if (UiUtilities.isRightMouseButton(e)) {
                     editPopup.show(npcTable, e.getX(), e.getY());
@@ -147,6 +148,7 @@ public class NoteProcessorChainEditor extends JComponent {
         addButton.setText("+");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 showNoteProcessorPopup(e);
             }
@@ -156,6 +158,7 @@ public class NoteProcessorChainEditor extends JComponent {
         removeButton.setText("-");
         removeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeCurrentNoteProcessor();
             }
@@ -165,6 +168,7 @@ public class NoteProcessorChainEditor extends JComponent {
         pushUpButton.setText("^");
         pushUpButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushUpNoteProcessor(e);
             }
@@ -174,6 +178,7 @@ public class NoteProcessorChainEditor extends JComponent {
         pushDownButton.setText("V");
         pushDownButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 pushDownNoteProcessor(e);
             }
@@ -185,7 +190,8 @@ public class NoteProcessorChainEditor extends JComponent {
                 .add(
                         new JLabel(
                                 BlueSystem
-                                        .getString("soundObjectProperties.noteProcessors.notSupported")),
+                                .getString(
+                                        "soundObjectProperties.noteProcessors.notSupported")),
                         "unsupported");
         noteProcessorCardLayout.show(noteProcessorEditPanel, "unsupported");
 
@@ -220,27 +226,6 @@ public class NoteProcessorChainEditor extends JComponent {
     public NoteProcessorChain getNoteProcessorChain() {
         return this.npc;
     }
-
-//    public static void main(String[] args) {
-//        try {
-//            UIManager.setLookAndFeel(new BlueLookAndFeel());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        NoteProcessorChain npc = new NoteProcessorChain();
-//        npc.addNoteProcessor(new AddProcessor());
-//        npc.addNoteProcessor(new MultiplyProcessor());
-//        npc.addNoteProcessor(new TimeWarpProcessor());
-//
-//        NoteProcessorChainEditor npcEditor = new NoteProcessorChainEditor();
-//
-//        npcEditor.setNoteProcessorChain(npc);
-//
-//        blue.utility.GUI.showComponentAsStandalone(npcEditor,
-//                "NoteProcessorChain Editor Test", true);
-//
-//    }
 
     void showNoteProcessorPopup(ActionEvent e) {
         if (npc == null) {
@@ -318,7 +303,7 @@ public class NoteProcessorChainEditor extends JComponent {
 
         ActionListener insertChainListener;
 
-        HashMap<String, Class> npNameClassMap = new HashMap<String, Class>();
+        HashMap<String, Class> npNameClassMap = new HashMap<>();
 
         private JMenuItem saveChain;
 
@@ -329,34 +314,24 @@ public class NoteProcessorChainEditor extends JComponent {
         public NoteProcessorPopup(NoteProcessorChainEditor npcEditor) {
             this.npcEditor = npcEditor;
 
-            ArrayList<Class> plugins =
-                    BluePluginManager.getInstance().getNoteProcessorClasses();
-
-            String className;
+            List<LazyPlugin<NoteProcessor>> plugins = LazyPluginFactory.
+                    loadPlugins("blue/noteProcessors", NoteProcessor.class);
+            
             JMenuItem temp;
 
             JMenu insertNoteProcessor = new JMenu("Insert Note Processor");
 
-            for (Class npClass : plugins) {
-                className = npClass.getName();
-
-                npNameClassMap.put(className, npClass);
-
-                try {
-                    temp = new JMenuItem();
-                    temp.setText(BlueSystem.getShortClassName(className));
-                    temp.setActionCommand(className);
-                    temp.addActionListener(this);
-                    insertNoteProcessor.add(temp);
-
-                } catch (Exception e) {
-                    Exceptions.printStackTrace(e);
-                }
-
+            for (LazyPlugin<NoteProcessor> plugin : plugins) {
+                temp = new JMenuItem();
+                temp.setText(plugin.getDisplayName());
+                temp.putClientProperty("plugin", plugin);
+                temp.addActionListener(this);
+                insertNoteProcessor.add(temp);
             }
 
             insertChainListener = new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     insertChain(e.getActionCommand());
                 }
@@ -365,6 +340,7 @@ public class NoteProcessorChainEditor extends JComponent {
             saveChain = new JMenuItem("Save");
             saveChain.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     saveChain();
                 }
@@ -373,6 +349,7 @@ public class NoteProcessorChainEditor extends JComponent {
             removeChain = new JMenuItem("Remove");
             removeChain.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     removeChain();
                 }
@@ -389,13 +366,16 @@ public class NoteProcessorChainEditor extends JComponent {
 
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     updateNoteProcessorChainMenuStatus();
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
             });
@@ -430,7 +410,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         private void updateNPCMapMenu() {
             if (npcMap == null) {
@@ -454,7 +434,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         protected void saveChain() {
             if (npcMap == null || npcEditor.getNoteProcessorChain().size() == 0) {
@@ -480,7 +460,7 @@ public class NoteProcessorChainEditor extends JComponent {
         }
 
         /**
-         * 
+         *
          */
         protected void removeChain() {
             if (npcMap == null || npcMap.size() == 0) {
@@ -504,12 +484,19 @@ public class NoteProcessorChainEditor extends JComponent {
 
         }
 
+        @Override
         public void actionPerformed(ActionEvent ae) {
+
+
+            LazyPlugin<NoteProcessor> plugin = (LazyPlugin<NoteProcessor>) 
+                        ((JMenuItem)ae.getSource()).getClientProperty("plugin");
+
+            NoteProcessor npTemplate = plugin.getInstance();
+
             try {
-                Class npClass = npNameClassMap.get(ae.getActionCommand());
-                Object tempNP = npClass.newInstance();
-                npcEditor.addNoteProcessor((NoteProcessor) tempNP);
-            } catch (Exception ex) {
+                NoteProcessor np = npTemplate.getClass().newInstance();
+                npcEditor.addNoteProcessor(np);
+            } catch (InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
@@ -541,9 +528,9 @@ public class NoteProcessorChainEditor extends JComponent {
         private JMenuItem removeProcessor = new JMenuItem();
 
         private JMenuItem cutProcessor = new JMenuItem();
-        
+
         private JMenuItem copyProcessor = new JMenuItem();
-        
+
         private JMenuItem pasteProcessor = new JMenuItem();
 
         public EditPopup(final NoteProcessorChainEditor npcEditor) {
@@ -552,6 +539,7 @@ public class NoteProcessorChainEditor extends JComponent {
             cutProcessor.setText("Cut");
             cutProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.cutCurrentNoteProcessor();
                 }
@@ -560,6 +548,7 @@ public class NoteProcessorChainEditor extends JComponent {
             copyProcessor.setText("Copy");
             copyProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.copyCurrentNoteProcessor();
                 }
@@ -568,6 +557,7 @@ public class NoteProcessorChainEditor extends JComponent {
             pasteProcessor.setText("Paste");
             pasteProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.pasteCurrentNoteProcessor();
                 }
@@ -577,6 +567,7 @@ public class NoteProcessorChainEditor extends JComponent {
                     .getString("soundObjectProperties.noteProcessors.remove"));
             removeProcessor.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     npcEditor.removeCurrentNoteProcessor();
                 }
@@ -591,15 +582,16 @@ public class NoteProcessorChainEditor extends JComponent {
             this.pack();
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             pasteProcessor.setEnabled(NoteProcessorChainEditor.buffer != null);
 
             NoteProcessor currentNoteProcessor = npcEditor.npcModel.getCurrentNoteProcessor();
-            
+
             pasteProcessor.setEnabled(NoteProcessorChainEditor.buffer != null);
             cutProcessor.setEnabled(currentNoteProcessor != null);
             copyProcessor.setEnabled(currentNoteProcessor != null);
-            
+
             removeProcessor.setEnabled(currentNoteProcessor != null);
 
             super.show(invoker, x, y);

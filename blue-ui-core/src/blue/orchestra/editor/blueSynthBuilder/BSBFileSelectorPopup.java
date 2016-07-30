@@ -22,7 +22,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
@@ -52,6 +51,7 @@ public class BSBFileSelectorPopup extends JPopupMenu implements ActionListener  
      * Invoked when the Clear menu item is selected
      * @param e Event parameter
      */
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Clear")) {
             fileView.resetText();

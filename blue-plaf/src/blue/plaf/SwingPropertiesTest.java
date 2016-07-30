@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -45,7 +44,8 @@ public class SwingPropertiesTest extends JComponent {
         UIDefaults ui = UIManager.getLookAndFeelDefaults();
 
         Set a = ui.keySet();
-        java.util.List b = Arrays.asList(a.toArray());
+        java.util.List b = Arrays.asList(a.stream().map(Object::toString).toArray());
+        
 
         Collections.sort(b);
 
@@ -88,6 +88,7 @@ public class SwingPropertiesTest extends JComponent {
 
         mFrame.setVisible(true);
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }

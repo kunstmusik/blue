@@ -19,6 +19,12 @@
  */
 package blue.components;
 
+import blue.components.lines.Line;
+import blue.components.lines.LineEditorDialog;
+import blue.components.lines.LineList;
+import blue.components.lines.LinePoint;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.NumberUtilities;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -29,20 +35,12 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Iterator;
-
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
-import blue.components.lines.Line;
-import blue.components.lines.LineEditorDialog;
-import blue.components.lines.LineList;
-import blue.components.lines.LinePoint;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.NumberUtilities;
 
 /**
  * @author steven
@@ -69,6 +67,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         new LineCanvasMouseListener(this);
 
         lineListener = new TableModelListener() {
+            @Override
             public void tableChanged(TableModelEvent e) {
                 repaint();
             }
@@ -86,6 +85,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
      * 
      * @see javax.swing.event.TableModelListener#tableChanged(javax.swing.event.TableModelEvent)
      */
+    @Override
     public void tableChanged(TableModelEvent e) {
         repaint();
     }
@@ -109,6 +109,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         repaint();
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -375,15 +376,19 @@ public class LineCanvas extends JComponent implements TableModelListener {
             lineCanvas.addMouseMotionListener(this);
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
         }
 
+        @Override
         public void mouseEntered(MouseEvent e) {
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
             if (currentLine == null) {
                 return;
@@ -423,6 +428,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
 
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
             if (currentLine == null) {
                 return;
@@ -431,6 +437,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
 
         }
 
+        @Override
         public void mouseDragged(MouseEvent e) {
             if (currentLine == null) {
                 return;
@@ -481,6 +488,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             }
         }
 
+        @Override
         public void mouseMoved(MouseEvent e) {
             if (currentLine == null) {
                 return;
@@ -524,6 +532,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
         public EditPointsPopup() {
             this.add(new AbstractAction("Edit Points") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     LineEditorDialog dialog = LineEditorDialog
                             .getInstance(getInvoker());
@@ -539,6 +548,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             this.line = line;
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             if (this.line != null) {
                 super.show(invoker, x, y);

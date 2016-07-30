@@ -19,11 +19,14 @@
  */
 package blue.clojure;
 
-import java.io.File;
+import blue.BlueData;
+import blue.projects.BlueProject;
+import blue.projects.BlueProjectManager;
+import java.beans.PropertyChangeEvent;
 import java.util.HashMap;
 import javax.script.ScriptException;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -76,7 +79,8 @@ public class BlueClojureEngineTest {
         String code = "(def score \"i1 0 2\")";
         HashMap<String, ? extends Object> values = null;
         String returnVariableName = "score";
-        BlueClojureEngine instance = new BlueClojureEngine();
+        BlueProjectManager.getInstance().addProject(BlueProjectManager.createNewProject());
+        BlueClojureEngine instance = BlueClojureEngine.getInstance();
         String expResult = "i1 0 2";
         try {
             String result = instance.processScript(code, values, returnVariableName);

@@ -23,21 +23,18 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.PythonObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin(scoreObjectType = PythonObject.class)
 public class PythonObjectRenderer extends LetterRenderer {
 
     public PythonObjectRenderer() {
         super("P");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return PythonObject.class;
     }
 
 }

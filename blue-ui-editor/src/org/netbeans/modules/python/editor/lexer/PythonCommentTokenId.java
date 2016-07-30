@@ -43,7 +43,6 @@ package org.netbeans.modules.python.editor.lexer;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
-
 import org.netbeans.api.lexer.InputAttributes;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.api.lexer.LanguagePath;
@@ -76,6 +75,7 @@ public enum PythonCommentTokenId implements TokenId {
         this.primaryCategory = primaryCategory;
     }
 
+    @Override
     public String primaryCategory() {
         return primaryCategory;
     }

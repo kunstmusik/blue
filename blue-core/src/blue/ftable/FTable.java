@@ -30,7 +30,7 @@ package blue.ftable;
 
 import java.util.StringTokenizer;
 
-public class FTable implements Comparable {
+public class FTable implements Comparable<FTable> {
     int tableNumber, actionTime, tableSize, genRoutine;
 
     String name, args;
@@ -146,8 +146,7 @@ public class FTable implements Comparable {
 
     }
 
-    public int compareTo(Object ft) {
-        FTable temp = (FTable) ft;
+    public int compareTo(FTable temp) {
 
         int a = this.getTableNumber();
         int b = temp.getTableNumber();
@@ -160,6 +159,7 @@ public class FTable implements Comparable {
         return 0;
     }
 
+    @Override
     public String toString() {
         String retVal = "[FTable]\n";
 

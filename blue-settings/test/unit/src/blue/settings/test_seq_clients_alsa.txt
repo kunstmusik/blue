@@ -1,0 +1,52 @@
+Client info
+  cur  clients : 6
+  peak clients : 7
+  max  clients : 192
+
+Client   0 : "System" [Kernel]
+  Port   0 : "Timer" (Rwe-)
+  Port   1 : "Announce" (R-e-)
+    Connecting To: 128:0
+Client  14 : "Midi Through" [Kernel]
+  Port   0 : "Midi Through Port-0" (RWe-)
+    Connecting To: 128:0[r:0]
+    Connected From: 128:0
+Client  16 : "M Audio Delta 1010" [Kernel]
+  Port   0 : "M Audio Delta 1010 MIDI" (RWeX)
+    Connecting To: 128:0[r:0]
+    Connected From: 128:0, 129:0
+Client 128 : "jack_midi" [User]
+  Port   0 : "port" (rw--)
+    Connecting To: 14:0, 16:0, 130:0
+    Connected From: 0:1, 14:0[r:0], 16:0[r:0], 129:0[r:0]
+  Output pool :
+    Pool size          : 500
+    Cells in use       : 0
+    Peak cells in use  : 0
+    Alloc success      : 0
+    Alloc failures     : 0
+  Input pool :
+    Pool size          : 200
+    Cells in use       : 0
+    Peak cells in use  : 6
+    Alloc success      : 55
+    Alloc failures     : 0
+Client 129 : "Csound" [User]
+  Port   0 : "Csound" (R-e-)
+    Connecting To: 16:0, 128:0[r:0]
+  Input pool :
+    Pool size          : 200
+    Cells in use       : 0
+    Peak cells in use  : 0
+    Alloc success      : 0
+    Alloc failures     : 0
+Client 130 : "Csound" [User]
+  Port   0 : "Csound" (-We-)
+    Connected From: 128:0
+  Input pool :
+    Pool size          : 200
+    Cells in use       : 0
+    Peak cells in use  : 1
+    Alloc success      : 1
+    Alloc failures     : 0
+

@@ -43,13 +43,11 @@ package org.netbeans.modules.python.editor.lexer;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
-
 import org.netbeans.api.lexer.InputAttributes;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.api.lexer.LanguagePath;
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenId;
-import org.netbeans.api.lexer.TokenUtilities;
 import org.netbeans.spi.lexer.LanguageEmbedding;
 import org.netbeans.spi.lexer.LanguageHierarchy;
 import org.netbeans.spi.lexer.Lexer;
@@ -75,6 +73,7 @@ public enum PythonStringTokenId implements TokenId {
         this.primaryCategory = primaryCategory;
     }
 
+    @Override
     public String primaryCategory() {
         return primaryCategory;
     }

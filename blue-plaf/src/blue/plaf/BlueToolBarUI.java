@@ -24,7 +24,6 @@ package blue.plaf;
 
 import java.awt.Component;
 import java.awt.Insets;
-
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -67,6 +66,7 @@ public class BlueToolBarUI extends MetalToolBarUI {
      * @param c
      *            The reference of the toolbar to install its default values.
      */
+    @Override
     public void installUI(JComponent c) {
         super.installUI(c);
         c.putClientProperty("JToolBar.isRollover", Boolean.FALSE);
@@ -81,6 +81,7 @@ public class BlueToolBarUI extends MetalToolBarUI {
      *            The component to paint.
      */
 
+    @Override
     protected Border createNonRolloverBorder() {
         return BorderFactory.createCompoundBorder(new BlueButtonBorder(),
                 BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -92,6 +93,7 @@ public class BlueToolBarUI extends MetalToolBarUI {
      * @param c
      *            The component to set its border.
      */
+    @Override
     protected void setBorderToRollover(Component c) {
         if (c instanceof AbstractButton) {
             AbstractButton button = (AbstractButton) c;

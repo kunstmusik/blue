@@ -25,7 +25,6 @@ package blue.plaf;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
@@ -39,7 +38,7 @@ public class BlueTableHeaderBorder extends AbstractBorder {
     /**
      * The border insets.
      */
-    protected Insets insets = new Insets(2, 2, 2, 0);
+    protected Insets insets = new Insets(10, 10, 10, 10);
 
     /**
      * Draws a simple 3d border for the given component.
@@ -57,17 +56,27 @@ public class BlueTableHeaderBorder extends AbstractBorder {
      * @param h
      *            The height.
      */
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
-        g.translate(x, y);
+//        g.translate(x, y);
 
-        g.setColor(MetalLookAndFeel.getControlHighlight());
-        g.drawLine(w - 1, 0, w - 1, h - 1);
-        g.drawLine(1, h - 1, w - 1, h - 1);
-        g.setColor(MetalLookAndFeel.getControlDarkShadow());
-        g.drawLine(0, 0, w - 2, 0);
-        g.drawLine(0, 0, 0, h - 2);
+        g.setColor(MetalLookAndFeel.getControl().brighter());
+        g.drawRect(x, y, w -3 , h -1);
 
-        g.translate(-x, -y);
+        g.setColor(MetalLookAndFeel.getControl());
+        g.drawRect(w - 2, y, w - 2, h - 1 );
+
+        g.setColor(MetalLookAndFeel.getControl().darker());
+        g.drawRect(w - 1, y, w - 1, h - 1 );
+        
+//        g.setColor(MetalLookAndFeel.getControlHighlight());
+//        g.drawLine(w - 1, 0, w - 1, h - 1);
+//        g.drawLine(1, h - 1, w - 1, h - 1);
+//        g.setColor(MetalLookAndFeel.getControlDarkShadow());
+//        g.drawLine(0, 0, w - 2, 0);
+//        g.drawLine(0, 0, 0, h - 2);
+
+//        g.translate(-x, -y);
     }
 
     /**
@@ -77,6 +86,7 @@ public class BlueTableHeaderBorder extends AbstractBorder {
      *            The component to get its border insets.
      * @return Always returns the same insets as defined in <code>insets</code>.
      */
+    @Override
     public Insets getBorderInsets(Component c) {
         return insets;
     }

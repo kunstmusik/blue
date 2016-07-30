@@ -50,7 +50,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * 
  * @author Steven
  */
-public class Line implements TableModel, Serializable, ChangeListener {
+public class Line implements TableModel, Serializable, ChangeListener, Iterable<LinePoint> {
     String varName = "";
 
     float max = 1.0f;
@@ -71,7 +71,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     
     private boolean endPointsLinked = false;
 
-    ArrayList<LinePoint> points = new ArrayList<LinePoint>();
+    ArrayList<LinePoint> points = new ArrayList<>();
 
     transient Vector<TableModelListener> listeners = null;
 
@@ -108,13 +108,15 @@ public class Line implements TableModel, Serializable, ChangeListener {
 
     public static Line loadFromXML(Element data) {
         Line line = new Line(false, false);
-
-        if (data.getName().equals("line")) {
-            line.varName = data.getAttributeValue("name");
-            line.setZak(false);
-        } else if (data.getName().equals("zakline")) {
-            line.channel = Integer.parseInt(data.getAttributeValue("channel"));
-            line.setZak(true);
+        switch (data.getName()) {
+            case "line":
+                line.varName = data.getAttributeValue("name");
+                line.setZak(false);
+                break;
+            case "zakline":
+                line.channel = Integer.parseInt(data.getAttributeValue("channel"));
+                line.setZak(true);
+                break;
         }
 
         int version = 1;
@@ -331,8 +333,9 @@ public class Line implements TableModel, Serializable, ChangeListener {
         
         fireTableDataChanged();
     }
-    
-    public Iterator getPointsIterator() {
+   
+    @Override
+    public Iterator<LinePoint> iterator() {
         return points.iterator();
     }
     
@@ -427,7 +430,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (rowIndex == 0 && columnIndex == 0) {
             return false;
-        } else if (rowIndex == (size() - 1) && columnIndex == 0) {
+        } else if (rightBound && rowIndex == (size() - 1) && columnIndex == 0) {
             return false;
         }
 
@@ -497,11 +500,11 @@ public class Line implements TableModel, Serializable, ChangeListener {
                 return;
             }
 
-            if (newValue < previous.getX()) {
+            if (previous != null && newValue < previous.getX()) {
                 newValue = previous.getX();
             }
 
-            if (rightBound && newValue > next.getX()) {
+            if (next != null && newValue > next.getX()) {
                 newValue = next.getX();
             }
 
@@ -525,7 +528,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
 
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector<TableModelListener>();
+            listeners = new Vector<>();
         }
 
         if(!listeners.contains(l)) {
@@ -660,6 +663,7 @@ public class Line implements TableModel, Serializable, ChangeListener {
         return y;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

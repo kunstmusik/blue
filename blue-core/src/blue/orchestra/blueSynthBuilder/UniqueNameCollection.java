@@ -1,7 +1,7 @@
 package blue.orchestra.blueSynthBuilder;
 
-import java.util.ArrayList;
+import java.util.Set;
 
 public interface UniqueNameCollection {
-    public ArrayList<String> getNames();
+    public Set<String> getNames();
 }

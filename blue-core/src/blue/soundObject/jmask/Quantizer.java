@@ -73,33 +73,44 @@ public class Quantizer implements Serializable {
             Element node = nodes.next();
             String nodeName = node.getName();
             String nodeVal = node.getTextString();
+            switch (nodeName) {
+                case "gridSize":
+                    retVal.gridSize = Double.parseDouble(nodeVal);
+                    break;
+                case "strength":
+                    retVal.strength = Double.parseDouble(nodeVal);
+                    break;
+                case "offset":
+                    retVal.offset = Double.parseDouble(nodeVal);
+                    break;
+                case "gridSizeTableEnabled":
+                    retVal.gridSizeTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "strengthTableEnabled":
+                    retVal.strengthTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "offsetTableEnabled":
+                    retVal.offsetTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "enabled":
+                    retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
+                    break;
+                case "table":
+                    Table t = Table.loadFromXML(node);
+                    String tabInstance = node.getAttributeValue("tableId");
+                    switch (tabInstance) {
+                        case "gridSizeTable":
 
-            if (nodeName.equals("gridSize")) {
-                retVal.gridSize = Double.parseDouble(nodeVal);
-            } else if (nodeName.equals("strength")) {
-                retVal.strength = Double.parseDouble(nodeVal);
-            } else if (nodeName.equals("offset")) {
-                retVal.offset = Double.parseDouble(nodeVal);
-            } else if (nodeName.equals("gridSizeTableEnabled")) {
-                retVal.gridSizeTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("strengthTableEnabled")) {
-                retVal.strengthTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("offsetTableEnabled")) {
-                retVal.offsetTableEnabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("enabled")) {
-                retVal.enabled = Boolean.valueOf(node.getTextString()).booleanValue();
-            } else if (nodeName.equals("table")) {
-                Table t = Table.loadFromXML(node);
-                String tabInstance = node.getAttributeValue("tableId");
-
-                if (tabInstance.equals("gridSizeTable")) {
-                    retVal.gridSizeTable = t;
-                } else if (tabInstance.equals("strengthTable")) {
-                    retVal.strengthTable = t;
-                } else if (tabInstance.equals("offsetTable")) {
-                    retVal.offsetTable = t;
-                }
-
+                            retVal.gridSizeTable = t;
+                            break;
+                        case "strengthTable":
+                            retVal.strengthTable = t;
+                            break;
+                        case "offsetTable":
+                            retVal.offsetTable = t;
+                            break;
+                    }
+                    break;
             }
 
         }
@@ -171,10 +182,12 @@ public class Quantizer implements Serializable {
 
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

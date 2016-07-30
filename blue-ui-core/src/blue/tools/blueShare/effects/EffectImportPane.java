@@ -1,5 +1,10 @@
 package blue.tools.blueShare.effects;
 
+import blue.BlueSystem;
+import blue.mixer.Effect;
+import blue.tools.blueShare.BlueShareRemoteCaller;
+import blue.ui.core.mixer.EffectsLibrary;
+import electric.xml.ParseException;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.GridBagConstraints;
@@ -10,7 +15,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -30,14 +34,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-
 import org.apache.xmlrpc.XmlRpcException;
-
-import blue.BlueSystem;
-import blue.mixer.Effect;
-import blue.ui.core.mixer.EffectsLibrary;
-import blue.tools.blueShare.BlueShareRemoteCaller;
-import electric.xml.ParseException;
 
 /**
  * <p>
@@ -211,6 +208,7 @@ public class EffectImportPane extends JComponent {
 
         categoryTree.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 int row = categoryTree.getClosestRowForLocation(e.getX(), e
                         .getY());
@@ -241,6 +239,7 @@ public class EffectImportPane extends JComponent {
         instrumentTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (e.getValueIsAdjusting()) {
                             return;
@@ -251,6 +250,7 @@ public class EffectImportPane extends JComponent {
 
         importButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 importEffect();
             }

@@ -20,12 +20,6 @@
 
 package blue.tools.codeRepository;
 
-import java.io.File;
-import java.io.FileOutputStream;
-
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-
 import blue.BlueSystem;
 import blue.ui.core.editor.actions.CodeRepositoryMenu;
 import electric.xml.Document;
@@ -33,6 +27,10 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
 import electric.xml.XMLDecl;
+import java.io.File;
+import java.io.FileOutputStream;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 public class CodeRepositoryManager {
 
@@ -56,34 +54,34 @@ public class CodeRepositoryManager {
         CodeRepositoryTreeNode returnNode = new CodeRepositoryTreeNode();
         ElementHolder tempElem = new ElementHolder();
         returnNode.setUserObject(tempElem);
-
-        if (node.getName().equals("customAccelerators")) {
-            tempElem.title = BlueSystem.getString("codeRepository.title");
-            tempElem.isGroup = true;
-            tempElem.isRoot = true;
-
-            returnNode.setAllowsChildren(true);
-
-            Elements children = node.getElements();
-            while (children.hasMoreElements()) {
-                returnNode.add(getTreeNode(children.next(), getLeafNodes));
-            }
-
-        } else if (node.getName().equals("customGroup")) {
-            tempElem.title = node.getAttribute("name").getValue();
-            tempElem.isGroup = true;
-            returnNode.setAllowsChildren(true);
-
-            if (getLeafNodes) {
-                Elements children = node.getElements();
+        Elements children;
+        switch (node.getName()) {
+            case "customAccelerators":
+                tempElem.title = BlueSystem.getString("codeRepository.title");
+                tempElem.isGroup = true;
+                tempElem.isRoot = true;
+                returnNode.setAllowsChildren(true);
+                children = node.getElements();
                 while (children.hasMoreElements()) {
                     returnNode.add(getTreeNode(children.next(), getLeafNodes));
                 }
-            }
-        } else if (node.getName().equals("customAccelerator")) {
-            returnNode.setAllowsChildren(false);
-            tempElem.title = node.getElement("name").getTextString();
-            tempElem.text = node.getElement("signature").getTextString();
+                break;
+            case "customGroup":
+                tempElem.title = node.getAttribute("name").getValue();
+                tempElem.isGroup = true;
+                returnNode.setAllowsChildren(true);
+                if (getLeafNodes) {
+                    children = node.getElements();
+                    while (children.hasMoreElements()) {
+                        returnNode.add(getTreeNode(children.next(), getLeafNodes));
+                    }
+                }
+                break;
+            case "customAccelerator":
+                returnNode.setAllowsChildren(false);
+                tempElem.title = node.getElement("name").getTextString();
+                tempElem.text = node.getElement("signature").getTextString();
+                break;
         }
 
         return returnNode;
@@ -98,11 +96,11 @@ public class CodeRepositoryManager {
         doc.setRoot(root);
 
         try {
-            FileOutputStream out = new FileOutputStream(BlueSystem
-                    .getCodeRepository());
-            doc.write(out);
-            out.flush();
-            out.close();
+            try (FileOutputStream out = new FileOutputStream(BlueSystem
+                         .getCodeRepository())) {
+                doc.write(out);
+                out.flush();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

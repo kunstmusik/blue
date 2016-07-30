@@ -25,22 +25,21 @@ package blue.plaf;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
 
 /**
- * This is a simple 3d border class used for text fields.
+ * Modified text field border to look closer to JavaFX
  * 
- * @author Taoufik Romdhane
+ * @author Steven Yi
  */
 public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
 
     /**
      * The border insets.
      */
-    private static final Insets insets = new Insets(1, 2, 1, 2);
+    private static final Insets insets = new Insets(4, 8, 4, 8);
 
     /**
      * Gets the border insets for a given component.
@@ -49,6 +48,7 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
      *            The component to get its border insets.
      * @return Always returns the same insets as defined in <code>insets</code>.
      */
+    @Override
     public Insets getBorderInsets(Component c) {
         return insets;
     }
@@ -69,28 +69,29 @@ public class BlueTextFieldBorder extends AbstractBorder implements UIResource {
      * @param h
      *            The height.
      */
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         if (!(c instanceof JTextComponent)) {
             if (c.isEnabled()) {
 //                BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
-                g.setColor(BlueLookAndFeel.getControlShadow());
-                g.drawRect(x, y, w -1, h -1);
+                g.setColor(BlueLookAndFeel.getControlShadow().darker());
+                g.drawRoundRect(x, y, w -1, h -1, 4, 4);
             } else {
 //                BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
                 g.setColor(BlueLookAndFeel.getControlShadow().darker());
-                g.drawRect(x, y, w -1, h -1);
+                g.drawRoundRect(x, y, w -1, h -1, 4, 4);
             }
             return;
         }
 
         if (c.isEnabled() && ((JTextComponent) c).isEditable()) {
 //            BlueBorderUtilities.drawPressed3DFieldBorder(g, x, y, w, h);
-            g.setColor(BlueLookAndFeel.getControlShadow());
-            g.drawRect(x, y, w -1, h -1);
+            g.setColor(BlueLookAndFeel.getControlShadow().darker());
+            g.drawRoundRect(x, y, w -1, h -1, 4, 4);
         } else {
 //            BlueBorderUtilities.drawDisabledBorder(g, x, y, w, h);
             g.setColor(BlueLookAndFeel.getControlShadow().darker());
-            g.drawRect(x, y, w -1, h -1);
+            g.drawRoundRect(x, y, w -1, h -1, 4, 4);
         }
     }
 }

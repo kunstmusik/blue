@@ -1,6 +1,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -24,6 +25,7 @@ import electric.xml.Element;
  * @version 1.0
  */
 
+@NoteProcessorPlugin(displayName="PchAddProcessor", position = 20)
 public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
 
     int value = 0;
@@ -34,6 +36,7 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
     public PchAddProcessor() {
     }
 
+    @Override
     public String toString() {
         // return "[add] pfield: " + pfield + " value: " + value;
         return "[pch add]";
@@ -62,7 +65,7 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
         Note temp;
         String val;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             try {
                 val = temp.getPField(pfield).trim();
@@ -93,7 +96,7 @@ public class PchAddProcessor implements NoteProcessor, java.io.Serializable {
 
         for (int i = 0; i < 10; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " 2 6.0" + i + " 4"));
+                n.add(Note.createNote("i1 " + i + " 2 6.0" + i + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

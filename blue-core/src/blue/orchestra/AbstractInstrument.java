@@ -78,6 +78,7 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
         return enabled;
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }

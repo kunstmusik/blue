@@ -20,6 +20,10 @@
 
 package blue.tools.soundFont;
 
+import blue.gui.FileTree;
+import blue.gui.FileTreeListener;
+import blue.gui.FileTreePopup;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -28,7 +32,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -36,11 +39,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-
-import blue.gui.FileTree;
-import blue.gui.FileTreeListener;
-import blue.gui.FileTreePopup;
-import blue.utility.GUI;
 
 /**
  * @author Steven Yi
@@ -65,6 +63,7 @@ public class SoundFontViewer extends JComponent {
         fTree.setFilters(filters);
 
         fTree.addFileTreeListener(new FileTreeListener() {
+            @Override
             public void fileSelected(File f) {
                 getSoundFontInfo(f);
             }
@@ -116,6 +115,7 @@ public class SoundFontViewer extends JComponent {
             JMenuItem menuItem = new JMenuItem("Copy Path");
             menuItem.addActionListener(new ActionListener() {
 
+                @Override
                 public void actionPerformed(ActionEvent arg0) {
                     if(file != null && file.exists() && file.isFile()) {
                         Clipboard clipboard = getToolkit().getSystemClipboard();
@@ -128,6 +128,7 @@ public class SoundFontViewer extends JComponent {
             this.add(menuItem);
         }
         
+        @Override
         public void show(File f, Component c, int x, int y) {
             this.file = f;
             this.show(c, x, y);

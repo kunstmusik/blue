@@ -95,6 +95,7 @@ public class BlueMidiDevice {
         this.enabled = enabled;
     }
 
+    @Override
     public String toString() {
         if (info != null) {
             return info.getName();
@@ -106,6 +107,7 @@ public class BlueMidiDevice {
         this.cl = cl;
     }
 
+    @Override
     public final boolean equals(Object obj) {
         if (obj instanceof BlueMidiDevice) {
             BlueMidiDevice dev2 = (BlueMidiDevice) obj;

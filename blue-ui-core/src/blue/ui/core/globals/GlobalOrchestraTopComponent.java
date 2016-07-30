@@ -13,25 +13,47 @@ import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
-import java.util.logging.Logger;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.awt.UndoRedo;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
 //import org.openide.util.Utilities;
 
 /**
  * Top component which displays something.
  */
-final class GlobalOrchestraTopComponent extends TopComponent {
+
+@ConvertAsProperties(dtd = "-//blue.ui.core.globals//GlobalOrchestra//EN",
+        autostore = false)
+@TopComponent.Description(
+        preferredID = "GlobalOrchestraTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = true,
+        position = 500)
+@ActionID(category = "Window", id = "blue.ui.core.globals.GlobalOrchestraTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 1400),
+    @ActionReference(path = "Shortcuts", name = "D-5")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_GlobalOrchestraAction",
+        preferredID = "GlobalOrchestraTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_GlobalOrchestraAction=Global Orchestra",
+    "CTL_GlobalOrchestraTopComponent=Global Orchestra",
+    "HINT_GlobalOrchestraTopComponent=This is a Global Orchestra window"
+})
+public final class GlobalOrchestraTopComponent extends TopComponent {
 
     private static GlobalOrchestraTopComponent instance;
-
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-    private static final String PREFERRED_ID = "GlobalOrchestraTopComponent";
 
     private GlobalOrcSco globalOrcSco = null;
     
@@ -53,6 +75,7 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
 
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
                         getPropertyName())) {
@@ -118,29 +141,6 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         return instance;
     }
 
-    /**
-     * Obtain the GlobalOrchestraTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized GlobalOrchestraTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(GlobalOrchestraTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof GlobalOrchestraTopComponent) {
-            return (GlobalOrchestraTopComponent) win;
-        }
-        Logger.getLogger(GlobalOrchestraTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
-
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
 
     @Override
     public void componentOpened() {
@@ -152,15 +152,21 @@ final class GlobalOrchestraTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
+    void writeProperties(java.util.Properties p) {
+        // better to version settings since initial version as advocated at
+        // http://wiki.apidesign.org/wiki/PropertyFiles
+        p.setProperty("version", "1.0");
+        // TODO store your settings
+    }
+
+    void readProperties(java.util.Properties p) {
+        String version = p.getProperty("version");
+    }
+    
     /** replaces this in object stream */
     @Override
     public Object writeReplace() {
         return new ResolvableHelper();
-    }
-
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
     }
 
     final static class ResolvableHelper implements Serializable {

@@ -101,21 +101,26 @@ public class Script implements Serializable {
             Element node = nodes.next();
 
             String nodeName = node.getName();
-
-            if (nodeName.equals("name")) {
-                script.setName(node.getTextString());
-            } else if (nodeName.equals("description")) {
-                script.setDescription(node.getTextString());
-            } else if (nodeName.equals("code")) {
-                script.setCode(node.getTextString());
-            } else if (nodeName.equals("comments")) {
-                script.setComments(node.getTextString());
+            switch (nodeName) {
+                case "name":
+                    script.setName(node.getTextString());
+                    break;
+                case "description":
+                    script.setDescription(node.getTextString());
+                    break;
+                case "code":
+                    script.setCode(node.getTextString());
+                    break;
+                case "comments":
+                    script.setComments(node.getTextString());
+                    break;
             }
         }
 
         return script;
     }
 
+    @Override
     public String toString() {
         return getName();
     }

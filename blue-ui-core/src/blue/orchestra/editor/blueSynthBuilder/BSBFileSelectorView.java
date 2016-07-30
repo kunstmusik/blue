@@ -19,32 +19,27 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.BlueSystem;
+import blue.orchestra.blueSynthBuilder.BSBFileSelector;
+import blue.ui.utilities.FileChooserManager;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-
+import java.net.URLDecoder;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
-
-import blue.BlueSystem;
-import blue.orchestra.blueSynthBuilder.BSBFileSelector;
-import blue.soundObject.AudioFile;
-import blue.soundObject.PolyObject;
-import blue.ui.utilities.FileChooserManager;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.SoundFileUtilities;
-import java.awt.Point;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
-import java.net.URLDecoder;
-import java.util.List;
 
 /**
  * @author steven
@@ -69,6 +64,7 @@ public class BSBFileSelectorView extends BSBObjectView {
         JButton fileButton = new JButton("...");
         fileButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 String fileName = selector.getFileName();
@@ -83,12 +79,11 @@ public class BSBFileSelectorView extends BSBObjectView {
                     }
                 }
 
-                int rValue = FileChooserManager.getDefault().showOpenDialog(
+                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_SELECTOR_ID, null);
 
-                if (rValue == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_SELECTOR_ID);
+                if (!rValue.isEmpty()) {
+                    File f = rValue.get(0);
 
                     try {
                         String absFilePath = f.getCanonicalPath();
@@ -118,6 +113,7 @@ public class BSBFileSelectorView extends BSBObjectView {
 
         fileNameField.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 requestFocus();
                 if (UiUtilities.isRightMouseButton(e)) {
@@ -169,6 +165,7 @@ public class BSBFileSelectorView extends BSBObjectView {
         selector.setStringChannelEnabled(enabled);
     }
 
+    @Override
     public void cleanup() {
     }
 
@@ -276,7 +273,7 @@ public class BSBFileSelectorView extends BSBObjectView {
                     }
                 }
                 dtde.rejectDrop();
-            } catch (Exception e) {
+            } catch (UnsupportedFlavorException | IOException e) {
                 e.printStackTrace();
                 dtde.rejectDrop();
             }

@@ -20,15 +20,13 @@
 
 package blue.soundObject.editor.ceciliaModule;
 
+import blue.soundObject.CeciliaModule;
+import blue.soundObject.ceciliaModule.ModuleDefinition;
 import java.awt.BorderLayout;
-
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
-
-import blue.soundObject.CeciliaModule;
-import blue.soundObject.ceciliaModule.ModuleDefinition;
 
 public class EditorPanel extends JComponent {
     private JTextArea info = new JTextArea();

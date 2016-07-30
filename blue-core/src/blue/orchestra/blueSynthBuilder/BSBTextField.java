@@ -46,14 +46,16 @@ public class BSBTextField extends BSBObject {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("value")) {
-                bsbText.value = node.getTextString();
-                if (bsbText.value == null) {
-                    bsbText.value = "";
-                }
-            } else if (node.getName().equals("textFieldWidth")) {
-                bsbText.textFieldWidth = Integer.parseInt(node.getTextString());
+            switch (node.getName()) {
+                case "value":
+                    bsbText.value = node.getTextString();
+                    if (bsbText.value == null) {
+                        bsbText.value = "";
+                    }
+                    break;
+                case "textFieldWidth":
+                    bsbText.textFieldWidth = Integer.parseInt(node.getTextString());
+                    break;
             }
         }
 

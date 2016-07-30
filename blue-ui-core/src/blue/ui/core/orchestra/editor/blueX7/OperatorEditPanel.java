@@ -1,14 +1,12 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.gui.LabelledRangeBar;
+import blue.orchestra.blueX7.Operator;
 import java.awt.GridLayout;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledRangeBar;
-import blue.orchestra.blueX7.Operator;
 
 /**
  * <p>
@@ -45,6 +43,7 @@ public class OperatorEditPanel extends JComponent {
         this.add(velocitySensitivity);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 checkData();
             }

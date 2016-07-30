@@ -167,6 +167,7 @@ private void meanTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JComboBox sigmaTypeComboBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         muTableEditor.setDuration(duration);
         sigmaTableEditor.setDuration(duration);

@@ -53,16 +53,20 @@ public class Exponential implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("direction")) {
-                retVal.direction = XMLUtilities.readInt(node);
-            } else if (nodeName.equals("lambda")) {
-                retVal.lambda = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("lambdaTableEnabled")) {
-                retVal.lambdaTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                retVal.lambdaTable = Table.loadFromXML(node);
-            } 
+            switch (nodeName) {
+                case "direction":
+                    retVal.direction = XMLUtilities.readInt(node);
+                    break;
+                case "lambda":
+                    retVal.lambda = XMLUtilities.readDouble(node);
+                    break;
+                case "lambdaTableEnabled":
+                    retVal.lambdaTableEnabled = XMLUtilities.readBoolean(node);
+                    break; 
+                case "table":
+                    retVal.lambdaTable = Table.loadFromXML(node);
+                    break;
+            }
         }
 
         return retVal;
@@ -89,7 +93,7 @@ public class Exponential implements ProbabilityGenerator {
         return "Exponential";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double x;
         double localLambda;
         
@@ -102,7 +106,7 @@ public class Exponential implements ProbabilityGenerator {
         if (direction == BILATERAL) {
             double e;
             do {
-                x = 2.0 * Math.random();
+                x = 2.0 * rnd.nextDouble();
                 if (x > 1.0) {
                     x = 2.0 - x;
                     e = -Math.log(x);
@@ -114,7 +118,7 @@ public class Exponential implements ProbabilityGenerator {
             x = e;
         } else {
             do {
-                while ((x = Math.random()) == 0) {
+                while ((x = rnd.nextDouble()) == 0) {
                 }
                 x = -Math.log(x) / 7.0 / localLambda;
             } while (x > 1.0);

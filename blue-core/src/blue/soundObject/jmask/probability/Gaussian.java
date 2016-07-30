@@ -56,23 +56,30 @@ public class Gaussian implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("sigma")) {
-                retVal.sigma = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("mu")) {
-                retVal.mu  = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("sigmaTableEnabled")) {
-                retVal.sigmaTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("muTableEnabled")) {
-                retVal.muTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("sigmaTable")) {
-                    retVal.sigmaTable = Table.loadFromXML(node);
-                } else if (tableId.equals("muTable")) {
-                    retVal.muTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "sigma":
+                    retVal.sigma = XMLUtilities.readDouble(node);
+                    break;
+                case "mu":
+                    retVal.mu  = XMLUtilities.readDouble(node);
+                    break;
+                case "sigmaTableEnabled":
+                    retVal.sigmaTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "muTableEnabled":
+                    retVal.muTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "sigmaTable":
+                            retVal.sigmaTable = Table.loadFromXML(node);
+                            break;
+                        case "muTable":
+                            retVal.muTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 
@@ -108,7 +115,7 @@ public class Gaussian implements ProbabilityGenerator {
         return "Gaussian";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         // sigma = Standardabweichung
         // mu = Mittelwert
         // mu+-sigma -> 68.26% aller x
@@ -131,7 +138,7 @@ public class Gaussian implements ProbabilityGenerator {
         do {
             sum = 0;
             for (int i = 1; i <= 12; i++) {
-                sum += Math.random();
+                sum += rnd.nextDouble();
             }
             e = localSigma * (sum - 6.0) + localMu;
         } while ((e > 1.0) || (e < 0.0));

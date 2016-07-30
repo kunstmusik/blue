@@ -243,7 +243,90 @@
       </para>
       
     </simplesect>
-    
+
+    <simplesect>
+      <title>Audio</title>
+      
+      <para> 
+        Audio Layer Groups provide standard Digital Audio Workstation
+        (DAW) functionality.  Users can use Audio Layers to drag-and-drop Audio
+        files onto the timeline.  Each Audio Layer maps to a channel in Blue's
+        mixer, where effects can be added for the audio layer.  Automation for
+        effect parameters is available on the audio layer.  
+      </para>
+      
+      <para>
+        To use the Audio layers, first create an Audio Layer 
+        Group using the Score Manager Dialog. Next, add as many layers
+        as you would like to the LayerGroup.  You can then edit the names of the
+        layers using the ScoreManager Dialog, or back in the main Score area by
+        double-clicking the area on the left of the Layer's panel on the left.
+        The name of the Audio layer will also show under its corresponding mixer 
+        channel. 
+      </para>
+      
+      <para>
+        To add Audio files to a layer, you can either drag and drop a file from
+        the operating system's file mananger, or you can use the Blue File Manager
+        to locate a file, then drag and drop it to an Audio layer.
+      </para>
+
+      <para>
+        Once an audio clip is on the timeline, you can modify its properties in
+        a few ways.  First, you can click and drag it to move it in time.  If
+        you click and drag from the left hand side, you will alter both the
+        audio clip's start time, as well as the audio clip's file start time.
+        For example, if a clip was added that started at time 0.0 and had an
+        audio file start of 0.0, if you drag from the left hand side to time
+        3.0, both the start of the clip and audio file start will be set to
+        3.0.  This means that 3.0 beats into the project, the audio clip will
+        start rendering from 3.0 seconds into the file.  If you drag from the
+        right hand side, it will alter the duration of the audio clip. If you
+        hold down alt+shift, then press within an AudioClip, you will split the
+        AudioClip into parts. If you hold down the alt key, then press and drag
+        the mouse, you can alter just the file start time.
+      </para>
+      
+      <para>
+        If you have a single Audio clip selected, you can edit the properties
+        of the clip by using the ScoreObject Property Window. This window can
+        be opened from the menu "Windows -&gt; Sound Object Properties" or by
+        using the shortcut "F3". 
+      </para>
+
+
+      <para>
+        Additionally, if a single Audio clip is selected, additional properties
+        are available to edit using the ScoreObject Editor window.  
+        You can also double-click an Audio clip, 
+        which will set the editor for the clip in the Editor window as 
+        well as focus the ScoreObject Editor window. (If the Editor window is
+        docked, double-clicking the clip will cause the editor to show
+        the docked window.)
+      </para>
+      
+      <para>
+        Audio clips support fades.  Like Ardour, upon which much of
+        the audio layer system is based, all fades are crossfades.  Clips will
+        crossfade with signals that are already in the bus, with the first clip
+        crossfading with silence.  Fade types and durations may be set within
+        the clip's editor panel.  The clip duration may be visually modified by
+        mousing over the clip, pressing with the mouse on either the fade-in or
+        fade-out handle that appears after mousing over the clip, then dragging
+        and releasing to update the fade's duration.  The fade type may also be
+        modified by right clicking within a fade area and choosing the fade
+        type using the popup menu. 
+      </para>
+
+      <para>For more information about Fades, please see Ardour's manual entry
+        on <ulink
+          url="http://manual.ardour.org/editing-and-arranging/create-region-fades-and-crossfades/">Region
+          Fades and Crossfades</ulink>.  
+      </para>
+
+    </simplesect>
+
+
   </section>
   
   <!-- ====================================== -->

@@ -22,94 +22,56 @@ package blue.score;
 import blue.CompileData;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProviderManager;
+import blue.score.layers.ScoreObjectLayer;
 import blue.score.tempo.Tempo;
 import blue.soundObject.NoteList;
 import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObjectException;
+import blue.soundObject.SoundObject;
+import blue.util.ObservableArrayList;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  *
  * @author stevenyi
  */
-public class Score implements Serializable {
+public class Score extends ObservableArrayList<LayerGroup> implements Serializable {
 
     Tempo tempo = null;
     TimeState timeState = null;
-    ArrayList<LayerGroup> layerGroups = new ArrayList<LayerGroup>();
     private NoteProcessorChain npc = new NoteProcessorChain();
 
-    private transient ArrayList<ScoreListener> scoreListeners = null;
+    public static final int SPACER = 36;
 
     public Score() {
         this(true);
     }
-    
+
     private Score(boolean populate) {
-        if(populate) {
+        if (populate) {
             PolyObject pObj = new PolyObject(true);
-            layerGroups.add(pObj);
+            add(pObj);
             timeState = new TimeState();
         }
         tempo = new Tempo();
     }
 
-    public void addLayerGroup(LayerGroup layerGroup) {
-        layerGroups.add(layerGroup);
-        int index = layerGroups.size() - 1;
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED, 
-                index, index);
-        fireScoreDataEvent(sde);
-    }
-    
-    public void addLayerGroup(int index, LayerGroup layerGroup) {
-        layerGroups.add(index, layerGroup);
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_ADDED, 
-                index, index);
-        fireScoreDataEvent(sde);
-    }
 
-    public void removeLayerGroups(int startIndex, int endIndex) {
-        for(int i = 0; i <= (endIndex - startIndex); i++) {
-            layerGroups.remove(startIndex);
-        }
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_REMOVED, 
-                startIndex, endIndex);
-        fireScoreDataEvent(sde);
-    }
-    
-    public void clearLayerGroups() {
-        if(layerGroups.size() == 0) {
-            return;
-        }
-        
-        int endIndex = layerGroups.size() - 1;
-        layerGroups.clear();
-        
-        ScoreDataEvent sde = new ScoreDataEvent(this, ScoreDataEvent.DATA_REMOVED, 
-                0, endIndex);
-        fireScoreDataEvent(sde);
-    }
-
-    public LayerGroup getLayerGroup(int index) {
-        return layerGroups.get(index);
-    }
-
-    public int getLayerGroupCount() {
-        return layerGroups.size();
-    }
-    
     public Tempo getTempo() {
         return tempo;
     }
-    
+
     public void setTempo(Tempo tempo) {
         this.tempo = tempo;
     }
@@ -121,8 +83,8 @@ public class Score implements Serializable {
     public void setTimeState(TimeState timeState) {
         this.timeState = timeState;
     }
-    
-     public NoteProcessorChain getNoteProcessorChain() {
+
+    public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
@@ -135,8 +97,8 @@ public class Score implements Serializable {
         retVal.addElement(tempo.saveAsXML());
         retVal.addElement(timeState.saveAsXML());
         retVal.addElement(npc.saveAsXML());
-        
-        for (LayerGroup layerGroup : layerGroups) {
+
+        for (LayerGroup layerGroup : this) {
             retVal.addElement(layerGroup.saveAsXML(objRefMap));
         }
 
@@ -152,110 +114,157 @@ public class Score implements Serializable {
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if ("tempo".equals(node.getName())) {
-                score.tempo = Tempo.loadFromXML(node);
-            } else if("timeState".equals(node.getName())) {
-                score.timeState = TimeState.loadFromXML(node);
-            } else if("noteProcessorChain".equals(node.getName())) {
-                score.npc = NoteProcessorChain.loadFromXML(node);
-            } else {
-
-                LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
-
-                if (layerGroup == null) {
-                    throw new RuntimeException(
-                            "Unable to load Score LayerGroup of type: " + node.getName());
-                }
-
-                score.layerGroups.add(layerGroup);
+            switch (node.getName()) {
+                case "tempo":
+                    score.tempo = Tempo.loadFromXML(node);
+                    break;
+                case "timeState":
+                    score.timeState = TimeState.loadFromXML(node);
+                    break;
+                case "noteProcessorChain":
+                    score.npc = NoteProcessorChain.loadFromXML(node);
+                    break;
+                default:
+                    LayerGroup layerGroup = manager.loadFromXML(node, objRefMap);
+                    if (layerGroup == null) {
+                        throw new RuntimeException(
+                                "Unable to load Score LayerGroup of type: " + node.getName());
+                    }
+                    score.add(layerGroup);
+                    if(layerGroup instanceof PolyObject) {
+                        ((PolyObject)layerGroup).setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+                    }
+                    break;
             }
         }
-        
-        if(score.layerGroups.size() == 0) {
+
+        if (score.size() == 0) {
             PolyObject pObj = new PolyObject(true);
-            score.layerGroups.add(pObj);
+            score.add(pObj);
         }
 
         return score;
     }
 
     public void processOnLoad() {
-        for (LayerGroup layerGroup : layerGroups) {
+        for (LayerGroup layerGroup : this) {
             layerGroup.onLoadComplete();
         }
     }
-    
+
     public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws ScoreGenerationException {
         NoteList noteList = new NoteList();
-        
+
         boolean soloFound = false;
-        
-        for(LayerGroup layerGroup : layerGroups) {
+
+        for (LayerGroup layerGroup : this) {
             soloFound = layerGroup.hasSoloLayers();
-            if(soloFound) {
+            if (soloFound) {
                 break;
             }
         }
-        
-        for(LayerGroup layerGroup : layerGroups) {
-            NoteList nl = layerGroup.generateForCSD(compileData, startTime, endTime, soloFound);
+
+        for (LayerGroup layerGroup : this) {
+            NoteList nl = layerGroup.generateForCSD(compileData, startTime,
+                    endTime, soloFound);
             noteList.merge(nl);
         }
-        
-         try {
+
+        try {
             ScoreUtilities.applyNoteProcessorChain(noteList, this.npc);
         } catch (NoteProcessorException e) {
             throw new ScoreGenerationException(e);
         }
-        
+
         return noteList;
     }
-    
-    /* Listener Code */
-    
-    public void addScoreListener(ScoreListener listener) {
-        if(scoreListeners == null) {
-            scoreListeners = new ArrayList<ScoreListener>();
-        }
-        
-        scoreListeners.add(listener);
-    }
-    
-    public void removeScoreListener(ScoreListener listener) {
-        if(scoreListeners != null) {
-            scoreListeners.remove(listener);
-        }
-    }
-    
-    public void fireScoreDataEvent(ScoreDataEvent sde) {
-        if(scoreListeners != null) {
-            for(ScoreListener listener : scoreListeners) {
-                listener.layerGroupsChanged(sde);
+
+    public List<LayerGroup> getLayerGroupsForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
+        List<LayerGroup> retVal = new ArrayList<>();
+
+        for (LayerGroup<Layer> layerGroup : this) {
+            for (Layer layer : layerGroup) {
+                boolean found = false;
+                if (layer instanceof ScoreObjectLayer) {
+                    ScoreObjectLayer scoreLayer = (ScoreObjectLayer) layer;
+                    if (!Collections.disjoint(scoreLayer, scoreObjects)) {
+                        retVal.add(layerGroup);
+                        found = true;
+                    }
+                }
+
+                if (found) {
+                    break;
+                }
             }
         }
+
+        return retVal;
     }
 
-    public void pushUpLayerGroups(int start, int end) {
-        LayerGroup a = layerGroups.remove(start - 1);
-        layerGroups.add(end, a);
+    /* Returns a flat list of all layers in the Score from each LayerGroup */
+    public List<Layer> getAllLayers() {
+        List<Layer> retVal = new ArrayList<>();
 
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_CHANGED, start - 1, end,
-                layerGroups.subList(start - 1, end + 1));
-
-        fireScoreDataEvent(sde);
+        for (LayerGroup<Layer> layerGroup : this) {
+            retVal.addAll(layerGroup);
+        }
+        return retVal;
     }
 
-    public void pushDownLayerGroups(int start, int end) {
-        LayerGroup a = layerGroups.remove(end + 1);
-        layerGroups.add(start, a);
+    public int getGlobalLayerIndexForY(int y) {
+        int runningY = 0;
+        int runningIndex = 0;
 
-        ScoreDataEvent sde = new ScoreDataEvent(this,
-                ScoreDataEvent.DATA_CHANGED, start, end + 1, 
-                layerGroups.subList(start, end + 2));
+        for (LayerGroup<Layer> layerGroup : this) {
+            for (Layer layer : layerGroup) {
+                if (y <= runningY + layer.getLayerHeight()) {
+                    return runningIndex;
+                }
+                runningY += layer.getLayerHeight();
+                runningIndex += 1;
+            }
+            if (y <= runningY + SPACER) {
+                return runningIndex;
+            }
+            runningY += SPACER;
+        }
 
-        fireScoreDataEvent(sde);
+        return runningIndex - 1;
     }
-    
+
+    public Layer getGlobalLayerForY(int y) {
+        int runningY = 0;
+
+        for (LayerGroup<Layer> layerGroup : this) {
+            for (Layer layer : layerGroup) {
+                if (y <= runningY + layer.getLayerHeight()) {
+                    return layer;
+                }
+                runningY += layer.getLayerHeight();
+            }
+            if (y <= runningY + SPACER) {
+                return null;
+            }
+            runningY += SPACER;
+        }
+
+        return null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.tempo);
+        hash = 79 * hash + Objects.hashCode(this.timeState);
+        return hash;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
+
+     
 }

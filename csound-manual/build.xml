@@ -7,7 +7,7 @@
   <import file="nbproject/build-impl.xml"/>
     
   <property name="CS_MANUAL_DIR" 
-              value="/Users/stevenyi/work/csound/manual6"/>
+              value="/Users/stevenyi/work/csound/manual"/>
     
   <target name="copy-csound-manual"
             description="Copies HTML Csound Manual into project">

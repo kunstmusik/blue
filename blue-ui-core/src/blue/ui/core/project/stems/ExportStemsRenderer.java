@@ -66,7 +66,7 @@ public class ExportStemsRenderer {
 
             }
 
-            RenderToDiskUtility.getInstance().renderToDisk(data, false);
+            RenderToDiskUtility.getInstance().renderToDisk(data, null);
 
         }
 

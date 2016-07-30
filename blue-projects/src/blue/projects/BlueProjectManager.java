@@ -32,7 +32,6 @@ import blue.settings.RealtimeRenderSettings;
 import blue.soundObject.PolyObject;
 import blue.ui.utilities.FileChooserManager;
 import blue.undo.BlueUndoManager;
-import blue.utility.GenericFileFilter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -41,8 +40,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Vector;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
@@ -90,7 +89,7 @@ public class BlueProjectManager {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), false);
         fcm.addFilter(this.getClass(),
-                new GenericFileFilter("blue", "blue Project File"));
+                new ExtensionFilter("blue Project File", "*.blue"));
         fcm.setSelectedFile(this.getClass(),
                 new File(
                 GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
@@ -100,12 +99,11 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        for(int i = 0; i <  blueData.getScore().getLayerGroupCount(); i++) {
-            LayerGroup layerGroup = blueData.getScore().getLayerGroup(i);
+        for(LayerGroup layerGroup : blueData.getScore()) {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
                 
-                if(pObj.getSize() == 0) {
+                if(pObj.size() == 0) {
                     pObj.newLayerAt(-1);
                 }
             }
@@ -158,10 +156,12 @@ public class BlueProjectManager {
     }
 
     public void setCurrentProject(BlueProject project) {
+        BlueProject previousProject = currentProject;
+        currentProject = project;
+
         if (!projects.contains(project)) {
             addProject(project);
         }
-        currentProject = project;
 
         if (currentProject != null) {
             BlueUndoManager.setUndoGroup(project.getUndoManager());
@@ -194,7 +194,7 @@ public class BlueProjectManager {
             
         }
 
-        fireUpdatedCurrentProject();
+        fireUpdatedCurrentProject(previousProject, currentProject);
 
     }
 
@@ -203,7 +203,7 @@ public class BlueProjectManager {
     }
 
     public void closeCurrentProject() {
-        if (projects.size() == 0) {
+        if (projects.isEmpty()) {
             return;
         }
 
@@ -216,7 +216,7 @@ public class BlueProjectManager {
             int index = projects.indexOf(currentProject);
             projects.remove(currentProject);
 
-            if (projects.size() == 0) {
+            if (projects.isEmpty()) {
                 setCurrentProject(createNewProject());
             } else if (index >= projects.size()) {
                 setCurrentProject(projects.get(projects.size() - 1));
@@ -258,14 +258,15 @@ public class BlueProjectManager {
         }
     }
 
-    public synchronized void fireUpdatedCurrentProject() {
+    protected synchronized void fireUpdatedCurrentProject(BlueProject oldProject, 
+            BlueProject newProject) {
 
         if (listeners == null || listeners.size() == 0) {
             return;
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                CURRENT_PROJECT, null, currentProject);
+                CURRENT_PROJECT, oldProject, newProject);
 
         for (PropertyChangeListener pcl : listeners) {
             pcl.propertyChange(pce);
@@ -340,11 +341,11 @@ public class BlueProjectManager {
                 GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
         }
 
-        int rValue = fcm.showSaveDialog(this.getClass(),
+        File rValue = fcm.showSaveDialog(this.getClass(),
                 WindowManager.getDefault().getMainWindow());
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File temp = fcm.getSelectedFile(this.getClass());
+        if (rValue != null) {
+            File temp = rValue;
             if (!(temp.getName().trim().endsWith(".blue"))) {
                 temp = new File(temp.getAbsolutePath() + ".blue");
             }
@@ -407,10 +408,11 @@ public class BlueProjectManager {
                 DialogDisplayer.getDefault().notify(descriptor);
             }
             return true;
-        } else if (rValue == JFileChooser.CANCEL_OPTION) {
+//        } 
+//        else if (rValue == JFileChooser.CANCEL_OPTION) {
 //            StatusBar.updateStatus(BlueSystem.getString(
 //                    "message.actionCancelled"));
-            return false;
+//            return false;
         } else {
             return false;
         }

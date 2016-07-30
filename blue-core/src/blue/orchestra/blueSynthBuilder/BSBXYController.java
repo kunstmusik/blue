@@ -50,7 +50,8 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     boolean randomizable = true;
 
-    // OVERRIDE to handle parameter name changes
+    // OVERRIDE to handle parameter name changes and multiple parameters
+    @Override
     public void setObjectName(String objectName) {
         String oldName = this.getObjectName();
 
@@ -115,25 +116,34 @@ public class BSBXYController extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("width")) {
-                xyController.setWidth(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("height")) {
-                xyController.setHeight(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("xMin")) {
-                xyController.xMin = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("xMax")) {
-                xyController.xMax = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("yMin")) {
-                xyController.yMin = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("yMax")) {
-                xyController.yMax = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("xValue")) {
-                xyController.xValue = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("yValue")) {
-                xyController.yValue = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("randomizable")) {
-                xyController.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "width":
+                    xyController.setWidth(Integer.parseInt(node.getTextString()));
+                    break;
+                case "height":
+                    xyController.setHeight(Integer.parseInt(node.getTextString()));
+                    break;
+                case "xMin":
+                    xyController.xMin = Float.parseFloat(node.getTextString());
+                    break;
+                case "xMax":
+                    xyController.xMax = Float.parseFloat(node.getTextString());
+                    break;
+                case "yMin":
+                    xyController.yMin = Float.parseFloat(node.getTextString());
+                    break;
+                case "yMax":
+                    xyController.yMax = Float.parseFloat(node.getTextString());
+                    break;
+                case "xValue":
+                    xyController.xValue = Float.parseFloat(node.getTextString());
+                    break;
+                case "yValue":
+                    xyController.yValue = Float.parseFloat(node.getTextString());
+                    break;
+                case "randomizable":
+                    xyController.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
         }
 
@@ -175,6 +185,7 @@ public class BSBXYController extends AutomatableBSBObject implements
 //        return new BSBXYControllerView(this);
 //    }
 
+    @Override
     public String[] getReplacementKeys() {
         if (this.objectName == null || this.objectName.trim().length() == 0) {
             return new String[] {};

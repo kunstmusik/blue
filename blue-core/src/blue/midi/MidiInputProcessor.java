@@ -219,27 +219,32 @@ public class MidiInputProcessor implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            switch (nodeName) {
+                case "keyMapping":
+                    try {
+                        processor.keyMapping = MidiKeyMapping.valueOf(
+                            node.getTextString());
+                    } catch (IllegalArgumentException iae) {
 
-            if (nodeName.equals("keyMapping")) {
-                try {
-                    processor.keyMapping = MidiKeyMapping.valueOf(
-                        node.getTextString());
-                } catch (IllegalArgumentException iae) {
+                    }
+                    break;
+                case "velMapping":
+                    try {
+                        processor.velMapping = MidiVelocityMapping.valueOf(node.
+                            getTextString());
+                    } catch (IllegalArgumentException iae) {
 
-                }
-            } else if (nodeName.equals("velMapping")) {
-                try {
-                    processor.velMapping = MidiVelocityMapping.valueOf(node.
-                        getTextString());
-                } catch (IllegalArgumentException iae) {
-
-                }
-            } else if (nodeName.equals("pitchConstant")) {
-                processor.pitchConstant = node.getTextString();
-            } else if (nodeName.equals("ampConstant")) {
-                processor.ampConstant = node.getTextString();
-            } else if (nodeName.equals("scale")) {
-                processor.scale = Scale.loadFromXML(node);
+                    }
+                    break;
+                case "pitchConstant":
+                    processor.pitchConstant = node.getTextString();
+                    break;
+                case "ampConstant":
+                    processor.ampConstant = node.getTextString();
+                    break;
+                case "scale":
+                    processor.scale = Scale.loadFromXML(node);
+                    break;
             }
         }
 

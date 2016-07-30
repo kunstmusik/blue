@@ -19,18 +19,18 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.Preset;
+import blue.orchestra.blueSynthBuilder.PresetGroup;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
-
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-
-import blue.orchestra.blueSynthBuilder.Preset;
-import blue.orchestra.blueSynthBuilder.PresetGroup;
 
 /**
  * @author Steven
@@ -40,7 +40,8 @@ public class PresetsTreeModel implements Serializable, TreeModel {
 
     PresetGroup rootGroup;
 
-    transient Vector listeners = new Vector();
+    transient List<TreeModelListener> listeners = 
+            Collections.synchronizedList(new ArrayList<TreeModelListener>());
 
     public PresetsTreeModel(PresetGroup rootGroup) {
         this.rootGroup = rootGroup;
@@ -121,6 +122,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getRoot()
      */
+    @Override
     public Object getRoot() {
         return rootGroup;
     }
@@ -130,6 +132,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getChild(java.lang.Object, int)
      */
+    @Override
     public Object getChild(Object parent, int index) {
         PresetGroup presetGroup = (PresetGroup) parent;
 
@@ -150,6 +153,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
      */
+    @Override
     public int getChildCount(Object parent) {
         if (parent instanceof Preset) {
             return 0;
@@ -168,6 +172,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
      */
+    @Override
     public boolean isLeaf(Object node) {
         return (node instanceof Preset);
     }
@@ -178,6 +183,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * @see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath,
      *      java.lang.Object)
      */
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
@@ -198,6 +204,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * @see javax.swing.tree.TreeModel#getIndexOfChild(java.lang.Object,
      *      java.lang.Object)
      */
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
         PresetGroup presetGroup = (PresetGroup) parent;
 
@@ -225,6 +232,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
         listeners.add(l);
     }
@@ -234,6 +242,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
     }
@@ -241,26 +250,34 @@ public class PresetsTreeModel implements Serializable, TreeModel {
     // UTILITY METHODS FOR FIRING EVENTS
 
     private void fireNodesChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesChanged(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesChanged(e);
+            }
         }
     }
 
     private void fireNodesInserted(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesInserted(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesInserted(e);
+            }
         }
     }
 
     private void fireNodesRemoved(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeNodesRemoved(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeNodesRemoved(e);
+            }
         }
     }
 
     private void fireTreeStructureChanged(TreeModelEvent e) {
-        for (int i = 0; i < listeners.size(); i++) {
-            ((TreeModelListener) listeners.get(i)).treeStructureChanged(e);
+        synchronized(listeners) {
+            for (TreeModelListener listener : listeners) {
+                listener.treeStructureChanged(e);
+            }
         }
     }
 

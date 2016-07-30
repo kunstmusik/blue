@@ -24,6 +24,7 @@ import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -119,12 +120,11 @@ final class UtilityPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        int retVal = FileChooserManager.getDefault().showOpenDialog(
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                 getClass(), this);
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(
-                    getClass());
+        if (!retVal.isEmpty()) {
+            File f = retVal.get(0);
 
             try {
                 String path = f.getCanonicalPath();

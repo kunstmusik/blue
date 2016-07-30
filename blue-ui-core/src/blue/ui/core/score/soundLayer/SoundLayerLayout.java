@@ -20,12 +20,12 @@
 
 package blue.ui.core.score.soundLayer;
 
+import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-
-import blue.soundObject.PolyObject;
 
 /**
  * 
@@ -33,26 +33,30 @@ import blue.soundObject.PolyObject;
  */
 public class SoundLayerLayout implements LayoutManager {
 
-    PolyObject pObj = null;
+    LayerGroup<Layer> layerGroup = null;
 
     /** Creates a new instance of SoundLayerLayout */
     public SoundLayerLayout() {
     }
 
-    public void setPolyObject(PolyObject pObj) {
-        this.pObj = pObj;
+    public void setPolyObject(LayerGroup layerGroup) {
+        this.layerGroup = layerGroup;
     }
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
         return minimumLayoutSize(parent);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
         int count = parent.getComponentCount();
 
@@ -64,17 +68,28 @@ public class SoundLayerLayout implements LayoutManager {
             return new Dimension(0, 0);
         }
 
-        if (pObj == null) {
+        if (layerGroup == null) {
             return new Dimension(0, 0);
         }
 
         int w = parent.getWidth();
 
-        int h = pObj.getTotalHeight();
+        int h = getTotalHeight();
+        
 
         return new Dimension(w, h);
     }
 
+    private int getTotalHeight() {
+        int h = 0;
+        for(Layer layer : layerGroup) {
+            h += layer.getLayerHeight();
+        }
+        return h;
+    }
+    
+
+    @Override
     public void layoutContainer(Container parent) {
 
         int count = parent.getComponentCount();
@@ -86,7 +101,7 @@ public class SoundLayerLayout implements LayoutManager {
             return;
         }
 
-        if (pObj == null) {
+        if (layerGroup == null) {
             return;
         }
 
@@ -97,7 +112,7 @@ public class SoundLayerLayout implements LayoutManager {
         for (int i = 0; i < count; i++) {
             Component temp = parent.getComponent(i);
 
-            int h = pObj.getSoundLayerHeight(i);
+            int h = layerGroup.get(i).getLayerHeight();
 
             temp.setLocation(0, runningY);
             temp.setSize(w, h);

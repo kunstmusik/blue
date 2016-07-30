@@ -239,6 +239,7 @@ private void offsetTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JComboBox strengthTypeComboBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         gridSizeTableEditor.setDuration(duration);
         offsetTableEditor.setDuration(duration);

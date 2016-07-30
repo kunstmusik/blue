@@ -20,21 +20,10 @@
 
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-
 import blue.BlueSystem;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.CeciliaModule;
-import blue.soundObject.SoundObject;
 import blue.soundObject.ceciliaModule.CFileIn;
 import blue.soundObject.ceciliaModule.CGraph;
 import blue.soundObject.ceciliaModule.CPopup;
@@ -49,12 +38,23 @@ import blue.soundObject.editor.ceciliaModule.GrapherEditPanel;
 import blue.soundObject.editor.ceciliaModule.PropertiesPanel;
 import blue.utility.GUI;
 import blue.utility.TextUtilities;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.StringTokenizer;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 /**
  * @author steven
  * 
  */
-public class CeciliaModuleEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = CeciliaModule.class)
+public class CeciliaModuleEditor extends ScoreObjectEditor {
 
     private CeciliaModule ceciliaModule;
 
@@ -75,6 +75,7 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
                 .getString("ceciliaModule.loadModule"));
         loadModule.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 loadModule();
 
@@ -115,7 +116,7 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
         ceciliaModule.setModuleDefinition(moduleDefinition);
         ceciliaModule.setStateData(stateData);
 
-        editSoundObject(ceciliaModule);
+        editScoreObject(ceciliaModule);
     }
 
     /**
@@ -179,7 +180,8 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
         return stateData;
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err.println("[CeciliaModuleEditor::editSoundObject()] "
                     + "ERROR: null object passed in");
@@ -206,7 +208,7 @@ public class CeciliaModuleEditor extends SoundObjectEditor {
         GUI.setBlueLookAndFeel();
 
         CeciliaModuleEditor ceciliaModuleEditor = new CeciliaModuleEditor();
-        ceciliaModuleEditor.editSoundObject(new CeciliaModule());
+        ceciliaModuleEditor.editScoreObject(new CeciliaModule());
 
         GUI.showComponentAsStandalone(ceciliaModuleEditor,
                 "CeciliaModule Editor", true);

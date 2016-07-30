@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import javax.swing.BorderFactory;
@@ -12,6 +11,8 @@ import javax.swing.InputMap;
 import javax.swing.KeyStroke;
 import javax.swing.UIDefaults;
 import javax.swing.border.AbstractBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 
@@ -32,26 +33,32 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     }
 
+    @Override
     public String getID() {
         return "Blue";
     }
 
+    @Override
     public String getName() {
         return "Blue";
     }
 
+    @Override
     public String getDescription() {
         return "Look and Feel for 'blue'";
     }
 
+    @Override
     public boolean isNativeLookAndFeel() {
         return false;
     }
 
+    @Override
     public boolean isSupportedLookAndFeel() {
         return true;
     }
 
+    @Override
     protected void initClassDefaults(UIDefaults table) {
         super.initClassDefaults(table);
 
@@ -108,12 +115,14 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         }
     }
 
+    @Override
     public UIDefaults getDefaults() {
-        blueTheme = new BlueTheme();
-        setCurrentTheme(blueTheme);
+//        blueTheme = new BlueTheme();
+//        setCurrentTheme(blueTheme);
         return super.getDefaults();
     }
 
+    @Override
     protected void initComponentDefaults(UIDefaults table) {
         super.initComponentDefaults(table);
         
@@ -124,11 +133,18 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
           
             
             "Table.gridColor", new javax.swing.plaf.ColorUIResource(
-                Color.darkGray),
+                getCurrentTheme().getControl()),
             
             "SplitPane.highlight", table.getColor("controlShadow"),
             "SplitPane.darkShadow", table.getColor("window"),
             "SplitPane.dividerSize", new Integer(5),
+
+            "Table.cellNoFocusBorder", new EmptyBorder(7,3,7,3),
+
+            "Table.focusSelectedCellHighlightBorder", BorderFactory.createCompoundBorder(
+            new LineBorder(getCurrentTheme().getFocusColor()),new EmptyBorder(6,2,6,2)),
+            "Table.focusCellHighlightBorder", new EmptyBorder(7,3,7,3),
+//            "Table.rowHeight", 28,
 
             "TableHeader.cellBorder", new BlueTableBorder(),
 
@@ -156,6 +172,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
             
             "Spinner.border", BlueBorderUtilities.getTextFieldBorder(),
             "Spinner.arrowButtonBorder", BlueBorderUtilities.getButtonBorder(),
+            "Spinner.background", Color.BLACK,
         };
 
         table.putDefaults(defaults);
@@ -236,6 +253,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
 
     }
 
+    @Override
     protected void initSystemColorDefaults(UIDefaults table) {
         super.initSystemColorDefaults(table);
         // we made the color a bit darker because the were complaints about the
@@ -243,7 +261,7 @@ public class BlueLookAndFeel extends MetalLookAndFeel {
         // being very difficult to see
         table.put("textHighlight", getTranslucentColor(getTextHighlightColor(),
                 128));
-        table.put("text", getWhite());
+        table.put("text", getBlack());
     }
 
     // helper to simplify creation of translucent colors
@@ -297,6 +315,7 @@ class BlueTableBorder extends AbstractBorder {
 
     protected Insets editorBorderInsets = new Insets(2, 2, 2, 0);
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         g.translate(x, y);
 
@@ -310,6 +329,7 @@ class BlueTableBorder extends AbstractBorder {
         g.translate(-x, -y);
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
         return editorBorderInsets;
     }

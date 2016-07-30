@@ -19,11 +19,17 @@
  */
 package blue;
 
+import blue.automation.Automatable;
+import blue.automation.Parameter;
+import blue.automation.ParameterList;
+import blue.automation.ParameterNameManager;
+import blue.mixer.Channel;
 import blue.orchestra.Instrument;
-import blue.udo.OpcodeList;
+import blue.orchestra.blueSynthBuilder.StringChannel;
+import blue.orchestra.blueSynthBuilder.StringChannelNameManager;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 //TODO - Should probably add methods to this class so that Arrangement, 
 //OpcodeList, etc. are hidden from public and to reduce dependencies
@@ -39,6 +45,11 @@ public class CompileData {
     private final HashMap compileMap = new HashMap();
     private final Arrangement arrangement;
     private final Tables tables;
+    private final Map<Channel, Integer> channelIdAssignments;
+    private final Map<Instrument, String> instrSourceId;
+    private boolean handleParametersAndChannels = true;
+    private StringBuilder globalOrc;
+    
 
     public static CompileData createEmptyCompileData() {
         CompileData compileData = new CompileData(
@@ -46,17 +57,70 @@ public class CompileData {
         return compileData;
     }
     
+    private ArrayList<StringChannel> stringChannels = null;
+    private ArrayList originalParameters = null;
+    private StringChannelNameManager scnm = null;
+    private ParameterNameManager pnm;
+
+    
     public CompileData(Arrangement arrangement, Tables tables) {
         this.arrangement = arrangement;
         this.tables = tables;
+        channelIdAssignments = new HashMap<>();
+        instrSourceId = new HashMap<>();
+        globalOrc = new StringBuilder();
+        setHandleParametersAndChannels(false);
     }
 
+    public CompileData(Arrangement arrangement, Tables tables, 
+            ArrayList<StringChannel> stringChannels, 
+            ArrayList originalParameters, StringChannelNameManager scnm,
+            ParameterNameManager pnm) {
+        this.arrangement = arrangement;
+        this.tables = tables;
+        this.stringChannels = stringChannels;
+        this.originalParameters = originalParameters;
+        this.scnm = scnm;
+        this.pnm = pnm;
+        
+        channelIdAssignments = new HashMap<>();
+        instrSourceId = new HashMap<>();
+        globalOrc = new StringBuilder();
+        setHandleParametersAndChannels(true);
+    }
+
+    public void setHandleParametersAndChannels(boolean handleParametersAndChannels) {
+        this.handleParametersAndChannels = handleParametersAndChannels;
+    }
+
+    
+    
     /** 
      * Adds and instrument to the Arrangement 
      * @return instrument id that was assigned
      */
     
     public int addInstrument(Instrument instrument) {
+        if(handleParametersAndChannels && stringChannels != null && originalParameters != null) {
+            if(instrument instanceof Automatable) {
+                Automatable auto = (Automatable) instrument;
+                ArrayList<StringChannel> tempStringChannels = auto.getStringChannels();
+                if(tempStringChannels != null) {
+                    stringChannels.addAll(tempStringChannels);
+                    
+                    for(StringChannel sChan : tempStringChannels) {
+                        sChan.setChannelName(scnm.getUniqueStringChannel());
+                    }
+                }
+                ParameterList paramList = auto.getParameterList();
+                if(paramList != null) {
+                    originalParameters.addAll(paramList.getParameters());
+                    for(Parameter param : paramList.getParameters()) {
+                        param.setCompilationVarName(pnm.getUniqueParamName());
+                    }
+                }
+            }
+        }
         return arrangement.addInstrument(instrument);
     }
 
@@ -88,5 +152,33 @@ public class CompileData {
     public void appendTables(String tablesString) {
         tables.setTables(tables.getTables() + "\n" + tablesString);
     }
-   
+  
+    public Map<Channel, Integer> getChannelIdAssignments() {
+        return channelIdAssignments;
+    }
+
+    /** Used to associate a source arrangmentId with an instr.  The instr should
+     * be one that is generated for always-on instr text. arrangementId is the 
+     * arrangementId of the original instr, and used to replace <INSTR_ID>.
+     * 
+     * @param instr
+     * @param sourceId 
+     */
+    public void addInstrSourceId(Instrument instr, String sourceId) {
+        instrSourceId.put(instr, sourceId);
+    }
+
+    public String getInstrSourceId(Instrument instr) {
+        return instrSourceId.get(instr);
+    }
+    
+    public void appendGlobalOrc(String orcText) {
+        if(orcText != null) {
+            globalOrc.append(orcText).append("\n");
+        }
+    }
+    
+    public String getGlobalOrc() {
+        return globalOrc.toString();
+    }
 }

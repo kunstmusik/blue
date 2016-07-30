@@ -23,7 +23,6 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.gui.ExceptionDialog;
 import blue.projects.BlueProjectManager;
-import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
 import blue.services.render.CsdRenderResult;
 import blue.ui.utilities.FileChooserManager;
@@ -34,7 +33,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import javax.swing.JFileChooser;
 import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
@@ -42,28 +40,29 @@ public final class GenerateCsdAction implements ActionListener {
 
     private static String FILE_GEN = "blueMainFrame.generateCSD";
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
-        int rValue = FileChooserManager.getDefault().showSaveDialog(FILE_GEN,mainWindow);
+        File rValue = FileChooserManager.getDefault().showSaveDialog(FILE_GEN,mainWindow);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
+        if (rValue != null) {
 
             BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
 
-            File temp = FileChooserManager.getDefault().getSelectedFile(FILE_GEN);
+            File temp = rValue;
             if (!(temp.getName().trim().endsWith(".csd"))) {
                 temp = new File(temp.getAbsolutePath() + ".csd");
             }
             try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new FileWriter(temp)));
-                final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
-                        data, data.getRenderStartTime(), data.
-                        getRenderEndTime(), false, false);
+                try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                             new FileWriter(temp)))) {
+                    final CsdRenderResult renderResult = CSDRenderService.getDefault().generateCSD(
+                            data, data.getRenderStartTime(), data.
+                            getRenderEndTime(), false, false);
 
-                out.print(renderResult.getCsdText());
-                out.flush();
-                out.close();
+                    out.print(renderResult.getCsdText());
+                    out.flush();
+                }
 
                 StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                         "message.generateScore.success") + " " + temp.getName());
@@ -73,9 +72,9 @@ public final class GenerateCsdAction implements ActionListener {
                 throw new RuntimeException("CSDRender Failed");
             }
         }
-        if (rValue == JFileChooser.CANCEL_OPTION) {
-            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
-                    "message.actionCancelled"));
-        }
+//        if (rValue == JFileChooser.CANCEL_OPTION) {
+//            StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
+//                    "message.actionCancelled"));
+//        }
     }
 }

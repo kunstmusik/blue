@@ -13,7 +13,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.netbeans.api.editor.completion.Completion;
-import org.netbeans.editor.DocumentUtilities;
 import org.netbeans.spi.editor.completion.CompletionItem;
 import org.netbeans.spi.editor.completion.CompletionTask;
 import org.netbeans.spi.editor.completion.support.CompletionUtilities;

@@ -20,11 +20,14 @@
 
 package blue.ui.core.mixer;
 
+import blue.BlueSystem;
 import blue.mixer.*;
+import blue.ui.core.mixer.EffectCategory;
+import blue.ui.core.mixer.EffectsLibrary;
+import blue.utility.ObjectUtilities;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ComboBoxModel;
@@ -34,9 +37,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-
-import blue.BlueSystem;
-import blue.utility.ObjectUtilities;
 import org.openide.windows.WindowManager;
 
 public class EffectsPopup extends JPopupMenu implements ChangeListener {
@@ -89,12 +89,14 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     private EffectsPopup() {
 
         addInsert = new AbstractAction("Add Insert") {
+            @Override
             public void actionPerformed(ActionEvent ae) {
 
             }
         };
 
         removeItem = new AbstractAction("Remove") {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (selectedIndex >= 0 && chain != null) {
                     Object obj = chain.removeElementAt(selectedIndex);
@@ -109,6 +111,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         };
 
         cutAction = new AbstractAction(BlueSystem.getString("common.cut")) {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (selectedIndex >= 0 && chain != null) {
 
@@ -125,6 +128,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         };
 
         copyAction = new AbstractAction(BlueSystem.getString("common.copy")) {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (selectedIndex >= 0 && chain != null) {
 
@@ -139,6 +143,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         };
 
         pasteAction = new AbstractAction(BlueSystem.getString("common.paste")) {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 if (chain != null && bufferedEffect != null) {
                     Effect clone = (Effect) ObjectUtilities
@@ -151,6 +156,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         importAction = new AbstractAction("Import from File") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (chain == null) {
                     return;
@@ -167,6 +173,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         exportAction = new AbstractAction("Export to File") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (selectedIndex >= 0 && chain != null) {
                     Object obj = chain.getElementAt(selectedIndex);
@@ -180,6 +187,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         };
 
         this.addPopupMenuListener(new PopupMenuListener() {
+            @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 boolean itemSelected = selectedIndex >= 0;
 
@@ -235,9 +243,11 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                 exportAction.setEnabled(isEffect && itemSelected);
             }
 
+            @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             }
 
+            @Override
             public void popupMenuCanceled(PopupMenuEvent e) {
             }
 
@@ -268,6 +278,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         return popup;
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
         reinitialize();
     }
@@ -354,6 +365,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, effect.getName());
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
                 Effect copy = (Effect) ObjectUtilities.clone(effect);
@@ -371,6 +383,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Push Up");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
                 chain.pushUp(selectedIndex);
@@ -385,6 +398,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Push Down");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
                 chain.pushDown(selectedIndex);
@@ -399,6 +413,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Import to Effects Library");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
@@ -422,6 +437,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Open Interface for Effect");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
@@ -460,6 +476,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Edit Effect");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
 
             if (chain != null && selectedIndex >= 0) {
@@ -490,6 +507,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Disable Effect");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null && selectedIndex >= 0) {
                 Object obj = chain.getElementAt(selectedIndex);
@@ -510,6 +528,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Add New Effect");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
                 if (addEffectDialog == null) {
@@ -535,6 +554,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             putValue(NAME, "Add New Send");
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
 

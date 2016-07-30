@@ -20,10 +20,17 @@
 
 package blue.soundObject.editor.objectBuilder;
 
+import blue.BlueSystem;
+import blue.components.EditEnabledCheckBox;
+import blue.event.EditModeListener;
+import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
+import blue.soundObject.ObjectBuilder;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.SimpleDocumentListener;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -34,14 +41,6 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.undo.UndoManager;
-import blue.BlueSystem;
-import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
-import blue.orchestra.editor.blueSynthBuilder.BSBCompletionProvider;
-import blue.soundObject.ObjectBuilder;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.ui.utilities.SimpleDocumentListener;
-import blue.utility.GUI;
 import org.openide.awt.UndoRedo;
 
 public class ObjectBuilderCodeEditor extends JComponent {
@@ -68,6 +67,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
         isExternalBox.setFocusable(false);
         isExternalBox.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 boolean selected = isExternalBox.isSelected();
 
@@ -88,6 +88,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
         commandLineText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (objBuilder != null) {
                             objBuilder
@@ -98,6 +99,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
         editBox.addEditModeListener(new EditModeListener() {
 
+            @Override
             public void setEditing(boolean isEditing) {
                 codePane.getJEditorPane().setEnabled(isEditing);
 
@@ -124,6 +126,7 @@ public class ObjectBuilderCodeEditor extends JComponent {
 
         codePane.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (objBuilder != null) {
                             objBuilder.setCode(codePane.getText());

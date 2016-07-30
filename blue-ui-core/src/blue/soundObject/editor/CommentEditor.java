@@ -1,30 +1,16 @@
 package blue.soundObject.editor;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.undo.UndoManager;
-
-import blue.BlueSystem;
-import blue.gui.ExceptionDialog;
-import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
 import blue.soundObject.Comment;
-import blue.soundObject.NoteList;
-import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
 /**
@@ -34,8 +20,8 @@ import org.openide.awt.UndoRedo;
  * @author steven yi
  * @version 1.0
  */
-
-public class CommentEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = Comment.class)
+public class CommentEditor extends ScoreObjectEditor {
 
     Comment sObj;
 
@@ -85,7 +71,8 @@ public class CommentEditor extends SoundObjectEditor {
         undo.setLimit(1000);
     }
 
-    public final void editSoundObject(SoundObject sObj) {
+    @Override
+    public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
             editorLabel.setText("no editor available");

@@ -40,6 +40,7 @@ class FTableTableModel extends AbstractTableModel {
         this.ftables = ftables;
     }
 
+    @Override
     public String getColumnName(int i) {
         switch (i) {
             case 0:
@@ -88,6 +89,7 @@ class FTableTableModel extends AbstractTableModel {
         return ftables.size();
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         return false;
 
@@ -100,6 +102,7 @@ class FTableTableModel extends AbstractTableModel {
      * public Class getColumnClass(int c) { return getValueAt(0, c).getClass(); }
      */
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         /*
          * if(col == 0) { try { boolean val = ((Boolean)value).booleanValue();

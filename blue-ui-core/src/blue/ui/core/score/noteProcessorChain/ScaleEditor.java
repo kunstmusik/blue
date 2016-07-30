@@ -19,24 +19,22 @@
  */
 package blue.ui.core.score.noteProcessorChain;
 
+import blue.BlueSystem;
+import blue.soundObject.editor.pianoRoll.ScaleSelectionPanel;
+import blue.soundObject.pianoRoll.Scale;
+import blue.ui.utilities.FileChooserManager;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
-
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-
-import blue.BlueSystem;
-import blue.soundObject.editor.pianoRoll.ScalaFileFilter;
-import blue.soundObject.editor.pianoRoll.ScaleSelectionPanel;
-import blue.soundObject.pianoRoll.Scale;
-import blue.ui.utilities.FileChooserManager;
 
 /**
  * @author steven
@@ -61,6 +59,7 @@ public class ScaleEditor extends JComponent {
         button.setMargin(new Insets(0, 0, 0, 0));
 
         button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectScale();
             }
@@ -89,12 +88,11 @@ public class ScaleEditor extends JComponent {
 
     protected void selectScale() {
         
-        int rValue = FileChooserManager.getDefault().showOpenDialog(ScaleSelectionPanel.FILE_CHOOSER_ID,
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(ScaleSelectionPanel.FILE_CHOOSER_ID,
                 null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault()
-                    .getSelectedFile(ScaleSelectionPanel.FILE_CHOOSER_ID);
+        if (!rValue.isEmpty()) {
+            File f = rValue.get(0);
 
             if (!f.exists()) {
                 return;
@@ -134,7 +132,8 @@ public class ScaleEditor extends JComponent {
 
         FileChooserManager.getDefault().setDialogTitle(ScaleSelectionPanel.FILE_CHOOSER_ID, BlueSystem
                 .getString("pianoRoll.selectScalaFile"));
-        FileChooserManager.getDefault().addFilter(ScaleSelectionPanel.FILE_CHOOSER_ID, new ScalaFileFilter());
+        FileChooserManager.getDefault().addFilter(ScaleSelectionPanel.FILE_CHOOSER_ID, 
+                new ExtensionFilter("Scala File (*.scl)", "*.scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();

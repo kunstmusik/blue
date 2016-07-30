@@ -24,7 +24,6 @@
 package blue.plaf;
 
 import java.awt.Graphics;
-
 import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicMenuUI;
@@ -55,6 +54,7 @@ public class BlueMenuUI extends BasicMenuUI {
      * @param c
      *            The component to paint.
      */
+    @Override
     public void paint(Graphics g, JComponent c) {
         super.paint(g, c);
         // Container parent = menuItem.getParent();

@@ -20,24 +20,23 @@
 
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.BSBLineObject;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyEditorSupport;
-
 import javax.swing.JComboBox;
-
-import blue.orchestra.blueSynthBuilder.BSBLineObject;
 
 public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
 
-    private JComboBox options;
+    private JComboBox<String> options;
 
     public SeparatorTypePropertyEditor() {
         super();
-        options = new JComboBox(BSBLineObject.SEPARATOR_TYPES);
+        options = new JComboBox<String>(BSBLineObject.SEPARATOR_TYPES);
         options.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setValueFromComboBox();
             }
@@ -49,19 +48,23 @@ public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
         super.setValue(options.getSelectedItem());
     }
 
+    @Override
     public void setValue(Object value) {
         super.setValue(value);
         options.setSelectedItem(value);
     }
 
+    @Override
     public String[] getTags() {
         return BSBLineObject.SEPARATOR_TYPES;
     }
 
+    @Override
     public Component getCustomEditor() {
         return options;
     }
 
+    @Override
     public boolean supportsCustomEditor() {
         return true;
     }

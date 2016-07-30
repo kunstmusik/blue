@@ -21,6 +21,7 @@
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
+import blue.ui.core.mixer.EffectCategory;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -53,10 +54,12 @@ public class TransferableEffect implements Transferable {
         }
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         if (flavors.length == 1) {
             return flavors[0].getRepresentationClass() == flavor
@@ -66,6 +69,7 @@ public class TransferableEffect implements Transferable {
         return false;
     }
 
+    @Override
     public Object getTransferData(DataFlavor flavor)
             throws UnsupportedFlavorException, IOException {
         return obj;

@@ -25,7 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -63,6 +63,7 @@ public class FileSelectionPanel extends JComponent {
 
         fileButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 selectFile();
             }
@@ -78,14 +79,14 @@ public class FileSelectionPanel extends JComponent {
     protected void selectFile() {
         FileChooserManager.getDefault().setDialogTitle(this.fileManagerGroup, "Choose File");
 
-        int retVal = FileChooserManager.getDefault().showOpenDialog(this.fileManagerGroup,
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(this.fileManagerGroup,
                 null);
 
-        if (retVal != JFileChooser.APPROVE_OPTION) {
+        if (retVal.isEmpty()) {
             return;
         }
 
-        File temp = FileChooserManager.getDefault().getSelectedFile(this.fileManagerGroup);
+        File temp = retVal.get(0);
         this.setSelectedFile(temp);
     }
 

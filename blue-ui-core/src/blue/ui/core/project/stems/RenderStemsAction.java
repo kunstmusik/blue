@@ -12,6 +12,7 @@ import org.openide.WizardDescriptor;
 
 public final class RenderStemsAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         WizardDescriptor wd = new WizardDescriptor(new RenderStemsWizardIterator());
 

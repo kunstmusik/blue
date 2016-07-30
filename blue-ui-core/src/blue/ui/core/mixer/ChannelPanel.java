@@ -17,15 +17,17 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.mixer;
 
+import blue.BlueSystem;
 import blue.mixer.*;
+import blue.ui.utilities.UiUtilities;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -36,7 +38,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.Locale;
-
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -45,29 +46,28 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.BlueSystem;
-import blue.ui.utilities.UiUtilities;
-import java.awt.Frame;
 import org.openide.windows.WindowManager;
 
 /**
- * 
+ *
  * @author Steven Yi
  * @author Michael Bechard
  */
 public class ChannelPanel extends javax.swing.JPanel implements
-        PropertyChangeListener, Comparable {
+        PropertyChangeListener, Comparable<ChannelPanel> {
 
     boolean subChannel = false;
 
     boolean updating = false;
 
-    /** Creates new form ChannelPanel */
+    /**
+     * Creates new form ChannelPanel
+     */
     public ChannelPanel() {
         initComponents();
 
         levelLabel.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     switchLevelValueView(true);
@@ -75,20 +75,22 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 }
             }
         });
-        
+
         levelValueField.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setLevelValueFromField();
                 switchLevelValueView(false);
             }
         });
-        
+
         levelValueField.addFocusListener(new FocusAdapter() {
+            @Override
             public void focusLost(FocusEvent e) {
                 switchLevelValueView(false);
             }
         });
-        
+
         Dimension miniScrollDim = new Dimension(9, 55);
 
         preScroll.getVerticalScrollBar().setPreferredSize(miniScrollDim);
@@ -101,6 +103,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         levelSlider.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (!updating) {
                     updateLevelValue();
@@ -111,6 +114,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         outputList.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                 if (channel != null) {
                     channel
@@ -128,11 +132,11 @@ public class ChannelPanel extends javax.swing.JPanel implements
     private void setLevelValueFromField() {
         try {
             float val = Float.parseFloat(levelValueField.getText());
-            
+
             //validate the value
             val = Math.max(val, -96.0f);
             val = Math.min(val, 12.0f);
-            
+
             //set widgets
             channel.setLevel(val);
 //            levelSlider.setValue(getSliderValFromChannel());
@@ -140,26 +144,27 @@ public class ChannelPanel extends javax.swing.JPanel implements
         } catch (NumberFormatException ex) {
         }
     }
-    
+
     private void switchLevelValueView(boolean toTextField) {
         String compName;
-        
+
         if (toTextField) {
             compName = "levelField";
-            MessageFormat fmt = new MessageFormat("{0,number,##.####}", Locale.ENGLISH);
-            levelValueField.setText(fmt.format(new Object[] { new Float(channel.getLevel()) }));
+            MessageFormat fmt = new MessageFormat("{0,number,##.####}",
+                    Locale.ENGLISH);
+            levelValueField.setText(fmt.format(new Object[]{new Float(
+                channel.getLevel())}));
             //levelValueField.setText(NumberUtilities.formatFloat(channel.getLevel()));
-        }
-        else {
+        } else {
             compName = "levelLabel";
             levelLabel.setText(channel.getLevel() + " dB");
         }
-        
+
         //switch components
-        CardLayout cardLayout = (CardLayout)levelValuePanel.getLayout();
+        CardLayout cardLayout = (CardLayout) levelValuePanel.getLayout();
         cardLayout.show(levelValuePanel, compName);
     }
-    
+
     public Channel getChannel() {
         return this.channel;
     }
@@ -175,6 +180,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         postList.setModel(channel.getPostEffects());
 
         channelNameLabel.setText(channel.getName());
+        channelNameLabel.setToolTipText(channel.getName());
         outputList.setSelectedItem(channel.getOutChannel());
 
         int levelVal = getSliderValFromChannel(channel);
@@ -197,10 +203,10 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 levelVal = (int) (channel.getLevel() * 10);
             }
         }
-        
+
         return levelVal;
     }
-    
+
     public void setSubChannel(boolean val) {
         subChannel = val;
     }
@@ -262,8 +268,6 @@ public class ChannelPanel extends javax.swing.JPanel implements
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
-    // <editor-fold defaultstate="collapsed" desc=" Generated Code
-    // <editor-fold defaultstate="collapsed" desc=" Generated Code
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -303,7 +307,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         levelSlider.setValue(0);
 
         channelNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        channelNameLabel.setText("Channel Name");
+        channelNameLabel.setText("Channel");
         channelNameLabel.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
         channelNameLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -335,11 +339,11 @@ public class ChannelPanel extends javax.swing.JPanel implements
             }
         });
 
-        outputList.setFont(new java.awt.Font("Dialog", 0, 10));
+        outputList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         outputList.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         outputList.setFocusable(false);
 
-        postList.setFont(new java.awt.Font("Dialog", 0, 10));
+        postList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         postList.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
@@ -353,7 +357,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
         });
         postScroll.setViewportView(postList);
 
-        preList.setFont(new java.awt.Font("Dialog", 0, 10));
+        preList.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         preList.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
@@ -392,25 +396,20 @@ public class ChannelPanel extends javax.swing.JPanel implements
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(levelSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(preLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(postLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(outputLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(postScroll, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(outputList, javax.swing.GroupLayout.Alignment.LEADING, 0, 101, Short.MAX_VALUE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(preScroll, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(channelNameLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
-                    .addComponent(levelValuePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE))
-                .addContainerGap())
+            .addComponent(channelNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(preLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(preScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(outputList, 0, 86, Short.MAX_VALUE)
+            .addComponent(outputLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(postScroll, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(postLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(levelValuePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
+            .addComponent(levelSlider, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(channelNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(preLabel)
@@ -419,8 +418,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(levelSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 161, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(levelSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE)
+                .addGap(3, 3, 3)
                 .addComponent(levelValuePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(postLabel)
@@ -429,8 +428,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(outputLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(outputList, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(outputList, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -548,15 +546,13 @@ public class ChannelPanel extends javax.swing.JPanel implements
     }// GEN-LAST:event_preListMouseClicked
 
     private void channelNameLabelMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_channelNameLabelMouseClicked
-        if (subChannel && evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 2
+                && (subChannel || channel.getAssociation() != null)) {
             editChannelName();
         }
     }// GEN-LAST:event_channelNameLabelMouseClicked
 
-    /**
-     * 
-     */
-    private void editChannelName() {
+    private void editSubChannelName() {
         boolean finished = false;
         String originalName = channel.getName();
 
@@ -565,7 +561,8 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         while (!finished) {
 
-            String retVal = JOptionPane.showInputDialog(this,
+            String retVal = JOptionPane.showInputDialog(
+                    WindowManager.getDefault().getMainWindow(),
                     "Please Enter SubChannel Name", originalName);
 
             if (retVal != null && retVal.trim().length() > 0
@@ -575,15 +572,15 @@ public class ChannelPanel extends javax.swing.JPanel implements
                 if (!isValidChannelName(retVal)) {
                     JOptionPane.showMessageDialog(this,
                             "Error: Channel names may only contain letters, "
-                                    + "numbers, or underscores", BlueSystem
-                                    .getString("common.error"),
+                            + "numbers, or underscores", BlueSystem
+                            .getString("common.error"),
                             JOptionPane.ERROR_MESSAGE);
                     finished = false;
                 } else if (retVal.equals(Channel.MASTER)
                         || subChannels.isChannelNameInUse(retVal)) {
                     JOptionPane.showMessageDialog(this,
                             "Error: Channel Name already in use", BlueSystem
-                                    .getString("common.error"),
+                            .getString("common.error"),
                             JOptionPane.ERROR_MESSAGE);
                     finished = false;
                 } else {
@@ -593,6 +590,26 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
             } else {
                 finished = true;
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private void editChannelName() {
+        if (subChannel) {
+            editSubChannelName();
+        } else {
+            String originalName = channel.getName();
+            String retVal = JOptionPane.showInputDialog(
+                    WindowManager.getDefault().getMainWindow(),
+                    "Please Enter Channel Name", originalName);
+
+            if (retVal != null && retVal.trim().length() > 0
+                    && !retVal.equals(originalName)) {
+                retVal = retVal.trim();
+                channel.setName(retVal);
             }
         }
     }
@@ -607,36 +624,39 @@ public class ChannelPanel extends javax.swing.JPanel implements
         return true;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() != this.channel) {
             return;
         }
 
         String prop = evt.getPropertyName();
-
-        if (prop.equals(Channel.NAME)) {
-            channelNameLabel.setText(channel.getName());
-        } else if (prop.equals(Channel.LEVEL)) {
-            updating = true;
-
-            int levelVal = 0;
-
-            if (channel.getLevel() > 0) {
-                levelVal = (int) (channel.getLevel() * 20);
-            } else {
-                levelVal = (int) (channel.getLevel() * 10);
-            }
-
-            levelSlider.setValue(levelVal);
-            levelLabel.setText(channel.getLevel() + " dB");
-
-            updating = false;
+        switch (prop) {
+            case Channel.NAME:
+                channelNameLabel.setText(channel.getName());
+                channelNameLabel.setToolTipText(channel.getName());
+                channelNameLabel.invalidate();
+                channelNameLabel.repaint();
+                break;
+            case Channel.LEVEL:
+                updating = true;
+                int levelVal = 0;
+                if (channel.getLevel() > 0) {
+                    levelVal = (int) (channel.getLevel() * 20);
+                } else {
+                    levelVal = (int) (channel.getLevel() * 10);
+                }
+                levelSlider.setValue(levelVal);
+                levelLabel.setText(channel.getLevel() + " dB");
+                levelLabel.invalidate();
+                levelLabel.repaint();
+                updating = false;
+                break;
         }
     }
 
-    public int compareTo(Object o) {
-        ChannelPanel chanB = (ChannelPanel) o;
-
+    @Override
+    public int compareTo(ChannelPanel chanB) {
         try {
             int a = Integer.parseInt(this.channel.getName());
             int b = Integer.parseInt(chanB.getChannel().getName());
@@ -686,6 +706,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
 
         }
 
+        @Override
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 

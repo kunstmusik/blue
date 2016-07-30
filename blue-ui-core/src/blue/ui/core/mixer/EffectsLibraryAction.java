@@ -28,6 +28,7 @@ public final class EffectsLibraryAction implements ActionListener {
 
     Dialog dialog = null;
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if(dialog == null) {
             dialog = new EffectsLibraryDialog(WindowManager.getDefault().getMainWindow(), true);

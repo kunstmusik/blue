@@ -1,6 +1,6 @@
 blue
 version @VERSION@ - @RELEASE_DATE@
-copyright (c) 2001-2014 Steven Yi - all rights reserved
+copyright (c) 2001-2016 Steven Yi - all rights reserved
 
 email: stevenyi@gmail.com
 web: http://blue.kunstmusik.com
@@ -11,6 +11,150 @@ certain conditions.  Please see the accompanying license.txt file for more
 information.
 
 [CHANGE LOG]
+
+> Notes for 2.6.x<
+[release 2016.xx.xx]
+
+NEW
+
+* AudioLayers: Initial release. New LayerGroup type for working with AudioFiles 
+  strictly by GUI. Each Audio Layer is bound to a mixer channel. Use is modeled
+  after common DAW idioms for working with audio clips.  
+
+* Added link to Csound FLOSS Manual from Help Menu
+
+* Added seed value and useSeed to RandomAddProcessor and RandomMultiplyProcessor
+  [issue #302]
+
+* Issue #313 - added Test button to PianoRoll
+
+* Issue #279 - added "Render to Disk and Open" action; will use command 
+  configured in program options for disk render to open the rendered file after
+  rendering (e.g., render and open with Audacity)
+
+* BlueSynthBuilder: added new BSBValue object that has a default value and may
+  be automated; the widget only appears during edit mode and is hidden during
+  performance mode
+
+UPDATED
+
+* Sound - modified to use BlueSynthBuilder object as backing instrument. Extends 
+  single-use instrument idea of previous Sound object to work with an interface 
+  modifiable in realtime, similar to Kyma-style objects.
+
+* Added "Paste BSB as Sound" action to score timeline popup menu to paste a BSB
+  Object from the copy buffer into the Score as a Sound soundObject
+
+* BlueSynthBuilder - Replaced Knob with new style implemented with JavaFX
+
+* Moved to using Java 8. NOTE: Java 8 JDK or JRE is now required for running 
+  Blue.
+
+* restored loading of all URLs to external browser now that Netbeans 7.4 IDE 
+  cluster removed dependency on debugger module
+
+* Made using trackpad or scroll wheel on layer panels (left-hand side) scroll  
+  both the layer panels and the main content areas (implemented in main Score
+  editor, PatternsObject editor) 
+
+* Modified URL that is opened for "Report a Bug" and "Request a Feature" links
+  from the Help menu to go to the issue tracker at GitHub 
+  (http://www.github.com/kunstmusik/blue/issues)
+
+* Mixer: 
+
+  * Reworked layout of channel panels to be more compact
+
+  * Double-click to edit ChannelList names as well as Channel names (for those
+  channels and lists that support it)
+
+  * Updated mixer generation code to use "+=" and "*=" for easier to read 
+  output and better performance when running Csound multicore
+
+* Changed "Tools->.csoundrc Editor" to "Tools->.csound6rc Editor", to edit 
+  .csound6rc instead of older .csoundrc
+
+* Added /usr/local/lib and /usr/lib to java.library.path for Linux [issue #304]
+
+* Issue #287 - added name of effect in generated CSD as part of generated UDO
+  for effect
+
+* Added MenuScroller for Automation menus (MenuScroller by Daryll Burke:
+  https://tips4java.wordpress.com/2009/02/01/menu-scroller/)
+
+FIX
+
+* Redid font/theme handling so that --fontsize flag is respected (can be given
+  at commandline or put into blue/etc/blue.conf)
+
+* Fixed issue where after adding a new layer to a LayerGroup, if multiple empty
+  layers existed, the new layer would not function properly to show score object
+  changes 
+
+* Prevent resizing of Score Objects from left-hand side to have 0 duration when
+  snap is enabled
+
+* Issue #250 - setting minimum and maximum for BSB Knobs did not update the knob
+  view location when using truncate option
+
+* Audited score timeline actions for undoability
+
+* Issue #258 - fixed "Follow the Leader" ScoreObject action
+
+* Issue #280 - Print out command line used to Output window when rendering to 
+  disk 
+
+* Rendering to disk with commandline runner would freeze up until process 
+  completed when render job canceled, instead of stopping render job
+
+* Issue #249 - Fixed editing of last automation and tempo point in popup "Edit
+  Points" dialog
+
+* Issue #259 - Fixed forwarding of key events from Effects dialogs to main 
+  window, so users can now us shortcuts for rendering and other menu shortcuts
+  while editing effects
+
+* Issue #270 - User Instrument Library and Arrangement Panel should share the 
+  same copy buffer for copying/pasting instruments between the two panels
+
+* Issue #285 - Generating Realtime CSD to Screen did not correctly set if API
+  version of CSD should be generated or not  
+
+* Issue #273 - Dragging instrument from library to project should copy, not move
+
+* Issue #306 - Fixed BSB interface not updating after setting values from preset
+
+* Automations - adjusted menu to show "More..." sub-menus when there are more 
+  automations available than can fit on the screen
+
+* When generating instruments that use <INSTR_ID> or <INSTR_NAME>, fixed that 
+  generated always-on instruments use the ID/name of the original instrument 
+  rather than the generated one 
+
+* Redid BlueLive trigger mechanism to use sample-accurate, synchronous 
+  processing of time for repeats to remove jitter
+
+* Windows: Fixed trackpad scrolling 
+
+* Fixed BSB parameter var name generation when project has >= 1000 params
+
+* Issue #267 - reset BSB Object property sheet when setting automation enabled
+  is cancelled
+
+* Issue #255 - fixed Automatable BSB objects that did not update parameters 
+  correctly when objectName was changed
+
+* Issue #251 - fixed issue where copy/pasted BSBFileSelector would not update
+  correctly within Csound even though UI was updating
+
+INTERNAL
+
+* Changed Blue plugin registration to use Annotations (@SoundObjectPlugin, 
+  @InstrumentPlugin, @NoteProcessorPlugin)
+
+* Refactored all ScoreTimeline actions into separate Action classes; shortcut 
+  registration now done declaratively 
+
 
 >Notes for 2.5.14<
 [release 2014.05.13]
@@ -94,11 +238,10 @@ NEW
 * Examples: 
  
   * soundsObjects/external_ngen1a.blue, soundsObjects/external_ngen1b.blue: 
-	Example of using nGen from Blue (contributed by Menno Knevel)
+	  Example of using nGen from Blue (contributed by Menno Knevel)
 
   * Updated AthenaCL examples in soundObjects folder 
     (contributed by Menno Knevel)
-
 
 UPDATED
 

@@ -19,24 +19,21 @@
  */
 package blue.ui.core.score.noteProcessorChain;
 
+import blue.noteProcessor.Code;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.utility.GUI;
+import com.l2fprod.common.swing.BaseDialog;
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.Vector;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-
-import blue.noteProcessor.Code;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
-import blue.utility.GUI;
-
-import com.l2fprod.common.swing.BaseDialog;
-import java.awt.Frame;
 import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 import org.openide.windows.WindowManager;
@@ -62,6 +59,7 @@ public class CodeEditor extends JComponent {
         button.setMargin(new Insets(0, 0, 0, 0));
 
         button.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 editCode();
             }

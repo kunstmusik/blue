@@ -23,11 +23,10 @@ package blue.tools.soundFont;
 
 import blue.settings.UtilitySettings;
 import blue.ui.core.render.DiskRenderManager;
-import java.io.File;
-import java.util.StringTokenizer;
-
 import blue.utility.FileUtilities;
 import blue.utility.TextUtilities;
+import java.io.File;
+import java.util.StringTokenizer;
 
 /**
  * @author Steven yi

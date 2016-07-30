@@ -19,6 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.event.GroupMovementSelectionList;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.ui.utilities.UiUtilities;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
@@ -27,17 +31,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.EventListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-
-import blue.event.GroupMovementSelectionList;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.ui.utilities.UiUtilities;
 
 /**
  * @author steven
@@ -74,18 +72,22 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
         mouseCapturePanel.addMouseListener(new MouseListener() {
 
+            @Override
             public void mouseClicked(MouseEvent e) {
                 e.consume();
             }
 
+            @Override
             public void mouseEntered(MouseEvent e) {
                 e.consume();
             }
 
+            @Override
             public void mouseExited(MouseEvent e) {
                 e.consume();
             }
 
+            @Override
             public void mousePressed(MouseEvent e) {
                 requestFocus();
 
@@ -122,6 +124,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
                 e.consume();
             }
 
+            @Override
             public void mouseReleased(MouseEvent e) {
                 originPoint = null;
 
@@ -132,12 +135,14 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
         mouseCapturePanel.addMouseMotionListener(new MouseMotionListener() {
 
+            @Override
             public void mouseDragged(MouseEvent e) {
                 setNewLocation(e.getPoint());
 
                 e.consume();
             }
 
+            @Override
             public void mouseMoved(MouseEvent e) {
                 e.consume();
             }
@@ -145,6 +150,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
         objectView.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 setSize(e.getComponent().getSize());
                 mouseCapturePanel.setSize(e.getComponent().getSize());
@@ -210,12 +216,16 @@ public class BSBObjectViewHolder extends JLayeredPane {
         if (isEditing) {
             this.add(mouseCapturePanel, DRAG_LAYER);
             // this.setSelected(false);
+            
+            setVisible(true);
         } else {
             this.remove(mouseCapturePanel);
+            setVisible(!isEditModeOnly());
         }
 
     }
 
+    @Override
     public void setLocation(int x, int y) {
         super.setLocation(x, y);
         this.objectView.setNewLocation(x, y);
@@ -241,6 +251,10 @@ public class BSBObjectViewHolder extends JLayeredPane {
      */
     public boolean isSelected() {
         return selected;
+    }
+    
+    public boolean isEditModeOnly() {
+        return objectView instanceof EditModeOnly;
     }
 
 }

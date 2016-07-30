@@ -5,7 +5,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
-
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneLayout;
 import javax.swing.Scrollable;
@@ -25,20 +24,28 @@ public class MyScrollPaneLayout extends ScrollPaneLayout {
 
     protected Component hleft, hright, vtop, vbottom = null;
 
+    @Override
     public void addLayoutComponent(String s, Component c) {
-        if (s.equals(HORIZONTAL_LEFT)) {
-            hleft = c;
-        } else if (s.equals(HORIZONTAL_RIGHT)) {
-            hright = c;
-        } else if (s.equals(VERTICAL_TOP)) {
-            vtop = c;
-        } else if (s.equals(VERTICAL_BOTTOM)) {
-            vbottom = c;
-        } else {
-            super.addLayoutComponent(s, c);
+        switch (s) {
+            case HORIZONTAL_LEFT:
+                hleft = c;
+                break;
+            case HORIZONTAL_RIGHT:
+                hright = c;
+                break;
+            case VERTICAL_TOP:
+                vtop = c;
+                break;
+            case VERTICAL_BOTTOM:
+                vbottom = c;
+                break;
+            default:
+                super.addLayoutComponent(s, c);
+                break;
         }
     }
 
+    @Override
     public void removeLayoutComponent(Component c) {
         if (c == hleft) {
             hleft = null;
@@ -53,6 +60,7 @@ public class MyScrollPaneLayout extends ScrollPaneLayout {
         }
     }
 
+    @Override
     public void layoutContainer(Container parent) {
         /*
          * Sync the (now obsolete) policy fields with the JScrollPane.

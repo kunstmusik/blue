@@ -1,7 +1,7 @@
 <section id="randomAddProcessor">
 <title>Random Add Processor</title>
 
-<para>Parameters: pfield, min, max</para>
+<para>Parameters: pfield, min, max, seedUsed, seed</para>
 
 <para>The RandomAddProcessor generates a random value between min and max and 
   adds it to the designated pfield for all notes. A random value is 
@@ -34,6 +34,11 @@ soundObject with time behavior set to scale.)</para>
 <para>The above is an example of random values, and because it is random, the 
   results will be different on another processing pass.
 .</para>
+
+<para>If seedUsed is set to "true", the random number generator will be 
+    initialized using the given seed value.  The seed value must be a valid 
+    long integer value (-2^63, 2^63-1).
+</para>
 
 <para>Hint: One useful way to use this noteProcessor is as a way to "humanize"
 velocity or pitch values values.</para>

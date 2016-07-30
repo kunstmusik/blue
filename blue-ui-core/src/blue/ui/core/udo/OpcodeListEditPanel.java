@@ -19,11 +19,20 @@
  */
 package blue.ui.core.udo;
 
+import blue.BlueSystem;
+import blue.gui.DragManager;
+import blue.udo.OpcodeList;
+import blue.udo.UDOCategory;
+import blue.udo.UserDefinedOpcode;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.ObjectUtilities;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -39,7 +48,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.io.IOException;
+import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -56,16 +66,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-
-import blue.BlueSystem;
-import blue.gui.DragManager;
-import blue.udo.OpcodeList;
-import blue.udo.UDOCategory;
-import blue.udo.UserDefinedOpcode;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.ObjectUtilities;
-import java.awt.Window;
-import java.util.ArrayList;
 
 /**
  * @author steven
@@ -85,6 +85,7 @@ public class OpcodeListEditPanel extends JComponent {
     public OpcodeListEditPanel() {
 
         table = new JTable() {
+            @Override
             public boolean getScrollableTracksViewportHeight() {
                 return getPreferredSize().height < getParent().getHeight();
             }
@@ -104,6 +105,7 @@ public class OpcodeListEditPanel extends JComponent {
         addButton.setToolTipText("Add User-Defined Opcode");
         addButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addUDO();
             }
@@ -116,6 +118,7 @@ public class OpcodeListEditPanel extends JComponent {
                 .setToolTipText("Import User-Defined Opcode from Repository");
         importButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 importUDO();
             }
@@ -127,6 +130,7 @@ public class OpcodeListEditPanel extends JComponent {
         removeButton.setToolTipText("Remove User-Defined Opcode");
         removeButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 removeUDO();
             }
@@ -137,6 +141,7 @@ public class OpcodeListEditPanel extends JComponent {
         pushUpButton.setToolTipText("Push Up");
         pushUpButton.setMargin(new Insets(4, 4, 0, 3));
         pushUpButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int[] rows = table.getSelectedRows();
                 if (rows.length > 0 && rows[0] > 0) {
@@ -153,6 +158,7 @@ public class OpcodeListEditPanel extends JComponent {
         pushDownButton.setMargin(new Insets(2, 3, 0, 4));
         pushDownButton.setToolTipText("Push Down");
         pushDownButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int[] rows = table.getSelectedRows();
                 if (rows.length > 0
@@ -182,6 +188,7 @@ public class OpcodeListEditPanel extends JComponent {
         this.add(new JScrollPane(table), BorderLayout.CENTER);
 
         table.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent e) {
                 if (table.isEditing()) {
                     return;
@@ -369,6 +376,7 @@ public class OpcodeListEditPanel extends JComponent {
             JMenuItem cut = new JMenuItem();
             cut.setText(BlueSystem.getString("common.cut"));
             cut.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     cutUDO();
                 }
@@ -377,6 +385,7 @@ public class OpcodeListEditPanel extends JComponent {
             JMenuItem copy = new JMenuItem();
             copy.setText(BlueSystem.getString("common.copy"));
             copy.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     copyUDO();
                 }
@@ -385,6 +394,7 @@ public class OpcodeListEditPanel extends JComponent {
             final JMenuItem paste = new JMenuItem();
             paste.setText(BlueSystem.getString("common.paste"));
             paste.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     pasteUDO();
                 }
@@ -396,6 +406,7 @@ public class OpcodeListEditPanel extends JComponent {
 
             this.addPopupMenuListener(new PopupMenuListener() {
 
+                @Override
                 public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                     UDOBuffer buffer = UDOBuffer.getInstance();
                     Object obj = buffer.getBufferedObject();
@@ -406,9 +417,11 @@ public class OpcodeListEditPanel extends JComponent {
                             obj instanceof UDOCategory));
                 }
 
+                @Override
                 public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                 }
 
+                @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
                 }
 
@@ -437,6 +450,7 @@ public class OpcodeListEditPanel extends JComponent {
                     actions, this);
         }
 
+        @Override
         public void dragGestureRecognized(DragGestureEvent dge) {
             int index = table.getSelectedRow();
             if (index < 0) {
@@ -455,6 +469,7 @@ public class OpcodeListEditPanel extends JComponent {
             DragManager.setDragSource(table);
         }
 
+        @Override
         public void dragDropEnd(DragSourceDropEvent dsde) {
             DragManager.setDragSource(null);
 
@@ -472,6 +487,7 @@ public class OpcodeListEditPanel extends JComponent {
             target = new DropTarget(targetTable, this);
         }
 
+        @Override
         public void dragEnter(DropTargetDragEvent dtde) {
 
             if (!dtde.isDataFlavorSupported(TransferableUDO.UDO_FLAVOR) &&
@@ -489,10 +505,12 @@ public class OpcodeListEditPanel extends JComponent {
 
         }
 
+        @Override
         public void dragOver(DropTargetDragEvent dtde) {
             dragEnter(dtde);
         }
 
+        @Override
         public void drop(DropTargetDropEvent dtde) {
             Point pt = dtde.getLocation();
 
@@ -515,7 +533,7 @@ public class OpcodeListEditPanel extends JComponent {
 
                 dtde.dropComplete(true);
 
-            } catch (Exception e) {
+            } catch (UnsupportedFlavorException | IOException e) {
                 e.printStackTrace();
             }
         }

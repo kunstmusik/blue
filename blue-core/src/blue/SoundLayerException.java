@@ -65,6 +65,7 @@ public class SoundLayerException extends Exception {
      * @return Message describing why the noteProcessor couldn't execute. Should
      *         be a readable message, digestable by the user.
      */
+    @Override
     public String getMessage() {
         String retVal;
 

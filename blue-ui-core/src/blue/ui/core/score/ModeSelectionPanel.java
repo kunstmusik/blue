@@ -20,17 +20,18 @@ public class ModeSelectionPanel extends javax.swing.JPanel {
         modeScoreToggle.setSelected(true);
 
         ModeManager.getInstance().addModeListener(new ModeListener() {
-            public void modeChanged(int mode) {
+            @Override
+            public void modeChanged(ScoreMode mode) {
                 updating = true;
 
                 switch (mode) {
-                    case ModeManager.MODE_SCORE:
+                    case SCORE:
                         modeScoreToggle.setSelected(true);
                         break;
-                    case ModeManager.MODE_SINGLE_LINE:
+                    case SINGLE_LINE:
                         modeSingleLineToggle.setSelected(true);
                         break;
-                    case ModeManager.MODE_MULTI_LINE:
+                    case MULTI_LINE:
                         modeMultiLineToggle.setSelected(true);
                         break;
                 }
@@ -101,20 +102,20 @@ public class ModeSelectionPanel extends javax.swing.JPanel {
     private void modeMultiLineToggleActionPerformed(
             java.awt.event.ActionEvent evt) {// GEN-FIRST:event_modeMultiLineToggleActionPerformed
         if (!updating) {
-            ModeManager.getInstance().setMode(ModeManager.MODE_MULTI_LINE);
+            ModeManager.getInstance().setMode(ScoreMode.MULTI_LINE);
         }
     }// GEN-LAST:event_modeMultiLineToggleActionPerformed
 
     private void modeSingleLineToggleActionPerformed(
             java.awt.event.ActionEvent evt) {// GEN-FIRST:event_modeSingleLineToggleActionPerformed
         if (!updating) {
-            ModeManager.getInstance().setMode(ModeManager.MODE_SINGLE_LINE);
+            ModeManager.getInstance().setMode(ScoreMode.SINGLE_LINE);
         }
     }// GEN-LAST:event_modeSingleLineToggleActionPerformed
 
     private void modeScoreToggleActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_modeScoreToggleActionPerformed
         if (!updating) {
-            ModeManager.getInstance().setMode(ModeManager.MODE_SCORE);
+            ModeManager.getInstance().setMode(ScoreMode.SCORE);
         }
     }// GEN-LAST:event_modeScoreToggleActionPerformed
 

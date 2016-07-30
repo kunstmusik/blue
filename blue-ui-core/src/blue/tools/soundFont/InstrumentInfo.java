@@ -27,6 +27,7 @@ public class InstrumentInfo {
 
     public String name;
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

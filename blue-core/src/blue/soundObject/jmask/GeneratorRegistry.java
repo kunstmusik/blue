@@ -52,6 +52,7 @@ public class GeneratorRegistry {
             generatorClass = clazz;
         }
 
+        @Override
         public String toString() {
             return generatorName;
         }
@@ -61,9 +62,7 @@ public class GeneratorRegistry {
 
             try {
                 retVal = (Generator) generatorClass.newInstance();
-            } catch (IllegalAccessException ex) {
-                ex.printStackTrace();
-            } catch (InstantiationException ex) {
+            } catch (    IllegalAccessException | InstantiationException ex) {
                 ex.printStackTrace();
             }
 

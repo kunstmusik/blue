@@ -19,18 +19,6 @@
  */
 package blue.utility.midi;
 
-import blue.utility.*;
-import java.io.File;
-import java.io.IOException;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Track;
-
 import blue.SoundLayer;
 import blue.soundObject.GenericScore;
 import blue.soundObject.Note;
@@ -38,7 +26,17 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.PolyObject;
 import blue.utilities.MidiUtilities;
+import blue.utility.*;
 import java.awt.Frame;
+import java.io.File;
+import java.io.IOException;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiMessage;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Track;
 
 public class MidiImportUtilities {
 
@@ -117,7 +115,7 @@ public class MidiImportUtilities {
 
             if (trSettings.isTrim()) {
                 // Assumes NoteList is already sorted
-                float start = nl.getNote(0).getStartTime();
+                float start = nl.get(0).getStartTime();
                 genSco.setStartTime(start);
                 ScoreUtilities.normalizeNoteList(nl);
             } else {
@@ -129,8 +127,8 @@ public class MidiImportUtilities {
 
             genSco.setName("Track " + i);
 
-            SoundLayer sLayer = (SoundLayer)pObj.newLayerAt(-1);
-            sLayer.addSoundObject(genSco);
+            SoundLayer sLayer = pObj.newLayerAt(-1);
+            sLayer.add(genSco);
         }
 
         return pObj;
@@ -182,7 +180,7 @@ public class MidiImportUtilities {
                                     template, instrId, start, duration,
                                     noteNum, velocity);
 
-                            nl.addNote(Note.createNote(note));
+                            nl.add(Note.createNote(note));
 
                             n.clear();
                         }
@@ -201,7 +199,7 @@ public class MidiImportUtilities {
                                 template, instrId, start, duration, noteNum,
                                 velocity);
 
-                        nl.addNote(Note.createNote(note));
+                        nl.add(Note.createNote(note));
 
                         n.clear();
 

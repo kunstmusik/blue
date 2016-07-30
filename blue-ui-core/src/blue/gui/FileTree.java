@@ -26,6 +26,8 @@ package blue.gui;
  * 
  */
 
+import blue.BlueSystem;
+import blue.ui.utilities.UiUtilities;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -40,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Vector;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -56,10 +57,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
-
-
-import blue.BlueSystem;
-import blue.ui.utilities.UiUtilities;
 import org.openide.util.ImageUtilities;
 
 /**
@@ -81,21 +78,21 @@ import org.openide.util.ImageUtilities;
  */
 
 public class FileTree extends JComponent {
-    private static final Comparator c = new AlphabeticalFileComparator();
+    private static final Comparator<File> c = new AlphabeticalFileComparator();
 
-    private ArrayList<FileTreeListener> listeners = new ArrayList<FileTreeListener>();
+    private ArrayList<FileTreeListener> listeners = new ArrayList<>();
     
-    JList directoryList = new JList();
+    JList<File> directoryList = new JList<>();
 
     JScrollPane fileListScrollPane = new JScrollPane();
 
-    JList fileList = new JList();
+    JList<File> fileList = new JList<>();
 
     FileListCellRenderer flcRenderer = new FileListCellRenderer();
 
     JButton driveButton = new JButton("<");
 
-    JComboBox dirList = new JComboBox();
+    JComboBox<File> dirList = new JComboBox<>();
 
     boolean listUpdating = false;
 
@@ -125,6 +122,7 @@ public class FileTree extends JComponent {
         this.setLayout(new BorderLayout());
 
         fileList.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                                 
                 if (listUpdating) {
@@ -132,7 +130,7 @@ public class FileTree extends JComponent {
                 }
 
                 listUpdating = true;
-                File f = (File) fileList.getSelectedValue();
+                File f = fileList.getSelectedValue();
 
                 if (e.getClickCount() == 2) {
 
@@ -170,6 +168,7 @@ public class FileTree extends JComponent {
         });
 
         driveButton.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 showDrivePopup();
             }
@@ -191,10 +190,11 @@ public class FileTree extends JComponent {
         fileList.setCellRenderer(flcRenderer);
 
         dirList.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!listUpdating) {
                     listUpdating = true;
-                    File dir = (File) dirList.getSelectedItem();
+                    File dir =  (File)dirList.getSelectedItem();
                     populateDirectory(dir);
                     populateFiles(dir);
                     listUpdating = false;
@@ -228,7 +228,7 @@ public class FileTree extends JComponent {
         // populate the selected dir and all its parents
         flcRenderer.setSelectedDir(dir);
 
-        Vector<File> parentList = new Vector<File>();
+        Vector<File> parentList = new Vector<>();
 
         File tempDir = dir;
         parentList.add(dir);
@@ -237,7 +237,7 @@ public class FileTree extends JComponent {
             parentList.add(0, tempDir);
         }
 
-        dirList.setModel(new DefaultComboBoxModel(parentList));
+        dirList.setModel(new DefaultComboBoxModel<>(parentList));
         dirList.setSelectedIndex(parentList.size() - 1);
     }
 
@@ -245,7 +245,7 @@ public class FileTree extends JComponent {
         File[] files = dir.listFiles();
         Arrays.sort(files, c);
 
-        Vector<File> v = new Vector<File>();
+        Vector<File> v = new Vector<>();
         String fileName;
 
         v.add(dir);
@@ -302,8 +302,9 @@ public class FileTree extends JComponent {
         FileTree soundFileManager1 = new FileTree();
         mFrame.getContentPane().add(soundFileManager1);
 
-        mFrame.show();
+        mFrame.setVisible(true);
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -312,7 +313,7 @@ public class FileTree extends JComponent {
 
 }
 
-class FileListCellRenderer extends JLabel implements ListCellRenderer {
+class FileListCellRenderer extends JLabel implements ListCellRenderer<File> {
     private static ImageIcon dirIcon = new ImageIcon(
             ImageUtilities.loadImage("blue/resources/images/Directory.gif"));
 
@@ -327,9 +328,9 @@ class FileListCellRenderer extends JLabel implements ListCellRenderer {
         this.selectedDir = dir;
     }
 
-    public Component getListCellRendererComponent(JList list, Object value,
+    @Override
+    public Component getListCellRendererComponent(JList<? extends File> list, File f,
             int index, boolean isSelected, boolean hasCellFocus) {
-        File f = (File) value;
         File parentDir = selectedDir.getParentFile();
 
         if (f == selectedDir) {
@@ -376,6 +377,7 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
         super.show(fileTree, x, y);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         File drive = new File(e.getActionCommand());
         fileTree.setDrive(drive);

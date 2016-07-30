@@ -27,7 +27,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -47,6 +46,7 @@ public class EditLabel extends JComponent {
     public EditLabel() {
 
         valueDisplay.addMouseListener(new MouseAdapter() {
+            @Override
             public void mousePressed(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     editField();
@@ -56,6 +56,7 @@ public class EditLabel extends JComponent {
 
         valueField.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setValueFromField();
 
@@ -65,6 +66,7 @@ public class EditLabel extends JComponent {
 
         valueField.addFocusListener(new FocusAdapter() {
 
+            @Override
             public void focusLost(FocusEvent e) {
                 showDisplay();
             }

@@ -19,19 +19,17 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JOptionPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import blue.components.ValueSlider;
 import blue.components.lines.LineBoundaryDialog;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.utility.NumberUtilities;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JOptionPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class BSBHSliderView extends AutomatableBSBObjectView implements
         PropertyChangeListener {
@@ -65,6 +63,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
         valSlider.setOpaque(false);
         valSlider.addChangeListener(new ChangeListener() {
 
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (!updating) {
                     updateValue();
@@ -257,6 +256,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
         slider.setRandomizable(randomizable);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getSource() == this.slider) {
             if (pce.getPropertyName().equals("updateValue")) {
@@ -270,6 +270,7 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
         }
     }
 
+    @Override
     public void cleanup() {
         slider.removePropertyChangeListener(this);
     }

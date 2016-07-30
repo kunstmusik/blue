@@ -44,6 +44,7 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
         initComponents();
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
 
@@ -52,6 +53,7 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
         }
     }
 
+    @Override
     public void removeNotify() {
         super.removeNotify();
         
@@ -264,6 +266,7 @@ public class TableEditor extends javax.swing.JPanel implements PropertyChangeLis
     private javax.swing.JTextField minTextField;
     private blue.soundObject.editor.jmask.TableCanvas tableCanvas;
     // End of variables declaration//GEN-END:variables
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.table) {
             repaint();

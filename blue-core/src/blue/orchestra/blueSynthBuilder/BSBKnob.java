@@ -36,57 +36,15 @@ import electric.xml.Elements;
 public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         Randomizable {
 
-    public static final float defaultMinimum = 0.0f;
-
-    public static final float defaultMaximum = 1.0f;
-
     float value = 0.0f;
 
-    float minimum = defaultMinimum;
+    float minimum = 0.0f;
 
-    float maximum = defaultMaximum;
+    float maximum = 1.0f;
 
     int knobWidth = 60;
 
     private boolean randomizable = true;
-
-    // OVERRIDE to handle parameter name changes
-    public void setObjectName(String objectName) {
-        if (objectName == null || objectName.equals(getObjectName())) {
-            return;
-        }
-
-        if (unm != null) {
-            if (objectName != null && objectName.length() != 0
-                    && !unm.isUnique(objectName)) {
-                return;
-            }
-        }
-
-        String oldName = this.getObjectName();
-
-        boolean doInitialize = false;
-
-        if (parameters != null && automationAllowed) {
-            if (objectName == null || objectName.length() == 0) {
-                parameters.removeParameter(oldName);
-            } else {
-                Parameter param = parameters.getParameter(oldName);
-
-                if (param == null) {
-                    doInitialize = true;
-                } else {
-                    param.setName(objectName);
-                }
-            }
-        }
-
-        super.setObjectName(objectName);
-
-        if (doInitialize) {
-            initializeParameters();
-        }
-    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBKnob knob = new BSBKnob();
@@ -107,23 +65,28 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("minimum")) {
-                minVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("maximum")) {
-                maxVal = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("value")) {
-                knob.value = Float.parseFloat(node.getTextString());
-            } else if (nodeName.equals("knobWidth")) {
-                knob.setKnobWidth(Integer.parseInt(node.getTextString()));
-            } else if (nodeName.equals("randomizable")) {
-                knob.randomizable = XMLUtilities.readBoolean(node);
+            switch (nodeName) {
+                case "minimum":
+                    minVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "maximum":
+                    maxVal = Float.parseFloat(node.getTextString());
+                    break;
+                case "value":
+                    knob.value = Float.parseFloat(node.getTextString());
+                    break;
+                case "knobWidth":
+                    knob.setKnobWidth(Integer.parseInt(node.getTextString()));
+                    break;
+                case "randomizable":
+                    knob.randomizable = XMLUtilities.readBoolean(node);
+                    break;
             }
 
         }
 
         // set min and max values
-        if (minVal > BSBKnob.defaultMaximum) {
+        if (minVal > 1.0f) {
             knob.maximum = maxVal;
             knob.minimum = minVal;
         } else {

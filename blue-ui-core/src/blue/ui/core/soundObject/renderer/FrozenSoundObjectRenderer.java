@@ -1,5 +1,6 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
 import blue.soundObject.FrozenSoundObject;
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
@@ -12,7 +13,7 @@ import java.awt.*;
  * @author steven yi
  * @version 1.0
  */
-
+@BarRendererPlugin(scoreObjectType = FrozenSoundObject.class)
 public class FrozenSoundObjectRenderer implements BarRenderer {
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
@@ -35,6 +36,7 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
 
     private static Color shadeColor = new Color(0, 0, 0, 64);
 
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
 
@@ -103,10 +105,8 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         }
     }
 
+    @Override
     public void cleanup(SoundObjectView sObjView) {
     }
 
-    public Class getSoundObjectClass() {
-        return FrozenSoundObject.class;
-    }
 }

@@ -45,6 +45,7 @@ public class ProbabilityEditor extends javax.swing.JPanel implements DurationSet
         updateSelectedProbabilityEditor();
     }
     
+    @Override
     public void setDuration(double duration) {
         this.duration = duration;
         

@@ -24,15 +24,10 @@ import blue.services.render.DiskRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.SimpleDocumentListener;
-import java.awt.Desktop;
 import java.awt.HeadlessException;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.List;
-import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -751,8 +746,7 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         }
 
         String command = csoundExecText.getText();
-        RealtimeRenderServiceFactory factory = (RealtimeRenderServiceFactory) 
-                renderServiceComboBox.getSelectedItem();
+        RealtimeRenderServiceFactory factory = (RealtimeRenderServiceFactory) renderServiceComboBox.getSelectedItem();
         DiskRenderService service = factory.createDiskRenderService();
 
         List<DeviceInfo> vals = DriverUtilities.getMidiDevices(command, driver,
@@ -788,12 +782,11 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_midiDriverComboActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        int retVal = FileChooserManager.getDefault().showOpenDialog(
+        List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
                 getClass(), this);
 
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(
-                    getClass());
+        if (!retVal.isEmpty()) {
+            File f = retVal.get(0);
 
             try {
                 String path = f.getCanonicalPath();
@@ -844,14 +837,10 @@ final class RealtimeRenderSettingsPanel extends javax.swing.JPanel {
         File manualDir = InstalledFileLocator.getDefault().
                 locate("csoundManual", "csound-manual", false);
 
-                File index = new File(manualDir, "CommandFlags.html");
-        
+        File index = new File(manualDir, "CommandFlags.html");
+
         try {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(index.toURI());
-            } else {
-                URLDisplayer.getDefault().showURL(index.toURL());
-            }
+            URLDisplayer.getDefault().showURL(index.toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

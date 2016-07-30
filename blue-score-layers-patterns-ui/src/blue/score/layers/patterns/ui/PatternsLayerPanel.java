@@ -26,17 +26,20 @@ import blue.score.layers.LayerGroupListener;
 import blue.score.layers.patterns.core.PatternData;
 import blue.score.layers.patterns.core.PatternLayer;
 import blue.score.layers.patterns.core.PatternsLayerGroup;
+import blue.ui.core.score.ScoreObjectView;
 import blue.ui.core.score.layers.LayerGroupPanel;
 import blue.ui.core.score.layers.SelectionMarquee;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.Action;
 import javax.swing.JPanel;
 
 /**
@@ -44,7 +47,7 @@ import javax.swing.JPanel;
  * @author stevenyi
  */
 public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
-        PropertyChangeListener, LayerGroupPanel {
+        PropertyChangeListener, LayerGroupPanel<PatternsLayerGroup> {
 
     private static final Color PATTERN_COLOR = new Color(198, 226, 255);
     private PatternsLayerGroup layerGroup;
@@ -92,7 +95,7 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         int w = (layerGroup.getMaxPattern() + 16) * 
                 layerGroup.getPatternBeatsLength() * 
                 timeState.getPixelSecond();
-        int h = layerGroup.getSize() * Layer.LAYER_HEIGHT;
+        int h = layerGroup.size() * Layer.LAYER_HEIGHT;
         final Dimension d = new Dimension(w, h);
         this.setPreferredSize(d);
         return d;
@@ -135,14 +138,14 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
 
         g.setColor(Color.DARK_GRAY);
 
-        for (int i = startLayerIndex; i < layerGroup.getSize(); i++) {
+        for (int i = startLayerIndex; i < layerGroup.size(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
 
             if (y > maxY) {
                 break;
             }
 
-            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.get(i);
             PatternData data = layer.getPatternData();
 
             g.setColor(PATTERN_COLOR);
@@ -188,10 +191,10 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
         int patternBeatsLength = layerGroup.getPatternBeatsLength();
         int patternWidth = patternBeatsLength * pixelSecond;
         
-        for (int i = 0; i < layerGroup.getSize(); i++) {
+        for (int i = 0; i < layerGroup.size(); i++) {
             int y = i * Layer.LAYER_HEIGHT;
             int x = 0; 
-            PatternLayer layer = (PatternLayer) layerGroup.getLayerAt(i);
+            PatternLayer layer = layerGroup.get(i);
             PatternData data = layer.getPatternData();
 
             g2d.setColor(PATTERN_COLOR);
@@ -205,4 +208,23 @@ public class PatternsLayerPanel extends JPanel implements LayerGroupListener,
             }
         }
     }
+
+    @Override
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p) {
+//        throw new UnsupportedOperationException(
+//                "Error: getScoreObjectViewAtPoint should not be called for PatternsLayerPanel"); 
+        return null;
+    }
+
+    @Override
+    public Action[] getLayerActions() {
+        throw new UnsupportedOperationException(
+                "Error: getLayerActions should not be called for PatternsLayerPanel");
+    }
+
+    @Override
+    public PatternsLayerGroup getLayerGroup() {
+        return layerGroup;
+    }
+
 }

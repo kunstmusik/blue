@@ -9,9 +9,8 @@ package blue.ui.core.soundObject.renderer;
  * @version 1.0
  */
 
-import java.awt.Graphics;
-
 import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import java.awt.Graphics;
 
 public interface BarRenderer {
     public void render(Graphics graphics, SoundObjectView sObjView,
@@ -19,5 +18,5 @@ public interface BarRenderer {
 
     public void cleanup(SoundObjectView sObjView);
 
-    public Class getSoundObjectClass();
+    //public boolean accepts(SoundObject scoreObject);
 }

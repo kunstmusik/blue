@@ -26,6 +26,7 @@ import blue.soundObject.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class ScoreUtilities {
 
@@ -38,13 +39,8 @@ public class ScoreUtilities {
         STARTING, COLLECTING;
     };
 
-    enum CommentType {
-
-        SINGLE_LINE, MULTI_LINE;
-    };
-
     /**
-     * getNotes will return a NoteList given a score input (String)
+     * gets will return a NoteList given a score input (String)
      *
      * @throws NoteParseException
      */
@@ -168,7 +164,7 @@ public class ScoreUtilities {
                         }
 
                         if (tempNote != null) {
-                            notes.addNote(tempNote);
+                            notes.add(tempNote);
                             previousNote = tempNote;
                         }
 
@@ -224,7 +220,7 @@ public class ScoreUtilities {
 //                }
 //
 //                if (tempNote != null) {
-//                    notes.addNote(tempNote);
+//                    notes.add(tempNote);
 //                    previousNote = tempNote;
 //                }
 //            }
@@ -240,12 +236,12 @@ public class ScoreUtilities {
             return;
         }
 
-        Note previousNote = notes.getNote(0);
+        Note previousNote = notes.get(0);
 
         for (int i = 1; i < notes.size(); i++) {
             // SWAP PLUS IN P2 WITH (P2 + P3) FROM PREVIOUS NOTE
 
-            Note note = notes.getNote(i);
+            Note note = notes.get(i);
 
             if (note.getPField(2).equals("+")) {
                 note.setPField(Float.toString(previousNote.getStartTime()
@@ -261,7 +257,7 @@ public class ScoreUtilities {
         Note currentNote;
 
         for (int i = 0; i < nl.size(); i++) {
-            currentNote = nl.getNote(i);
+            currentNote = nl.get(i);
 
             String pField;
 
@@ -277,8 +273,8 @@ public class ScoreUtilities {
                         continue;
                     }
 
-                    Note startNote = nl.getNote(headNoteIndex);
-                    Note endNote = nl.getNote(tailNoteIndex);
+                    Note startNote = nl.get(headNoteIndex);
+                    Note endNote = nl.get(tailNoteIndex);
 
                     // y = mx + b, linear ramp over time
                     float b = Float.parseFloat(startNote.getPField(j + 1));
@@ -291,7 +287,7 @@ public class ScoreUtilities {
                     float m = rise / run;
 
                     for (int k = headNoteIndex + 1; k < tailNoteIndex; k++) {
-                        Note tempNote = nl.getNote(k);
+                        Note tempNote = nl.get(k);
 
                         float x = tempNote.getStartTime()
                                 - startNote.getStartTime();
@@ -320,7 +316,7 @@ public class ScoreUtilities {
 
         String pField;
         try {
-            pField = nl.getNote(previousNoteIndex).getPField(pFieldNum);
+            pField = nl.get(previousNoteIndex).getPField(pFieldNum);
         } catch (IndexOutOfBoundsException iobe) {
             return RAMP_END_NOT_FOUND;
         }
@@ -349,7 +345,7 @@ public class ScoreUtilities {
 
         String pField;
         try {
-            pField = nl.getNote(nextNote).getPField(pFieldNum);
+            pField = nl.get(nextNote).getPField(pFieldNum);
         } catch (IndexOutOfBoundsException iobe) {
             return RAMP_END_NOT_FOUND;
         }
@@ -375,7 +371,7 @@ public class ScoreUtilities {
         Note tempNote;
 
         for (int i = 0; i < size; i++) {
-            tempNote = notes.getNote(i);
+            tempNote = notes.get(i);
             tempValue = tempNote.getStartTime()
                     + tempNote.getObjectiveDuration();
             if (max < tempValue) {
@@ -394,15 +390,10 @@ public class ScoreUtilities {
      * @return
      */
     public static float getProcessingStartTime(PolyObject pObj) {
-        ArrayList sObjects = pObj.getSoundObjects(false);
-        Collections.sort(sObjects, new Comparator() {
-            public int compare(Object arg0, Object arg1) {
-                SoundObject s1 = (SoundObject) arg0;
-                SoundObject s2 = (SoundObject) arg1;
-                float val = s1.getStartTime() - s2.getStartTime();
-
-                return (int) val;
-                // return s2.getStartTime();
+        List<SoundObject> sObjects = pObj.getSoundObjects(false);
+        Collections.sort(sObjects, new Comparator<SoundObject>() {
+            public int compare(SoundObject s1, SoundObject s2) {
+                return (int)(s1.getStartTime() - s2.getStartTime());
             }
         });
 
@@ -444,7 +435,7 @@ public class ScoreUtilities {
         Note tempNote;
 
         for (int i = 0; i < notes.size(); i++) {
-            tempNote = notes.getNote(i);
+            tempNote = notes.get(i);
             tempNote.setStartTime(tempNote.getStartTime() * multiplier);
             tempNote.setSubjectiveDuration(tempNote.getObjectiveDuration()
                     * multiplier);
@@ -453,8 +444,8 @@ public class ScoreUtilities {
 
     public static void setScoreStart(NoteList notes, float start) {
         for (int i = 0; i < notes.size(); i++) {
-            notes.getNote(i).setStartTime(
-                    notes.getNote(i).getStartTime() + start);
+            notes.get(i).setStartTime(
+                    notes.get(i).getStartTime() + start);
         }
     }
 
@@ -465,12 +456,12 @@ public class ScoreUtilities {
      */
     public static void normalizeNoteList(NoteList notes) {
         notes.sort();
-        float minStart = notes.getNote(0).getStartTime();
+        float minStart = notes.get(0).getStartTime();
 
         Note temp;
 
         for (int i = 0; i < notes.size(); i++) {
-            temp = notes.getNote(i);
+            temp = notes.get(i);
             temp.setStartTime(temp.getStartTime() - minStart);
         }
     }
@@ -556,10 +547,10 @@ public class ScoreUtilities {
             float remainingDur = subjectiveDuration - startVal;
 
             for (int i = 0; i < tempNL.size(); i++) {
-                tempNote = (Note) tempNL.getNote(i).clone();
+                tempNote = (Note) tempNL.get(i).clone();
                 if (tempNote.getStartTime() + tempNote.getSubjectiveDuration() <= remainingDur) {
                     tempNote.setStartTime(tempNote.getStartTime() + startVal);
-                    notes.addNote(tempNote);
+                    notes.add(tempNote);
                 } else {
                     // stop processing of notes as the rest will be invalid
                     break;
@@ -588,14 +579,14 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTime(ArrayList sObjects) {
+    public static float getMaxTime(List<SoundObject> sObjects) {
         float max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
-            sObj = (SoundObject) (sObjects.get(i));
+            sObj = sObjects.get(i);
             float val = sObj.getStartTime() + sObj.getSubjectiveDuration();
             if (val > max) {
                 max = val;
@@ -604,14 +595,14 @@ public class ScoreUtilities {
         return max;
     }
 
-    public static float getMaxTimeWithEmptyCheck(ArrayList sObjects) {
+    public static float getMaxTimeWithEmptyCheck(List<SoundObject> sObjects) {
         float max = 0.0f;
 
         SoundObject sObj;
         int size = sObjects.size();
 
         for (int i = 0; i < size; i++) {
-            sObj = (SoundObject) (sObjects.get(i));
+            sObj = sObjects.get(i);
 
             if (sObj instanceof Comment) {
                 continue;
@@ -664,9 +655,7 @@ public class ScoreUtilities {
     public static String testNotesList(NoteList nl) {
         StringBuilder returnText = new StringBuilder();
         for (int i = 0; i < nl.size(); i++) {
-            returnText.append("N").append(i).append(": s>").append(
-                    nl.getNote(i).getStartTime()).append(" d>").append(
-                            nl.getNote(i).getSubjectiveDuration()).append("\n");
+            returnText.append("N").append(i).append(": s>").append(nl.get(i).getStartTime()).append(" d>").append(nl.get(i).getSubjectiveDuration()).append("\n");
         }
         return returnText.toString();
     }
@@ -706,13 +695,13 @@ public class ScoreUtilities {
         NoteList n = new NoteList();
 
         try {
-            n.addNote(Note.createNote("i1 0 2 3 0"));
+            n.add(Note.createNote("i1 0 2 3 0"));
 
             for (int i = 0; i < 10; i++) {
-                n.addNote(Note.createNote("i1 " + (2 + (i * 2)) + " 2 3 <"));
+                n.add(Note.createNote("i1 " + (2 + (i * 2)) + " 2 3 <"));
             }
 
-            n.addNote(Note.createNote("i1 22 2 3 4"));
+            n.add(Note.createNote("i1 22 2 3 4"));
 
         } catch (NoteParseException npe) {
             npe.printStackTrace();

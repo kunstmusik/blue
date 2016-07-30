@@ -29,7 +29,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
 import javax.sound.midi.ShortMessage;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -70,6 +69,7 @@ public class VirtualKeyboardPanel extends JComponent {
 
         this.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent me) {
 
                 if (SwingUtilities.isLeftMouseButton(me)) {
@@ -97,6 +97,7 @@ public class VirtualKeyboardPanel extends JComponent {
                 }
             }
 
+            @Override
             public void mouseReleased(MouseEvent me) {
 
                 if (SwingUtilities.isLeftMouseButton(me)) {
@@ -132,6 +133,7 @@ public class VirtualKeyboardPanel extends JComponent {
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
 
+            @Override
             public void mouseDragged(MouseEvent me) {
                 if (SwingUtilities.isLeftMouseButton(me)) {
                     int key = getMIDIKey(me.getX(), me.getY());

@@ -20,14 +20,27 @@
 
 package blue.soundObject.editor;
 
-import blue.*;
+import blue.Arrangement;
+import blue.BlueData;
+import blue.BlueSystem;
+import blue.CompileData;
+import blue.GlobalOrcSco;
+import blue.Tables;
+import blue.gui.InfoDialog;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.projects.BlueProjectManager;
+import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
+import blue.soundObject.PolyObject;
+import blue.soundObject.SoundObject;
+import blue.udo.OpcodeList;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -39,14 +52,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-
-import blue.gui.InfoDialog;
-import blue.projects.BlueProjectManager;
-import blue.soundObject.NoteList;
-import blue.soundObject.PolyObject;
-import blue.soundObject.SoundObject;
-import blue.udo.OpcodeList;
-import blue.ui.nbutilities.MimeTypeEditorComponent;
 import org.openide.util.Exceptions;
 
 /**
@@ -58,7 +63,8 @@ import org.openide.util.Exceptions;
  */
 
 // TODO - Clean up UI Code in this class
-public class PolyObjectEditor extends SoundObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = PolyObject.class)
+public class PolyObjectEditor extends ScoreObjectEditor {
 
     PolyObject pObj;
 
@@ -95,7 +101,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
     JLabel nameText = new JLabel();
 
-    ArrayList sObjects;
+    List<SoundObject> sObjects;
 
     JButton testButton = new JButton();
 
@@ -136,6 +142,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
@@ -162,6 +169,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
         sObjTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
 
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (pObj == null || e.getValueIsAdjusting()) {
                             return;
@@ -169,14 +177,15 @@ public class PolyObjectEditor extends SoundObjectEditor {
 
                         int index = sObjTable.getSelectedRow();
                         if (index != -1) {
-                            populate((SoundObject) (sObjects.get(index)));
+                            populate(sObjects.get(index));
                         }
 
                     }
                 });
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             System.err
                     .println("[PolyObjectEditor::editSoundObject()] ERROR: not an instance of polyObject");
@@ -272,12 +281,12 @@ public class PolyObjectEditor extends SoundObjectEditor {
     /** Table Model used for Sound Object Table */
     static class SoundObjectTableModel extends AbstractTableModel {
 
-        ArrayList sObjects;
+        List<SoundObject> sObjects;
 
         public SoundObjectTableModel() {
         }
 
-        public void setSoundObjects(ArrayList sObjects) {
+        public void setSoundObjects(List<SoundObject> sObjects) {
             if (this.sObjects != null) {
                 fireTableRowsDeleted(0, sObjects.size());
             }
@@ -289,6 +298,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
             }
         }
 
+        @Override
         public String getColumnName(int i) {
             if (i == 0) {
                 return BlueSystem.getString("polyObject.soundObject");
@@ -300,15 +310,17 @@ public class PolyObjectEditor extends SoundObjectEditor {
             return null;
         }
 
+        @Override
         public int getColumnCount() {
             return 3;
         }
 
+        @Override
         public Object getValueAt(int parm1, int parm2) {
             if (sObjects == null) {
                 return null;
             }
-            SoundObject temp = (SoundObject) sObjects.get(parm1);
+            SoundObject temp = sObjects.get(parm1);
             if (parm2 == 0) {
                 return temp.getName();
             } else if (parm2 == 1) {
@@ -321,6 +333,7 @@ public class PolyObjectEditor extends SoundObjectEditor {
             }
         }
 
+        @Override
         public int getRowCount() {
             if (sObjects == null) {
                 return 0;

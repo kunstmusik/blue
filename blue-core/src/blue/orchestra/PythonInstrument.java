@@ -1,6 +1,7 @@
 package blue.orchestra;
 
 import blue.Tables;
+import blue.plugin.InstrumentPlugin;
 import blue.scripting.PythonProxy;
 import blue.udo.OpcodeList;
 import blue.utility.TextUtilities;
@@ -28,6 +29,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
+@InstrumentPlugin(displayName = "PythonInstrument", position = 20)
 public class PythonInstrument extends AbstractInstrument implements
         Serializable {
 
@@ -81,6 +83,7 @@ public class PythonInstrument extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String toString() {
         return this.name;
     }
@@ -143,15 +146,19 @@ public class PythonInstrument extends AbstractInstrument implements
         while (elements.hasMoreElements()) {
             Element node = elements.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("globalOrc")) {
-                instr.setGlobalOrc(node.getTextString());
-            } else if (nodeName.equals("globalSco")) {
-                instr.setGlobalSco(node.getTextString());
-            } else if (nodeName.equals("instrumentText")) {
-                instr.setText(node.getTextString());
-            } else if (nodeName.equals("opcodeList")) {
-                instr.opcodeList = OpcodeList.loadFromXML(node);
+            switch (nodeName) {
+                case "globalOrc":
+                    instr.setGlobalOrc(node.getTextString());
+                    break;
+                case "globalSco":
+                    instr.setGlobalSco(node.getTextString());
+                    break;
+                case "instrumentText":
+                    instr.setText(node.getTextString());
+                    break;
+                case "opcodeList":
+                    instr.opcodeList = OpcodeList.loadFromXML(node);
+                    break;
             }
         }
 

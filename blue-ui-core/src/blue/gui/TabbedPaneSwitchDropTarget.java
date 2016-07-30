@@ -23,7 +23,6 @@ import java.awt.Point;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
-
 import javax.swing.JTabbedPane;
 
 public class TabbedPaneSwitchDropTarget extends DropTargetAdapter {
@@ -33,6 +32,7 @@ public class TabbedPaneSwitchDropTarget extends DropTargetAdapter {
         this.tabs = viewSelectPane;
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         Point p = dtde.getLocation();
 
@@ -45,10 +45,12 @@ public class TabbedPaneSwitchDropTarget extends DropTargetAdapter {
         dtde.rejectDrag();
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         dragEnter(dtde);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         dtde.rejectDrop();
     }

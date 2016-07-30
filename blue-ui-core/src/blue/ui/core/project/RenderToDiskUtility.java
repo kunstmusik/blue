@@ -24,18 +24,16 @@ import blue.BlueSystem;
 import blue.MainToolBar;
 import blue.ProjectProperties;
 import blue.gui.ExceptionDialog;
-import blue.services.render.CSDRenderService;
-import blue.settings.DiskRenderSettings;
-import blue.settings.GeneralSettings;
-import blue.services.render.CsdRenderResult;
 import blue.services.render.DiskRenderJob;
 import blue.services.render.DiskRenderService;
+import blue.settings.DiskRenderSettings;
+import blue.settings.GeneralSettings;
 import blue.ui.core.render.ProcessConsole;
 import blue.ui.core.soundFile.AudioFilePlayerTopComponent;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.FileUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Consumer;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -64,7 +62,8 @@ public class RenderToDiskUtility {
         return instance;
     }
 
-    public void renderToDisk(BlueData data, boolean playAfterRender) {
+    public void renderToDisk(BlueData data, 
+            Consumer<File> completionCallback) {
 
         if (MainToolBar.getInstance().isRendering()) {
             MainToolBar.getInstance().stopRendering();
@@ -85,7 +84,6 @@ public class RenderToDiskUtility {
 //                startTime = 0.0f;
 //                endTime = -1.0f;
 //            }
-
 //            CsdRenderResult result = CSDRenderService.getDefault().generateCSD(
 //                    data, startTime,
 //                    endTime, false);
@@ -98,11 +96,10 @@ public class RenderToDiskUtility {
 //            String playArgs[] = new String[command.args.length + 1];
 //            System.arraycopy(command.args, 0, playArgs, 0, command.args.length);
 //            playArgs[command.args.length] = "\"" + temp.getAbsolutePath() + "\"";
-
             DiskRenderJob job = new DiskRenderJob(command.args, command.filename,
                     data, BlueSystem.getCurrentProjectDirectory());
 
-            play(job, playAfterRender);
+            play(job, completionCallback);
         } catch (Exception ex) {
             ExceptionDialog.showExceptionDialog(WindowManager.getDefault().
                     getMainWindow(),
@@ -141,15 +138,12 @@ public class RenderToDiskUtility {
             String fileName = "";
 
             if (props.askOnRender || props.fileName.trim().length() == 0) {
-                int retVal = FileChooserManager.getDefault().showSaveDialog(
+                File retVal = FileChooserManager.getDefault().showSaveDialog(
                         FILE_CHOOSER_ID,
                         WindowManager.getDefault().getMainWindow());
 
-                if (retVal == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_CHOOSER_ID);
-
-                    fileName = f.getCanonicalPath();
+                if (retVal != null) {
+                    fileName = retVal.getCanonicalPath();
                 } else {
                     return null;
                 }
@@ -169,8 +163,8 @@ public class RenderToDiskUtility {
         return new DiskRenderCommand(args, fileOutput);
     }
 
-    public void play(DiskRenderJob job, boolean playAfterRender) {
-        RunProxy runProxy = new RunProxy(job, playAfterRender);
+    public void play(DiskRenderJob job, Consumer<File> completionCallback) {
+        RunProxy runProxy = new RunProxy(job, completionCallback);
         new Thread(runProxy).start();
     }
 
@@ -217,17 +211,18 @@ public class RenderToDiskUtility {
 
     class RunProxy implements Runnable, Cancellable {
 
-        private final boolean playAfterRender;
         boolean cancelled = false;
         DiskRenderService diskRenderService;
         DiskRenderJob job;
+        private final Consumer<File> completionCallback;
 
-        private RunProxy(DiskRenderJob job, boolean playAfterRender) {
+        private RunProxy(DiskRenderJob job, Consumer<File> completionCallback) {
             this.job = job;
-            this.playAfterRender = playAfterRender;
+            this.completionCallback = completionCallback;
             this.diskRenderService = DiskRenderSettings.getInstance().renderServiceFactory.createInstance();
         }
 
+        @Override
         public boolean cancel() {
 
             if (diskRenderService.isRunning()) {
@@ -237,6 +232,7 @@ public class RenderToDiskUtility {
             return true;
         }
 
+        @Override
         public void run() {
             ProgressHandle handle = ProgressHandleFactory.createHandle(
                     "Rendering to Disk", this);
@@ -246,7 +242,7 @@ public class RenderToDiskUtility {
             try {
                 diskRenderService.renderToDisk(job);
 
-                if (playAfterRender && !cancelled) {
+                if (completionCallback != null && !cancelled) {
                     String fileOut = job.getFilename();
 
                     if (fileOut == null) {
@@ -265,45 +261,8 @@ public class RenderToDiskUtility {
                         return;
                     }
 
-                    DiskRenderSettings settings = DiskRenderSettings.getInstance();
-
-                    if (settings.externalPlayCommandEnabled) {
-                        String command = settings.externalPlayCommand;
-                        command = command.replaceAll("\\$outfile",
-                                f.getAbsolutePath());
-
-                        try {
-
-                            if (System.getProperty("os.name").indexOf(
-                                    "Windows") >= 0) {
-                                Runtime.getRuntime().exec(command);
-                            } else {
-                                String[] cmdArray = ProcessConsole.
-                                        splitCommandString(command);
-                                Runtime.getRuntime().exec(cmdArray);
-                            }
-
-                            System.out.println(command);
-                        } catch (Exception e) {
-                            JOptionPane.showMessageDialog(
-                                    WindowManager.getDefault().getMainWindow(),
-                                    "Could not run command: " + command,
-                                    "Error",
-                                    JOptionPane.ERROR_MESSAGE);
-                            System.err.println("[" + BlueSystem.getString(
-                                    "message.error") + "] - " + e.
-                                    getLocalizedMessage());
-                            e.printStackTrace();
-                        }
-                    } else {
-                        SwingUtilities.invokeLater(
-                                new Runnable() {
-                            public void run() {
-                                AudioFilePlayerTopComponent.getDefault().
-                                        setAudioFile(f);
-                            }
-                        });
-                    }
+                    SwingUtilities.invokeLater(()-> completionCallback.accept(f));
+                    
                 }
 
             } catch (Exception ioe) {

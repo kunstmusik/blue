@@ -20,13 +20,21 @@
 package blue.ui.core.project;
 
 import blue.BlueData;
+import blue.BlueSystem;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
+import blue.settings.DiskRenderSettings;
+import blue.ui.core.render.ProcessConsole;
+import blue.ui.core.soundFile.AudioFilePlayerTopComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.openide.windows.WindowManager;
 
 public final class RenderToDiskAndPlayAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
 
@@ -34,7 +42,54 @@ public final class RenderToDiskAndPlayAction implements ActionListener {
             BlueData data = project.getData();
 
             if (data != null) {
-                RenderToDiskUtility.getInstance().renderToDisk(data, true);
+                RenderToDiskUtility.getInstance().renderToDisk(data,
+                        f -> {
+                            DiskRenderSettings settings = 
+                                    DiskRenderSettings.getInstance();
+
+                            if (settings.externalPlayCommandEnabled) {
+                                String command = settings.externalPlayCommand;
+                                command = command.replaceAll("\\$outfile",
+                                        f.getAbsolutePath());
+
+                                try {
+
+                                    if (System.getProperty("os.name").indexOf(
+                                    "Windows") >= 0) {
+                                        Runtime.getRuntime().exec(command);
+                                    } else {
+                                        String[] cmdArray = ProcessConsole.
+                                        splitCommandString(command);
+                                        Runtime.getRuntime().exec(cmdArray);
+                                    }
+
+                                    System.out.println(command);
+                                } catch (Exception ex) {
+                                    JOptionPane.showMessageDialog(
+                                            WindowManager.getDefault().getMainWindow(),
+                                            "Could not run command: " + command,
+                                            "Error",
+                                            JOptionPane.ERROR_MESSAGE);
+                                    System.err.println("[" + BlueSystem.getString(
+                                            "message.error") + "] - " + ex.
+                                            getLocalizedMessage());
+                                    ex.printStackTrace();
+                                }
+                            } else {
+                                SwingUtilities.invokeLater(
+                                        new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        AudioFilePlayerTopComponent tc
+                                                = (AudioFilePlayerTopComponent) WindowManager.getDefault().
+                                                findTopComponent(
+                                                        "AudioFilePlayerTopComponent");
+                                        tc.setAudioFile(f);
+                                    }
+                                });
+                            }
+
+                        });
             }
 
         }

@@ -21,13 +21,12 @@ package blue.soundObject.pianoRoll;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
@@ -61,7 +60,7 @@ public class PianoNoteTest {
     @Test
     public void testCompareTo() {
         
-        ArrayList<PianoNote> list = new ArrayList<PianoNote>();
+        ArrayList<PianoNote> list = new ArrayList<>();
         
         PianoNote note0 = new PianoNote();
         note0.octave = 6;

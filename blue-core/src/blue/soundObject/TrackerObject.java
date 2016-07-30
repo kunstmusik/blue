@@ -23,6 +23,7 @@ package blue.soundObject;
 import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.noteProcessor.NoteProcessorException;
+import blue.plugin.SoundObjectPlugin;
 import blue.soundObject.tracker.TrackList;
 import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+@SoundObjectPlugin(displayName = "TrackerObject", live=true, position = 140)
 public class TrackerObject extends AbstractSoundObject implements Serializable {
 
     private TrackList tracks = new TrackList();
@@ -125,11 +127,13 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("duration")) {
-                retVal.setDuration(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("trackList")) {
-                retVal.setTracks(TrackList.loadFromXML(node));
+            switch (nodeName) {
+                case "duration":
+                    retVal.setDuration(XMLUtilities.readFloat(node));
+                    break;
+                case "trackList":
+                    retVal.setTracks(TrackList.loadFromXML(node));
+                    break;
             }
         }
 
@@ -171,6 +175,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         this.tracks = tracks;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }

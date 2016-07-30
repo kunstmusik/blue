@@ -19,13 +19,11 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-
 import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.ui.utilities.SimpleDocumentListener;
+import java.awt.BorderLayout;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
 
 public class BSBTextFieldView extends BSBObjectView {
 
@@ -45,6 +43,7 @@ public class BSBTextFieldView extends BSBObjectView {
         textField.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (bsbText != null) {
                             bsbText.setValue(textField.getText());
@@ -73,5 +72,6 @@ public class BSBTextFieldView extends BSBObjectView {
         this.setSize(w, this.getHeight());
     }
 
+    @Override
     public void cleanup() {}
 }

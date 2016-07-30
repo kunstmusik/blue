@@ -22,12 +22,9 @@ package blue.gui;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-
-import blue.soundObject.SoundObjectException;
 
 /**
  * @author steven

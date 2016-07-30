@@ -1,13 +1,11 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.orchestra.blueX7.Operator;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-
-import blue.orchestra.blueX7.Operator;
 
 /**
  * <p>

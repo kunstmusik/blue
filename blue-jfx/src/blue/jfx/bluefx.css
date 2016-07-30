@@ -1,0 +1,126 @@
+.root {
+
+    /* METAL COLORS */
+    primary1: rgb(198,226,255);
+    primary2: rgb(153,153,204);
+    primary3: rgb(204, 204, 255);
+    secondary1: rgb(102, 177, 253);
+    secondary2: rgb(63, 102, 150);
+    secondary3: rgb(38, 51, 76);
+    
+    -fx-base: secondary3;
+    -fx-background: secondary3;
+    -fx-control-inner-background: black;
+    /* using 12 px is a hack to match Swing's font size.  This deals with a
+     problem that Blue Synth Builder uses pixels and font size of 12 as a default.
+     This will not work for High DPI aware screens at all.  In the future, this
+    should really use ems or pts.  Swing code could be based on 
+    Font.getDefault().getSize(), or simply removed and JFX code only used. 
+    
+    JEP 263 may also address all of these issues; more research is required. 
+    */
+    -fx-font-size: 12px;
+
+    -fx-font-family: "sans-serif";
+
+    -fx-accent: primary2;
+    -fx-focus-color: primary1;
+    -fx-faint-focus-color: rgba(198,226,255,0.1);
+}
+
+.value-panel:readonly, 
+.value-panel:focused {
+    -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border), transparent;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 3, 2;
+}
+
+.text-input:focused {
+    -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border),
+        linear-gradient(from 0px 0px to 0px 5px, derive(-fx-control-inner-background, -9%), -fx-control-inner-background);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 3, 2;
+}
+
+.scroll-pane:focused,
+.split-pane:focused,
+.list-view:focused,
+.tree-view:focused,
+.table-view:focused,
+.tree-table-view:focused,
+.html-editor:contains-focus {
+    -fx-background-color: -fx-box-border, -fx-control-inner-background;
+    -fx-background-insets: 0, 1;
+    -fx-padding: 1;
+}
+
+/* SCROLLBAR */
+
+.scroll-bar:horizontal .track,
+.scroll-bar:vertical .track {
+    -fx-background-color:transparent;
+    -fx-border-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-border-radius:2em;
+}
+
+.scroll-bar:horizontal .increment-button ,
+.scroll-bar:horizontal .decrement-button {
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 0 10 0;
+}
+
+.scroll-bar:vertical .increment-button ,
+.scroll-bar:vertical .decrement-button {
+    -fx-background-color:transparent;
+    -fx-background-radius: 0em;
+    -fx-padding:0 10 0 0;
+
+}
+
+.scroll-bar:horizontal .increment-arrow,
+.scroll-bar:horizontal .decrement-arrow {
+    -fx-shape: " ";	
+    -fx-padding:1 0 1 0;
+}
+
+.scroll-bar:vertical .increment-arrow,
+.scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " ";	
+    -fx-padding:0 1 0 1;
+}
+
+/* The main scrollbar **thumb** CSS class which we drag every time (movable) */
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: primary2;
+    -fx-background-insets: 2 0 2 0;
+    -fx-background-radius: 2em;
+}
+
+.scroll-bar:vertical .thumb {
+    /*-fx-background-color:derive(black,90%);*/
+    -fx-background-color: primary2;
+    -fx-background-insets: 0 2 0 2;
+    -fx-background-radius: 2em;
+
+}
+
+/* The column header row is made up of a number of column-header, one for each
+   TableColumn, and a 'filler' area that extends from the right-most column
+   to the edge of the tableview, or up to the 'column control' button. */
+.table-view .column-header,
+.tree-table-view .column-header,
+.table-view .filler,
+.tree-table-view .filler,
+.table-view > .column-header-background > .show-hide-columns-button,
+.tree-table-view > .column-header-background > .show-hide-columns-button,
+.table-view:constrained-resize .filler,
+.tree-table-view:constrained-resize .filler {
+    -fx-background-color: -fx-box-border, -fx-inner-border, -fx-body-color;
+    -fx-background-insets: 0, 0 1 1 0, 1 2 2 1;
+    -fx-font-weight: normal;
+    -fx-size: 2em;
+    -fx-text-fill: -fx-selection-bar-text;
+    -fx-padding: 0.166667em;
+}

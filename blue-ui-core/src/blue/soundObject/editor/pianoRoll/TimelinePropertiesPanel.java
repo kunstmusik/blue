@@ -19,11 +19,12 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.BlueSystem;
+import blue.soundObject.PianoRoll;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -33,9 +34,6 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-
-import blue.BlueSystem;
-import blue.soundObject.PianoRoll;
 
 public class TimelinePropertiesPanel extends JComponent {
 
@@ -60,6 +58,7 @@ public class TimelinePropertiesPanel extends JComponent {
 
         snapEnabledBox.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (pianoRoll != null) {
                     pianoRoll.setSnapEnabled(snapEnabledBox.isSelected());
@@ -69,6 +68,7 @@ public class TimelinePropertiesPanel extends JComponent {
 
         snapValue.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (pianoRoll == null || isUpdating) {
                     return;
@@ -92,6 +92,7 @@ public class TimelinePropertiesPanel extends JComponent {
 
         ActionListener timeActionListener = new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!isUpdating) {
                     if (e.getSource() == timeDisplayTime) {
@@ -114,6 +115,7 @@ public class TimelinePropertiesPanel extends JComponent {
 
         timeUnit.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     int val = Integer.parseInt(timeUnit.getText());

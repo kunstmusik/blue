@@ -29,7 +29,6 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
-
 import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.JTable;
@@ -51,6 +50,7 @@ public class TableHilightDropListener implements DropTargetListener {
     // glasspane on which visual clues are drawn
     JPanel glassPane = new JPanel() {
 
+        @Override
         public void paint(Graphics g) {
             g.setColor(Color.GREEN);
             if (from == null || to == null) {
@@ -131,6 +131,7 @@ public class TableHilightDropListener implements DropTargetListener {
         glassPane.getRootPane().repaint();
     }
 
+    @Override
     public void dragEnter(DropTargetDragEvent dtde) {
 
         JTable table = (JTable) dtde.getDropTargetContext().getComponent();
@@ -145,12 +146,14 @@ public class TableHilightDropListener implements DropTargetListener {
         updateLine(table, location);
     }
 
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
         JTable table = (JTable) dtde.getDropTargetContext().getComponent();
         Point location = dtde.getLocation();
         updateLine(table, location);
     }
 
+    @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
     }
 
@@ -163,10 +166,12 @@ public class TableHilightDropListener implements DropTargetListener {
         rootPane.repaint();
     }
 
+    @Override
     public void dragExit(DropTargetEvent dte) {
         resetGlassPane(dte);
     }
 
+    @Override
     public void drop(DropTargetDropEvent dtde) {
         resetGlassPane(dtde);
     }

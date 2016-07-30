@@ -33,7 +33,6 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import org.netbeans.swing.tabcontrol.TabDisplayer;
 import org.netbeans.swing.tabcontrol.plaf.AbstractViewTabDisplayerUI;
-import org.netbeans.swing.tabcontrol.plaf.TabCellRenderer;
 import org.openide.awt.HtmlRenderer;
 
 /**
@@ -62,6 +61,7 @@ public class BlueViewTabDisplayerUI extends AbstractViewTabDisplayerUI {
     }
 
 
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         FontMetrics fm = getTxtFontMetrics();
         int height = fm == null ?

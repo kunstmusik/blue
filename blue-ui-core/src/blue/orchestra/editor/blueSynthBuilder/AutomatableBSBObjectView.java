@@ -19,10 +19,11 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.AutomatableBSBObject;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
-import blue.orchestra.blueSynthBuilder.AutomatableBSBObject;
 
 public abstract class AutomatableBSBObjectView extends BSBObjectView {
 
@@ -33,7 +34,7 @@ public abstract class AutomatableBSBObjectView extends BSBObjectView {
         return ((AutomatableBSBObject) bsbObj).isAutomationAllowed();
     }
 
-    public void setAutomationAllowed(boolean val) {
+    public void setAutomationAllowed(boolean val) throws PropertyVetoException {
         if (bsbObj == null) {
             return;
         }
@@ -46,11 +47,11 @@ public abstract class AutomatableBSBObjectView extends BSBObjectView {
                             + "confirm disabling of automation.");
 
             if (retVal != JOptionPane.YES_OPTION) {
-                // throw new PropertyVetoException(
-                // "allowAutomation change cancelled",
-                // new PropertyChangeEvent(this, "automationAllowed",
-                // Boolean.valueOf(!val), Boolean.valueOf(val)));
-                return;
+                throw new PropertyVetoException(
+                 "allowAutomation change cancelled",
+                 new PropertyChangeEvent(this, "automationAllowed",
+                 Boolean.valueOf(!val), Boolean.valueOf(val)));
+//                return;
             }
         }
 

@@ -21,7 +21,6 @@
 package blue.tools.soundFont;
 
 import java.util.ArrayList;
-
 import javax.swing.table.AbstractTableModel;
 
 public class InstrumentInfoTableModel extends AbstractTableModel {
@@ -32,14 +31,17 @@ public class InstrumentInfoTableModel extends AbstractTableModel {
         instruments.add(info);
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public int getRowCount() {
         return instruments.size();
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         InstrumentInfo info = (InstrumentInfo) instruments.get(rowIndex);
 
@@ -52,6 +54,7 @@ public class InstrumentInfoTableModel extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public String getColumnName(int index) {
         if (index == 0) {
             return "#";

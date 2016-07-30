@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+
+<ScrollPane fitToWidth="true" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="blue.score.layers.audio.ui.AudioClipEditorController">
+   <content>
+      <AnchorPane prefHeight="341.0" prefWidth="515.0">
+         <children>
+            <GridPane hgap="5.0" layoutX="14.920731544494629" layoutY="8.0" vgap="5.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+               <columnConstraints>
+                  <ColumnConstraints fillWidth="false" hgrow="NEVER" minWidth="100.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <Label text="Audio File" />
+                  <TextField fx:id="audioFileText" editable="false" prefHeight="26.0" prefWidth="278.0" text="Audio File" GridPane.columnIndex="1" />
+                  <Label text="Start Time" GridPane.rowIndex="1" />
+                  <Label text="Duration" GridPane.rowIndex="2" />
+                  <Label text="File Start" GridPane.rowIndex="4" />
+                  <Label text="Duration" GridPane.rowIndex="5" />
+                  <Label prefHeight="30.0" text="File Properties" GridPane.rowIndex="3" />
+                  <Label text="Fade In" GridPane.rowIndex="6" />
+                  <Label text="Fade Out" GridPane.rowIndex="8" />
+                  <TextField fx:id="startTimeText" prefHeight="26.0" prefWidth="278.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <TextField fx:id="durationText" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <TextField fx:id="fileStartText" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  <TextField fx:id="audioDurationText" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                  <TextField fx:id="fadeInText" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                  <TextField fx:id="fadeOutText" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                  <Label text="Fade In Type" GridPane.rowIndex="7" />
+                  <Label text="Fade Out Type" GridPane.rowIndex="9" />
+                  <ChoiceBox fx:id="fadeInChoiceBox" prefHeight="26.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                  <ChoiceBox fx:id="fadeOutChoiceBox" prefHeight="26.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+               </children>
+               <opaqueInsets>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </opaqueInsets>
+            </GridPane>
+         </children>
+         <padding>
+            <Insets left="5.0" top="5.0" />
+         </padding>
+      </AnchorPane>
+   </content>
+</ScrollPane>

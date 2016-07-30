@@ -25,7 +25,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.beans.PropertyChangeSupport;
 
 /**
  * @author steven
@@ -56,15 +55,18 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("fileName")) {
-                selector.setFileName(node.getTextString());
-            } else if (node.getName().equals("textFieldWidth")) {
-                selector.setTextFieldWidth(Integer.parseInt(node
-                        .getTextString()));
-            } else if (node.getName().equals("stringChannelEnabled")) {
-                stringChannelEnabled = XMLUtilities.readBoolean(node);
-            } 
+            switch (node.getName()) {
+                case "fileName":
+                    selector.setFileName(node.getTextString());
+                    break;
+                case "textFieldWidth":
+                    selector.setTextFieldWidth(Integer.parseInt(node
+                            .getTextString()));
+                    break;
+                case "stringChannelEnabled": 
+                    stringChannelEnabled = XMLUtilities.readBoolean(node);
+                    break;
+            }
 
         }
         
@@ -85,10 +87,6 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
 
         return retVal;
     }
-
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBFileSelectorView(this);
-//    }
 
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         String fileNameValue = fileName.replace('\\', '/');
@@ -166,5 +164,11 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         return stringChannel;
     }
     
-    
+    @Override
+    public Object clone() {
+        BSBFileSelector clone = (BSBFileSelector) super.clone();
+        clone.stringChannel = new StringChannel();
+        clone.addPropertyChangeListener(clone.stringChannel);
+        return clone;
+    }
 }

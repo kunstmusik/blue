@@ -1,6 +1,15 @@
 package blue.ui.core.soundObject.renderer;
 
+import blue.BlueSystem;
+import blue.plugin.BarRendererPlugin;
 import blue.score.layers.Layer;
+import blue.soundObject.AudioFile;
+import blue.soundObject.SoundObject;
+import blue.ui.core.score.layers.soundObject.SoundObjectView;
+import blue.ui.utilities.audio.AudioWaveformCache;
+import blue.ui.utilities.audio.AudioWaveformData;
+import blue.ui.utilities.audio.AudioWaveformListener;
+import blue.ui.utilities.audio.AudioWaveformUI;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -8,13 +17,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
-import blue.ui.core.score.layers.soundObject.SoundObjectView;
-import blue.soundObject.AudioFile;
-import blue.soundObject.SoundObject;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformCache;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformData;
-import blue.ui.core.soundObject.renderer.audioFile.AudioWaveformListener;
-
+@BarRendererPlugin(scoreObjectType = AudioFile.class)
 public class AudioFileRenderer implements BarRenderer {
 
     private static final String AUDIO_WAVEFORM_DATA = "audioWaveformData";
@@ -23,7 +26,7 @@ public class AudioFileRenderer implements BarRenderer {
 
     private static Font renderFont = new Font("Dialog", Font.BOLD, 12);
 
-    protected static Color selectedBgColor = Color.white;
+    protected static Color selectedBgColor = new Color(255,255,255,128);
 
     protected static Color selectedBorder1 = selectedBgColor.brighter()
             .brighter();
@@ -32,8 +35,13 @@ public class AudioFileRenderer implements BarRenderer {
 
     protected static Color selectedFontColor = Color.darkGray;
 
-    protected static AudioWaveformCache waveCache = new AudioWaveformCache();
+    protected static AudioWaveformCache waveCache = AudioWaveformCache.getInstance();
 
+    private boolean isBright(Color c) {
+        return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
+    }
+    
+    @Override
     public void render(Graphics graphics, SoundObjectView sObjView,
             int pixelSeconds) {
 
@@ -47,6 +55,7 @@ public class AudioFileRenderer implements BarRenderer {
         Color border1;
         Color border2;
         Color fontColor;
+        Color waveColor;
 
         SoundObject sObj = sObjView.getSoundObject();
 
@@ -60,24 +69,23 @@ public class AudioFileRenderer implements BarRenderer {
             border1 = bgColor.brighter().brighter();
             border2 = bgColor.darker().darker();
 
-            int total = bgColor.getRed() + bgColor.getGreen()
-                    + bgColor.getBlue();
-
-            if (total > 128 * 3) {
-                fontColor = Color.black;
-            } else {
-                fontColor = Color.white;
-            }
+            fontColor = isBright(bgColor) ? Color.BLACK : Color.WHITE;
 
         }
 
+        if(isBright(bgColor)) {
+            waveColor = bgColor.brighter().brighter();
+        } else {
+            waveColor = bgColor.darker().darker();
+        }
+        
         g.setPaint(bgColor);
 
         g.fillRect(clip.x, 2, clip.width, h - 4);
 
         // Draw Waveform
 
-        g.setPaint(fontColor);
+        g.setPaint(waveColor);
 
         paintWaveform(g, sObjView, pixelSeconds);
 
@@ -124,7 +132,8 @@ public class AudioFileRenderer implements BarRenderer {
                 .getClientProperty(AUDIO_WAVEFORM_DATA);
 
         if (waveData == null) {
-            waveData = waveCache.getAudioWaveformData(audioFilename,
+            waveData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
 
             if (waveData.percentLoadingComplete < 1.0) {
@@ -135,9 +144,8 @@ public class AudioFileRenderer implements BarRenderer {
             sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, waveData);
         } else if (waveData.pixelSeconds != pixelSeconds
                 || !waveData.fileName.equals(audioFile.getSoundFileName())) {
-            waveCache.removeReference(waveData);
-
-            waveData = waveCache.getAudioWaveformData(audioFilename,
+            waveData = waveCache.getAudioWaveformData(
+                    BlueSystem.getFullPath(audioFilename),
                     pixelSeconds);
             sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, waveData);
 
@@ -149,75 +157,15 @@ public class AudioFileRenderer implements BarRenderer {
 
         g.translate(1, 2);
 
-        paintWaveForm(g, sObjVisibleHeight, waveData);
+        AudioWaveformUI.paintWaveForm(g, sObjVisibleHeight, waveData, 0);
 
         g.translate(-1, -2);
 
     }
 
-    private void paintWaveForm(Graphics2D g, int sObjVisibleHeight,
-            AudioWaveformData waveForm) {
-
-        if (waveForm.data == null) {
-            return;
-        }
-
-        // if (waveForm.percentLoadingComplete < 1.0) {
-        // return;
-        // }
-
-        Rectangle bounds = g.getClipBounds();
-
-        int startX = bounds.x; // + 1;
-        int endX = startX + bounds.width;
-
-        if (startX < 0) {
-            startX = 0;
-        }
-
-        // System.out.println(startX + " : " + endX + " : " + bounds);
-
-        int index;
-
-        int channelHeight = sObjVisibleHeight / waveForm.data.length;
-        int middleZero = channelHeight / 2;
-
-        for (int j = 0; j < waveForm.data.length; j++) {
-            int yAdjust = j * channelHeight;
-
-            for (int i = startX; i < endX; i++) {
-                index = i * 2;
-
-                if (index + 1 > waveForm.data[j].length) {
-                    break;
-                }
-
-                // if(index + 1 > waveForm.data[j].length) {
-                // break;
-                // }
-
-                int y1 = (int) (middleZero - (waveForm.data[j][index] * middleZero))
-                        + yAdjust;
-                int y2 = (int) (middleZero - (waveForm.data[j][index + 1] * middleZero))
-                        + yAdjust;
-
-                g.drawLine(i, y1, i, y2);
-
-            }
-        }
-    }
-
+    @Override
     public void cleanup(SoundObjectView sObjView) {
-        AudioWaveformData waveData = (AudioWaveformData) sObjView
-                .getClientProperty(AUDIO_WAVEFORM_DATA);
-
-        if (waveData != null) {
-            waveCache.removeReference(waveData);
-        }
         sObjView.putClientProperty(AUDIO_WAVEFORM_DATA, null);
     }
-
-    public Class getSoundObjectClass() {
-        return AudioFile.class;
-    }
+    
 }

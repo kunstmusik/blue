@@ -25,6 +25,7 @@ import blue.soundObject.NoteList;
 
 class li extends CybilAlgorithm {
 
+    @Override
     public float[] getValue(CybilNoteList cybilNoteList) {
 
         float start = getFloatValue(args.get(0));
@@ -68,7 +69,7 @@ class li extends CybilAlgorithm {
                     float val = (x * diff) + start;
                     String strVal = Float.toString(val);
 
-                    Note currentNote = notes.getNote(cybilNoteList.index);
+                    Note currentNote = notes.get(cybilNoteList.index);
                     currentNote.setPField(strVal, cybilNoteList.pfield);
                     cybilNoteList.index++;
 

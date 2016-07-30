@@ -60,23 +60,30 @@ public class Weibull implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("s")) {
-                retVal.s = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("t")) {
-                retVal.t = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("sTableEnabled")) {
-                retVal.sTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("tTableEnabled")) {
-                retVal.tTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("sTable")) {
-                    retVal.sTable = Table.loadFromXML(node);
-                } else if (tableId.equals("tTable")) {
-                    retVal.tTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "s":
+                    retVal.s = XMLUtilities.readDouble(node);
+                    break;
+                case "t":
+                    retVal.t = XMLUtilities.readDouble(node);
+                    break;
+                case "sTableEnabled":
+                    retVal.sTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "tTableEnabled":
+                    retVal.tTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "sTable":
+                            retVal.sTable = Table.loadFromXML(node);
+                            break;
+                        case "tTable":
+                            retVal.tTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 
@@ -113,7 +120,7 @@ public class Weibull implements ProbabilityGenerator {
         return "Weibull";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
 
         double x, a, e; // t>1 -> max bei s
 
@@ -132,7 +139,7 @@ public class Weibull implements ProbabilityGenerator {
         }
 
         do {
-            x = Math.random();
+            x = rnd.nextDouble();
             a = 1.0 / (1.0 - x);
             e = localS * Math.pow(Math.log(a), (1.0 / localT));
         } while (e > 1);

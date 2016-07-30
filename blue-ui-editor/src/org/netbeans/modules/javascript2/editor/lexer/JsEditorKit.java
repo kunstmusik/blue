@@ -23,7 +23,6 @@ import javax.swing.text.Document;
 import org.netbeans.api.lexer.Language;
 import org.netbeans.modules.editor.NbEditorDocument;
 import org.netbeans.modules.editor.NbEditorKit;
-import org.netbeans.modules.javascript2.editor.lexer.JsTokenId;
 
 /**
  *

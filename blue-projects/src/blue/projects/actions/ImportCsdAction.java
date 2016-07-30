@@ -23,19 +23,17 @@ import blue.BlueData;
 import blue.BlueSystem;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import blue.projects.recentProjects.RecentProjectsList;
 import blue.settings.GeneralSettings;
 import blue.ui.utilities.FileChooserManager;
 import blue.utility.CSDUtility;
-import blue.utility.GenericFileFilter;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import javax.swing.JFileChooser;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.awt.StatusDisplayer;
 import org.openide.windows.WindowManager;
 
 public final class ImportCsdAction implements ActionListener {
@@ -45,7 +43,7 @@ public final class ImportCsdAction implements ActionListener {
 //        fcm.setAcceptAllFileFilterUsed(false);
         fcm.setMultiSelectionEnabled(this.getClass(), false);
         fcm.addFilter(this.getClass(),
-                new GenericFileFilter("csd", "CSD File"));
+                new ExtensionFilter("CSD File", "*.csd"));
         fcm.setSelectedFile(this.getClass(),
                 GeneralSettings.getInstance().getDefaultDirectory());
         fcm.setDialogTitle(this.getClass(), "Select CSD File");
@@ -61,12 +59,11 @@ public final class ImportCsdAction implements ActionListener {
 
     protected void importCsdAction() {
         final Frame mainWindow = WindowManager.getDefault().getMainWindow();
-        int rValue = FileChooserManager.getDefault().showOpenDialog(
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                 this.getClass(), mainWindow);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File temp = FileChooserManager.getDefault().getSelectedFile(this.
-                    getClass());
+        if (rValue.size() > 0) {
+            File temp = rValue.get(0);
 
             if (!(temp.getName().trim().toLowerCase().endsWith(".csd"))) {
                 String errorMessage = BlueSystem.getString(
@@ -114,11 +111,11 @@ public final class ImportCsdAction implements ActionListener {
                         "message.error"), JOptionPane.ERROR_MESSAGE);
             }
 
-        } else if (rValue == JFileChooser.CANCEL_OPTION) {
-            StatusDisplayer.getDefault().setStatusText(
-                    BlueSystem.getString("message.actionCancelled"));
-
-        }
+        } 
+//        else if (rValue == JFileChooser.CANCEL_OPTION) {
+//            StatusDisplayer.getDefault().setStatusText(
+//                    BlueSystem.getString("message.actionCancelled"));
+//        }
 
     }
 }

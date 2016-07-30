@@ -19,15 +19,13 @@
  */
 package blue.soundObject.ceciliaModule.cybil;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.StringTokenizer;
-
 import blue.BlueSystem;
 import blue.soundObject.CeciliaModule;
 import blue.soundObject.ceciliaModule.CGraph;
-//import blue.soundObject.editor.ceciliaModule.CeciliaModuleImportDialog;
 import blue.utility.TextUtilities;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 /**
  * @author steven

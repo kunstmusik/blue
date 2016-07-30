@@ -17,74 +17,84 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue.ui.core.score.layers.soundObject;
 
-import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JComponent;
-
-import blue.SoundLayer;
 import blue.automation.ParameterLinePanel;
 import blue.components.AlphaMarquee;
 import blue.score.TimeState;
+import blue.score.layers.AutomatableLayer;
+import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
+import blue.ui.core.score.MultiLineScoreSelection;
+import blue.ui.core.score.MultiLineScoreSelectionListener;
+import blue.ui.core.score.ScoreController;
+import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.soundLayer.SoundLayerLayout;
-import blue.soundObject.PolyObject;
+import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import javax.swing.JComponent;
 
 public class AutomationLayerPanel extends JComponent implements
-        PropertyChangeListener, LayerGroupListener {
+        PropertyChangeListener, LayerGroupListener,
+        MultiLineScoreSelectionListener {
+
     SoundLayerLayout layout = new SoundLayerLayout();
 
-    private PolyObject pObj = null;
-    
+    private LayerGroup layerGroup = null;
+
     private TimeState timeState = null;
 
     private AlphaMarquee marquee;
-    
+
     private int scaleLayerNum = -1;
 
+    MultiLineScoreSelection selection = MultiLineScoreSelection.getInstance();
+
+    final ScorePath path;
+    
     public AutomationLayerPanel(AlphaMarquee marquee) {
         this.setLayout(layout);
         this.marquee = marquee;
+        path = ScoreController.getInstance().getScorePath();
     }
 
-    public void setPolyObject(PolyObject pObj, TimeState timeState) {
-        if (this.pObj != null && this.pObj.isRoot()) {
+    public void setLayerGroup(LayerGroup layerGroup, TimeState timeState) {
+        if (this.layerGroup != null && path.getLastLayerGroup() == null) {
             this.timeState.removePropertyChangeListener(this);
-            this.pObj.removeLayerGroupListener(this);
+            this.layerGroup.removeLayerGroupListener(this);
         }
 
         Component[] components = this.getComponents();
         this.removeAll();
 
-        for(int i = 0; i < components.length; i++) {
-            ((ParameterLinePanel)components[i]).cleanup();
+        for (int i = 0; i < components.length; i++) {
+            ((ParameterLinePanel) components[i]).cleanup();
         }
 
-        layout.setPolyObject(pObj);
+        layout.setPolyObject(layerGroup);
 
-        this.pObj = pObj;
+        this.layerGroup = layerGroup;
         this.timeState = timeState;
 
-        if (pObj != null && pObj.isRoot()) {
+        if (layerGroup != null && path.getLastLayerGroup() == null) {
             this.timeState.addPropertyChangeListener(this);
-            this.pObj.addLayerGroupListener(this);
+            this.layerGroup.addLayerGroupListener(this);
         }
 
         this.populate();
     }
 
     private void populate() {
-        if (pObj == null || !pObj.isRoot()) {
+        if (layerGroup == null || path.getLastLayerGroup() != null) {
             return;
         }
 
-        for (int i = 0; i < pObj.getSize(); i++) {
-            SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(i);
+        for (int i = 0; i < layerGroup.size(); i++) {
+            AutomatableLayer sLayer = (AutomatableLayer) layerGroup.get(i);
 
             ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
             paramPanel.setTimeState(timeState);
@@ -96,28 +106,67 @@ public class AutomationLayerPanel extends JComponent implements
         revalidate();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getSource() == this.pObj) {
+        if (evt.getSource() == this.layerGroup) {
             if (evt.getPropertyName().equals("heightIndex")) {
                 revalidate();
             }
         }
     }
-    
-    public void addSelectionDragRegion(float startTime, float endTime, int layerNum) {
-        if(layerNum >= getComponentCount()) {
-            return;
-        }
-        
-        ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(layerNum);
-        paramLinePanel.addSelectionDragRegion(startTime, endTime);
+
+//    public void addSelectionDragRegion(float startTime, float endTime, int layerNum) {
+//        if(layerNum >= getComponentCount()) {
+//            return;
+//        }
+//        
+//        ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(layerNum);
+//        paramLinePanel.addSelectionDragRegion(startTime, endTime);
+//    }
+    @Override
+    public void removeNotify() {
+        MultiLineScoreSelection.getInstance().removeListener(this);
+        super.removeNotify();
     }
-    
-    public void setMultiLineDragStart(float startTime, float endTime, 
-            int startLayer, int endLayer) {
-        for(int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(i);
-            if(i >= startLayer && i <= endLayer) {
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        MultiLineScoreSelection.getInstance().addListener(this);
+    }
+
+    @Override
+    public void multiLineSelectionUpdated(MultiLineScoreSelection.UpdateType updateType) {
+        switch (updateType) {
+            case SELECTION:
+                setMultiLineDragStart(selection.getStartTime(),
+                        selection.getEndTime(),
+                        selection.getSelectedLayers());
+                break;
+            case TRANSLATION_START:
+                setMultiLineDragStart(selection.getStartTime(),
+                        selection.getEndTime(),
+                        selection.getSelectedLayers());
+                break;
+            case TRANSLATION:
+                setMultiLineTranslation(selection.getTranslationTime());
+                break;
+            case TRANSLATION_COMPLETE:
+                commitMultiLineDrag();
+                break;
+            case CLEAR:
+                clearMultiLineTranslation();
+                break;
+        }
+    }
+
+    public void setMultiLineDragStart(float startTime, float endTime,
+            Collection<Layer> selectedLayers) {
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+
+            if (selectedLayers != null && selectedLayers.contains(layerGroup.get(i))) {
                 paramLinePanel.setSelectionDragRegion(startTime, endTime);
             } else {
                 paramLinePanel.clearSelectionDragRegions();
@@ -126,52 +175,60 @@ public class AutomationLayerPanel extends JComponent implements
     }
 
     public void commitMultiLineDrag() {
-        for(int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(i);
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
             paramLinePanel.commitMultiLineDrag();
         }
     }
 
     public void setMultiLineTranslation(float timeTranslate) {
-        for(int i = 0; i < getComponentCount(); i++) {
-            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(i);
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
             paramLinePanel.setMultiLineMouseTranslation(timeTranslate);
         }
     }
-    
+
+    public void clearMultiLineTranslation() {
+        for (int i = 0; i < getComponentCount(); i++) {
+            ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
+                    i);
+            paramLinePanel.clearSelectionDragRegions();
+        }
+    }
+
     /* SCORE SCALING */
-    
     public void initiateScoreScale(float startTime, float endTime, int scaleLayerNum) {
         this.scaleLayerNum = scaleLayerNum;
-        
-        ParameterLinePanel paramLinePanel = 
-                ((ParameterLinePanel)this.getComponent(this.scaleLayerNum));
+
+        ParameterLinePanel paramLinePanel
+                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.initiateScoreScale(startTime, endTime);
     }
-    
+
     public void setScoreScaleStart(float newSelectionStartTime) {
-        ParameterLinePanel paramLinePanel = 
-                ((ParameterLinePanel)this.getComponent(this.scaleLayerNum));
+        ParameterLinePanel paramLinePanel
+                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.setScoreScaleStart(newSelectionStartTime);
     }
-    
+
     public void setScoreScaleEnd(float newSelectionEndTime) {
-        ParameterLinePanel paramLinePanel = 
-                ((ParameterLinePanel)this.getComponent(this.scaleLayerNum));
+        ParameterLinePanel paramLinePanel
+                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.setScoreScaleEnd(newSelectionEndTime);
     }
-    
-    
+
     public void endScoreScale() {
-        ParameterLinePanel paramLinePanel = 
-                ((ParameterLinePanel)this.getComponent(this.scaleLayerNum));
+        ParameterLinePanel paramLinePanel
+                = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.commitScoreScale();
         this.scaleLayerNum = -1;
     }
 
     @Override
     public void layerGroupChanged(LayerGroupDataEvent event) {
-        switch(event.getType()) {
+        switch (event.getType()) {
             case LayerGroupDataEvent.DATA_ADDED:
                 layersAdded(event);
                 break;
@@ -183,8 +240,8 @@ public class AutomationLayerPanel extends JComponent implements
                 break;
         }
     }
-    
-     public void contentsChanged(LayerGroupDataEvent e) {
+
+    public void contentsChanged(LayerGroupDataEvent e) {
         int start = e.getStartIndex();
         int end = e.getEndIndex();
 
@@ -209,14 +266,13 @@ public class AutomationLayerPanel extends JComponent implements
 
     public void layersAdded(LayerGroupDataEvent e) {
         int index = e.getStartIndex();
-        SoundLayer sLayer = (SoundLayer) pObj.getLayerAt(index);
+        AutomatableLayer sLayer = (AutomatableLayer)layerGroup.get(index);
 
         ParameterLinePanel paramPanel = new ParameterLinePanel(this.marquee);
         paramPanel.setTimeState(timeState);
         paramPanel.setParameterIdList(sLayer.getAutomationParameters());
 
         // this.add(paramPanel);
-
         this.add(paramPanel, index);
 
         revalidate(); // is this necessary?
@@ -229,9 +285,10 @@ public class AutomationLayerPanel extends JComponent implements
         for (int i = end; i >= start; i--) {
             Component c = getComponent(i);
             remove(i);
-            ((ParameterLinePanel)c).cleanup();
+            ((ParameterLinePanel) c).cleanup();
         }
 
         revalidate(); // is this necessary?
     }
+
 }

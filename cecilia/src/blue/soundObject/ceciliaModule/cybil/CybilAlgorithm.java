@@ -35,7 +35,7 @@ abstract class CybilAlgorithm extends CybilArg {
      */
     protected int getCount(NoteList notes, int startIndex, float endTime) {
         for (int i = startIndex; i < notes.size(); i++) {
-            if (notes.getNote(i).getStartTime() >= endTime) {
+            if (notes.get(i).getStartTime() >= endTime) {
                 return i - startIndex;
             }
         }

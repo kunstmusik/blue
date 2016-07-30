@@ -20,20 +20,18 @@
 
 package blue.components;
 
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Frame;
-import java.util.WeakHashMap;
-
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.utility.GUI;
 import electric.xml.Element;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.util.WeakHashMap;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 /**
@@ -48,7 +46,7 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     JTextComponent textArea = null;
 
     private static WeakHashMap<Component, FindReplaceDialog> map =
-            new WeakHashMap<Component, FindReplaceDialog>();
+            new WeakHashMap<>();
 
     public static void showFindReplace(JTextComponent textComponent) {
         Component root = SwingUtilities.getRoot(textComponent);
@@ -435,6 +433,7 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
                 JFrame frame = new JFrame();
                 new FindReplaceDialog(frame).setVisible(true);
@@ -461,10 +460,12 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
     private javax.swing.JCheckBox wrapSearchBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

@@ -31,6 +31,10 @@ public class XMLUtilities {
     public static int readInt(Element data, String nodeName) {
         return Integer.parseInt(data.getTextString(nodeName));
     }
+    
+    public static long readLong(Element data) {
+        return Long.parseLong(data.getTextString());
+    }
 
     public static int readInt(Element data) {
         return Integer.parseInt(data.getTextString());
@@ -51,6 +55,13 @@ public class XMLUtilities {
     public static Element writeInt(String nodeName, int val) {
         Element elem = new Element(nodeName);
         elem.setText(Integer.toString(val));
+
+        return elem;
+    }
+    
+    public static Element writeLong(String nodeName, long val) {
+        Element elem = new Element(nodeName);
+        elem.setText(Long.toString(val));
 
         return elem;
     }

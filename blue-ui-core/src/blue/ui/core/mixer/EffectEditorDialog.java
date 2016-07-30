@@ -19,17 +19,15 @@
  */
 package blue.ui.core.mixer;
 
-import blue.mixer.*;
-import java.awt.BorderLayout;
-
-import javax.swing.event.DocumentEvent;
-
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
+import blue.mixer.*;
 import blue.ui.utilities.SimpleDocumentListener;
 import blue.utility.GUI;
 import electric.xml.Element;
+import java.awt.BorderLayout;
 import java.awt.Frame;
+import javax.swing.event.DocumentEvent;
 
 public class EffectEditorDialog extends javax.swing.JDialog implements
         WindowSettingsSavable {
@@ -47,6 +45,7 @@ public class EffectEditorDialog extends javax.swing.JDialog implements
         nameText.getDocument().addDocumentListener(
                 new SimpleDocumentListener() {
 
+                    @Override
                     public void documentChanged(DocumentEvent e) {
                         if (effect != null) {
                             effect.setName(nameText.getText());
@@ -140,16 +139,19 @@ public class EffectEditorDialog extends javax.swing.JDialog implements
      */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 new EffectEditorDialog(null, true).setVisible(true);
             }
         });
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }

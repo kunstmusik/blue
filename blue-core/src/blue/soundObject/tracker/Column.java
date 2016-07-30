@@ -154,6 +154,7 @@ public class Column implements Serializable {
         this.outputFrequency = outputFrequency;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
@@ -447,27 +448,33 @@ public class Column implements Serializable {
             Element node = nodes.next();
             String nodeName = node.getName();
             String nodeVal = node.getTextString();
-
-            if (nodeName.equals("scale")) {
-                retVal.setScale(Scale.loadFromXML(node));
-                // } else if (nodeName.equals("defaultValue")) {
-                // retVal.defaultValue = nodeVal;
-            } else if (nodeName.equals("outputFrequency")) {
-                retVal.outputFrequency = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("name")) {
-                retVal.name = nodeVal;
-            } else if (nodeName.equals("rangeMin")) {
-                retVal.rangeMin = Double.parseDouble(nodeVal);
-            } else if (nodeName.equals("rangeMax")) {
-                retVal.rangeMax = Double.parseDouble(nodeVal);
-            } else if (nodeName.equals("type")) {
-                retVal.type = Integer.parseInt(nodeVal);
-            } else if (nodeName.equals("restrictedToInteger")) {
-                retVal.restrictedToInteger = Boolean.valueOf(nodeVal)
-                        .booleanValue();
-            } else if (nodeName.equals("usingRange")) {
-                retVal.usingRange = Boolean.valueOf(nodeVal).booleanValue();
+            switch (nodeName) {
+                case "scale":
+                    retVal.setScale(Scale.loadFromXML(node));
+                    break;
+                case "outputFrequency":
+                    retVal.outputFrequency = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "name":
+                    retVal.name = nodeVal;
+                    break;
+                case "rangeMin":
+                    retVal.rangeMin = Double.parseDouble(nodeVal);
+                    break;
+                case "rangeMax":
+                    retVal.rangeMax = Double.parseDouble(nodeVal);
+                    break;
+                case "type":
+                    retVal.type = Integer.parseInt(nodeVal);
+                    break;
+                case "restrictedToInteger":
+                    retVal.restrictedToInteger = Boolean.valueOf(nodeVal)
+                            .booleanValue();
+                    break;
+                case "usingRange":
+                    retVal.usingRange = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
             }
         }
 

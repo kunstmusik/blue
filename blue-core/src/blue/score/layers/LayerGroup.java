@@ -25,13 +25,14 @@ import blue.score.ScoreGenerationException;
 import blue.soundObject.NoteList;
 import electric.xml.Element;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 /**
  *
  * @author stevenyi
  */
-public interface LayerGroup extends Serializable {
+public interface LayerGroup<T extends Layer> extends Serializable, List<T> {
     
     public String getName();
     
@@ -76,7 +77,7 @@ public interface LayerGroup extends Serializable {
      * 
      * @param index 
      */
-    public Layer newLayerAt(int index);
+    public T newLayerAt(int index);
     
     /**
      * Removes Layer from startIndex to endIndex.
@@ -101,20 +102,6 @@ public interface LayerGroup extends Serializable {
      */
     public void pushDownLayers(int startIndex, int endIndex);
 
-    /**
-     * Returns number of Layers in LayerGroup
-     * @return 
-     */
-    public int getSize();
-    
-    /**
-     * Returns Layer at index.
-     * 
-     * @param index
-     * @return 
-     */
-    public Layer getLayerAt(int index);
-    
     /* LIFECYCLE EVENT CODE */
     
     /** Called when a project has been loaded and allows layer to initialize

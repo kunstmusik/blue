@@ -21,7 +21,6 @@
 package blue.soundObject.editor.ceciliaModule;
 
 import java.awt.Dimension;
-
 import javax.swing.JLabel;
 
 /**
@@ -46,6 +45,7 @@ public class DisplayLabel extends JLabel {
         this.unit = unit;
     }
 
+    @Override
     public void setText(String text) {
         super.setText(text + " " + this.getUnit());
     }

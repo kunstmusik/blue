@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.Vector;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiMessage;
 import javax.sound.midi.MidiSystem;

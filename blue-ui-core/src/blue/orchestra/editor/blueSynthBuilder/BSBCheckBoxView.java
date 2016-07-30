@@ -19,15 +19,13 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JCheckBox;
-
-import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 
 /**
  * @author steven
@@ -55,6 +53,7 @@ public class BSBCheckBoxView extends AutomatableBSBObjectView implements
 
         uiBox.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!updating) {
                     updateSelected();
@@ -100,6 +99,7 @@ public class BSBCheckBoxView extends AutomatableBSBObjectView implements
         box.setRandomizable(randomizable);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getSource() == this.box) {
             if (pce.getPropertyName().equals("selected")) {
@@ -112,6 +112,7 @@ public class BSBCheckBoxView extends AutomatableBSBObjectView implements
         }
     }
 
+    @Override
     public void cleanup() {
         box.removePropertyChangeListener(this);
     }

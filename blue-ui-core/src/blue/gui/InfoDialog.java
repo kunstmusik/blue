@@ -17,92 +17,79 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.gui;
 
-import java.awt.BorderLayout;
+import blue.ui.nbutilities.MimeTypeEditorComponent;
+import blue.ui.utilities.UiUtilities;
+import blue.utility.GUI;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
-
-import blue.components.CaretPositionDisplayLabel;
-import blue.ui.utilities.UiUtilities;
-import blue.utility.GUI;
+import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
 public class InfoDialog {
 
     private static JPanel infoPanel = null;
-
-    private static JTextArea infoText = null;
-
     private static JDialog dialog = null;
 
     private static JTabbedPane tabs = null;
 
     private static JPopupMenu popup = null;
 
-    private InfoDialog() {
-    }
+    private static MimeTypeEditorComponent infoText = null;
 
-    private static final void initialize() {
-        infoPanel = new JPanel();
-
-        JScrollPane infoScrollPane = new JScrollPane();
-        infoText = new JTextArea();
-        infoText.setFont(new Font("Monospaced", Font.PLAIN, 12));
-
-        CaretPositionDisplayLabel caretPositionDisplayLabel = new CaretPositionDisplayLabel();
-        infoText.addCaretListener(caretPositionDisplayLabel);
-        
-        infoScrollPane.getViewport().add(infoText);
-        infoScrollPane.setPreferredSize(new Dimension(760, 400));
-
-        infoPanel.setLayout(new BorderLayout());
-        infoPanel.add(infoScrollPane, BorderLayout.CENTER);
-        infoPanel.add(caretPositionDisplayLabel, BorderLayout.SOUTH);
-    }
-
-    public static final void showInformationDialog(Component parent,
+    public static synchronized final void showInformationDialog(Component parent,
             String information, String title) {
-        if (infoPanel == null) {
-            initialize();
+
+        if (infoText == null) {
+            try {
+                if (SwingUtilities.isEventDispatchThread()) {
+                    infoText = new MimeTypeEditorComponent("text/plain");
+                } else {
+                    SwingUtilities.invokeAndWait(()
+                            -> infoText = new MimeTypeEditorComponent(
+                                    "text/plain"));
+                }
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (InvocationTargetException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
+
         infoText.setText(information);
-        JOptionPane.showMessageDialog(parent, infoPanel, title,
-                JOptionPane.PLAIN_MESSAGE);
+        infoText.getJEditorPane().getCaret().setDot(0);
+
+        final JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(parent));
+        dlg.getContentPane().add(infoText);
+        dlg.setModal(true);
+        dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dlg.setTitle(title);
+        dlg.setSize(new Dimension(760, 400));
+
+        GUI.centerOnScreen(dlg);
+        dlg.setVisible(true);
         infoText.setText("");
     }
-
-//    public static final void showInformationDialogCode(Component parent,
-//            String information, String title) {
-//        BlueEditorPane bep = new BlueEditorPane();
-//
-//        bep.setText(information);
-//        bep.setCaretPosition(0);
-//        JOptionPane.showMessageDialog(parent, bep, title,
-//                JOptionPane.PLAIN_MESSAGE);
-//    }
 
     public static final void showInformationDialogTabs(String information,
             String title) {
@@ -121,6 +108,7 @@ public class InfoDialog {
 
             popup.add(new AbstractAction("Remove") {
 
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     int index = tabs.getSelectedIndex();
                     if (index >= 0) {
@@ -136,6 +124,7 @@ public class InfoDialog {
 
             tabs.addMouseListener(new MouseAdapter() {
 
+                @Override
                 public void mousePressed(MouseEvent e) {
                     if (UiUtilities.isRightMouseButton(e)) {
                         popup.show(tabs, e.getX(), e.getY());
@@ -144,7 +133,8 @@ public class InfoDialog {
 
             });
 
-            DialogUtil.registerJDialog(dialog);
+            dialog.getRootPane().putClientProperty("SeparateWindow",
+                    Boolean.TRUE);
         }
 
         tabs.add(title, new JScrollPane(new JTextArea(information)));

@@ -52,11 +52,13 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
           super(leftClip, normal, rightClip, new Dimension (28, 32));
       }
 
+    @Override
     public Color getSelectedForeground() {
 //        return UIManager.getColor("textText"); //NOI18N
         return Color.WHITE;
     }
 
+    @Override
     public Color getForeground() {
         return getSelectedForeground();
     }
@@ -65,14 +67,17 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
      * #56245 - need more space between icon and edge on classic for the case
      * of full 16x16 icons.
      */
+    @Override
     public int getPixelsToAddToSelection() {
         return 4;
     }
 
+    @Override
     protected int getCaptionYAdjustment() {
         return 0;
     }
 
+    @Override
     public Dimension getPadding() {
         Dimension d = super.getPadding();
         d.width = isShowCloseButton() && !Boolean.getBoolean("nb.tabs.suppressCloseButton") ? 28 : 14;

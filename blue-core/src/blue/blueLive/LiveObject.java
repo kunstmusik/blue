@@ -118,16 +118,20 @@ public class LiveObject implements Serializable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String name = node.getName();
-
-            if (name.equals("keyTrigger")) {
-                liveObj.setKeyTrigger(XMLUtilities.readInt(node));
-            } else if (name.equals("midiTrigger")) {
-                liveObj.setMidiTrigger(XMLUtilities.readInt(node));
-            } else if (name.equals("soundObject")) {
-                liveObj.setSObj((SoundObject) ObjectUtilities.loadFromXML(node,
-                        objRefMap));
-            } else if (name.equals("enabled")) {
-                liveObj.setEnabled(XMLUtilities.readBoolean(node));
+            switch (name) {
+                case "keyTrigger":
+                    liveObj.setKeyTrigger(XMLUtilities.readInt(node));
+                    break;
+                case "midiTrigger":
+                    liveObj.setMidiTrigger(XMLUtilities.readInt(node));
+                    break;
+                case "soundObject":
+                    liveObj.setSObj((SoundObject) ObjectUtilities.loadFromXML(node,
+                            objRefMap));
+                    break;
+                case "enabled":
+                    liveObj.setEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
         }
 

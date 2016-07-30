@@ -1,5 +1,23 @@
 package blue.soundObject.editor;
 
+import blue.BlueSystem;
+import blue.gui.ExceptionDialog;
+import blue.gui.InfoDialog;
+import blue.gui.MyScrollPaneLayout;
+import blue.gui.ScrollerButton;
+import blue.plugin.ScoreObjectEditorPlugin;
+import blue.score.ScoreObject;
+import blue.soundObject.NoteList;
+import blue.soundObject.PianoRoll;
+import blue.soundObject.SoundObject;
+import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
+import blue.soundObject.editor.pianoRoll.PianoRollCanvas;
+import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
+import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
+import blue.soundObject.editor.pianoRoll.TimeBar;
+import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
+import blue.ui.components.IconFactory;
+import blue.utility.GUI;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -9,37 +27,24 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
-
-import blue.BlueSystem;
-import blue.ui.components.IconFactory;
-import blue.gui.MyScrollPaneLayout;
-import blue.gui.ScrollerButton;
-import blue.soundObject.PianoRoll;
-import blue.soundObject.SoundObject;
-import blue.soundObject.editor.pianoRoll.NotePropertiesEditor;
-import blue.soundObject.editor.pianoRoll.PianoRollCanvas;
-import blue.soundObject.editor.pianoRoll.PianoRollCanvasHeader;
-import blue.soundObject.editor.pianoRoll.PianoRollPropertiesEditor;
-import blue.soundObject.editor.pianoRoll.TimeBar;
-import blue.soundObject.editor.pianoRoll.TimelinePropertiesPanel;
-import blue.utility.GUI;
+import javax.swing.SwingUtilities;
 
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
-
-public class PianoRollEditor extends SoundObjectEditor implements
+@ScoreObjectEditorPlugin(scoreObjectType = PianoRoll.class)
+public class PianoRollEditor extends ScoreObjectEditor implements
         PropertyChangeListener, ActionListener {
 
     PianoRollPropertiesEditor props = new PianoRollPropertiesEditor();
@@ -66,7 +71,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         snapButton.setFocusable(false);
 
         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        this.setLayout(new BorderLayout(5, 5));
+        this.setLayout(new BorderLayout());
 
         noteScrollPane = new JScrollPane();
         noteScrollPane.setViewportView(noteCanvas);
@@ -84,11 +89,18 @@ public class PianoRollEditor extends SoundObjectEditor implements
         noteCanvas.addSelectionListener(noteTemplateEditor);
         noteCanvas.addSelectionListener(noteHeader);
 
+        JButton testButton = new JButton("Test");
+        testButton.addActionListener(evt -> generateTest());
+
         JTabbedPane tabs = new JTabbedPane();
 
         JPanel notesPanel = new JPanel(new BorderLayout());
 
-        notesPanel.add(noteTemplateEditor, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(noteTemplateEditor, BorderLayout.CENTER);
+        topPanel.add(testButton, BorderLayout.EAST);
+
+        notesPanel.add(topPanel, BorderLayout.NORTH);
         notesPanel.add(noteScrollPane, BorderLayout.CENTER);
         notesPanel.add(timeProperties, BorderLayout.EAST);
 
@@ -103,6 +115,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
 
         snapButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 timeProperties.setVisible(!timeProperties.isVisible());
             }
@@ -110,6 +123,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
 
         noteCanvas.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 Dimension d = new Dimension(e.getComponent().getWidth(), 20);
                 timeBar.setSize(d);
@@ -121,13 +135,35 @@ public class PianoRollEditor extends SoundObjectEditor implements
         });
 
         noteScrollPane.getViewport().addComponentListener(
-        new ComponentAdapter() {
+                new ComponentAdapter() {
 
-            public void componentResized(ComponentEvent e) {
-                noteCanvas.recalculateSize();
-            }
-        });
-        
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        noteCanvas.recalculateSize();
+                    }
+                });
+
+    }
+
+    protected void generateTest() {
+
+        if (this.p == null) {
+            return;
+        }
+
+        NoteList notes = null;
+
+        try {
+            notes = ((SoundObject) this.p).generateForCSD(null, 0.0f, -1.0f);
+        } catch (Exception e) {
+            ExceptionDialog.showExceptionDialog(SwingUtilities.getRoot(this), e);
+        }
+
+        if (notes != null) {
+            InfoDialog.showInformationDialog(SwingUtilities.getRoot(this),
+                    notes.toString(), BlueSystem
+                    .getString("soundObject.generatedScore"));
+        }
     }
 
     /**
@@ -161,9 +197,11 @@ public class PianoRollEditor extends SoundObjectEditor implements
         minusVert.addActionListener(this);
 
         noteSP
-                .setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                .setHorizontalScrollBarPolicy(
+                        JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         noteSP
-                .setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                .setVerticalScrollBarPolicy(
+                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         noteSP.setLayout(new MyScrollPaneLayout());
 
@@ -178,7 +216,8 @@ public class PianoRollEditor extends SoundObjectEditor implements
         scrollbar.setValue((max / 32) * 13);
     }
 
-    public void editSoundObject(SoundObject sObj) {
+    @Override
+    public void editScoreObject(ScoreObject sObj) {
 
         if (sObj == null) {
             return;
@@ -207,6 +246,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         centerNoteScrollPane();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.p) {
             if (evt.getPropertyName().equals("scale")) {
@@ -220,7 +260,7 @@ public class PianoRollEditor extends SoundObjectEditor implements
         GUI.setBlueLookAndFeel();
 
         PianoRollEditor pEditor = new PianoRollEditor();
-        pEditor.editSoundObject(new PianoRoll());
+        pEditor.editScoreObject(new PianoRoll());
 
         GUI.showComponentAsStandalone(pEditor, "Piano Roll Editor", true);
     }
@@ -276,16 +316,22 @@ public class PianoRollEditor extends SoundObjectEditor implements
         p.setPixelSecond(pixelSecond);
     }
 
+    @Override
     public void actionPerformed(ActionEvent ae) {
         String command = ae.getActionCommand();
-        if (command.equals("plusVertical")) {
-            raiseHeight();
-        } else if (command.equals("minusVertical")) {
-            lowerHeight();
-        } else if (command.equals("plusHorizontal")) {
-            raisePixelSecond();
-        } else if (command.equals("minusHorizontal")) {
-            lowerPixelSecond();
+        switch (command) {
+            case "plusVertical":
+                raiseHeight();
+                break;
+            case "minusVertical":
+                lowerHeight();
+                break;
+            case "plusHorizontal":
+                raisePixelSecond();
+                break;
+            case "minusHorizontal":
+                lowerPixelSecond();
+                break;
         }
     }
 }

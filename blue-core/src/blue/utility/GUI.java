@@ -18,7 +18,6 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import javax.swing.*;
 
 public class GUI {
@@ -47,27 +46,23 @@ public class GUI {
 
     public static final int DISTRIBUTE_BOTTOM = 5;
 
-    private static Comparator leftComparator, horizontalCenterComparator,
+    private static Comparator<JComponent> leftComparator, horizontalCenterComparator,
             rightComparator, topComparator, verticalCenterComparator,
             bottomComparator;
 
     static {
-        leftComparator = new Comparator() {
+        leftComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 return a.getX() - b.getX();
             }
         };
 
-        horizontalCenterComparator = new Comparator() {
+        horizontalCenterComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 int center1 = a.getX() + (a.getWidth() / 2);
                 int center2 = b.getX() + (b.getWidth() / 2);
 
@@ -75,32 +70,26 @@ public class GUI {
             }
         };
 
-        rightComparator = new Comparator() {
+        rightComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 return (a.getX() + a.getWidth()) - (b.getX() + b.getWidth());
             }
         };
 
-        topComparator = new Comparator() {
+        topComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 return a.getY() - b.getY();
             }
         };
 
-        verticalCenterComparator = new Comparator() {
+        verticalCenterComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 int center1 = a.getY() + (a.getHeight() / 2);
                 int center2 = b.getY() + (b.getHeight() / 2);
 
@@ -108,33 +97,29 @@ public class GUI {
             }
         };
 
-        bottomComparator = new Comparator() {
+        bottomComparator = new Comparator<JComponent>() {
 
-            public int compare(Object o1, Object o2) {
-                JComponent a = (JComponent) o1;
-                JComponent b = (JComponent) o2;
-
+            @Override
+            public int compare(JComponent a, JComponent b) {
                 return (a.getY() + a.getHeight()) - (b.getY() + b.getHeight());
             }
         };
     }
 
-    public static void align(ArrayList jComponents, int type) {
+    public static void align(ArrayList<JComponent> jComponents, int type) {
         int left, right, top, bottom, center;
 
         switch (type) {
             case ALIGN_LEFT:
                 left = Integer.MAX_VALUE;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     if (comp.getX() < left) {
                         left = comp.getX();
                     }
                 }
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     comp.setLocation(left, comp.getY());
                 }
 
@@ -143,8 +128,7 @@ public class GUI {
                 left = Integer.MAX_VALUE;
                 right = 0;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     if (comp.getX() < left) {
                         left = comp.getX();
                     }
@@ -156,9 +140,7 @@ public class GUI {
 
                 center = ((right - left) / 2) + left;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
-
+                for (JComponent comp : jComponents) {
                     comp.setLocation(center - (comp.getWidth() / 2), comp
                             .getY());
                 }
@@ -167,16 +149,14 @@ public class GUI {
             case ALIGN_RIGHT:
                 right = 0;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     int rightSide = comp.getX() + comp.getWidth();
                     if (rightSide > right) {
                         right = rightSide;
                     }
                 }
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     comp.setLocation(right - comp.getWidth(), comp.getY());
                 }
 
@@ -184,15 +164,13 @@ public class GUI {
             case ALIGN_TOP:
                 top = Integer.MAX_VALUE;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     if (comp.getY() < top) {
                         top = comp.getY();
                     }
                 }
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     comp.setLocation(comp.getX(), top);
                 }
                 break;
@@ -200,8 +178,7 @@ public class GUI {
                 top = Integer.MAX_VALUE;
                 bottom = 0;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     if (comp.getY() < top) {
                         top = comp.getY();
                     }
@@ -213,9 +190,7 @@ public class GUI {
 
                 center = ((bottom - top) / 2) + top;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
-
+                for (JComponent comp : jComponents) {
                     comp.setLocation(comp.getX(), center
                             - (comp.getHeight() / 2));
                 }
@@ -223,16 +198,14 @@ public class GUI {
             case ALIGN_BOTTOM:
                 bottom = 0;
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     int bottomSide = comp.getY() + comp.getHeight();
                     if (bottomSide > bottom) {
                         bottom = bottomSide;
                     }
                 }
 
-                for (Iterator iter = jComponents.iterator(); iter.hasNext();) {
-                    JComponent comp = (JComponent) iter.next();
+                for (JComponent comp : jComponents) {
                     comp.setLocation(comp.getX(), bottom - comp.getHeight());
                 }
                 break;
@@ -240,7 +213,7 @@ public class GUI {
         }
     }
 
-    public static void distribute(ArrayList jComponents, int type) {
+    public static void distribute(ArrayList<JComponent> jComponents, int type) {
         if (jComponents == null || jComponents.size() < 3) {
             return;
         }
@@ -253,13 +226,13 @@ public class GUI {
             case DISTRIBUTE_LEFT:
                 Collections.sort(jComponents, leftComparator);
 
-                first = (JComponent) jComponents.get(0);
-                last = (JComponent) jComponents.get(size - 1);
+                first = jComponents.get(0);
+                last = jComponents.get(size - 1);
 
                 spacing = (last.getX() - first.getX()) / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newX = (i * spacing) + first.getX();
 
@@ -270,8 +243,8 @@ public class GUI {
             case DISTRIBUTE_HORIZONTAL_CENTER:
                 Collections.sort(jComponents, horizontalCenterComparator);
 
-                first = (JComponent) jComponents.get(0);
-                last = (JComponent) jComponents.get(size - 1);
+                first = jComponents.get(0);
+                last = jComponents.get(size - 1);
 
                 firstCenter = first.getX() + (first.getWidth() / 2);
                 lastCenter = last.getX() + (last.getWidth() / 2);
@@ -279,7 +252,7 @@ public class GUI {
                 spacing = (lastCenter - firstCenter) / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newX = (i * spacing) + firstCenter;
                     newX = newX - (comp.getWidth() / 2);
@@ -291,15 +264,15 @@ public class GUI {
             case DISTRIBUTE_RIGHT:
                 Collections.sort(jComponents, rightComparator);
 
-                first = (JComponent) jComponents.get(0);
-                last = (JComponent) jComponents.get(size - 1);
+                first = jComponents.get(0);
+                last = jComponents.get(size - 1);
 
                 spacing = ((last.getX() + last.getWidth()) - (first.getX() + first
                         .getWidth()))
                         / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newX = (i * spacing) + first.getX() + first.getWidth();
                     newX = newX - comp.getWidth();
@@ -310,13 +283,13 @@ public class GUI {
             case DISTRIBUTE_TOP:
                 Collections.sort(jComponents, topComparator);
 
-                first = (JComponent) jComponents.get(0);
-                last = (JComponent) jComponents.get(size - 1);
+                first = jComponents.get(0);
+                last = jComponents.get(size - 1);
 
                 spacing = (last.getY() - first.getY()) / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newY = (i * spacing) + first.getY();
 
@@ -336,7 +309,7 @@ public class GUI {
                 spacing = (lastCenter - firstCenter) / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newY = (i * spacing) + firstCenter;
                     newY = newY - (comp.getHeight() / 2);
@@ -347,15 +320,15 @@ public class GUI {
             case DISTRIBUTE_BOTTOM:
                 Collections.sort(jComponents, bottomComparator);
 
-                first = (JComponent) jComponents.get(0);
-                last = (JComponent) jComponents.get(size - 1);
+                first = jComponents.get(0);
+                last = jComponents.get(size - 1);
 
                 spacing = ((last.getY() + last.getHeight()) - (first.getY() + first
                         .getHeight()))
                         / (size - 1);
 
                 for (int i = 1; i < size - 1; i++) {
-                    JComponent comp = (JComponent) jComponents.get(i);
+                    JComponent comp = jComponents.get(i);
 
                     int newY = (i * spacing) + first.getY() + first.getHeight();
                     newY = newY - comp.getHeight();
@@ -406,6 +379,7 @@ public class GUI {
         if (exitOnClose) {
             mFrame.addWindowListener(new WindowAdapter() {
 
+                @Override
                 public void windowClosing(WindowEvent e) {
                     System.exit(0);
                 }

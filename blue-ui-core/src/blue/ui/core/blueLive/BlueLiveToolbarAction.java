@@ -20,8 +20,6 @@
 package blue.ui.core.blueLive;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import org.openide.util.actions.Presenter;
 
 public final class BlueLiveToolbarAction implements Presenter.Toolbar {

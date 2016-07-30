@@ -40,6 +40,7 @@ public class LiveData implements Serializable {
     private LiveObjectSetList liveObjectSets = new LiveObjectSetList();
     private boolean commandLineEnabled = false;
     private boolean commandLineOverride = false;
+    private boolean repeatEnabled = false;
 
     public String getCommandLine() {
         return commandLine;
@@ -81,40 +82,52 @@ public class LiveData implements Serializable {
 
         boolean doCommandLineUpgrade = true;
 
-        ArrayList<LiveObject> oldFormat = new ArrayList<LiveObject>();
+        ArrayList<LiveObject> oldFormat = new ArrayList<>();
 
         Element liveObjectSetsNode = null;
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String name = node.getName();
-
-            if (name.equals("commandLine")) {
-                liveData.setCommandLine(node.getTextString());
-            } else if (name.equals("commandLineEnabled")) {
-                liveData.setCommandLineEnabled(XMLUtilities.readBoolean(node));
-                doCommandLineUpgrade = false;
-            } else if (name.equals("commandLineOverride")) {
-                liveData.setCommandLineOverride(XMLUtilities.readBoolean(node));
-                doCommandLineUpgrade = false;
-            } else if (name.equals("soundObject")) {
-                SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
-                        node, objRefMap);
-                LiveObject lObj = new LiveObject();
-                lObj.setSObj(sObj);
-                oldFormat.add(lObj);
-            } else if (name.equals("liveObject")) {
-                oldFormat.add(LiveObject.loadFromXML(node,
-                        objRefMap));
-            } else if (name.equals("liveObjectBins")) {
-                liveData.liveObjectBins = LiveObjectBins.loadFromXML(node,
-                        objRefMap);
-            } else if (name.equals("repeat")) {
-                liveData.repeat = XMLUtilities.readInt(node);
-            } else if (name.equals("tempo")) {
-                liveData.tempo = XMLUtilities.readInt(node);
-            } else if (name.equals("liveObjectSetList")) {
-                liveObjectSetsNode = node;
+            switch (name) {
+                case "commandLine":
+                    liveData.setCommandLine(node.getTextString());
+                    break;
+                case "commandLineEnabled":
+                    liveData.setCommandLineEnabled(XMLUtilities.readBoolean(node));
+                    doCommandLineUpgrade = false;
+                    break;
+                case "commandLineOverride":
+                    liveData.setCommandLineOverride(XMLUtilities.readBoolean(node));
+                    doCommandLineUpgrade = false;
+                    break;
+                case "soundObject":
+                    SoundObject sObj = (SoundObject) ObjectUtilities.loadFromXML(
+                            node, objRefMap);
+                    LiveObject lObj = new LiveObject();
+                    lObj.setSObj(sObj);
+                    oldFormat.add(lObj);
+                    break;
+                case "liveObject":
+                    oldFormat.add(LiveObject.loadFromXML(node,
+                            objRefMap));
+                    break;
+                case "liveObjectBins":
+                    liveData.liveObjectBins = LiveObjectBins.loadFromXML(node,
+                            objRefMap);
+                    break;
+                case "repeat":
+                    liveData.repeat = XMLUtilities.readInt(node);
+                    break;
+                case "tempo":
+                    liveData.tempo = XMLUtilities.readInt(node);
+                    break;
+                case "liveObjectSetList":
+                    liveObjectSetsNode = node;
+                    break;
+                case "repeatEnabled":
+                    liveData.setRepeatEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
 
         }
@@ -159,6 +172,8 @@ public class LiveData implements Serializable {
 
         retVal.addElement(XMLUtilities.writeInt("repeat", repeat));
         retVal.addElement(XMLUtilities.writeInt("tempo", tempo));
+        retVal.addElement(XMLUtilities.writeBoolean("repeatEnabled",
+                repeatEnabled));
 
         return retVal;
     }
@@ -178,4 +193,14 @@ public class LiveData implements Serializable {
     public void setCommandLineOverride(boolean commandLineOverride) {
         this.commandLineOverride = commandLineOverride;
     }
+
+    public boolean isRepeatEnabled() {
+        return repeatEnabled;
+    }
+
+    public void setRepeatEnabled(boolean repeatEnabled) {
+        this.repeatEnabled = repeatEnabled;
+    }
+
+    
 }

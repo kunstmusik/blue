@@ -119,27 +119,36 @@ public class Effect implements Serializable, Automatable {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("name")) {
-                effect.setName(node.getTextString());
-            } else if (nodeName.equals("enabled")) {
-                effect.setEnabled(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("numIns")) {
-                effect.setNumIns(XMLUtilities.readInt(node));
-            } else if (nodeName.equals("numOuts")) {
-                effect.setNumOuts(XMLUtilities.readInt(node));
-            } else if (nodeName.equals("code")) {
-                effect.setCode(node.getTextString());
-            } else if (nodeName.equals("comments")) {
-                effect.setComments(node.getTextString());
-            } else if (nodeName.equals("opcodeList")) {
-                effect.opcodeList = OpcodeList.loadFromXML(node);
-            } else if (nodeName.equals("graphicInterface")) {
-                effect.setGraphicInterface(BSBGraphicInterface
-                        .loadFromXML(node));
-            } else if (nodeName.equals("bsbParameterList")) {
-                effect.parameterList = (BSBParameterList) BSBParameterList
-                        .loadFromXML(node);
+            switch (nodeName) {
+                case "name":
+                    effect.setName(node.getTextString());
+                    break;
+                case "enabled":
+                    effect.setEnabled(XMLUtilities.readBoolean(node));
+                    break;
+                case "numIns":
+                    effect.setNumIns(XMLUtilities.readInt(node));
+                    break;
+                case "numOuts":
+                    effect.setNumOuts(XMLUtilities.readInt(node));
+                    break;
+                case "code":
+                    effect.setCode(node.getTextString());
+                    break;
+                case "comments":
+                    effect.setComments(node.getTextString());
+                    break;
+                case "opcodeList":
+                    effect.opcodeList = OpcodeList.loadFromXML(node);
+                    break;
+                case "graphicInterface":
+                    effect.setGraphicInterface(BSBGraphicInterface
+                            .loadFromXML(node));
+                    break;
+                case "bsbParameterList":
+                    effect.parameterList = (BSBParameterList) BSBParameterList
+                            .loadFromXML(node);
+                    break;
             }
         }
 
@@ -281,6 +290,7 @@ public class Effect implements Serializable, Automatable {
         this.comments = comments;
     }
 
+    @Override
     public String toString() {
         return getName();
     }

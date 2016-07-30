@@ -87,6 +87,7 @@ public class Packer extends GridBagLayout implements PackAs {
      * @exception CloneNotSupportedException
      *                if strange clone errors occur
      */
+    @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }

@@ -23,21 +23,17 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.TrackerObject;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin(scoreObjectType = TrackerObject.class)
 public class TrackerRenderer extends LetterRenderer {
 
     public TrackerRenderer() {
         super("T");
     }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return TrackerObject.class;
-    }
-
 }

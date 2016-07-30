@@ -20,10 +20,9 @@
 
 package blue.soundObject.editor.jmask;
 
+import blue.soundObject.jmask.ItemList;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ListSelectionModel;
-
-import blue.soundObject.jmask.ItemList;
 
 /**
  * 
@@ -205,6 +204,7 @@ public class ItemListEditor extends javax.swing.JPanel implements DurationSettab
     private javax.swing.JButton removeButton;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void setDuration(double duration) {
         //ignore
     }

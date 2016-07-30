@@ -114,6 +114,7 @@ public class TrackerNote implements Serializable {
         return false;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
@@ -141,22 +142,31 @@ public class TrackerNote implements Serializable {
             Element node = nodes.next();
             String nodeName = node.getName();
             String nodeVal = node.getTextString();
-
-            if (nodeName.equals("tied")) {
-                retVal.tied = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("off")) {
-                retVal.off = Boolean.valueOf(nodeVal).booleanValue();
-            } else if (nodeName.equals("pitch")) {
-                String val = (nodeVal == null) ? "" : nodeVal;
-                retVal.fields.add(val);
-            } else if (nodeName.equals("amp")) {
-                String val = (nodeVal == null) ? "" : nodeVal;
-                retVal.fields.add(val);
-            } else if (nodeName.equals("field")
-                    || nodeName.equals("otherField")) {
-                String atVal = node.getAttributeValue("val");
-                atVal = (atVal == null) ? "" : atVal;
-                retVal.fields.add(atVal);
+            switch (nodeName) {
+                case "tied":
+                    retVal.tied = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "off":
+                    retVal.off = Boolean.valueOf(nodeVal).booleanValue();
+                    break;
+                case "pitch":
+                    {
+                        String val = (nodeVal == null) ? "" : nodeVal;
+                        retVal.fields.add(val);
+                        break;
+                    }
+                case "amp":
+                    {
+                        String val = (nodeVal == null) ? "" : nodeVal;
+                        retVal.fields.add(val);
+                        break;
+                    }
+                case "field":
+                case "otherField":
+                    String atVal = node.getAttributeValue("val");
+                    atVal = (atVal == null) ? "" : atVal;
+                    retVal.fields.add(atVal);
+                    break;
             }
         }
 

@@ -35,6 +35,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -45,7 +46,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Steven Yi
  */
 
-public class Channel implements Serializable, Comparable, ParameterListener {
+public class Channel implements Serializable, Comparable<Channel>, ParameterListener {
 
     public static final String MASTER = "Master";
 
@@ -59,7 +60,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
 
     public static final String OUT_CHANNEL = "outChannel";
 
-    private transient Vector<PropertyChangeListener> listeners;
+    private transient List<PropertyChangeListener> listeners;
 
     private EffectsChain preEffects = new EffectsChain();
 
@@ -79,6 +80,8 @@ public class Channel implements Serializable, Comparable, ParameterListener {
 
     private boolean updatingLine = false;
 
+    private String association = null;
+
     public Channel() {
         levelParameter.setName("Volume");
         levelParameter.setLabel("dB");
@@ -93,32 +96,44 @@ public class Channel implements Serializable, Comparable, ParameterListener {
     public static Channel loadFromXML(Element data) throws Exception {
         Channel channel = new Channel();
 
+        String associationVal = data.getAttributeValue("association");
+        if(associationVal != null && !"null".equals(associationVal)) {
+            channel.setAssociation(data.getAttributeValue("association"));
+        }
+        
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("name")) {
-                channel.setName(node.getTextString());
-            } else if (nodeName.equals("outChannel")) {
-                channel.setOutChannel(node.getTextString());
-            } else if (nodeName.equals("level")) {
-                channel.setLevel(XMLUtilities.readFloat(node));
-            } else if (nodeName.equals("muted")) {
-                channel.setMuted(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("solo")) {
-                channel.setSolo(XMLUtilities.readBoolean(node));
-            } else if (nodeName.equals("effectsChain")) {
-                if (node.getAttributeValue("bin").equals("pre")) {
-                    channel.setPreEffects(EffectsChain.loadFromXML(node));
-                } else {
-                    channel.setPostEffects(EffectsChain.loadFromXML(node));
-                }
-            } else if (nodeName.equals("parameter")) {
-                channel.levelParameter.removeParameterListener(channel);
-                channel.levelParameter = Parameter.loadFromXML(node);
-                channel.levelParameter.addParameterListener(channel);
+            switch (nodeName) {
+                case "name":
+                    channel.setName(node.getTextString());
+                    break;
+                case "outChannel":
+                    channel.setOutChannel(node.getTextString());
+                    break;
+                case "level":
+                    channel.setLevel(XMLUtilities.readFloat(node));
+                    break;
+                case "muted":
+                    channel.setMuted(XMLUtilities.readBoolean(node));
+                    break;
+                case "solo":
+                    channel.setSolo(XMLUtilities.readBoolean(node));
+                    break;
+                case "effectsChain":
+                    if (node.getAttributeValue("bin").equals("pre")) {
+                        channel.setPreEffects(EffectsChain.loadFromXML(node));
+                    } else {
+                        channel.setPostEffects(EffectsChain.loadFromXML(node));
+                    }
+                    break;
+                case "parameter":
+                    channel.levelParameter.removeParameterListener(channel);
+                    channel.levelParameter = Parameter.loadFromXML(node);
+                    channel.levelParameter.addParameterListener(channel);
+                    break;
             }
 
         }
@@ -133,6 +148,10 @@ public class Channel implements Serializable, Comparable, ParameterListener {
     public Element saveAsXML() {
         Element retVal = new Element("channel");
 
+        if(association != null) {
+            retVal.setAttribute("association", association);
+        }
+        
         retVal.addElement(new Element("name").setText(name));
         retVal.addElement(new Element("outChannel").setText(outChannel));
         retVal.addElement(XMLUtilities.writeFloat("level", level));
@@ -150,6 +169,14 @@ public class Channel implements Serializable, Comparable, ParameterListener {
         retVal.addElement(levelParameter.saveAsXML());
 
         return retVal;
+    }
+
+    public String getAssociation() {
+        return association;
+    }
+
+    public void setAssociation(String association) {
+        this.association = association;
     }
 
     public EffectsChain getPreEffects() {
@@ -275,7 +302,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector<PropertyChangeListener>();
+            listeners = new Vector<>();
         }
         listeners.add(pcl);
     }
@@ -315,9 +342,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
         }
     }
 
-    public int compareTo(Object o) {
-        Channel chanB = (Channel) o;
-
+    public int compareTo(Channel chanB) {
         try {
             int a = Integer.parseInt(this.getName());
             int b = Integer.parseInt(chanB.getName());
@@ -329,10 +354,12 @@ public class Channel implements Serializable, Comparable, ParameterListener {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
@@ -374,7 +401,7 @@ public class Channel implements Serializable, Comparable, ParameterListener {
     }
 
     public Send[] getSends() {
-        ArrayList<Send> temp = new ArrayList<Send>();
+        ArrayList<Send> temp = new ArrayList<>();
 
         for (int i = 0; i < preEffects.size(); i++) {
             Object obj = preEffects.getElementAt(i);

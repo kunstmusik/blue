@@ -19,6 +19,7 @@
  */
 package blue.ui.core.score.manager;
 
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import javax.swing.table.AbstractTableModel;
 
@@ -28,7 +29,7 @@ import javax.swing.table.AbstractTableModel;
  */
 public class LayersTableModel extends AbstractTableModel {
 
-    private final LayerGroup layerGroup;
+    private final LayerGroup<Layer> layerGroup;
 
     public LayersTableModel(LayerGroup layerGroup) {
         this.layerGroup = layerGroup;
@@ -36,7 +37,7 @@ public class LayersTableModel extends AbstractTableModel {
     
     @Override
     public int getRowCount() {
-        return layerGroup.getSize();
+        return layerGroup.size();
     }
 
     @Override
@@ -52,7 +53,7 @@ public class LayersTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if(columnIndex == 1) {
-            layerGroup.getLayerAt(rowIndex).setName((String)aValue);
+            layerGroup.get(rowIndex).setName((String)aValue);
         }
     }
     
@@ -61,7 +62,7 @@ public class LayersTableModel extends AbstractTableModel {
         if(columnIndex == 0) {
             return rowIndex;
         }
-        return layerGroup.getLayerAt(rowIndex).getName();
+        return layerGroup.get(rowIndex).getName();
     }
     
     @Override

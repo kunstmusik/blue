@@ -23,21 +23,18 @@
 
 package blue.ui.core.soundObject.renderer;
 
+import blue.plugin.BarRendererPlugin;
 import blue.soundObject.JMask;
 
 /**
  *
  * @author syi
  */
+@BarRendererPlugin(scoreObjectType = JMask.class)
 public class JMaskRenderer extends LetterRenderer {
 
     public JMaskRenderer() {
         super("J");
-    }
-
-    @Override
-    public Class getSoundObjectClass() {
-        return JMask.class;
     }
 
 }

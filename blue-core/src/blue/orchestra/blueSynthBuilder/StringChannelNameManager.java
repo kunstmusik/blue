@@ -5,6 +5,7 @@
 package blue.orchestra.blueSynthBuilder;
 
 import java.text.MessageFormat;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -15,10 +16,10 @@ public class StringChannelNameManager {
     private static MessageFormat STRING_VAR_NAME = new MessageFormat(
             "gS_blue_str{0}");
     
-    private int stringChannelCounter = 0;
+    private AtomicInteger stringChannelCounter = new AtomicInteger(0);
 
     public String getUniqueStringChannel() {
-        Object vars = new Object[]{stringChannelCounter++};
+        Object vars = new Object[]{stringChannelCounter.getAndIncrement()};
         String varName = STRING_VAR_NAME.format(vars);
         return varName;
     }

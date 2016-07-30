@@ -29,6 +29,7 @@ abstract class CybilArg {
 
     public abstract float[] getValue(CybilNoteList cybilNoteList);
 
+    @Override
     public String toString() {
         return printVals(0);
     }

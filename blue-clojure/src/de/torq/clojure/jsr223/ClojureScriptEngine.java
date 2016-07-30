@@ -1,26 +1,7 @@
 package de.torq.clojure.jsr223;
 
-import java.io.Writer;
-import java.io.Reader;
-import java.io.StringReader;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-
-import javax.script.AbstractScriptEngine;
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptException;
-
 import clojure.lang.Associative;
 import clojure.lang.Compiler;
-import clojure.lang.DynamicClassLoader;
 import clojure.lang.ISeq;
 import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
@@ -28,12 +9,21 @@ import clojure.lang.Namespace;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.script.SimpleScriptContext;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.Writer;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import javax.script.AbstractScriptEngine;
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptException;
 
 /**
  * The design of Clojure is somewhat special in that there is no way to get some
@@ -234,6 +224,7 @@ class CallableClojureInitialization implements Callable<Object> {
         this.ns = ns;
     }
 
+    @Override
     public Object call() {
         try {
             Var.pushThreadBindings(bindings);
@@ -252,6 +243,7 @@ class CallableClojureFinalization implements Callable<Object> {
     public CallableClojureFinalization() {
     }
 
+    @Override
     public Object call() {
         Var.popThreadBindings();
         return null;
@@ -273,6 +265,7 @@ class CallableEval implements Callable<Object> {
         this.cl = cl;
     }
 
+    @Override
     public Object call() {
         return handleInput(ClojureBindings.toAssociative(context.getBindings(
                 ScriptContext.ENGINE_SCOPE), ns));
@@ -340,6 +333,7 @@ class CallableClojureInvokeFunction implements Callable<Object> {
         this.args = args;
     }
 
+    @Override
     public Object call() {
         try {
             // We need to use Symbol.intern vs. Symbol.create because of
@@ -391,6 +385,7 @@ class CallableClojureInvokeMethod implements Callable<Object> {
         this.args = args;
     }
 
+    @Override
     public Object call() {
         try {
             Symbol nameSym = Symbol.intern(name.intern());
@@ -423,6 +418,7 @@ class CallableClojureInvokeMethod implements Callable<Object> {
  */
 class ClojureScriptEngineThreadFactory implements ThreadFactory {
 
+    @Override
     public Thread newThread(Runnable r) {
         Thread result = new Thread(r);
         result.setContextClassLoader(

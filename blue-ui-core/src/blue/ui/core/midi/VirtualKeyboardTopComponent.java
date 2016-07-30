@@ -19,16 +19,22 @@
  */
 package blue.ui.core.midi;
 
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.openide.windows.TopComponent;
 
 /**
  * Top component which displays something.
@@ -50,38 +56,39 @@ public final class VirtualKeyboardTopComponent extends TopComponent {
         setName(NbBundle.getMessage(VirtualKeyboardTopComponent.class, "CTL_VirtualKeyboardTopComponent"));
         setToolTipText(NbBundle.getMessage(VirtualKeyboardTopComponent.class, "HINT_VirtualKeyboardTopComponent"));
 
-        channelSpinner.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent ce) {
-                virtualKeyboardPanel1.setChannel(((Integer) channelSpinner.getValue()) - 1);
-            }
+//        JFXPanel panel = new JFXPanel();
+//        this.setLayout(new BorderLayout());
+//        this.add(panel);
+//
+//        Platform.runLater(() -> {
+//            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+//                    "VirtualKeyboard.fxml"));
+//            try {
+//                loader.load();
+//                panel.setScene(new Scene(loader.getRoot()));
+//            } catch (IOException ex) {
+//                Exceptions.printStackTrace(ex);
+//            }
+//        });
+        channelSpinner.addChangeListener((ChangeEvent ce) -> {
+            virtualKeyboardPanel1.setChannel(((Integer) channelSpinner.getValue()) - 1);
         });
 
-        octaveSpinner.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent ce) {
-                virtualKeyboardPanel1.setOctave(((Integer) octaveSpinner.getValue()));
-            }
+        octaveSpinner.addChangeListener((ChangeEvent ce) -> {
+            virtualKeyboardPanel1.setOctave(((Integer) octaveSpinner.getValue()));
         });
 
-        velocitySpinner.addChangeListener(new ChangeListener() {
-
-            public void stateChanged(ChangeEvent ce) {
-                virtualKeyboardPanel1.setVelocity(((Integer) velocitySpinner.getValue()));
-            }
+        velocitySpinner.addChangeListener((ChangeEvent ce) -> {
+            virtualKeyboardPanel1.setVelocity(((Integer) velocitySpinner.getValue()));
         });
 
-        virtualKeyboardPanel1.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                final String propertyName = evt.getPropertyName();
-                
-                if("channel".equals(evt.getPropertyName())) {
-                    channelSpinner.setValue((Integer)evt.getNewValue() + 1);
-                } else if("octave".equals(propertyName)) {
-                    octaveSpinner.setValue(evt.getNewValue());
-                }
+        virtualKeyboardPanel1.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            final String propertyName = evt.getPropertyName();
+            
+            if("channel".equals(evt.getPropertyName())) {
+                channelSpinner.setValue((Integer)evt.getNewValue() + 1);
+            } else if("octave".equals(propertyName)) {
+                octaveSpinner.setValue(evt.getNewValue());
             }
         });
     }

@@ -1,5 +1,6 @@
 package blue.components;
 
+import blue.BlueSystem;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -8,14 +9,11 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
-import blue.BlueSystem;
 
 /**
  * Title: blue Description: an object composition environment for csound
@@ -65,6 +63,7 @@ public class PropertyEditor extends JComponent {
 
         mFrame.show();
         mFrame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -111,6 +110,7 @@ class PropertyEditTableModel extends AbstractTableModel {
         this.fireTableDataChanged();
     }
 
+    @Override
     public String getColumnName(int i) {
         if (i == 0) {
             return "Property";
@@ -118,10 +118,12 @@ class PropertyEditTableModel extends AbstractTableModel {
         return "Value";
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Object getValueAt(int row, int column) {
         if (this.obj == null) {
             return null;
@@ -135,12 +137,8 @@ class PropertyEditTableModel extends AbstractTableModel {
             retVal = temp.getName();
         } else {
             try {
-                retVal = temp.getReadMethod().invoke(temp, null);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
+                retVal = temp.getReadMethod().invoke(temp);
+            } catch (    IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -148,6 +146,7 @@ class PropertyEditTableModel extends AbstractTableModel {
         return retVal;
     }
 
+    @Override
     public int getRowCount() {
         if (props == null) {
             return 0;
@@ -155,6 +154,7 @@ class PropertyEditTableModel extends AbstractTableModel {
         return props.length;
     }
 
+    @Override
     public boolean isCellEditable(int r, int c) {
         if (c == 1) {
             return true;
@@ -162,10 +162,12 @@ class PropertyEditTableModel extends AbstractTableModel {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int c) {
         return getValueAt(0, 1).getClass();
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
 
         if (this.obj == null) {
@@ -179,7 +181,7 @@ class PropertyEditTableModel extends AbstractTableModel {
 
                 PropertyDescriptor temp = props[row];
                 temp.getWriteMethod().invoke(temp, args);
-            } catch (Exception e) {
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 // swallow exception: this just won't let the property be set,
                 // and the table will be updated,
                 // the old value

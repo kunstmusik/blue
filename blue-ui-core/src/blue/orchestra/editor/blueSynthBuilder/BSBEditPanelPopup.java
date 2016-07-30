@@ -19,10 +19,8 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
@@ -81,6 +79,7 @@ public class BSBEditPanelPopup extends JPopupMenu implements ActionListener {
         super.show(bsbEditPanel, x, y);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Paste")) {
             bsbEditPanel.paste(itemX, itemY);
@@ -96,11 +95,7 @@ public class BSBEditPanelPopup extends JPopupMenu implements ActionListener {
             bsbObj.setX(itemX);
             bsbObj.setY(itemY);
             bsbEditPanel.addBSBObject(bsbObj);
-        } catch (InstantiationException e1) {
-            e1.printStackTrace();
-        } catch (IllegalAccessException e1) {
-            e1.printStackTrace();
-        } catch (ClassNotFoundException e1) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e1) {
             e1.printStackTrace();
         }
 

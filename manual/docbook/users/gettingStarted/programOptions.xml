@@ -971,15 +971,15 @@
 
   <simplesect>
     <title>MIDI</title>
-    <!--<screenshot>
+    <screenshot>
       <screeninfo>Program Options - Disk Render</screeninfo>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="images/programOptions_diskRender.png"
+          <imagedata fileref="images/programOptions_midi.png"
             format="PNG" />
         </imageobject>
       </mediaobject>
-    </screenshot>-->
+    </screenshot>
     
     <para>These settings are for blue's MIDI input, used with 
       <link linkend="blueLive">blueLive</link>. The table shows what devices
@@ -992,6 +992,16 @@
 
   <simplesect>
     <title>OSC</title>
+
+    <screenshot>
+      <screeninfo>Program Options - OSC</screeninfo>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/programOptions_osc.png"
+            format="PNG" />
+        </imageobject>
+      </mediaobject>
+    </screenshot>
     
     <para>
       This allows you to set what port blue will listen to for incoming OSC 

@@ -19,6 +19,11 @@
  */
 package blue.ui.core.score;
 
+import blue.WindowSettingManager;
+import blue.WindowSettingsSavable;
+import blue.ui.core.score.layers.LayerGroupPanel;
+import blue.utility.GUI;
+import electric.xml.Element;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -38,7 +43,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
-
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -48,13 +52,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
-
-import blue.WindowSettingManager;
-import blue.WindowSettingsSavable;
-import blue.gui.DialogUtil;
-import blue.ui.core.score.layers.LayerGroupPanel;
-import blue.utility.GUI;
-import electric.xml.Element;
 
 public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         AdjustmentListener, WindowSettingsSavable {
@@ -91,6 +88,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
         layeredPane.addComponentListener(new ComponentAdapter() {
 
+            @Override
             public void componentResized(ComponentEvent e) {
                 updateOverBox();
                 drawPanel.setSize(layeredPane.getWidth(), layeredPane
@@ -107,16 +105,18 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
         this.addWindowFocusListener(new WindowFocusListener() {
 
+            @Override
             public void windowGainedFocus(WindowEvent e) {
                 drawPanel.repaint();
             }
 
+            @Override
             public void windowLostFocus(WindowEvent e) {
             }
 
         });
 
-        DialogUtil.registerJDialog(this);
+        getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
     }
 
     public void setJScrollPane(JScrollPane jScrollPane) {
@@ -190,6 +190,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         nav.setVisible(true);
     }
 
+    @Override
     public void componentResized(ComponentEvent e) {
         if (e.getSource() == jScrollPane.getViewport()
                 || e.getSource() == jScrollPane.getViewport().getView()) {
@@ -197,6 +198,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         }
     }
 
+    @Override
     public void componentMoved(ComponentEvent e) {
         if (e.getSource() == overBox && overBox.origin != null) {
             isAdjusting = true;
@@ -230,12 +232,15 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         }
     }
 
+    @Override
     public void componentShown(ComponentEvent e) {
     }
 
+    @Override
     public void componentHidden(ComponentEvent e) {
     }
 
+    @Override
     public void adjustmentValueChanged(AdjustmentEvent e) {
         if (!isAdjusting) {
             updateOverBox();
@@ -264,6 +269,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
             this.addMouseListener(new MouseAdapter() {
 
+                @Override
                 public void mousePressed(MouseEvent e) {
                     origin = SwingUtilities.convertPoint(NavBox.this, e
                             .getPoint(), NavBox.this.getParent());
@@ -271,6 +277,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
                     originY = NavBox.this.getY();
                 }
 
+                @Override
                 public void mouseReleased(MouseEvent e) {
                     origin = null;
                     originX = -1;
@@ -281,6 +288,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
 
             this.addMouseMotionListener(new MouseMotionAdapter() {
 
+                @Override
                 public void mouseDragged(MouseEvent e) {
                     NavBox box = NavBox.this;
                     Container c = box.getParent();
@@ -318,10 +326,12 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
         }
     }
 
+    @Override
     public void loadWindowSettings(Element settings) {
         WindowSettingManager.setBasicSettings(settings, this);
     }
 
+    @Override
     public Element saveWindowSettings() {
         return WindowSettingManager.getBasicSettings(this);
     }
@@ -333,6 +343,7 @@ public class ScoreNavigatorDialog extends JDialog implements ComponentListener,
             setDoubleBuffered(true);
         }
 
+        @Override
         public void paintComponent(Graphics g) {
             if (jScrollPane == null) {
                 return;

@@ -17,8 +17,6 @@ import javax.swing.plaf.metal.MetalComboBoxUI;
 public class BlueComboBoxUI extends MetalComboBoxUI {
 
     boolean oldOpaque = false;
-    ListCellRenderer renderer;
-
 
     public static ComponentUI createUI(JComponent c) {
         return new BlueComboBoxUI();
@@ -31,6 +29,7 @@ public class BlueComboBoxUI extends MetalComboBoxUI {
      }
     
  
+    @Override
     protected ListCellRenderer createRenderer() {
         ListCellRenderer c =  new BlueComboBoxRenderer();
         return c;
@@ -38,6 +37,7 @@ public class BlueComboBoxUI extends MetalComboBoxUI {
     
     public static class BlueComboBoxRenderer extends BasicComboBoxRenderer.UIResource {
         
+        @Override
         public Component getListCellRendererComponent(
                                                  JList list, 
                                                  Object value,

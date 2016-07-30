@@ -297,7 +297,7 @@ public class Track implements Serializable, TableModel {
 
                 Note note = Note.createNote(noteStr);
 
-                retVal.addNote(note);
+                retVal.add(note);
 
             }
 
@@ -434,6 +434,7 @@ public class Track implements Serializable, TableModel {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
@@ -476,39 +477,42 @@ public class Track implements Serializable, TableModel {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("name")) {
-                retVal.name = node.getTextString();
-
-                if (retVal.name == null) {
-                    retVal.name = "";
-                }
-
-            } else if (nodeName.equals("noteTemplate")) {
-                retVal.noteTemplate = node.getTextString();
-
-                if (retVal.noteTemplate == null) {
-                    retVal.noteTemplate = "";
-                }
-            } else if (nodeName.equals("instrumentId")) {
-                retVal.instrumentId = node.getTextString();
-
-                if (retVal.instrumentId == null) {
-                    retVal.instrumentId = "";
-                }
-            } else if (nodeName.equals("columns")) {
-                Elements nodes2 = node.getElements();
-
-                while (nodes2.hasMoreElements()) {
-                    retVal.addColumn(Column.loadFromXML(nodes2.next()));
-                }
-            } else if (nodeName.equals("trackerNotes")) {
-                Elements nodes2 = node.getElements();
-
-                while (nodes2.hasMoreElements()) {
-                    retVal.trackerNotes.add(TrackerNote.loadFromXML(nodes2
-                            .next()));
-                }
+            switch (nodeName) {
+                case "name":
+                    retVal.name = node.getTextString();
+                    if (retVal.name == null) {
+                        retVal.name = "";
+                    }
+                    break;
+                case "noteTemplate":
+                    retVal.noteTemplate = node.getTextString();
+                    if (retVal.noteTemplate == null) {
+                        retVal.noteTemplate = "";
+                    }
+                    break;
+                case "instrumentId":
+                    retVal.instrumentId = node.getTextString();
+                    if (retVal.instrumentId == null) {
+                        retVal.instrumentId = "";
+                    }
+                    break;
+                case "columns":
+                    {
+                        Elements nodes2 = node.getElements();
+                        while (nodes2.hasMoreElements()) {
+                            retVal.addColumn(Column.loadFromXML(nodes2.next()));
+                        }
+                        break;
+                    }
+                case "trackerNotes":
+                    {
+                        Elements nodes2 = node.getElements();
+                        while (nodes2.hasMoreElements()) {
+                            retVal.trackerNotes.add(TrackerNote.loadFromXML(nodes2
+                                    .next()));
+                        }
+                        break;
+                    }
             }
         }
 

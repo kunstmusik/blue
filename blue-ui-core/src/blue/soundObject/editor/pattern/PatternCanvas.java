@@ -19,6 +19,9 @@
  */
 package blue.soundObject.editor.pattern;
 
+import blue.soundObject.PatternObject;
+import blue.soundObject.pattern.Pattern;
+import blue.utility.GUI;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -27,15 +30,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
 import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-
-
-import blue.soundObject.PatternObject;
-import blue.soundObject.pattern.Pattern;
-import blue.utility.GUI;
 
 public class PatternCanvas extends JComponent implements TableModelListener,
         PropertyChangeListener {
@@ -73,6 +70,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
         this.setPreferredSize(new Dimension(width, height));
     }
 
+    @Override
     public void paintComponent(Graphics g) {
 
         super.paintComponent(g);
@@ -137,6 +135,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
 
     }
 
+    @Override
     public void tableChanged(TableModelEvent e) {
         this.checkSize();
         this.revalidate();
@@ -166,6 +165,7 @@ public class PatternCanvas extends JComponent implements TableModelListener,
         return this.patObj;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.patObj) {
             if (evt.getPropertyName().equals("time")) {
@@ -188,27 +188,34 @@ class PatternCanvasMouseListener implements MouseListener, MouseMotionListener {
         this.canvas = canvas;
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
         processMousePressed(e);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
         processMouseReleased(e);
     }
 
+    @Override
     public void mouseDragged(MouseEvent e) {
         processMouseDragged(e);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
     }
 
+    @Override
     public void mouseEntered(MouseEvent e) {
     }
 
+    @Override
     public void mouseClicked(MouseEvent e) {
     }
 

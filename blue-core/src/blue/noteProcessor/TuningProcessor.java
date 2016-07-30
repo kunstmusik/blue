@@ -21,6 +21,7 @@
 package blue.noteProcessor;
 
 import blue.BlueSystem;
+import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
@@ -33,6 +34,8 @@ import java.io.Serializable;
 /**
  * @author Steven Yi
  */
+
+@NoteProcessorPlugin(displayName="TuningProcessor", position = 160)
 public class TuningProcessor implements NoteProcessor, Serializable {
 
     // String fileName = "";
@@ -42,6 +45,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
 
     int pfield = 4;
 
+    @Override
     public String toString() {
         return "[tuning]";
     }
@@ -52,7 +56,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         int pcount = 0;
         float freq = 0f;
         for (int i = 0; i < in.size(); i++) {
-            temp = in.getNote(i);
+            temp = in.get(i);
 
             // verify pfield
             pcount = temp.getPCount();
@@ -131,27 +135,28 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
-
-            if (node.getName().equals("baseFrequency")) {
-                baseFreq = Float.parseFloat(node.getTextString());
-            } else if (node.getName().equals("pfield")) {
-                tp.setPfield(node.getTextString());
-            } else if (node.getName().equals("scale")) {
-                Scale scale;
-                
-                if(node.getElements().size() == 0) {
-                    
-                    String scaleDir = BlueSystem.getUserConfigurationDirectory()
-                        + File.separator + "scl";
-                    String scalePath = scaleDir + File.separator + node.getTextString();
-                    File scaleFile = new File(scalePath);
-                    
-                    scale = Scale.loadScale(scaleFile);
-                } else {
-                    scale = Scale.loadFromXML(node);
-                }
-                
-                tp.setScale(scale);
+            switch (node.getName()) {
+                case "baseFrequency":
+                    baseFreq = Float.parseFloat(node.getTextString());
+                    break;
+                case "pfield":
+                    tp.setPfield(node.getTextString());
+                    break;
+                case "scale":
+                    Scale scale;
+                    if(node.getElements().size() == 0) {
+                        
+                        String scaleDir = BlueSystem.getUserConfigurationDirectory()
+                            + File.separator + "scl";
+                        String scalePath = scaleDir + File.separator + node.getTextString();
+                        File scaleFile = new File(scalePath);
+                        
+                        scale = Scale.loadScale(scaleFile);
+                    } else {
+                        scale = Scale.loadFromXML(node);
+                    }
+                    tp.setScale(scale);
+                    break;
             }
         }
         
@@ -205,7 +210,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
 
         for (int i = 0; i < 30; i++) {
             try {
-                n.addNote(Note.createNote("i1 " + i + " " + i + " 6." + i
+                n.add(Note.createNote("i1 " + i + " " + i + " 6." + i
                         + " 4"));
             } catch (NoteParseException e) {
                 // TODO Auto-generated catch block

@@ -83,7 +83,7 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
             buffer.append(lineNum);
 
             try {
-                notes.addNote(Note.createNote(buffer.toString()));
+                notes.add(Note.createNote(buffer.toString()));
             } catch (NoteParseException e) {
                 throw new SoundObjectException(this, e);
             }
@@ -220,38 +220,45 @@ public abstract class AbstractLineObject extends AbstractSoundObject implements
 
     /* GENERIC SOUND OBJECT METHODS */
 
+    @Override
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
     /* SERIALIZATION */
 
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
-        for (Iterator iter = lines.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
+        for (Line line : lines) {
             retVal.addElement(line.saveAsXML());
         }
 

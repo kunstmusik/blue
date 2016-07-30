@@ -23,6 +23,7 @@ package blue.utility;
 import blue.BlueSystem;
 import electric.xml.Element;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -43,9 +44,7 @@ public class ObjectUtilities {
                     byteArrayInputStream);
             Object myClone = objectInputStream.readObject();
             return myClone;
-        } catch (IOException x) {
-            x.printStackTrace();
-        } catch (ClassNotFoundException x) {
+        } catch (IOException | ClassNotFoundException x) {
             x.printStackTrace();
         }
         return null;
@@ -61,10 +60,10 @@ public class ObjectUtilities {
                 if (methods[i].getName().startsWith("get")
                         || methods[i].getName().startsWith("is")) {
                     System.out.println(methods[i].getName() + " : "
-                            + methods[i].invoke(obj, null));
+                            + methods[i].invoke(obj));
                 }
 
-            } catch (Exception e) {
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -113,6 +112,7 @@ class PluginObjectInputStream extends ObjectInputStream {
         super(in);
     }
 
+    @Override
     protected Class resolveClass(ObjectStreamClass desc) throws IOException,
             ClassNotFoundException {
         String className = desc.getName();

@@ -17,26 +17,26 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.ComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 
 import blue.mixer.Channel;
 import blue.mixer.ChannelListListener;
 import blue.mixer.Mixer;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
 import blue.projects.BlueProjectManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
+import javax.swing.ComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 /**
  * @author Steven Yi
@@ -45,13 +45,9 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         PropertyChangeListener {
 
     BSBSubChannelDropdown dropdown = null;
-
     SubChannelComboBoxModel model;
-
     JComboBox comboBox;
-
     ActionListener updateIndexListener;
-
     boolean updating = false;
 
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropdown2) {
@@ -71,14 +67,13 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         this.setSize(comboBox.getPreferredSize());
 
         comboBox.addActionListener(new ActionListener() {
-
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (!updating) {
                     dropdown.setChannelOutput((String) comboBox
                             .getSelectedItem());
                 }
             }
-
         });
 
         revalidate();
@@ -86,11 +81,13 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         dropdown.addPropertyChangeListener(this);
     }
 
+    @Override
     public void cleanup() {
         model.clearListeners();
         dropdown.removePropertyChangeListener(this);
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.dropdown) {
             if (evt.getPropertyName().equals("channelOutput")) {
@@ -102,14 +99,13 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
             }
         }
     }
-
 }
 
 class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
-    Vector listeners = new Vector();
 
+    List<ListDataListener> listeners = Collections.synchronizedList(
+            new ArrayList<ListDataListener>());
     Mixer mixer;
-
     Object selected = null;
 
     public SubChannelComboBoxModel() {
@@ -127,6 +123,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ComboBoxModel#getSelectedItem()
      */
+    @Override
     public Object getSelectedItem() {
         return selected;
 
@@ -137,6 +134,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ComboBoxModel#setSelectedItem(java.lang.Object)
      */
+    @Override
     public void setSelectedItem(Object anItem) {
         this.selected = anItem;
 
@@ -152,6 +150,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ListModel#getSize()
      */
+    @Override
     public int getSize() {
         return mixer.getSubChannels().size() + 1;
     }
@@ -161,6 +160,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ListModel#getElementAt(int)
      */
+    @Override
     public Object getElementAt(int index) {
         if (index == 0) {
             return Channel.MASTER;
@@ -174,6 +174,7 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ListModel#addListDataListener(javax.swing.event.ListDataListener)
      */
+    @Override
     public void addListDataListener(ListDataListener l) {
         listeners.add(l);
     }
@@ -183,14 +184,16 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
      * 
      * @see javax.swing.ListModel#removeListDataListener(javax.swing.event.ListDataListener)
      */
+    @Override
     public void removeListDataListener(ListDataListener l) {
         listeners.remove(l);
     }
 
+    @Override
     public void channelAdded(Channel channel) {
-
     }
 
+    @Override
     public void channelRemoved(Channel channel) {
         if (!Channel.MASTER.equals(selected)) {
             if (mixer.getSubChannels().indexOfChannel((String) selected) < 0) {
@@ -200,10 +203,10 @@ class SubChannelComboBoxModel implements ComboBoxModel, ChannelListListener {
     }
 
     private void fireListDataEvent(ListDataEvent lde) {
-        for (Iterator iter = new Vector(listeners).iterator(); iter.hasNext();) {
-            ListDataListener ldl = (ListDataListener) iter.next();
-            ldl.contentsChanged(lde);
+        synchronized (listeners) {
+            for (ListDataListener ldl : listeners) {
+                ldl.contentsChanged(lde);
+            }
         }
     }
-
 }

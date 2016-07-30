@@ -55,6 +55,7 @@ public class AddSemiColonLineCommentAction extends BaseAction {
             final BaseDocument doc = (BaseDocument) target.getDocument();
 
             doc.runAtomicAsUser(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         int startPos;

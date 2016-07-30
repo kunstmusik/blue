@@ -22,8 +22,8 @@ package blue.orchestra.editor.blueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import javax.swing.JEditorPane;
 import javax.swing.text.JTextComponent;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *

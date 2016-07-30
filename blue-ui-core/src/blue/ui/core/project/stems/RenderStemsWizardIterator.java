@@ -86,22 +86,27 @@ public final class RenderStemsWizardIterator implements WizardDescriptor.Iterato
         return panels;
     }
 
+    @Override
     public WizardDescriptor.Panel current() {
         return getPanels()[index];
     }
 
+    @Override
     public String name() {
         return index + 1 + ". from " + getPanels().length;
     }
 
+    @Override
     public boolean hasNext() {
         return index < getPanels().length - 1;
     }
 
+    @Override
     public boolean hasPrevious() {
         return index > 0;
     }
 
+    @Override
     public void nextPanel() {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -109,6 +114,7 @@ public final class RenderStemsWizardIterator implements WizardDescriptor.Iterato
         index++;
     }
 
+    @Override
     public void previousPanel() {
         if (!hasPrevious()) {
             throw new NoSuchElementException();
@@ -117,9 +123,11 @@ public final class RenderStemsWizardIterator implements WizardDescriptor.Iterato
     }
 
     // If nothing unusual changes in the middle of the wizard, simply:
+    @Override
     public void addChangeListener(ChangeListener l) {
     }
 
+    @Override
     public void removeChangeListener(ChangeListener l) {
     }
     // If something changes dynamically (besides moving between panels), e.g.

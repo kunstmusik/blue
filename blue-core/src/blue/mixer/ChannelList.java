@@ -17,35 +17,67 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.mixer;
 
+import blue.util.ObservableArrayList;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Vector;
-import javax.swing.ListModel;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author Steven Yi
  */
-public class ChannelList implements ListModel, Serializable {
+public class ChannelList extends ObservableArrayList<Channel>
+        implements Serializable {
 
-    ArrayList<Channel> channels = new ArrayList<Channel>();
+    /**
+     * UniqueId of object that is associated with ChannelList (i.e.
+     * AudioLayerGroup)
+     */
+    private String association = null;
 
-    private transient Vector<ListDataListener> listeners = null;
+    private String listName = "";
+    private boolean listNameEditSupported = true;
 
-    private transient Vector<ChannelListListener> channelListListeners = null;
+    private transient PropertyChangeSupport propSupport = null;
 
-    /** Creates a new instance of ChannelList */
+    /**
+     * Creates a new instance of ChannelList
+     */
     public ChannelList() {
+    }
+
+    public String getListName() {
+        return listName;
+    }
+
+    public void setListName(String listName) {
+        if (!listNameEditSupported) {
+            throw new RuntimeException(
+                    "Error: Attempted to edit Channel List name for "
+                    + "group that does not support it.");
+        }
+        String oldListName = this.listName;
+        this.listName = listName;
+        if (propSupport != null) {
+            propSupport.firePropertyChange("listName", oldListName, listName);
+        }
+    }
+
+    public boolean isListNameEditSupported() {
+        return listNameEditSupported;
+    }
+
+    public void setListNameEditSupported(boolean listNameEditSupported) {
+        this.listNameEditSupported = listNameEditSupported;
     }
 
     public static ChannelList loadFromXML(Element data) throws Exception {
@@ -53,12 +85,22 @@ public class ChannelList implements ListModel, Serializable {
 
         Elements nodes = data.getElements();
 
+        String associationVal = data.getAttributeValue("association");
+        if (associationVal != null && !"null".equals(associationVal)) {
+            channels.setAssociation(data.getAttributeValue("association"));
+        }
+
+        String listName = data.getAttributeValue("listName");
+        if (listName != null && !"null".equals(listName)) {
+            channels.setListName(listName);
+        }
+
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
 
             if (nodeName.equals("channel")) {
-                channels.addChannel(Channel.loadFromXML(node));
+                channels.add(Channel.loadFromXML(node));
             }
         }
 
@@ -68,111 +110,47 @@ public class ChannelList implements ListModel, Serializable {
     public Element saveAsXML() {
         Element retVal = new Element("channelList");
 
-        for (Channel channel : channels) {
+        if (association != null) {
+            retVal.setAttribute("association", association);
+        }
+
+        if (listName != null) {
+            retVal.setAttribute("listName", listName);
+        }
+
+        for (Channel channel : this) {
             retVal.addElement(channel.saveAsXML());
         }
 
         return retVal;
     }
 
-    public Channel getChannel(int index) {
-        return channels.get(index);
+    public String getAssociation() {
+        return association;
     }
 
-    public void addChannel(Channel channel) {
-        int index = channels.size();
-        channels.add(channel);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_ADDED, index, index);
-
-        fireListEvent(lde);
-
-        fireChannelAdded(channel);
-    }
-
-    public void removeChannel(Channel channel) {
-        int index = channels.indexOf(channel);
-
-        if (index == -1) {
-            return;
-        }
-
-        channels.remove(channel);
-
-        ListDataEvent lde = new ListDataEvent(this,
-                ListDataEvent.INTERVAL_REMOVED, index, index);
-
-        fireListEvent(lde);
-        fireChannelRemoved(channel);
-    }
-
-    public int size() {
-        return channels.size();
-    }
-
-    // ListModel Methods
-
-    public int getSize() {
-        return size();
-    }
-
-    public Object getElementAt(int index) {
-        return getChannel(index);
+    public void setAssociation(String association) {
+        this.association = association;
     }
 
     public void checkOrCreate(String channelName) {
-        for (Iterator it = channels.iterator(); it.hasNext();) {
-            Channel channel = (Channel) it.next();
+        for (Channel channel : this) {
             if (channel.getName().equals(channelName)) {
                 return;
             }
         }
         Channel channel = new Channel();
         channel.setName(channelName);
-        this.addChannel(channel);
+        add(channel);
     }
 
     public void sort() {
-        Collections.<Channel>sort(channels);
-    }
-
-    public void addListDataListener(ListDataListener l) {
-        if (listeners == null) {
-            listeners = new Vector<ListDataListener>();
-        }
-        listeners.add(l);
-    }
-
-    public void removeListDataListener(ListDataListener l) {
-        if (listeners == null) {
-            return;
-        }
-        listeners.remove(l);
-    }
-
-    private void fireListEvent(ListDataEvent lde) {
-        if (listeners == null) {
-            return;
-        }
-
-        for (Iterator<ListDataListener> it = listeners.iterator(); it.hasNext();) {
-            ListDataListener listener = it.next();
-
-            switch (lde.getType()) {
-                case ListDataEvent.INTERVAL_ADDED:
-                    listener.intervalAdded(lde);
-                    break;
-                case ListDataEvent.INTERVAL_REMOVED:
-                    listener.intervalRemoved(lde);
-                    break;
-            }
-        }
+        Collections.<Channel>sort(this);
     }
 
     public int indexByName(Object anItem) {
-        for (int i = 0; i < channels.size(); i++) {
-            Channel channel = channels.get(i);
+        for (int i = 0; i < size(); i++) {
+            Channel channel = get(i);
             if (channel.getName().equals(anItem)) {
                 return i;
             }
@@ -181,22 +159,13 @@ public class ChannelList implements ListModel, Serializable {
         return -1;
     }
 
-    boolean contains(Channel channel) {
-        return channels.contains(channel);
-    }
-
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-    }
-
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 
     public boolean isChannelNameInUse(String channelName) {
-        for (int i = 0; i < size(); i++) {
-            Channel c = getChannel(i);
-
+        for (Channel c : this) {
             if (c.getName().equals(channelName)) {
                 return true;
             }
@@ -204,47 +173,9 @@ public class ChannelList implements ListModel, Serializable {
         return false;
     }
 
-    public void addChannelListListener(ChannelListListener listener) {
-        if (channelListListeners == null) {
-            channelListListeners = new Vector<ChannelListListener>();
-        }
-
-        channelListListeners.add(listener);
-    }
-
-    public void removeChannelListListener(ChannelListListener listener) {
-        if (channelListListeners != null) {
-            channelListListeners.remove(listener);
-        }
-    }
-
-    private void fireChannelAdded(Channel channel) {
-        if (channelListListeners != null) {
-            Iterator iter = new Vector(channelListListeners).iterator();
-
-            while (iter.hasNext()) {
-                ChannelListListener listener = (ChannelListListener) iter
-                        .next();
-                listener.channelAdded(channel);
-            }
-        }
-    }
-
-    private void fireChannelRemoved(Channel channel) {
-        if (channelListListeners != null) {
-            Iterator<ChannelListListener> iter =
-                    new Vector<ChannelListListener>(channelListListeners).iterator();
-
-            while (iter.hasNext()) {
-                ChannelListListener listener = iter.next();
-                listener.channelRemoved(channel);
-            }
-        }
-    }
-
     public int indexOfChannel(String channelName) {
-        for (int i = 0; i < channels.size(); i++) {
-            if (getChannel(i).getName().equals(channelName)) {
+        for (int i = 0; i < size(); i++) {
+            if (get(i).getName().equals(channelName)) {
                 return i;
             }
         }
@@ -253,14 +184,53 @@ public class ChannelList implements ListModel, Serializable {
     }
 
     public void clearChannelsNotInList(ArrayList ids) {
-        Iterator iter = channels.iterator();
-        
-        while(iter.hasNext()) {
-            Channel channel = (Channel) iter.next();
-            
-            if(!ids.contains(channel.getName())) {
+        Iterator<Channel> iter = this.iterator();
+
+        while (iter.hasNext()) {
+            Channel channel = iter.next();
+
+            if (!ids.contains(channel.getName())) {
                 iter.remove();
             }
         }
     }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(11, 41, this, false);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj, false);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        if (propSupport == null) {
+            propSupport = new PropertyChangeSupport(this);
+        }
+
+        propSupport.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        if (propSupport != null) {
+            propSupport.removePropertyChangeListener(pcl);
+        }
+    }
+
+    public static Channel findChannelByAssociation(ChannelList list, String uniqueId) {
+        if (uniqueId == null) {
+            return null;
+        }
+
+        for (Channel channel : list) {
+            if (uniqueId.equals(channel.getAssociation())) {
+                return channel;
+            }
+        }
+
+        return null;
+    }
+
 }

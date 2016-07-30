@@ -15,8 +15,8 @@ package skt.swing;
  * Lesser General Public License for more details.
  */
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 public class SwingUtil{
 

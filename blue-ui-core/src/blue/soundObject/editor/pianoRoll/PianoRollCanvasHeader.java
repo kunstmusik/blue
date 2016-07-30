@@ -19,6 +19,9 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.soundObject.PianoRoll;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -26,12 +29,7 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
-
 import javax.swing.JComponent;
-
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.soundObject.PianoRoll;
 
 /**
  * @author steven
@@ -54,7 +52,7 @@ public class PianoRollCanvasHeader extends JComponent implements
     private PianoRoll p;
 
     private HashMap<PianoNoteView, SelectedNoteHighlighter> noteHilightMap =
-            new HashMap<PianoNoteView, SelectedNoteHighlighter>();
+            new HashMap<>();
 
     public PianoRollCanvasHeader() {
         // this.setBackground(Color.darkGray);
@@ -75,6 +73,7 @@ public class PianoRollCanvasHeader extends JComponent implements
                 * noteHeight));
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -193,6 +192,7 @@ public class PianoRollCanvasHeader extends JComponent implements
         repaint();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getSource() == this.p) {
             String propertyName = evt.getPropertyName();
@@ -206,6 +206,7 @@ public class PianoRollCanvasHeader extends JComponent implements
         }
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         Object selectedItem = e.getSelectedItem();
 

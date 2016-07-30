@@ -28,8 +28,6 @@ import org.netbeans.editor.BaseAction;
 import org.netbeans.editor.BaseDocument;
 import org.netbeans.editor.Utilities;
 import org.netbeans.lib.editor.util.CharSequenceUtilities;
-import org.netbeans.lib.editor.util.CharSequenceUtilities;
-import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 import org.netbeans.lib.editor.util.swing.DocumentUtilities;
 
 /**
@@ -61,6 +59,7 @@ public class RemoveSemiColonLineCommentAction extends BaseAction {
             final BaseDocument doc = (BaseDocument) target.getDocument();
 
             doc.runAtomicAsUser(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         int startPos;

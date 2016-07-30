@@ -21,6 +21,7 @@ package blue;
 
 import blue.automation.Automatable;
 import blue.automation.AutomatableCollectionListener;
+import blue.mixer.Channel;
 import blue.mixer.Mixer;
 import blue.orchestra.GenericInstrument;
 import blue.orchestra.Instrument;
@@ -59,10 +60,10 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     private transient StrBuilder preGenerationCache = null;
 
-    private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<InstrumentAssignment>();
+    private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<>();
 
     public Arrangement() {
-        arrangement = new ArrayList<InstrumentAssignment>();
+        arrangement = new ArrayList<>();
     }
 
     public int addInstrument(Instrument instrument) {
@@ -302,6 +303,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
+    @Override
     public Object clone() {
         return ObjectUtilities.clone(this);
     }
@@ -314,10 +316,10 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         this.arrangement = arrangement;
     }
 
-    public String generateGlobalOrc() {
+    public String generateGlobalOrc(CompileData data) {
         StrBuilder retVal = new StrBuilder();
 
-        ArrayList<Instrument> instruments = new ArrayList<Instrument>();
+        ArrayList<Instrument> instruments = new ArrayList<>();
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
                 hasNext();) {
@@ -333,7 +335,15 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 String globalOrc = instr.generateGlobalOrc();
 
                 if (globalOrc != null) {
-                    String transformed = replaceInstrumentId(ia, globalOrc);
+
+                    String assignmentId;
+
+                    if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+                        assignmentId = ia.arrangementId;
+                    }
+
+                    String transformed = replaceInstrumentId(assignmentId,
+                            globalOrc);
                     retVal.append(transformed);
                     retVal.append("\n");
                 }
@@ -345,7 +355,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return retVal.toString();
     }
 
-    public String generateGlobalSco() {
+    public String generateGlobalSco(CompileData data) {
         StrBuilder retVal = new StrBuilder();
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
@@ -362,7 +372,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
             if (globalSco != null) {
 
-                String transformed = replaceInstrumentId(ia, globalSco);
+                String assignmentId;
+
+                if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+                    assignmentId = ia.arrangementId;
+                }
+                
+                String transformed = replaceInstrumentId(assignmentId, globalSco);
 
                 retVal.append(transformed);
                 retVal.append("\n");
@@ -382,11 +398,11 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
      * @param mixer
      * @param nchnls
      */
-    public void preGenerateOrchestra(Mixer mixer, int nchnls,
+    public void preGenerateOrchestra(CompileData data, Mixer mixer, int nchnls,
             ArrayList<Instrument> alwaysOnInstruments) {
         if (preGenerationCache == null) {
             preGenerationCache = new StrBuilder();
-            preGenList = new ArrayList<InstrumentAssignment>();
+            preGenList = new ArrayList<>();
         }
 
         for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
@@ -399,18 +415,19 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 continue;
             }
 
-            appendInstrumentText(preGenerationCache, ia, mixer, nchnls);
+            appendInstrumentText(data, preGenerationCache, ia, mixer, nchnls);
 
-            Instrument alwaysOnInstr = createAlwaysOnInstrument(ia, mixer,
+            Instrument alwaysOnInstr = createAlwaysOnInstrument(data, ia, mixer,
                     nchnls);
 
             if (alwaysOnInstr != null) {
                 alwaysOnInstruments.add(alwaysOnInstr);
+                data.addInstrSourceId(alwaysOnInstr, ia.arrangementId);
             }
         }
     }
 
-    public String generateOrchestra(Mixer mixer, int nchnls) {
+    public String generateOrchestra(CompileData data, Mixer mixer, int nchnls) {
         StrBuilder buffer;
 
         if (preGenerationCache == null) {
@@ -429,7 +446,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                     continue;
                 }
 
-                appendInstrumentText(buffer, ia, mixer, nchnls);
+                appendInstrumentText(data, buffer, ia, mixer, nchnls);
 
             }
         }
@@ -442,7 +459,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return retVal;
     }
 
-    private void appendInstrumentText(StrBuilder buffer,
+    private void appendInstrumentText(CompileData data, StrBuilder buffer,
             InstrumentAssignment ia, Mixer mixer, int nchnls) {
         Instrument instr = ia.instr;
 
@@ -451,16 +468,23 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
         String instrumentText = instr.generateInstrument();
 
-        String transformed = replaceInstrumentId(ia, instrumentText);
+        String assignmentId;
 
-        transformed = convertBlueMixerOut(mixer, ia.arrangementId, transformed,
+        if ((assignmentId = data.getInstrSourceId(instr)) == null) {
+            assignmentId = ia.arrangementId;
+        }
+
+        String transformed = replaceInstrumentId(assignmentId, instrumentText);
+
+        transformed = convertBlueMixerOut(data, mixer, ia.arrangementId,
+                transformed,
                 nchnls);
 
         buffer.append(transformed).append("\n");
         buffer.append("\tendin\n\n");
     }
 
-    private Instrument createAlwaysOnInstrument(InstrumentAssignment ia,
+    private Instrument createAlwaysOnInstrument(CompileData data, InstrumentAssignment ia,
             Mixer mixer, int nchnls) {
         Instrument instr = ia.instr;
 
@@ -470,7 +494,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
             return null;
         }
 
-        String transformed = convertBlueMixerOut(mixer, ia.arrangementId,
+        String transformed = convertBlueMixerOut(data, mixer, ia.arrangementId,
                 alwaysOnInstrCode,
                 nchnls);
 
@@ -520,29 +544,46 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
-    private String replaceInstrumentId(InstrumentAssignment ia, String input) {
+    private String replaceInstrumentId(String arrangementId, String input) {
         String replacementId = "";
         try {
-            replacementId += Integer.parseInt(ia.arrangementId);
+            replacementId += Integer.parseInt(arrangementId);
         } catch (NumberFormatException nfe) {
-            replacementId = "\"" + ia.arrangementId + "\"";
+            replacementId = "\"" + arrangementId + "\"";
         }
 
         String transformed = TextUtilities.replaceAll(input, "<INSTR_ID>",
                 replacementId);
 
         transformed = TextUtilities.replaceAll(transformed, "<INSTR_NAME>",
-                ia.arrangementId);
+                arrangementId);
 
         return transformed;
     }
 
     // TODO - Make this more efficient (made this way in case blueMixerOut is in
     // comments
-    private String convertBlueMixerOut(Mixer mixer, String arrangementId,
+    private String convertBlueMixerOut(CompileData data, Mixer mixer, String arrangementId,
             String input, int nchnls) {
-        if (input.indexOf("blueMixerOut") < 0 && input.indexOf("blueMixerIn") < 0) {
+
+        Channel c = null;
+
+        if (!input.contains("blueMixerOut") && !input.contains("blueMixerIn")) {
             return input;
+        }
+
+        if (mixer != null) {
+            for (Channel channel : mixer.getAllSourceChannels()) {
+                if (channel.getName().equals(arrangementId)) {
+                    c = channel;
+                    break;
+                }
+            }
+
+            if (c == null) {
+                throw new RuntimeException(
+                        "Unable to find channel for instrument: " + arrangementId);
+            }
         }
 
         StrBuilder buffer = new StrBuilder();
@@ -559,7 +600,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 String noCommentLine = TextUtilities.stripSingleLineComments(
                         line);
 
-                if(!noCommentLine.contains("blueMixerIn")) {
+                if (!noCommentLine.contains("blueMixerIn")) {
                     buffer.append(line).append("\n");
                     continue;
                 }
@@ -578,7 +619,8 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 for (int i = 0; i < nchnls && i < args.length; i++) {
                     String arg = args[i];
 
-                    String var = Mixer.getChannelVar(arrangementId, i);
+                    String var = Mixer.getChannelVar(
+                            data.getChannelIdAssignments().get(c), i);
 
                     buffer.append(arg).append(" = ");
                     buffer.append(var).append("\n");
@@ -617,37 +659,39 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                             String var = Mixer.getSubChannelVar(subChannelName,
                                     i - 1);
 
-                            buffer.append(var).append(" = ");
+			    buffer.append(var);
 
                             if (!blueMixerInFound) {
-                                buffer.append(var).append(" + ");
-                            }
+				buffer.append(" += ");
+                            } else {
+				buffer.append(" = ");
+			    }
 
                             buffer.append(arg).append("\n");
 
                         }
                     }
 
+                } else if (mixer == null || !mixer.isEnabled()) {
+                    buffer.append(line.replaceAll("blueMixerOut", "outc"));
+                    buffer.append("\n");
                 } else {
+                    for (int i = 0; i < nchnls && i < args.length; i++) {
+                        String arg = args[i];
 
-                    if (mixer == null || !mixer.isEnabled()) {
-                        buffer.append(line.replaceAll("blueMixerOut", "outc"));
-                        buffer.append("\n");
-                    } else {
-                        for (int i = 0; i < nchnls && i < args.length; i++) {
-                            String arg = args[i];
+                        String var = Mixer.getChannelVar(
+                                data.getChannelIdAssignments().get(c), i);
 
-                            String var = Mixer.getChannelVar(arrangementId, i);
+                        buffer.append(var);
 
-                            buffer.append(var).append(" = ");
-                            
-                            if (!blueMixerInFound) {
-                                buffer.append(var).append(" + ");
-                            }
+			if (!blueMixerInFound) {
+			    buffer.append(" += ");
+			} else {
+			    buffer.append(" = ");
+			}
 
-                            buffer.append(arg).append("\n");
+			buffer.append(arg).append("\n");
 
-                        }
                     }
                 }
 
@@ -869,7 +913,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
-            listeners = new Vector<TableModelListener>();
+            listeners = new Vector<>();
         }
         listeners.add(l);
     }
@@ -901,7 +945,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
 
     public void addArrangementListener(ArrangementListener l) {
         if (arrangementListeners == null) {
-            arrangementListeners = new Vector<ArrangementListener>();
+            arrangementListeners = new Vector<>();
         }
         arrangementListeners.add(l);
     }
@@ -927,7 +971,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     public void addAutomatableCollectionListener(
             AutomatableCollectionListener listener) {
         if (automatableCollectionListeners == null) {
-            automatableCollectionListeners = new Vector<AutomatableCollectionListener>();
+            automatableCollectionListeners = new Vector<>();
         }
         automatableCollectionListeners.add(listener);
     }

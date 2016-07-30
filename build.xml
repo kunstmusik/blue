@@ -9,7 +9,7 @@
 
   <property name="blue.manual.dir" value="build/manual"/>
   <property name="linux.java.lib.path" 
-              value="-J-Djava.library.path=/usr/lib/jni"/>
+              value="-J-Djava.library.path=/usr/lib/jni:/usr/local/lib:/usr/lib"/>
 
   <condition property="isWindows">
     <os family="windows" />
@@ -23,7 +23,7 @@
 
   <condition property="confReplacementString"
                value="-J-Xms256m -J-Xmx768m -J-Dapple.laf.useScreenMenuBar=true"
-               else="-J-Xms256m -J-Xmx768m">
+               else="-J-Xms256m -J-Xmx768m -J-Dswing.java2d.dpiaware=false -J-Dprism.allowhidpi=false">
     <os family="mac"/>
   </condition>
 
@@ -53,6 +53,8 @@
       <zipfileset file="build/ChangeLog" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="build/README.TXT" filemode="755" prefix="${app.name}/"/>
       <zipfileset file="imageSrc/blueIcon.png" filemode="755" prefix="${app.name}/bin"/>
+      <zipfileset file="blue.desktop.in" filemode="755" prefix="${app.name}/bin"/>
+      <zipfileset file="install_desktop_starter.sh" filemode="755" prefix="${app.name}/bin"/>
     </zip>
     <delete dir="${dist.dir}/blue"/>
     <unzip src="${dist.dir}/${app.name}.zip" dest="${dist.dir}"/>
@@ -67,7 +69,7 @@
     <property name="zipName" value="${app.name}_OSX_${blueVersion}.zip"/>
 
     <!-- Replace the icns file. -->
-    <copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="${app.name}.icns" overwrite="true"/>
+    <copy tofile="${nbdist-resources.dir}/${app.name}.icns" file="imageSrc/${app.name}.icns" overwrite="true"/>
 
     <copy file="ChangeLog" tofile="${dist.dir}/${app.name}.app/ChangeLog" overwrite="true">
       <filterset>
@@ -136,12 +138,13 @@
     <echo message="Replacing icon of Windows launcher executable."/>
     <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
       <arg value="${build.launcher.dir}\bin\${app.name}.exe"/>
-      <arg value="${app.name}.ico"/>
+      <arg value="imageSrc\${app.name}.ico"/>
     </exec>
-    <!--<exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
-      <arg line="build/launcher/bin/${app.name}64.exe ${app.name}.ico"/>
-    </exec>-->
-    <delete file="build/launcher/bin/${app.name}64.exe"/>
+    <exec executable="C:\bin\ReplaceVistaIcon.exe" resolveexecutable="true">
+      <arg value="${build.launcher.dir}\bin\${app.name}64.exe"/>
+      <arg value="imageSrc\${app.name}.ico"/>
+    </exec>
+    <!--<delete file="build/launcher/bin/${app.name}64.exe"/>-->
   </target>
 
 
@@ -159,7 +162,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-     <condition property="xsltCmd" value="c:\bin\xsltproc.exe">
+     <condition property="xsltCmd" value="c:\msys64\mingw64\bin\xsltproc.exe">
       <os family="windows"/>
     </condition>
 
@@ -189,7 +192,7 @@
 
     <replace file="manual/docbook/index.xml" token="[[version]]" value="${blueVersion}" />
 
-    <condition property="fopCommand" value="d:\work\fop-1.1\fop.bat">
+    <condition property="fopCommand" value="c:\bin\fop-2.0\fop.bat">
       <os family="windows"/>
     </condition>
 

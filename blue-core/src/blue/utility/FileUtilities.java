@@ -89,12 +89,11 @@ public class FileUtilities {
             }
 
             f.deleteOnExit();
-
-            PrintWriter out = new PrintWriter(new BufferedWriter(
-                    new FileWriter(f)));
-            out.print(text);
-            out.flush();
-            out.close();
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                         new FileWriter(f)))) {
+                out.print(text);
+                out.flush();
+            }
 
         } catch (IOException e) {
             return null;

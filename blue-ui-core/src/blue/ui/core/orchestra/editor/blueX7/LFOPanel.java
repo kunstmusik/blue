@@ -1,10 +1,12 @@
 package blue.ui.core.orchestra.editor.blueX7;
 
+import blue.gui.LabelledRangeBar;
+import blue.orchestra.BlueX7;
+import blue.orchestra.blueX7.LFOData;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -12,10 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import blue.gui.LabelledRangeBar;
-import blue.orchestra.BlueX7;
-import blue.orchestra.blueX7.LFOData;
 
 /**
  * <p>
@@ -61,7 +59,7 @@ public class LFOPanel extends JComponent {
         this.add(pmd);
         this.add(amd);
 
-        Vector<String> items = new Vector<String>();
+        Vector<String> items = new Vector<>();
         items.add("Triangle");
         items.add("Saw Down");
         items.add("Saw Up");
@@ -86,6 +84,7 @@ public class LFOPanel extends JComponent {
         this.add(temp);
 
         ChangeListener cl = new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 checkData();
             }
@@ -97,6 +96,7 @@ public class LFOPanel extends JComponent {
         pmd.addChangeListener(cl);
 
         ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ae) {
                 checkData();
             }

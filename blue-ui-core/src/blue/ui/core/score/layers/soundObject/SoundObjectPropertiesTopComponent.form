@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
-  <NonVisualComponents>
-    <Component class="blue.ui.core.score.NoteProcessorChainEditor" name="noteProcessorChainEditor1">
-    </Component>
-  </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -47,27 +43,27 @@
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="noteProcessorChainEditor2" alignment="1" pref="260" max="32767" attributes="0"/>
+                          <Component id="npcEditorPanel" alignment="1" max="32767" attributes="0"/>
                           <Group type="102" alignment="1" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel1" alignment="1" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel2" alignment="1" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel3" alignment="1" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel4" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel5" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel7" alignment="1" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel6" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="timeBehaviorLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="useRepeatLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="repeatPointLabel" alignment="1" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel8" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="colorPanel" max="32767" attributes="0"/>
-                                  <Component id="nameText" pref="123" max="32767" attributes="0"/>
-                                  <Component id="repeatePointText" alignment="0" pref="123" max="32767" attributes="0"/>
-                                  <Component id="endTimeText" alignment="0" pref="123" max="32767" attributes="0"/>
-                                  <Component id="subjectiveDurationText" alignment="0" pref="123" max="32767" attributes="0"/>
-                                  <Component id="startTimeText" alignment="0" pref="123" max="32767" attributes="0"/>
-                                  <Component id="timeBehaviorBox" alignment="0" pref="123" max="32767" attributes="0"/>
+                                  <Component id="nameText" max="32767" attributes="0"/>
+                                  <Component id="repeatePointText" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="endTimeText" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="subjectiveDurationText" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="startTimeText" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="timeBehaviorBox" alignment="0" max="32767" attributes="0"/>
                                   <Component id="useRepeatPoint" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -99,28 +95,28 @@
                           <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="endTimeText" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="timeBehaviorBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                          <Component id="useRepeatPoint" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="repeatePointText" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="colorPanel" max="32767" attributes="1"/>
                           <Component id="jLabel8" alignment="0" min="-2" max="-2" attributes="1"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="noteProcessorChainEditor2" pref="113" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="timeBehaviorLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="timeBehaviorBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="useRepeatLabel" min="-2" max="-2" attributes="0"/>
+                          <Component id="useRepeatPoint" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="repeatPointLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="repeatePointText" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="npcEditorPanel" pref="38" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -135,12 +131,12 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="123" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="16" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -219,17 +215,17 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="timeBehaviorBoxActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabel7">
+            <Component class="javax.swing.JLabel" name="useRepeatLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.jLabel7.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.useRepeatLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabel5">
+            <Component class="javax.swing.JLabel" name="timeBehaviorLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.jLabel5.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.timeBehaviorLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -252,10 +248,10 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabel6">
+            <Component class="javax.swing.JLabel" name="repeatPointLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.jLabel6.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="blue/ui/core/score/layers/soundObject/Bundle.properties" key="SoundObjectPropertiesTopComponent.repeatPointLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
             </Component>
@@ -266,7 +262,7 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="blue.ui.core.score.NoteProcessorChainEditor" name="noteProcessorChainEditor2">
+            <Component class="javax.swing.JPanel" name="npcEditorPanel">
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel2">
               <Properties>

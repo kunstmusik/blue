@@ -20,17 +20,6 @@
 
 package blue.soundObject.ceciliaModule;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 import blue.Arrangement;
 import blue.BlueSystem;
 import blue.GlobalOrcSco;
@@ -45,6 +34,16 @@ import blue.soundObject.SoundObject;
 import blue.soundObject.ceciliaModule.cybil.CybilCompiler;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CeciliaModuleCompilationUnit {
 
@@ -251,6 +250,7 @@ public class CeciliaModuleCompilationUnit {
 
         Collections.sort(keyset, new Comparator() {
 
+            @Override
             public int compare(Object o1, Object o2) {
                 return Integer.parseInt((String) o1)
                         - Integer.parseInt((String) o2);
@@ -485,7 +485,7 @@ public class CeciliaModuleCompilationUnit {
             String magicNote = "i" + Integer.toString(magicInstrId) + " 0 "
                     + cm.getSubjectiveDuration();
 
-            nl.addNote(Note.createNote(magicNote));
+            nl.add(Note.createNote(magicNote));
 
         }
 
@@ -495,7 +495,7 @@ public class CeciliaModuleCompilationUnit {
 
             String newId = (String) instrIDMap.get(id);
             note.setPField(newId, 1);
-            nl.addNote(note);
+            nl.add(note);
         }
 
         ScoreUtilities.applyTimeBehavior(nl, SoundObject.TIME_BEHAVIOR_SCALE,
@@ -515,7 +515,7 @@ public class CeciliaModuleCompilationUnit {
             String noteLine = "i1 0 "
                     + Float.toString(cm.getSubjectiveDuration());
 
-            notes.addNote(Note.createNote(noteLine));
+            notes.add(Note.createNote(noteLine));
         } else if (scoreText.startsWith("#cyb")) {
             scoreText = replaceCeciliaVariables(scoreText);
             /*
@@ -549,7 +549,7 @@ public class CeciliaModuleCompilationUnit {
             if (line.startsWith("i")) {
                 line = replaceCeciliaVariables(line);
 
-                notes.addNote(Note.createNote(line));
+                notes.add(Note.createNote(line));
             } else if (line.startsWith("f")) {
                 line = line.substring(1).trim();
 

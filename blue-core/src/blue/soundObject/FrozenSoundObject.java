@@ -141,7 +141,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
         }
 
         if (tempNote != null) {
-            n.addNote(tempNote);
+            n.add(tempNote);
         }
 
         return n;

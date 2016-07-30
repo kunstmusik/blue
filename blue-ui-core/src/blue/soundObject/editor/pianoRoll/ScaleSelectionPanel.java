@@ -19,26 +19,25 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JTextField;
-
 import blue.BlueSystem;
 import blue.soundObject.pianoRoll.Scale;
 import blue.ui.utilities.FileChooserManager;
 import blue.ui.utilities.UiUtilities;
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.util.List;
 import java.util.Vector;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -64,15 +63,15 @@ public class ScaleSelectionPanel extends JComponent {
         JButton fileButton = new JButton("...");
         fileButton.addActionListener(new ActionListener() {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
 
-                int rValue = FileChooserManager.getDefault().showOpenDialog(
+                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                         FILE_CHOOSER_ID,
                         null);
 
-                if (rValue == JFileChooser.APPROVE_OPTION) {
-                    File f = FileChooserManager.getDefault().getSelectedFile(
-                            FILE_CHOOSER_ID);
+                if (!rValue.isEmpty()) {
+                    File f = rValue.get(0);
 
                     if (!f.exists()) {
                         return;
@@ -93,6 +92,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         popup.add(new AbstractAction("Reset (12TET)") {
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 setScale(Scale.get12TET());
                 fireChangeEvent();
@@ -101,6 +101,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         fileNameField.addMouseListener(new MouseAdapter() {
 
+            @Override
             public void mousePressed(MouseEvent evt) {
                 if (UiUtilities.isRightMouseButton(evt)) {
 
@@ -120,7 +121,7 @@ public class ScaleSelectionPanel extends JComponent {
 
         fcm.setDialogTitle(FILE_CHOOSER_ID, BlueSystem.getString(
                 "pianoRoll.selectScalaFile"));
-        fcm.addFilter(FILE_CHOOSER_ID, new ScalaFileFilter());
+        fcm.addFilter(FILE_CHOOSER_ID, new ExtensionFilter("Scala File (*.scl)", "*.scl"));
 
         // SET DEFAULT DIR
         String fileName = BlueSystem.getUserConfigurationDirectory();
@@ -153,7 +154,7 @@ public class ScaleSelectionPanel extends JComponent {
     // change listener methods
     public void addChangeListener(ChangeListener cl) {
         if (changeListeners == null) {
-            changeListeners = new Vector<ChangeListener>();
+            changeListeners = new Vector<>();
         }
         changeListeners.add(cl);
     }

@@ -29,14 +29,14 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JPopupMenu;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.openide.windows.WindowManager;
-//import org.openide.util.ImageUtilities;
-import org.netbeans.api.settings.ConvertAsProperties;
 
 /**
  * Top component which displays something.
@@ -45,13 +45,29 @@ import org.netbeans.api.settings.ConvertAsProperties;
     dtd="-//blue.ui.core.score//Markers//EN",
     autostore=false
 )
+@TopComponent.Description(
+        preferredID = "MarkersTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
+@TopComponent.Registration(mode = "properties", openAtStartup = false)
+@ActionID(category = "Window", id = "blue.ui.core.score.MarkersTopComponent")
+@ActionReferences({
+    @ActionReference(path = "Menu/Window", position = 500, separatorBefore = 490),
+    @ActionReference(path = "Shortcuts", name = "S-F4")
+})
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_MarkersAction",
+        preferredID = "MarkersTopComponent"
+)
+@NbBundle.Messages({
+    "CTL_MarkersAction=Markers List",
+    "CTL_MarkersTopComponent=Markers",
+    "HINT_MarkersTopComponent=This is a Markers window"
+})
 public final class MarkersTopComponent extends TopComponent {
 
     private static MarkersTopComponent instance;
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
-
-    private static final String PREFERRED_ID = "MarkersTopComponent";
     private MarkersPopup popup = null;
     private BlueData data = null;
 
@@ -62,6 +78,7 @@ public final class MarkersTopComponent extends TopComponent {
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
         BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
                     reinitialize();
@@ -152,30 +169,7 @@ public final class MarkersTopComponent extends TopComponent {
         return instance;
     }
 
-    /**
-     * Obtain the MarkersTopComponent instance. Never call {@link #getDefault} directly!
-     */
-    public static synchronized MarkersTopComponent findInstance() {
-        TopComponent win = WindowManager.getDefault().findTopComponent(
-                PREFERRED_ID);
-        if (win == null) {
-            Logger.getLogger(MarkersTopComponent.class.getName()).warning(
-                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-            return getDefault();
-        }
-        if (win instanceof MarkersTopComponent) {
-            return (MarkersTopComponent) win;
-        }
-        Logger.getLogger(MarkersTopComponent.class.getName()).warning(
-                "There seem to be multiple components with the '" + PREFERRED_ID +
-                "' ID. That is a potential source of errors and unexpected behavior.");
-        return getDefault();
-    }
 
-    @Override
-    public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_ALWAYS;
-    }
 
     @Override
     public void componentOpened() {
@@ -205,12 +199,6 @@ public final class MarkersTopComponent extends TopComponent {
         // TODO read your settings according to their version
     }
 
-    @Override
-    protected String preferredID() {
-        return PREFERRED_ID;
-    }
-
-
      class MarkersPopup extends JPopupMenu {
 
         public MarkersPopup() {
@@ -218,6 +206,7 @@ public final class MarkersTopComponent extends TopComponent {
             this.add(new DeleteMarkerAction());
         }
 
+        @Override
         public void show(Component invoker, int x, int y) {
             if (markersTable.getSelectedRow() < 0) {
                 return;
@@ -231,6 +220,7 @@ public final class MarkersTopComponent extends TopComponent {
                 super("Set Start Time to Marker Time");
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int index = markersTable.getSelectedRow();
                 Marker m = data.getMarkersList().getMarker(index);
@@ -244,6 +234,7 @@ public final class MarkersTopComponent extends TopComponent {
                 super("Delete Marker");
             }
 
+            @Override
             public void actionPerformed(ActionEvent e) {
                 int index = markersTable.getSelectedRow();
                 data.getMarkersList().removeMarker(index);

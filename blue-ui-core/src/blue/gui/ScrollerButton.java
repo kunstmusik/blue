@@ -13,7 +13,6 @@ package blue.gui;
 
 import java.awt.Dimension;
 import java.awt.Insets;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.util.ImageUtilities;
@@ -56,7 +55,8 @@ public class ScrollerButton extends JButton {
         setDefaultCapable(false);
     }
 
-    public boolean isFocusTraversable() {
+    @Override
+    public boolean isFocusable() {
         return false;
     }
 }

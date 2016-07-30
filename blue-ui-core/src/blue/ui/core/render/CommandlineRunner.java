@@ -1,39 +1,35 @@
 package blue.ui.core.render;
 
-import blue.services.render.RenderTimeManager;
-import blue.services.render.CsdRenderResult;
-import java.awt.BorderLayout;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.LiveData;
 import blue.event.PlayModeListener;
 import blue.score.ScoreGenerationException;
 import blue.services.render.CSDRenderService;
-import blue.services.render.DeviceInfo;
+import blue.services.render.CsdRenderResult;
+import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
+import blue.services.render.RenderTimeManager;
 import blue.settings.GeneralSettings;
+import blue.settings.ProjectPropertiesUtil;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.utility.FileUtilities;
-import blue.settings.ProjectPropertiesUtil;
 import blue.utility.ScoreUtilities;
 import blue.utility.TextUtilities;
-import java.util.List;
+import java.awt.BorderLayout;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.openide.awt.NotificationDisplayer;
-import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
@@ -50,29 +46,14 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
     ProcessConsole console = new ProcessConsole();
     RunProxy runProxy;
-    ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
+    ArrayList<PlayModeListener> listeners = new ArrayList<>();
     private BlueData data = null;
     private boolean shouldStop = false;
     JCheckBox disableMessagesBox = null;
     JPanel errorPanel = null;
 
     public CommandlineRunner() {
-
         console.addPlayModeListener(this);
-
-//        AuditionManager audition = AuditionManager.getInstance();
-//        audition.addPlayModeListener(new PlayModeListener() {
-//
-//            public void playModeChanged(int playMode) {
-//                if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-//                    if (isRunning()) {
-//                        stop();
-//                    }
-//                }
-//
-//            }
-//
-//        });
     }
 
     @Override
@@ -257,23 +238,13 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     @Override
-    public List<DeviceInfo> getAudioInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void addBinding(CsoundBinding binding) {
+        // no-op, commandline runner does not support bindings
     }
 
     @Override
-    public List<DeviceInfo> getAudioOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiInputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DeviceInfo> getMidiOutputs(String driver) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void removeBinding(CsoundBinding binding) {
+        // no-op, commandline runner does not support bindings
     }
 
     class RunProxy implements Runnable {
@@ -302,6 +273,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
                 }
                 console.execWait(command, currentWorkingDirectory);
             } catch (IOException ioe) {
+                shouldStop = true;
                 stop();
                 NotificationDisplayer.getDefault().notify("Error", 
                         NotificationDisplayer.Priority.HIGH.getIcon(), 

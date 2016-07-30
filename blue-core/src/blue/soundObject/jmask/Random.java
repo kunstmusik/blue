@@ -42,11 +42,13 @@ public class Random implements Generator, Serializable, Quantizable,
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("min")) {
-                retVal.min = Double.parseDouble(node.getTextString());
-            } else if (nodeName.equals("max")) {
-                retVal.max = Double.parseDouble(node.getTextString());
+            switch (nodeName) {
+                case "min":
+                    retVal.min = Double.parseDouble(node.getTextString());
+                    break;
+                case "max":
+                    retVal.max = Double.parseDouble(node.getTextString());
+                    break;
             }
         }
 
@@ -71,10 +73,10 @@ public class Random implements Generator, Serializable, Quantizable,
 
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double range = max - min;
 
-        return min + (range * Math.random());
+        return min + (range * rnd.nextDouble());
     }
 
     public double getMax() {
@@ -93,10 +95,12 @@ public class Random implements Generator, Serializable, Quantizable,
         this.min = min;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
+    @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }

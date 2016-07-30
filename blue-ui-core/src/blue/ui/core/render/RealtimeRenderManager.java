@@ -25,6 +25,7 @@ import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
+import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.settings.RealtimeRenderSettings;
@@ -44,8 +45,8 @@ public final class RealtimeRenderManager {
 
     private boolean looping = false;
     private static RealtimeRenderManager instance = null;
-    private ArrayList<PlayModeListener> listeners = new ArrayList<PlayModeListener>();
-    private ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<PlayModeListener>();
+    private ArrayList<PlayModeListener> listeners = new ArrayList<>();
+    private ArrayList<PlayModeListener> blueLiveListeners = new ArrayList<>();
     private RealtimeRenderServiceFactory currentRenderServiceFactory = null;
     private RealtimeRenderService currentRenderService = null;
     private RealtimeRenderService currentBlueLiveRenderService = null;
@@ -179,6 +180,7 @@ public final class RealtimeRenderManager {
             currentBlueLiveRenderService.addPlayModeListener(blueLiveListener);
         }
 
+        currentBlueLiveRenderService.addBinding(new BlueLiveBinding(data));
         currentBlueLiveRenderService.setData(data);
         try {
             currentBlueLiveRenderService.renderForBlueLive();
@@ -188,6 +190,12 @@ public final class RealtimeRenderManager {
                     soe);
         }
 
+    }
+
+    public void addBlueLiveBinding(CsoundBinding binding) {
+        if(currentBlueLiveRenderService != null) {
+            currentBlueLiveRenderService.addBinding(binding);
+        }
     }
 
     public void auditionSoundObjects(BlueData data, SoundObject[] soundObjects) {
@@ -203,7 +211,7 @@ public final class RealtimeRenderManager {
         BlueData tempData = (BlueData) ObjectUtilities.clone(data);
 
         PolyObject tempPObj = new PolyObject(true);
-        SoundLayer sLayer = (SoundLayer)tempPObj.newLayerAt(-1);
+        SoundLayer sLayer = tempPObj.newLayerAt(-1);
 
         float minTime = Float.MAX_VALUE;
         float maxTime = Float.MIN_VALUE;
@@ -221,11 +229,11 @@ public final class RealtimeRenderManager {
                 maxTime = endTime;
             }
 
-            sLayer.addSoundObject((SoundObject) sObj.clone());
+            sLayer.add((SoundObject) sObj.clone());
         }
 
-        tempData.getScore().clearLayerGroups();
-        tempData.getScore().addLayerGroup(tempPObj);
+        tempData.getScore().clear();
+        tempData.getScore().add(tempPObj);
 
         Mixer m = tempData.getMixer();
 

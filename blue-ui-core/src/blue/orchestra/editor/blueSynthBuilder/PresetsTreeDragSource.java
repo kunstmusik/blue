@@ -19,6 +19,8 @@
  */
 package blue.orchestra.editor.blueSynthBuilder;
 
+import blue.orchestra.blueSynthBuilder.Preset;
+import blue.orchestra.blueSynthBuilder.PresetGroup;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -31,12 +33,8 @@ import java.awt.dnd.DragSourceDropEvent;
 import java.awt.dnd.DragSourceEvent;
 import java.awt.dnd.DragSourceListener;
 import java.io.IOException;
-
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-
-import blue.orchestra.blueSynthBuilder.Preset;
-import blue.orchestra.blueSynthBuilder.PresetGroup;
 
 /**
  * @author steven
@@ -61,6 +59,7 @@ public class PresetsTreeDragSource implements DragSourceListener,
                 actions, this);
     }
 
+    @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         TreePath path = sourceTree.getSelectionPath();
         if ((path == null) || (path.getPathCount() <= 1)) {
@@ -77,6 +76,7 @@ public class PresetsTreeDragSource implements DragSourceListener,
         }
     }
 
+    @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
         if (dsde.getDropSuccess()) {
 
@@ -96,15 +96,19 @@ public class PresetsTreeDragSource implements DragSourceListener,
         oldNode = null;
     }
 
+    @Override
     public void dragEnter(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dragOver(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
     }
 
+    @Override
     public void dragExit(DragSourceEvent dse) {
     }
 
@@ -126,10 +130,12 @@ class TransferablePreset implements Transferable {
 
     DataFlavor flavors[] = { PRESET_FLAVOR, PRESET_GROUP_FLAVOR };
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         if (flavor.getRepresentationClass() == Preset.class
                 || flavor.getRepresentationClass() == PresetGroup.class) {
@@ -138,6 +144,7 @@ class TransferablePreset implements Transferable {
         return false;
     }
 
+    @Override
     public Object getTransferData(DataFlavor flavor)
             throws UnsupportedFlavorException, IOException {
         return obj;

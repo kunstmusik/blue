@@ -38,18 +38,21 @@ import org.openide.util.Exceptions;
  */
 public class BlueClojureEngine implements PropertyChangeListener {
 
-    private static BlueClojureEngine instance = null;
+    private static class LazyHolder {
+        private static final BlueClojureEngine INSTANCE;
+        static {
+            INSTANCE = new BlueClojureEngine();
+            BlueProjectManager.getInstance().addPropertyChangeListener(INSTANCE);
+            INSTANCE.currentProject = BlueProjectManager.getInstance().getCurrentProject();
+        }
+    }
+
     private BlueProject currentProject = null;
     private HashMap<BlueProject, ClojureScriptEngine> engines =
             new HashMap<BlueProject, ClojureScriptEngine>();
 
     public static BlueClojureEngine getInstance() {
-        if (instance == null) {
-            instance = new BlueClojureEngine();
-            BlueProjectManager.getInstance().addPropertyChangeListener(instance);
-            instance.currentProject = BlueProjectManager.getInstance().getCurrentProject();
-        }
-        return instance;
+        return LazyHolder.INSTANCE;
     }
 
     public void reinitialize() {

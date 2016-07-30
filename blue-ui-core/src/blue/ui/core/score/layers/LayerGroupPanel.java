@@ -19,14 +19,24 @@
  */
 package blue.ui.core.score.layers;
 
+import blue.score.layers.LayerGroup;
+import blue.ui.core.score.ScoreObjectView;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import javax.swing.Action;
 
 /**
  *
  * @author stevenyi
  */
-public interface LayerGroupPanel {
+public interface LayerGroupPanel<T extends LayerGroup> {
     public void marqueeSelectionPerformed(SelectionMarquee marquee);
     
     public void paintNavigatorView(Graphics2D g2d);
+
+    public ScoreObjectView getScoreObjectViewAtPoint(Point p);
+
+    public Action[] getLayerActions();
+
+    public T getLayerGroup();
 }

@@ -19,56 +19,68 @@
  */
 package blue.soundObject.editor.pianoRoll;
 
+import blue.BlueSystem;
+import blue.event.SelectionEvent;
+import blue.event.SelectionListener;
+import blue.soundObject.pianoRoll.PianoNote;
+import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import blue.BlueSystem;
-import blue.event.SelectionEvent;
-import blue.event.SelectionListener;
-import blue.gui.LabelledItemPanel;
-import blue.soundObject.pianoRoll.PianoNote;
-
 /**
  * @author steven
  */
-public class NotePropertiesEditor extends LabelledItemPanel implements
+public class NotePropertiesEditor extends JPanel implements
         SelectionListener, PropertyChangeListener {
 
     PianoNote note = null;
 
     JTextField noteTemplateText = new JTextField();
 
+    JLabel label = new JLabel(BlueSystem.getString("pianoRoll.noteTemplate"));
+
     // JTextField noteStartText = new JTextField();
     // JTextField noteDurationText = new JTextField();
-
     private boolean isUpdating = false;
 
     public NotePropertiesEditor() {
-        // this.setLayout(new BorderLayout(5, 5));
+        this.setLayout(new BorderLayout(5, 5));
 
         // this.setBorder(BorderFactory.createTitledBorder("Note Properties"));
         // this.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
+        noteTemplateText.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createEmptyBorder(5, 5, 5, 5),
+                        noteTemplateText.getBorder()));
 
-        addItem(BlueSystem.getString("pianoRoll.noteTemplate"),
-                noteTemplateText);
+        add(label, BorderLayout.WEST);
+        add(noteTemplateText, BorderLayout.CENTER);
+//        addItem(BlueSystem.getString("pianoRoll.noteTemplate"),
+//                noteTemplateText);
         // addItem("Note Start: ", noteStartText);
         // addItem("Note Duration: ", noteDurationText);
 
         noteTemplateText.getDocument().addDocumentListener(
                 new DocumentListener() {
 
+                    @Override
                     public void insertUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void removeUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
 
+                    @Override
                     public void changedUpdate(DocumentEvent e) {
                         updateNoteTemplate();
                     }
@@ -92,6 +104,7 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
         // });
     }
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         isUpdating = true;
 
@@ -102,11 +115,9 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
                 // if(note != null) {
                 // note.removePropertyChangeListener(this);
                 // }
-
                 note = noteView.getPianoNote();
 
                 // note.addPropertyChangeListener(this);
-
                 noteTemplateText.setEditable(true);
                 // noteStartText.setEditable(true);
                 // noteDurationText.setEditable(true);
@@ -126,12 +137,13 @@ public class NotePropertiesEditor extends LabelledItemPanel implements
                 // noteDurationText.setEditable(false);
                 noteTemplateText.setText("");
                 // noteStartText.setText("");
-                // noteDurationText.setText("");
+            // noteDurationText.setText("");
         }
 
         isUpdating = false;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         // if(evt.getSource() == note) {
         // if(evt.getPropertyName().equals("start")) {

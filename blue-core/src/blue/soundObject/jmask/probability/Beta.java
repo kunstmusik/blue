@@ -53,23 +53,30 @@ public class Beta implements ProbabilityGenerator {
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
-
-            if (nodeName.equals("a")) {
-                retVal.a = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("b")) {
-                retVal.b = XMLUtilities.readDouble(node);
-            } else if (nodeName.equals("aTableEnabled")) {
-                retVal.aTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("bTableEnabled")) {
-                retVal.bTableEnabled = XMLUtilities.readBoolean(node);
-            } else if (nodeName.equals("table")) {
-                String tableId = node.getAttributeValue("tableId");
-
-                if (tableId.equals("aTable")) {
-                    retVal.aTable = Table.loadFromXML(node);
-                } else if (tableId.equals("bTable")) {
-                    retVal.bTable = Table.loadFromXML(node);
-                }
+            switch (nodeName) {
+                case "a":
+                    retVal.a = XMLUtilities.readDouble(node);
+                    break;
+                case "b":
+                    retVal.b = XMLUtilities.readDouble(node);
+                    break;
+                case "aTableEnabled":
+                    retVal.aTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "bTableEnabled":
+                    retVal.bTableEnabled = XMLUtilities.readBoolean(node);
+                    break;
+                case "table":
+                    String tableId = node.getAttributeValue("tableId");
+                    switch (tableId) {
+                        case "aTable":
+                            retVal.aTable = Table.loadFromXML(node);
+                            break;
+                        case "bTable":
+                            retVal.bTable = Table.loadFromXML(node);
+                            break;
+                    }
+                    break;
             }
         }
 
@@ -101,7 +108,7 @@ public class Beta implements ProbabilityGenerator {
         return "Beta";
     }
 
-    public double getValue(double time) {
+    public double getValue(double time, java.util.Random rnd) {
         double x1, x2, yps1, yps2, sum;
 
         double localA, localB;
@@ -119,8 +126,8 @@ public class Beta implements ProbabilityGenerator {
         }
         
         do {
-            x1 = Math.random();
-            x2 = Math.random();
+            x1 = rnd.nextDouble();
+            x2 = rnd.nextDouble();
             yps1 = Math.pow(x1, (1.0 / localA));
             yps2 = Math.pow(x2, (1.0 / localB));
             sum = yps1 + yps2;

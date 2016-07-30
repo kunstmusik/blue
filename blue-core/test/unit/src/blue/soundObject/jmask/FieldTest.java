@@ -59,24 +59,25 @@ public class FieldTest extends TestCase {
     public void testGenerateNotesConstant() {
         double duration = 5.0;
         Field field = new Field();
+        java.util.Random r = new java.util.Random(0L);
 
-        NoteList result = field.generateNotes(duration);
+        NoteList result = field.generateNotes(duration, r);
 
         assertEquals(5, result.size());
 
         Constant c = (Constant) field.getParameter(0).getGenerator();
         c.setValue(2.0);
 
-        result = field.generateNotes(duration);
+        result = field.generateNotes(duration, r);
 
         for (int i = 0; i < result.size(); i++) {
-            assertEquals("2", result.getNote(i).getPField(1));
+            assertEquals("2", result.get(i).getPField(1));
         }
 
         Constant c2 = (Constant) field.getParameter(1).getGenerator();
         c2.setValue(1.5);
 
-        result = field.generateNotes(duration);
+        result = field.generateNotes(duration, new java.util.Random(0L));
 
         assertEquals(4, result.size());
 

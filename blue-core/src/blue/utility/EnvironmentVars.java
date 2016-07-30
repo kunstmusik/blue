@@ -55,19 +55,17 @@ public class EnvironmentVars {
                 // our last hope, we assume Unix (thanks to H. Ware for the fix)
                 p = r.exec("env");
             }
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(p
+                         .getInputStream()))) {
+                String line;
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(p
-                    .getInputStream()));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                int idx = line.indexOf('=');
-                String key = line.substring(0, idx);
-                String value = line.substring(idx + 1);
-                envVars.setProperty(key, value);
+                while ((line = br.readLine()) != null) {
+                    int idx = line.indexOf('=');
+                    String key = line.substring(0, idx);
+                    String value = line.substring(idx + 1);
+                    envVars.setProperty(key, value);
+                }
             }
-
-            br.close();
         } catch (IOException ioe) {
             System.err
                     .println("Error - EnvironmentVars: Could not read environment variables");

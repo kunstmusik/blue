@@ -27,14 +27,17 @@ public class CsoundScoLanguageHierarchy extends LanguageHierarchy<CsoundScoToken
         }
     }
 
+    @Override
     protected synchronized Collection<CsoundScoTokenId> createTokenIds() {
         return tokens;
     }
 
+    @Override
     protected synchronized Lexer<CsoundScoTokenId> createLexer(LexerRestartInfo<CsoundScoTokenId> info) {
         return new CsoundScoHLexer(info);
     }
 
+    @Override
     protected String mimeType() {
         return "text/x-csound-sco";
     }

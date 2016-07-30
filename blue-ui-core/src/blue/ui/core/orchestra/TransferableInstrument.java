@@ -20,13 +20,12 @@
 
 package blue.ui.core.orchestra;
 
+import blue.orchestra.Instrument;
+import blue.orchestra.InstrumentCategory;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-
-import blue.orchestra.Instrument;
-import blue.orchestra.InstrumentCategory;
 
 /**
  * @author Steven Yi
@@ -55,10 +54,12 @@ public class TransferableInstrument implements Transferable {
         }
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         if (flavors.length == 1) {
             return flavors[0].getRepresentationClass() == flavor
@@ -68,6 +69,7 @@ public class TransferableInstrument implements Transferable {
         return false;
     }
 
+    @Override
     public Object getTransferData(DataFlavor flavor)
             throws UnsupportedFlavorException, IOException {
         return obj;

@@ -129,6 +129,7 @@ public class PatternData {
         return patternData;
     }
     
+    @Override
     public PatternData clone() {
         PatternData patternData = new PatternData();
         patternData.patterns = Arrays.copyOf(this.patterns, this.patterns.length);

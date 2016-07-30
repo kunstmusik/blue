@@ -27,9 +27,11 @@ package blue.ui.core.soundFile;
 
 import blue.BlueSystem;
 import blue.ui.utilities.FileChooserManager;
-import blue.utility.GenericFileFilter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.List;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -38,6 +40,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
@@ -60,10 +63,9 @@ public class AudioFilePlayer extends javax.swing.JPanel {
 
     static {
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new GenericFileFilter(new String[]{"aiff", "aif"},
-                "AIFF file (.aif, aiff)"));
+                new ExtensionFilter("AIFF file (.aif, aiff)", "*.aif", "*.aiff"));
         FileChooserManager.getDefault().addFilter(AudioFilePlayer.class,
-                new GenericFileFilter("wav", "WAV file (.wav)"));
+                new ExtensionFilter("WAV file (.wav)", "*.wav"));
     }
 
     /** Creates new form AudioFilePlayer */
@@ -84,7 +86,7 @@ public class AudioFilePlayer extends javax.swing.JPanel {
         try {
             aFormat = AudioSystem.getAudioFileFormat(soundFile);
             format = aFormat.getFormat();
-        } catch (Exception e) {
+        } catch (UnsupportedAudioFileException | IOException | NullPointerException e) {
             isAudioFile = false;
 
             timeDivisor = -1;
@@ -322,12 +324,11 @@ public class AudioFilePlayer extends javax.swing.JPanel {
     }//GEN-LAST:event_playStopButtonActionPerformed
 
     private void selectFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectFileButtonActionPerformed
-        int rValue = FileChooserManager.getDefault().showOpenDialog(
+        List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
                 this.getClass(), null);
 
-        if (rValue == JFileChooser.APPROVE_OPTION) {
-            File f = FileChooserManager.getDefault().getSelectedFile(this.
-                    getClass());
+        if (!rValue.isEmpty()) {
+            File f = rValue.get(0);
             setSoundFile(f);
         }
         
@@ -365,6 +366,7 @@ public class AudioFilePlayer extends javax.swing.JPanel {
             this.stopPlaying = true;
         }
 
+        @Override
         public void run() {
             playAudioFile(soundFile);
         }
@@ -390,42 +392,36 @@ public class AudioFilePlayer extends javax.swing.JPanel {
                             "soundfile.player.error.lineUnsupported"));
                     return;
                 }
+                try (SourceDataLine b = (SourceDataLine) AudioSystem.getLine(
+                             targetInfo)) {
+                    int read;
+                    byte[] buffer = new byte[bufferSize];
 
-                SourceDataLine b = (SourceDataLine) AudioSystem.getLine(
-                        targetInfo);
-                int read;
-                byte[] buffer = new byte[bufferSize];
+                    b.open(format, bufferSize);
+                    b.start();
 
-                b.open(format, bufferSize);
-                b.start();
+                    slider.setMinimum(0);
+                    slider.setMaximum(aFormat.getByteLength());
+                    slider.setValue(0);
 
-                slider.setMinimum(0);
-                slider.setMaximum(aFormat.getByteLength());
-                slider.setValue(0);
+                    while ((read = ain.read(buffer)) != -1) {
+                        if (stopPlaying) {
+                            break;
+                        }
+                        b.write(buffer, 0, read);
 
-                while ((read = ain.read(buffer)) != -1) {
-                    if (stopPlaying) {
-                        break;
+                        int bytesRead = slider.getValue() + read;
+                        slider.setValue(bytesRead);
+                        updateCurrentTime(bytesRead);
                     }
-                    b.write(buffer, 0, read);
 
-                    int bytesRead = slider.getValue() + read;
-                    slider.setValue(bytesRead);
-                    updateCurrentTime(bytesRead);
+                    if (!stopPlaying) {
+                        b.drain();
+                    }
+                    b.stop();
                 }
-
-                if (!stopPlaying) {
-                    b.drain();
-                }
-                b.stop();
-                b.close();
-
-                // System.out.println(mixer);
-                // System.out.println(aFormat);
-            } catch (IllegalArgumentException iae) {
+            } catch (    IllegalArgumentException | LineUnavailableException iae) {
                 JOptionPane.showMessageDialog(null, iae.getLocalizedMessage());
-            } catch (LineUnavailableException lue) {
-                JOptionPane.showMessageDialog(null, lue.getLocalizedMessage());
             } catch (FileNotFoundException fe) {
                 JOptionPane.showMessageDialog(null, BlueSystem.getString(
                         "message.file.notFound"));
