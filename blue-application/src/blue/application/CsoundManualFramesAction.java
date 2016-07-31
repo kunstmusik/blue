@@ -37,7 +37,7 @@ public final class CsoundManualFramesAction implements ActionListener {
         File index = new File(manualDir, "indexframes.html");
 
         try {
-            URLDisplayer.getDefault().showURL(index.toURL());
+            URLDisplayer.getDefault().showURL(index.toURI().toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
