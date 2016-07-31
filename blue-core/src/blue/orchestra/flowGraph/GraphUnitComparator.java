@@ -3,6 +3,7 @@ package blue.orchestra.flowGraph;
 import java.util.Comparator;
 
 class GraphUnitComparator implements Comparator {
+    @Override
     public int compare(Object o1, Object o2) {
         GraphUnit a = (GraphUnit) o1;
         GraphUnit b = (GraphUnit) o2;

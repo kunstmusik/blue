@@ -49,7 +49,7 @@ public class BlueClojureEngine implements PropertyChangeListener {
 
     private BlueProject currentProject = null;
     private HashMap<BlueProject, ClojureScriptEngine> engines =
-            new HashMap<BlueProject, ClojureScriptEngine>();
+            new HashMap<>();
 
     public static BlueClojureEngine getInstance() {
         return LazyHolder.INSTANCE;

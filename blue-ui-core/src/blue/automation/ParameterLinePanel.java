@@ -120,11 +120,8 @@ public class ParameterLinePanel extends JComponent implements
 
         ModeManager.getInstance().addModeListener(this);
 
-        lineListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
 
         FileChooserManager fcm = FileChooserManager.getDefault();
@@ -1539,18 +1536,13 @@ public class ParameterLinePanel extends JComponent implements
 
             };
 
-            paramItemListener = new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    JMenuItem menuItem = (JMenuItem) e.getSource();
-                    Parameter param = (Parameter) menuItem
-                            .getClientProperty("param");
-
-                    parameterIdList.setSelectedParameter(param.getUniqueId());
-                    ParameterLinePanel.this.repaint();
-                }
-
+            paramItemListener = (ActionEvent e) -> {
+                JMenuItem menuItem = (JMenuItem) e.getSource();
+                Parameter param = (Parameter) menuItem
+                        .getClientProperty("param");
+                
+                parameterIdList.setSelectedParameter(param.getUniqueId());
+                ParameterLinePanel.this.repaint();
             };
 
             exportBPF = new AbstractAction("Export BPF") {

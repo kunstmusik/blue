@@ -139,11 +139,8 @@ public class LayersPanel extends JComponent implements LayerGroupListener {
             }
         });
 
-        selection.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateSelection();
-            }
+        selection.addChangeListener((ChangeEvent e) -> {
+            updateSelection();
         });
 
         this.addFocusListener(new FocusListener() {

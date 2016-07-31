@@ -104,7 +104,7 @@ public final class ProcessRunner implements java.io.Serializable {
     private static String[] splitCommandString(String in) {
         int mode = 0;
 
-        ArrayList<String> parts = new ArrayList<String>();
+        ArrayList<String> parts = new ArrayList<>();
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < in.length(); i++) {
@@ -172,7 +172,7 @@ public final class ProcessRunner implements java.io.Serializable {
 
         this.commandLine = commandLine;
 
-        if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+        if (System.getProperty("os.name").contains("Windows")) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {
@@ -205,7 +205,7 @@ public final class ProcessRunner implements java.io.Serializable {
 
         this.commandLine = commandLine;
 
-        if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+        if (System.getProperty("os.name").contains("Windows")) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {

@@ -163,11 +163,9 @@ public class MidiImportSettingsDialog extends javax.swing.JDialog {
      *            the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new MidiImportSettingsDialog(new javax.swing.JFrame(), true)
-                        .setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new MidiImportSettingsDialog(new javax.swing.JFrame(), true)
+                    .setVisible(true);
         });
     }
 

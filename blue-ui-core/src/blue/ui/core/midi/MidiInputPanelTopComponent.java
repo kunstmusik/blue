@@ -49,14 +49,10 @@ public final class MidiInputPanelTopComponent extends TopComponent {
                 "HINT_MidiInputPanelTopComponent"));
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
-                        getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
+                    getPropertyName())) {
+                reinitialize();
             }
         });
 

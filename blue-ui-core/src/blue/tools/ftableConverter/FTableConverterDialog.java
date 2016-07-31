@@ -137,12 +137,9 @@ public class FTableConverterDialog extends javax.swing.JDialog implements
     public static void main(String args[]) {
         GUI.setBlueLookAndFeel();
 
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new FTableConverterDialog(new javax.swing.JFrame(), true)
-                        .setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new FTableConverterDialog(new javax.swing.JFrame(), true)
+                    .setVisible(true);
         });
     }
 

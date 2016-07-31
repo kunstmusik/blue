@@ -51,15 +51,10 @@ public class BSBCheckBoxView extends AutomatableBSBObjectView implements
         uiBox.setSelected(box.isSelected());
         uiBox.setText(box.getLabel());
 
-        uiBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!updating) {
-                    updateSelected();
-                }
+        uiBox.addActionListener((ActionEvent e) -> {
+            if (!updating) {
+                updateSelected();
             }
-
         });
 
         this.setLayout(new BorderLayout());

@@ -92,52 +92,34 @@ public final class UserToolsDialog extends JDialog {
         this.getContentPane().setLayout(new BorderLayout());
 
         addButton.setText(BlueSystem.getString("common.add"));
-        addButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addUserTool();
-            }
+        addButton.addActionListener((ActionEvent e) -> {
+            addUserTool();
         });
 
         pushDownButton.setText(BlueSystem.getString("common.pushDown"));
-        pushDownButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushDownUserTool();
-            }
+        pushDownButton.addActionListener((ActionEvent e) -> {
+            pushDownUserTool();
         });
         pushUpButton.setText(BlueSystem.getString("common.pushUp"));
-        pushUpButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushUpUserTool();
-            }
+        pushUpButton.addActionListener((ActionEvent e) -> {
+            pushUpUserTool();
         });
         removeButton.setText(BlueSystem.getString("common.remove"));
-        removeButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteUserTool();
-            }
+        removeButton.addActionListener((ActionEvent e) -> {
+            deleteUserTool();
         });
 
         buttonPanel.setLayout(gridLayout1);
         gridLayout1.setColumns(4);
 
         okButton.setText(BlueSystem.getString("programOptions.okButton"));
-        okButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                okButton_actionPerformed();
-            }
+        okButton.addActionListener((ActionEvent e) -> {
+            okButton_actionPerformed();
         });
         cancelButton.setText(BlueSystem
                 .getString("programOptions.cancelButton"));
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cancelButton_actionPerformed();
-            }
+        cancelButton.addActionListener((ActionEvent e) -> {
+            cancelButton_actionPerformed();
         });
         this.getContentPane().add(buttonPanel, BorderLayout.NORTH);
         buttonPanel.add(addButton, null);

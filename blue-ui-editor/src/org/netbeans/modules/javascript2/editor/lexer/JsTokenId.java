@@ -235,7 +235,7 @@ public enum JsTokenId implements TokenId {
                 @Override
                 protected Map<String, Collection<JsTokenId>> createTokenCategories() {
                     Map<String, Collection<JsTokenId>> cats =
-                            new HashMap<String, Collection<JsTokenId>>();
+                            new HashMap<>();
                     return cats;
                 }
 

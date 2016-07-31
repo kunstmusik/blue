@@ -70,32 +70,20 @@ public class DropdownItemEditorDialog extends JDialog implements
         pushUpButton.setText(BlueSystem.getString("common.pushUp"));
         pushDownButton.setText(BlueSystem.getString("common.pushDown"));
 
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addItem();
-            }
+        addButton.addActionListener((ActionEvent e) -> {
+            addItem();
         });
 
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeItem();
-            }
+        removeButton.addActionListener((ActionEvent e) -> {
+            removeItem();
         });
 
-        pushUpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushUpItem();
-            }
+        pushUpButton.addActionListener((ActionEvent e) -> {
+            pushUpItem();
         });
 
-        pushDownButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushDownItem();
-            }
+        pushDownButton.addActionListener((ActionEvent e) -> {
+            pushDownItem();
         });
 
         topPanel.add(addButton);
@@ -112,11 +100,8 @@ public class DropdownItemEditorDialog extends JDialog implements
         JButton closeButton = new JButton(BlueSystem
                 .getString("menu.file.close.text"));
 
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                closeDialog();
-            }
+        closeButton.addActionListener((ActionEvent e) -> {
+            closeDialog();
         });
 
         closePanel.add(closeButton);

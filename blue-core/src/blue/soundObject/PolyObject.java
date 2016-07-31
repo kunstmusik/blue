@@ -130,6 +130,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
 
     // public accessor methods
     //FIXME
+    @Override
     public float getObjectiveDuration() {
         float totalDuration;
         try {
@@ -142,10 +143,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return totalDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain npc) {
         this.npc = npc;
     }
@@ -394,18 +397,22 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return pObj;
     }
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -503,6 +510,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
@@ -725,6 +733,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         return true;
     }
 
+    @Override
     public void onLoadComplete() {
         SoundObject sObj;
 
@@ -751,6 +760,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     // methods from AbstractSoundObject
+    @Override
     public void setName(String name) {
         this.name = name;
 
@@ -760,10 +770,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         fireSoundObjectEvent(event);
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setStartTime(float startTime) {
         this.startTime = startTime;
 
@@ -773,10 +785,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         fireSoundObjectEvent(event);
     }
 
+    @Override
     public float getStartTime() {
         return startTime;
     }
 
+    @Override
     public void setSubjectiveDuration(float subjectiveDuration) {
         this.subjectiveDuration = subjectiveDuration;
 
@@ -786,6 +800,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         fireSoundObjectEvent(event);
     }
 
+    @Override
     public float getSubjectiveDuration() {
         return subjectiveDuration;
     }
@@ -812,6 +827,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         setSubjectiveDuration(newEndTime - startTime);
     }
 
+    @Override
     public void addScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             soundObjectListeners = new Vector<>();
@@ -819,6 +835,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         soundObjectListeners.add(listener);
     }
 
+    @Override
     public void removeScoreObjectListener(ScoreObjectListener listener) {
         if (soundObjectListeners == null) {
             return;
@@ -836,10 +853,12 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
         }
     }
 
+    @Override
     public Color getBackgroundColor() {
         return backgroundColor;
     }
 
+    @Override
     public void setBackgroundColor(Color backgroundColor) {
         this.backgroundColor = backgroundColor;
 

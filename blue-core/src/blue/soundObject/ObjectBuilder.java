@@ -117,7 +117,7 @@ public class ObjectBuilder extends AbstractSoundObject {
                 // outputs to screen
                 // and grab from stdin
 
-                if (this.getCommandLine().indexOf("$outfile") == -1) {
+                if (!this.getCommandLine().contains("$outfile")) {
                     String commandLine = this.getPreparedCommandLine(temp
                             .getName());
 
@@ -212,7 +212,7 @@ public class ObjectBuilder extends AbstractSoundObject {
     public String getPreparedCommandLine(String inFileName) {
         String temp = this.commandLine;
 
-        if (this.commandLine.indexOf("$infile") == -1) {
+        if (!this.commandLine.contains("$infile")) {
             return this.commandLine + " " + inFileName;
         } else {
             return blue.utility.TextUtilities.replace(temp, "$infile",
@@ -222,6 +222,7 @@ public class ObjectBuilder extends AbstractSoundObject {
 
     // END GENERATION METHODS
 
+    @Override
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
@@ -230,26 +231,32 @@ public class ObjectBuilder extends AbstractSoundObject {
 //        return renderer;
 //    }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain noteProcessorChain) {
         this.npc = noteProcessorChain;
     }
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -312,6 +319,7 @@ public class ObjectBuilder extends AbstractSoundObject {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

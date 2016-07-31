@@ -120,22 +120,27 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     /* Table Model Methods */
 
+    @Override
     public int getColumnCount() {
         return 1;
     }
 
+    @Override
     public int getRowCount() {
         return this.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return String.class;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         UserDefinedOpcode udo = this.get(rowIndex);
 
@@ -147,6 +152,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex == 0) {
             String val = (String) aValue;
@@ -157,6 +163,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         }
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             // case 0:
@@ -171,6 +178,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
 
     /* TABLE MODEL METHODS */
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -178,6 +186,7 @@ public class OpcodeList extends ArrayList<UserDefinedOpcode> implements TableMod
         listeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners == null) {
             return;

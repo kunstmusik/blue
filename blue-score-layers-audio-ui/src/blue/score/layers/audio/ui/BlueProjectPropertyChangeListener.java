@@ -63,55 +63,51 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         layerGroupBindings = new HashMap<>();
         layerBindings = new HashMap<>();
 
-        layerGroupListener = new LayerGroupListener() {
-
-            @Override
-            public void layerGroupChanged(LayerGroupDataEvent event) {
-                if (!(event.getSource() instanceof AudioLayerGroup)) {
-                    return;
-                }
-
-                AudioLayerGroup alg = (AudioLayerGroup) event.getSource();
-                ChannelList list = findChannelListForAudioLayerGroup(
-                        currentProject.getData().getMixer(), alg);
-
-                switch (event.getType()) {
-                    case LayerGroupDataEvent.DATA_ADDED:
-                        //FIXME - handle indexes
-                        for (Layer layer : event.getLayers()) {
-                            AudioLayer aLayer = (AudioLayer) layer;
-                            Channel channel = new Channel();
-                            channel.setAssociation(aLayer.getUniqueId());
-                            list.add(channel);
-                            
-                            layerBindings.put(aLayer, 
-                                    new AudioLayerChannelBinding(aLayer, channel));
-                        }
-
-                        break;
-                    case LayerGroupDataEvent.DATA_REMOVED:
-                        for (Layer layer : event.getLayers()) {
-                            AudioLayer aLayer = (AudioLayer) layer;
-                            String uniqueId = aLayer.getUniqueId();
-                            for (int i = 0; i < list.size(); i++) {
-                                Channel channel = list.get(i);
-                                if (uniqueId.equals(channel.getAssociation())) {
-                                    list.remove(channel);
-                                    break;
-                                }
+        layerGroupListener = (LayerGroupDataEvent event) -> {
+            if (!(event.getSource() instanceof AudioLayerGroup)) {
+                return;
+            }
+            
+            AudioLayerGroup alg = (AudioLayerGroup) event.getSource();
+            ChannelList list = findChannelListForAudioLayerGroup(
+                    currentProject.getData().getMixer(), alg);
+            
+            switch (event.getType()) {
+                case LayerGroupDataEvent.DATA_ADDED:
+                    //FIXME - handle indexes
+                    for (Layer layer : event.getLayers()) {
+                        AudioLayer aLayer = (AudioLayer) layer;
+                        Channel channel = new Channel();
+                        channel.setAssociation(aLayer.getUniqueId());
+                        list.add(channel);
+                        
+                        layerBindings.put(aLayer,
+                                new AudioLayerChannelBinding(aLayer, channel));
+                    }
+                    
+                    break;
+                case LayerGroupDataEvent.DATA_REMOVED:
+                    for (Layer layer : event.getLayers()) {
+                        AudioLayer aLayer = (AudioLayer) layer;
+                        String uniqueId = aLayer.getUniqueId();
+                        for (int i = 0; i < list.size(); i++) {
+                            Channel channel = list.get(i);
+                            if (uniqueId.equals(channel.getAssociation())) {
+                                list.remove(channel);
+                                break;
                             }
-                            
-                            if(layerBindings.containsKey(aLayer)) {
-                                layerBindings.get(aLayer).clearBinding();
-                                layerBindings.remove(aLayer);
-                            }   
                         }
-                        break;
-                    case LayerGroupDataEvent.DATA_CHANGED: {
-
+                        
+                        if(layerBindings.containsKey(aLayer)) {
+                            layerBindings.get(aLayer).clearBinding();
+                            layerBindings.remove(aLayer);
+                        }
                     }
                     break;
+                case LayerGroupDataEvent.DATA_CHANGED: {
+                    
                 }
+                break;
             }
         };
 

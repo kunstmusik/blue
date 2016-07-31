@@ -53,12 +53,8 @@ public class ValuePanel extends JPanel {
             }
         });
 
-        valueField.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setValueFromField();
-            }
+        valueField.addActionListener((ActionEvent e) -> {
+            setValueFromField();
         });
 
         valueField.addFocusListener(new FocusAdapter() {

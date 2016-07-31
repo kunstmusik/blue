@@ -121,6 +121,7 @@ public class InstrumentAssignment implements Serializable, Comparable<Instrument
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
+    @Override
     public int compareTo(InstrumentAssignment ia) {
         try {
             int a = Integer.parseInt(this.arrangementId);

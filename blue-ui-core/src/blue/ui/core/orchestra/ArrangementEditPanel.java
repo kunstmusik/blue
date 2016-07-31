@@ -139,16 +139,10 @@ public class ArrangementEditPanel extends JComponent
         final JButton addButton = new JButton("+");
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add Instrument");
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int x = addButton.getWidth();
-                int y = 0;
-
-                popup.show(addButton, x, y);
-            }
-
+        addButton.addActionListener((ActionEvent e) -> {
+            int x1 = addButton.getWidth();
+            int y1 = 0;
+            popup.show(addButton, x1, y1);
         });
 
         topPanel.add(label, BorderLayout.CENTER);
@@ -623,43 +617,22 @@ public class ArrangementEditPanel extends JComponent
         Action exportItem;
 
         public InstrumentTablePopup() {
-            removeInstrumentMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    removeInstrument();
-                }
+            removeInstrumentMenuItem.addActionListener((ActionEvent e) -> {
+                removeInstrument();
             });
-            cutMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    cutInstrument();
-                }
+            cutMenuItem.addActionListener((ActionEvent e) -> {
+                cutInstrument();
             });
-            copyMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    copyInstrument();
-                }
+            copyMenuItem.addActionListener((ActionEvent e) -> {
+                copyInstrument();
             });
-            pasteMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    pasteInstrument();
-                }
+            pasteMenuItem.addActionListener((ActionEvent e) -> {
+                pasteInstrument();
             });
 
             convertToBSB.setText("Convert to BlueSynthBuilder");
-            convertToBSB.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    convertToBSB();
-                }
-
+            convertToBSB.addActionListener((ActionEvent e) -> {
+                convertToBSB();
             });
 
             Action importItem = new AbstractAction(BlueSystem
@@ -831,15 +804,12 @@ public class ArrangementEditPanel extends JComponent
 
             this.setLabel("Add Instrument");
 
-            ActionListener al = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>) 
-                            ((JMenuItem) e.getSource()).getClientProperty(
-                            "plugin");
-
-                    fireAddInstrument(plugin.getInstance());
-                }
+            ActionListener al = (ActionEvent e) -> {
+                LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>)
+                        ((JMenuItem) e.getSource()).getClientProperty(
+                                "plugin");
+                
+                fireAddInstrument(plugin.getInstance());
             };
 
             for (LazyPlugin<Instrument> plugin : plugins) {

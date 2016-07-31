@@ -61,27 +61,22 @@ public class ScaleSelectionPanel extends JComponent {
         initScaleFileSelector();
 
         JButton fileButton = new JButton("...");
-        fileButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
-                        FILE_CHOOSER_ID,
-                        null);
-
-                if (!rValue.isEmpty()) {
-                    File f = rValue.get(0);
-
-                    if (!f.exists()) {
-                        return;
-                    }
-
-                    scale = Scale.loadScale(f);
-
-                    updateDisplay();
-                    fireChangeEvent();
+        fileButton.addActionListener((ActionEvent e) -> {
+            List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
+                    FILE_CHOOSER_ID,
+                    null);
+            
+            if (!rValue.isEmpty()) {
+                File f = rValue.get(0);
+                
+                if (!f.exists()) {
+                    return;
                 }
+                
+                scale = Scale.loadScale(f);
+                
+                updateDisplay();
+                fireChangeEvent();
             }
         });
 

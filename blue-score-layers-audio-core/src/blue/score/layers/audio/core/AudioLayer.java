@@ -124,10 +124,12 @@ public class AudioLayer extends ArrayList<AudioClip>
         this.solo = solo;
     }
 
+    @Override
     public int getHeightIndex() {
         return heightIndex;
     }
 
+    @Override
     public void setHeightIndex(int heightIndex) {
         if (this.heightIndex == heightIndex) {
             return;
@@ -150,6 +152,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         return uniqueId;
     }
 
+    @Override
     public ParameterIdList getAutomationParameters() {
         return automationParameters;
     }
@@ -402,7 +405,7 @@ public class AudioLayer extends ArrayList<AudioClip>
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {

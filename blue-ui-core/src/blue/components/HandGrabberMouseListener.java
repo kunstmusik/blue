@@ -159,14 +159,9 @@ public class HandGrabberMouseListener implements MouseListener,
             final int tempX = newX;
             final int tempY = newY;
 
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    jsp.getHorizontalScrollBar().setValue(tempX);
-                    jsp.getVerticalScrollBar().setValue(tempY);
-                }
-
+            SwingUtilities.invokeLater(() -> {
+                jsp.getHorizontalScrollBar().setValue(tempX);
+                jsp.getVerticalScrollBar().setValue(tempY);
             });
 
         }

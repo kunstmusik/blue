@@ -141,7 +141,7 @@ public enum PythonTokenId implements TokenId {
                 @Override
                 protected Map<String, Collection<PythonTokenId>> createTokenCategories() {
                     Map<String, Collection<PythonTokenId>> cats =
-                            new HashMap<String, Collection<PythonTokenId>>();
+                            new HashMap<>();
                     return cats;
                 }
 

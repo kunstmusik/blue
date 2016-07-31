@@ -256,6 +256,7 @@ public class Table extends AbstractTableModel implements Serializable {
         return Double.class;
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
@@ -268,10 +269,12 @@ public class Table extends AbstractTableModel implements Serializable {
         return "Value";
     }
 
+    @Override
     public int getRowCount() {
         return points.size();
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         TablePoint tp = getPoint(rowIndex);
 

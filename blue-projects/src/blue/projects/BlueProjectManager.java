@@ -65,7 +65,7 @@ public class BlueProjectManager {
         return projects.contains(project);
     }
 
-    ArrayList<BlueProject> projects = new ArrayList<BlueProject>();
+    ArrayList<BlueProject> projects = new ArrayList<>();
 
     BlueProject currentProject = null;
 
@@ -179,16 +179,12 @@ public class BlueProjectManager {
             final Score score = project.getData().getScore();
             
             
-            new Thread(new Runnable() {
-
-                public void run() {
-                    try {
-                        score.processOnLoad();
-                    } catch (Exception ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+            new Thread(() -> {
+                try {
+                    score.processOnLoad();
+                } catch (Exception ex) {
+                    Exceptions.printStackTrace(ex);
                 }
-                
             }).start();
             
             
@@ -246,7 +242,7 @@ public class BlueProjectManager {
     public synchronized void addPropertyChangeListener(
             PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector<PropertyChangeListener>();
+            listeners = new Vector<>();
         }
         listeners.add(pcl);
     }
@@ -301,18 +297,12 @@ public class BlueProjectManager {
 
     public void save() {
         if (getCurrentProject().getDataFile() != null) {
-            try {
-                PrintWriter out = new PrintWriter(new FileWriter(
-                        getCurrentProject().getDataFile()));
+            try (PrintWriter out = new PrintWriter(new FileWriter(
+                    getCurrentProject().getDataFile()))) {
 
                 out.print(getCurrentProject().getData().saveAsXML().toString());
 
                 out.flush();
-                out.close();
-
-
-                StatusDisplayer.getDefault().setStatusText("File saved: "
-                        + getCurrentProject().getDataFile().getName());
             } catch (IOException ioe) {
 
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
@@ -324,6 +314,8 @@ public class BlueProjectManager {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            StatusDisplayer.getDefault().setStatusText("File saved: "
+                    + getCurrentProject().getDataFile().getName());
         } else {
             saveAs();
         }
@@ -368,38 +360,13 @@ public class BlueProjectManager {
                 getCurrentProject().setOpenedFromTempFile(false);
             }
 
-            try {
-                PrintWriter out = new PrintWriter(new FileWriter(temp));
+            try (PrintWriter out = new PrintWriter(new FileWriter(temp))) {
 
                 BlueData data = getCurrentProject().getData();
 
                 out.print(data.saveAsXML().toString());
 
                 out.flush();
-                out.close();
-
-                StatusDisplayer.getDefault().setStatusText("File saved: " + temp.
-                        getName());
-//                ProgramOptions.addRecentFile(temp);
-//                blueMenuBar.resetRecentFiles();
-//                ProgramOptions.save();
-//
-
-                RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
-
-                // fileName = temp;
-
-                getCurrentProject().setDataFile(temp);
-
-                BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
-
-                temp = null;
-
-                fireProjectFileChanged();
-
-//                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
-                //                        getName());
-                //                setRevertEnabled();
             } catch (Exception e) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
                         "Could not save file:\n\n" + e.getLocalizedMessage(),
@@ -407,6 +374,23 @@ public class BlueProjectManager {
 
                 DialogDisplayer.getDefault().notify(descriptor);
             }
+            StatusDisplayer.getDefault().setStatusText("File saved: " + temp.
+                    getName());
+//                ProgramOptions.addRecentFile(temp);
+//                blueMenuBar.resetRecentFiles();
+//                ProgramOptions.save();
+//
+RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
+// fileName = temp;
+
+getCurrentProject().setDataFile(temp);
+BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
+temp = null;
+fireProjectFileChanged();
+
+//                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
+//                        getName());
+//                setRevertEnabled();
             return true;
 //        } 
 //        else if (rValue == JFileChooser.CANCEL_OPTION) {

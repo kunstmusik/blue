@@ -570,7 +570,7 @@ public class Grapher extends JComponent {
 
             // System.out.println(line);
 
-            if (line.indexOf(objectName) > -1 && line.indexOf("cgraph") > -1) {
+            if (line.contains(objectName) && line.contains("cgraph")) {
                 String[] tokens = TextUtilities.splitStringWithQuotes(line);
                 currentGraph.initialize(tokens);
                 break;

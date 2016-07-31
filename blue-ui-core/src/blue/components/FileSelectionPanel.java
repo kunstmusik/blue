@@ -61,13 +61,8 @@ public class FileSelectionPanel extends JComponent {
 
         JButton fileButton = new JButton("...");
 
-        fileButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectFile();
-            }
-
+        fileButton.addActionListener((ActionEvent e) -> {
+            selectFile();
         });
 
         this.add(fileLabel, BorderLayout.WEST);

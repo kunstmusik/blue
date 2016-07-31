@@ -28,7 +28,7 @@ public class ClojureLanguageHierarchy extends LanguageHierarchy<ClojureTokenId> 
     private static void init() {
         AntlrTokenReader reader = new AntlrTokenReader();
         tokens = reader.readTokenFile();
-        idToToken = new HashMap<Integer, ClojureTokenId>();
+        idToToken = new HashMap<>();
         for (ClojureTokenId token : tokens) {
             idToToken.put(token.ordinal(), token);
         }

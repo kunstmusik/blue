@@ -39,6 +39,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
         this.noteIndex = Integer.parseInt(noteIndex);
     }
 
+    @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         if (in.size() < 2 || noteIndex == 1) {
             return;
@@ -114,6 +115,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

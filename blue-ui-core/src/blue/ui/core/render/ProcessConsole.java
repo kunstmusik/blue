@@ -255,7 +255,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
         this.commandLine = commandLine;
 
-        if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+        if (System.getProperty("os.name").contains("Windows")) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {
@@ -299,7 +299,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
         this.commandLine = commandLine;
 
-        if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+        if (System.getProperty("os.name").contains("Windows")) {
             process = Runtime.getRuntime().exec(commandLine, null,
                     currentWorkingdirectory);
         } else {
@@ -343,7 +343,7 @@ public final class ProcessConsole implements java.io.Serializable, DiskRenderSer
 
         if (killProcess) {
 
-            if (System.getProperty("os.name").indexOf("Windows") >= 0) {
+            if (System.getProperty("os.name").contains("Windows")) {
 
                 try {
                     if (stderrThread != null) {

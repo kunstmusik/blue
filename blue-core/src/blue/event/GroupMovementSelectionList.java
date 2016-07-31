@@ -46,6 +46,7 @@ public class GroupMovementSelectionList extends SelectionList implements
         this.gridSettings = gridSettings;
     }
 
+    @Override
     public void initiateMovement(JComponent source) {
         originPoints.clear();
 
@@ -84,6 +85,7 @@ public class GroupMovementSelectionList extends SelectionList implements
      * 
      * @see blue.event.GroupMovementListener#move(java.awt.Point)
      */
+    @Override
     public void move(int offsetX, int offsetY) {
 
         if(gridSettings != null && gridSettings.isSnapEnabled()) {

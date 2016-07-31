@@ -58,6 +58,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return settings;
     }
 
+    @Override
     public int getColumnCount() {
         return 4;
     }
@@ -78,6 +79,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public int getRowCount() {
         return settings.size();
     }
@@ -101,6 +103,7 @@ public class MidiImportSettings extends AbstractTableModel {
 
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         TrackImportSettings trSetting = (TrackImportSettings) settings
                 .get(rowIndex);

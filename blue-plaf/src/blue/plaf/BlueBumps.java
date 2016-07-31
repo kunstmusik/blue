@@ -41,7 +41,7 @@ class BlueBumps implements Icon {
 
     protected Color backColor;
 
-    protected static Vector<BumpBuffer> buffers = new Vector<BumpBuffer>();
+    protected static Vector<BumpBuffer> buffers = new Vector<>();
 
     protected BumpBuffer buffer;
 
@@ -102,6 +102,7 @@ class BlueBumps implements Icon {
         backColor = newBackColor;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
         GraphicsConfiguration gc = (g instanceof Graphics2D) ? ((Graphics2D) g)
                 .getDeviceConfiguration()
@@ -128,10 +129,12 @@ class BlueBumps implements Icon {
         }
     }
 
+    @Override
     public int getIconWidth() {
         return xBumps * 2;
     }
 
+    @Override
     public int getIconHeight() {
         return yBumps * 2;
     }

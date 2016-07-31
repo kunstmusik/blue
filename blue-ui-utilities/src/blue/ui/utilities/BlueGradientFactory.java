@@ -13,7 +13,7 @@ import java.util.HashMap;
  * @author stevenyi
  */
 public class BlueGradientFactory {
-     private static HashMap<Color, GradientPaint> gpCache = new HashMap<Color, GradientPaint>();
+     private static HashMap<Color, GradientPaint> gpCache = new HashMap<>();
 
     public static GradientPaint getGradientPaint(Color c) {
         GradientPaint gp = gpCache.get(c);

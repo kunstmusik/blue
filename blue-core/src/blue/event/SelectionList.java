@@ -26,6 +26,7 @@ import java.util.ArrayList;
  */
 public class SelectionList extends ArrayList implements SelectionListener {
 
+    @Override
     public void selectionPerformed(SelectionEvent e) {
         switch (e.getSelectionType()) {
             case SelectionEvent.SELECTION_CLEAR:

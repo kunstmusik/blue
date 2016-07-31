@@ -431,13 +431,9 @@ public class FindReplaceDialog extends javax.swing.JDialog implements
      *            the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                JFrame frame = new JFrame();
-                new FindReplaceDialog(frame).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            JFrame frame = new JFrame();
+            new FindReplaceDialog(frame).setVisible(true);
         });
     }
 

@@ -84,23 +84,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         presets.addPresetListener(this);
 
         editBox.addEditModeListener(bsbEditPanel);
-        editBox.addEditModeListener(new EditModeListener() {
-
-            @Override
-            public void setEditing(boolean isEditing) {
-                rightBar.setVisible(isEditing);
+        editBox.addEditModeListener(rightBar::setVisible);
+        editBox.addEditModeListener((boolean isEditing) -> {
+            if (!isUpdating && gInterface != null) {
+                gInterface.setEditEnabled(isEditing);
             }
-
-        });
-        editBox.addEditModeListener(new EditModeListener() {
-
-            @Override
-            public void setEditing(boolean isEditing) {
-                if (!isUpdating && gInterface != null) {
-                    gInterface.setEditEnabled(isEditing);
-                }
-            }
-
         });
 
         JPanel topBar = new JPanel(new BorderLayout());
@@ -124,17 +112,12 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
         gridPropertySheet.setPreferredSize(new Dimension(250, 30));
 
-        gridPropertySheet.addPropertySheetChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (gInterface != null) {
-                            Property prop = (Property) evt.getSource();
-                            prop.writeToObject(gInterface.getGridSettings());
-                        }
-                    }
-                });
+        gridPropertySheet.addPropertySheetChangeListener((PropertyChangeEvent evt) -> {
+            if (gInterface != null) {
+                Property prop = (Property) evt.getSource();
+                prop.writeToObject(gInterface.getGridSettings());
+            }
+        });
 
         try {
             gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(

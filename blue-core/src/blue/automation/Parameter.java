@@ -209,6 +209,7 @@ public class Parameter implements TableModelListener, Serializable {
 
     /* Listening to Line Value Changes to fire events to update UI */
 
+    @Override
     public void tableChanged(TableModelEvent e) {
         if (!updatingLine) {
             fireLineDataChanged();

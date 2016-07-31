@@ -310,24 +310,27 @@ public class CybilCompiler {
      * @return
      */
     private static CybilArg createCybilArg(String argName) {
-        if (argName.equals("sq")) {
-            return new sq();
-        } else if (argName.equals("li")) {
-            return new li();
-        } else if (argName.equals("lo")) {
-            return new lo();
-        } else if (argName.equals("ma")) {
-            return new ma();
-        } else if (argName.equals("gr")) {
-            return new gr();
-        } else if (argName.equals("ran")) {
-            return new ran();
-        } else if (argName.equals("pik")) {
-            return new pik();
-        } else if (argName.equals("pa")) {
-            return new pa();
-        } else if (argName.equals("co")) {
-            return new co();
+        switch (argName) {
+            case "sq":
+                return new sq();
+            case "li":
+                return new li();
+            case "lo":
+                return new lo();
+            case "ma":
+                return new ma();
+            case "gr":
+                return new gr();
+            case "ran":
+                return new ran();
+            case "pik":
+                return new pik();
+            case "pa":
+                return new pa();
+            case "co":
+                return new co();
+            default:
+                break;
         }
 
         String errMessage = "[" + BlueSystem.getString("message.error")

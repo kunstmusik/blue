@@ -30,6 +30,7 @@ public class BlueUndoManager {
 
     static {
         al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 if (e.getSource() == undoMenuItem) {
                     if (undo.canUndo()) {

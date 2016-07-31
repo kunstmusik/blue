@@ -45,7 +45,7 @@ public class ScoreControllerTest {
     private ScoreController.ScoreObjectBuffer buffer;
     
     public ScoreControllerTest() {
-        BlueUndoManager.setUndoGroup(new HashMap<String, UndoManager>());
+        BlueUndoManager.setUndoGroup(new HashMap<>());
     }
 
     @Before

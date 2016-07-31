@@ -66,13 +66,10 @@ public class BSBSubChannelDropdownView extends BSBObjectView implements
         comboBox.setSize(comboBox.getPreferredSize());
         this.setSize(comboBox.getPreferredSize());
 
-        comboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!updating) {
-                    dropdown.setChannelOutput((String) comboBox
-                            .getSelectedItem());
-                }
+        comboBox.addActionListener((ActionEvent e) -> {
+            if (!updating) {
+                dropdown.setChannelOutput((String) comboBox
+                        .getSelectedItem());
             }
         });
 

@@ -76,32 +76,50 @@ public class CGraph extends CeciliaObject implements Serializable {
         float initValue = Float.NaN;
 
         for (int i = 2; i < tokens.length; i += 2) {
-            if (tokens[i].equals("-label")) {
-                this.setLabel(tokens[i + 1]);
-            } else if (tokens[i].equals("-min")) {
-                this.setMin(Float.parseFloat(tokens[i + 1]));
-            } else if (tokens[i].equals("-max")) {
-                this.setMax(Float.parseFloat(tokens[i + 1]));
-            } else if (tokens[i].equals("-rel")) {
-                if (tokens[i + 1].equals("lin")) {
-                    this.setRel(REL_LINEAR);
-                } else if (tokens[i + 1].equals("log")) {
-                    this.setRel(REL_LOGARITHMIC);
-                } else if (tokens[i + 1].equals("raw")) {
-                    this.setRel(REL_RAW);
-                }
-            } else if (tokens[i].equals("-unit")) {
-                this.setUnit(tokens[i + 1]);
-            } else if (tokens[i].equals("-gen")) {
-                this.setGen(Integer.parseInt(tokens[i + 1]));
-            } else if (tokens[i].equals("-size")) {
-                this.setSize(Integer.parseInt(tokens[i + 1]));
-            } else if (tokens[i].equals("-init")) {
-                initValue = Float.parseFloat(tokens[i + 1]);
-                setInitValue = true;
-            } else if (tokens[i].equals("-func")) {
-                parseFuncString(tokens[i + 1]);
-                setInitValue = false;
+            switch (tokens[i]) {
+                case "-label":
+                    this.setLabel(tokens[i + 1]);
+                    break;
+                case "-min":
+                    this.setMin(Float.parseFloat(tokens[i + 1]));
+                    break;
+                case "-max":
+                    this.setMax(Float.parseFloat(tokens[i + 1]));
+                    break;
+                case "-rel":
+                    switch (tokens[i + 1]) {
+                        case "lin":
+                            this.setRel(REL_LINEAR);
+                            break;
+                        case "log":
+                            this.setRel(REL_LOGARITHMIC);
+                            break;
+                        case "raw":
+                            this.setRel(REL_RAW);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case "-unit":
+                    this.setUnit(tokens[i + 1]);
+                    break;
+                case "-gen":
+                    this.setGen(Integer.parseInt(tokens[i + 1]));
+                    break;
+                case "-size":
+                    this.setSize(Integer.parseInt(tokens[i + 1]));
+                    break;
+                case "-init":
+                    initValue = Float.parseFloat(tokens[i + 1]);
+                    setInitValue = true;
+                    break;
+                case "-func":
+                    parseFuncString(tokens[i + 1]);
+                    setInitValue = false;
+                    break;
+                default:
+                    break;
             }
         }
         if (setInitValue) {

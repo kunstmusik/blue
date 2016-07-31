@@ -89,25 +89,15 @@ public class PresetsManagerDialog extends JDialog implements
         JPanel bottomPanel = new JPanel();
 
         JButton saveButton = new JButton(BlueSystem.getString("common.save"));
-        saveButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                retVal = (PresetGroup) model.getRoot();
-                setVisible(false);
-            }
-
+        saveButton.addActionListener((ActionEvent e) -> {
+            retVal = (PresetGroup) model.getRoot();
+            setVisible(false);
         });
 
         JButton cancelButton = new JButton(BlueSystem
                 .getString("programOptions.cancelButton"));
-        cancelButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setVisible(false);
-            }
-
+        cancelButton.addActionListener((ActionEvent e) -> {
+            setVisible(false);
         });
 
         bottomPanel.add(saveButton);
@@ -217,198 +207,157 @@ public class PresetsManagerDialog extends JDialog implements
             this.addSeparator();
             this.add(addFolder);
 
-            remove.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null) {
-                        return;
-                    }
-
-                    if (userObj instanceof Preset) {
-                        model.removePreset((Preset) userObj);
-                    } else if (userObj instanceof PresetGroup) {
-                        model.removePresetGroup((PresetGroup) userObj);
-                    }
+            remove.addActionListener((ActionEvent e) -> {
+                if (userObj == null) {
+                    return;
                 }
 
+                if (userObj instanceof Preset) {
+                    model.removePreset((Preset) userObj);
+                } else if (userObj instanceof PresetGroup) {
+                    model.removePresetGroup((PresetGroup) userObj);
+                }
             });
 
-            cut.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null) {
-                        return;
-                    }
-
-                    if (userObj instanceof Preset) {
-                        buffer.setBufferedItem((Preset) ObjectUtilities
-                                .clone(userObj));
-                        model.removePreset((Preset) userObj);
-                    } else {
-                        buffer.setBufferedItem((PresetGroup) ObjectUtilities
-                                .clone(userObj));
-                        model.removePresetGroup((PresetGroup) userObj);
-                    }
+            cut.addActionListener((ActionEvent e) -> {
+                if (userObj == null) {
+                    return;
                 }
 
+                if (userObj instanceof Preset) {
+                    buffer.setBufferedItem((Preset) ObjectUtilities
+                            .clone(userObj));
+                    model.removePreset((Preset) userObj);
+                } else {
+                    buffer.setBufferedItem((PresetGroup) ObjectUtilities
+                            .clone(userObj));
+                    model.removePresetGroup((PresetGroup) userObj);
+                }
             });
 
-            copy.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null) {
-                        return;
-                    }
-
-                    if (userObj instanceof Preset) {
-                        buffer.setBufferedItem((Preset) ObjectUtilities
-                                .clone(userObj));
-                    } else {
-                        buffer.setBufferedItem((PresetGroup) ObjectUtilities
-                                .clone(userObj));
-                    }
+            copy.addActionListener((ActionEvent e) -> {
+                if (userObj == null) {
+                    return;
                 }
 
+                if (userObj instanceof Preset) {
+                    buffer.setBufferedItem((Preset) ObjectUtilities
+                            .clone(userObj));
+                } else {
+                    buffer.setBufferedItem((PresetGroup) ObjectUtilities
+                            .clone(userObj));
+                }
             });
 
-            paste.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null || !(userObj instanceof PresetGroup)) {
-                        return;
-                    }
+            paste.addActionListener((ActionEvent e) -> {
+                if (userObj == null || !(userObj instanceof PresetGroup)) {
+                    return;
+                }
+                
+                PresetGroup group = (PresetGroup) userObj;
+                
+                Object item = buffer.getBufferedItem();
+                
+                if (item instanceof Preset) {
+                    model.addPreset(group, (Preset) ObjectUtilities
+                            .clone(item));
+                } else {
+                    model.addPresetGroup(group,
+                            (PresetGroup) ObjectUtilities.clone(item));
+                }
+            });
 
+            importItem.addActionListener((ActionEvent e) -> {
+                if (userObj == null || !(userObj instanceof PresetGroup)) {
+                    return;
+                }
+                List<File> retVal1 = FileChooserManager.getDefault().showOpenDialog(
+                        IMPORT_DIALOG, PresetsManagerDialog.this);
+                if (!retVal1.isEmpty()) {
                     PresetGroup group = (PresetGroup) userObj;
-
-                    Object item = buffer.getBufferedItem();
-
-                    if (item instanceof Preset) {
-                        model.addPreset(group, (Preset) ObjectUtilities
-                                .clone(item));
-                    } else {
-                        model.addPresetGroup(group,
-                                (PresetGroup) ObjectUtilities.clone(item));
-                    }
-
-                }
-            });
-
-            importItem.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null || !(userObj instanceof PresetGroup)) {
-                        return;
-                    }
-
-                    List<File> retVal = FileChooserManager.getDefault().showOpenDialog(
-                            IMPORT_DIALOG, PresetsManagerDialog.this);
-
-                    if (!retVal.isEmpty()) {
-
-                        PresetGroup group = (PresetGroup) userObj;
-
-                        File f = retVal.get(0);
-                        Document doc;
-
-                        try {
-                            doc = new Document(f);
-                            Element root = doc.getRoot();
-                            switch (root.getName()) {
-                                case "presetGroup":
-                                    PresetGroup pGroup = PresetGroup
-                                            .loadFromXML(root);
-                                    model.addPresetGroup(group, pGroup);
-                                    break;
-                                case "preset":
-                                    Preset p = Preset.loadFromXML(root);
-                                    model.addPreset(group, p);
-                                    break;
-                                default:
-                                    JOptionPane.showMessageDialog(
-                                            PresetsManagerDialog.this,
-                                            "Error: File did not contain presets",
-                                            "Error", JOptionPane.ERROR_MESSAGE);
-                                    break;
-                            }
-
-                        } catch (ParseException ex) {
-                            ex.printStackTrace();
-                            JOptionPane.showMessageDialog(
-                                    PresetsManagerDialog.this,
-                                    "Error: Could not read presets from file",
-                                    "Error", JOptionPane.ERROR_MESSAGE);
+                    File f = retVal1.get(0);
+                    Document doc;
+                    try {
+                        doc = new Document(f);
+                        Element root = doc.getRoot();
+                        switch (root.getName()) {
+                            case "presetGroup":
+                                PresetGroup pGroup = PresetGroup
+                                        .loadFromXML(root);
+                                model.addPresetGroup(group, pGroup);
+                                break;
+                            case "preset":
+                                Preset p = Preset.loadFromXML(root);
+                                model.addPreset(group, p);
+                                break;
+                            default:
+                                JOptionPane.showMessageDialog(
+                                        PresetsManagerDialog.this,
+                                        "Error: File did not contain presets",
+                                        "Error", JOptionPane.ERROR_MESSAGE);
+                                break;
                         }
 
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(
+                                PresetsManagerDialog.this,
+                                "Error: Could not read presets from file",
+                                "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
 
-            export.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null) {
-                        return;
-                    }
-
-                    File retVal = FileChooserManager.getDefault().showSaveDialog(
-                            EXPORT_DIALOG, PresetsManagerDialog.this);
-
-                    if (retVal != null) {
-
-                        File f = retVal;
-
-                        if (f.exists()) {
-                            int overWrite = JOptionPane
-                                    .showConfirmDialog(
-                                            PresetsManagerDialog.this,
-                                            "Please confirm you would like to overwrite this file.");
-
-                            if (overWrite != JOptionPane.OK_OPTION) {
-                                return;
-                            }
-                        }
-
-                        Element node;
-
-                        if (userObj instanceof PresetGroup) {
-                            node = ((PresetGroup) userObj).saveAsXML();
-                        } else if (userObj instanceof Preset) {
-                            node = ((Preset) userObj).saveAsXML();
-                        } else {
+            export.addActionListener((ActionEvent e) -> {
+                if (userObj == null) {
+                    return;
+                }
+                File retVal1 = FileChooserManager.getDefault().showSaveDialog(
+                        EXPORT_DIALOG, PresetsManagerDialog.this);
+                if (retVal1 != null) {
+                    File f = retVal1;
+                    if (f.exists()) {
+                        int overWrite = JOptionPane
+                                .showConfirmDialog(
+                                        PresetsManagerDialog.this,
+                                        "Please confirm you would like to overwrite this file.");
+                        
+                        if (overWrite != JOptionPane.OK_OPTION) {
                             return;
                         }
-                        PrintWriter out;
-
-                        try {
-                            out = new PrintWriter(new FileWriter(f));
-                            out.print(node.toString());
-
-                            out.flush();
-                            out.close();
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
-
                     }
-
+                    Element node;
+                    if (userObj instanceof PresetGroup) {
+                        node = ((PresetGroup) userObj).saveAsXML();
+                    } else if (userObj instanceof Preset) {
+                        node = ((Preset) userObj).saveAsXML();
+                    } else {
+                        return;
+                    }
+                    PrintWriter out;
+                    try {
+                        out = new PrintWriter(new FileWriter(f));
+                        out.print(node.toString());
+                        
+                        out.flush();
+                        out.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
             });
 
-            addFolder.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (userObj == null || !(userObj instanceof PresetGroup)) {
-                        return;
-                    }
-
-                    PresetGroup pGroup = (PresetGroup) userObj;
-
-                    PresetGroup newGroup = new PresetGroup();
-                    newGroup.setPresetGroupName("New Folder");
-
-                    model.addPresetGroup(pGroup, newGroup);
+            addFolder.addActionListener((ActionEvent e) -> {
+                if (userObj == null || !(userObj instanceof PresetGroup)) {
+                    return;
                 }
+                
+                PresetGroup pGroup = (PresetGroup) userObj;
+                
+                PresetGroup newGroup = new PresetGroup();
+                newGroup.setPresetGroupName("New Folder");
+                
+                model.addPresetGroup(pGroup, newGroup);
             });
 
             /* setup file choosers */

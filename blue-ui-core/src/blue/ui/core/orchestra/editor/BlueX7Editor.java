@@ -63,37 +63,28 @@ public class BlueX7Editor extends InstrumentEditor {
     boolean isUpdatingData = false;
 
     public BlueX7Editor() {
-        modPitchListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (isUpdatingData) {
-                    return;
-                }
-                int val = ((JSlider) e.getSource()).getValue();
-                for (int i = 0; i < operators.length; i++) {
-                    operators[i].modulation.pitch.setValue(val);
-                }
+        modPitchListener = (ChangeEvent e) -> {
+            if (isUpdatingData) {
+                return;
+            }
+            int val = ((JSlider) e.getSource()).getValue();
+            for (int i = 0; i < operators.length; i++) {
+                operators[i].modulation.pitch.setValue(val);
             }
         };
 
-        syncListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isUpdatingData) {
-                    return;
-                }
-                int val = ((JComboBox) e.getSource()).getSelectedIndex();
-                for (int i = 0; i < operators.length; i++) {
-                    operators[i].oscilator.syncCombo.setSelectedIndex(val);
-                }
+        syncListener = (ActionEvent e) -> {
+            if (isUpdatingData) {
+                return;
+            }
+            int val = ((JComboBox) e.getSource()).getSelectedIndex();
+            for (int i = 0; i < operators.length; i++) {
+                operators[i].oscilator.syncCombo.setSelectedIndex(val);
             }
         };
 
-        importButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                importFromSysex();
-            }
+        importButton.addActionListener((ActionEvent e) -> {
+            importFromSysex();
         });
 
         JTabbedPane operatorPanel = new JTabbedPane();

@@ -74,11 +74,8 @@ public class AudioHeaderListPanel extends JPanel implements
             this.add(new AudioHeaderLayerPanel(layer, c));
         }
         
-        selection.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateSelection();
-            }
+        selection.addChangeListener((ChangeEvent e) -> {
+            updateSelection();
         });
         
         final LayerAddAction layerAddAction = new LayerAddAction();
@@ -160,11 +157,8 @@ public class AudioHeaderListPanel extends JPanel implements
             }
         });
         
-        selection.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateSelection();
-            }
+        selection.addChangeListener((ChangeEvent e) -> {
+            updateSelection();
         });
         
         initActions();
@@ -248,16 +242,12 @@ public class AudioHeaderListPanel extends JPanel implements
         final int index = e.getStartIndex();
         final AudioLayer sLayer = layerGroup.get(index);
         
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(() -> {
+            Channel c = mixer.findChannelById(sLayer.getUniqueId());
+            AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer, c);
             
-            @Override
-            public void run() {
-                Channel c = mixer.findChannelById(sLayer.getUniqueId());
-                AudioHeaderLayerPanel panel = new AudioHeaderLayerPanel(sLayer, c);
-                
-                add(panel, index);
-                checkSize();
-            }
+            add(panel, index);
+            checkSize();
         });
     }
     
@@ -265,18 +255,14 @@ public class AudioHeaderListPanel extends JPanel implements
         final int start = e.getStartIndex();
         final int end = e.getEndIndex();
         
-        SwingUtilities.invokeLater(new Runnable() {
-            
-            @Override
-            public void run() {
-                for (int i = end; i >= start; i--) {
-                    remove(i);
-                }
-                
-                checkSize();
-                
-                selection.setAnchor(-1);
+        SwingUtilities.invokeLater(() -> {
+            for (int i = end; i >= start; i--) {
+                remove(i);
             }
+            
+            checkSize();
+            
+            selection.setAnchor(-1);
         });
     }
     
@@ -288,40 +274,36 @@ public class AudioHeaderListPanel extends JPanel implements
         // pushed
         final boolean isUp = ((start >= 0) && (end >= 0));
         
-        SwingUtilities.invokeLater(new Runnable() {
-            
-            @Override
-            public void run() {
-                if (isUp) {
-                    Component c = getComponent(start);
-                    
-                    AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
-                    remove(start);
-                    add(c, end);
-                    
-                    int i1 = selection.getStartIndex() - 1;
-                    int i2 = selection.getEndIndex() - 1;
-                    
-                    selection.setAnchor(i1);
-                    selection.setEnd(i2);
-                    
-                } else {
-                    // have to flip because listDataEvent stores as min and max
-                    Component c = getComponent(-start);
-                    
-                    AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
-                    remove(-start);
-                    add(c, -end);
-                    
-                    int i1 = selection.getStartIndex() + 1;
-                    int i2 = selection.getEndIndex() + 1;
-                    
-                    selection.setAnchor(i1);
-                    selection.setEnd(i2);
-                }
+        SwingUtilities.invokeLater(() -> {
+            if (isUp) {
+                Component c = getComponent(start);
                 
-                revalidate();
+                AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
+                remove(start);
+                add(c, end);
+                
+                int i1 = selection.getStartIndex() - 1;
+                int i2 = selection.getEndIndex() - 1;
+                
+                selection.setAnchor(i1);
+                selection.setEnd(i2);
+                
+            } else {
+                // have to flip because listDataEvent stores as min and max
+                Component c = getComponent(-start);
+                
+                AudioHeaderLayerPanel panel = (AudioHeaderLayerPanel) c;
+                remove(-start);
+                add(c, -end);
+                
+                int i1 = selection.getStartIndex() + 1;
+                int i2 = selection.getEndIndex() + 1;
+                
+                selection.setAnchor(i1);
+                selection.setEnd(i2);
             }
+            
+            revalidate();
         });
         
     }

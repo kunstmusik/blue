@@ -53,6 +53,7 @@ public final class OpenProjectAction implements ActionListener {
                         GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         FileChooserManager fcm = FileChooserManager.getDefault();

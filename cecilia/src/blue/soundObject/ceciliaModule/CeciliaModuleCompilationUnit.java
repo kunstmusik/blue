@@ -63,7 +63,7 @@ public class CeciliaModuleCompilationUnit {
 
     HashMap ftableNumMap = new HashMap();
 
-    HashMap<String, String> ceciliaVariables = new HashMap<String, String>();
+    HashMap<String, String> ceciliaVariables = new HashMap<>();
 
     ArrayList magicInstrument_instr = new ArrayList();
 
@@ -248,14 +248,8 @@ public class CeciliaModuleCompilationUnit {
 
         ArrayList keyset = new ArrayList(ftableNumMap.keySet());
 
-        Collections.sort(keyset, new Comparator() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-                return Integer.parseInt((String) o1)
-                        - Integer.parseInt((String) o2);
-            }
-        });
+        Collections.sort(keyset, (Object o1, Object o2) -> Integer.parseInt((String) o1)
+                - Integer.parseInt((String) o2));
 
         // use reverse iteration so that ftable4 won't replace ftable44
         for (int i = keyset.size() - 1; i >= 0; i--) {
@@ -387,52 +381,43 @@ public class CeciliaModuleCompilationUnit {
         Matcher matcher = sinfoPattern.matcher(retVal);
 
         if (sinfoPattern != null) {
+            OUTER:
             while (matcher.find()) {
-                // while (matcher.contains(input, sinfoPattern)) {
-
-                // MatchResult match = matcher.getMatch();
-
-                // System.err.println(match.group(1) + " : " + match.group(2));
-
-                // String key = match.toString();
                 String key = matcher.group();
-
                 String result = key.substring(1, key.length() - 1);
-
                 String objectName = matcher.group(1);
                 String prop = matcher.group(2);
-
                 CFileIn cfilein;
-
                 try {
                     cfilein = (CFileIn) cm.getStateData().get(objectName);
                 } catch (Exception e) {
                     e.printStackTrace();
                     break;
                 }
-
                 String val = null;
-
-                if (prop.equals("sr")) {
-                    val = Float.toString(cfilein.getSampleRate());
-                } else if (prop.equals("frames")) {
-                    val = Integer.toString(cfilein.getFrames());
-                } else if (prop.equals("dur")) {
-                    val = Float.toString(cfilein.getDuration());
-                } else if (prop.equals("chn")) {
-                    val = Integer.toString(cfilein.getChannels());
-                } else {
-                    String errMessage = "["
-                            + BlueSystem.getString("message.error")
-                            + "] - "
-                            + BlueSystem
-                                    .getString("ceciliaModule.propNotFound")
-                            + " ";
-
-                    System.err.println(errMessage + prop);
-                    break;
+                switch (prop) {
+                    case "sr":
+                        val = Float.toString(cfilein.getSampleRate());
+                        break;
+                    case "frames":
+                        val = Integer.toString(cfilein.getFrames());
+                        break;
+                    case "dur":
+                        val = Float.toString(cfilein.getDuration());
+                        break;
+                    case "chn":
+                        val = Integer.toString(cfilein.getChannels());
+                        break;
+                    default:
+                        String errMessage = "["
+                                + BlueSystem.getString("message.error")
+                                + "] - "
+                                + BlueSystem
+                                        .getString("ceciliaModule.propNotFound")
+                                + " ";
+                        System.err.println(errMessage + prop);
+                        break OUTER;
                 }
-
                 if (val == null) {
                     String errMessage = "["
                             + BlueSystem.getString("message.error")
@@ -444,10 +429,7 @@ public class CeciliaModuleCompilationUnit {
                     System.err.println(errMessage + prop);
                     break;
                 }
-
-                // System.err.println(key + " : " + val);
                 ceciliaVariables.put(result, val);
-
             }
         }
     }

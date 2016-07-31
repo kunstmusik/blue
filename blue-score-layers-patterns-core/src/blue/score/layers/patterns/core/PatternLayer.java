@@ -201,7 +201,7 @@ public class PatternLayer implements Layer {
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {

@@ -77,26 +77,20 @@ public class EffectEditor extends javax.swing.JPanel implements
         codePanel.add(xOutLabel, BorderLayout.SOUTH);
 
         inSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
-        inSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (effect != null) {
-                    Integer val = (Integer) inSpinner.getValue();
-
-                    effect.setNumIns(val.intValue());
-                }
+        inSpinner.addChangeListener((ChangeEvent e) -> {
+            if (effect != null) {
+                Integer val = (Integer) inSpinner.getValue();
+                
+                effect.setNumIns(val.intValue());
             }
         });
 
         outSpinner.setModel(new SpinnerNumberModel(1, 1, 100, 1));
-        outSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (effect != null) {
-                    Integer val = (Integer) outSpinner.getValue();
-
-                    effect.setNumOuts(val.intValue());
-                }
+        outSpinner.addChangeListener((ChangeEvent e) -> {
+            if (effect != null) {
+                Integer val = (Integer) outSpinner.getValue();
+                
+                effect.setNumOuts(val.intValue());
             }
         });
 

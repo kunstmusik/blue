@@ -170,6 +170,7 @@ public class Preset implements Serializable, Comparable<Preset> {
      * 
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
+    @Override
     public int compareTo(Preset b) {
         return this.getPresetName().compareTo(b.getPresetName());
     }

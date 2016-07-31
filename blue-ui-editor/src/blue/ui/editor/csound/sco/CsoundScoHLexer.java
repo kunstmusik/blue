@@ -18,7 +18,7 @@ import org.netbeans.spi.lexer.TokenFactory;
  */
 public class CsoundScoHLexer implements Lexer<CsoundScoTokenId> {
 
-    private static final Map<String,CsoundScoTokenId> keywords = new HashMap<String,CsoundScoTokenId>();
+    private static final Map<String,CsoundScoTokenId> keywords = new HashMap<>();
    
     private static final void addKeyword(CsoundScoTokenId id) {
        keywords.put(id.getFixedText(), id);

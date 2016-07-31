@@ -53,18 +53,14 @@ public class BSBObjectPropertySheet extends JComponent implements
     public BSBObjectPropertySheet(boolean showAutomatable) {
         this.showAutomatable = showAutomatable;
 
-        pl = new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (objectView != null) {
-                    Property prop = (Property) evt.getSource();
-
-                    try {
-                        prop.writeToObject(objectView);
-                    } catch (Exception pve) {
-                        bsbObjectChanged(objectView.getBSBObject());
-                    }
+        pl = (PropertyChangeEvent evt) -> {
+            if (objectView != null) {
+                Property prop = (Property) evt.getSource();
+                
+                try {
+                    prop.writeToObject(objectView);
+                } catch (Exception pve) {
+                    bsbObjectChanged(objectView.getBSBObject());
                 }
             }
         };

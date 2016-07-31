@@ -66,6 +66,7 @@ public class Probability implements Generator, Serializable, Maskable,
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -84,10 +85,12 @@ public class Probability implements Generator, Serializable, Maskable,
 //        return new ProbabilityEditor(this);
 //    }
 
+    @Override
     public void initialize(double duration) {
         this.duration = duration;
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         return generators[selectedIndex].getValue(time / duration, rnd);
     }

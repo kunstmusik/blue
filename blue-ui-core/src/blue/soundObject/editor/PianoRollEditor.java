@@ -113,12 +113,8 @@ public class PianoRollEditor extends ScoreObjectEditor implements
 
         centerNoteScrollPane();
 
-        snapButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                timeProperties.setVisible(!timeProperties.isVisible());
-            }
+        snapButton.addActionListener((ActionEvent e) -> {
+            timeProperties.setVisible(!timeProperties.isVisible());
         });
 
         noteCanvas.addComponentListener(new ComponentAdapter() {

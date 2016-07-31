@@ -82,33 +82,27 @@ public class SoundLayerListPanel extends javax.swing.JPanel {
         public LayerHeightPopup() {
             super();
 
-            ActionListener allListener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (pObj == null) {
-                        return;
-                    }
-
-                    int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-
-                    for (int i = 0; i < pObj.size(); i++) {
-                        SoundLayer temp = pObj.get(i);
-                        temp.setHeightIndex(heightIndex);
-                    }
+            ActionListener allListener = (ActionEvent ae) -> {
+                if (pObj == null) {
+                    return;
+                }
+                
+                int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
+                
+                for (int i = 0; i < pObj.size(); i++) {
+                    SoundLayer temp = pObj.get(i);
+                    temp.setHeightIndex(heightIndex);
                 }
             };
 
-            ActionListener defaultListener = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (pObj == null) {
-                        return;
-                    }
-
-                    int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-
-                    pObj.setDefaultHeightIndex(heightIndex);
+            ActionListener defaultListener = (ActionEvent ae) -> {
+                if (pObj == null) {
+                    return;
                 }
+                
+                int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
+                
+                pObj.setDefaultHeightIndex(heightIndex);
             };
 
             JMenu setAllMenu = new JMenu("Set All Layer Heights");

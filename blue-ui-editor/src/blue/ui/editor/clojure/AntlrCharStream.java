@@ -120,7 +120,7 @@ public class AntlrCharStream implements CharStream {
     @Override
     public int mark() {
         if (markers == null) {
-            markers = new ArrayList<CharStreamState>();
+            markers = new ArrayList<>();
             markers.add(null); // depth 0 means no backtracking, leave blank
         }
         markDepth++;

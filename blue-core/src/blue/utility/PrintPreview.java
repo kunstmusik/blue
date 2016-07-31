@@ -53,6 +53,7 @@ public class PrintPreview extends JFrame {
         JButton bt = new JButton("Print");
         bt.setMnemonic('p');
         ActionListener lst = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     // Use default printer, no dialog
@@ -75,6 +76,7 @@ public class PrintPreview extends JFrame {
         bt = new JButton("Close");
         bt.setMnemonic('c');
         lst = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
             }
@@ -87,6 +89,7 @@ public class PrintPreview extends JFrame {
         String[] scales = { "10 %", "25 %", "50 %", "100 %" };
         m_cbScale = new JComboBox(scales);
         lst = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 Thread runner = new Thread() {
                     @Override

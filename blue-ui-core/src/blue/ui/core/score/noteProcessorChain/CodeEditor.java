@@ -58,11 +58,8 @@ public class CodeEditor extends JComponent {
         this.add(button, BorderLayout.EAST);
         button.setMargin(new Insets(0, 0, 0, 0));
 
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                editCode();
-            }
+        button.addActionListener((ActionEvent e) -> {
+            editCode();
         });
 
         label = new JLabel();

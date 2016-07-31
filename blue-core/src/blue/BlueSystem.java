@@ -558,7 +558,7 @@ public class BlueSystem {
             return f;
         }
 
-        if (path.indexOf(File.separator) < 0) {
+        if (!path.contains(File.separator)) {
             String sfDir = EnvironmentVars.getProperty("SFDIR");
 
             if (sfDir != null) {

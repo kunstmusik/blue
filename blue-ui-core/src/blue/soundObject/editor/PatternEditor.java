@@ -66,20 +66,14 @@ public class PatternEditor extends ScoreObjectEditor {
     public PatternEditor() {
         this.setLayout(new BorderLayout());
 
-        layerPanel.addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (e.getValueIsAdjusting()) {
-                    return;
-                } else {
-
-                    Pattern p = layerPanel.getSelectedPattern();
-                    patternScore.setPattern(p);
-                }
-
+        layerPanel.addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            } else {
+                
+                Pattern p = layerPanel.getSelectedPattern();
+                patternScore.setPattern(p);
             }
-
         });
 
         JToggleButton setTimeButton = new JToggleButton();
@@ -87,13 +81,8 @@ public class PatternEditor extends ScoreObjectEditor {
         setTimeButton.setSelectedIcon(IconFactory.getRightArrowIcon());
         setTimeButton.setFocusable(false);
 
-        setTimeButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                props.setVisible(!props.isVisible());
-            }
-
+        setTimeButton.addActionListener((ActionEvent e) -> {
+            props.setVisible(!props.isVisible());
         });
 
         final JScrollPane scroll = new JScrollPane(canvas);
@@ -124,14 +113,10 @@ public class PatternEditor extends ScoreObjectEditor {
 
         this.add(mainSplitPane, BorderLayout.CENTER);
 
-        layerPanel.getViewPort().addMouseWheelListener(new MouseWheelListener() {
-
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if(!e.isShiftDown()) {
-                    for(MouseWheelListener listener: scroll.getMouseWheelListeners()) {
-                        listener.mouseWheelMoved(e);
-                    }
+        layerPanel.getViewPort().addMouseWheelListener((MouseWheelEvent e) -> {
+            if(!e.isShiftDown()) {
+                for(MouseWheelListener listener: scroll.getMouseWheelListeners()) {
+                    listener.mouseWheelMoved(e);
                 }
             }
         });

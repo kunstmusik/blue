@@ -109,6 +109,7 @@ public class FTableGUI extends JComponent {
 
         ftableTable.getSelectionModel().addListSelectionListener(
                 new ListSelectionListener() {
+                    @Override
                     public void valueChanged(ListSelectionEvent e) {
                         if (e.getValueIsAdjusting()) {
                             return;
@@ -135,12 +136,14 @@ public class FTableGUI extends JComponent {
                 });
 
         addFTableButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 addFTable(new FTable());
             }
         });
         removeFTableButton
                 .addActionListener(new java.awt.event.ActionListener() {
+                    @Override
                     public void actionPerformed(ActionEvent e) {
                         removeFTable();
                     }

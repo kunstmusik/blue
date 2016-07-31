@@ -264,6 +264,7 @@ public class Note implements Serializable, Comparable<Note> {
         return ObjectUtilities.clone(this);
     }
 
+    @Override
     public int compareTo(Note b) {
 
         float t1 = this.getStartTime();

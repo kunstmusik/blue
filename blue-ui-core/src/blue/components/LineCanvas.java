@@ -66,11 +66,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
     public LineCanvas() {
         new LineCanvasMouseListener(this);
 
-        lineListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
     }
 

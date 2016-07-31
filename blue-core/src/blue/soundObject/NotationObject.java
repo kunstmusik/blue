@@ -59,6 +59,7 @@ public class NotationObject extends AbstractSoundObject implements
     public void generateInstruments(Arrangement arrangement) {
     }
 
+    @Override
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
@@ -67,10 +68,12 @@ public class NotationObject extends AbstractSoundObject implements
 //        return renderer;
 //    }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
@@ -92,6 +95,7 @@ public class NotationObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#getTimeBehavior()
      */
+    @Override
     public int getTimeBehavior() {
         // TODO Auto-generated method stub
         return 0;
@@ -102,15 +106,18 @@ public class NotationObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#setTimeBehavior(int)
      */
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
@@ -129,6 +136,7 @@ public class NotationObject extends AbstractSoundObject implements
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         // TODO Auto-generated method stub
         return null;

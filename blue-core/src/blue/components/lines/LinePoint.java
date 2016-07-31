@@ -60,6 +60,7 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
         return retVal;
     }
 
+    @Override
     public int compareTo(LinePoint b) {
         LinePoint a = this;
 

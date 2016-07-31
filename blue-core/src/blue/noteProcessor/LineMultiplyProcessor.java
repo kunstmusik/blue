@@ -44,6 +44,7 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#processNotes(blue.soundObject.NoteList)
      */
+    @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         float oldVal = 0f;
@@ -143,6 +144,7 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

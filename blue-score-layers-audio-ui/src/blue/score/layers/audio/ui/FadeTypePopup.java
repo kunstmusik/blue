@@ -29,6 +29,7 @@ public class FadeTypePopup extends JPopupMenu {
     private FadeTypePopup() {
         for(FadeType f : FadeType.values()) {
             Action a = new AbstractAction(f.toString()) {
+                @Override
                 public void actionPerformed(ActionEvent ae) {
                     setType(f);
                 }

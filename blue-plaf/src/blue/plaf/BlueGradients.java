@@ -124,6 +124,7 @@ public class BlueGradients implements Paint {
      *            rendering alternatives.
      * @return The <code>PaintContext</code> for generating color patterns.
      */
+    @Override
     public synchronized PaintContext createContext(ColorModel cm, Rectangle r,
             Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
         return new FastGradientPaintContext(cm, r, startColor, endColor,
@@ -136,6 +137,7 @@ public class BlueGradients implements Paint {
      * @return <code>TRANSLUCENT</code> id the end and start colors have an
      *         alpha channel otherwise <code>OPAQUE</code>.
      */
+    @Override
     public int getTransparency() {
         return ((((startColor & endColor) >> 24) & 0xFF) == 0xFF) ? OPAQUE
                 : TRANSLUCENT;

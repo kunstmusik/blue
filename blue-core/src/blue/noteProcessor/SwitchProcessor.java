@@ -53,6 +53,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
         this.pfield2 = Integer.parseInt(pfield2);
     }
 
+    @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         String tempPField;
@@ -119,6 +120,7 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

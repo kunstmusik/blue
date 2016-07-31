@@ -159,7 +159,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
             this.add(index, audioLayer);
         }
 
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
         layers.add(audioLayer);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
@@ -173,7 +173,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     @Override
     public void removeLayers(int startIndex, int endIndex) {
 
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
 
         for (int i = endIndex; i >= startIndex; i--) {
             AudioLayer audioLayer = this.get(i);
@@ -223,7 +223,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     @Override
     public void addLayerGroupListener(LayerGroupListener l) {
         if (layerGroupListeners == null) {
-            layerGroupListeners = new Vector<LayerGroupListener>();
+            layerGroupListeners = new Vector<>();
         }
 
         layerGroupListeners.add(l);
@@ -315,7 +315,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {

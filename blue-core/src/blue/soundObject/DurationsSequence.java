@@ -160,14 +160,17 @@ public class DurationsSequence extends AbstractSoundObject implements
         return score;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
@@ -198,17 +201,21 @@ public class DurationsSequence extends AbstractSoundObject implements
 //        }
 //    }
 
+    @Override
     public int getTimeBehavior() {
         return -1;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
@@ -230,6 +237,7 @@ public class DurationsSequence extends AbstractSoundObject implements
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         return null;
     }

@@ -62,32 +62,25 @@ public class LineListTable extends JComponent {
 
         table.setDefaultRenderer(Color.class, new ColorCellRenderer());
 
-        table.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (listener != null && !e.getValueIsAdjusting()) {
-                            int row = table.getSelectedRow();
-
-                            SelectionEvent event;
-
-                            if (row == -1) {
-                                event = new SelectionEvent(null,
-                                        SelectionEvent.SELECTION_REMOVE);
-                            } else {
-                                Line line = lineList.get(row);
-
-                                event = new SelectionEvent(line,
-                                        SelectionEvent.SELECTION_SINGLE);
-                            }
-
-                            listener.selectionPerformed(event);
-                        }
-
-                    }
-
-                });
+        table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (listener != null && !e.getValueIsAdjusting()) {
+                int row = table.getSelectedRow();
+                
+                SelectionEvent event;
+                
+                if (row == -1) {
+                    event = new SelectionEvent(null,
+                            SelectionEvent.SELECTION_REMOVE);
+                } else {
+                    Line line = lineList.get(row);
+                    
+                    event = new SelectionEvent(line,
+                            SelectionEvent.SELECTION_SINGLE);
+                }
+                
+                listener.selectionPerformed(event);
+            }
+        });
 
         table.getColumnModel().getColumn(0).setMaxWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(100);
@@ -98,23 +91,13 @@ public class LineListTable extends JComponent {
         buttonPanel.setLayout(new GridLayout(1, 2));
 
         JButton addButton = new JButton("+");
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addLine();
-            }
-
+        addButton.addActionListener((ActionEvent e) -> {
+            addLine();
         });
 
         JButton removeButton = new JButton("-");
-        removeButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeLine();
-            }
-
+        removeButton.addActionListener((ActionEvent e) -> {
+            removeLine();
         });
 
         buttonPanel.add(addButton);

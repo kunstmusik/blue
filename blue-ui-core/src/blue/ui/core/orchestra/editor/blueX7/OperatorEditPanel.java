@@ -42,11 +42,8 @@ public class OperatorEditPanel extends JComponent {
         this.add(outputLevel);
         this.add(velocitySensitivity);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         outputLevel.addChangeListener(cl);

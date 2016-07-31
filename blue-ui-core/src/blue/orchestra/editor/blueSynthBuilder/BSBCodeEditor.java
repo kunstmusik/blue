@@ -68,18 +68,14 @@ public class BSBCodeEditor extends JComponent {
 
     public BSBCodeEditor() {
 
-        editBox.addEditModeListener(new EditModeListener() {
-
-            @Override
-            public void setEditing(boolean isEditing) {
-                codePane.getJEditorPane().setEnabled(isEditing);
-                alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
-                globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
-                globalScoEditPane.getJEditorPane().setEnabled(isEditing);
-
-                if (bsb != null) {
-                    bsb.setEditEnabled(isEditing);
-                }
+        editBox.addEditModeListener((boolean isEditing) -> {
+            codePane.getJEditorPane().setEnabled(isEditing);
+            alwaysOnCodePane.getJEditorPane().setEnabled(isEditing);
+            globalOrcEditPane.getJEditorPane().setEnabled(isEditing);
+            globalScoEditPane.getJEditorPane().setEnabled(isEditing);
+            
+            if (bsb != null) {
+                bsb.setEditEnabled(isEditing);
             }
         });
 

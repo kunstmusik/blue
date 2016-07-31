@@ -72,6 +72,7 @@ public class Exponential implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -89,10 +90,12 @@ public class Exponential implements ProbabilityGenerator {
 //        return new ExponentialEditor(this);
 //    }
 
+    @Override
     public String getName() {
         return "Exponential";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double x;
         double localLambda;

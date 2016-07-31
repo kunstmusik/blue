@@ -106,11 +106,8 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
         this.setSize(d);
         this.setBackground(Color.BLACK);
 
-        this.addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent mwe) {
-                mwe.getComponent().getParent().dispatchEvent(mwe);
-            }
+        this.addMouseWheelListener((MouseWheelEvent mwe) -> {
+            mwe.getComponent().getParent().dispatchEvent(mwe);
         });
 
 //        AudioLayerPanelMouseListener listener =
@@ -120,12 +117,9 @@ public class AudioLayersPanel extends JLayeredPane implements LayerGroupListener
 //        this.addMouseMotionListener(listener);
         new AudioLayersDropTargetListener(this);
 
-        heightListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                checkSize();
-                updateAudioClipYandHeight();
-            }
+        heightListener = (PropertyChangeEvent evt) -> {
+            checkSize();
+            updateAudioClipYandHeight();
         };
 
         int y = 0;

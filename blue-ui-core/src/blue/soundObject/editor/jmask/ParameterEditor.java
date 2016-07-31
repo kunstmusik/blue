@@ -142,11 +142,13 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         this.setVisible(this.parameter.isVisible());
     }
 
+    @Override
     public void addNotify() {
         super.addNotify();
         this.parameter.addPropertyChangeListener(this);
     }
 
+    @Override
     public void removeNotify() {
         super.removeNotify();
         this.parameter.removePropertyChangeListener(this);
@@ -164,12 +166,9 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
         }
 
         final String newLabel = label;
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                paramLabelPanel.setText(newLabel);
-                repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+            paramLabelPanel.setText(newLabel);
+            repaint();
         });
     }
 
@@ -506,6 +505,7 @@ private void pushDownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JMenuItem removeParameter;
     // End of variables declaration//GEN-END:variables
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("visible")) {
             this.setVisible(this.parameter.isVisible());

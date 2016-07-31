@@ -153,7 +153,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         // FIXME - Need a generic way to handle shadow objects; perhaps need to
         // deal with this in the model...
-        List<Instance> instanceSoundObjects = new ArrayList<Instance>();
+        List<Instance> instanceSoundObjects = new ArrayList<>();
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject sObj = buffer.scoreObjects.get(i).clone();

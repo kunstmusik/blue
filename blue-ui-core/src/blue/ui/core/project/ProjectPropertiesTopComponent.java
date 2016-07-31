@@ -71,12 +71,9 @@ public final class ProjectPropertiesTopComponent extends TopComponent {
         setToolTipText(NbBundle.getMessage(ProjectPropertiesTopComponent.class, "HINT_ProjectPropertiesTopComponent"));
 //        setIcon(ImageUtilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
+                reinitialize();
             }
         });
 

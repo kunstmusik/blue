@@ -40,6 +40,7 @@ public class DialogFlipAction extends BlueAction {
         this.dialog = dialog;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         dialog.setVisible(!dialog.isShowing());
         GUI.adjustIfOffScreen(dialog);

@@ -101,11 +101,8 @@ public class KeyboardLevelScalingPanel extends JComponent {
         this.add(depthRight);
         this.add(keybardRateScaling);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         breakpoint.addChangeListener(cl);
@@ -113,11 +110,8 @@ public class KeyboardLevelScalingPanel extends JComponent {
         depthRight.addChangeListener(cl);
         keybardRateScaling.addChangeListener(cl);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                checkData();
-            }
+        ActionListener al = (ActionEvent ae) -> {
+            checkData();
         };
 
         curveLeft.addActionListener(al);

@@ -208,6 +208,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
         return "> Send: " + sendChannel;
     }
 
+    @Override
     public ParameterList getParameterList() {
         return params;
     }
@@ -244,6 +245,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
     }
 
     // PARAMETER LISTENING
+    @Override
     public void lineDataChanged(Parameter param) {
         if (!updatingLine) {
             float time = ParameterTimeManagerFactory.getInstance().getTime();
@@ -259,6 +261,7 @@ public class Send implements Serializable, Automatable, ParameterListener {
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
         // TODO Auto-generated method stub
 

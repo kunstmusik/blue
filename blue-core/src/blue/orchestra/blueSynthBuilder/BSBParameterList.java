@@ -47,6 +47,7 @@ public class BSBParameterList extends ParameterList implements
         }
     }
 
+    @Override
     public void bsbObjectAdded(BSBObject bsbObj) {
         if (bsbObj instanceof AutomatableBSBObject) {
             AutomatableBSBObject autoBsb = (AutomatableBSBObject) bsbObj;
@@ -54,6 +55,7 @@ public class BSBParameterList extends ParameterList implements
         }
     }
 
+    @Override
     public void bsbObjectRemoved(BSBObject bsbObj) {
         String[] keys = bsbObj.getReplacementKeys();
 

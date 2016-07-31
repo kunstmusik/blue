@@ -31,6 +31,7 @@ public class PythonProcessor implements NoteProcessor, Serializable {
 
     private Code code = new Code();
 
+    @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
         try {
             PythonProxy.processPythonNoteProcessor(in, code.getCode());
@@ -66,6 +67,7 @@ public class PythonProcessor implements NoteProcessor, Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

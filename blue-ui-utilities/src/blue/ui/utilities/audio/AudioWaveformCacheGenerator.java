@@ -145,14 +145,9 @@ public class AudioWaveformCacheGenerator extends Thread {
                         waveData.percentLoadingComplete = i / maxWidth;
 
                         if (i % 100 == 0) {
-                            SwingUtilities.invokeLater(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    audioWaveformCache
-                                            .fireAudioWaveformDataGenerated(waveData.fileName);
-                                }
-
+                            SwingUtilities.invokeLater(() -> {
+                                audioWaveformCache
+                                        .fireAudioWaveformDataGenerated(waveData.fileName);
                             });
                         }
 

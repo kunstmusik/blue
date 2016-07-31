@@ -61,18 +61,22 @@ public class InstrumentList extends ArrayList implements ListModel {
      * Code from AbstractListModel - used here to access a private transient
      * listenerList
      */
+    @Override
     public int getSize() {
         return this.size();
     }
 
+    @Override
     public Object getElementAt(int i) {
         return this.get(i);
     }
 
+    @Override
     public void addListDataListener(ListDataListener l) {
         listenerList.add(ListDataListener.class, l);
     }
 
+    @Override
     public void removeListDataListener(ListDataListener l) {
         listenerList.remove(ListDataListener.class, l);
     }

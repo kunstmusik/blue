@@ -96,6 +96,7 @@ public class ItemList implements Generator, Serializable, TableModel,
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -120,11 +121,13 @@ public class ItemList implements Generator, Serializable, TableModel,
 //    public JComponent getEditor() {
 //        return new ItemListEditor(this);
 //    }
+    @Override
     public void initialize(double duration) {
         index = 0;
         direction = 0;
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double retVal = 0.0;
 
@@ -206,6 +209,7 @@ public class ItemList implements Generator, Serializable, TableModel,
     }
 
     /* Table Model Code */
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -221,30 +225,37 @@ public class ItemList implements Generator, Serializable, TableModel,
         
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return Double.class;
     }
 
+    @Override
     public int getColumnCount() {
         return 1;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         return "List Items";
     }
 
+    @Override
     public int getRowCount() {
         return listItems.size();
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         return listItems.get(rowIndex);
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners != null) {
 
@@ -264,6 +275,7 @@ public class ItemList implements Generator, Serializable, TableModel,
         }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (aValue instanceof Double) {
             listItems.remove(rowIndex);

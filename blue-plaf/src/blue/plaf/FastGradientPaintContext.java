@@ -34,9 +34,9 @@ import java.util.WeakHashMap;
 
 public class FastGradientPaintContext implements PaintContext {
     private static WeakHashMap<GradientInfo,WeakReference> gradientCache
-            = new WeakHashMap<GradientInfo,WeakReference>();
+            = new WeakHashMap<>();
 
-    private static LinkedList<GradientInfo> recentInfos = new LinkedList<GradientInfo>();
+    private static LinkedList<GradientInfo> recentInfos = new LinkedList<>();
 
     private GradientInfo info;
 
@@ -82,14 +82,17 @@ public class FastGradientPaintContext implements PaintContext {
         }
     }
 
+    @Override
     public void dispose() {
         gradient.dispose();
     }
 
+    @Override
     public ColorModel getColorModel() {
         return info.model;
     }
 
+    @Override
     public synchronized Raster getRaster(int x, int y, int w, int h) {
         if (info.isVertical) {
             return gradient.getRaster(y - parallelDevicePos, w, h);
@@ -193,7 +196,7 @@ class Gradient {
                 }
             }
         }
-        childRasterCache = new HashMap<Integer,Raster>();
+        childRasterCache = new HashMap<>();
 
     }
 }

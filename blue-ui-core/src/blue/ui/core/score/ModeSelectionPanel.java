@@ -19,24 +19,21 @@ public class ModeSelectionPanel extends javax.swing.JPanel {
         initComponents();
         modeScoreToggle.setSelected(true);
 
-        ModeManager.getInstance().addModeListener(new ModeListener() {
-            @Override
-            public void modeChanged(ScoreMode mode) {
-                updating = true;
-
-                switch (mode) {
-                    case SCORE:
-                        modeScoreToggle.setSelected(true);
-                        break;
-                    case SINGLE_LINE:
-                        modeSingleLineToggle.setSelected(true);
-                        break;
-                    case MULTI_LINE:
-                        modeMultiLineToggle.setSelected(true);
-                        break;
-                }
-                updating = false;
+        ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
+            updating = true;
+            
+            switch (mode) {
+                case SCORE:
+                    modeScoreToggle.setSelected(true);
+                    break;
+                case SINGLE_LINE:
+                    modeSingleLineToggle.setSelected(true);
+                    break;
+                case MULTI_LINE:
+                    modeMultiLineToggle.setSelected(true);
+                    break;
             }
+            updating = false;
         });
     }
 

@@ -62,12 +62,9 @@ public final class ImportOrcScoAction implements ActionListener {
         fcm.setDialogTitle(scoFilter, "Select SCO File");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                importOrcSco();
-            }
-        });
+        SwingUtilities.invokeLater(this::importOrcSco);
     }
 
     public void importOrcSco() {

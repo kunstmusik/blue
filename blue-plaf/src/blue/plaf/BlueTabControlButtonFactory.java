@@ -101,6 +101,7 @@ public class BlueTabControlButtonFactory {
             toolTipManager.registerComponent( this );
         }
 
+        @Override
         protected String getTabActionCommand( ActionEvent e ) {
             return TabDisplayer.COMMAND_MAXIMIZE;
         }
@@ -163,6 +164,7 @@ public class BlueTabControlButtonFactory {
 
         int count = 0;
 
+        @Override
         public void actionPerformed( ActionEvent e ) {
             count++;
             if (count > 2) {
@@ -221,6 +223,7 @@ public class BlueTabControlButtonFactory {
             }
         }
 
+        @Override
         protected String getTabActionCommand(ActionEvent e) {
             return null;
         }
@@ -254,6 +257,7 @@ public class BlueTabControlButtonFactory {
             }
         }
 
+        @Override
         protected String getTabActionCommand(ActionEvent e) {
             return null;
         }
@@ -294,7 +298,7 @@ public class BlueTabControlButtonFactory {
          */
         public Icon obtainIcon(String iconPath) {
             if (paths2Icons == null) {
-                paths2Icons = new HashMap<String, Icon>(6);
+                paths2Icons = new HashMap<>(6);
             }
             Icon icon = paths2Icons.get(iconPath);
             if (icon == null) {

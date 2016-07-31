@@ -108,10 +108,12 @@ public class AudioClip implements ScoreObject, Externalizable, Comparable<AudioC
         }
     }
 
+    @Override
     public void setName(String value) {
         name.set(value);
     }
 
+    @Override
     public String getName() {
         return name.get();
     }

@@ -253,6 +253,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

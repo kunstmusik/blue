@@ -80,30 +80,24 @@ public class AutomationManager implements ParameterListListener,
     PropertyChangeListener renderTimeListener;
 
     private AutomationManager() {
-        parameterActionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                if (data == null || selectedParamIdList == null) {
-                    return;
-                }
-
-                JMenuItem menuItem = (JMenuItem) ae.getSource();
-
-                Parameter param = (Parameter) menuItem.getClientProperty("param");
-
-                parameterSelected(selectedParamIdList, param);
-
-                selectedParamIdList = null;
+        parameterActionListener = (ActionEvent ae) -> {
+            if (data == null || selectedParamIdList == null) {
+                return;
             }
+            
+            JMenuItem menuItem = (JMenuItem) ae.getSource();
+            
+            Parameter param = (Parameter) menuItem.getClientProperty("param");
+            
+            parameterSelected(selectedParamIdList, param);
+            
+            selectedParamIdList = null;
         };
 
-        renderTimeListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent pce) {
-                if (pce.getSource() == data) {
-                    if (pce.getPropertyName().equals("renderStartTime")) {
-                        updateValuesFromAutomations();
-                    }
+        renderTimeListener = (PropertyChangeEvent pce) -> {
+            if (pce.getSource() == data) {
+                if (pce.getPropertyName().equals("renderStartTime")) {
+                    updateValuesFromAutomations();
                 }
             }
         };
@@ -412,23 +406,20 @@ public class AutomationManager implements ParameterListListener,
         menu.addSeparator();
 
         JMenuItem clearAll = new JMenuItem("Clear All");
-        clearAll.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Object retVal = DialogDisplayer.getDefault().notify(
-                        new NotifyDescriptor.Confirmation(
-                                "Please Confirm Clearing All Parameter Data for this SoundLayer"));
-
-                if (retVal == NotifyDescriptor.YES_OPTION) {
-
-                    ParameterIdList idList = selectedParamIdList;
-
-                    for (String paramId : idList.getParameters()) {
-                        Parameter param = getParameter(paramId);
-
-                        param.setAutomationEnabled(false);
-                        idList.removeParameterId(paramId);
-                    }
+        clearAll.addActionListener((ActionEvent e) -> {
+            Object retVal = DialogDisplayer.getDefault().notify(
+                    new NotifyDescriptor.Confirmation(
+                            "Please Confirm Clearing All Parameter Data for this SoundLayer"));
+            
+            if (retVal == NotifyDescriptor.YES_OPTION) {
+                
+                ParameterIdList idList = selectedParamIdList;
+                
+                for (String paramId : idList.getParameters()) {
+                    Parameter param = getParameter(paramId);
+                    
+                    param.setAutomationEnabled(false);
+                    idList.removeParameterId(paramId);
                 }
             }
         });

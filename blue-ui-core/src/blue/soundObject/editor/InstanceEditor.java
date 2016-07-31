@@ -56,12 +56,8 @@ public class InstanceEditor extends ScoreObjectEditor {
         scoreEditPane.getJEditorPane().setEditable(false);
 
         testButton.setText(BlueSystem.getString("common.test"));
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
 
         topPanel.setLayout(new BorderLayout());

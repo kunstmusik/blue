@@ -30,6 +30,7 @@ public class Triangle implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -41,10 +42,12 @@ public class Triangle implements ProbabilityGenerator {
         return null;
     }
 
+    @Override
     public String getName() {
         return "Triangle";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
 
         double x1 = rnd.nextDouble();

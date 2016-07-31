@@ -103,21 +103,17 @@ public class JConsole extends JTextArea implements KeyListener
 		// editStart = getText().length();
 		getCaret().setDot(editStart);
         
-        PythonProxy.addPythonProxyListener(new PythonProxyListener() {
-
-            @Override
-            public void pythonProxyReinitializePerformed() {
-                if(engine != null) {
-                    engine.setIn(System.in);
-                    engine.setOut(System.out);
-                    engine.setErr(System.err);
-                }
-                engine = PythonProxy.getInterpreter();
-                engine.setIn(in);
-                engine.setOut(out);
-                engine.setErr(err);
+        PythonProxy.addPythonProxyListener(() -> {
+            if(engine != null) {
+                engine.setIn(System.in);
+                engine.setOut(System.out);
+                engine.setErr(System.err);
             }
-        });
+            engine = PythonProxy.getInterpreter();
+            engine.setIn(in);
+            engine.setOut(out);
+            engine.setErr(err);
+                });
         
         Action clearAction = new AbstractAction("Clear" ) {
 

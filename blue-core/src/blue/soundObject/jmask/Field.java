@@ -38,7 +38,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Field implements Serializable, ListModel {
 
-    ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+    ArrayList<Parameter> parameters = new ArrayList<>();
 
     private transient Vector listListeners = null;
 
@@ -198,14 +198,17 @@ public class Field implements Serializable, ListModel {
     }
 
     // List Model Methods
+    @Override
     public int getSize() {
         return parameters.size();
     }
 
+    @Override
     public Object getElementAt(int index) {
         return parameters.get(index);
     }
 
+    @Override
     public void addListDataListener(ListDataListener l) {
         if (listListeners == null) {
             listListeners = new Vector();
@@ -214,6 +217,7 @@ public class Field implements Serializable, ListModel {
         listListeners.add(l);
     }
 
+    @Override
     public void removeListDataListener(ListDataListener l) {
         if (listListeners != null) {
             listListeners.remove(l);

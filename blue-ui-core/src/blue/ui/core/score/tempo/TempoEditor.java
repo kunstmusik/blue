@@ -54,12 +54,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
 
     public TempoEditor() {
-        lineListener = new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
 
         TempoEditorMouseListener tempoEditorMouseListener = 

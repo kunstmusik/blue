@@ -392,13 +392,19 @@ public class PnutsLayout implements LayoutManager2, java.io.Serializable {
         this.align = ha | va;
 
         String fix = (String) t.get("uniform");
-        if ("x".equals(fix)) {
-            xfix = true;
-        } else if ("y".equals(fix)) {
-            yfix = true;
-        } else if ("xy".equals(fix)) {
-            xfix = true;
-            yfix = true;
+        if (null != fix) switch (fix) {
+            case "x":
+                xfix = true;
+                break;
+            case "y":
+                yfix = true;
+                break;
+            case "xy":
+                xfix = true;
+                yfix = true;
+                break;
+            default:
+                break;
         }
     }
 

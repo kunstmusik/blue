@@ -58,11 +58,8 @@ public class ScaleEditor extends JComponent {
         this.add(button, BorderLayout.EAST);
         button.setMargin(new Insets(0, 0, 0, 0));
 
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectScale();
-            }
+        button.addActionListener((ActionEvent e) -> {
+            selectScale();
         });
 
         label = new JLabel();

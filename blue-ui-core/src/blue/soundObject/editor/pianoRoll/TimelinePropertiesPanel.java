@@ -56,54 +56,40 @@ public class TimelinePropertiesPanel extends JComponent {
 
     public TimelinePropertiesPanel() {
 
-        snapEnabledBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (pianoRoll != null) {
-                    pianoRoll.setSnapEnabled(snapEnabledBox.isSelected());
-                }
+        snapEnabledBox.addActionListener((ActionEvent e) -> {
+            if (pianoRoll != null) {
+                pianoRoll.setSnapEnabled(snapEnabledBox.isSelected());
             }
         });
 
-        snapValue.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (pianoRoll == null || isUpdating) {
+        snapValue.addActionListener((ActionEvent e) -> {
+            if (pianoRoll == null || isUpdating) {
+                return;
+            }
+            isUpdating = true;
+            
+            try {
+                float val = Float.parseFloat(snapValue.getText());
+                if (val < 0) {
                     return;
                 }
-                isUpdating = true;
-
-                try {
-                    float val = Float.parseFloat(snapValue.getText());
-                    if (val < 0) {
-                        return;
-                    }
-                    pianoRoll.setSnapValue(val);
-                } catch (NumberFormatException nfe) {
-                    snapValue.setText(Float.toString(pianoRoll.getSnapValue()));
-                }
-
-                isUpdating = false;
+                pianoRoll.setSnapValue(val);
+            } catch (NumberFormatException nfe) {
+                snapValue.setText(Float.toString(pianoRoll.getSnapValue()));
             }
 
+            isUpdating = false;
         });
 
-        ActionListener timeActionListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!isUpdating) {
-                    if (e.getSource() == timeDisplayTime) {
-                        pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_TIME);
-                    } else if (e.getSource() == timeDisplayNumber) {
-                        pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_NUMBER);
-
-                    }
+        ActionListener timeActionListener = (ActionEvent e) -> {
+            if (!isUpdating) {
+                if (e.getSource() == timeDisplayTime) {
+                    pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_TIME);
+                } else if (e.getSource() == timeDisplayNumber) {
+                    pianoRoll.setTimeDisplay(PianoRoll.DISPLAY_NUMBER);
+                    
                 }
             }
-
         };
 
         timeDisplayTime.addActionListener(timeActionListener);
@@ -113,25 +99,20 @@ public class TimelinePropertiesPanel extends JComponent {
         bg.add(timeDisplayTime);
         bg.add(timeDisplayNumber);
 
-        timeUnit.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int val = Integer.parseInt(timeUnit.getText());
-
-                    if (val < 1) {
-                        timeUnit.setText(Integer.toString(pianoRoll
-                                .getTimeUnit()));
-                        return;
-                    }
-
-                    pianoRoll.setTimeUnit(val);
-
-                } catch (NumberFormatException nfe) {
-                    timeUnit.setText(Integer.toString(pianoRoll.getTimeUnit()));
+        timeUnit.addActionListener((ActionEvent e) -> {
+            try {
+                int val = Integer.parseInt(timeUnit.getText());
+                
+                if (val < 1) {
+                    timeUnit.setText(Integer.toString(pianoRoll
+                            .getTimeUnit()));
+                    return;
                 }
 
+                pianoRoll.setTimeUnit(val);
+                
+            } catch (NumberFormatException nfe) {
+                timeUnit.setText(Integer.toString(pianoRoll.getTimeUnit()));
             }
         });
 

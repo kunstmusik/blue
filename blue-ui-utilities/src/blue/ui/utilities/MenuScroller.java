@@ -511,13 +511,9 @@ public class MenuScroller {
   private class MenuScrollTimer extends Timer {
 
     public MenuScrollTimer(final int increment, int interval) {
-      super(interval, new ActionListener() {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
+      super(interval, (ActionEvent e) -> {
           firstIndex += increment;
           refreshMenu();
-        }
       });
     }
   }

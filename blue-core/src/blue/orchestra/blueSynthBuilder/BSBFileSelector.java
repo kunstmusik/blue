@@ -75,6 +75,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         return selector;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -88,6 +89,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         return retVal;
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         String fileNameValue = fileName.replace('\\', '/');
         
@@ -138,6 +140,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         return fileName;
     }
@@ -147,10 +150,12 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         setFileName(val);
     }
 
+    @Override
     public boolean isStringChannelEnabled() {
         return stringChannelEnabled;
     }

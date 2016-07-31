@@ -64,6 +64,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         return checkBox;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -75,6 +76,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         return retVal;
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
@@ -124,6 +126,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         return Boolean.toString(isSelected());
     }
@@ -133,16 +136,19 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue()
      */
+    @Override
     public void setPresetValue(String val) {
         setSelected(Boolean.valueOf(val).booleanValue());
     }
 
     /* RANDOMIZABLE METHODS */
 
+    @Override
     public boolean isRandomizable() {
         return randomizable;
     }
 
+    @Override
     public void randomize() {
         if (randomizable) {
 
@@ -160,6 +166,7 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         }
     }
 
+    @Override
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
         fireBSBObjectChanged();
@@ -236,9 +243,11 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         }
     }
     
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);
 

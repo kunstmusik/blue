@@ -342,6 +342,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         }
     }
 
+    @Override
     public int compareTo(Channel chanB) {
         try {
             int a = Integer.parseInt(this.getName());
@@ -364,6 +365,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         return ToStringBuilder.reflectionToString(this);
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         if (!updatingLine) {
             float time = ParameterTimeManagerFactory.getInstance().getTime();
@@ -376,6 +378,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
         // TODO Auto-generated method stub
 

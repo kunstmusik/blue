@@ -485,29 +485,24 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         if(addLayerGroupMenu == null) {
             addLayerGroupMenu = new JPopupMenu();
             
-            ActionListener listener = new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    JMenuItem menuItem = (JMenuItem)e.getSource();
-                    LayerGroupProvider provider = (LayerGroupProvider) 
-                            menuItem.getClientProperty("provider");
-                    LayerGroup layerGroup = provider.createLayerGroup();
-                    LayerGroupTableModel model = getLayerGroupListModel();
-        
-                    int index = (layerGroupsTable.getSelectionModel().getMaxSelectionIndex());
-
-                    if(index < 0 || index > model.getRowCount()) {
-                        index = model.getRowCount();
-                        model.addLayerGroup(index, layerGroup);
-                    } else {
-                        model.addLayerGroup(index, layerGroup);
-                    }
-                    
-                    ListSelectionModel selection = layerGroupsTable.getSelectionModel();
-                    selection.setSelectionInterval(index, index);
-
+            ActionListener listener = (ActionEvent e) -> {
+                JMenuItem menuItem = (JMenuItem)e.getSource();
+                LayerGroupProvider provider = (LayerGroupProvider)
+                        menuItem.getClientProperty("provider");
+                LayerGroup layerGroup = provider.createLayerGroup();
+                LayerGroupTableModel model = getLayerGroupListModel();
+                
+                int index = (layerGroupsTable.getSelectionModel().getMaxSelectionIndex());
+                
+                if(index < 0 || index > model.getRowCount()) {
+                    index = model.getRowCount();
+                    model.addLayerGroup(index, layerGroup);
+                } else {
+                    model.addLayerGroup(index, layerGroup);
                 }
+                
+                ListSelectionModel selection = layerGroupsTable.getSelectionModel();
+                selection.setSelectionInterval(index, index);
             };
             
             LayerGroupProviderManager manager = LayerGroupProviderManager.getInstance();
@@ -552,21 +547,17 @@ public class ScoreManagerDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ScoreManagerDialog dialog = new ScoreManagerDialog(
-                        new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ScoreManagerDialog dialog = new ScoreManagerDialog(
+                    new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -104,14 +104,17 @@ public class MarkersList implements Serializable, TableModel,
     }
 
     // TABLE MODEL CLASSES
+    @Override
     public int getRowCount() {
         return size();
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -122,6 +125,7 @@ public class MarkersList implements Serializable, TableModel,
         return null;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -132,10 +136,12 @@ public class MarkersList implements Serializable, TableModel,
         return null;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Marker m = getMarker(rowIndex);
 
@@ -153,6 +159,7 @@ public class MarkersList implements Serializable, TableModel,
         return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Marker m = getMarker(rowIndex);
 
@@ -204,6 +211,7 @@ public class MarkersList implements Serializable, TableModel,
         return retVal;
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector();
@@ -211,6 +219,7 @@ public class MarkersList implements Serializable, TableModel,
         listeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners == null) {
             return;
@@ -231,6 +240,7 @@ public class MarkersList implements Serializable, TableModel,
         }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (markers.contains(evt.getSource())) {
             if (evt.getPropertyName().equals("time")) {

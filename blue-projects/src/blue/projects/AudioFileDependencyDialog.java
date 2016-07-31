@@ -99,7 +99,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
         AudioFileDependencyDialog aDialog = new AudioFileDependencyDialog();
-        ArrayList<String> fList = new ArrayList<String>();
+        ArrayList<String> fList = new ArrayList<>();
 
         fList.add("test1");
         fList.add("test2");
@@ -125,15 +125,18 @@ public class AudioFileDependencyDialog extends BaseDialog {
             }
         }
 
+        @Override
         public int getColumnCount() {
             // TODO Auto-generated method stub
             return 2;
         }
 
+        @Override
         public int getRowCount() {
             return (filesList == null) ? 0 : filesList.size();
         }
 
+        @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 return filesList.get(rowIndex);

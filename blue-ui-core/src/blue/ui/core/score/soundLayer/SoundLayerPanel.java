@@ -637,17 +637,14 @@ public class SoundLayerPanel extends javax.swing.JPanel implements
 
             JMenu layerHeightMenu = new JMenu("Layer Height");
 
-            ActionListener al = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (soundLayer == null) {
-                        return;
-                    }
-
-                    int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-
-                    soundLayer.setHeightIndex(heightIndex);
+            ActionListener al = (ActionEvent ae) -> {
+                if (soundLayer == null) {
+                    return;
                 }
+                
+                int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
+                
+                soundLayer.setHeightIndex(heightIndex);
             };
 
             for (int i = 0; i < heightItems.length; i++) {

@@ -132,13 +132,8 @@ final public class ScoreObjectEditorTopComponent extends TopComponent
         setEditingLibraryObject(null);
         setActivatedNodes(null);
 
-        projectListener = new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                editScoreObject(null);
-
-            }
+        projectListener = (PropertyChangeEvent evt) -> {
+            editScoreObject(null);
         };
     }
 

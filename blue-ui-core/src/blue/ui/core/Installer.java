@@ -99,13 +99,9 @@ public class Installer extends ModuleInstall {
 //        });
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
-        windowTitlePropertyChangeListener = new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (WindowManager.getDefault().getMainWindow() != null) {
-                    setWindowTitle();
-                }
+        windowTitlePropertyChangeListener = (PropertyChangeEvent evt) -> {
+            if (WindowManager.getDefault().getMainWindow() != null) {
+                setWindowTitle();
             }
         };
 
@@ -114,17 +110,13 @@ public class Installer extends ModuleInstall {
         BlueProjectManager.getInstance().addPropertyChangeListener(
                 tempFileCleaner);
 
-        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-
-            @Override
-            public void run() {
-                setWindowTitle();
-                backupFileSaver = new BackupFileSaver();
-                Thread t = new Thread(backupFileSaver);
-                t.setPriority(Thread.MIN_PRIORITY);
-                t.setDaemon(true);
-                t.start();
-            }
+        WindowManager.getDefault().invokeWhenUIReady(() -> {
+            setWindowTitle();
+            backupFileSaver = new BackupFileSaver();
+            Thread t = new Thread(backupFileSaver);
+            t.setPriority(Thread.MIN_PRIORITY);
+            t.setDaemon(true);
+            t.start();
         });
 
         PythonProxy.setLibDir(InstalledFileLocator.getDefault().
@@ -155,13 +147,9 @@ public class Installer extends ModuleInstall {
 //                }.start();
 //            }
 //        });
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                MidiInputManager.getInstance().addReceiver(
-                        MidiInputEngine.getInstance());
-            }
+        SwingUtilities.invokeLater(() -> {
+            MidiInputManager.getInstance().addReceiver(
+                    MidiInputEngine.getInstance());
         });
 
         OSCManager oscManager = OSCManager.getInstance();
@@ -175,13 +163,9 @@ public class Installer extends ModuleInstall {
         LayerGroupProviderManager.getInstance().updateProviders(
                 result.allInstances());
 
-        lookupListener = new LookupListener() {
-
-            @Override
-            public void resultChanged(LookupEvent ev) {
-                LayerGroupProviderManager.getInstance().updateProviders(
-                        result.allInstances());
-            }
+        lookupListener = (LookupEvent ev) -> {
+            LayerGroupProviderManager.getInstance().updateProviders(
+                    result.allInstances());
         };
 
         //        for(LayerGroupPanelProvider provider : lkp.lookupAll(
@@ -238,12 +222,8 @@ public class Installer extends ModuleInstall {
 
         final String t = title;
 
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                WindowManager.getDefault().getMainWindow().setTitle(t);
-            }
+        SwingUtilities.invokeLater(() -> {
+            WindowManager.getDefault().getMainWindow().setTitle(t);
         });
 
     }

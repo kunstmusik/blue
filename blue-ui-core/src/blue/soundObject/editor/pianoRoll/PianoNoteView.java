@@ -66,15 +66,10 @@ public class PianoNoteView extends JPanel implements PropertyChangeListener,
 
         note.addPropertyChangeListener(this);
 
-        this.addHierarchyListener(new HierarchyListener() {
-
-            @Override
-            public void hierarchyChanged(HierarchyEvent e) {
-                if (getParent() == null) {
-                    removeAsListener();
-                }
+        this.addHierarchyListener((HierarchyEvent e) -> {
+            if (getParent() == null) {
+                removeAsListener();
             }
-
         });
 
     }

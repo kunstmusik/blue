@@ -33,12 +33,7 @@ import javax.swing.JOptionPane;
  */
 public class ScaleSelector {
 
-    static FilenameFilter fileNameFilter = new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.toLowerCase().endsWith(".scl");
-        }
-    };
+    static FilenameFilter fileNameFilter = (File dir, String name) -> name.toLowerCase().endsWith(".scl");
 
     public static String selectScale() {
         File scaleDir = new File(BlueSystem.getUserConfigurationDirectory()

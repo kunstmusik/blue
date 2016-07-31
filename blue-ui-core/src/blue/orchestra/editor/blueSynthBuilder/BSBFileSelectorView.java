@@ -62,42 +62,37 @@ public class BSBFileSelectorView extends BSBObjectView {
         fileNameField.setEditable(false);
 
         JButton fileButton = new JButton("...");
-        fileButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                String fileName = selector.getFileName();
-
-                if (fileName != null && fileName.trim().length() > 0) {
-                    File file = BlueSystem.findFile(fileName);
-
-                    if (file != null) {
-                        FileChooserManager.getDefault().setSelectedFile(
-                                FILE_SELECTOR_ID,
-                                file);
-                    }
+        fileButton.addActionListener((ActionEvent e) -> {
+            String fileName = selector.getFileName();
+            
+            if (fileName != null && fileName.trim().length() > 0) {
+                File file = BlueSystem.findFile(fileName);
+                
+                if (file != null) {
+                    FileChooserManager.getDefault().setSelectedFile(
+                            FILE_SELECTOR_ID,
+                            file);
                 }
-
-                List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
-                        FILE_SELECTOR_ID, null);
-
-                if (!rValue.isEmpty()) {
-                    File f = rValue.get(0);
-
-                    try {
-                        String absFilePath = f.getCanonicalPath();
-                        String relPath = BlueSystem.getRelativePath(absFilePath);
-
-                        System.out.println("Rel Path: " + relPath);
-                        selector.setFileName(relPath);
-                        updateDisplay();
-                    } catch (IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-
+            }
+            
+            List<File> rValue = FileChooserManager.getDefault().showOpenDialog(
+                    FILE_SELECTOR_ID, null);
+            
+            if (!rValue.isEmpty()) {
+                File f = rValue.get(0);
+                
+                try {
+                    String absFilePath = f.getCanonicalPath();
+                    String relPath = BlueSystem.getRelativePath(absFilePath);
+                    
+                    System.out.println("Rel Path: " + relPath);
+                    selector.setFileName(relPath);
+                    updateDisplay();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
                 }
+                
             }
         });
 

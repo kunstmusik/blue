@@ -54,42 +54,39 @@ public class AddSemiColonLineCommentAction extends BaseAction {
             final Caret caret = target.getCaret();
             final BaseDocument doc = (BaseDocument) target.getDocument();
 
-            doc.runAtomicAsUser(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        int startPos;
-                        int endPos;
-
-                        if (org.netbeans.editor.Utilities.isSelectionShowing(
-                                caret)) {
-                            startPos = org.netbeans.editor.Utilities.getRowStart(
-                                    doc,
-                                    target.getSelectionStart());
-                            endPos = target.getSelectionEnd();
-                            if (endPos > 0 && org.netbeans.editor.Utilities.getRowStart(
-                                    doc, endPos) == endPos) {
-                                endPos--;
-                            }
-                            endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
-                                    endPos);
-                        } else { // selection not visible
-                            startPos = org.netbeans.editor.Utilities.getRowStart(
-                                    doc, caret.getDot());
-                            endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
-                                    caret.getDot());
+            doc.runAtomicAsUser(() -> {
+                try {
+                    int startPos;
+                    int endPos;
+                    
+                    if (org.netbeans.editor.Utilities.isSelectionShowing(
+                            caret)) {
+                        startPos = org.netbeans.editor.Utilities.getRowStart(
+                                doc,
+                                target.getSelectionStart());
+                        endPos = target.getSelectionEnd();
+                        if (endPos > 0 && org.netbeans.editor.Utilities.getRowStart(
+                                doc, endPos) == endPos) {
+                            endPos--;
                         }
-
-                        int lineCount = org.netbeans.editor.Utilities.getRowCount(
-                                doc, startPos,
+                        endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
                                 endPos);
-
-                        comment(doc, startPos, lineCount);
-
-
-                    } catch (BadLocationException e) {
-                        target.getToolkit().beep();
+                    } else { // selection not visible
+                        startPos = org.netbeans.editor.Utilities.getRowStart(
+                                doc, caret.getDot());
+                        endPos = org.netbeans.editor.Utilities.getRowEnd(doc,
+                                caret.getDot());
                     }
+                    
+                    int lineCount = org.netbeans.editor.Utilities.getRowCount(
+                            doc, startPos,
+                            endPos);
+                    
+                    comment(doc, startPos, lineCount);
+                    
+                    
+                } catch (BadLocationException e) {
+                    target.getToolkit().beep();
                 }
             });
         }

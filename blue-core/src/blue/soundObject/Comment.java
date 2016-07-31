@@ -36,28 +36,35 @@ public class Comment extends AbstractSoundObject implements Serializable,
         this.commentText = text;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
@@ -83,6 +90,7 @@ public class Comment extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

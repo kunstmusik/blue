@@ -88,10 +88,12 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
 
     private static class WinClassicPainter implements TabPainter {
 
+        @Override
         public Insets getBorderInsets(Component c) {
             return INSETS;
         }
 
+        @Override
         public Polygon getInteriorPolygon(Component c) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
 
@@ -114,10 +116,12 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             return p;
         }
 
+        @Override
         public boolean isBorderOpaque() {
             return true;
         }
 
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y,
                                 int width, int height) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
@@ -145,6 +149,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             }
         }
 
+        @Override
         public void paintInterior(Graphics g, Component c) {
 
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
@@ -174,6 +179,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             paintCloseButton( g, (JComponent)c );
         }
 
+        @Override
         public void getCloseButtonRectangle(JComponent jc, Rectangle rect, Rectangle bounds) {
             boolean rightClip = ((BlueEditorTabCellRenderer) jc).isClipRight();
             boolean leftClip = ((BlueEditorTabCellRenderer) jc).isClipLeft();
@@ -223,6 +229,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             return "blue/plaf/resources/metal_close_enabled.png"; // NOI18N
         }
 
+        @Override
         public boolean supportsCloseButton(JComponent renderer) {
             return
                 ((AbstractTabCellRenderer) renderer).isShowCloseButton();
@@ -233,10 +240,12 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
 
     private static class WinClassicLeftClipPainter implements TabPainter {
 
+        @Override
         public Insets getBorderInsets(Component c) {
             return INSETS;
         }
 
+        @Override
         public Polygon getInteriorPolygon(Component c) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
 
@@ -259,6 +268,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             return p;
         }
 
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y,
                                 int width, int height) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
@@ -286,6 +296,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             }
         }
 
+        @Override
         public void paintInterior(Graphics g, Component c) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
 //            boolean wantGradient = ren.isSelected() && ren.isActive() || ((ren.isClipLeft()
@@ -308,16 +319,19 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             g.fillPolygon(p);
         }
 
+        @Override
         public boolean isBorderOpaque() {
             return true;
         }
 
+        @Override
         public void getCloseButtonRectangle(JComponent jc,
                                             final Rectangle rect,
                                             Rectangle bounds) {
             rect.setBounds(-20, -20, 0, 0);
         }
 
+        @Override
         public boolean supportsCloseButton(JComponent renderer) {
             return false;
         }
@@ -325,14 +339,17 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
 
     private static class WinClassicRightClipPainter implements TabPainter {
 
+        @Override
         public Insets getBorderInsets(Component c) {
             return INSETS;
         }
 
+        @Override
         public boolean isBorderOpaque() {
             return true;
         }
 
+        @Override
         public Polygon getInteriorPolygon(Component c) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
 
@@ -354,6 +371,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             return p;
         }
 
+        @Override
         public void paintBorder(Component c, Graphics g, int x, int y,
                                 int width, int height) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
@@ -385,6 +403,7 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             }
         }
 
+        @Override
         public void paintInterior(Graphics g, Component c) {
             BlueEditorTabCellRenderer ren = (BlueEditorTabCellRenderer) c;
             boolean wantGradient = ren.isSelected() && ren.isActive() || ((ren.isClipLeft()
@@ -407,10 +426,12 @@ public class BlueEditorTabCellRenderer extends AbstractTabCellRenderer {
             g.fillPolygon(p);
         }
 
+        @Override
         public boolean supportsCloseButton(JComponent renderer) {
             return false;
         }
 
+        @Override
         public void getCloseButtonRectangle(JComponent jc,
                                             final Rectangle rect,
                                             Rectangle bounds) {

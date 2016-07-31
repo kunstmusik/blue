@@ -83,6 +83,7 @@ public class Beta implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -104,10 +105,12 @@ public class Beta implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public String getName() {
         return "Beta";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double x1, x2, yps1, yps2, sum;
 

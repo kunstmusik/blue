@@ -48,6 +48,7 @@ id = "blue.ui.core.project.GenerateRealtimeCsdToScreenAction")
 @Messages("CTL_GenerateRealtimeCsdToScreenAction=Generate Realtime CSD to Screen")
 public final class GenerateRealtimeCsdToScreenAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
                 "message.generatingCSD"));

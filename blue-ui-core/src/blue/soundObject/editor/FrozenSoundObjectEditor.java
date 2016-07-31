@@ -65,12 +65,8 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
         panel.setLayout(new FlowLayout(FlowLayout.LEFT));
         panel.add(frozenWaveFileName);
         panel.add(button);
-        button.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveCopy();
-            }
+        button.addActionListener((ActionEvent e) -> {
+            saveCopy();
         });
 
         LabelledItemPanel itemPanel = new LabelledItemPanel();

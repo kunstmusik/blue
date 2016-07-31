@@ -20,7 +20,7 @@ import org.netbeans.spi.lexer.TokenFactory;
  */
 public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
 
-    private static final Map<String,CsoundOrcTokenId> keywords = new HashMap<String,CsoundOrcTokenId>();
+    private static final Map<String,CsoundOrcTokenId> keywords = new HashMap<>();
     
     private static final Set<String> opcodeNames = CsoundManualUtilities.getOpcodeNames();
     

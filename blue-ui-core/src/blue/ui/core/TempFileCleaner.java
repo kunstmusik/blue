@@ -74,13 +74,7 @@ public class TempFileCleaner implements PropertyChangeListener {
             return;
         }
         
-        File[] tempFiles = parentProjDir.listFiles(new FilenameFilter() {
-
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith("tempCsd") && name.endsWith(".csd");
-            }
-        });
+        File[] tempFiles = parentProjDir.listFiles((File dir, String name) -> name.startsWith("tempCsd") && name.endsWith(".csd"));
         
         if(tempFiles.length > 0) {
             int retVal = JOptionPane.showConfirmDialog(

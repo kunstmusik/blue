@@ -48,7 +48,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
 
     private ChangeEvent changeEvent = null;
 
-    private Vector<BlueMidiDevice> items = new Vector<BlueMidiDevice>();
+    private Vector<BlueMidiDevice> items = new Vector<>();
 
     private boolean running = false;
 
@@ -67,7 +67,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
     public void rescan() {
         MidiDevice.Info[] info = MidiSystem.getMidiDeviceInfo();
 
-        Vector<BlueMidiDevice> newItems = new Vector<BlueMidiDevice>();
+        Vector<BlueMidiDevice> newItems = new Vector<>();
 
         for (int i = 0; i < info.length; i++) {
             try {
@@ -143,7 +143,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
     /* BROADCAST MIDI TO RECEIVERS */
     public void addReceiver(Receiver receiver) {
         if (receivers == null) {
-            receivers = new Vector<Receiver>();
+            receivers = new Vector<>();
         }
         receivers.add(receiver);
     }
@@ -156,7 +156,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
 
     private void broadcastMessage(MidiMessage message, long timeStamp) {
         if (receivers != null) {
-            Iterator<Receiver> iter = new Vector<Receiver>(receivers).iterator();
+            Iterator<Receiver> iter = new Vector<>(receivers).iterator();
 
             while (iter.hasNext()) {
                 Receiver receiver = iter.next();
@@ -166,6 +166,7 @@ public class MidiInputManager implements Receiver, ChangeListener {
     }
 
     /* CHANGE LISTENER CODE */
+    @Override
     public void stateChanged(ChangeEvent e) {
         BlueMidiDevice device = (BlueMidiDevice) e.getSource();
 
@@ -179,11 +180,13 @@ public class MidiInputManager implements Receiver, ChangeListener {
     }
 
     /* RECEIVER METHODS */
+    @Override
     public void send(MidiMessage message, long timeStamp) {
         broadcastMessage(message, timeStamp);
         //System.out.println(timeStamp + " : " + message);
     }
 
+    @Override
     public void close() {
     }
 

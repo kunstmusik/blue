@@ -135,22 +135,26 @@ public class GrapherEditPanel extends JComponent {
 
             String objectName = objectTokenizer.nextToken();
 
-            if (objectType.equals("cfilein")) {
-
-            } else if (objectType.equals("cpopup")) {
-
-            } else if (objectType.equals("ctoggle")) {
-                toggles.addToggle(objectName);
-            } else if (objectType.equals("cslider")) {
-                sliders.addSlider(objectName);
-            } else if (objectType.equals("cgraph")) {
-                String label = findLabel(line);
-
-                if (label == null) {
-                    label = objectName;
-                }
-                grapher.addGraphOrder(objectName);
-                this.grapherLineController.addGrapher(objectName, label);
+            switch (objectType) {
+                case "cfilein":
+                    break;
+                case "cpopup":
+                    break;
+                case "ctoggle":
+                    toggles.addToggle(objectName);
+                    break;
+                case "cslider":
+                    sliders.addSlider(objectName);
+                    break;
+                case "cgraph":
+                    String label = findLabel(line);
+                    if (label == null) {
+                        label = objectName;
+                    }   grapher.addGraphOrder(objectName);
+                    this.grapherLineController.addGrapher(objectName, label);
+                    break;
+                default:
+                    break;
             }
         }
     }

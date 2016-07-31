@@ -76,12 +76,9 @@ public class ChannelPanel extends javax.swing.JPanel implements
             }
         });
 
-        levelValueField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setLevelValueFromField();
-                switchLevelValueView(false);
-            }
+        levelValueField.addActionListener((ActionEvent e) -> {
+            setLevelValueFromField();
+            switchLevelValueView(false);
         });
 
         levelValueField.addFocusListener(new FocusAdapter() {
@@ -101,28 +98,18 @@ public class ChannelPanel extends javax.swing.JPanel implements
         preScroll.getHorizontalScrollBar().setPreferredSize(miniScrollDim);
         postScroll.getHorizontalScrollBar().setPreferredSize(miniScrollDim);
 
-        levelSlider.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (!updating) {
-                    updateLevelValue();
-                }
+        levelSlider.addChangeListener((ChangeEvent e) -> {
+            if (!updating) {
+                updateLevelValue();
             }
-
         });
 
-        outputList.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                if (channel != null) {
-                    channel
-                            .setOutChannel((String) outputList
-                                    .getSelectedItem());
-                }
+        outputList.addActionListener((ActionEvent arg0) -> {
+            if (channel != null) {
+                channel
+                        .setOutChannel((String) outputList
+                                .getSelectedItem());
             }
-
         });
 
         preList.setCellRenderer(new EnabledListCellRenderer());

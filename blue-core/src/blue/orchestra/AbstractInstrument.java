@@ -38,18 +38,22 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
 
     int instrumentNumber = 0;
 
+    @Override
     public String getName() {
         return this.name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = (name == null) ? "" : name;
     }
 
+    @Override
     public String getComment() {
         return this.comment;
     }
 
+    @Override
     public void setComment(String comment) {
         this.comment = (comment == null) ? "" : comment;
     }
@@ -62,18 +66,22 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
     // this.testScore = testScore;
     // }
 
+    @Override
     public int getInstrumentNumber() {
         return this.instrumentNumber;
     }
 
+    @Override
     public void setInstrumentNumber(int instrumentNumber) {
         this.instrumentNumber = instrumentNumber;
     }
 
+    @Override
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }
@@ -83,6 +91,7 @@ public abstract class AbstractInstrument implements Instrument, Serializable {
         return ObjectUtilities.clone(this);
     }
 
+    @Override
     public String generateAlwaysOnInstrument() {
         return null;
     }

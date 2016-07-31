@@ -44,6 +44,7 @@ public class RedoAction extends AbstractAction {
         this.manager = manager;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (manager.canRedo()) {
             manager.redo();

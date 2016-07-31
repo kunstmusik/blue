@@ -80,15 +80,18 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         noteHeight = 15;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
 
     // TODO - Implement using notes
+    @Override
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
@@ -186,18 +189,22 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         return nl;
     }
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -263,6 +270,7 @@ public class PianoRoll extends AbstractSoundObject implements Serializable, Gene
         return p;
     }
 
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

@@ -135,10 +135,10 @@ public class RealtimeRenderSettings implements Serializable {
             String csoundExecutableDefault = "csound";
             String audioDriverDefault = "PortAudio";
 
-            if (osName.indexOf("Windows") >= 0) {
+            if (osName.contains("Windows")) {
                 softwareBufferSize = 4096;
                 hardwareBufferSize = 16384;
-            } else if (osName.toLowerCase().indexOf("mac") >= 0) {
+            } else if (osName.toLowerCase().contains("mac")) {
                 softwareBufferSize = 1024;
                 hardwareBufferSize = 4096;
                 csoundExecutableDefault = "/usr/local/bin/csound";
@@ -329,11 +329,11 @@ public class RealtimeRenderSettings implements Serializable {
         if (MIDI_DRIVERS == null) {
             String osName = System.getProperty("os.name").toLowerCase();
 
-            if (osName.indexOf("windows") >= 0) {
+            if (osName.contains("windows")) {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "MME", "null"};
-            } else if (osName.indexOf("mac") >= 0) {
+            } else if (osName.contains("mac")) {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "null"};
-            } else if (osName.indexOf("linux") >= 0) {
+            } else if (osName.contains("linux")) {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "ALSA", "null"};
             } else {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "MME", "ALSA", "null"};
@@ -348,13 +348,13 @@ public class RealtimeRenderSettings implements Serializable {
         if (AUDIO_DRIVERS == null) {
             String osName = System.getProperty("os.name").toLowerCase();
 
-            if (osName.indexOf("windows") >= 0) {
+            if (osName.contains("windows")) {
                 AUDIO_DRIVERS = new String[]{"PortAudio", "pa_cb", "pa_bl",
                     "MME", "null"};
-            } else if (osName.indexOf("mac") >= 0) {
+            } else if (osName.contains("mac")) {
                 AUDIO_DRIVERS = new String[]{"PortAudio", "pa_cb", "pa_bl",
                     "CoreAudio", "JACK", "null"};
-            } else if (osName.indexOf("linux") >= 0) {
+            } else if (osName.contains("linux")) {
                 AUDIO_DRIVERS = new String[]{"PortAudio", "pa_cb", "pa_bl",
                     "ALSA", "JACK", "pulse", "null"};
             } else {

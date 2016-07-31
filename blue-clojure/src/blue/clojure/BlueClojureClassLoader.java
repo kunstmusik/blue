@@ -37,9 +37,9 @@ import org.openide.util.Exceptions;
  */
 public class BlueClojureClassLoader extends DynamicClassLoader {
 
-    HashMap<Integer, Object[]> constantVals = new HashMap<Integer, Object[]>();
+    HashMap<Integer, Object[]> constantVals = new HashMap<>();
     ConcurrentHashMap<String, Reference<Class>> classCache =
-            new ConcurrentHashMap<String, Reference<Class>>();
+            new ConcurrentHashMap<>();
     static final URL[] EMPTY_URLS = new URL[]{};
     static final ReferenceQueue rq = new ReferenceQueue();
     
@@ -71,7 +71,7 @@ public class BlueClojureClassLoader extends DynamicClassLoader {
     public Class defineClass(String name, byte[] bytes, Object srcForm) {
         Util.clearCache(rq, classCache);
         Class c = defineClass(name, bytes, 0, bytes.length);
-        classCache.put(name, new SoftReference<Class>(c, rq));
+        classCache.put(name, new SoftReference<>(c, rq));
         return c;
     }
 

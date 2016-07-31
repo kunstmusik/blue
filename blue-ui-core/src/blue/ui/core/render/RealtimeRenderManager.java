@@ -56,29 +56,23 @@ public final class RealtimeRenderManager {
     private boolean shuttingDown = false;
 
     private RealtimeRenderManager() {
-        realtimeListener = new PlayModeListener() {
-            @Override
-            public void playModeChanged(int playMode) {
-                if(shuttingDown) {
-                    return;
-                }
-                if(playMode == PlayModeListener.PLAY_MODE_STOP) {
-                    auditioning = false;
-                }
-                for (PlayModeListener listener : listeners) {
-                    listener.playModeChanged(playMode);
-                }
+        realtimeListener = (int playMode) -> {
+            if(shuttingDown) {
+                return;
+            }
+            if(playMode == PlayModeListener.PLAY_MODE_STOP) {
+                auditioning = false;
+            }
+            for (PlayModeListener listener : listeners) {
+                listener.playModeChanged(playMode);
             }
         };
-        blueLiveListener = new PlayModeListener() {
-            @Override
-            public void playModeChanged(int playMode) {
-                if(shuttingDown) {
-                    return;
-                }
-                for (PlayModeListener listener : blueLiveListeners) {
-                    listener.playModeChanged(playMode);
-                }
+        blueLiveListener = (int playMode) -> {
+            if(shuttingDown) {
+                return;
+            }
+            for (PlayModeListener listener : blueLiveListeners) {
+                listener.playModeChanged(playMode);
             }
         };
     }

@@ -90,15 +90,18 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         globalSco = "";
     }
 
+    @Override
     public void generateUserDefinedOpcodes(OpcodeList udoList) {
         udoReplacementValues = UDOUtilities.appendUserDefinedOpcodes(
                 opcodeList, udoList);
     }
 
+    @Override
     public void generateFTables(Tables tables) {
         doPreCompilation();
     }
 
+    @Override
     public String generateGlobalOrc() {
         String retVal = bsbCompilationUnit
                 .replaceBSBValues(this.getGlobalOrc());
@@ -106,6 +109,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String generateInstrument() {
         String retVal = bsbCompilationUnit
                 .replaceBSBValues(getInstrumentText());
@@ -132,6 +136,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return retVal;
     }
 
+    @Override
     public String generateGlobalSco() {
         String retVal = bsbCompilationUnit.replaceBSBValues(getGlobalSco());
 
@@ -216,6 +221,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         return bsb;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = InstrumentUtilities.getBasicXML(this);
 
@@ -324,6 +330,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         this.presetGroup = presetGroup;
     }
 
+    @Override
     public ParameterList getParameterList() {
         return parameterList;
     }

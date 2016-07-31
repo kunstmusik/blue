@@ -92,7 +92,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
 
         BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
         SoundObjectLibrary sObjLib = data.getSoundObjectLibrary();
-        List<Instance> instanceSoundObjects = new ArrayList<Instance>();
+        List<Instance> instanceSoundObjects = new ArrayList<>();
         ScoreController.ScoreObjectBuffer buffer
                 = ScoreController.getInstance().getScoreObjectBuffer();
 

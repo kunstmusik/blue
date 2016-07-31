@@ -26,10 +26,12 @@ public class CloseProjectAction extends AbstractAction implements
         this.setEnabled(BlueProjectManager.getInstance().getCurrentProject() != null);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProjectManager.getInstance().closeCurrentProject();
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
             setEnabled(evt.getNewValue() != null);

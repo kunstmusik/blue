@@ -112,6 +112,7 @@ public class Oscillator implements Generator, Serializable, Maskable,
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -150,10 +151,12 @@ public class Oscillator implements Generator, Serializable, Maskable,
         this.oscillatorType = oscillatorType;
     }
 
+    @Override
     public void initialize(double duration) {
 //        freqTable.setInitialPhase(phaseInit);
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double retVal = 0.0;
 

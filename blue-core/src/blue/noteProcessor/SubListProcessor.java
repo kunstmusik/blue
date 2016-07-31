@@ -47,6 +47,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
         this.end = Integer.parseInt(end);
     }
 
+    @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         NoteList tempList = new NoteList();
 
@@ -106,6 +107,7 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

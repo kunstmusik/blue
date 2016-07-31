@@ -54,12 +54,18 @@ public class CPopup extends CeciliaObject {
         String initialVal = null;
 
         for (int i = 2; i < tokens.length; i += 2) {
-            if (tokens[i].equals("-label")) {
-                // ignore
-            } else if (tokens[i].equals("-value")) {
-                st = new StringTokenizer(tokens[i + 1]);
-            } else if (tokens[i].equals("-init")) {
-                initialVal = tokens[i + 1];
+            switch (tokens[i]) {
+            // ignore
+                case "-label":
+                    break;
+                case "-value":
+                    st = new StringTokenizer(tokens[i + 1]);
+                    break;
+                case "-init":
+                    initialVal = tokens[i + 1];
+                    break;
+                default:
+                    break;
             }
         }
 

@@ -73,13 +73,8 @@ public class CeciliaModuleEditor extends ScoreObjectEditor {
 
         JButton loadModule = new JButton(BlueSystem
                 .getString("ceciliaModule.loadModule"));
-        loadModule.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadModule();
-
-            }
+        loadModule.addActionListener((ActionEvent e) -> {
+            loadModule();
         });
 
         JPanel topPanel = new JPanel();
@@ -154,21 +149,29 @@ public class CeciliaModuleEditor extends ScoreObjectEditor {
 
             CeciliaObject cObj = null;
 
-            if (objectType.equals("cfilein")) {
-                CeciliaObject fileIn = new CFileIn();
-                cObj = fileIn;
-            } else if (objectType.equals("cpopup")) {
-                CPopup popup = new CPopup();
-                cObj = popup;
-            } else if (objectType.equals("ctoggle")) {
-                CToggle toggle = new CToggle();
-                cObj = toggle;
-            } else if (objectType.equals("cslider")) {
-                CSlider slider = new CSlider();
-                cObj = slider;
-            } else if (objectType.equals("cgraph")) {
-                CGraph graph = new CGraph();
-                cObj = graph;
+            switch (objectType) {
+                case "cfilein":
+                    CeciliaObject fileIn = new CFileIn();
+                    cObj = fileIn;
+                    break;
+                case "cpopup":
+                    CPopup popup = new CPopup();
+                    cObj = popup;
+                    break;
+                case "ctoggle":
+                    CToggle toggle = new CToggle();
+                    cObj = toggle;
+                    break;
+                case "cslider":
+                    CSlider slider = new CSlider();
+                    cObj = slider;
+                    break;
+                case "cgraph":
+                    CGraph graph = new CGraph();
+                    cObj = graph;
+                    break;
+                default:
+                    break;
             }
 
             cObj.initialize(tokens);

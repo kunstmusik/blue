@@ -87,6 +87,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         }
     }
 
+    @Override
     public Iterator<BSBObject> iterator() {
         return interfaceItems.iterator();
     }
@@ -203,6 +204,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         }
     }
 
+    @Override
     public Set<String> getNames() {
         Set<String> names = new HashSet<>();
 

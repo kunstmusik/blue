@@ -121,12 +121,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         rewindButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
                 "blue/resources/images/Rewind16.gif")));
 
-        rewindButton.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                rewind();
-            }
+        rewindButton.addActionListener((ActionEvent e) -> {
+            rewind();
         });
 
         rewindButton.setFocusable(false);
@@ -134,12 +130,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         playButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
                 "blue/resources/images/Play16.gif")));
 
-        playButton.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                renderProject();
-            }
+        playButton.addActionListener((ActionEvent e) -> {
+            renderProject();
         });
 
         playButton.setFocusable(false);
@@ -147,12 +139,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         stopButton.setIcon(new ImageIcon(ImageUtilities.loadImage(
                 "blue/resources/images/Stop16.gif")));
 
-        stopButton.addActionListener(new java.awt.event.ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                stopRendering();
-            }
+        stopButton.addActionListener((ActionEvent e) -> {
+            stopRendering();
         });
 
         stopButton.setFocusable(false);
@@ -175,12 +163,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         loopBox.setFocusable(false);
         loopBox.setText("Loop");
-        loopBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateLoopRendering(loopBox.isSelected());
-            }
+        loopBox.addActionListener((ActionEvent e) -> {
+            updateLoopRendering(loopBox.isSelected());
         });
 
         this.add(toolStartLabel, null);
@@ -198,43 +182,35 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         
         // Setup as Listener to RenderTimeManager
 
-        renderTimeManager.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String prop = evt.getPropertyName();
-
-                if (evt.getSource() == renderTimeManager) {
-                    if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-                        float val = ((Float) evt.getNewValue()).floatValue();
-
-                        if (val <= 0.0f) {
-                            playTimeText.setText(EMPTY_TIME);
-                        } else {
-                            float latency = PlaybackSettings.getInstance().
-                                    getPlaybackLatencyCorrection();
-
-                            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
-
-                            playTimeText.setText(NumberUtilities.formatTime(
-                                    newVal));
-                        }
-
+        renderTimeManager.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            String prop = evt.getPropertyName();
+            
+            if (evt.getSource() == renderTimeManager) {
+                if (prop.equals(RenderTimeManager.TIME_POINTER)) {
+                    float val = ((Float) evt.getNewValue()).floatValue();
+                    
+                    if (val <= 0.0f) {
+                        playTimeText.setText(EMPTY_TIME);
+                    } else {
+                        float latency = PlaybackSettings.getInstance().
+                                getPlaybackLatencyCorrection();
+                        
+                        float newVal = val + renderTimeManager.getRenderStartTime() - latency;
+                        
+                        playTimeText.setText(NumberUtilities.formatTime(
+                                newVal));
                     }
+                    
                 }
             }
         });
         renderTimeManager.addRenderTimeManagerListener(this);
 
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
-                        getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
+                    getPropertyName())) {
+                reinitialize();
             }
         });
 
@@ -359,18 +335,14 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     @Override
     public void playModeChanged(final int playMode) {
 
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                if (playMode == PLAY_MODE_PLAY) {
-                    playButton.setEnabled(false);
-                    StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));
-                } else if (playMode == PLAY_MODE_STOP) {
-                    playButton.setEnabled(true);
-                    StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
-                            "message.finishedRenderingCSD"));
-                }
+        SwingUtilities.invokeLater(() -> {
+            if (playMode == PLAY_MODE_PLAY) {
+                playButton.setEnabled(false);
+                StatusDisplayer.getDefault().setStatusText(BlueSystem.getString("message.renderingCSD"));
+            } else if (playMode == PLAY_MODE_STOP) {
+                playButton.setEnabled(true);
+                StatusDisplayer.getDefault().setStatusText(BlueSystem.getString(
+                        "message.finishedRenderingCSD"));
             }
         });
 

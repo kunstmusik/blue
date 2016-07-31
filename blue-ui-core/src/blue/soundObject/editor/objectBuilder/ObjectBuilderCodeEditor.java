@@ -65,25 +65,20 @@ public class ObjectBuilderCodeEditor extends JComponent {
     public ObjectBuilderCodeEditor() {
         isExternalBox.setHorizontalTextPosition(SwingConstants.LEFT);
         isExternalBox.setFocusable(false);
-        isExternalBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                boolean selected = isExternalBox.isSelected();
-
-                commandLineText.setEnabled(selected);
-
-                if (objBuilder != null) {
-                    objBuilder.setExternal(selected);
-
-                    isUpdating = true;
-
+        isExternalBox.addActionListener((ActionEvent e) -> {
+            boolean selected = isExternalBox.isSelected();
+            
+            commandLineText.setEnabled(selected);
+            
+            if (objBuilder != null) {
+                objBuilder.setExternal(selected);
+                
+                isUpdating = true;
+                
 //                    setCodeSyntaxType(objBuilder);
 
-                    isUpdating = false;
-                }
+isUpdating = false;
             }
-
         });
 
         commandLineText.getDocument().addDocumentListener(
@@ -97,15 +92,11 @@ public class ObjectBuilderCodeEditor extends JComponent {
                     }
                 });
 
-        editBox.addEditModeListener(new EditModeListener() {
-
-            @Override
-            public void setEditing(boolean isEditing) {
-                codePane.getJEditorPane().setEnabled(isEditing);
-
-                if (objBuilder != null) {
-                    objBuilder.setEditEnabled(isEditing);
-                }
+        editBox.addEditModeListener((boolean isEditing) -> {
+            codePane.getJEditorPane().setEnabled(isEditing);
+            
+            if (objBuilder != null) {
+                objBuilder.setEditEnabled(isEditing);
             }
         });
 

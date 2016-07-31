@@ -67,14 +67,17 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         return this.javaScriptCode;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
@@ -115,6 +118,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#getTimeBehavior()
      */
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
@@ -124,14 +128,17 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#setTimeBehavior(int)
      */
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -162,6 +169,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

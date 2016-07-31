@@ -367,47 +367,23 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
     public UserInstrumentTreePopup() {
 
-        addCategoryMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addInstrumentCategory();
-            }
+        addCategoryMenuItem.addActionListener((ActionEvent e) -> {
+            addInstrumentCategory();
         });
-        removeCategoryMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeInstrumentCategory();
-            }
+        removeCategoryMenuItem.addActionListener((ActionEvent e) -> {
+            removeInstrumentCategory();
         });
-        removeInstrumentMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeInstrument();
-            }
+        removeInstrumentMenuItem.addActionListener((ActionEvent e) -> {
+            removeInstrument();
         });
-        cutMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cutNode();
-            }
+        cutMenuItem.addActionListener((ActionEvent e) -> {
+            cutNode();
         });
-        copyMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                copyNode();
-            }
+        copyMenuItem.addActionListener((ActionEvent e) -> {
+            copyNode();
         });
-        pasteMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pasteNode();
-            }
+        pasteMenuItem.addActionListener((ActionEvent e) -> {
+            pasteNode();
         });
 
         importItem = new AbstractAction(BlueSystem.getString("common.import")) {
@@ -683,19 +659,16 @@ class UserInstrumentTreePopup extends JPopupMenu {
 
         this.setLabel("Add Instrument");
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>) 
-                        ((JMenuItem)e.getSource()).getClientProperty("plugin");
-
-                Instrument instrTemplate = plugin.getInstance();
-                try {
-                    Instrument newInstrument = instrTemplate.getClass().newInstance();
-                    addInstrument(newInstrument);
-                } catch (InstantiationException | IllegalAccessException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+        ActionListener al = (ActionEvent e) -> {
+            LazyPlugin<Instrument> plugin = (LazyPlugin<Instrument>)
+                    ((JMenuItem)e.getSource()).getClientProperty("plugin");
+            
+            Instrument instrTemplate = plugin.getInstance();
+            try {
+                Instrument newInstrument = instrTemplate.getClass().newInstance();
+                addInstrument(newInstrument);
+            } catch (InstantiationException | IllegalAccessException ex) {
+                Exceptions.printStackTrace(ex);
             }
         };
 

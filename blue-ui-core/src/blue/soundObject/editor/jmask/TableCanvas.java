@@ -53,12 +53,8 @@ public class TableCanvas extends JComponent {
     double duration = 1.0;
 
     public TableCanvas() {        
-        lineListener = new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
         
         new TableCanvasMouseListener(this);

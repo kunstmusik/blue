@@ -247,24 +247,15 @@ public class InstrumentImportPane extends JComponent {
             }
         });
 
-        instrumentTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (e.getValueIsAdjusting()) {
-                            return;
-                        }
-                        populateInstrument();
-                    }
-                });
-
-        importButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                importInstrument();
+        instrumentTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                return;
             }
+            populateInstrument();
+        });
+
+        importButton.addActionListener((ActionEvent e) -> {
+            importInstrument();
         });
     }
 

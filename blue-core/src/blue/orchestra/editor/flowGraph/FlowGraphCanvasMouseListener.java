@@ -13,10 +13,12 @@ public class FlowGraphCanvasMouseListener implements MouseListener {
         this.canvas = flowGraphPanel.getFlowGraphCanvas();
     }
 
+    @Override
     public void mouseClicked(MouseEvent me) {
         // System.out.println("click");
     }
 
+    @Override
     public void mousePressed(MouseEvent me) {
         if (me.getButton() == MouseEvent.BUTTON3) {
             System.out.println("popup trigger");
@@ -25,14 +27,17 @@ public class FlowGraphCanvasMouseListener implements MouseListener {
         }
     }
 
+    @Override
     public void mouseReleased(MouseEvent arg0) {
 
     }
 
+    @Override
     public void mouseEntered(MouseEvent arg0) {
 
     }
 
+    @Override
     public void mouseExited(MouseEvent arg0) {
 
     }

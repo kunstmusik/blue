@@ -52,8 +52,7 @@ public final class RenderToDiskAndOpenAction implements ActionListener {
 //                                        f.getAbsolutePath());
 
                                 try {
-                                    if (System.getProperty("os.name").indexOf(
-                                    "Windows") >= 0) {
+                                    if (System.getProperty("os.name").contains("Windows")) {
                                         String p = f.getAbsolutePath().replace("\\", "\\\\");
                                         command = command.replaceAll("\\$outfile", p);
                                         Runtime.getRuntime().exec(command);

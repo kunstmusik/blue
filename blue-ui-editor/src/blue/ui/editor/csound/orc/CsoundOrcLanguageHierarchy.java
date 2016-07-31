@@ -17,7 +17,7 @@ import org.netbeans.spi.lexer.LexerRestartInfo;
  */
 public class CsoundOrcLanguageHierarchy extends LanguageHierarchy<CsoundOrcTokenId> {
     
-    private static List<CsoundOrcTokenId> tokens = new ArrayList<CsoundOrcTokenId>();
+    private static List<CsoundOrcTokenId> tokens = new ArrayList<>();
    
 
     static {

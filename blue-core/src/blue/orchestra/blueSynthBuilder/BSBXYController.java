@@ -159,6 +159,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         return xyController;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = super.getBasicXML(this);
 
@@ -194,6 +195,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         return new String[] { this.objectName + "X", this.objectName + "Y" };
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
 
         String xCompVal = null;
@@ -221,10 +223,12 @@ public class BSBXYController extends AutomatableBSBObject implements
                         : yCompVal);
     }
 
+    @Override
     public String getPresetValue() {
         return "ver2:" + xValue + ":" + yValue;
     }
 
+    @Override
     public void setPresetValue(String val) {
         String[] vals = val.split(":");
 
@@ -448,6 +452,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
@@ -539,6 +544,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
 
         float time = ParameterTimeManagerFactory.getInstance().getTime();
@@ -553,10 +559,12 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
     // override to handle removing/adding parameters when this changes
+    @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
 
@@ -572,10 +580,12 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     /* RANDOMIZABLE METHODS */
 
+    @Override
     public boolean isRandomizable() {
         return randomizable;
     }
 
+    @Override
     public void randomize() {
         if (randomizable) {
             float rangeX = getXMax() - getXMin();
@@ -589,6 +599,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
         fireBSBObjectChanged();

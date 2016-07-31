@@ -50,7 +50,7 @@ public class UtilitySettings {
 
             String defaultCsoundCommand = "csound";
             
-            if (osName.indexOf("Mac") >= 0) {
+            if (osName.contains("Mac")) {
                 flag = "A";
                 defaultCsoundCommand = "/usr/local/bin/csound";
             }

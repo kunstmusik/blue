@@ -53,6 +53,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     private static Comparator sObjComparator = new Comparator() {
 
+        @Override
         public int compare(Object arg0, Object arg1) {
             SoundObject a = (SoundObject) arg0;
             SoundObject b = (SoundObject) arg1;
@@ -107,6 +108,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
         this.solo = solo;
     }
 
+    @Override
     public void setName(String name) {
         String oldName = this.name;
         this.name = (name == null) ? "" : name;
@@ -117,10 +119,12 @@ public final class SoundLayer extends ArrayList<SoundObject>
         }
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public ParameterIdList getAutomationParameters() {
         return automationParameters;
     }
@@ -241,10 +245,12 @@ public final class SoundLayer extends ArrayList<SoundObject>
         this.npc = npc;
     }
 
+    @Override
     public int getHeightIndex() {
         return heightIndex;
     }
 
+    @Override
     public void setHeightIndex(int heightIndex) {
         if (this.heightIndex == heightIndex) {
             return;

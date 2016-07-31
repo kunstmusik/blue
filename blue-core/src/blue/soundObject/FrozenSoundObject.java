@@ -58,6 +58,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
 //        return editor;
 //    }
 
+    @Override
     public float getObjectiveDuration() {
         return this.subjectiveDuration;
     }
@@ -66,25 +67,31 @@ public class FrozenSoundObject extends AbstractSoundObject implements
 //        return renderer;
 //    }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return null;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
     }
 
+    @Override
     public int getTimeBehavior() {
         return SoundObject.TIME_BEHAVIOR_NOT_SUPPORTED;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         return;
     }
 
+    @Override
     public float getRepeatPoint() {
         return -1.0f;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
     }
 
@@ -251,6 +258,7 @@ public class FrozenSoundObject extends AbstractSoundObject implements
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

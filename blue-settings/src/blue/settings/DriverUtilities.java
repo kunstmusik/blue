@@ -149,7 +149,7 @@ public class DriverUtilities {
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i].trim();
 
-                if (line.startsWith("Client") && line.indexOf(":") >= 0) {
+                if (line.startsWith("Client") && line.contains(":")) {
 
                     String[] parts = line.split("\"");
                     String clientName = parts[1];
@@ -166,7 +166,7 @@ public class DriverUtilities {
                             String capabilities = tempLine
                                     .substring(tempLine.lastIndexOf("("));
 
-                            if (capabilities.indexOf(portType) >= 0) {
+                            if (capabilities.contains(portType)) {
 
                                 String[] portParts = tempLine.split("\"");
 
@@ -227,9 +227,9 @@ public class DriverUtilities {
         String lines[] = text.split("\\r?\\n");
         for (String line : lines) {
             if (collect) {
-                if (endToken.length() > 0 && line.indexOf(endToken) >= 0) {
+                if (endToken.length() > 0 && line.contains(endToken)) {
                     collect = false;
-                } else if (line.indexOf(":") >= 0) {
+                } else if (line.contains(":")) {
                     try {
                         int cardNum = Integer.parseInt(line.substring(0,
                                 line.indexOf(":")).trim());
@@ -241,7 +241,7 @@ public class DriverUtilities {
                         // pass
                     }
                 }
-            } else if (line.toLowerCase().indexOf(startToken) >= 0) {
+            } else if (line.toLowerCase().contains(startToken)) {
                 collect = true;
             }
         }
@@ -279,7 +279,7 @@ public class DriverUtilities {
             while (st.hasMoreTokens()) {
                 String line = st.nextToken();
 
-                if (line.indexOf(searchVal) >= 0) {
+                if (line.contains(searchVal)) {
                     String[] parts = line.split(":");
 
                     String[] cardId = parts[0].split("-");
@@ -339,9 +339,9 @@ public class DriverUtilities {
         String lines[] = text.split("\\r?\\n");
         for (String line : lines) {
             if (collect) {
-                if (endToken.length() > 0 && line.indexOf(endToken) >= 0) {
+                if (endToken.length() > 0 && line.contains(endToken)) {
                     collect = false;
-                } else if (line.indexOf(":") >= 0) {
+                } else if (line.contains(":")) {
                     try {
                         int cardNum = Integer.parseInt(line.substring(0,
                                 line.indexOf(":")).trim());
@@ -353,7 +353,7 @@ public class DriverUtilities {
                         // pass
                     }
                 }
-            } else if (line.indexOf(startToken) >= 0) {
+            } else if (line.contains(startToken)) {
                 collect = true;
             }
         }
@@ -413,13 +413,13 @@ public class DriverUtilities {
         String sr = null;
 
         if (retVal != null
-                && retVal.indexOf("does not match JACK sample rate") >= 0) {
+                && retVal.contains("does not match JACK sample rate")) {
             String[] lines = retVal.split("\n");
 
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
 
-                if (line.indexOf("does not match JACK sample rate") >= 0) {
+                if (line.contains("does not match JACK sample rate")) {
                     sr = line.substring(line.lastIndexOf(" ") + 1);
                     break;
                 }

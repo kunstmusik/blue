@@ -112,9 +112,11 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         return true;
     }
 
+    @Override
     public void generateUserDefinedOpcodes(OpcodeList udos) {
     }
 
+    @Override
     public void generateFTables(Tables tables) {
         StrBuilder buffer = new StrBuilder();
 
@@ -288,6 +290,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
         return buffer.toString();
     }
 
+    @Override
     public String generateInstrument() {
         String algNum = this.algorithmCommon.algorithm < 10 ? "0"
                 + this.algorithmCommon.algorithm : Integer
@@ -383,6 +386,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
      * 
      * @see blue.orchestra.Instrument#generateGlobalOrc()
      */
+    @Override
     public String generateGlobalOrc() {
         return null;
     }
@@ -392,6 +396,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
      * 
      * @see blue.orchestra.Instrument#generateGlobalSco()
      */
+    @Override
     public String generateGlobalSco() {
         return null;
     }
@@ -436,6 +441,7 @@ public class BlueX7 extends AbstractInstrument implements Serializable {
      * 
      * @see blue.orchestra.Instrument#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = InstrumentUtilities.getBasicXML(this);
 

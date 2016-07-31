@@ -70,18 +70,13 @@ public final class GlobalScoreTopComponent extends TopComponent {
                 "HINT_GlobalScoreTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            globalOrcSco = null;
-                            reinitialize();
-                        }
-                    }
-                });
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(
+                    evt.getPropertyName())) {
+                globalOrcSco = null;
+                reinitialize();
+            }
+        });
 
         reinitialize();
 

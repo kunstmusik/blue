@@ -46,6 +46,7 @@ public class Download implements Runnable {
         this.event = new ChangeEvent(this);
     }
 
+    @Override
     public void run() {
         try {
             URLConnection conn = new URL(fileToDownload).openConnection();

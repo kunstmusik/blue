@@ -63,17 +63,14 @@ public final class FollowTheLeaderAction extends AbstractAction implements Conte
     @Override
     public void actionPerformed(ActionEvent e) {
         List<ScoreObject> scoreObjs = new ArrayList<>(selected);
-        Collections.sort(scoreObjs, new Comparator<ScoreObject>() {
-            @Override
-            public int compare(ScoreObject o1, ScoreObject o2) {
-                float diff = o1.getStartTime() - o2.getStartTime();
-                if (diff > 0) {
-                    return 1;
-                } else if (diff < 0) {
-                    return -1;
-                }
-                return 0;
+        Collections.sort(scoreObjs, (ScoreObject o1, ScoreObject o2) -> {
+            float diff = o1.getStartTime() - o2.getStartTime();
+            if (diff > 0) {
+                return 1;
+            } else if (diff < 0) {
+                return -1;
             }
+            return 0;
         });
 
         float[] initialStartTimes = new float[scoreObjs.size()];
