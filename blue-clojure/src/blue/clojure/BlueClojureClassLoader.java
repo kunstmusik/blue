@@ -38,10 +38,10 @@ import org.openide.util.Exceptions;
 public class BlueClojureClassLoader extends DynamicClassLoader {
 
     HashMap<Integer, Object[]> constantVals = new HashMap<>();
-    ConcurrentHashMap<String, Reference<Class>> classCache =
+    ConcurrentHashMap<String, Reference<Class<?>>> classCache =
             new ConcurrentHashMap<>();
     static final URL[] EMPTY_URLS = new URL[]{};
-    static final ReferenceQueue rq = new ReferenceQueue();
+    static final ReferenceQueue<Class<?>> rq = new ReferenceQueue<>();
     
     public BlueClojureClassLoader(File blueUserScriptDir, File projectScriptDir) {
         super(Thread.currentThread().getContextClassLoader());
@@ -68,18 +68,18 @@ public class BlueClojureClassLoader extends DynamicClassLoader {
     }
     
     @Override
-    public Class defineClass(String name, byte[] bytes, Object srcForm) {
+    public Class<?> defineClass(String name, byte[] bytes, Object srcForm) {
         Util.clearCache(rq, classCache);
-        Class c = defineClass(name, bytes, 0, bytes.length);
+        Class<?> c = defineClass(name, bytes, 0, bytes.length);
         classCache.put(name, new SoftReference<>(c, rq));
         return c;
     }
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        Reference<Class> cr = classCache.get(name);
+        Reference<Class<?>> cr = classCache.get(name);
         if (cr != null) {
-            Class c = cr.get();
+            Class<?> c = cr.get();
             if (c != null) {
                 return c;
             } else {
