@@ -95,11 +95,6 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <test-dependencies>
-                <test-type>
-                    <name>unit</name>
-                </test-type>
-            </test-dependencies>
             <public-packages>
                 <package>blue.projects</package>
                 <package>blue.projects.actions</package>

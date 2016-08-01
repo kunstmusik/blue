@@ -44,7 +44,7 @@ public class MidiImportSettingsDialog extends javax.swing.JDialog {
         }
         dialog.retVal = false;
         dialog.setMidiImportSettings(settings);
-        dialog.show();
+        dialog.setVisible(true);
 
         return dialog.retVal;
     }
@@ -150,12 +150,12 @@ public class MidiImportSettingsDialog extends javax.swing.JDialog {
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_okButtonActionPerformed
         retVal = true;
-        this.hide();
+        this.setVisible(false);
     }// GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_cancelButtonActionPerformed
         retVal = false;
-        this.hide();
+        this.setVisible(false);
     }// GEN-LAST:event_cancelButtonActionPerformed
 
     /**
