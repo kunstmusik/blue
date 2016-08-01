@@ -48,7 +48,7 @@ public class LineListTable extends JComponent {
 
     LineListTableModel tableModel = null;
 
-    private SelectionListener listener;
+    private SelectionListener<Line> listener;
 
     private LineList lineList;
 
@@ -66,15 +66,15 @@ public class LineListTable extends JComponent {
             if (listener != null && !e.getValueIsAdjusting()) {
                 int row = table.getSelectedRow();
                 
-                SelectionEvent event;
+                SelectionEvent<Line> event;
                 
                 if (row == -1) {
-                    event = new SelectionEvent(null,
+                    event = new SelectionEvent<>(null,
                             SelectionEvent.SELECTION_REMOVE);
                 } else {
                     Line line = lineList.get(row);
                     
-                    event = new SelectionEvent(line,
+                    event = new SelectionEvent<>(line,
                             SelectionEvent.SELECTION_SINGLE);
                 }
                 
@@ -141,7 +141,7 @@ public class LineListTable extends JComponent {
     /**
      * @param listener
      */
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<Line> listener) {
         this.listener = listener;
     }
 

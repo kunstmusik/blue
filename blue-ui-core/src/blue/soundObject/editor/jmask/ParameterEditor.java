@@ -11,8 +11,6 @@ import blue.soundObject.jmask.Accumulator;
 import blue.soundObject.jmask.Mask;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
-import java.util.Iterator;
-import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -26,6 +24,8 @@ import blue.soundObject.jmask.Quantizable;
 import blue.soundObject.jmask.Quantizer;
 import blue.ui.utilities.UiUtilities;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
@@ -40,7 +40,7 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
 
     Parameter parameter = null;
 
-    private transient Vector listeners = null;
+    private transient List<ParameterEditListener> listeners = null;
 
     int parameterNum = -1;
 
@@ -174,7 +174,7 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
 
     public void addParameterEditListener(ParameterEditListener listener) {
         if (listeners == null) {
-            listeners = new Vector(1);
+            listeners = new ArrayList<>(1);
         }
         listeners.add(listener);
     }
@@ -191,10 +191,7 @@ public class ParameterEditor extends javax.swing.JPanel implements PropertyChang
             return;
         }
 
-        Iterator iter = new Vector(listeners).iterator();
-
-        while (iter.hasNext()) {
-            ParameterEditListener listener = (ParameterEditListener) iter.next();
+        for (ParameterEditListener listener : listeners) {
             listener.parameterEdit(editType, parameterNum, generator);
         }
     }

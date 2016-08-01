@@ -215,15 +215,11 @@ public class LineListTableModel extends AbstractTableModel {
     }
 
     private boolean isLineNameAvailable(String string) {
-        for (Iterator iter = lines.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
-
+        for (Line line : lines) {
             if (line.getVarName().equals(string)) {
                 return false;
             }
-
         }
-
         return true;
     }
 

@@ -282,7 +282,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
     }
 
     private Object[] getPathForObject(Object obj) {
-        Vector v = new Vector();
+        List<Object> v = new ArrayList<>();
         getPathForObject(rootGroup, obj, v);
 
         Collections.reverse(v);
@@ -290,7 +290,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
         return v.toArray();
     }
 
-    private Object getPathForObject(PresetGroup current, Object obj, Vector v) {
+    private Object getPathForObject(PresetGroup current, Object obj, List<Object> v) {
 
         if (current == obj) {
             return v;
@@ -301,8 +301,7 @@ public class PresetsTreeModel implements Serializable, TreeModel {
             return v;
         }
 
-        for (Iterator iter = current.getSubGroups().iterator(); iter.hasNext();) {
-            PresetGroup pGroup = (PresetGroup) iter.next();
+        for (PresetGroup pGroup : current.getSubGroups()) {
             Object pathObj = getPathForObject(pGroup, obj, v);
             if (pathObj != null) {
                 v.add(current);
@@ -321,11 +320,8 @@ public class PresetsTreeModel implements Serializable, TreeModel {
             return presetGroup;
         }
 
-        for (Iterator iter = presetGroup.getSubGroups().iterator(); iter
-                .hasNext();) {
-            PresetGroup c = (PresetGroup) iter.next();
-
-            PresetGroup temp = findParent(c, obj);
+        for (PresetGroup grp : presetGroup.getSubGroups()) {
+            PresetGroup temp = findParent(grp, obj);
 
             if (temp != null) {
                 return temp;

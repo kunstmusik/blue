@@ -27,6 +27,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -45,9 +46,9 @@ public class AlignmentPanel extends JComponent implements ActionListener {
 
     String[] commandNames = null;
 
-    private ArrayList<JComponent> jCompList;
+    private List<? extends JComponent> jCompList;
 
-    ArrayList<JButton> buttons = new ArrayList<>();
+    List<JButton> buttons = new ArrayList<>();
 
     public AlignmentPanel() {
         initCommandNames();
@@ -128,7 +129,7 @@ public class AlignmentPanel extends JComponent implements ActionListener {
         return icon;
     }
 
-    public void setJComponentArrayList(ArrayList<JComponent> jCompList) {
+    public void setJComponentList(List<? extends JComponent> jCompList) {
         this.jCompList = jCompList;
     }
 

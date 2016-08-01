@@ -130,7 +130,7 @@ public class AutomationManager implements ParameterListListener,
                 //LayerGroup Design
                 Score score = data.getScore();
 
-                for (LayerGroup layerGroup : score) {
+                for (LayerGroup<? extends Layer> layerGroup : score) {
 
                     if (!(layerGroup instanceof PolyObject)) {
                         continue;
@@ -201,7 +201,7 @@ public class AutomationManager implements ParameterListListener,
             removeListenerFromChannel(mixer.getMaster());
 
             if (this.score != null) {
-                for (LayerGroup layerGroup : score) {
+                for (LayerGroup<? extends Layer> layerGroup : score) {
                     layerGroup.removeLayerGroupListener(this);
                 }
             }
@@ -262,7 +262,7 @@ public class AutomationManager implements ParameterListListener,
 
         this.score = data.getScore();
 
-        for (LayerGroup layerGroup : this.score) {
+        for (LayerGroup<? extends Layer> layerGroup : this.score) {
             layerGroup.addLayerGroupListener(this);
         }
 
@@ -573,7 +573,7 @@ public class AutomationManager implements ParameterListListener,
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
-        for (LayerGroup layerGroup : score) {
+        for (LayerGroup<? extends Layer> layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
@@ -713,7 +713,7 @@ public class AutomationManager implements ParameterListListener,
             return;
         }
 
-        for (LayerGroup layerGroup : score) {
+        for (LayerGroup<? extends Layer> layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

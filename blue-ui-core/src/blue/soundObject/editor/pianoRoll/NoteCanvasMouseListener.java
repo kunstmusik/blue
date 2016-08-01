@@ -59,14 +59,13 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     private PianoRollCanvas canvas;
 
-    private ArrayList<SelectionListener> listeners = new ArrayList<>();
+    private ArrayList<SelectionListener<PianoNoteView>> listeners = new ArrayList<>();
 
     private Point start = null;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas) {
         canvas.addMouseListener(this);
         canvas.addMouseMotionListener(this);
-        addSelectionListener(canvas);
         addSelectionListener(canvas.noteBuffer);
         this.canvas = canvas;
     }
@@ -90,10 +89,10 @@ public class NoteCanvasMouseListener implements MouseListener,
             if (comp instanceof PianoNoteView) {
                 PianoNoteView noteView = (PianoNoteView) comp;
 
-                SelectionEvent selEvt = null;
+                SelectionEvent<PianoNoteView> selEvt = null;
 
                 if (canvas.getCursor() == RESIZE_CURSOR) {
-                    selEvt = new SelectionEvent(noteView,
+                    selEvt = new SelectionEvent<>(noteView,
                             SelectionEvent.SELECTION_SINGLE);
                     fireSelectionEvent(selEvt);
                     canvas.noteBuffer.startResize();
@@ -107,10 +106,10 @@ public class NoteCanvasMouseListener implements MouseListener,
 
                     if (e.isShiftDown() && canvas.getCursor() == NORMAL_CURSOR
                             && canvas.noteBuffer.size() > 0) {
-                        selEvt = new SelectionEvent(noteView,
+                        selEvt = new SelectionEvent<>(noteView,
                                 SelectionEvent.SELECTION_ADD);
                     } else {
-                        selEvt = new SelectionEvent(noteView,
+                        selEvt = new SelectionEvent<>(noteView,
                                 SelectionEvent.SELECTION_SINGLE);
                     }
 
@@ -133,13 +132,13 @@ public class NoteCanvasMouseListener implements MouseListener,
                 } 
                 PianoNote note = (PianoNote) canvas.bufferedNote.clone();
 
-                fireSelectionEvent(new SelectionEvent(null,
+                fireSelectionEvent(new SelectionEvent<>(null,
                         SelectionEvent.SELECTION_CLEAR));
                 start = null;
 
                 canvas.addNote(note, startTime, y, 0);
             } else if (e.isShiftDown() && ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY)) {
-                fireSelectionEvent(new SelectionEvent(null,
+                fireSelectionEvent(new SelectionEvent<>(null,
                         SelectionEvent.SELECTION_CLEAR));
                 // start = null;
 
@@ -158,7 +157,7 @@ public class NoteCanvasMouseListener implements MouseListener,
                 } 
 
                 PianoNoteView noteView = canvas.addNote(startTime, y, 0);
-                SelectionEvent selEvt = new SelectionEvent(noteView,
+                SelectionEvent<PianoNoteView> selEvt = new SelectionEvent<>(noteView,
                         SelectionEvent.SELECTION_ADD);
 
                 noteView.getPianoNote().setDuration(duration);
@@ -171,7 +170,7 @@ public class NoteCanvasMouseListener implements MouseListener,
                 canvas.setCursor(RESIZE_CURSOR);
 
             } else {
-                fireSelectionEvent(new SelectionEvent(null,
+                fireSelectionEvent(new SelectionEvent<>(null,
                         SelectionEvent.SELECTION_CLEAR));
                 start = null;
 
@@ -327,7 +326,7 @@ public class NoteCanvasMouseListener implements MouseListener,
 
         Component[] comps = canvas.getComponents();
 
-        fireSelectionEvent(new SelectionEvent(null,
+        fireSelectionEvent(new SelectionEvent<>(null,
                 SelectionEvent.SELECTION_CLEAR));
 
         for (int i = 0; i < comps.length; i++) {
@@ -342,7 +341,8 @@ public class NoteCanvasMouseListener implements MouseListener,
                 int selectionType = isFirst ? SelectionEvent.SELECTION_SINGLE
                         : SelectionEvent.SELECTION_ADD;
 
-                SelectionEvent selectionEvent = new SelectionEvent(comps[i],
+                SelectionEvent<PianoNoteView> selectionEvent = new SelectionEvent<>(
+                        (PianoNoteView) comps[i],
                         selectionType);
 
                 fireSelectionEvent(selectionEvent);
@@ -356,18 +356,17 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     // SELECTION EVENT CODE
 
-    public void fireSelectionEvent(SelectionEvent se) {
-        for (Iterator<SelectionListener> iter = listeners.iterator(); iter.hasNext();) {
-            SelectionListener listener = iter.next();
+    public void fireSelectionEvent(SelectionEvent<PianoNoteView> se) {
+        for (SelectionListener<PianoNoteView> listener : listeners) {
             listener.selectionPerformed(se);
         }
     }
 
-    public void addSelectionListener(SelectionListener sl) {
+    public void addSelectionListener(SelectionListener<PianoNoteView> sl) {
         listeners.add(sl);
     }
 
-    public void removeSelectionListener(SelectionListener sl) {
+    public void removeSelectionListener(SelectionListener<PianoNoteView> sl) {
         listeners.remove(sl);
     }
 }

@@ -58,7 +58,7 @@ import javax.swing.SwingConstants;
  * @author steven
  */
 public class PianoRollCanvas extends JLayeredPane implements Scrollable,
-        PropertyChangeListener, SelectionListener {
+        PropertyChangeListener  {
 
     JPopupMenu popup = new JPopupMenu();
 
@@ -246,7 +246,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             this.remove(noteView);
         }
 
-        nMouse.fireSelectionEvent(new SelectionEvent(null,
+        nMouse.fireSelectionEvent(new SelectionEvent<>(null,
                 SelectionEvent.SELECTION_CLEAR));
 
         repaint();
@@ -378,7 +378,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             addNoteView(note);
         }
 
-        nMouse.fireSelectionEvent(new SelectionEvent(null,
+        nMouse.fireSelectionEvent(new SelectionEvent<>(null,
                 SelectionEvent.SELECTION_CLEAR));
 
         recalculateSize();
@@ -459,18 +459,12 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
     }
 
-    @Override
-    public void selectionPerformed(SelectionEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
     /**
      * Adds a selection listener to the ScoreMouseProcessor
      * 
      * @param listener
      */
-    public void addSelectionListener(SelectionListener listener) {
+    public void addSelectionListener(SelectionListener<PianoNoteView> listener) {
         nMouse.addSelectionListener(listener);
     }
 

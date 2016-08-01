@@ -40,7 +40,7 @@ import javax.swing.JComponent;
  * @author Steven Yi
  */
 public class BSBObjectPropertySheet extends JComponent implements
-        SelectionListener, BSBObjectListener {
+        SelectionListener<BSBObjectViewHolder>, BSBObjectListener {
 
     private PropertySheetPanel propSheet = new PropertySheetPanel();
 
@@ -88,14 +88,13 @@ public class BSBObjectPropertySheet extends JComponent implements
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
+    public void selectionPerformed(SelectionEvent<BSBObjectViewHolder> e) {
         if (e.getSelectionType() != SelectionEvent.SELECTION_SINGLE) {
             clear();
             return;
         }
 
-        BSBObjectViewHolder objectViewHolder = (BSBObjectViewHolder) e
-                .getSelectedItem();
+        BSBObjectViewHolder objectViewHolder = e.getSelectedItem();
         BSBObjectView objectView = objectViewHolder.getBSBObjectView();
 
         this.setEnabled(true);

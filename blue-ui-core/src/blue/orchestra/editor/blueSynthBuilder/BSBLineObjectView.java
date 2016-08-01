@@ -203,7 +203,7 @@ public class BSBLineObjectView extends BSBObjectView implements
                 index = 0;
             }
 
-            currentLine = (Line) lines.get(index);
+            currentLine = lines.get(index);
             updateLabel();
             fireLineSelection();
         }
@@ -225,7 +225,7 @@ public class BSBLineObjectView extends BSBObjectView implements
                 index = lines.size() - 1;
             }
 
-            currentLine = (Line) lines.get(index);
+            currentLine = lines.get(index);
             updateLabel();
             fireLineSelection();
         }
@@ -245,7 +245,7 @@ public class BSBLineObjectView extends BSBObjectView implements
             this.lines = lines;
 
             if (lines.size() > 0 && !lines.contains(currentLine)) {
-                currentLine = (Line) lines.get(0);
+                currentLine = lines.get(0);
                 updateLabel();
             }
         }

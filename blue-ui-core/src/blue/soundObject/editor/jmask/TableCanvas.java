@@ -168,6 +168,7 @@ public class TableCanvas extends JComponent {
         g2d.drawString(yText, xLoc, yLoc + 14);
     }
 
+    @SuppressWarnings("fallthrough")
     private final void drawTable(Graphics g, Table table, boolean drawPoints) {
         
         double min = table.getMin();

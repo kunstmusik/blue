@@ -149,7 +149,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
         bsbEditPanel.addSelectionListener(bsbPropSheet);
 
-        alignPanel.setJComponentArrayList(bsbEditPanel.getSelectionList());
+        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
 
         rightBar.setVisible(false);
 
@@ -237,6 +237,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
          * @see com.l2fprod.common.propertysheet.PropertyEditorRegistry#getEditor(java.lang.Class)
          */
         @Override
+        @SuppressWarnings("rawtypes")
         public synchronized PropertyEditor getEditor(Class type) {
             PropertyEditor editor = super.getEditor(type);
 

@@ -165,7 +165,7 @@ public class DropdownItemEditorDialog extends JDialog implements
         this.items = items;
         blue.utility.GUI.centerOnScreen(this);
         model.setDropdownItems(items);
-        super.show();
+        super.setVisible(true);
 
     }
 
@@ -242,7 +242,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        BSBDropdownItem item = (BSBDropdownItem) items.get(row);
+        BSBDropdownItem item = items.get(row);
 
         if (col == 0) {
             return item.getName();
@@ -277,7 +277,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int row, int col) {
         try {
             String val = (String) value;
-            BSBDropdownItem item = (BSBDropdownItem) items.get(row);
+            BSBDropdownItem item = items.get(row);
 
             if (col == 0) {
                 item.setName(val);

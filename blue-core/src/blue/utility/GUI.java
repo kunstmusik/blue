@@ -15,9 +15,9 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import javax.swing.*;
 
 public class GUI {
@@ -106,7 +106,7 @@ public class GUI {
         };
     }
 
-    public static void align(ArrayList<JComponent> jComponents, int type) {
+    public static void align(List<? extends JComponent> jComponents, int type) {
         int left, right, top, bottom, center;
 
         switch (type) {
@@ -213,7 +213,7 @@ public class GUI {
         }
     }
 
-    public static void distribute(ArrayList<JComponent> jComponents, int type) {
+    public static void distribute(List<? extends JComponent> jComponents, int type) {
         if (jComponents == null || jComponents.size() < 3) {
             return;
         }
@@ -386,7 +386,7 @@ public class GUI {
             });
         }
 
-        mFrame.show();
+        mFrame.setVisible(true);
     }
 
     public static void setBlueLookAndFeel() {

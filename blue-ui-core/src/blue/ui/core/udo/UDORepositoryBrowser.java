@@ -75,7 +75,7 @@ public class UDORepositoryBrowser extends JDialog {
 
     JTree categories = new JTree();
 
-    JList udoList = new JList();
+    JList<UDOItem> udoList = new JList<>();
 
     UDODisplayPanel udoDisplayPanel = new UDODisplayPanel();
 
@@ -292,11 +292,10 @@ public class UDORepositoryBrowser extends JDialog {
 
         if (tempCat.itemId >= 0) {
             String result = null;
-            Vector v = new Vector();
-            v.add(new Integer(tempCat.itemId));
+            Vector<Integer> v = new Vector<>();
+            v.add(tempCat.itemId);
 
             try {
-
                 result = (String) xrpc.execute("udo.getUDOList", v);
             } catch (    XmlRpcException | IOException e) {
                 // TODO Auto-generated catch block
@@ -325,7 +324,7 @@ public class UDORepositoryBrowser extends JDialog {
 
             Element root = doc.getRoot();
 
-            DefaultListModel listItems = new DefaultListModel();
+            DefaultListModel<UDOItem> listItems = new DefaultListModel<>();
 
             Elements nodes = root.getElements();
 
@@ -348,7 +347,7 @@ public class UDORepositoryBrowser extends JDialog {
         String result = null;
         try {
             result = (String) xrpc.execute("udo.getUDOCategoryTree",
-                    new Vector());
+                    new Vector<Object>());
         } catch (XmlRpcException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

@@ -130,9 +130,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             return;
         }
 
-        for (Iterator iter = lineList.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
-
+        for (Line line : lineList) {
             if (line == currentLine) {
                 currentColor = line.getColor();
             } else {

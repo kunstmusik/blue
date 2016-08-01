@@ -28,7 +28,7 @@ import javax.swing.JComponent;
 /**
  * @author steven
  */
-public class GroupMovementSelectionList extends SelectionList implements
+public class GroupMovementSelectionList<T> extends SelectionList<T> implements
         GroupMovementListener {
 
     ArrayList originPoints = new ArrayList();

@@ -24,16 +24,16 @@ import java.util.ArrayList;
 /**
  * @author steven
  */
-public class SelectionList extends ArrayList implements SelectionListener {
+public class SelectionList<T> extends ArrayList<T> implements SelectionListener<T> {
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
+    public void selectionPerformed(SelectionEvent<T> e) {
         switch (e.getSelectionType()) {
             case SelectionEvent.SELECTION_CLEAR:
                 this.clear();
                 break;
             case SelectionEvent.SELECTION_SINGLE:
-                Object selectedItem = e.getSelectedItem();
+                T selectedItem = e.getSelectedItem();
                 if (this.contains(selectedItem)) {
                     return;
                 }
