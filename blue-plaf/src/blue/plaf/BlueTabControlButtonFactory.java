@@ -245,13 +245,13 @@ public class BlueTabControlButtonFactory {
         @Override
         protected void processMouseEvent(MouseEvent me) {
             super.processMouseEvent(me);
-            if (isEnabled() && me.getID() == me.MOUSE_PRESSED) {
+            if (isEnabled() && me.getID() == MouseEvent.MOUSE_PRESSED) {
                 forcePressedIcon = true;
                 repaint();
                 getAction().actionPerformed(new ActionEvent(this,
                                                             ActionEvent.ACTION_PERFORMED,
                                                             "pressed"));
-            } else if (isEnabled() && me.getID() == me.MOUSE_RELEASED) {
+            } else if (isEnabled() && me.getID() == MouseEvent.MOUSE_RELEASED) {
                 forcePressedIcon = false;
                 repaint();
             }

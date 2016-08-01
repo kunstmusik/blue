@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.WeakHashMap;
 
 public class FastGradientPaintContext implements PaintContext {
-    private static WeakHashMap<GradientInfo,WeakReference> gradientCache
+    private static WeakHashMap<GradientInfo,WeakReference<Gradient>> gradientCache
             = new WeakHashMap<>();
 
     private static LinkedList<GradientInfo> recentInfos = new LinkedList<>();
@@ -68,14 +68,15 @@ public class FastGradientPaintContext implements PaintContext {
         if (recentInfos.size() > 16) {
             recentInfos.removeLast();
         }
-        Object o = gradientCache.get(info);
-        if (o != null) {
-            o = ((WeakReference) o).get();
+        WeakReference<Gradient> ref = gradientCache.get(info);
+        Gradient temp = null;
+        if (ref != null) {
+            temp = ref.get();
         }
-        if (o != null) {
-            gradient = (Gradient) o;
+        if (temp != null) {
+            gradient = temp;
         } else {
-            gradientCache.put(info, new WeakReference(gradient = new Gradient(
+            gradientCache.put(info, new WeakReference<>(gradient = new Gradient(
                     info)));
             // System.out.println( "Storing gradient in cache. Info: " +
             // info.toString() );
