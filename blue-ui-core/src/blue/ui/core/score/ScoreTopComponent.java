@@ -29,6 +29,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
 import blue.services.render.RenderTimeManager;
@@ -102,7 +103,7 @@ import org.openide.windows.WindowManager;
     "HINT_ScoreTopComponent=This is a Score window"
 })
 public final class ScoreTopComponent extends TopComponent
-        implements ObservableListListener<LayerGroup>, RenderTimeManagerListener,
+        implements ObservableListListener<LayerGroup<? extends Layer>>, RenderTimeManagerListener,
         PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
@@ -890,7 +891,7 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     @Override
-    public void listChanged(ObservableListEvent<LayerGroup> evt) {
+    public void listChanged(ObservableListEvent<LayerGroup<? extends Layer>> evt) {
         if (evt.getType() == ObservableListEvent.DATA_ADDED) {
             Score score = data.getScore();
             for (int i = evt.getStartIndex(); i <= evt.getEndIndex(); i++) {
@@ -902,7 +903,7 @@ public final class ScoreTopComponent extends TopComponent
         } else if (evt.getType() == ObservableListEvent.DATA_REMOVED) {
             removePanelsForLayerGroups(evt.getStartIndex(), evt.getEndIndex());
         } else if (evt.getType() == ObservableListEvent.DATA_CHANGED) {
-            List<LayerGroup> layerGroups = evt.getAffectedItems();
+            List<LayerGroup<? extends Layer>> layerGroups = evt.getAffectedItems();
             JComponent c = (JComponent) layerPanel.getComponent(
                     evt.getStartIndex());
             LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");

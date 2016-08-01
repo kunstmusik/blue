@@ -30,7 +30,7 @@ package blue.services.render;
 public interface RealtimeRenderServiceFactory {
 
     /** Returns the Class for the generated RenderServices */
-    public Class getRenderServiceClass();
+    public Class<? extends RealtimeRenderService> getRenderServiceClass();
 
     /** Creates an instance of a RealtimeRenderService */
     public RealtimeRenderService createInstance();

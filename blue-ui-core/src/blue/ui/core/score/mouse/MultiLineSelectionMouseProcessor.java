@@ -235,10 +235,10 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         scoreTC.getScorePanel().scrollRectToVisible(scrollRect);
     }
 
-    protected int[] getTopBottomForLayer(Layer targetLayer, List<LayerGroup> allLayers) {
+    protected int[] getTopBottomForLayer(Layer targetLayer, List<LayerGroup<? extends Layer>> allLayers) {
         int runningY = 0;
 
-        for (LayerGroup<Layer> layerGroup : allLayers) {
+        for (LayerGroup<? extends Layer> layerGroup : allLayers) {
             for (Layer layer : layerGroup) {
                 if (layer == targetLayer) {
                     return new int[]{runningY, runningY + layer.getLayerHeight()};
