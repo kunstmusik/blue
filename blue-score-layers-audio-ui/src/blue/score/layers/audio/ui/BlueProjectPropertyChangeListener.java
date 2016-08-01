@@ -53,7 +53,7 @@ import java.util.Map;
 public class BlueProjectPropertyChangeListener implements PropertyChangeListener {
 
     protected BlueProject currentProject = null;
-    protected ObservableListListener<LayerGroup> scoreListener;
+    protected ObservableListListener<LayerGroup<? extends Layer>> scoreListener;
     protected LayerGroupListener layerGroupListener;
     
     protected Map<AudioLayerGroup, AudioLayerGroupBinding> layerGroupBindings;
@@ -111,13 +111,13 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
             }
         };
 
-        scoreListener = new ObservableListListener<LayerGroup>() {
+        scoreListener = new ObservableListListener<LayerGroup<?>>() {
             /* TODO - May need to introduce a new interface for layerGroups that
              * require matching mixer channel lists if new layer groups require
              * that functionality, so that channel lists can be sorted correctly
              */
             @Override
-            public void listChanged(ObservableListEvent<LayerGroup> evt) {
+            public void listChanged(ObservableListEvent<LayerGroup<?>> evt) {
                 if (currentProject == null) {
                     return;
                 }
@@ -128,7 +128,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                 switch (evt.getType()) {
                     case ObservableListEvent.DATA_ADDED:
 
-                        for (LayerGroup lg : evt.getAffectedItems()) {
+                        for (LayerGroup<? extends Layer> lg : evt.getAffectedItems()) {
                             if (lg instanceof AudioLayerGroup) {
                                 AudioLayerGroup alg = (AudioLayerGroup) lg;
                                 alg.addLayerGroupListener(layerGroupListener);
@@ -159,7 +159,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                         break;
                     case ObservableListEvent.DATA_REMOVED:
 
-                        for (LayerGroup lg : evt.getAffectedItems()) {
+                        for (LayerGroup<? extends Layer> lg : evt.getAffectedItems()) {
                             if (lg instanceof AudioLayerGroup) {
                                 AudioLayerGroup alg = (AudioLayerGroup) lg;
                                 String uniqueId = alg.getUniqueId();
@@ -191,9 +191,9 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
                         break;
                     case ObservableListEvent.DATA_CHANGED: {
 
-                        List<LayerGroup> affectedItems = evt.getAffectedItems();
+                        List<LayerGroup<?>> affectedItems = evt.getAffectedItems();
                         List<AudioLayerGroup> affectedAudioGroups = new ArrayList<>();
-                        for (LayerGroup layerGroup : evt.getAffectedItems()) {
+                        for (LayerGroup<?> layerGroup : affectedItems) {
                             if (layerGroup instanceof AudioLayerGroup) {
                                 affectedAudioGroups.add(
                                         (AudioLayerGroup) layerGroup);
@@ -291,7 +291,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
 
         Score score = project.getData().getScore();
 
-        for (LayerGroup lg : score) {
+        for (LayerGroup<? extends Layer> lg : score) {
             if (lg instanceof AudioLayerGroup) {
                 lg.removeLayerGroupListener(layerGroupListener);
             }
@@ -308,7 +308,7 @@ public class BlueProjectPropertyChangeListener implements PropertyChangeListener
         Score score = project.getData().getScore();
         Mixer mixer = project.getData().getMixer();
 
-        for (LayerGroup lg : score) {
+        for (LayerGroup<? extends Layer> lg : score) {
             if (lg instanceof AudioLayerGroup) {
                 AudioLayerGroup alg = (AudioLayerGroup)lg;
                 ChannelList channelList = findChannelListForAudioLayerGroup(mixer, alg);

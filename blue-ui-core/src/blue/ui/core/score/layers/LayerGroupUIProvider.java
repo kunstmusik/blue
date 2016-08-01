@@ -30,15 +30,14 @@ import org.openide.util.lookup.InstanceContent;
  * @author stevenyi
  */
 public interface LayerGroupUIProvider {
-
     
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup, 
+    public JComponent getLayerGroupPanel(LayerGroup<?> layerGroup, 
             TimeState timeState, 
             BlueData data, 
             InstanceContent ic);
 
 
-    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup, 
+    public JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup, 
                 TimeState timeState, 
                 BlueData data,
                 InstanceContent ic);
@@ -51,5 +50,5 @@ public interface LayerGroupUIProvider {
      * @param layerGroup
      * @return 
      */
-    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup);
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup<?> layerGroup);
 }
