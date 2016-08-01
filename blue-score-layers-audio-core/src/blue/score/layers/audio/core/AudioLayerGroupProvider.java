@@ -36,14 +36,14 @@ public class AudioLayerGroupProvider implements LayerGroupProvider {
     }
 
     @Override
-    public LayerGroup createLayerGroup() {
+    public LayerGroup<?> createLayerGroup() {
         AudioLayerGroup layerGroup = new AudioLayerGroup();
         layerGroup.newLayerAt(0);
         return layerGroup;
     }
 
     @Override
-    public LayerGroup loadFromXML(electric.xml.Element element, Map<String, Object> objRefMap) {
+    public LayerGroup<?> loadFromXML(electric.xml.Element element, Map<String, Object> objRefMap) {
         if ("audioLayerGroup".equals(element.getName())) {
             try {
                 return AudioLayerGroup.loadFromXML(element);

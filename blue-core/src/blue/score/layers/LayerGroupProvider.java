@@ -41,7 +41,7 @@ public interface LayerGroupProvider {
      * 
      * @return 
      */
-    LayerGroup createLayerGroup();
+    LayerGroup<?> createLayerGroup();
     
     /**
      * Loads a new LayerGroup from XML.  Currently takes in SoundObjectLibrary
@@ -50,5 +50,5 @@ public interface LayerGroupProvider {
      * 
      * @return 
      */
-    LayerGroup loadFromXML(Element element, Map<String, Object> objRefMap);
+    LayerGroup<?> loadFromXML(Element element, Map<String, Object> objRefMap);
 }
