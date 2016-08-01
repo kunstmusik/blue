@@ -189,12 +189,7 @@ public class PatternLayer implements Layer {
             return;
         }
 
-        Iterator iter = new Vector(propListeners).iterator();
-
-        while (iter.hasNext()) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for(PropertyChangeListener listener : propListeners) {
             listener.propertyChange(pce);
         }
     }
