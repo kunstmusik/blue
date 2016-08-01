@@ -24,6 +24,7 @@ import javax.swing.Action;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
+import org.netbeans.api.editor.document.LineDocumentUtils;
 import org.netbeans.editor.BaseAction;
 import org.netbeans.editor.BaseDocument;
 
@@ -61,6 +62,7 @@ public class AddSemiColonLineCommentAction extends BaseAction {
                     
                     if (org.netbeans.editor.Utilities.isSelectionShowing(
                             caret)) {
+                        
                         startPos = org.netbeans.editor.Utilities.getRowStart(
                                 doc,
                                 target.getSelectionStart());

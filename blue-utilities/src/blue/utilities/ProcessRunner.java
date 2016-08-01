@@ -54,8 +54,6 @@ public final class ProcessRunner implements java.io.Serializable {
 
     transient PrintWriter stdin = null;
 
-    ArrayList listeners = new ArrayList();
-
     StringBuffer buffer = null;
 
     private int lastExitValue = 0;

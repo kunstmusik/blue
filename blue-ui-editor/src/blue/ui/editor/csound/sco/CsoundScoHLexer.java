@@ -36,6 +36,7 @@ public class CsoundScoHLexer implements Lexer<CsoundScoTokenId> {
     }
 
     @Override
+    @SuppressWarnings("fallthrough")
     public org.netbeans.api.lexer.Token<CsoundScoTokenId> nextToken() {
 
         while (true) {

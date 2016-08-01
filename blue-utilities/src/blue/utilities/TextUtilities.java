@@ -199,9 +199,9 @@ public class TextUtilities {
      * @return ArrayList containing all lines in the file (including empty
      *         lines).
      */
-    public static ArrayList getLinesFromFile(File textFile, boolean trim)
+    public static ArrayList<String> getLinesFromFile(File textFile, boolean trim)
             throws FileNotFoundException, IOException {
-        ArrayList lines = new ArrayList();
+        ArrayList<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(textFile))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -319,17 +319,14 @@ public class TextUtilities {
         return retVal;
     }
 
-    public static String replaceOpcodeNames(HashMap replacementValues,
+    public static String replaceOpcodeNames(Map<String, String> replacementValues,
             final String input) {
 
         String retVal = input;
 
-        for (Iterator iter = replacementValues.entrySet().iterator(); iter
-                .hasNext();) {
-            Map.Entry entry = (Entry) iter.next();
-
-            String key = (String) entry.getKey();
-            String value = (String) entry.getValue();
+        for (Entry<String, String> entry : replacementValues.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
 
             retVal = retVal.replaceAll("(^|\\s)" + key + "($|\\s)", "$1"
                     + value + "$2");

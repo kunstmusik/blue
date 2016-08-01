@@ -47,6 +47,7 @@ public class CsoundOrcHLexer implements Lexer<CsoundOrcTokenId> {
     }
 
     @Override
+    @SuppressWarnings("fallthrough")
     public org.netbeans.api.lexer.Token<CsoundOrcTokenId> nextToken() {
 
         while (true) {
