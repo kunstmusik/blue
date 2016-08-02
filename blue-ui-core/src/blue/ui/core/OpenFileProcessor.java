@@ -21,6 +21,8 @@ package blue.ui.core;
 
 import blue.projects.actions.OpenProjectAction;
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ import org.netbeans.api.sendopts.CommandException;
 import org.netbeans.spi.sendopts.Env;
 import org.netbeans.spi.sendopts.Option;
 import org.netbeans.spi.sendopts.OptionProcessor;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
@@ -61,8 +64,17 @@ public class OpenFileProcessor extends OptionProcessor {
                     file = new File(env.getCurrentDirectory(),
                             fName);
                 }
+                
 
                 if (!file.exists()) {
+                    try {
+                        file = new File(new URI(fName));
+                    } catch (URISyntaxException ex) {
+                        file = null;
+                    }
+                }
+                
+                if (file == null || !file.exists()) {
                     log.warning("Can not open file: does not exist: " + fName);
                 } else if (!file.getName().endsWith(".blue")) {
                     log.warning("Can not open non-Blue file: " + fName);
