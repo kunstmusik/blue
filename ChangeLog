@@ -12,8 +12,23 @@ information.
 
 [CHANGE LOG]
 
+
 > Notes for 2.6.x<
 [release 2016.xx.xx]
+
+NEW
+
+* Issue #292: added open file handling for Windows and Linux. (Was unable to get 
+  it working with OSX unfortunately.) On Windows and Linux, users can 
+  right-click on a .blue document and configure Blue to open the file.  Once the
+  association is made, users can double-click .blue files to open them in Blue.
+
+* Issue #55: Resize Soundobjects from left-side to adjust start and duration.
+  (This was implemented in 2.6.0 as part of Score internal redesign work but the
+  issue was not seen until after release.) 
+
+> Notes for 2.6.0<
+[release 2016.07.29]
 
 NEW
 
