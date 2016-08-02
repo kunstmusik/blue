@@ -100,9 +100,11 @@ public class Installer extends ModuleInstall {
         ParameterTimeManagerFactory.setInstance(new ParameterTimeManagerImpl());
 
         windowTitlePropertyChangeListener = (PropertyChangeEvent evt) -> {
-            if (WindowManager.getDefault().getMainWindow() != null) {
-                setWindowTitle();
-            }
+            SwingUtilities.invokeLater(() -> {
+                if (WindowManager.getDefault().getMainWindow() != null) {
+                    setWindowTitle();
+                }
+            });
         };
 
         BlueProjectManager.getInstance().addPropertyChangeListener(
