@@ -40,7 +40,7 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = Processor.class)
 @SupportedAnnotationTypes("blue.plugin.ScoreMouseListenerPlugin")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ScoreMouseListenerPluginProcessor extends LayerGeneratingProcessor {
 
     @Override

@@ -42,7 +42,7 @@ import org.openide.util.lookup.ServiceProvider;
  */
 @ServiceProvider(service = Processor.class)
 @SupportedAnnotationTypes("blue.plugin.BarRendererPlugin")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class BarRendererPluginProcessor extends LayerGeneratingProcessor {
 
     @Override
