@@ -27,6 +27,24 @@ NEW
   (This was implemented in 2.6.0 as part of Score internal redesign work but the
   issue was not seen until after release.) 
 
+* ProjectPlugins - new plugin system for Project-level editors that can save 
+  data with Blue project and can participate in the project lifecycle.  
+
+* Clojure Project Plugin - project-level plugin that adds a new Clojure tab to
+  the Project Properties editor and allows setting Clojure library dependencies. 
+  Uses Chas Emerick's Pomegranate plugin to download direct and transitive 
+  dependencies from Clojars or Maven Central. Useful for using libraries within
+  Blue projects. Libraries are set using coordinates and version strings, such
+  as:
+
+  kunstmusik/score 0.3.0
+
+
+UPDATED
+
+* Updated included Clojure version to 1.8.0
+
+
 > Notes for 2.6.0<
 [release 2016.07.29]
 

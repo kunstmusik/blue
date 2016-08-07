@@ -39,6 +39,7 @@ import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import blue.soundObject.SoundObjectException;
 import blue.udo.OpcodeList;
+import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
 import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
@@ -62,6 +63,8 @@ public class CSDRender extends CSDRenderService {
     protected synchronized CsdRenderResult generateCSDForBlueLiveImpl(
             BlueData data, boolean usingAPI) {
 
+        ProjectPluginManager.getInstance().preRender(data);
+        
         StringChannelNameManager scnm = new StringChannelNameManager();
 
         ArrayList<StringChannel> stringChannels = getStringChannels(
@@ -185,6 +188,8 @@ public class CSDRender extends CSDRenderService {
     @Override
     protected CsdRenderResult generateCSDImpl(BlueData data,
             float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
+
+        ProjectPluginManager.getInstance().preRender(data);
 
         StringChannelNameManager scnm = new StringChannelNameManager();
         ParameterNameManager pnm = new ParameterNameManager();

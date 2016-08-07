@@ -34,20 +34,20 @@ public class LazyPluginFactory {
     private LazyPluginFactory() {
     }
 
-    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class z) {
+    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> z) {
         return loadPlugins(folder, z, null, null);
     }
 
-    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class z, MetaDataProcessor processor) {
+    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> z, MetaDataProcessor processor) {
         return loadPlugins(folder, z, processor, null);
     }
 
 
-    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class z, Filter filter) {
+    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> z, Filter filter) {
         return loadPlugins(folder, z, null, filter);
     }
     
-    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class pluginClass,
+    public static <T> List<LazyPlugin<T>> loadPlugins(String folder, Class<T> pluginClass,
             MetaDataProcessor processor, Filter f) {
         List<LazyPlugin<T>> plugins = new ArrayList<>();
 

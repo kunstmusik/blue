@@ -98,13 +98,16 @@ public class BlueClojureEngine implements PropertyChangeListener {
 
         engine.eval(code);
 
-        try {
-            Object obj = engine.eval("(str score)");
-            if (obj != null) {
-                retVal = obj.toString();
+        if(returnVariableName != null) {
+            try {
+                Object obj = engine.eval("(str " + returnVariableName + ")");
+                if (obj != null) {
+                    retVal = obj.toString();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();;
+                throw e;
             }
-        } catch (Exception e) {
-            e.printStackTrace();;
         }
 
         return retVal;

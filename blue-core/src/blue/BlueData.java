@@ -17,10 +17,10 @@
  * Software Foundation Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307
  * USA
  */
-
 package blue;
 
 import Silence.XMLSerializer;
+import blue.data.BlueDataObjectManager;
 import blue.ftable.FTableSet;
 import blue.midi.MidiInputProcessor;
 import blue.mixer.Mixer;
@@ -48,19 +48,19 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.util.*;
 import java.util.Map.Entry;
+import org.openide.util.Lookup;
 
 /**
  * Main Data class for blue
  */
-
-public class BlueData implements Serializable {
+public class BlueData implements Serializable, BlueDataObject {
 
     private final transient Vector listeners = new Vector();
 
     private InstrumentLibrary instrumentLibrary = null; // No Longer in Use
 
     private String version;
-    
+
     private Arrangement arrangement;
 
     private Mixer mixer;
@@ -78,7 +78,6 @@ public class BlueData implements Serializable {
     private Tables tableSet;
 
     // ^ temporary, until FTableSet is made and worked out
-
     // private String userDefinedOpcodes = "";
     private OpcodeList opcodeList;
 
@@ -97,7 +96,7 @@ public class BlueData implements Serializable {
     private MarkersList markersList;
 
     private boolean loopRendering;
-    
+
     // all of this left here for compatibility's sake;
     // no longer being used (moved to ProjectProperties class)
     private String title;
@@ -124,7 +123,8 @@ public class BlueData implements Serializable {
     // Converted over to using InstrumentLibrary/Arrangement (ver 0.94.0)
     private Orchestra orchestra;
 
-    //
+    /** Holds data for ProjectPlugins */
+    private List<BlueDataObject> pluginData;
 
     public BlueData() {
         // orchestra = new Orchestra();
@@ -155,6 +155,8 @@ public class BlueData implements Serializable {
         liveData = new LiveData();
 
         midiInputProcessor = new MidiInputProcessor();
+
+        pluginData = new ArrayList<>();
     }
 
     /**
@@ -195,10 +197,12 @@ public class BlueData implements Serializable {
         return this.liveData;
     }
 
-    /** *************************************** */
-
-    /** *************************************** */
-
+    /**
+     * ***************************************
+     */
+    /**
+     * ***************************************
+     */
     public SoundObjectLibrary getSoundObjectLibrary() {
         return sObjLib;
     }
@@ -265,7 +269,6 @@ public class BlueData implements Serializable {
         commandLine = null;
 
         // for version 0.89.5, moving data to globalOrcSco
-
         if (this.globalScore != null) {
             this.globalOrcSco.setGlobalSco(this.globalScore);
         }
@@ -283,11 +286,9 @@ public class BlueData implements Serializable {
         this.tables = null;
 
         // for 0.91.5, converting all repetitionObjects to genericScore
-
 //        convertRepetitionObjects(this.pObj);
-
         convertOrchestra();
-        
+
     }
 
     /**
@@ -330,7 +331,7 @@ public class BlueData implements Serializable {
 
         for (SoundLayer sLayer : pObj) {
 
-            for(SoundObject tempSObj : sLayer) { 
+            for (SoundObject tempSObj : sLayer) {
                 if (tempSObj instanceof PolyObject) {
                     convertRepetitionObjects((PolyObject) tempSObj);
                 } else if (tempSObj instanceof RepetitionObject) {
@@ -365,8 +366,7 @@ public class BlueData implements Serializable {
     }
 
     /**
-     * @param arrangement
-     *            The arrangement to set.
+     * @param arrangement The arrangement to set.
      */
     public void setArrangement(Arrangement arrangement) {
         this.arrangement = arrangement;
@@ -380,11 +380,14 @@ public class BlueData implements Serializable {
     }
 
     /**
-     * @param instrumentLibrary
-     *            The instrumentLibrary to set.
+     * @param instrumentLibrary The instrumentLibrary to set.
      */
     public void setInstrumentLibrary(InstrumentLibrary instrumentLibrary) {
         this.instrumentLibrary = instrumentLibrary;
+    }
+
+    public List<BlueDataObject> getPluginData() {
+        return pluginData;
     }
 
     /**
@@ -415,11 +418,11 @@ public class BlueData implements Serializable {
     }
 
     public static BlueData loadFromXML(Element data) throws Exception {
-        
+
         UpgradeManager.getInstance().performUpgrades(data);
 
         BlueData blueData = new BlueData();
-        
+
         Map<String, Object> objRefMap = new HashMap<>();
 
         Elements nodes = data.getElements();
@@ -433,7 +436,10 @@ public class BlueData implements Serializable {
         if (versionAttribute != null) {
             blueData.setVersion(versionAttribute.getValue());
         }
-        
+
+        BlueDataObjectManager bdoManager = Lookup.getDefault().
+                lookup(BlueDataObjectManager.class);
+
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
@@ -460,23 +466,21 @@ public class BlueData implements Serializable {
                 case "globalOrcSco":
                     blueData.globalOrcSco = GlobalOrcSco.loadFromXML(node);
                     break;
-                case "udo":
-                    {
-                        // blueData.setUserDefinedOpcodes(node.getTextString());
-                        String udoText = node.getTextString();
-                        if (udoText == null) {
-                            udoText = "";
-                        }
-                        OpcodeList results = UDOUtilities.parseUDOText(udoText);
-                        blueData.setOpcodeList(results);
-                        break;
+                case "udo": {
+                    // blueData.setUserDefinedOpcodes(node.getTextString());
+                    String udoText = node.getTextString();
+                    if (udoText == null) {
+                        udoText = "";
                     }
-                case "opcodeList":
-                    {
-                        OpcodeList results = OpcodeList.loadFromXML(node);
-                        blueData.setOpcodeList(results);
-                        break;
-                    }
+                    OpcodeList results = UDOUtilities.parseUDOText(udoText);
+                    blueData.setOpcodeList(results);
+                    break;
+                }
+                case "opcodeList": {
+                    OpcodeList results = OpcodeList.loadFromXML(node);
+                    blueData.setOpcodeList(results);
+                    break;
+                }
                 case "liveData":
                     blueData.liveData = LiveData
                             .loadFromXML(node, objRefMap);
@@ -510,6 +514,13 @@ public class BlueData implements Serializable {
                     blueData.midiInputProcessor = MidiInputProcessor.loadFromXML(
                             node);
                     break;
+                case "pluginData":
+                    Elements pluginElems = node.getElements();
+                    while (pluginElems.hasMoreElements()) {
+                        blueData.pluginData.add(bdoManager.loadFromXML(
+                                pluginElems.next()));
+                    }
+                    break;
             }
 
         }
@@ -528,17 +539,17 @@ public class BlueData implements Serializable {
         } else {
             blueData.mixer.setEnabled(false);
         }
-        
+
         return blueData;
     }
 
     public Element saveAsXML() {
-        
+
         // update version
         this.version = BlueConstants.getVersion();
-        
+
         Map<Object, String> objRefMap = new HashMap<>();
-        
+
         Element retVal = new Element("blueData");
         retVal.setAttribute("version", BlueConstants.getVersion());
 
@@ -567,7 +578,13 @@ public class BlueData implements Serializable {
                 Boolean.toString(loopRendering));
 
         retVal.addElement(midiInputProcessor.saveAsXML());
-        
+
+        Element pluginElems = retVal.addElement("pluginData");
+
+        for (BlueDataObject bdoObj : pluginData) {
+            pluginElems.addElement(bdoObj.saveAsXML());
+        }
+
         return retVal;
     }
 
@@ -579,8 +596,7 @@ public class BlueData implements Serializable {
     }
 
     /**
-     * @param noteProcessorChainMap
-     *            The noteProcessorChainMap to set.
+     * @param noteProcessorChainMap The noteProcessorChainMap to set.
      */
     public void setNoteProcessorChainMap(
             NoteProcessorChainMap noteProcessorChainMap) {
@@ -672,7 +688,7 @@ public class BlueData implements Serializable {
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
                 "loopRendering", Boolean.valueOf(oldVal), Boolean
-                        .valueOf(loopRendering));
+                .valueOf(loopRendering));
 
         this.loopRendering = loopRendering;
 
