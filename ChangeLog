@@ -39,6 +39,8 @@ NEW
 
   kunstmusik/score 0.3.0
 
+* Issue #309: Added 'alsaseq' driver to list of options in Blue's Realtime 
+  Render Settings and added input/output discovery code. 
 
 UPDATED
 
