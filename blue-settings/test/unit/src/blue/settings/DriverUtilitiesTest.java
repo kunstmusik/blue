@@ -151,12 +151,12 @@ public class DriverUtilitiesTest {
 
     @Test
     public void testParseAlsaMidiDevices() {
-        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("", "R"));
-        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("a", ""));
+        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("", "R", "hw:%d,%d"));
+        assertEquals(null, DriverUtilities.parseAlsaMidiDevices("a", "", "hw:%d,%d"));
 
         String seqClients = TextUtilities.getTextFromSystemResource("blue/settings/test_seq_clients_alsa.txt");
 
-        List<DeviceInfo> drivers = DriverUtilities.parseAlsaMidiDevices(seqClients, "R");
+        List<DeviceInfo> drivers = DriverUtilities.parseAlsaMidiDevices(seqClients, "R", "hw:%d,%d");
         assertEquals(5, drivers.size());
         for(DeviceInfo d : drivers) {
             System.out.println(d + " :" + d.getDeviceId());

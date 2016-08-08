@@ -41,6 +41,8 @@ NEW
 
   to use my Score library for generating and processing note lists.  
 
+* Issue #309: Added 'alsaseq' driver to list of options in Blue's Realtime 
+  Render Settings and added input/output discovery code. 
 
 UPDATED
 

@@ -334,7 +334,7 @@ public class RealtimeRenderSettings implements Serializable {
             } else if (osName.contains("mac")) {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "null"};
             } else if (osName.contains("linux")) {
-                MIDI_DRIVERS = new String[]{"PortMIDI", "ALSA", "null"};
+                MIDI_DRIVERS = new String[]{"PortMIDI", "alsaseq", "ALSA", "null"};
             } else {
                 MIDI_DRIVERS = new String[]{"PortMIDI", "MME", "ALSA", "null"};
             }
