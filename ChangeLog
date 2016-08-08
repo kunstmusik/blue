@@ -34,10 +34,12 @@ NEW
   the Project Properties editor and allows setting Clojure library dependencies. 
   Uses Chas Emerick's Pomegranate plugin to download direct and transitive 
   dependencies from Clojars or Maven Central. Useful for using libraries within
-  Blue projects. Libraries are set using coordinates and version strings, such
-  as:
+  Blue projects. Libraries are set using coordinates and version strings, much 
+  as one would with Leiningen-based projects. For example, one may use: 
 
   kunstmusik/score 0.3.0
+
+  to use my Score library for generating and processing note lists.  
 
 
 UPDATED
