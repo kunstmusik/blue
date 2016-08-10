@@ -44,6 +44,8 @@ NEW
 * Issue #309: Added 'alsaseq' driver to list of options in Blue's Realtime 
   Render Settings and added input/output discovery code. 
 
+* Added Steven Yi's "Transit" to the examples/pieces/stevenYi folder
+
 UPDATED
 
 * Updated included Clojure version to 1.8.0
