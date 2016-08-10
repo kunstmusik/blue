@@ -68,7 +68,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
     AlignmentPanel alignPanel = new AlignmentPanel();
 
-    JPanel rightBar;
+    JPanel rightBar = new JPanel(new BorderLayout());
 
     private BSBGraphicInterface gInterface;
 
@@ -84,7 +84,9 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         presets.addPresetListener(this);
 
         editBox.addEditModeListener(bsbEditPanel);
-        editBox.addEditModeListener(rightBar::setVisible);
+        editBox.addEditModeListener(isEditing ->
+                rightBar.setVisible(isEditing));
+
         editBox.addEditModeListener((boolean isEditing) -> {
             if (!isUpdating && gInterface != null) {
                 gInterface.setEditEnabled(isEditing);
@@ -126,7 +128,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
             Exceptions.printStackTrace(ex);
         }
 
-        rightBar = new JPanel(new BorderLayout());
 //        rightBar.add(new JLabel(BlueSystem
 //                .getString("instrument.bsb.objectProperties")),
 //                BorderLayout.NORTH);
