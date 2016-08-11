@@ -50,6 +50,13 @@ UPDATED
 
 * Updated included Clojure version to 1.8.0
 
+FIX
+
+* Adding new AudioLayerGroups did not properly handle change listening, 
+  resulting in NullPointerExceptions when trying to automate parameters on new 
+  AudioLayers added to a project.  (This problem only occurred when the 
+  AudioLayerGroup and AudioLayer was first added and did not present when 
+  loading an existing project or switching to another project and back again.)  
 
 > Notes for 2.6.0<
 [release 2016.07.29]

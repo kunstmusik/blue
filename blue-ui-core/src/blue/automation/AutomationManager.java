@@ -47,6 +47,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -78,6 +79,7 @@ public class AutomationManager implements ParameterListListener,
     private ParameterIdList selectedParamIdList = null;
     private static AutomationManager instance = null;
     PropertyChangeListener renderTimeListener;
+    ObservableListListener<ChannelList> channelListListener;
 
     private AutomationManager() {
         parameterActionListener = (ActionEvent ae) -> {
@@ -99,6 +101,28 @@ public class AutomationManager implements ParameterListListener,
                 if (pce.getPropertyName().equals("renderStartTime")) {
                     updateValuesFromAutomations();
                 }
+            }
+        };
+
+        channelListListener = e -> {
+            List<ChannelList> items = e.getAffectedItems();
+            switch(e.getType()) {
+                case ObservableListEvent.DATA_ADDED:
+                    for(ChannelList cList : items) {
+                       cList.addListener(AutomationManager.this);
+                       for(Channel c : cList) {
+                           addListenerToChannel(c);
+                       }
+                    }
+                    break;
+                case ObservableListEvent.DATA_REMOVED:
+                    for(ChannelList cList : items) {
+                       cList.removeListener(AutomationManager.this);
+                       for(Channel c : cList) {
+                           removeListenerFromChannel(c);
+                       }
+                    }
+                    break;
             }
         };
     }
@@ -179,6 +203,7 @@ public class AutomationManager implements ParameterListListener,
             }
 
             Mixer mixer = this.data.getMixer();
+            mixer.getChannelListGroups().removeListener(channelListListener);
 
             for (ChannelList list : mixer.getChannelListGroups()) {
                 list.removeListener(this);
@@ -236,6 +261,7 @@ public class AutomationManager implements ParameterListListener,
         arrangement.addAutomatableCollectionListener(this);
 
         Mixer mixer = data.getMixer();
+        mixer.getChannelListGroups().addListener(channelListListener);
 
         for (ChannelList list : mixer.getChannelListGroups()) {
             list.addListener(this);
