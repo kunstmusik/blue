@@ -554,28 +554,26 @@ public class DriverUtilities {
                 String chn = port.substring(end);
 
                 if (portMap.containsKey(portName)) {
-                    int p = portMap.get(portName);
-                    if (p < new Integer(chn)) {
-                        portMap.put(portName, new Integer(chn));
-                    }
+                    portMap.put(portName, 
+                            portMap.get(portName) + 1);
                 } else {
-                    portMap.put(portName, new Integer(chn));
+                    portMap.put(portName, 1);
                 }
             }
         }
 
-        for (Map.Entry<String, Integer> entry : portMap.entrySet()) {
+        portMap.entrySet().stream().forEach((entry) -> {
             String displayName = entry.getKey();
             String deviceId = prepend + displayName;
 
             if (entry.getValue().intValue() == 1) {
                 displayName = displayName + "(1 channel)";
             } else {
-                displayName = displayName + " (" + entry.getValue().intValue() + " channels)";
+                displayName = displayName + " (" + entry.getValue() + " channels)";
             }
 
             vals.add(new DeviceInfo(displayName, deviceId));
-        }
+        });
     }
 
     protected static String findExecutableInPath(String exe, String[] paths) {
