@@ -50,6 +50,9 @@ UPDATED
 
 * Updated included Clojure version to 1.8.0
 
+* Issue #149 - implemented cut/copy/paste for PianoRoll for multiple notes, as
+  well as shared copy buffer to allow pasting copy/pasting between PianoRolls
+
 FIX
 
 * Adding new AudioLayerGroups did not properly handle change listening, 

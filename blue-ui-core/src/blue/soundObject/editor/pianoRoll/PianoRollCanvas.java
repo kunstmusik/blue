@@ -42,7 +42,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -59,6 +60,9 @@ import javax.swing.SwingConstants;
  */
 public class PianoRollCanvas extends JLayeredPane implements Scrollable,
         PropertyChangeListener  {
+
+    // TODO - This shouldn't be public, but it will be for now...
+    public static final List<PianoNote> NOTE_COPY_BUFFER = new ArrayList<>();
 
     JPopupMenu popup = new JPopupMenu();
 
@@ -77,8 +81,6 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     protected PianoRoll p;
 
     public NoteBuffer noteBuffer = new NoteBuffer();
-
-    public PianoNote bufferedNote = null;
 
     ComponentListener cl;
 
@@ -166,9 +168,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (noteBuffer.size() == 1) {
-                    cut();
-                }
+                cut();
             }
         });
 
@@ -176,9 +176,7 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (noteBuffer.size() == 1) {
-                    copy();
-                }
+                copy();
             }
         });
 
@@ -232,8 +230,10 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
     }
 
     public void copy() {
-        PianoNote noteInBuffer = noteBuffer.get(0).getPianoNote();
-        bufferedNote = (PianoNote) (noteInBuffer.clone());
+        NOTE_COPY_BUFFER.clear();
+        for(PianoNoteView pnv : noteBuffer) {
+           NOTE_COPY_BUFFER.add(pnv.getPianoNote().clone());
+        }
     }
 
     /**
@@ -390,27 +390,33 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
      * @param x
      * @param y
      */
-    public PianoNoteView addNote(float startTime, int y, int dummy) {
+    public PianoNoteView addNote(float startTime, int y) {
         PianoNote note = new PianoNote();
         note.setNoteTemplate(p.getNoteTemplate());
+        note.setStart(startTime);
 
-        return addNote(note, startTime, y, dummy);
+        int[] pch = getOctaveScaleDegreeForY(y);
+        note.setOctave(pch[0]);
+        note.setScaleDegree(pch[1]);
+
+        return addNote(note);
     }
 
-    public PianoNoteView addNote(PianoNote note, float startTime, int y, int dummy) {
-        note.setStart(startTime);
+    public int[] getOctaveScaleDegreeForY(int y) {
+        int[] retVal = new int[2];
 
         int h = getHeight() - y;
         int noteHeight = p.getNoteHeight();
 
         h = h / noteHeight;
         int numScaleDegrees = p.getScale().getNumScaleDegrees();
-        int octave = h / numScaleDegrees;
-        int scaleDegree = h % numScaleDegrees;
+        retVal[0] = h / numScaleDegrees;
+        retVal[1] = h % numScaleDegrees;
 
-        note.setOctave(octave);
-        note.setScaleDegree(scaleDegree);
+        return retVal;
+    }
 
+    public PianoNoteView addNote(PianoNote note) {
         p.getNotes().add(note);
         PianoNoteView n = addNoteView(note);
 
