@@ -19,6 +19,7 @@
  */
 package blue.automation;
 
+import blue.components.DragDirection;
 import blue.components.AlphaMarquee;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
@@ -54,7 +55,6 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -1133,6 +1133,8 @@ public class ParameterLinePanel extends JComponent implements
     class LineCanvasMouseListener implements MouseListener, MouseMotionListener {
 
         ParameterLinePanel lineCanvas;
+        DragDirection direction = DragDirection.NOT_SET;
+        Point pressPoint = null;
 
         public LineCanvasMouseListener(ParameterLinePanel lineCanvas) {
             this.lineCanvas = lineCanvas;
@@ -1155,7 +1157,9 @@ public class ParameterLinePanel extends JComponent implements
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
-
+                
+            pressPoint = e.getPoint();
+            
             if (marquee.isVisible()
                     && marquee.intersects(ParameterLinePanel.this)) {
 
@@ -1264,6 +1268,8 @@ public class ParameterLinePanel extends JComponent implements
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            direction = DragDirection.NOT_SET;
+
             if (ModeManager.getInstance().getMode() != ScoreMode.SINGLE_LINE) {
                 return;
             }
@@ -1361,6 +1367,22 @@ public class ParameterLinePanel extends JComponent implements
 
                 int x = e.getX();
                 int y = e.getY();
+
+                if(direction == DragDirection.NOT_SET) {
+                    int magx = Math.abs(x - (int)pressPoint.getX());
+                    int magy = Math.abs(y - (int)pressPoint.getY());
+
+                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT :
+                            DragDirection.UP_DOWN;
+                }
+
+                if(e.isControlDown()) {
+                    if(direction == DragDirection.LEFT_RIGHT) {
+                        y = (int)pressPoint.getY();
+                    } else {
+                        x = (int)pressPoint.getX(); 
+                    }
+                }
 
                 int topY = 5;
                 int bottomY = getHeight() - 5;
@@ -1502,7 +1524,7 @@ public class ParameterLinePanel extends JComponent implements
         }
         repaint();
     }    
-    
+   
     
     class EditPointsPopup extends JPopupMenu {
         Line line = null;

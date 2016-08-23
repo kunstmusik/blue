@@ -53,6 +53,10 @@ UPDATED
 * Issue #149 - implemented cut/copy/paste for PianoRoll for multiple notes, as
   well as shared copy buffer to allow pasting copy/pasting between PianoRolls
 
+* Issue #322 - pressing ctrl when moving mouse points will limit point 
+  modification only to the initial direction for line edit panels (i.e, 
+  automations, tempo, etc.).
+
 FIX
 
 * Adding new AudioLayerGroups did not properly handle change listening, 
