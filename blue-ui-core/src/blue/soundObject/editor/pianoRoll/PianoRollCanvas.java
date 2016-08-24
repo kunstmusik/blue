@@ -162,27 +162,36 @@ public class PianoRollCanvas extends JLayeredPane implements Scrollable,
             }
         };
 
-        actionMap.put("deleteNotes", deleteNotes);
-
-        actionMap.put("cut", new AbstractAction() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cut();
-            }
-        });
-
-        actionMap.put("copy", new AbstractAction() {
-
+        Action copyAction = new AbstractAction("Copy") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 copy();
             }
-        });
+        };
+
+        Action cutAction = new AbstractAction("Cut") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cut();
+            }
+        };
+
+        actionMap.put("deleteNotes", deleteNotes);
+        actionMap.put("cut", cutAction);
+        actionMap.put("copy", copyAction);
 
         JMenuItem remove = new JMenuItem("Remove");
         remove.setAction(deleteNotes);
 
+        JMenuItem cut = new JMenuItem("Cut");
+        cut.setAction(cutAction);
+
+        JMenuItem copy = new JMenuItem("Copy");
+        copy.setAction(copyAction);
+
+        popup.add(cut);
+        popup.add(copy);
+        popup.addSeparator();
         popup.add(remove);
 
         // ZOOM ACTIONS
