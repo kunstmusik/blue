@@ -61,6 +61,14 @@ UPDATED
   modification only to the initial direction for line edit panels (i.e, 
   automations, tempo, etc.).
 
+* Automation Parameters - Single-Line Mode Editing Updates
+  * When the selection marquee is shown, holding down ctrl when press/dragging 
+    will allow modifying just the horizontal locations of the points 
+  * When marquee is selected, left-clicking outside the marquee will disable the
+    marquee as before, but will not also add an additional point
+  * fixed issue when right-clicking a point to delete it that the popup menu
+    would also appear
+
 FIX
 
 * Adding new AudioLayerGroups did not properly handle change listening, 

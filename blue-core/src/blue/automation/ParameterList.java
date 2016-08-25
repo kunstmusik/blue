@@ -26,7 +26,7 @@ import java.util.*;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
-public class ParameterList implements Serializable {
+public class ParameterList implements Serializable, Iterable<Parameter> {
     private static final Comparator<Parameter> comparator = new Comparator<Parameter>() {
         @Override
         public int compare(Parameter o1, Parameter o2) {
@@ -188,5 +188,10 @@ public class ParameterList implements Serializable {
 
     public int indexOf(Parameter currentParameter) {
         return parameters.indexOf(currentParameter);
+    }
+
+    @Override
+    public Iterator<Parameter> iterator() {
+        return parameters.iterator();
     }
 }
