@@ -69,6 +69,9 @@ FIX
   AudioLayerGroup and AudioLayer was first added and did not present when 
   loading an existing project or switching to another project and back again.)  
 
+* Issue #332 - "All" file filter did not properly allow all files
+
+
 > Notes for 2.6.0<
 [release 2016.07.29]
 

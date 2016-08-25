@@ -22,7 +22,7 @@ public class FileChooserManager {
             = new HashMap<>();
 
 //    private FileChooser fileChooser;
-    private ExtensionFilter allFilter = new ExtensionFilter("All Files", "*.*");
+    private ExtensionFilter allFilter = new ExtensionFilter("All Files", "*");
 
     private static FileChooserManager instance = null;
 
