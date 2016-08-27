@@ -94,6 +94,10 @@ public class ClojureEngine {
         // may need to track current namespace
     }
 
+    public String getNamespace() {
+        return userNs.toString();
+    }
+
     public Object eval(String code) {
         ClassLoader old = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(cl);

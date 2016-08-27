@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2012
+ * Copyright (C) 2016
  * Steven Yi <stevenyi@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -17,76 +17,89 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.ui.core.script.jython;
+package blue.clojure;
 
-import blue.scripting.PythonProxy;
+import blue.projects.BlueProjectManager;
 import blue.ui.utilities.jconsole.JConsole;
 import blue.ui.utilities.jconsole.JConsoleDelegate;
 import java.awt.BorderLayout;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JScrollPane;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
-import org.openide.util.NbBundle.Messages;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
-import org.python.util.InteractiveInterpreter;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Top component which displays something.
  */
 @ConvertAsProperties(
-        dtd = "-//blue.ui.core.script.jython//JythonConsole//EN",
-        autostore = false)
+        dtd = "-//blue.clojure//ClojureConsole//EN",
+        autostore = false
+)
 @TopComponent.Description(
-        preferredID = "JythonConsoleTopComponent",
+        preferredID = "ClojureConsoleTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
-        persistenceType = TopComponent.PERSISTENCE_ALWAYS)
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
-@ActionID(category = "Window", id = "blue.ui.core.script.jython.JythonConsoleTopComponent")
-@ActionReference(path = "Menu/Window", position = 1900)
+@ActionID(category = "Window", id = "blue.clojure.ClojureConsoleTopComponent")
+@ActionReference(path = "Menu/Window", position = 1910)
 @TopComponent.OpenActionRegistration(
-        displayName = "#CTL_JythonConsoleAction",
-        preferredID = "JythonConsoleTopComponent")
+        displayName = "#CTL_ClojureConsoleAction",
+        preferredID = "ClojureConsoleTopComponent"
+)
 @Messages({
-    "CTL_JythonConsoleAction=Python Console",
-    "CTL_JythonConsoleTopComponent=Python Console Window",
-    "HINT_JythonConsoleTopComponent=This is a PythonConsole window"
+    "CTL_ClojureConsoleAction=Clojure REPL",
+    "CTL_ClojureConsoleTopComponent=Clojure REPL",
+    "HINT_ClojureConsoleTopComponent=REPL for evaluating Clojure code"
 })
-public final class JythonConsoleTopComponent extends TopComponent {
+public final class ClojureConsoleTopComponent extends TopComponent {
 
     JConsole jconsole = new JConsole();
 
-    public JythonConsoleTopComponent() {
+    public ClojureConsoleTopComponent() {
         initComponents();
-        setName(Bundle.CTL_JythonConsoleTopComponent());
-        setToolTipText(Bundle.HINT_JythonConsoleTopComponent());
+        setName(Bundle.CTL_ClojureConsoleTopComponent());
+        setToolTipText(Bundle.HINT_ClojureConsoleTopComponent());
 
         this.add(new JScrollPane(jconsole), BorderLayout.CENTER);
 
-        PythonProxy.addPythonProxyListener(() -> jconsole.setText(">>>"));
-
-        jconsole.setDelegate(new JConsoleDelegate() {
+        final JConsoleDelegate jConsoleDelegate = new JConsoleDelegate() {
             @Override
             public String getPrompt() {
-                return ">>> ";
+                return BlueClojureEngine.getInstance().getCurrentNameSpace() + "=> ";
             }
 
             @Override
             public void processCommands(String commands, Reader stdin, Writer stdout, Writer stderr) {
-                InteractiveInterpreter interp = PythonProxy.getInterpreter();
-                try {
-                    interp.setIn(stdin);
-                    interp.setOut(stdout);
-                    interp.setErr(stderr);
 
-                    interp.runsource(commands);
-                } finally {
-                    interp.setIn(System.in);
-                    interp.setOut(System.out);
-                    interp.setErr(System.err);
+                Map<String, Object> values = new HashMap<>();
+                values.put("*in*", stdin);
+                values.put("*out*", stdout);
+                values.put("*err*", stderr);
+                try {
+                    String retVal = BlueClojureEngine.getInstance().processScript(commands,
+                            null,
+                            null);
+                    stdout.write(retVal + "\n");
+                } catch (Exception ex) {
+                    Exceptions.printStackTrace(ex);
                 }
+            }
+        };
+
+        jconsole.setDelegate(jConsoleDelegate);
+
+        BlueProjectManager.getInstance().addPropertyChangeListener(pce -> {
+
+            if (BlueProjectManager.CURRENT_PROJECT.equals(pce.getPropertyName())) {
+                jconsole.setText(jConsoleDelegate.getPrompt());
             }
         });
     }

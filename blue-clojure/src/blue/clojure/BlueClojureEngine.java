@@ -80,6 +80,18 @@ public class BlueClojureEngine implements PropertyChangeListener {
 
     }
 
+    public String getCurrentNameSpace() {
+        if(currentProject == null) {
+            return "ERROR - No Engine Available";
+        }
+
+        if (engines.get(currentProject) == null) {
+            reinitialize();
+        }
+
+        return engines.get(currentProject).getNamespace();
+    }
+
     public String processScript(String code,
             HashMap<String, ? extends Object> values,
             String returnVariableName) throws ScriptException {
@@ -90,13 +102,13 @@ public class BlueClojureEngine implements PropertyChangeListener {
 
         ClojureEngine engine = engines.get(currentProject);
 
-        String retVal = "";
 
         if (values != null) {
             engine.intern(values);
         }
 
-        engine.eval(code);
+        Object retObj = engine.eval(code);
+        String retVal = (retObj != null) ? retObj.toString() : "";
 
         if(returnVariableName != null) {
             try {

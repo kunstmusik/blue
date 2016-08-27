@@ -41,6 +41,11 @@ NEW
 
   to use my Score library for generating and processing note lists.  
 
+* Issue #148 - Clojure REPL - new Clojure REPL window tied into the synthesized
+  namespace created for each project.  User can test and diagnose code that has
+  been entered into the namespace (e.g., if a function is defined in a 
+  ClojureObject, one can test it from the REPL)
+
 * Issue #309: Added 'alsaseq' driver to list of options in Blue's Realtime 
   Render Settings and added input/output discovery code. 
 
