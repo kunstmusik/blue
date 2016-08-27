@@ -44,6 +44,12 @@ import org.openide.windows.WindowManager;
 public class Installer extends ModuleInstall {
 
     Logger logger = Logger.getLogger("blue.plaf.Installer");
+    private static BlueLFCustoms customs = new BlueLFCustoms();
+
+    @Override
+    public void validate() throws IllegalStateException {
+        UIManager.put("Nb.BlueLFCustoms", customs);
+    }
 
     @Override
     public void restored() {
@@ -56,17 +62,17 @@ public class Installer extends ModuleInstall {
         EventQueue.invokeLater(() -> {
             boolean isMac = System.getProperty("os.name").toLowerCase().startsWith(
                     "mac");
-            
+
             Object[] macEntries = null;
             if (isMac) {
                 try {
                     System.setProperty("apple.laf.useScreenMenuBar", "true");
-                    
+
                     UIManager.setLookAndFeel(
                             UIManager.getSystemLookAndFeelClassName());
-                    
+
                     macEntries = new Object[7];
-                    
+
                     macEntries[0] = UIManager.get("MenuBarUI");
                     //macEntries[1] = UIManager.get("MenuUI");
                     //macEntries[2] = UIManager.get("MenuItemUI");
@@ -74,7 +80,7 @@ public class Installer extends ModuleInstall {
                     macEntries[4] = UIManager.get("RadioButtonMenuItemUI");
                     macEntries[5] = UIManager.get("PopupMenuUI");
                     macEntries[6] = UIManager.get("PopupMenuSeparatorUI");
-                    
+
                 } catch (ClassNotFoundException ex) {
                     Exceptions.printStackTrace(ex);
                 } catch (InstantiationException ex) {
@@ -85,14 +91,14 @@ public class Installer extends ModuleInstall {
                     Exceptions.printStackTrace(ex);
                 }
             }
-            
+
             try {
                 Integer in = (Integer) UIManager.get("customFontSize"); //NOI18N
                 UIManager.getDefaults().clear();
-                
+
                 if (in == null || in <= 11) {
                     UIManager.put("customFontSize", 12
-//                                (int) Math.ceil(Font.getDefault().getSize())
+                    //                                (int) Math.ceil(Font.getDefault().getSize())
                     );
                 } else {
                     UIManager.put("customFontSize", in.intValue());
@@ -100,7 +106,7 @@ public class Installer extends ModuleInstall {
                 ClassLoader cl = Lookup.getDefault().lookup(
                         ClassLoader.class);
                 UIManager.put("ClassLoader", cl);
-                UIManager.put("Nb.BlueLFCustoms", new BlueLFCustoms());
+                UIManager.put("Nb.BlueLFCustoms", customs);
                 UIManager.put("swing.boldMetal", false);
                 MetalLookAndFeel.setCurrentTheme(new BlueTheme());
                 LookAndFeel plaf = new blue.plaf.BlueLookAndFeel();
@@ -115,16 +121,16 @@ public class Installer extends ModuleInstall {
                     new BlueViewBorder(UIManager.getColor(
                             "SplitPane.highlight"),
                             UIManager.getColor("SplitPane.darkShadow")));
-            
+
             UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER,
                     BorderFactory.createEmptyBorder());
             UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_OUTER_BORDER,
                     new BlueViewBorder(UIManager.getColor(
                             "SplitPane.highlight"),
                             UIManager.getColor("SplitPane.darkShadow")));
-            
+
             UIManager.put("nb.output.foreground", Color.WHITE); //NOI18N
-            
+
             if (isMac && macEntries != null) {
                 UIManager.put("MenuBarUI", macEntries[0]);
                 //UIManager.put("MenuUI", macEntries[1]);
@@ -134,14 +140,14 @@ public class Installer extends ModuleInstall {
                 UIManager.put("PopupMenuUI", macEntries[5]);
                 UIManager.put("PopupMenuSeparatorUI", macEntries[6]);
             }
-            
+
             if (isMac) {
                 replaceCtrlShortcutsWithMacShortcuts();
-                
+
             }
-            
+
             logger.info("Finished blue PLAF installation");
-            
+
             MacFullScreenUtil.setWindowCanFullScreen(
                     WindowManager.getDefault().getMainWindow());
         });

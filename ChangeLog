@@ -84,6 +84,8 @@ FIX
 
 * Issue #332 - "All" file filter did not properly allow all files
 
+* Issue #324 - (Potentially) fixed intermittent look and feel issue where 
+  sometimes tabs were not styled correctly
 
 > Notes for 2.6.0<
 [release 2016.07.29]
