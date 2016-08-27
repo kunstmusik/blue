@@ -1,6 +1,6 @@
-package blue.ui.core.script.jython.console.streams;
+package blue.ui.utilities.jconsole.streams;
 
-import blue.ui.core.script.jython.console.JConsole;
+import blue.ui.utilities.jconsole.JConsole;
 import java.io.IOException;
 import java.io.Writer;
 

@@ -1,4 +1,4 @@
-package blue.ui.core.script.jython.console;
+package blue.ui.utilities.jconsole;
 
 /** Code used from http://www.javaprogrammingforums.com/java-swing-tutorials/4907-java-tip-jul-29-2010-swing-console-component.html
  * 

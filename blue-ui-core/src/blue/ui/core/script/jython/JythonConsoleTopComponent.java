@@ -19,14 +19,19 @@
  */
 package blue.ui.core.script.jython;
 
-import blue.ui.core.script.jython.console.JConsole;
+import blue.scripting.PythonProxy;
+import blue.ui.utilities.jconsole.JConsole;
+import blue.ui.utilities.jconsole.JConsoleDelegate;
 import java.awt.BorderLayout;
+import java.io.Reader;
+import java.io.Writer;
 import javax.swing.JScrollPane;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
+import org.python.util.InteractiveInterpreter;
 
 /**
  * Top component which displays something.
@@ -52,6 +57,7 @@ preferredID = "JythonConsoleTopComponent")
 public final class JythonConsoleTopComponent extends TopComponent {
 
     JConsole jconsole = new JConsole();
+    JConsoleDelegate delegate;
     
     public JythonConsoleTopComponent() {
         initComponents();
@@ -59,6 +65,31 @@ public final class JythonConsoleTopComponent extends TopComponent {
         setToolTipText(Bundle.HINT_JythonConsoleTopComponent());
 
         this.add(new JScrollPane(jconsole), BorderLayout.CENTER);
+
+        PythonProxy.addPythonProxyListener( () -> jconsole.setText(">>>"));
+
+        jconsole.setDelegate(new JConsoleDelegate() {
+            @Override
+            public String getPrompt() {
+                return ">>> ";
+            }
+
+            @Override
+            public void processCommands(String commands, Reader stdin, Writer stdout, Writer stderr) {
+                InteractiveInterpreter interp = PythonProxy.getInterpreter();
+                try {
+                    interp.setIn(stdin);
+                    interp.setOut(stdout);
+                    interp.setErr(stderr);
+
+                    interp.runsource(commands);
+                } finally {
+                    interp.setIn(System.in);
+                    interp.setOut(System.out);
+                    interp.setErr(System.err);
+                }
+            }
+        });
     }
 
     /**

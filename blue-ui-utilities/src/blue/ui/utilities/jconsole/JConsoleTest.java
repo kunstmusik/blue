@@ -1,4 +1,4 @@
-package blue.ui.core.script.jython.console;
+package blue.ui.utilities.jconsole;
 
 import java.awt.GridLayout;
 import javax.swing.JFrame;
