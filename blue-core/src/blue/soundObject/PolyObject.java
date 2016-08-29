@@ -378,7 +378,7 @@ public class PolyObject extends ArrayList<SoundLayer> implements SoundObject,
     }
 
     @Override
-    public SoundObject clone() {
+    public PolyObject clone() {
         PolyObject pObj = new PolyObject();
 
         pObj.setName(this.getName());

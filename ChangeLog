@@ -87,6 +87,11 @@ FIX
 * Issue #324 - (Potentially) fixed intermittent look and feel issue where 
   sometimes tabs were not styled correctly
 
+* Issue #248 - partial fix to respect Automations when auditioning SoundObjects.
+  Auditioning is guaranteed only to work correctly with top-level SoundObjects.
+  (Issue #333 filed to continue looking into this once Blue 3.0 internal changes
+  are in place.)
+
 > Notes for 2.6.0<
 [release 2016.07.29]
 

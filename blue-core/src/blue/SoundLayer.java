@@ -450,6 +450,11 @@ public final class SoundLayer extends ArrayList<SoundObject>
     public boolean equals(Object obj) {
         return obj == this;
     }
+
+    @Override
+    public void clearScoreObjects() {
+        this.clear();
+    }
     
     
 }

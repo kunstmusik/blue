@@ -36,4 +36,5 @@ public interface Layer extends Serializable {
     public boolean accepts(ScoreObject object);
     public boolean contains(ScoreObject object);
     public boolean remove(ScoreObject object);
+    public void clearScoreObjects();
 }

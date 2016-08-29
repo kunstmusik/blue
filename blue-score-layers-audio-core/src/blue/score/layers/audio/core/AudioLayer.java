@@ -495,4 +495,9 @@ public class AudioLayer extends ArrayList<AudioClip>
     public boolean equals(Object obj) {
         return obj == this;
     }
+
+    @Override
+    public void clearScoreObjects() {
+        this.clear();
+    }
 }
