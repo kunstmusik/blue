@@ -13,8 +13,8 @@ information.
 [CHANGE LOG]
 
 
-> Notes for 2.6.x<
-[release 2016.xx.xx]
+> Notes for 2.6.1 <
+[release 2016.08.30]
 
 NEW
 
@@ -95,7 +95,8 @@ FIX
   (Issue #333 filed to continue looking into this once Blue 3.0 internal changes
   are in place.)
 
-> Notes for 2.6.0<
+
+> Notes for 2.6.0 <
 [release 2016.07.29]
 
 NEW
