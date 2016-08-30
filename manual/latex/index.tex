@@ -1,0 +1,75 @@
+
+\documentclass{book}
+
+\usepackage{url}
+\usepackage{makeidx}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{graphviz}
+\usepackage{tikz}
+\usepackage[T1]{fontenc}
+\usepackage{pdfpages}
+\usepackage{float}
+\usepackage{morewrites}
+
+\usepackage{microtype}
+
+\usepackage[all]{nowidow}
+
+
+\pdfpagewidth=\paperwidth
+\pdfpageheight=\paperheight
+
+
+\pdfoptionpdfminorversion=7
+
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,        % the size of the fonts that are used for the code
+  breakatwhitespace=true, 
+  keepspaces=true, 
+  breaklines=true,
+  upquote=true,
+  showstringspaces=false,
+  captionpos=b
+}
+
+\lstdefinelanguage{csound}{
+  morecomment=[l]{;}
+}
+
+
+\newenvironment{myitemize}
+{ \begin{itemize}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}     }
+    { \end{itemize}                  } 
+
+\begin{document}
+
+\title{Blue Manual}
+\author{Steven Yi}
+
+
+
+\frontmatter
+\include{acknowledgements}
+\include{preface}
+
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\mainmatter
+
+\part{Users}
+\include{users/top}
+
+
+
+\end{document}

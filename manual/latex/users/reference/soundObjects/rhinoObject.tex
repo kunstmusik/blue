@@ -1,0 +1,19 @@
+\section{RhinoObject}\label{rhinoObject}
+
+Accepts NoteProcessors: yes
+
+Allows for the use of the JavaScript programming language to create
+score data. uses the Rhino interpreter to interpret JavaScript scripts.
+
+After writing your script to generate notes, you'll have to bring back
+into blue by assigning the variable 'score' the text string of the
+generated javaScript score.
+
+\begin{verbatim}
+[code for generating score]
+...
+         
+score = myScoreGenerator();
+\end{verbatim}
+
+(where myScoreGenerator() is a function that will generate Csound SCO)
