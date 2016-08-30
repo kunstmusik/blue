@@ -83,11 +83,8 @@ public class LFOPanel extends JComponent {
 
         this.add(temp);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         speed.addChangeListener(cl);
@@ -95,11 +92,8 @@ public class LFOPanel extends JComponent {
         amd.addChangeListener(cl);
         pmd.addChangeListener(cl);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                checkData();
-            }
+        ActionListener al = (ActionEvent ae) -> {
+            checkData();
         };
 
         wave.addActionListener(al);

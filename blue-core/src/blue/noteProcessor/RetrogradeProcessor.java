@@ -35,6 +35,7 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
         return "[retrograde]";
     }
 
+    @Override
     public final void processNotes(NoteList in) {
         in.sort();
         Note temp;
@@ -82,6 +83,7 @@ public class RetrogradeProcessor implements NoteProcessor, java.io.Serializable 
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

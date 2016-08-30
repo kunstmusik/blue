@@ -189,19 +189,14 @@ public class PatternLayer implements Layer {
             return;
         }
 
-        Iterator iter = new Vector(propListeners).iterator();
-
-        while (iter.hasNext()) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for(PropertyChangeListener listener : propListeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = new Vector<>();
         }
 
         if (propListeners.contains(pcl)) {
@@ -247,5 +242,9 @@ public class PatternLayer implements Layer {
     @Override
     public boolean equals(Object obj) {
         return obj == this;
+    }
+
+    @Override
+    public void clearScoreObjects() {
     }
 }

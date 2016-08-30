@@ -75,7 +75,7 @@ public class UDORepositoryBrowser extends JDialog {
 
     JTree categories = new JTree();
 
-    JList udoList = new JList();
+    JList<UDOItem> udoList = new JList<>();
 
     UDODisplayPanel udoDisplayPanel = new UDODisplayPanel();
 
@@ -89,52 +89,39 @@ public class UDORepositoryBrowser extends JDialog {
         categories.setModel(null);
         categories.setRootVisible(false);
 
-        categories.getSelectionModel().addTreeSelectionListener(
-                new TreeSelectionListener() {
-
-                    @Override
-                    public void valueChanged(TreeSelectionEvent e) {
-
-                        TreePath path = e.getNewLeadSelectionPath();
-
-                        if (path == null) {
-                            return;
-                        }
-
-                        try {
-                            DefaultMutableTreeNode tempNode = (DefaultMutableTreeNode) path
-                                    .getLastPathComponent();
-                            UDOItem tempCat = (UDOItem) tempNode
-                                    .getUserObject();
-
-                            populateUDOList(tempCat);
-                        } catch (ClassCastException cce) {
-                            // do nothing and ignore (top level root is just a
-                            // string)
-                        }
-
-                    }
-
-                });
+        categories.getSelectionModel().addTreeSelectionListener((TreeSelectionEvent e) -> {
+            TreePath path = e.getNewLeadSelectionPath();
+            
+            if (path == null) {
+                return;
+            }
+            
+            try {
+                DefaultMutableTreeNode tempNode = (DefaultMutableTreeNode) path
+                        .getLastPathComponent();
+                UDOItem tempCat = (UDOItem) tempNode
+                        .getUserObject();
+                
+                populateUDOList(tempCat);
+            } catch (ClassCastException cce) {
+                // do nothing and ignore (top level root is just a
+                // string)
+            }
+        });
 
         udoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        udoList.addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    Object obj = udoList.getSelectedValue();
-
-                    if (obj == null) {
-                        populateUDOList(-1);
-                    } else {
-                        UDOItem item = (UDOItem) obj;
-                        populateUDOList(item.itemId);
-                    }
-
+        udoList.addListSelectionListener((ListSelectionEvent e) -> {
+            if (!e.getValueIsAdjusting()) {
+                Object obj = udoList.getSelectedValue();
+                
+                if (obj == null) {
+                    populateUDOList(-1);
+                } else {
+                    UDOItem item = (UDOItem) obj;
+                    populateUDOList(item.itemId);
                 }
+                
             }
-
         });
 
         JScrollPane catScrollPane = new JScrollPane(categories);
@@ -152,13 +139,8 @@ public class UDORepositoryBrowser extends JDialog {
                 udoDisplayPanel);
 
         JButton importButton = new JButton("Import");
-        importButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addUDOtoOpcodeList();
-            }
-
+        importButton.addActionListener((ActionEvent e) -> {
+            addUDOtoOpcodeList();
         });
 
         udoPanel.add(importButton, BorderLayout.SOUTH);
@@ -244,7 +226,7 @@ public class UDORepositoryBrowser extends JDialog {
                 }
             } else if (mode == 1) {
                 String line = lines[i];
-                if (line.indexOf("endop") >= 0) {
+                if (line.contains("endop")) {
                     break;
                 }
                 cleanedCode.append(line).append("\n");
@@ -310,11 +292,10 @@ public class UDORepositoryBrowser extends JDialog {
 
         if (tempCat.itemId >= 0) {
             String result = null;
-            Vector v = new Vector();
-            v.add(new Integer(tempCat.itemId));
+            Vector<Integer> v = new Vector<>();
+            v.add(tempCat.itemId);
 
             try {
-
                 result = (String) xrpc.execute("udo.getUDOList", v);
             } catch (    XmlRpcException | IOException e) {
                 // TODO Auto-generated catch block
@@ -343,7 +324,7 @@ public class UDORepositoryBrowser extends JDialog {
 
             Element root = doc.getRoot();
 
-            DefaultListModel listItems = new DefaultListModel();
+            DefaultListModel<UDOItem> listItems = new DefaultListModel<>();
 
             Elements nodes = root.getElements();
 
@@ -366,7 +347,7 @@ public class UDORepositoryBrowser extends JDialog {
         String result = null;
         try {
             result = (String) xrpc.execute("udo.getUDOCategoryTree",
-                    new Vector());
+                    new Vector<Object>());
         } catch (XmlRpcException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

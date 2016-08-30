@@ -34,7 +34,7 @@ import org.openide.util.lookup.InstanceContent;
 public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
 
     @Override
-    public JComponent getLayerGroupPanel(LayerGroup layerGroup,
+    public JComponent getLayerGroupPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         
         if (layerGroup instanceof AudioLayerGroup) {
@@ -45,7 +45,7 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
     }
 
         @Override
-    public JComponent getLayerGroupHeaderPanel(LayerGroup layerGroup,
+    public JComponent getLayerGroupHeaderPanel(LayerGroup<?> layerGroup,
             TimeState timeState, BlueData data, InstanceContent ic) {
         if (layerGroup instanceof AudioLayerGroup) {
             return new AudioHeaderListPanel((AudioLayerGroup) layerGroup,
@@ -55,7 +55,7 @@ public class AudioLayerGroupUIProvider implements LayerGroupUIProvider {
     }
 
     @Override
-    public JComponent getLayerGroupPropertiesPanel(LayerGroup layerGroup) {
+    public JComponent getLayerGroupPropertiesPanel(LayerGroup<?> layerGroup) {
         return null;
     }
 }

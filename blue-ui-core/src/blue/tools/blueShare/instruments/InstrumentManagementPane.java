@@ -66,20 +66,12 @@ public class InstrumentManagementPane extends JComponent {
 
         // this.add(mainSplit, BorderLayout.CENTER);
 
-        fetchInstrumentsButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fetchInstruments();
-            }
+        fetchInstrumentsButton.addActionListener((ActionEvent e) -> {
+            fetchInstruments();
         });
 
-        removeInstrumentButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeInstrument();
-            }
+        removeInstrumentButton.addActionListener((ActionEvent e) -> {
+            removeInstrument();
         });
 
         /*

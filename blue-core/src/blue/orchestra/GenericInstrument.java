@@ -59,6 +59,7 @@ public class GenericInstrument extends AbstractInstrument implements
         opcodeList = new OpcodeList();
     }
 
+    @Override
     public String generateInstrument() {
         String retVal = instrumentText;
 
@@ -88,11 +89,13 @@ public class GenericInstrument extends AbstractInstrument implements
         return false;
     }
 
+    @Override
     public void generateUserDefinedOpcodes(OpcodeList udoList) {
         udoReplacementValues = UDOUtilities.appendUserDefinedOpcodes(
                 opcodeList, udoList);
     }
 
+    @Override
     public void generateFTables(Tables tables) {
     }
 
@@ -106,6 +109,7 @@ public class GenericInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#generateGlobalOrc()
      */
+    @Override
     public String generateGlobalOrc() {
         return getGlobalOrc();
     }
@@ -115,6 +119,7 @@ public class GenericInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#generateGlobalSco()
      */
+    @Override
     public String generateGlobalSco() {
         return getGlobalSco();
     }
@@ -191,6 +196,7 @@ public class GenericInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = InstrumentUtilities.getBasicXML(this);
 

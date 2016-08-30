@@ -144,12 +144,8 @@ public class InstrumentExportPane extends JComponent {
 
         mainSplitPane.setDividerLocation(200);
 
-        submitButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                submitInstrument();
-            }
+        submitButton.addActionListener((ActionEvent e) -> {
+            submitInstrument();
         });
 
         instrumentLibraryTree.addMouseListener(new MouseAdapter() {

@@ -26,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -85,11 +86,11 @@ public class AudioFileDependencyDialog extends BaseDialog {
         GUI.centerOnScreen(this);
     }
 
-    public void setFilesList(ArrayList filesList) {
+    public void setFilesList(ArrayList<String> filesList) {
         model.setFilesList(filesList);
     }
 
-    public HashMap getFilesMap() {
+    public Map<String, String> getFilesMap() {
         return model.getFilesMap();
     }
 
@@ -99,7 +100,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
     public static void main(String[] args) {
         GUI.setBlueLookAndFeel();
         AudioFileDependencyDialog aDialog = new AudioFileDependencyDialog();
-        ArrayList<String> fList = new ArrayList<String>();
+        ArrayList<String> fList = new ArrayList<>();
 
         fList.add("test1");
         fList.add("test2");
@@ -112,28 +113,31 @@ public class AudioFileDependencyDialog extends BaseDialog {
 
     static class DependencyTableModel extends AbstractTableModel {
 
-        ArrayList filesList = null;
+        ArrayList<String> filesList = null;
 
-        ArrayList returnList = null;
+        ArrayList<String> returnList = null;
 
-        public void setFilesList(ArrayList filesList) {
+        public void setFilesList(ArrayList<String> filesList) {
             this.filesList = filesList;
-            this.returnList = new ArrayList();
+            this.returnList = new ArrayList<>();
 
             for (int i = 0; i < filesList.size(); i++) {
                 returnList.add("");
             }
         }
 
+        @Override
         public int getColumnCount() {
             // TODO Auto-generated method stub
             return 2;
         }
 
+        @Override
         public int getRowCount() {
             return (filesList == null) ? 0 : filesList.size();
         }
 
+        @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 return filesList.get(rowIndex);
@@ -153,7 +157,7 @@ public class AudioFileDependencyDialog extends BaseDialog {
                 return;
             }
 
-            returnList.set(rowIndex, aValue);
+            returnList.set(rowIndex, (String)aValue);
             fireTableCellUpdated(rowIndex, columnIndex);
         }
 
@@ -165,14 +169,14 @@ public class AudioFileDependencyDialog extends BaseDialog {
             return "New File";
         }
 
-        public HashMap getFilesMap() {
-            HashMap filesMap = new HashMap();
+        public Map<String, String> getFilesMap() {
+            Map<String, String> filesMap = new HashMap<>();
 
             for (int i = 0; i < filesList.size(); i++) {
-                String key = (String) filesList.get(i);
-                String val = (String) returnList.get(i);
+                String key = filesList.get(i);
+                String val = returnList.get(i);
 
-                if (!key.equals(val) && !val.equals("") && val != null) {
+                if (!key.equals(val) && val != null && !val.equals("")) {
                     filesMap.put(key, val);
                 }
             }

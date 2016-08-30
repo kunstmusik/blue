@@ -65,35 +65,21 @@ public class PresetsPanel extends javax.swing.JPanel {
     public PresetsPanel() {
         initComponents();
 
-        addPresetListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Object obj = e.getSource();
-
-                if (obj instanceof AddPresetMenuItem) {
-
-                    PresetGroup presetGroup = ((AddPresetMenuItem) obj).
-                            getPresetGroup();
-
-                    addPreset(presetGroup);
-                }
+        addPresetListener = (ActionEvent e) -> {
+            Object obj = e.getSource();
+            if (obj instanceof AddPresetMenuItem) {
+                PresetGroup presetGroup1 = ((AddPresetMenuItem) obj).
+                        getPresetGroup();
+                addPreset(presetGroup1);
             }
         };
 
-        addFolderListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Object obj = e.getSource();
-
-                if (obj instanceof AddFolderMenuItem) {
-
-                    PresetGroup presetGroup = ((AddFolderMenuItem) obj).
-                            getPresetGroup();
-
-                    addFolder(presetGroup);
-                }
+        addFolderListener = (ActionEvent e) -> {
+            Object obj = e.getSource();
+            if (obj instanceof AddFolderMenuItem) {
+                PresetGroup presetGroup1 = ((AddFolderMenuItem) obj).
+                        getPresetGroup();
+                addFolder(presetGroup1);
             }
         };
     }

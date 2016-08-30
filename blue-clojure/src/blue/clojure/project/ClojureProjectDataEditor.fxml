@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<BorderPane prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="blue.clojure.project.ClojureProjectDataEditorController">
+   <center>
+      <TableView fx:id="table" editable="true" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+   </center>
+   <bottom>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <buttons>
+          <Button fx:id="addButton" mnemonicParsing="false" onAction="#addEntry" text="Add" />
+            <Button fx:id="removeButton" mnemonicParsing="false" onAction="#removeEntry" text="Remove" />
+            <Button fx:id="pushUpButton" mnemonicParsing="false" onAction="#pushUpEntry" text="Push Up" />
+            <Button fx:id="pushDownButton" mnemonicParsing="false" onAction="#pushDownEntry" text="Push down" />
+        </buttons>
+      </ButtonBar>
+   </bottom>
+</BorderPane>

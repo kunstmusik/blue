@@ -61,13 +61,9 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
                 VALUE_DISPLAY_HEIGHT);
 
         valSlider.setOpaque(false);
-        valSlider.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (!updating) {
-                    updateValue();
-                }
+        valSlider.addChangeListener((ChangeEvent e) -> {
+            if (!updating) {
+                updateValue();
             }
         });
 
@@ -85,26 +81,21 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
         slider.addPropertyChangeListener(this);
         updating = false;
         
-        valuePanel.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-
-                if ("value".equals(evt.getPropertyName())) {
-                    try {
-                        float val = Float.parseFloat(valuePanel.getPendingValue());
-                        
-                        updating = true;
-                        
-                        BSBHSliderView.this.slider.setValue(val);
-                        
-                        updateSliderSettings();
-                        updateValueText();
-
-                        updating = false;
-                        
-                    } catch (NumberFormatException nfe) {
-                    }
+        valuePanel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if ("value".equals(evt.getPropertyName())) {
+                try {
+                    float val = Float.parseFloat(valuePanel.getPendingValue());
+                    
+                    updating = true;
+                    
+                    BSBHSliderView.this.slider.setValue(val);
+                    
+                    updateSliderSettings();
+                    updateValueText();
+                    
+                    updating = false;
+                    
+                } catch (NumberFormatException nfe) {
                 }
             }
         });

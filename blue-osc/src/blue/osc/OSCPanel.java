@@ -20,12 +20,8 @@ final class OSCPanel extends javax.swing.JPanel {
         this.controller = controller;
         initComponents();
         
-        serverPortSpinner.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                OSCPanel.this.controller.changed();
-            }
+        serverPortSpinner.addChangeListener((ChangeEvent e) -> {
+            OSCPanel.this.controller.changed();
         });
     }
 

@@ -57,54 +57,40 @@ class TimelinePropertiesPanel extends JComponent {
 
     public TimelinePropertiesPanel() {
 
-        snapEnabledBox.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (timeState != null) {
-                    timeState.setSnapEnabled(snapEnabledBox.isSelected());
-                }
+        snapEnabledBox.addActionListener((ActionEvent e) -> {
+            if (timeState != null) {
+                timeState.setSnapEnabled(snapEnabledBox.isSelected());
             }
         });
 
-        snapValue.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (timeState == null || isUpdating) {
+        snapValue.addActionListener((ActionEvent e) -> {
+            if (timeState == null || isUpdating) {
+                return;
+            }
+            isUpdating = true;
+            
+            try {
+                float val = Float.parseFloat(snapValue.getText());
+                if (val < 0) {
                     return;
                 }
-                isUpdating = true;
-
-                try {
-                    float val = Float.parseFloat(snapValue.getText());
-                    if (val < 0) {
-                        return;
-                    }
-                    timeState.setSnapValue(val);
-                } catch (NumberFormatException nfe) {
-                    snapValue.setText(Float.toString(timeState.getSnapValue()));
-                }
-
-                isUpdating = false;
+                timeState.setSnapValue(val);
+            } catch (NumberFormatException nfe) {
+                snapValue.setText(Float.toString(timeState.getSnapValue()));
             }
 
+            isUpdating = false;
         });
 
-        ActionListener timeActionListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!isUpdating) {
-                    if (e.getSource() == timeDisplayTime) {
-                        timeState.setTimeDisplay(PolyObject.DISPLAY_TIME);
-                    } else if (e.getSource() == timeDisplayNumber) {
-                        timeState.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
-
-                    }
+        ActionListener timeActionListener = (ActionEvent e) -> {
+            if (!isUpdating) {
+                if (e.getSource() == timeDisplayTime) {
+                    timeState.setTimeDisplay(PolyObject.DISPLAY_TIME);
+                } else if (e.getSource() == timeDisplayNumber) {
+                    timeState.setTimeDisplay(PolyObject.DISPLAY_NUMBER);
+                    
                 }
             }
-
         };
 
         timeDisplayTime.addActionListener(timeActionListener);
@@ -114,24 +100,19 @@ class TimelinePropertiesPanel extends JComponent {
         bg.add(timeDisplayTime);
         bg.add(timeDisplayNumber);
 
-        timeUnit.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int val = Integer.parseInt(timeUnit.getText());
-
-                    if (val < 1) {
-                        timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
-                        return;
-                    }
-
-                    timeState.setTimeUnit(val);
-
-                } catch (NumberFormatException nfe) {
+        timeUnit.addActionListener((ActionEvent e) -> {
+            try {
+                int val = Integer.parseInt(timeUnit.getText());
+                
+                if (val < 1) {
                     timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
+                    return;
                 }
 
+                timeState.setTimeUnit(val);
+                
+            } catch (NumberFormatException nfe) {
+                timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
             }
         });
 

@@ -22,6 +22,7 @@ package blue.projects;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.ProjectProperties;
+import blue.project.ProjectPlugin;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
@@ -39,13 +40,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.JFileChooser;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 
 /**
@@ -65,7 +67,7 @@ public class BlueProjectManager {
         return projects.contains(project);
     }
 
-    ArrayList<BlueProject> projects = new ArrayList<BlueProject>();
+    ArrayList<BlueProject> projects = new ArrayList<>();
 
     BlueProject currentProject = null;
 
@@ -99,7 +101,7 @@ public class BlueProjectManager {
         final BlueData blueData = new BlueData();
         BlueProject project = new BlueProject(blueData, null);
 
-        for(LayerGroup layerGroup : blueData.getScore()) {
+        for(LayerGroup<?> layerGroup : blueData.getScore()) {
             if(layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject)layerGroup;
                 
@@ -177,18 +179,19 @@ public class BlueProjectManager {
             }
             
             final Score score = project.getData().getScore();
+          
+            Collection<? extends ProjectPlugin> plugins = 
+                    Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
+            for(ProjectPlugin plugin : plugins) {
+                plugin.preRender(project.getData());
+            }
             
-            
-            new Thread(new Runnable() {
-
-                public void run() {
-                    try {
-                        score.processOnLoad();
-                    } catch (Exception ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+            new Thread(() -> {
+                try {
+                    score.processOnLoad();
+                } catch (Exception ex) {
+                    Exceptions.printStackTrace(ex);
                 }
-                
             }).start();
             
             
@@ -246,7 +249,7 @@ public class BlueProjectManager {
     public synchronized void addPropertyChangeListener(
             PropertyChangeListener pcl) {
         if (listeners == null) {
-            listeners = new Vector<PropertyChangeListener>();
+            listeners = new Vector<>();
         }
         listeners.add(pcl);
     }
@@ -301,18 +304,12 @@ public class BlueProjectManager {
 
     public void save() {
         if (getCurrentProject().getDataFile() != null) {
-            try {
-                PrintWriter out = new PrintWriter(new FileWriter(
-                        getCurrentProject().getDataFile()));
+            try (PrintWriter out = new PrintWriter(new FileWriter(
+                    getCurrentProject().getDataFile()))) {
 
                 out.print(getCurrentProject().getData().saveAsXML().toString());
 
                 out.flush();
-                out.close();
-
-
-                StatusDisplayer.getDefault().setStatusText("File saved: "
-                        + getCurrentProject().getDataFile().getName());
             } catch (IOException ioe) {
 
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
@@ -324,6 +321,8 @@ public class BlueProjectManager {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            StatusDisplayer.getDefault().setStatusText("File saved: "
+                    + getCurrentProject().getDataFile().getName());
         } else {
             saveAs();
         }
@@ -368,38 +367,13 @@ public class BlueProjectManager {
                 getCurrentProject().setOpenedFromTempFile(false);
             }
 
-            try {
-                PrintWriter out = new PrintWriter(new FileWriter(temp));
+            try (PrintWriter out = new PrintWriter(new FileWriter(temp))) {
 
                 BlueData data = getCurrentProject().getData();
 
                 out.print(data.saveAsXML().toString());
 
                 out.flush();
-                out.close();
-
-                StatusDisplayer.getDefault().setStatusText("File saved: " + temp.
-                        getName());
-//                ProgramOptions.addRecentFile(temp);
-//                blueMenuBar.resetRecentFiles();
-//                ProgramOptions.save();
-//
-
-                RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
-
-                // fileName = temp;
-
-                getCurrentProject().setDataFile(temp);
-
-                BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
-
-                temp = null;
-
-                fireProjectFileChanged();
-
-//                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
-                //                        getName());
-                //                setRevertEnabled();
             } catch (Exception e) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(
                         "Could not save file:\n\n" + e.getLocalizedMessage(),
@@ -407,6 +381,23 @@ public class BlueProjectManager {
 
                 DialogDisplayer.getDefault().notify(descriptor);
             }
+            StatusDisplayer.getDefault().setStatusText("File saved: " + temp.
+                    getName());
+//                ProgramOptions.addRecentFile(temp);
+//                blueMenuBar.resetRecentFiles();
+//                ProgramOptions.save();
+//
+RecentProjectsList.getInstance().addFile(temp.getAbsolutePath());
+// fileName = temp;
+
+getCurrentProject().setDataFile(temp);
+BlueSystem.setCurrentProjectDirectory(temp.getParentFile());
+temp = null;
+fireProjectFileChanged();
+
+//                this.setTitle(BlueConstants.getVersion() + " - " + currentDataFile.dataFile.
+//                        getName());
+//                setRevertEnabled();
             return true;
 //        } 
 //        else if (rValue == JFileChooser.CANCEL_OPTION) {

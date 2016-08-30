@@ -30,6 +30,7 @@ public class Uniform implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -42,10 +43,12 @@ public class Uniform implements ProbabilityGenerator {
         return null;
     }
 
+    @Override
     public String getName() {
         return "Uniform";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         return rnd.nextDouble();
     }

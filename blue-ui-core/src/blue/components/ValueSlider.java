@@ -197,14 +197,8 @@ public class ValueSlider extends JSlider {
 
         slider.set(0.0f, 80.0f, 40.0f);
 
-        slider.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                System.out.println(slider.getFloat());
-
-            }
-
+        slider.addChangeListener((ChangeEvent e) -> {
+            System.out.println(slider.getFloat());
         });
 
         JFrame frame = new JFrame();

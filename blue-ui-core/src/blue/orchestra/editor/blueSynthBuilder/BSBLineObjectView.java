@@ -167,22 +167,12 @@ public class BSBLineObjectView extends BSBObjectView implements
             next.setMargin(new Insets(3, 3, 3, 3));
             previous.setMargin(new Insets(3, 3, 3, 3));
 
-            next.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    nextLine();
-                }
-
+            next.addActionListener((ActionEvent e) -> {
+                nextLine();
             });
 
-            previous.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    previousLine();
-                }
-
+            previous.addActionListener((ActionEvent e) -> {
+                previousLine();
             });
 
             Packer p = new Packer(this);
@@ -213,7 +203,7 @@ public class BSBLineObjectView extends BSBObjectView implements
                 index = 0;
             }
 
-            currentLine = (Line) lines.get(index);
+            currentLine = lines.get(index);
             updateLabel();
             fireLineSelection();
         }
@@ -235,7 +225,7 @@ public class BSBLineObjectView extends BSBObjectView implements
                 index = lines.size() - 1;
             }
 
-            currentLine = (Line) lines.get(index);
+            currentLine = lines.get(index);
             updateLabel();
             fireLineSelection();
         }
@@ -255,7 +245,7 @@ public class BSBLineObjectView extends BSBObjectView implements
             this.lines = lines;
 
             if (lines.size() > 0 && !lines.contains(currentLine)) {
-                currentLine = (Line) lines.get(0);
+                currentLine = lines.get(0);
                 updateLabel();
             }
         }

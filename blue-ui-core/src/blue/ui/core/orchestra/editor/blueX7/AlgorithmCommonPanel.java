@@ -111,11 +111,8 @@ public class AlgorithmCommonPanel extends JComponent {
 
         algorithmPicture = new JLabel(algoIcon[0]);
 
-        algorithm.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                algorithmPicture.setIcon(algoIcon[algorithm.getValue() - 1]);
-            }
+        algorithm.addChangeListener((ChangeEvent e) -> {
+            algorithmPicture.setIcon(algoIcon[algorithm.getValue() - 1]);
         });
 
         algorithmPicture.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -166,22 +163,16 @@ public class AlgorithmCommonPanel extends JComponent {
         this.add(algorithmPicture, BorderLayout.WEST);
         this.add(algorithmEditPanelTop, BorderLayout.CENTER);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         keyTranspose.addChangeListener(cl);
         algorithm.addChangeListener(cl);
         feedback.addChangeListener(cl);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                checkData();
-            }
+        ActionListener al = (ActionEvent ae) -> {
+            checkData();
         };
 
         for (int i = 0; i < operatorEnabled.length; i++) {

@@ -59,11 +59,8 @@ public class PatternObjectPropertiesPanel extends JComponent {
 
         this.add(timePropsPanel);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateProperties();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            updateProperties();
         };
 
         beatsSpinner.addChangeListener(cl);

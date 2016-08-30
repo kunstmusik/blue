@@ -29,19 +29,21 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 /**
  * @author steven
  */
-
 public class NoteCanvasMouseListener implements MouseListener,
         MouseMotionListener {
 
@@ -59,16 +61,28 @@ public class NoteCanvasMouseListener implements MouseListener,
 
     private PianoRollCanvas canvas;
 
-    private ArrayList<SelectionListener> listeners = new ArrayList<>();
+    private ArrayList<SelectionListener<PianoNoteView>> listeners = new ArrayList<>();
 
     private Point start = null;
+
+    private JPopupMenu pasteMenu = new JPopupMenu();
+    int pasteX = 0;
+    int pasteY = 0;
 
     public NoteCanvasMouseListener(PianoRollCanvas canvas) {
         canvas.addMouseListener(this);
         canvas.addMouseMotionListener(this);
-        addSelectionListener(canvas);
         addSelectionListener(canvas.noteBuffer);
         this.canvas = canvas;
+
+        pasteMenu.add(new AbstractAction("Paste") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(PianoRollCanvas.NOTE_COPY_BUFFER.size() > 0) {
+                    pasteNotes(pasteX, pasteY);
+                }
+            }
+        });
     }
 
     @Override
@@ -85,15 +99,19 @@ public class NoteCanvasMouseListener implements MouseListener,
                     && canvas.noteBuffer.contains(comp)) {
 
                 canvas.showPopup(e.getX(), e.getY());
+            } else if (!PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
+                pasteX = e.getX();
+                pasteY = e.getY();
+                pasteMenu.show(canvas, pasteX, pasteY);
             }
         } else if (SwingUtilities.isLeftMouseButton(e)) {
             if (comp instanceof PianoNoteView) {
                 PianoNoteView noteView = (PianoNoteView) comp;
 
-                SelectionEvent selEvt = null;
+                SelectionEvent<PianoNoteView> selEvt = null;
 
                 if (canvas.getCursor() == RESIZE_CURSOR) {
-                    selEvt = new SelectionEvent(noteView,
+                    selEvt = new SelectionEvent<>(noteView,
                             SelectionEvent.SELECTION_SINGLE);
                     fireSelectionEvent(selEvt);
                     canvas.noteBuffer.startResize();
@@ -107,10 +125,10 @@ public class NoteCanvasMouseListener implements MouseListener,
 
                     if (e.isShiftDown() && canvas.getCursor() == NORMAL_CURSOR
                             && canvas.noteBuffer.size() > 0) {
-                        selEvt = new SelectionEvent(noteView,
+                        selEvt = new SelectionEvent<>(noteView,
                                 SelectionEvent.SELECTION_ADD);
                     } else {
-                        selEvt = new SelectionEvent(noteView,
+                        selEvt = new SelectionEvent<>(noteView,
                                 SelectionEvent.SELECTION_SINGLE);
                     }
 
@@ -118,47 +136,35 @@ public class NoteCanvasMouseListener implements MouseListener,
                 }
 
             } else if (((e.getModifiers() & OS_CTRL_KEY) == OS_CTRL_KEY) && !e.isShiftDown()) {
-                if (canvas.bufferedNote == null) {
+                if (PianoRollCanvas.NOTE_COPY_BUFFER.isEmpty()) {
                     return;
                 }
 
                 int x = e.getX();
                 int y = e.getY();
-                
-                float startTime = (float)x / canvas.p.getPixelSecond();
 
-                if (canvas.p.isSnapEnabled()) {
-                    float snapValue = canvas.p.getSnapValue();
-                    startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
-                } 
-                PianoNote note = (PianoNote) canvas.bufferedNote.clone();
+                pasteNotes(x, y);
 
-                fireSelectionEvent(new SelectionEvent(null,
-                        SelectionEvent.SELECTION_CLEAR));
-                start = null;
-
-                canvas.addNote(note, startTime, y, 0);
             } else if (e.isShiftDown() && ((e.getModifiers() & OS_CTRL_KEY) != OS_CTRL_KEY)) {
-                fireSelectionEvent(new SelectionEvent(null,
+                fireSelectionEvent(new SelectionEvent<>(null,
                         SelectionEvent.SELECTION_CLEAR));
                 // start = null;
 
                 int x = e.getX();
                 int y = e.getY();
 
-                float startTime = (float)x / canvas.p.getPixelSecond();
+                float startTime = (float) x / canvas.p.getPixelSecond();
                 float duration = 5.0f / canvas.p.getPixelSecond();
-                
-                
+
                 if (canvas.p.isSnapEnabled()) {
                     float snapValue = canvas.p.getSnapValue();
                     startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
-                    
-                    duration = canvas.p.getSnapValue();
-                } 
 
-                PianoNoteView noteView = canvas.addNote(startTime, y, 0);
-                SelectionEvent selEvt = new SelectionEvent(noteView,
+                    duration = canvas.p.getSnapValue();
+                }
+
+                PianoNoteView noteView = canvas.addNote(startTime, y);
+                SelectionEvent<PianoNoteView> selEvt = new SelectionEvent<>(noteView,
                         SelectionEvent.SELECTION_ADD);
 
                 noteView.getPianoNote().setDuration(duration);
@@ -171,13 +177,54 @@ public class NoteCanvasMouseListener implements MouseListener,
                 canvas.setCursor(RESIZE_CURSOR);
 
             } else {
-                fireSelectionEvent(new SelectionEvent(null,
+                fireSelectionEvent(new SelectionEvent<>(null,
                         SelectionEvent.SELECTION_CLEAR));
                 start = null;
 
                 canvas.marquee.setStart(e.getPoint());
                 canvas.marquee.setVisible(true);
             }
+        }
+    }
+
+    private void pasteNotes(int x, int y) {
+        float startTime = (float) x / canvas.p.getPixelSecond();
+        int[] pchBase = canvas.getOctaveScaleDegreeForY(y);
+        float timeAdjust = Float.MAX_VALUE;
+        int topPitchNum = Integer.MIN_VALUE;
+        int bottomPitchNum = Integer.MAX_VALUE;
+        int scaleDegrees = canvas.p.getScale().getNumScaleDegrees();
+        
+        if (canvas.p.isSnapEnabled()) {
+            float snapValue = canvas.p.getSnapValue();
+            startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
+        }
+        
+        for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
+            timeAdjust = Math.min(timeAdjust, note.getStart());
+            int pitchNum = note.getOctave() * scaleDegrees + note.getScaleDegree();
+            topPitchNum = Math.max(topPitchNum, pitchNum);
+            bottomPitchNum = Math.min(bottomPitchNum, pitchNum);
+        }
+        
+        fireSelectionEvent(new SelectionEvent<>(null,
+                SelectionEvent.SELECTION_CLEAR));
+        start = null;
+        
+        int basePitchNum = pchBase[0] * scaleDegrees + pchBase[1];
+        int pitchNumAdjust = basePitchNum - topPitchNum;
+        
+        for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
+            PianoNote copy = note.clone();
+            copy.setStart(startTime + (copy.getStart() - timeAdjust));
+            
+            int pitchNum = copy.getOctave() * scaleDegrees + copy.getScaleDegree();
+            pitchNum += pitchNumAdjust;
+            
+            copy.setOctave(pitchNum / scaleDegrees);
+            copy.setScaleDegree(pitchNum % scaleDegrees);
+            
+            canvas.addNote(copy);
         }
     }
 
@@ -188,7 +235,7 @@ public class NoteCanvasMouseListener implements MouseListener,
         }
 
         if (start != null) {
-            if(!canvas.p.isSnapEnabled()) {
+            if (!canvas.p.isSnapEnabled()) {
                 if (canvas.getCursor() == NORMAL_CURSOR) {
                     canvas.noteBuffer.endMove();
                 } else {
@@ -247,24 +294,23 @@ public class NoteCanvasMouseListener implements MouseListener,
 
         int noteHeight = canvas.getNoteHeight();
         int layerDiff = (e.getPoint().y / noteHeight) - (start.y / noteHeight);
-        
+
         if (canvas.p.isSnapEnabled()) {
-            float timeAdjust = (float)diffX / canvas.p.getPixelSecond();
-        
-           
+            float timeAdjust = (float) diffX / canvas.p.getPixelSecond();
+
             float initialStartTime = canvas.noteBuffer.initialStartTimes[0];
-            
+
             float tempStart = initialStartTime + timeAdjust;
-            
-            if(tempStart < 0.0f) {
+
+            if (tempStart < 0.0f) {
                 timeAdjust = -initialStartTime;
             } else {
                 float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
-                    canvas.p.getSnapValue());
-            
+                        canvas.p.getSnapValue());
+
                 timeAdjust = snappedStart - initialStartTime;
             }
-            
+
             canvas.noteBuffer.moveByTime(timeAdjust, layerDiff);
         } else {
             canvas.noteBuffer.move(diffX, layerDiff);
@@ -276,30 +322,28 @@ public class NoteCanvasMouseListener implements MouseListener,
         int mouseX = e.getPoint().x;
 
         if (canvas.p.isSnapEnabled()) {
-            
+
             float snapValue = canvas.p.getSnapValue();
-            
-            float endTime = ScoreUtilities.getSnapValueMove((float)mouseX / canvas.p.getPixelSecond(), 
+
+            float endTime = ScoreUtilities.getSnapValueMove((float) mouseX / canvas.p.getPixelSecond(),
                     snapValue);
-            
-           
+
             float minTime = ScoreUtilities.getSnapValueMove(
-                    canvas.noteBuffer.initialStartTimes[0] + snapValue / 2, 
+                    canvas.noteBuffer.initialStartTimes[0] + snapValue / 2,
                     snapValue);
 
             endTime = (endTime < minTime) ? minTime : endTime;
-            
-            float newDuration = endTime - canvas.noteBuffer.initialStartTimes[0];
-            
-            canvas.noteBuffer.setDuration(newDuration);
-            
-        } else {
-              int diffX = mouseX - start.x;
 
-              canvas.noteBuffer.resize(diffX);
+            float newDuration = endTime - canvas.noteBuffer.initialStartTimes[0];
+
+            canvas.noteBuffer.setDuration(newDuration);
+
+        } else {
+            int diffX = mouseX - start.x;
+
+            canvas.noteBuffer.resize(diffX);
         }
 
-      
     }
 
     /*
@@ -327,7 +371,7 @@ public class NoteCanvasMouseListener implements MouseListener,
 
         Component[] comps = canvas.getComponents();
 
-        fireSelectionEvent(new SelectionEvent(null,
+        fireSelectionEvent(new SelectionEvent<>(null,
                 SelectionEvent.SELECTION_CLEAR));
 
         for (int i = 0; i < comps.length; i++) {
@@ -342,7 +386,8 @@ public class NoteCanvasMouseListener implements MouseListener,
                 int selectionType = isFirst ? SelectionEvent.SELECTION_SINGLE
                         : SelectionEvent.SELECTION_ADD;
 
-                SelectionEvent selectionEvent = new SelectionEvent(comps[i],
+                SelectionEvent<PianoNoteView> selectionEvent = new SelectionEvent<>(
+                        (PianoNoteView) comps[i],
                         selectionType);
 
                 fireSelectionEvent(selectionEvent);
@@ -355,19 +400,17 @@ public class NoteCanvasMouseListener implements MouseListener,
     }
 
     // SELECTION EVENT CODE
-
-    public void fireSelectionEvent(SelectionEvent se) {
-        for (Iterator<SelectionListener> iter = listeners.iterator(); iter.hasNext();) {
-            SelectionListener listener = iter.next();
+    public void fireSelectionEvent(SelectionEvent<PianoNoteView> se) {
+        for (SelectionListener<PianoNoteView> listener : listeners) {
             listener.selectionPerformed(se);
         }
     }
 
-    public void addSelectionListener(SelectionListener sl) {
+    public void addSelectionListener(SelectionListener<PianoNoteView> sl) {
         listeners.add(sl);
     }
 
-    public void removeSelectionListener(SelectionListener sl) {
+    public void removeSelectionListener(SelectionListener<PianoNoteView> sl) {
         listeners.remove(sl);
     }
 }

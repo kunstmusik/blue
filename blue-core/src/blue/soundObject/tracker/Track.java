@@ -358,10 +358,12 @@ public class Track implements Serializable, TableModel {
 
     /* TABLE MODEL METHODS */
 
+    @Override
     public int getRowCount() {
         return columns.size();
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         if (columnIndex == 0) {
             return "Name";
@@ -369,18 +371,22 @@ public class Track implements Serializable, TableModel {
         return "Type";
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return String.class;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return columnIndex == 0;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Column col = (Column) columns.get(rowIndex);
 
@@ -391,6 +397,7 @@ public class Track implements Serializable, TableModel {
         return Column.TYPES[col.getType()];
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (columnIndex != 0) {
             return;
@@ -406,6 +413,7 @@ public class Track implements Serializable, TableModel {
 
     /* TABLE MODEL METHODS */
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
             tableListeners = new Vector();
@@ -413,6 +421,7 @@ public class Track implements Serializable, TableModel {
         tableListeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (tableListeners == null) {
             return;

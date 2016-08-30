@@ -29,12 +29,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.Iterator;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
@@ -66,11 +66,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
     public LineCanvas() {
         new LineCanvasMouseListener(this);
 
-        lineListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
     }
 
@@ -133,9 +130,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             return;
         }
 
-        for (Iterator iter = lineList.iterator(); iter.hasNext();) {
-            Line line = (Line) iter.next();
-
+        for (Line line : lineList) {
             if (line == currentLine) {
                 currentColor = line.getColor();
             } else {
@@ -369,6 +364,8 @@ public class LineCanvas extends JComponent implements TableModelListener {
     class LineCanvasMouseListener implements MouseListener, MouseMotionListener {
 
         LineCanvas lineCanvas;
+        DragDirection direction = DragDirection.NOT_SET;
+        Point pressPoint = null;
 
         public LineCanvasMouseListener(LineCanvas lineCanvas) {
             this.lineCanvas = lineCanvas;
@@ -393,6 +390,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
             if (currentLine == null) {
                 return;
             }
+            pressPoint = e.getPoint();
 
             if (selectedLine != null) {
 
@@ -430,6 +428,7 @@ public class LineCanvas extends JComponent implements TableModelListener {
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            direction = DragDirection.NOT_SET;
             if (currentLine == null) {
                 return;
             }
@@ -447,6 +446,22 @@ public class LineCanvas extends JComponent implements TableModelListener {
                 int x = e.getX();
                 int y = e.getY();
 
+                if(direction == DragDirection.NOT_SET) {
+                    int magx = Math.abs(x - (int)pressPoint.getX());
+                    int magy = Math.abs(y - (int)pressPoint.getY());
+
+                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT :
+                            DragDirection.UP_DOWN;
+                }
+
+                if(e.isControlDown()) {
+                    if(direction == DragDirection.LEFT_RIGHT) {
+                        y = (int)pressPoint.getY();
+                    } else {
+                        x = (int)pressPoint.getX(); 
+                    }
+                }
+                
                 int topY = 5;
                 int bottomY = getHeight() - 5;
 

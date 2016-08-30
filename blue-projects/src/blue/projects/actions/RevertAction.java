@@ -32,6 +32,7 @@ import org.openide.windows.WindowManager;
 
 public final class RevertAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent actionEvent) {
         BlueProject project = BlueProjectManager.getInstance().getCurrentProject();
 

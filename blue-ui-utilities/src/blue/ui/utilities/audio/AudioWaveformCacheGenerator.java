@@ -23,7 +23,9 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -35,7 +37,7 @@ public class AudioWaveformCacheGenerator extends Thread {
 
     public static final String CACHE_GEN_COMPLETE = "CACHE_GEN_COMPLETE";
 
-    Vector workQueue = new Vector();
+    List<AudioWaveformData> workQueue = Collections.synchronizedList(new ArrayList<>());
 
     boolean running = true;
 
@@ -55,7 +57,7 @@ public class AudioWaveformCacheGenerator extends Thread {
         if (workQueue.isEmpty()) {
             return -1;
         }
-        return ((AudioWaveformData) workQueue.get(0)).pixelSeconds;
+        return (workQueue.get(0)).pixelSeconds;
     }
 
     @Override
@@ -63,7 +65,7 @@ public class AudioWaveformCacheGenerator extends Thread {
         // System.out.println("started");
 
         while (running && workQueue.size() > 0) {
-            AudioWaveformData data = (AudioWaveformData) this.workQueue.get(0);
+            AudioWaveformData data = this.workQueue.get(0);
 
             analyzeWaveform(data);
 
@@ -145,14 +147,9 @@ public class AudioWaveformCacheGenerator extends Thread {
                         waveData.percentLoadingComplete = i / maxWidth;
 
                         if (i % 100 == 0) {
-                            SwingUtilities.invokeLater(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    audioWaveformCache
-                                            .fireAudioWaveformDataGenerated(waveData.fileName);
-                                }
-
+                            SwingUtilities.invokeLater(() -> {
+                                audioWaveformCache
+                                        .fireAudioWaveformDataGenerated(waveData.fileName);
                             });
                         }
 

@@ -79,29 +79,17 @@ public class PatternLayerEditPanel extends JComponent implements
 
         bottomPanel.setLayout(new GridLayout());
 
-        buttonUp.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushUpLayer();
-            }
+        buttonUp.addActionListener((ActionEvent e) -> {
+            pushUpLayer();
         });
-        buttonDown.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushDownLayer();
-            }
+        buttonDown.addActionListener((ActionEvent e) -> {
+            pushDownLayer();
         });
-        buttonAdd.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addLayer();
-            }
+        buttonAdd.addActionListener((ActionEvent e) -> {
+            addLayer();
         });
-        buttonRemove.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeLayer();
-            }
+        buttonRemove.addActionListener((ActionEvent e) -> {
+            removeLayer();
         });
         bottomPanel.add(buttonUp);
         bottomPanel.add(buttonDown);

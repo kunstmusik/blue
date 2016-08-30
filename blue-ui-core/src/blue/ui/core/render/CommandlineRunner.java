@@ -180,7 +180,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
             command += " -Lstdin ";
         }
 
-        if (osName.indexOf("Windows") >= 0) {
+        if (osName.contains("Windows")) {
             command += " \"" + temp.getAbsolutePath() + "\"";
         } else {
             command += " " + temp.getAbsolutePath();
@@ -317,17 +317,14 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
                     disableMessagesBox.setSelected(false);
 
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            JOptionPane.showMessageDialog(null, errorPanel,
-                                    "Csound Error", JOptionPane.ERROR_MESSAGE);
-
-                            if (disableMessagesBox.isSelected()) {
-                                generalSettings
-                                        .setCsoundErrorWarningEnabled(false);
-                                generalSettings.save();
-                            }
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null, errorPanel,
+                                "Csound Error", JOptionPane.ERROR_MESSAGE);
+                        
+                        if (disableMessagesBox.isSelected()) {
+                            generalSettings
+                                    .setCsoundErrorWarningEnabled(false);
+                            generalSettings.save();
                         }
                     });
 

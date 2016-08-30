@@ -167,12 +167,8 @@ public class FileTree extends JComponent {
 
         });
 
-        driveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showDrivePopup();
-            }
-
+        driveButton.addActionListener((ActionEvent e) -> {
+            showDrivePopup();
         });
 
         driveButton.setPreferredSize(new Dimension(26, 26));
@@ -189,16 +185,13 @@ public class FileTree extends JComponent {
         fileListScrollPane.getViewport().add(fileList);
         fileList.setCellRenderer(flcRenderer);
 
-        dirList.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!listUpdating) {
-                    listUpdating = true;
-                    File dir =  (File)dirList.getSelectedItem();
-                    populateDirectory(dir);
-                    populateFiles(dir);
-                    listUpdating = false;
-                }
+        dirList.addActionListener((ActionEvent e) -> {
+            if (!listUpdating) {
+                listUpdating = true;
+                File dir =  (File)dirList.getSelectedItem();
+                populateDirectory(dir);
+                populateFiles(dir);
+                listUpdating = false;
             }
         });
 
@@ -385,6 +378,7 @@ class DriveSelectorPopupMenu extends JPopupMenu implements ActionListener {
 }
 
 class AlphabeticalFileComparator implements Comparator<File> {
+    @Override
     public int compare(File a, File b) {
         return a.getName().compareTo(b.getName());
     }

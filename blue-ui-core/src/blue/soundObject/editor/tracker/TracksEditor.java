@@ -146,34 +146,25 @@ public class TracksEditor extends JPanel {
             }
         });
 
-        jsp.getViewport().addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                namePort.setViewPosition(new Point(jsp.getViewport()
-                        .getViewPosition().x, 0));
-            }
-
+        jsp.getViewport().addChangeListener((ChangeEvent e) -> {
+            namePort.setViewPosition(new Point(jsp.getViewport()
+                    .getViewPosition().x, 0));
         });
 
         this.add(topPanel, BorderLayout.NORTH);
 
-        namePanel.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int index = namePanel.getSelectedIndex();
-
-                if (index > -1) {
-                    Track track = trackList.getTrack(index);
-
-                    selectedTrack = track;
-
-                    trackEditor.setTrack(track);
-                } else {
-                    trackEditor.setTrack(null);
-                    selectedTrack = null;
-                }
-
+        namePanel.addChangeListener((ChangeEvent e) -> {
+            int index = namePanel.getSelectedIndex();
+            
+            if (index > -1) {
+                Track track = trackList.getTrack(index);
+                
+                selectedTrack = track;
+                
+                trackEditor.setTrack(track);
+            } else {
+                trackEditor.setTrack(null);
+                selectedTrack = null;
             }
         });
 
@@ -195,36 +186,29 @@ public class TracksEditor extends JPanel {
 
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        snapButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                trackEditorScrollPane.setVisible(!trackEditorScrollPane
-                        .isVisible());
-
-                revalidate();
-            }
+        snapButton.addActionListener((ActionEvent e) -> {
+            trackEditorScrollPane.setVisible(!trackEditorScrollPane
+                    .isVisible());
+            
+            revalidate();
         });
 
-        trackListListener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                if (trackList == null) {
-                    return;
-                }
-
-                int selectedIndex = namePanel.getSelectedIndex();
-
-                namePanel.updateLabels();
-
-                if (trackList.contains(selectedTrack)) {
-                    namePanel.setSelected(selectedIndex, false);
-                } else {
-                    trackEditor.setTrack(null);
-                }
-
-                setColumnWidths();
+        trackListListener = (TableModelEvent e) -> {
+            if (trackList == null) {
+                return;
             }
 
+            int selectedIndex = namePanel.getSelectedIndex();
+            
+            namePanel.updateLabels();
+            
+            if (trackList.contains(selectedTrack)) {
+                namePanel.setSelected(selectedIndex, false);
+            } else {
+                trackEditor.setTrack(null);
+            }
+            
+            setColumnWidths();
         };
 
         final Action pAction = new PasteAction();
@@ -307,19 +291,12 @@ public class TracksEditor extends JPanel {
                     }
                 });
 
-        table.getColumnModel().getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        int h = table.getRowHeight();
-
-                        int y = table.getSelectedRow() * h;
-                        int selectionH = table.getSelectedRowCount() * h;
-
-                        table.repaint(0, y, table.getWidth(), selectionH);
-
-                    }
-                });
+        table.getColumnModel().getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            int h = table.getRowHeight();
+            int y1 = table.getSelectedRow() * h;
+            int selectionH = table.getSelectedRowCount() * h;
+            table.repaint(0, y1, table.getWidth(), selectionH);
+        });
 
         SwingUtil.installActions(table, new Action[] { new IncrementAction(),
                 new DecrementAction(), new TieAction(), new SpaceBarAction(),
@@ -589,17 +566,14 @@ public class TracksEditor extends JPanel {
                 }
             });
 
-            nameListener = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (!(evt.getSource() instanceof Track)
-                            || !evt.getPropertyName().equals(Track.NAME)) {
-                        return;
-                    }
-                    Track t = (Track) evt.getSource();
-
-                    updateLabel(t);
+            nameListener = (PropertyChangeEvent evt) -> {
+                if (!(evt.getSource() instanceof Track)
+                        || !evt.getPropertyName().equals(Track.NAME)) {
+                    return;
                 }
+                Track t = (Track) evt.getSource();
+                
+                updateLabel(t);
             };
         }
 
@@ -683,21 +657,17 @@ public class TracksEditor extends JPanel {
             if (c != null) {
                 final Component[] components = getComponents();
 
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < components.length; i++) {
-                            if (components[i] == c) {
-                                components[i].setBackground(Color.GREEN);
-                            } else {
-                                components[i].setBackground(null);
-                            }
+                SwingUtilities.invokeLater(() -> {
+                    for (int i = 0; i < components.length; i++) {
+                        if (components[i] == c) {
+                            components[i].setBackground(Color.GREEN);
+                        } else {
+                            components[i].setBackground(null);
                         }
-
-                        if (fireEvent) {
-                            fireChangeEvent();
-                        }
+                    }
+                    
+                    if (fireEvent) {
+                        fireChangeEvent();
                     }
                 });
             }
@@ -715,103 +685,70 @@ public class TracksEditor extends JPanel {
                 }
             }
 
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    removeAll();
-
-                    if (trackList == null) {
-                        return;
-                    }
-
-                    TableColumnModel columnModel = table.getColumnModel();
-
-                    int count = columnModel.getColumnCount();
-
-                    if (count == 0) {
-                        return;
-                    }
-
-                    int offset = 0;
-                    int offsetX = 0;
-
-                    for (int i = 0; i < trackList.size(); i++) {
-                        Track track = trackList.getTrack(i);
-                        track.addPropertyChangeListener(nameListener);
-
-                        int size = track.getNumColumns();
-
-                        int x = offsetX;
-
-                        for (int j = 0; j < size; j++) {
-                            offsetX += columnModel.getColumn(offset).getWidth();
-                            offset++;
-                        }
-
-                        JLabel label = new JLabel();
-                        label.setBorder(new BevelBorder(BevelBorder.RAISED));
-
-                        label.setHorizontalAlignment(JLabel.CENTER);
-                        // label.setOpaque(true);
-                        // label.setBackground(i % 2 == 0 ? Color.DARK_GRAY
-                        // : Color.DARK_GRAY.darker().darker());
-                        // label.setForeground(Color.WHITE);
-                        label.setText(track.getName());
-
-                        add(label);
-
-                        label.setLocation(x, 0);
-                        label.setSize(offsetX - x, 20);
-
-                    }
-
-                    setMinimumSize(new Dimension(offsetX, 20));
-                    setPreferredSize(new Dimension(offsetX, 20));
+            SwingUtilities.invokeLater(() -> {
+                removeAll();
+                if (trackList == null) {
+                    return;
                 }
+                TableColumnModel columnModel = table.getColumnModel();
+                int count = columnModel.getColumnCount();
+                if (count == 0) {
+                    return;
+                }
+                int offset = 0;
+                int offsetX = 0;
+                for (int i = 0; i < trackList.size(); i++) {
+                    Track track = trackList.getTrack(i);
+                    track.addPropertyChangeListener(nameListener);
+                    int size = track.getNumColumns();
+                    int x1 = offsetX;
+                    for (int j = 0; j < size; j++) {
+                        offsetX += columnModel.getColumn(offset).getWidth();
+                        offset++;
+                    }
+                    JLabel label = new JLabel();
+                    label.setBorder(new BevelBorder(BevelBorder.RAISED));
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                    // label.setOpaque(true);
+                    // label.setBackground(i % 2 == 0 ? Color.DARK_GRAY
+                    // : Color.DARK_GRAY.darker().darker());
+                    // label.setForeground(Color.WHITE);
+                    label.setText(track.getName());
+                    add(label);
+                    label.setLocation(x1, 0);
+                    label.setSize(offsetX - x1, 20);
+                }
+                setMinimumSize(new Dimension(offsetX, 20));
+                setPreferredSize(new Dimension(offsetX, 20));
             });
         }
 
         public void updateLabelSizes() {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    if (trackList == null || getComponentCount() == 0) {
-                        return;
-                    }
-
-                    TableColumnModel columnModel = table.getColumnModel();
-
-                    int count = columnModel.getColumnCount();
-
-                    if (count == 0) {
-                        return;
-                    }
-
-                    int offset = 0;
-                    int offsetX = 0;
-
-                    for (int i = 0; i < trackList.size(); i++) {
-                        Track track = trackList.getTrack(i);
-
-                        int size = track.getNumColumns();
-
-                        int x = offsetX;
-
-                        for (int j = 0; j < size; j++) {
-                            offsetX += columnModel.getColumn(offset).getWidth();
-                            offset++;
-                        }
-
-                        JLabel label = (JLabel) getComponent(i);
-
-                        label.setLocation(x, 0);
-                        label.setSize(offsetX - x, 20);
-
-                    }
-
-                    setMinimumSize(new Dimension(offsetX, 20));
-                    setPreferredSize(new Dimension(offsetX, 20));
+            SwingUtilities.invokeLater(() -> {
+                if (trackList == null || getComponentCount() == 0) {
+                    return;
                 }
+                TableColumnModel columnModel = table.getColumnModel();
+                int count = columnModel.getColumnCount();
+                if (count == 0) {
+                    return;
+                }
+                int offset = 0;
+                int offsetX = 0;
+                for (int i = 0; i < trackList.size(); i++) {
+                    Track track = trackList.getTrack(i);
+                    int size = track.getNumColumns();
+                    int x1 = offsetX;
+                    for (int j = 0; j < size; j++) {
+                        offsetX += columnModel.getColumn(offset).getWidth();
+                        offset++;
+                    }
+                    JLabel label = (JLabel) getComponent(i);
+                    label.setLocation(x1, 0);
+                    label.setSize(offsetX - x1, 20);
+                }
+                setMinimumSize(new Dimension(offsetX, 20));
+                setPreferredSize(new Dimension(offsetX, 20));
             });
         }
 

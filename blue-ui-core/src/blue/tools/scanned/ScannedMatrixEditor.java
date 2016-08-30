@@ -90,56 +90,38 @@ public class ScannedMatrixEditor extends JComponent {
                 new ScannedAbout());
 
         newButton.setText(BlueSystem.getString("common.new"));
-        newButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                newMatrix();
-            }
+        newButton.addActionListener((ActionEvent e) -> {
+            newMatrix();
         });
 
         loadButton.setText(BlueSystem.getString("common.load"));
-        loadButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadMatrix();
-            }
+        loadButton.addActionListener((ActionEvent e) -> {
+            loadMatrix();
         });
 
         saveButton.setText(BlueSystem.getString("common.save"));
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                saveMatrix();
-            }
+        saveButton.addActionListener((ActionEvent e) -> {
+            saveMatrix();
         });
 
         randomButton.setText(BlueSystem.getString("common.random"));
-        randomButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                randomMatrix();
-            }
+        randomButton.addActionListener((ActionEvent e) -> {
+            randomMatrix();
         });
 
         plusButton.setText("+");
-        plusButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                MatrixGridEditor.increaseGridSize();
-                matrixGridEditor.redoSize();
-                scroll.revalidate();
-                scroll.repaint();
-            }
+        plusButton.addActionListener((ActionEvent e) -> {
+            MatrixGridEditor.increaseGridSize();
+            matrixGridEditor.redoSize();
+            scroll.revalidate();
+            scroll.repaint();
         });
         minusButton.setText("-");
-        minusButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                MatrixGridEditor.decreaseGridSize();
-                matrixGridEditor.redoSize();
-                scroll.revalidate();
-                scroll.repaint();
-            }
+        minusButton.addActionListener((ActionEvent e) -> {
+            MatrixGridEditor.decreaseGridSize();
+            matrixGridEditor.redoSize();
+            scroll.revalidate();
+            scroll.repaint();
         });
 
         locationLabel.setText("pos (x,x)");

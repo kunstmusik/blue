@@ -74,19 +74,14 @@ public class ScoreMouseWheelListener implements MouseWheelListener {
                 timeState.lowerPixelSecond();
             }
 
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    int newVal = (int) (timeVal * timeState.getPixelSecond());
-
-                    newVal -= xLoc;
-
-                    if (newVal > 0) {
-                        //FIXME
-                        scrollPane.getHorizontalScrollBar().setValue(newVal);
-                    }
-
+            SwingUtilities.invokeLater(() -> {
+                int newVal = (int) (timeVal * timeState.getPixelSecond());
+                
+                newVal -= xLoc;
+                
+                if (newVal > 0) {
+                    //FIXME
+                    scrollPane.getHorizontalScrollBar().setValue(newVal);
                 }
             });
             e.consume();

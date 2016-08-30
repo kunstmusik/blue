@@ -90,6 +90,7 @@ public class Weibull implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -116,10 +117,12 @@ public class Weibull implements ProbabilityGenerator {
 //
 //    }
 
+    @Override
     public String getName() {
         return "Weibull";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
 
         double x, a, e; // t>1 -> max bei s

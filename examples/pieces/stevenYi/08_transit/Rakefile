@@ -1,0 +1,88 @@
+require 'rake'
+require 'date'
+
+FINAL = true 
+
+def windows?
+  return RUBY_PLATFORM =~ /mingw/i
+end
+
+# CONFIGURATION #
+project = "transit"
+author = "Steven Yi"
+title = "Transit"
+unless FINAL
+	title << " - " << Date.today.to_s
+end
+album = "kunstmusik.com"
+genre = "Classical"
+release_date = Date.today.to_s
+year = Date.today.year
+
+csoundFlags = "-m135 -WZd" 
+
+## TARGETS ##
+
+#desc 'Generate CSD from .blue file'
+#task :csd => "#{project}.csd"
+
+desc 'Generate Wave from CSD'
+task :wav => "#{project}.wav" 
+
+desc 'Generate FLAC from WAV'
+task :flac => "#{project}.flac"
+
+desc 'Generate MP3 from WAV'
+task :mp3 => "#{project}.mp3"
+
+desc 'Generate OGG from WAV'
+task :ogg => "#{project}.ogg"
+
+desc 'Generate MP3, OGG, FLAC'
+task :all => [:mp3, :ogg, :flac]
+
+desc 'Cleanup generated file'
+task :clean do
+	endings = [".csd", ".wav", ".flac", ".mp3", ".ogg"]
+	#endings = [".wav", ".flac", ".mp3", ".ogg"]
+	endings.each { |i|
+		File.delete("#{project + i}") if File.exists? "#{project + i}"
+	}
+end
+
+desc 'Copy MP3 to Android Device using adb'
+task :android => :mp3 do
+	sh "adb push #{project}.mp3 /sdcard/Music"
+end
+
+desc 'Copy MP3 to Android Device using adb (no rebuild)'
+task :android_copy  do
+	sh "adb push #{project}.mp3 /sdcard/Music"
+end
+task :default => [:flac, :mp3, :ogg]
+
+
+## RULES ##
+
+rule ".csd" => ".blue" do |t|
+  blue_cmd = windows? ? "blue64" : blue
+	sh "#{blue_cmd} --compile #{Dir.pwd}/#{t.source} --output #{Dir.pwd}/#{t.name} --nosplash --nogui"
+end
+
+rule '.wav' => '.csd' do |t|
+	sh "csound #{csoundFlags} -o ./#{t.name} #{t.source}"
+end
+
+rule '.flac' => '.wav' do |t|
+	sh "flac --tag=\"TITLE=#{title}\" --tag=\"ALBUM=#{album}\" --tag=\"ARTIST=#{author}\" --tag=\"DATE=#{release_date}\" --tag=\"GENRE=#{genre}\" -f -o #{t.name} #{t.source}"
+end
+
+
+rule '.ogg' => '.wav' do |t|
+	sh "oggenc -q9 -a \"#{author}\" -t \"#{title}\" -d \"#{release_date}\" -l \"#{album}\" #{t.source}"
+end
+
+rule '.mp3' => '.wav' do |t|
+	sh "lame -b 320 -h --ta \"#{author}\" --ty \"#{year}\" --tt \"#{title}\" --tl \"#{album}\" --tg \"#{genre}\" #{t.source} #{t.name}"
+end
+

@@ -49,12 +49,9 @@ public final class ImportCsdAction implements ActionListener {
         fcm.setDialogTitle(this.getClass(), "Select CSD File");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                importCsdAction();
-            }
-        });
+        SwingUtilities.invokeLater(this::importCsdAction);
     }
 
     protected void importCsdAction() {

@@ -35,6 +35,7 @@ public class BSBEnvelopeGenerator extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BlueSynthBuilderObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         // TODO Auto-generated method stub
         return null;
@@ -57,6 +58,7 @@ public class BSBEnvelopeGenerator extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         // TODO Auto-generated method stub
 
@@ -67,6 +69,7 @@ public class BSBEnvelopeGenerator extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         // TODO Auto-generated method stub
         return null;
@@ -77,6 +80,7 @@ public class BSBEnvelopeGenerator extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         // TODO Auto-generated method stub
 

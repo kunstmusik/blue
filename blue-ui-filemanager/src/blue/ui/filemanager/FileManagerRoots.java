@@ -49,7 +49,7 @@ public class FileManagerRoots {
     }
 
     public List<File> getRoots() {
-        List<File> retVal = new ArrayList<File>();
+        List<File> retVal = new ArrayList<>();
         retVal.addAll(staticRoots);
         retVal.addAll(customRoots);
         return retVal;

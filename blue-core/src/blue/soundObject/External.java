@@ -55,14 +55,17 @@ public class External extends AbstractSoundObject implements Serializable,
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return this.npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain noteProcessorChain) {
         this.npc = noteProcessorChain;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
@@ -104,7 +107,7 @@ public class External extends AbstractSoundObject implements Serializable,
 
             ProcessRunner processRunner = new ProcessRunner();
 
-            if (this.getCommandLine().indexOf("$outfile") == -1) {
+            if (!this.getCommandLine().contains("$outfile")) {
                 String commandLine = this
                         .getPreparedCommandLine(temp.getName());
 
@@ -201,7 +204,7 @@ public class External extends AbstractSoundObject implements Serializable,
     public String getPreparedCommandLine(String inFileName) {
         String temp = this.commandLine;
 
-        if (this.commandLine.indexOf("$infile") == -1) {
+        if (!this.commandLine.contains("$infile")) {
             return this.commandLine + " " + inFileName;
         } else {
             return blue.utility.TextUtilities.replace(temp, "$infile",
@@ -226,18 +229,22 @@ public class External extends AbstractSoundObject implements Serializable,
      * return buffer.toString(); }
      */
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -285,6 +292,7 @@ public class External extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

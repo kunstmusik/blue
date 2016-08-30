@@ -38,6 +38,7 @@ public class LineObject extends AbstractLineObject implements Serializable {
         this.setName("LineObject");
     }
 
+    @Override
     protected String generateLineInstrument(Line line) {
         StringBuilder buffer = new StringBuilder();
 

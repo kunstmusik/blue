@@ -33,6 +33,7 @@ public class ParameterTimeManagerFactory {
 
     static class DefaultParameterTimeManager implements ParameterTimeManager {
 
+        @Override
         public float getTime() {
             return -1.0f;
         }

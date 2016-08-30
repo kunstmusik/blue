@@ -148,7 +148,7 @@ final class UtilityPanel extends javax.swing.JPanel {
 
         String flag = "W";
 
-        if (osName.indexOf("Mac") >= 0) {
+        if (osName.contains("Mac")) {
             flag = "A";
         }
 

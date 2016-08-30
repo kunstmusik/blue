@@ -36,7 +36,7 @@ import javax.swing.JComponent;
  */
 
 public class PianoRollCanvasHeader extends JComponent implements
-        PropertyChangeListener, SelectionListener {
+        PropertyChangeListener, SelectionListener<PianoNoteView> {
 
     private static final Font labelFont = new Font("Dialog", Font.PLAIN, 10);
 
@@ -207,10 +207,8 @@ public class PianoRollCanvasHeader extends JComponent implements
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
-        Object selectedItem = e.getSelectedItem();
-
-        PianoNoteView pnv;
+    public void selectionPerformed(SelectionEvent<PianoNoteView> e) {
+        PianoNoteView pnv = e.getSelectedItem();
         SelectedNoteHighlighter snh;
 
         switch (e.getSelectionType()) {
@@ -223,6 +221,7 @@ public class PianoRollCanvasHeader extends JComponent implements
                 repaint();
 
                 break;
+
             case SelectionEvent.SELECTION_SINGLE:
                 for(SelectedNoteHighlighter tempSnh : noteHilightMap.values()) {
                     tempSnh.cleanup();
@@ -230,8 +229,6 @@ public class PianoRollCanvasHeader extends JComponent implements
                 noteHilightMap.clear();
                 this.removeAll();
 
-                pnv = (PianoNoteView) selectedItem;
-
                 snh = new SelectedNoteHighlighter(pnv);
                 snh.setLocation(0, pnv.getY());
 
@@ -241,9 +238,8 @@ public class PianoRollCanvasHeader extends JComponent implements
                 repaint();
 
                 break;
+
             case SelectionEvent.SELECTION_ADD:
-                pnv = (PianoNoteView) selectedItem;
-
                 snh = new SelectedNoteHighlighter(pnv);
                 snh.setLocation(0, pnv.getY());
 
@@ -253,9 +249,8 @@ public class PianoRollCanvasHeader extends JComponent implements
                 repaint();
 
                 break;
+                
             case SelectionEvent.SELECTION_REMOVE:
-                pnv = (PianoNoteView) selectedItem;
-
                 snh = noteHilightMap.get(pnv);
 
                 this.remove(snh);

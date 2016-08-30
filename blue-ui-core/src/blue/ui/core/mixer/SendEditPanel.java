@@ -38,25 +38,19 @@ public class SendEditPanel extends javax.swing.JPanel implements
         amountSlider.setMinimum(0);
         amountSlider.setMaximum(100);
 
-        amountSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                float val = amountSlider.getValue() / 100.0f;
-                valueLabel.setText(format
-                        .format(new Object[] { new Float(val) }));
-                if (send != null && !updating) {
-                    send.setLevel(val);
-                }
+        amountSlider.addChangeListener((ChangeEvent e) -> {
+            float val = amountSlider.getValue() / 100.0f;
+            valueLabel.setText(format
+                    .format(new Object[] { new Float(val) }));
+            if (send != null && !updating) {
+                send.setLevel(val);
             }
         });
 
-        channelComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (send != null) {
-                    send.setSendChannel((String) channelComboBox
-                            .getSelectedItem());
-                }
+        channelComboBox.addActionListener((ActionEvent e) -> {
+            if (send != null) {
+                send.setSendChannel((String) channelComboBox
+                        .getSelectedItem());
             }
         });
 

@@ -87,6 +87,7 @@ public class Cauchy implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -112,10 +113,12 @@ public class Cauchy implements ProbabilityGenerator {
 //        return new CauchyEditor(this);
 //    }
 
+    @Override
     public String getName() {
         return "Cauchy";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         // alpha -> Bereich f�r 50% aller x
 

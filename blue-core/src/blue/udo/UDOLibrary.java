@@ -210,6 +210,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getRoot()
      */
+    @Override
     public Object getRoot() {
         return getRootUDOCategory();
     }
@@ -219,6 +220,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
      */
+    @Override
     public int getChildCount(Object parent) {
         if (parent instanceof UserDefinedOpcode) {
             return 0;
@@ -236,6 +238,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
      */
+    @Override
     public boolean isLeaf(Object node) {
         return (node instanceof UserDefinedOpcode);
     }
@@ -245,6 +248,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
         listeners.add(l);
     }
@@ -254,6 +258,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
     }
@@ -264,6 +269,7 @@ public class UDOLibrary implements Serializable, TreeModel {
      * @see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath,
      *      java.lang.Object)
      */
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
@@ -304,6 +310,7 @@ public class UDOLibrary implements Serializable, TreeModel {
         }
     }
 
+    @Override
     public Object getChild(Object parent, int index) {
         UDOCategory category = (UDOCategory) parent;
 
@@ -320,6 +327,7 @@ public class UDOLibrary implements Serializable, TreeModel {
 
     }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
         UDOCategory category = (UDOCategory) parent;
 

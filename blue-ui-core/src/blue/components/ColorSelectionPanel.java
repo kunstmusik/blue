@@ -87,14 +87,9 @@ public class ColorSelectionPanel extends JPanel {
     }
 
     public static void main(String[] args) {
-        PropertyChangeListener pcl = new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                System.out.println(evt.getPropertyName() + " : "
-                        + evt.getOldValue() + " : " + evt.getNewValue());
-            }
-
+        PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+            System.out.println(evt.getPropertyName() + " : "
+                    + evt.getOldValue() + " : " + evt.getNewValue());
         };
 
         ColorSelectionPanel csp = new ColorSelectionPanel();

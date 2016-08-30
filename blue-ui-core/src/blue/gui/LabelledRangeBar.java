@@ -46,14 +46,11 @@ public class LabelledRangeBar extends JComponent {
         slider.setMaximum(rangeEnd);
         slider.setValue(rangeEnd);
 
-        slider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (filter != null) {
-                    display.setText(filter.filter(slider.getValue()));
-                } else {
-                    display.setText(Integer.toString(slider.getValue()));
-                }
+        slider.addChangeListener((ChangeEvent e) -> {
+            if (filter != null) {
+                display.setText(filter.filter(slider.getValue()));
+            } else {
+                display.setText(Integer.toString(slider.getValue()));
             }
         });
 

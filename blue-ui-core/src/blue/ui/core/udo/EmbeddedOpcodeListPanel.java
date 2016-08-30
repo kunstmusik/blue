@@ -45,30 +45,23 @@ public class EmbeddedOpcodeListPanel extends JComponent {
         this.add(split);
 
         opcodeListEditPanel
-                .addListSelectionListener(new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-
-                        if (e.getValueIsAdjusting()) {
-                            return;
-                        }
-
-                        UserDefinedOpcode[] udos = opcodeListEditPanel
-                                .getSelectedUDOs();
-
-                        
-                        if(udos != null && udos.length == 1) {
-                            opcodeEditor.editUserDefinedOpcode(udos[0]);
-                            opcodeEditor.setBorder(null);
-                        } else {
-                            opcodeEditor.editUserDefinedOpcode(null);
-                            opcodeEditor.setBorder(null);
-                        }
-                        
-
+                .addListSelectionListener((ListSelectionEvent e) -> {
+                    if (e.getValueIsAdjusting()) {
+                        return;
                     }
-                });
+                    
+                    UserDefinedOpcode[] udos = opcodeListEditPanel
+                            .getSelectedUDOs();
+                    
+                    
+                    if(udos != null && udos.length == 1) {
+                        opcodeEditor.editUserDefinedOpcode(udos[0]);
+                        opcodeEditor.setBorder(null);
+                    } else {
+                        opcodeEditor.editUserDefinedOpcode(null);
+                        opcodeEditor.setBorder(null);
+                    }
+        });
     }
 
     public void editOpcodeList(OpcodeList opcodeList) {

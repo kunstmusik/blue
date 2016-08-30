@@ -62,12 +62,7 @@ public class SoundFontViewer extends JComponent {
 
         fTree.setFilters(filters);
 
-        fTree.addFileTreeListener(new FileTreeListener() {
-            @Override
-            public void fileSelected(File f) {
-                getSoundFontInfo(f);
-            }
-        });
+        fTree.addFileTreeListener(this::getSoundFontInfo);
         
         fTree.addFileTreePopup(new SFFileTreePopup());
 
@@ -113,16 +108,11 @@ public class SoundFontViewer extends JComponent {
 
         public SFFileTreePopup() {
             JMenuItem menuItem = new JMenuItem("Copy Path");
-            menuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent arg0) {
-                    if(file != null && file.exists() && file.isFile()) {
-                        Clipboard clipboard = getToolkit().getSystemClipboard();
-                        clipboard.setContents(new StringSelection(file.getAbsolutePath()), null);
-                    }
+            menuItem.addActionListener((ActionEvent arg0) -> {
+                if(file != null && file.exists() && file.isFile()) {
+                    Clipboard clipboard = getToolkit().getSystemClipboard();
+                    clipboard.setContents(new StringSelection(file.getAbsolutePath()), null);
                 }
-                
             });
             
             this.add(menuItem);

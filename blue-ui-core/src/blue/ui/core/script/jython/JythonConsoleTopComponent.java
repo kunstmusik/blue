@@ -19,31 +19,36 @@
  */
 package blue.ui.core.script.jython;
 
-import blue.ui.core.script.jython.console.JConsole;
+import blue.scripting.PythonProxy;
+import blue.ui.utilities.jconsole.JConsole;
+import blue.ui.utilities.jconsole.JConsoleDelegate;
 import java.awt.BorderLayout;
+import java.io.Reader;
+import java.io.Writer;
 import javax.swing.JScrollPane;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
+import org.python.util.InteractiveInterpreter;
 
 /**
  * Top component which displays something.
  */
 @ConvertAsProperties(
-    dtd = "-//blue.ui.core.script.jython//JythonConsole//EN",
-autostore = false)
+        dtd = "-//blue.ui.core.script.jython//JythonConsole//EN",
+        autostore = false)
 @TopComponent.Description(
-    preferredID = "JythonConsoleTopComponent",
-//iconBase="SET/PATH/TO/ICON/HERE", 
-persistenceType = TopComponent.PERSISTENCE_ALWAYS)
+        preferredID = "JythonConsoleTopComponent",
+        //iconBase="SET/PATH/TO/ICON/HERE", 
+        persistenceType = TopComponent.PERSISTENCE_ALWAYS)
 @TopComponent.Registration(mode = "output", openAtStartup = false)
 @ActionID(category = "Window", id = "blue.ui.core.script.jython.JythonConsoleTopComponent")
-@ActionReference(path = "Menu/Window", position = 1900 )
+@ActionReference(path = "Menu/Window", position = 1900)
 @TopComponent.OpenActionRegistration(
-    displayName = "#CTL_JythonConsoleAction",
-preferredID = "JythonConsoleTopComponent")
+        displayName = "#CTL_JythonConsoleAction",
+        preferredID = "JythonConsoleTopComponent")
 @Messages({
     "CTL_JythonConsoleAction=Python Console",
     "CTL_JythonConsoleTopComponent=Python Console Window",
@@ -52,13 +57,38 @@ preferredID = "JythonConsoleTopComponent")
 public final class JythonConsoleTopComponent extends TopComponent {
 
     JConsole jconsole = new JConsole();
-    
+
     public JythonConsoleTopComponent() {
         initComponents();
         setName(Bundle.CTL_JythonConsoleTopComponent());
         setToolTipText(Bundle.HINT_JythonConsoleTopComponent());
 
         this.add(new JScrollPane(jconsole), BorderLayout.CENTER);
+
+        PythonProxy.addPythonProxyListener(() -> jconsole.setText(">>>"));
+
+        jconsole.setDelegate(new JConsoleDelegate() {
+            @Override
+            public String getPrompt() {
+                return ">>> ";
+            }
+
+            @Override
+            public void processCommands(String commands, Reader stdin, Writer stdout, Writer stderr) {
+                InteractiveInterpreter interp = PythonProxy.getInterpreter();
+                try {
+                    interp.setIn(stdin);
+                    interp.setOut(stdout);
+                    interp.setErr(stderr);
+
+                    interp.runsource(commands);
+                } finally {
+                    interp.setIn(System.in);
+                    interp.setOut(System.out);
+                    interp.setErr(System.err);
+                }
+            }
+        });
     }
 
     /**

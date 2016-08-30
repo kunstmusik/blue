@@ -48,6 +48,7 @@ public class BlueScrollPaneUI extends MetalScrollPaneUI {
     
     class HorizontalScrollListener implements MouseWheelListener {
 
+        @Override
         public void mouseWheelMoved(MouseWheelEvent e) {
             
             if (scrollpane.isWheelScrollingEnabled() &&

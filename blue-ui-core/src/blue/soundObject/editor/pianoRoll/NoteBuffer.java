@@ -22,13 +22,14 @@ package blue.soundObject.editor.pianoRoll;
 import blue.event.SelectionEvent;
 import blue.event.SelectionListener;
 import blue.soundObject.PianoRoll;
+import blue.soundObject.pianoRoll.PianoNote;
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
  * @author steven
  */
-public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionListener {
+public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionListener<PianoNoteView> {
     private static final int EDGE = 5;
 
     private PianoRoll pianoRoll = null;
@@ -112,7 +113,7 @@ public class NoteBuffer extends ArrayList<PianoNoteView> implements SelectionLis
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
+    public void selectionPerformed(SelectionEvent<PianoNoteView> e) {
         Object selectedItem = e.getSelectedItem();
 
         switch (e.getSelectionType()) {

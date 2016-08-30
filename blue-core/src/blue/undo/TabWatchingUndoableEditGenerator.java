@@ -43,6 +43,7 @@ public class TabWatchingUndoableEditGenerator {
         currentTab = tabs.getSelectedIndex();
         this.undo = undoManager;
         tabs.addChangeListener(new ChangeListener() {
+            @Override
             public void stateChanged(ChangeEvent e) {
                 if (!processingUndoRedo) {
                     undo.addEdit(new TabSwitchUndoableEdit(jTabbedPane,

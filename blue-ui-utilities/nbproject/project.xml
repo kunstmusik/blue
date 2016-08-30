@@ -6,19 +6,11 @@
             <code-name-base>blue.ui.utilities</code-name-base>
             <suite-component/>
             <module-dependencies/>
-            <test-dependencies>
-                <test-type>
-                    <name>unit</name>
-                    <test-dependency>
-                        <code-name-base>blue.ui.utilities</code-name-base>
-                        <recursive/>
-                        <compile-dependency/>
-                    </test-dependency>
-                </test-type>
-            </test-dependencies>
             <public-packages>
                 <package>blue.ui.utilities</package>
                 <package>blue.ui.utilities.audio</package>
+                <package>blue.ui.utilities.jconsole</package>
+                <package>blue.ui.utilities.jconsole.streams</package>
                 <package>org.wonderly.awt</package>
                 <package>skt.swing</package>
             </public-packages>

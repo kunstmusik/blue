@@ -70,13 +70,9 @@ public class MidiInputProcessorPanel extends javax.swing.JPanel {
             }
         });
 
-        scaleSelectionPanel1.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (processor != null) {
-                    processor.setScale(scaleSelectionPanel1.getScale());
-                }
+        scaleSelectionPanel1.addChangeListener((ChangeEvent e) -> {
+            if (processor != null) {
+                processor.setScale(scaleSelectionPanel1.getScale());
             }
         });
     }

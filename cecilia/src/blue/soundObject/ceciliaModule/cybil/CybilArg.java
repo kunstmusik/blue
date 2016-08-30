@@ -66,7 +66,7 @@ abstract class CybilArg {
     protected static float getTimeValue(Object obj) {
         String time = (String) obj;
 
-        if (time.indexOf("s") < 0) {
+        if (!time.contains("s")) {
             return Float.parseFloat(time);
         }
 
@@ -76,6 +76,6 @@ abstract class CybilArg {
     protected static boolean isTime(Object obj) {
         String time = (String) obj;
 
-        return !(time.indexOf("s") < 0);
+        return !!time.contains("s");
     }
 }

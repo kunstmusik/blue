@@ -114,13 +114,9 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
         });
 
 
-        cl = new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (!updating) {
-                    updateKnobValue();
-                }
+        cl = (ChangeEvent e) -> {
+            if (!updating) {
+                updateKnobValue();
             }
         };
 

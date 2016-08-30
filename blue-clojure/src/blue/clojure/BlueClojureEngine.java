@@ -22,15 +22,13 @@ package blue.clojure;
 import blue.BlueSystem;
 import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
-import clojure.lang.Symbol;
-import clojure.lang.Var;
-import de.torq.clojure.jsr223.ClojureScriptEngine;
+import com.kunstmusik.clojureengine.ClojureEngine;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.script.ScriptException;
-import org.openide.util.Exceptions;
 
 /**
  *
@@ -38,8 +36,12 @@ import org.openide.util.Exceptions;
  */
 public class BlueClojureEngine implements PropertyChangeListener {
 
+    private static AtomicInteger NS_COUNTER = new AtomicInteger(0);
+
     private static class LazyHolder {
+
         private static final BlueClojureEngine INSTANCE;
+
         static {
             INSTANCE = new BlueClojureEngine();
             BlueProjectManager.getInstance().addPropertyChangeListener(INSTANCE);
@@ -48,40 +50,46 @@ public class BlueClojureEngine implements PropertyChangeListener {
     }
 
     private BlueProject currentProject = null;
-    private HashMap<BlueProject, ClojureScriptEngine> engines =
-            new HashMap<BlueProject, ClojureScriptEngine>();
+    private HashMap<BlueProject, ClojureEngine> engines
+            = new HashMap<>();
 
     public static BlueClojureEngine getInstance() {
         return LazyHolder.INSTANCE;
     }
 
     public void reinitialize() {
-        try {
-            if (currentProject == null) {
-                return;
-            }
-
-            File f = BlueSystem.getCurrentProjectDirectory();
-            File projScriptDir = null;
-
-            if (f != null) {
-                projScriptDir = new File(
-                        f.getAbsolutePath() + File.separator + "script"
-                        + File.separator + "clojure");
-            }
-
-            ClassLoader cl = new BlueClojureClassLoader(
-                    new File(BlueSystem.getUserScriptDir()
-                        + File.separator + "clojure"),
-                    projScriptDir);
-
-            ClojureScriptEngine engine = new ClojureScriptEngine(cl);
-
-            engines.put(currentProject,
-                    engine);
-        } catch (ScriptException ex) {
-            Exceptions.printStackTrace(ex);
+        if (currentProject == null) {
+            return;
         }
+
+        File f = BlueSystem.getCurrentProjectDirectory();
+        File projScriptDir = null;
+        File userScriptDir = new File(BlueSystem.getUserScriptDir()
+                + File.separator + "clojure");
+
+        if (f != null) {
+            projScriptDir = new File(
+                    f.getAbsolutePath() + File.separator + "script"
+                    + File.separator + "clojure");
+        }
+
+        ClojureEngine engine = new ClojureEngine("user" + NS_COUNTER.getAndIncrement(), userScriptDir, projScriptDir);
+
+        engines.put(currentProject,
+                engine);
+
+    }
+
+    public String getCurrentNameSpace() {
+        if(currentProject == null) {
+            return "ERROR - No Engine Available";
+        }
+
+        if (engines.get(currentProject) == null) {
+            reinitialize();
+        }
+
+        return engines.get(currentProject).getNamespace();
     }
 
     public String processScript(String code,
@@ -91,27 +99,27 @@ public class BlueClojureEngine implements PropertyChangeListener {
         if (engines.get(currentProject) == null) {
             reinitialize();
         }
-        
-        ClojureScriptEngine engine = engines.get(currentProject);
 
-        String retVal = "";
+        ClojureEngine engine = engines.get(currentProject);
+
 
         if (values != null) {
-            for (String key : values.keySet()) {
-                Var.intern(engine.getInstanceNameSpace(), Symbol.create(key),
-                        values.get(key));
-            }
+            engine.intern(values);
         }
 
-        engine.eval(code);
+        Object retObj = engine.eval(code);
+        String retVal = (retObj != null) ? retObj.toString() : "";
 
-        try {
-            Object obj = engine.eval("(str score)");
-            if (obj != null) {
-                retVal = obj.toString();
+        if(returnVariableName != null) {
+            try {
+                Object obj = engine.eval("(str " + returnVariableName + ")");
+                if (obj != null) {
+                    retVal = obj.toString();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();;
+                throw e;
             }
-        } catch (Exception e) {
-            e.printStackTrace();;
         }
 
         return retVal;
@@ -122,7 +130,7 @@ public class BlueClojureEngine implements PropertyChangeListener {
         if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
             if (this.currentProject != null
                     && !BlueProjectManager.getInstance().isProjectStillOpen(this.currentProject)) {
-                if(engines.containsKey(this.currentProject)) {
+                if (engines.containsKey(this.currentProject)) {
                     engines.remove(this.currentProject);
                 }
             }

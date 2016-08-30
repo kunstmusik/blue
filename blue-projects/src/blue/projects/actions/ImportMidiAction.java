@@ -53,12 +53,9 @@ public final class ImportMidiAction implements ActionListener {
         fcm.setDialogTitle(this.getClass(), "Select MIDI File");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                importMidiFile();
-            }
-        });
+        SwingUtilities.invokeLater(this::importMidiFile);
     }
 
     public void importMidiFile() {

@@ -101,20 +101,15 @@ public class TrackerEditor extends ScoreObjectEditor {
         // panel.setLayout(new FlowLayout(FlowLayout.LEADING));
 
         JButton addButton = new JButton("+");
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (tracker != null) {
-                    Track t = new Track();
-                    TrackList trackList = tracker.getTracks();
-
-                    t.setName(trackList.getNextTrackName());
-
-                    trackList.addTrack(t);
-                }
+        addButton.addActionListener((ActionEvent e) -> {
+            if (tracker != null) {
+                Track t = new Track();
+                TrackList trackList = tracker.getTracks();
+                
+                t.setName(trackList.getNextTrackName());
+                
+                trackList.addTrack(t);
             }
-
         });
 
         addButton.setToolTipText("Add New Track");
@@ -124,34 +119,24 @@ public class TrackerEditor extends ScoreObjectEditor {
         label.setFont(new Font("Dialog", Font.BOLD, 16));
 
         JButton button = new JButton("Test");
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        button.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
         button.setFocusPainted(false);
 
         JButton helpButton = new JButton("[ ? ]");
-        helpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showHelpText();
-            }
-
+        helpButton.addActionListener((ActionEvent e) -> {
+            showHelpText();
         });
         helpButton.setFocusPainted(false);
 
         spinner = new JSpinner();
         spinner.setModel(new SpinnerNumberModel(16, 1, Integer.MAX_VALUE, 1));
-        spinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (tracker != null) {
-                    tracker.setSteps(((Integer) spinner.getValue()).intValue());
-                    tracksEditor.revalidate();
-                    tracksEditor.repaint();
-                }
+        spinner.addChangeListener((ChangeEvent e) -> {
+            if (tracker != null) {
+                tracker.setSteps(((Integer) spinner.getValue()).intValue());
+                tracksEditor.revalidate();
+                tracksEditor.repaint();
             }
         });
 
@@ -161,23 +146,17 @@ public class TrackerEditor extends ScoreObjectEditor {
         spinner.setMaximumSize(d);
 
         useKeyboardNotes = new JCheckBox("Use Keyboard Notes");
-        useKeyboardNotes.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                tracksEditor.useKeyboardNoteShortcuts(useKeyboardNotes
-                        .isSelected());
-            }
+        useKeyboardNotes.addActionListener((ActionEvent e) -> {
+            tracksEditor.useKeyboardNoteShortcuts(useKeyboardNotes
+                    .isSelected());
         });
 
         octaveSpinner = new JSpinner();
         octaveSpinner.setModel(new SpinnerNumberModel(0, -8, 8, 1));
-        octaveSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (tracker != null) {
-                    int oct = ((Integer) octaveSpinner.getValue()).intValue();
-                    tracksEditor.setKeyboardOctave(oct);
-                }
+        octaveSpinner.addChangeListener((ChangeEvent e) -> {
+            if (tracker != null) {
+                int oct = ((Integer) octaveSpinner.getValue()).intValue();
+                tracksEditor.setKeyboardOctave(oct);
             }
         });
         octaveSpinner.setSize(d);

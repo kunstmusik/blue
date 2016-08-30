@@ -27,14 +27,21 @@ class CybilOperator {
     public static void process(String operator, CybilNoteList cybNoteList,
             int startIndex, int endIndex, CybilArg arg) {
 
-        if (operator.equals("+")) {
-            add(cybNoteList, startIndex, endIndex, arg);
-        } else if (operator.equals("-")) {
-            subtract(cybNoteList, startIndex, endIndex, arg);
-        } else if (operator.equals("*")) {
-            multiply(cybNoteList, startIndex, endIndex, arg);
-        } else if (operator.equals("/")) {
-            divide(cybNoteList, startIndex, endIndex, arg);
+        switch (operator) {
+            case "+":
+                add(cybNoteList, startIndex, endIndex, arg);
+                break;
+            case "-":
+                subtract(cybNoteList, startIndex, endIndex, arg);
+                break;
+            case "*":
+                multiply(cybNoteList, startIndex, endIndex, arg);
+                break;
+            case "/":
+                divide(cybNoteList, startIndex, endIndex, arg);
+                break;
+            default:
+                break;
         }
     }
 

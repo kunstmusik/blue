@@ -44,6 +44,7 @@ public class UndoAction extends AbstractAction {
         this.manager = manager;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (manager.canUndo()) {
             manager.undo();

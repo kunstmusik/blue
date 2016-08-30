@@ -47,7 +47,8 @@ public class LazyPlugin<T extends Object> {
     public String getDisplayName() {
         return displayName;
     }
-    
+   
+    @SuppressWarnings("unchecked")
     public T getInstance() {
         return (T) FileUtil.getConfigObject(path, clazz);
     }

@@ -17,7 +17,7 @@ import org.netbeans.spi.lexer.LexerRestartInfo;
  */
 public class CsoundScoLanguageHierarchy extends LanguageHierarchy<CsoundScoTokenId> {
     
-    private static List<CsoundScoTokenId> tokens = new ArrayList<CsoundScoTokenId>();
+    private static List<CsoundScoTokenId> tokens = new ArrayList<>();
    
 
     static {

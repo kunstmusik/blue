@@ -11,10 +11,11 @@ import java.awt.event.ActionListener;
 
 public final class NewProjectAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         final BlueProjectManager blueProjectManager = BlueProjectManager.
                 getInstance();
-        BlueProject project = blueProjectManager.createNewProject();
+        BlueProject project = BlueProjectManager.createNewProject();
         blueProjectManager.setCurrentProject(project);
     }
 }

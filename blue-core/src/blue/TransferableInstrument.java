@@ -54,10 +54,12 @@ public class TransferableInstrument implements Transferable {
         }
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return flavors;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         if (flavors.length == 1) {
             return flavors[0].getRepresentationClass() == flavor
@@ -67,6 +69,7 @@ public class TransferableInstrument implements Transferable {
         return false;
     }
 
+    @Override
     public Object getTransferData(DataFlavor flavor)
             throws UnsupportedFlavorException, IOException {
         return obj;

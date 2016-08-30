@@ -205,7 +205,7 @@ public class TimeState implements Serializable, Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public TimeState clone() {
         TimeState timeState = new TimeState();
         timeState.pixelSecond = this.pixelSecond;
         timeState.snapEnabled = this.snapEnabled;

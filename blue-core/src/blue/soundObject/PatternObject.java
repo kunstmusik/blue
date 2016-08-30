@@ -206,26 +206,32 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         return tempNoteList;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public int getTimeBehavior() {
         return timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -235,6 +241,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         fireScoreObjectEvent(event);
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
@@ -274,6 +281,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         return pattern;
     }
 
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
@@ -340,14 +348,17 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
 
     /* TABLE MODEL METHODS */
 
+    @Override
     public int getRowCount() {
         return patterns.size();
     }
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -359,6 +370,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -370,10 +382,12 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Pattern p = (Pattern) patterns.get(rowIndex);
 
@@ -387,6 +401,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Pattern p = (Pattern) patterns.get(rowIndex);
 
@@ -403,6 +418,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         }
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector();
@@ -410,6 +426,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         listeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners == null) {
             return;

@@ -419,14 +419,17 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
 
     // TABLE MODEL METHODS
 
+    @Override
     public int getColumnCount() {
         return 2;
     }
 
+    @Override
     public int getRowCount() {
         return points.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (rowIndex == 0 && columnIndex == 0) {
             return false;
@@ -437,10 +440,12 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         return true;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return Float.class;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         LinePoint p = points.get(rowIndex);
 
@@ -478,6 +483,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     // return yVal;
     // }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         Float val = (Float) aValue;
         float newValue = val.floatValue();
@@ -522,10 +528,12 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         return (columnIndex == 0) ? "x" : "y";
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -536,6 +544,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         }
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners != null) {
             listeners.remove(l);
@@ -574,6 +583,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         }
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
         LinePoint lp = (LinePoint) e.getSource();
 

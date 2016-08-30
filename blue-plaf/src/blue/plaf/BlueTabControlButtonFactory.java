@@ -101,6 +101,7 @@ public class BlueTabControlButtonFactory {
             toolTipManager.registerComponent( this );
         }
 
+        @Override
         protected String getTabActionCommand( ActionEvent e ) {
             return TabDisplayer.COMMAND_MAXIMIZE;
         }
@@ -163,6 +164,7 @@ public class BlueTabControlButtonFactory {
 
         int count = 0;
 
+        @Override
         public void actionPerformed( ActionEvent e ) {
             count++;
             if (count > 2) {
@@ -221,6 +223,7 @@ public class BlueTabControlButtonFactory {
             }
         }
 
+        @Override
         protected String getTabActionCommand(ActionEvent e) {
             return null;
         }
@@ -242,18 +245,19 @@ public class BlueTabControlButtonFactory {
         @Override
         protected void processMouseEvent(MouseEvent me) {
             super.processMouseEvent(me);
-            if (isEnabled() && me.getID() == me.MOUSE_PRESSED) {
+            if (isEnabled() && me.getID() == MouseEvent.MOUSE_PRESSED) {
                 forcePressedIcon = true;
                 repaint();
                 getAction().actionPerformed(new ActionEvent(this,
                                                             ActionEvent.ACTION_PERFORMED,
                                                             "pressed"));
-            } else if (isEnabled() && me.getID() == me.MOUSE_RELEASED) {
+            } else if (isEnabled() && me.getID() == MouseEvent.MOUSE_RELEASED) {
                 forcePressedIcon = false;
                 repaint();
             }
         }
 
+        @Override
         protected String getTabActionCommand(ActionEvent e) {
             return null;
         }
@@ -294,7 +298,7 @@ public class BlueTabControlButtonFactory {
          */
         public Icon obtainIcon(String iconPath) {
             if (paths2Icons == null) {
-                paths2Icons = new HashMap<String, Icon>(6);
+                paths2Icons = new HashMap<>(6);
             }
             Icon icon = paths2Icons.get(iconPath);
             if (icon == null) {

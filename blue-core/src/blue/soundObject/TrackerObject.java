@@ -78,30 +78,37 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         return nl;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return duration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public int getTimeBehavior() {
         return timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
     }
 
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
@@ -140,6 +147,7 @@ public class TrackerObject extends AbstractSoundObject implements Serializable {
         return retVal;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }

@@ -61,7 +61,7 @@ public class PropertyEditor extends JComponent {
         PropertyEditor a = new PropertyEditor();
         mFrame.getContentPane().add(a);
 
-        mFrame.show();
+        mFrame.setVisible(true);
         mFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -163,7 +163,7 @@ class PropertyEditTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Class getColumnClass(int c) {
+    public Class<?> getColumnClass(int c) {
         return getValueAt(0, 1).getClass();
     }
 

@@ -87,14 +87,10 @@ public final class ScratchPadTopComponent extends TopComponent {
             }
         });
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
-                        getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.
+                    getPropertyName())) {
+                reinitialize();
             }
         });
 

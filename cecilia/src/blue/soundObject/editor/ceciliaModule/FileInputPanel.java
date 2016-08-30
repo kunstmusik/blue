@@ -223,12 +223,8 @@ class CFilePanel extends JComponent {
 
         JButton fileButton = new JButton("...");
 
-        fileButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectFile();
-            }
-
+        fileButton.addActionListener((ActionEvent e) -> {
+            selectFile();
         });
 
         itemConstraints = new GridBagConstraints();
@@ -274,22 +270,16 @@ class CFilePanel extends JComponent {
         slider.setMinimum(0);
         slider.setValue(0);
 
-        slider.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                // slider = (JSlider) e.getSource();
-
-                float val = slider.getValue() / 10.0f;
-
-                offsetLabel.setText(Float.toString(val) + "s");
-
-                if (cfilein != null) {
-                    cfilein.setOffset(slider.getValue());
-                }
-
+        slider.addChangeListener((ChangeEvent e) -> {
+            // slider = (JSlider) e.getSource();
+            
+            float val = slider.getValue() / 10.0f;
+            
+            offsetLabel.setText(Float.toString(val) + "s");
+            
+            if (cfilein != null) {
+                cfilein.setOffset(slider.getValue());
             }
-
         });
 
     }

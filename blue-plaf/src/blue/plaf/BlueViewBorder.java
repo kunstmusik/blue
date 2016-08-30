@@ -40,6 +40,7 @@ public class BlueViewBorder implements Border, UIResource {
         this.shadow = shadow;
     }
 
+    @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width,
             int height) {
         Rectangle rect = c.getBounds();
@@ -51,10 +52,12 @@ public class BlueViewBorder implements Border, UIResource {
         g.drawLine(rect.width - 1, 0, rect.width - 1, rect.height - 1);
     }
 
+    @Override
     public Insets getBorderInsets(Component c) {
         return new Insets(1, 1, 1, 1);
     }
 
+    @Override
     public boolean isBorderOpaque() {
         return true;
     }

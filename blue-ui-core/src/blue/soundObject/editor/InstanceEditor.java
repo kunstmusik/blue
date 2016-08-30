@@ -56,12 +56,8 @@ public class InstanceEditor extends ScoreObjectEditor {
         scoreEditPane.getJEditorPane().setEditable(false);
 
         testButton.setText(BlueSystem.getString("common.test"));
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
 
         topPanel.setLayout(new BorderLayout());
@@ -90,7 +86,7 @@ public class InstanceEditor extends ScoreObjectEditor {
         String generatedNoteText = null;
 
         try {
-            SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+            SoundObject clone = instance.getSoundObject().clone();
 
             generatedNoteText = clone.generateForCSD(CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f).toString();
@@ -113,7 +109,7 @@ public class InstanceEditor extends ScoreObjectEditor {
 
         try {
 
-            SoundObject clone = (SoundObject) instance.getSoundObject().clone();
+            SoundObject clone = instance.getSoundObject().clone();
 
             notes = clone.generateForCSD(CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f);

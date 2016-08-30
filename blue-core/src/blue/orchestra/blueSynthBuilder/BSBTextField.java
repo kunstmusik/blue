@@ -34,6 +34,7 @@ public class BSBTextField extends BSBObject {
 //        return new BSBTextFieldView(this);
 //    }
 
+    @Override
     public String getPresetValue() {
         return value;
     }
@@ -62,6 +63,7 @@ public class BSBTextField extends BSBObject {
         return bsbText;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -72,10 +74,12 @@ public class BSBTextField extends BSBObject {
         return retVal;
     }
 
+    @Override
     public void setPresetValue(String val) {
         value = val;
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         compilationUnit.addReplacementValue(objectName, value);
     }

@@ -58,17 +58,12 @@ public class BlueLiveToolBar extends JToolBar {
     private BlueLiveToolBar() {
         setFloatable(false);
 
-        PlayModeListener playModeListener = new PlayModeListener() {
-
-            @Override
-            public void playModeChanged(int playMode) {
-                if (playMode == PlayModeListener.PLAY_MODE_STOP) {
-                    
-                        runButton.setSelected(false);
-                } else if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
-                    runButton.setSelected(true);
-                }
-
+        PlayModeListener playModeListener = (int playMode) -> {
+            if (playMode == PlayModeListener.PLAY_MODE_STOP) {
+                
+                runButton.setSelected(false);
+            } else if (playMode == PlayModeListener.PLAY_MODE_PLAY) {
+                runButton.setSelected(true);
             }
         };
 
@@ -76,36 +71,18 @@ public class BlueLiveToolBar extends JToolBar {
         RealtimeRenderManager.getInstance().addBlueLivePlayModeListener(playModeListener);
         
 
-        runButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                runButtonActionPerformed();
-            }
+        runButton.addActionListener((ActionEvent e) -> {
+            runButtonActionPerformed();
         });
 
-        refreshButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                refreshButtonActionPerformed();
-            }
+        refreshButton.addActionListener((ActionEvent e) -> {
+            refreshButtonActionPerformed();
         });
         
-        allNotesOffButton.addActionListener(new ActionListener() {
+        allNotesOffButton.addActionListener(this::allNotesOffButtonActionPerformed);
 
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                allNotesOffButtonActionPerformed(e);
-            }
-        });
-
-        midiButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                midiButtonActionPerformed();
-            }
+        midiButton.addActionListener((ActionEvent e) -> {
+            midiButtonActionPerformed();
         });
 
         this.add(runButton);
@@ -113,13 +90,9 @@ public class BlueLiveToolBar extends JToolBar {
         this.add(allNotesOffButton);
         this.add(midiButton);
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
+                reinitialize();
             }
         });
         

@@ -33,14 +33,9 @@ public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
 
     public SeparatorTypePropertyEditor() {
         super();
-        options = new JComboBox<String>(BSBLineObject.SEPARATOR_TYPES);
-        options.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setValueFromComboBox();
-            }
-
+        options = new JComboBox<>(BSBLineObject.SEPARATOR_TYPES);
+        options.addActionListener((ActionEvent e) -> {
+            setValueFromComboBox();
         });
     }
 

@@ -457,11 +457,11 @@ public class XMLSerializer {
                             + "' not found for:  " + line);
 
                     // Consume lines until the end tag is found?
-                    if (line.indexOf("<" + getName(line)) != -1) {
+                    if (line.contains("<" + getName(line))) {
                         String missingFieldEndTag = "</" + getName(line);
                         for (;;) {
                             String consumedLine = bufferedReader.readLine();
-                            if (consumedLine.indexOf(missingFieldEndTag) != -1) {
+                            if (consumedLine.contains(missingFieldEndTag)) {
                                 break;
                             }
                         }
@@ -966,7 +966,7 @@ public class XMLSerializer {
      * object.
      */
     protected boolean isReference(String tag) {
-        return tag.indexOf(" />") != -1;
+        return tag.contains(" />");
     }
 
     /**

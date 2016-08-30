@@ -34,7 +34,7 @@ public interface LayerGroupPanel<T extends LayerGroup> {
     
     public void paintNavigatorView(Graphics2D g2d);
 
-    public ScoreObjectView getScoreObjectViewAtPoint(Point p);
+    public ScoreObjectView<?> getScoreObjectViewAtPoint(Point p);
 
     public Action[] getLayerActions();
 

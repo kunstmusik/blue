@@ -52,16 +52,13 @@ public class PropertiesPanel extends JComponent {
     public PropertiesPanel() {
         ButtonGroup group = new ButtonGroup();
 
-        ActionListener orchListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (initiatingObject) {
-                    return;
-                }
-                for (int i = 0; i < orchOptions.length; i++) {
-                    if (orchOptions[i].isSelected()) {
-                        ceciliaModule.setOrchestraVersion(i);
-                    }
+        ActionListener orchListener = (ActionEvent e) -> {
+            if (initiatingObject) {
+                return;
+            }
+            for (int i = 0; i < orchOptions.length; i++) {
+                if (orchOptions[i].isSelected()) {
+                    ceciliaModule.setOrchestraVersion(i);
                 }
             }
         };
@@ -70,15 +67,12 @@ public class PropertiesPanel extends JComponent {
         stereo.addActionListener(orchListener);
         quad.addActionListener(orchListener);
 
-        genSizeOptions.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (initiatingObject) {
-                    return;
-                }
-                ceciliaModule.setGenSize(genSizeOptions.getSelectedItem()
-                        .toString());
+        genSizeOptions.addActionListener((ActionEvent e) -> {
+            if (initiatingObject) {
+                return;
             }
+            ceciliaModule.setGenSize(genSizeOptions.getSelectedItem()
+                    .toString());
         });
 
         group.add(mono);

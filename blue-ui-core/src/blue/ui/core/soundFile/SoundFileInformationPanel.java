@@ -64,12 +64,9 @@ public class SoundFileInformationPanel extends JComponent {
         ftablePanel.setLayout(new BorderLayout());
         ftablePanel.add(fTableText, BorderLayout.CENTER);
         ftablePanel.add(ftableCopyButton, BorderLayout.EAST);
-        ftableCopyButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fTableText.selectAll();
-                fTableText.copy();
-            }
+        ftableCopyButton.addActionListener((ActionEvent e) -> {
+            fTableText.selectAll();
+            fTableText.copy();
         });
         ftableCopyButton.setText(BlueSystem
                 .getString("soundfile.infoPanel.copy"));

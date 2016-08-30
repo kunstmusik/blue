@@ -103,73 +103,50 @@ public class OpcodeListEditPanel extends JComponent {
         JButton addButton = new JButton("+");
         addButton.setMargin(smallButtonInsets);
         addButton.setToolTipText("Add User-Defined Opcode");
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addUDO();
-            }
-
+        addButton.addActionListener((ActionEvent e) -> {
+            addUDO();
         });
 
         JButton importButton = new JButton("I");
         importButton.setMargin(new Insets(1, 6, 1, 7));
         importButton
                 .setToolTipText("Import User-Defined Opcode from Repository");
-        importButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                importUDO();
-            }
-
+        importButton.addActionListener((ActionEvent e) -> {
+            importUDO();
         });
 
         JButton removeButton = new JButton("-");
         removeButton.setMargin(new Insets(1, 4, 1, 5));
         removeButton.setToolTipText("Remove User-Defined Opcode");
-        removeButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeUDO();
-            }
-
+        removeButton.addActionListener((ActionEvent e) -> {
+            removeUDO();
         });
 
         JButton pushUpButton = new JButton("^");
         pushUpButton.setToolTipText("Push Up");
         pushUpButton.setMargin(new Insets(4, 4, 0, 3));
-        pushUpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] rows = table.getSelectedRows();
-                if (rows.length > 0 && rows[0] > 0) {
-                    opcodeList.pushUpUDO(rows);
-
-                    table.setRowSelectionInterval(rows[0] - 1,
-                            rows[rows.length - 1] - 1);
-                }
+        pushUpButton.addActionListener((ActionEvent e) -> {
+            int[] rows = table.getSelectedRows();
+            if (rows.length > 0 && rows[0] > 0) {
+                opcodeList.pushUpUDO(rows);
+                
+                table.setRowSelectionInterval(rows[0] - 1,
+                        rows[rows.length - 1] - 1);
             }
-
         });
 
         JButton pushDownButton = new JButton("V");
         pushDownButton.setMargin(new Insets(2, 3, 0, 4));
         pushDownButton.setToolTipText("Push Down");
-        pushDownButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int[] rows = table.getSelectedRows();
-                if (rows.length > 0
-                        && rows[rows.length - 1] < (opcodeList.size() - 1)) {
-                    opcodeList.pushDownUDO(rows);
-
-                    table.setRowSelectionInterval(rows[0] + 1,
-                            rows[rows.length - 1] + 1);
-                }
+        pushDownButton.addActionListener((ActionEvent e) -> {
+            int[] rows = table.getSelectedRows();
+            if (rows.length > 0
+                    && rows[rows.length - 1] < (opcodeList.size() - 1)) {
+                opcodeList.pushDownUDO(rows);
+                
+                table.setRowSelectionInterval(rows[0] + 1,
+                        rows[rows.length - 1] + 1);
             }
-
         });
 
         JPanel buttonPanel = new JPanel();
@@ -375,29 +352,20 @@ public class OpcodeListEditPanel extends JComponent {
         public UDOPopup() {
             JMenuItem cut = new JMenuItem();
             cut.setText(BlueSystem.getString("common.cut"));
-            cut.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    cutUDO();
-                }
+            cut.addActionListener((ActionEvent ae) -> {
+                cutUDO();
             });
 
             JMenuItem copy = new JMenuItem();
             copy.setText(BlueSystem.getString("common.copy"));
-            copy.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    copyUDO();
-                }
+            copy.addActionListener((ActionEvent ae) -> {
+                copyUDO();
             });
 
             final JMenuItem paste = new JMenuItem();
             paste.setText(BlueSystem.getString("common.paste"));
-            paste.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    pasteUDO();
-                }
+            paste.addActionListener((ActionEvent ae) -> {
+                pasteUDO();
             });
 
             this.add(cut);

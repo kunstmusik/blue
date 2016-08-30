@@ -225,7 +225,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
             this.add(index, patternLayer);
         }
 
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
         layers.add(patternLayer);
 
         LayerGroupDataEvent lde = new LayerGroupDataEvent(this,
@@ -239,7 +239,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     @Override
     public void removeLayers(int startIndex, int endIndex) {
 
-        ArrayList<Layer> layers = new ArrayList<Layer>();
+        ArrayList<Layer> layers = new ArrayList<>();
 
         for (int i = endIndex; i >= startIndex; i--) {
             PatternLayer patternLayer = this.get(i);
@@ -301,7 +301,7 @@ public class PatternsLayerGroup extends ArrayList<PatternLayer>
     @Override
     public void addLayerGroupListener(LayerGroupListener l) {
         if (layerGroupListeners == null) {
-            layerGroupListeners = new Vector<LayerGroupListener>();
+            layerGroupListeners = new Vector<>();
         }
 
         layerGroupListeners.add(l);

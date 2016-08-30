@@ -210,7 +210,7 @@ public class BlueEditorTabDisplayerUI extends BasicScrollingTabDisplayerUI {
 
     private static void initIcons() {
         if( null == buttonIconPaths ) {
-            buttonIconPaths = new HashMap<Integer, String[]>(7);
+            buttonIconPaths = new HashMap<>(7);
 
             //left button
             String[] iconPaths = new String[4];

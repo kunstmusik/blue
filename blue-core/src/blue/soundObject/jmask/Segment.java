@@ -50,6 +50,7 @@ public class Segment implements Generator, Serializable, Quantizable,
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -65,6 +66,7 @@ public class Segment implements Generator, Serializable, Quantizable,
 //        return segmentEditor;
 //    }
 
+    @Override
     public void initialize(double duration) {
         for(int i = 0; i < table.getRowCount(); i++) {
             TablePoint tp = table.getTablePoint(i);
@@ -72,6 +74,7 @@ public class Segment implements Generator, Serializable, Quantizable,
         }
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         return table.getValue(time);
     }

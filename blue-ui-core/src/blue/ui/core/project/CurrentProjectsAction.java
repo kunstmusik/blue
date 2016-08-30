@@ -38,17 +38,13 @@ public class CurrentProjectsAction extends JMenuItem implements
     private static ActionListener al;
 
     static {
-        al = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem item = (JMenuItem) e.getSource();
-                Object obj = item.getClientProperty("project");
-
-                if (obj != null) {
-                    BlueProjectManager.getInstance().setCurrentProject(
-                            (BlueProject) obj);
-                }
+        al = (ActionEvent e) -> {
+            JMenuItem item = (JMenuItem) e.getSource();
+            Object obj = item.getClientProperty("project");
+            
+            if (obj != null) {
+                BlueProjectManager.getInstance().setCurrentProject(
+                        (BlueProject) obj);
             }
         };
     }

@@ -30,8 +30,9 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class ParameterIdList implements Serializable {
+public class ParameterIdList implements Serializable, Iterable<String> {
     private static final Comparator comparator = new Comparator() {
+        @Override
         public int compare(Object o1, Object o2) {
             String s1 = (String) o1;
             String s2 = (String) o2;

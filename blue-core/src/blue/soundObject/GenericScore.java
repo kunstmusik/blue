@@ -68,6 +68,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         this.score = text;
     }
 
+    @Override
     public float getObjectiveDuration() {
         NoteList notes = null;
 
@@ -84,6 +85,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
         }
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
@@ -126,22 +128,27 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
 //        return renderer;
 //    }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain noteProcessorChain) {
         this.npc = noteProcessorChain;
     }
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -179,6 +186,7 @@ public class GenericScore extends AbstractSoundObject implements Serializable,
      *
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 

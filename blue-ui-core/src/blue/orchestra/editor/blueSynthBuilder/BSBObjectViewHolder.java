@@ -57,7 +57,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
 
     private boolean selected;
 
-    private GroupMovementSelectionList groupMovementSelectionList;
+    private GroupMovementSelectionList<BSBObjectViewHolder> groupMovementSelectionList;
 
     public BSBObjectViewHolder(BSBObjectView objectView) {
         this.objectView = objectView;
@@ -159,22 +159,23 @@ public class BSBObjectViewHolder extends JLayeredPane {
         });
     }
 
-    public void addSelectionListener(SelectionListener sl) {
+    public void addSelectionListener(SelectionListener<BSBObjectViewHolder> sl) {
         listenerList.add(SelectionListener.class, sl);
     }
 
-    public void removeSelectionListener(SelectionListener sl) {
+    public void removeSelectionListener(SelectionListener<BSBObjectViewHolder> sl) {
         listenerList.remove(SelectionListener.class, sl);
     }
 
+    @SuppressWarnings("unchecked")
     public void fireSelected(int selectionType) {
-        EventListener[] listeners = listenerList
+        SelectionListener<BSBObjectViewHolder>[] listeners = listenerList
                 .getListeners(SelectionListener.class);
 
-        SelectionEvent se = new SelectionEvent(this, selectionType);
+        SelectionEvent<BSBObjectViewHolder> se = new SelectionEvent<>(this, selectionType);
 
         for (int i = 0; i < listeners.length; i++) {
-            SelectionListener listener = (SelectionListener) listeners[i];
+            SelectionListener<BSBObjectViewHolder> listener = listeners[i];
             listener.selectionPerformed(se);
         }
 
@@ -242,7 +243,7 @@ public class BSBObjectViewHolder extends JLayeredPane {
      * @param selectionList
      */
     public void setGroupMovementListener(
-            GroupMovementSelectionList selectionList) {
+            GroupMovementSelectionList<BSBObjectViewHolder> selectionList) {
         this.groupMovementSelectionList = selectionList;
     }
 

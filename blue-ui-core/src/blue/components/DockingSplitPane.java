@@ -49,32 +49,27 @@ public class DockingSplitPane extends JComponent {
         jsp.add(primary, JSplitPane.LEFT);
         jsp.add(dockPanel, JSplitPane.RIGHT);
 
-        dockPanel.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (window.isShowing()) {
-                    window.remove(dockPanel);
-                    window.setVisible(false);
-                    remove(primary);
-                    add(jsp);
-                    jsp.add(primary, JSplitPane.LEFT);
-                    jsp.add(dockPanel, JSplitPane.RIGHT);
-                    revalidate();
-                    repaint();
-                } else {
-                    removeAll();
-                    add(primary);
-
-                    window.setSize(dockPanel.getSize());
-                    window.add(dockPanel);
-                    window.setVisible(true);
-
-                    revalidate();
-                    repaint();
-                }
+        dockPanel.addActionListener((ActionEvent e) -> {
+            if (window.isShowing()) {
+                window.remove(dockPanel);
+                window.setVisible(false);
+                remove(primary);
+                add(jsp);
+                jsp.add(primary, JSplitPane.LEFT);
+                jsp.add(dockPanel, JSplitPane.RIGHT);
+                revalidate();
+                repaint();
+            } else {
+                removeAll();
+                add(primary);
+                
+                window.setSize(dockPanel.getSize());
+                window.add(dockPanel);
+                window.setVisible(true);
+                
+                revalidate();
+                repaint();
             }
-
         });
     }
 

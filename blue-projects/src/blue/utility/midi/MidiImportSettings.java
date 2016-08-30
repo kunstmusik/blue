@@ -19,21 +19,21 @@
  */
 package blue.utility.midi;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 public class MidiImportSettings extends AbstractTableModel {
 
-    Vector settings = new Vector();
+    List<TrackImportSettings> settings = Collections.synchronizedList(new ArrayList<>());
 
     public void addTrackImportSetting(TrackImportSettings trSetting) {
         settings.add(trSetting);
     }
 
     public TrackImportSettings getTrackSettingsForTrackNum(int trackNum) {
-        for (int i = 0; i < settings.size(); i++) {
-            TrackImportSettings trSettings = (TrackImportSettings) settings
-                    .get(i);
+        for (TrackImportSettings trSettings : settings) {
             if (trSettings.getTrackNumber() == trackNum) {
                 return trSettings;
             }
@@ -42,7 +42,7 @@ public class MidiImportSettings extends AbstractTableModel {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
         switch (columnIndex) {
             case 0:
             case 1:
@@ -54,10 +54,11 @@ public class MidiImportSettings extends AbstractTableModel {
         return null;
     }
 
-    public Vector getSettings() {
+    public List<TrackImportSettings> getSettings() {
         return settings;
     }
 
+    @Override
     public int getColumnCount() {
         return 4;
     }
@@ -78,6 +79,7 @@ public class MidiImportSettings extends AbstractTableModel {
         return null;
     }
 
+    @Override
     public int getRowCount() {
         return settings.size();
     }
@@ -85,8 +87,7 @@ public class MidiImportSettings extends AbstractTableModel {
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 
-        TrackImportSettings trSetting = (TrackImportSettings) settings
-                .get(rowIndex);
+        TrackImportSettings trSetting = settings.get(rowIndex);
 
         switch (columnIndex) {
             case 1:
@@ -101,9 +102,9 @@ public class MidiImportSettings extends AbstractTableModel {
 
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        TrackImportSettings trSetting = (TrackImportSettings) settings
-                .get(rowIndex);
+        TrackImportSettings trSetting = settings.get(rowIndex);
 
         switch (columnIndex) {
             case 0:

@@ -51,7 +51,7 @@ public class ChoiceBinder<T> {
         });
 
         cl = (obs, oldVal, newVal) -> {
-            ChoiceBox choice = choiceBox.get();
+            ChoiceBox<T> choice = choiceBox.get();
             if (choice != null) {
                 BlueFX.runOnFXThread(()
                         -> choice.setValue(newVal)
@@ -61,7 +61,7 @@ public class ChoiceBinder<T> {
     }
     
     public void setObjectProperty(ObjectProperty<T> prop) {
-        ChoiceBox cb;
+        ChoiceBox<T> cb;
         ObjectProperty<T> op = objProperty == null ? null : objProperty.get();
 
         if ((cb = choiceBox.get()) == null) {

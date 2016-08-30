@@ -183,7 +183,7 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
     }
 
     @Override
-    public Object clone() {
+    public PianoNote clone() {
         PianoNote note = new PianoNote();
 
         note.octave = this.octave;
@@ -195,6 +195,7 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
         return note;
     }
 
+    @Override
     public int compareTo(PianoNote note2) {
         int val = this.octave - note2.octave;
         

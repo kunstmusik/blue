@@ -140,12 +140,8 @@ public class PolyObjectEditor extends ScoreObjectEditor {
         JPanel headerPanel = new JPanel();
 
         testButton.setText(BlueSystem.getString("common.test"));
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
 
         headerPanel.setLayout(new BorderLayout());
@@ -166,22 +162,16 @@ public class PolyObjectEditor extends ScoreObjectEditor {
 
         sObjScrollPane.getViewport().add(sObjTable, null);
         mainSplitPane.setDividerLocation(300);
-        sObjTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (pObj == null || e.getValueIsAdjusting()) {
-                            return;
-                        }
-
-                        int index = sObjTable.getSelectedRow();
-                        if (index != -1) {
-                            populate(sObjects.get(index));
-                        }
-
-                    }
-                });
+        sObjTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (pObj == null || e.getValueIsAdjusting()) {
+                return;
+            }
+            
+            int index = sObjTable.getSelectedRow();
+            if (index != -1) {
+                populate(sObjects.get(index));
+            }
+        });
     }
 
     @Override

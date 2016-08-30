@@ -99,7 +99,7 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
                 .getAbsolutePath()
                 + File.separator;
         
-        HashMap<String, Object> initObjects = new HashMap<String,Object>();
+        HashMap<String, Object> initObjects = new HashMap<>();
         initObjects.put("score", "");
         initObjects.put("blueDuration", getSubjectiveDuration());
         initObjects.put("blueProjectDir", currentDirFile);

@@ -60,15 +60,10 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
 
         model.setDropDown(dropdown);
 
-        updateIndexListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!updating) {
-                    updateSelectedIndex();
-                }
+        updateIndexListener = (ActionEvent e) -> {
+            if (!updating) {
+                updateSelectedIndex();
             }
-
         };
 
         setComboBox();

@@ -77,22 +77,16 @@ public class OscilatorPanel extends JComponent {
         this.add(freqFine);
         this.add(detune);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         freqCoarse.addChangeListener(cl);
         freqFine.addChangeListener(cl);
         detune.addChangeListener(cl);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                checkData();
-            }
+        ActionListener al = (ActionEvent ae) -> {
+            checkData();
         };
 
         modeCombo.addActionListener(al);

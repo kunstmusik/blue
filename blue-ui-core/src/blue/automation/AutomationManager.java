@@ -47,6 +47,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -78,33 +79,50 @@ public class AutomationManager implements ParameterListListener,
     private ParameterIdList selectedParamIdList = null;
     private static AutomationManager instance = null;
     PropertyChangeListener renderTimeListener;
+    ObservableListListener<ChannelList> channelListListener;
 
     private AutomationManager() {
-        parameterActionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                if (data == null || selectedParamIdList == null) {
-                    return;
+        parameterActionListener = (ActionEvent ae) -> {
+            if (data == null || selectedParamIdList == null) {
+                return;
+            }
+            
+            JMenuItem menuItem = (JMenuItem) ae.getSource();
+            
+            Parameter param = (Parameter) menuItem.getClientProperty("param");
+            
+            parameterSelected(selectedParamIdList, param);
+            
+            selectedParamIdList = null;
+        };
+
+        renderTimeListener = (PropertyChangeEvent pce) -> {
+            if (pce.getSource() == data) {
+                if (pce.getPropertyName().equals("renderStartTime")) {
+                    updateValuesFromAutomations();
                 }
-
-                JMenuItem menuItem = (JMenuItem) ae.getSource();
-
-                Parameter param = (Parameter) menuItem.getClientProperty("param");
-
-                parameterSelected(selectedParamIdList, param);
-
-                selectedParamIdList = null;
             }
         };
 
-        renderTimeListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent pce) {
-                if (pce.getSource() == data) {
-                    if (pce.getPropertyName().equals("renderStartTime")) {
-                        updateValuesFromAutomations();
+        channelListListener = e -> {
+            List<ChannelList> items = e.getAffectedItems();
+            switch(e.getType()) {
+                case ObservableListEvent.DATA_ADDED:
+                    for(ChannelList cList : items) {
+                       cList.addListener(AutomationManager.this);
+                       for(Channel c : cList) {
+                           addListenerToChannel(c);
+                       }
                     }
-                }
+                    break;
+                case ObservableListEvent.DATA_REMOVED:
+                    for(ChannelList cList : items) {
+                       cList.removeListener(AutomationManager.this);
+                       for(Channel c : cList) {
+                           removeListenerFromChannel(c);
+                       }
+                    }
+                    break;
             }
         };
     }
@@ -136,7 +154,7 @@ public class AutomationManager implements ParameterListListener,
                 //LayerGroup Design
                 Score score = data.getScore();
 
-                for (LayerGroup layerGroup : score) {
+                for (LayerGroup<? extends Layer> layerGroup : score) {
 
                     if (!(layerGroup instanceof PolyObject)) {
                         continue;
@@ -185,6 +203,7 @@ public class AutomationManager implements ParameterListListener,
             }
 
             Mixer mixer = this.data.getMixer();
+            mixer.getChannelListGroups().removeListener(channelListListener);
 
             for (ChannelList list : mixer.getChannelListGroups()) {
                 list.removeListener(this);
@@ -207,7 +226,7 @@ public class AutomationManager implements ParameterListListener,
             removeListenerFromChannel(mixer.getMaster());
 
             if (this.score != null) {
-                for (LayerGroup layerGroup : score) {
+                for (LayerGroup<? extends Layer> layerGroup : score) {
                     layerGroup.removeLayerGroupListener(this);
                 }
             }
@@ -242,6 +261,7 @@ public class AutomationManager implements ParameterListListener,
         arrangement.addAutomatableCollectionListener(this);
 
         Mixer mixer = data.getMixer();
+        mixer.getChannelListGroups().addListener(channelListListener);
 
         for (ChannelList list : mixer.getChannelListGroups()) {
             list.addListener(this);
@@ -268,7 +288,7 @@ public class AutomationManager implements ParameterListListener,
 
         this.score = data.getScore();
 
-        for (LayerGroup layerGroup : this.score) {
+        for (LayerGroup<? extends Layer> layerGroup : this.score) {
             layerGroup.addLayerGroupListener(this);
         }
 
@@ -412,23 +432,20 @@ public class AutomationManager implements ParameterListListener,
         menu.addSeparator();
 
         JMenuItem clearAll = new JMenuItem("Clear All");
-        clearAll.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Object retVal = DialogDisplayer.getDefault().notify(
-                        new NotifyDescriptor.Confirmation(
-                                "Please Confirm Clearing All Parameter Data for this SoundLayer"));
-
-                if (retVal == NotifyDescriptor.YES_OPTION) {
-
-                    ParameterIdList idList = selectedParamIdList;
-
-                    for (String paramId : idList.getParameters()) {
-                        Parameter param = getParameter(paramId);
-
-                        param.setAutomationEnabled(false);
-                        idList.removeParameterId(paramId);
-                    }
+        clearAll.addActionListener((ActionEvent e) -> {
+            Object retVal = DialogDisplayer.getDefault().notify(
+                    new NotifyDescriptor.Confirmation(
+                            "Please Confirm Clearing All Parameter Data for this SoundLayer"));
+            
+            if (retVal == NotifyDescriptor.YES_OPTION) {
+                
+                ParameterIdList idList = selectedParamIdList;
+                
+                for (String paramId : idList.getParameters()) {
+                    Parameter param = getParameter(paramId);
+                    
+                    param.setAutomationEnabled(false);
+                    idList.removeParameterId(paramId);
                 }
             }
         });
@@ -582,7 +599,7 @@ public class AutomationManager implements ParameterListListener,
     public void parameterRemoved(Parameter param) {
         allParameters.remove(param);
 
-        for (LayerGroup layerGroup : score) {
+        for (LayerGroup<? extends Layer> layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;
@@ -722,7 +739,7 @@ public class AutomationManager implements ParameterListListener,
             return;
         }
 
-        for (LayerGroup layerGroup : score) {
+        for (LayerGroup<? extends Layer> layerGroup : score) {
 
             if (layerGroup instanceof PolyObject) {
                 PolyObject pObj = (PolyObject) layerGroup;

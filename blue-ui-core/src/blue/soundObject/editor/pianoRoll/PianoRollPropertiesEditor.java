@@ -78,21 +78,16 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         LabelledItemPanel mainPanel = new LabelledItemPanel();
 
-        ActionListener timeActionListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!isUpdating) {
-                    if (e.getSource() == frequencyOption) {
-                        p.setPchGenerationMethod(PianoRoll.GENERATE_FREQUENCY);
-                    } else if (e.getSource() == pchOption) {
-                        p.setPchGenerationMethod(PianoRoll.GENERATE_PCH);
-                    } else if (e.getSource() == midiOption) {
-                        p.setPchGenerationMethod(PianoRoll.GENERATE_MIDI);
-                    }
+        ActionListener timeActionListener = (ActionEvent e) -> {
+            if (!isUpdating) {
+                if (e.getSource() == frequencyOption) {
+                    p.setPchGenerationMethod(PianoRoll.GENERATE_FREQUENCY);
+                } else if (e.getSource() == pchOption) {
+                    p.setPchGenerationMethod(PianoRoll.GENERATE_PCH);
+                } else if (e.getSource() == midiOption) {
+                    p.setPchGenerationMethod(PianoRoll.GENERATE_MIDI);
                 }
             }
-
         };
 
         frequencyOption.addActionListener(timeActionListener);
@@ -142,22 +137,12 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
         });
 
-        baseFrequencyText.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateBaseFrequency();
-            }
-
+        baseFrequencyText.addActionListener((ActionEvent e) -> {
+            updateBaseFrequency();
         });
 
-        transposition.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                updateTransposition();
-            }
-
+        transposition.addChangeListener((ChangeEvent e) -> {
+            updateTransposition();
         });
 
         noteTemplateText.getDocument().addDocumentListener(
@@ -186,22 +171,12 @@ public class PianoRollPropertiesEditor extends JScrollPane {
 
                 });
 
-        setAllNotesButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setAllNoteTemplates();
-            }
-
+        setAllNotesButton.addActionListener((ActionEvent e) -> {
+            setAllNoteTemplates();
         });
 
-        setSelectedNotesButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setSelectedNoteTemplates();
-            }
-
+        setSelectedNotesButton.addActionListener((ActionEvent e) -> {
+            setSelectedNoteTemplates();
         });
 
         instrumentIDText.getDocument().addDocumentListener(
@@ -234,14 +209,10 @@ public class PianoRollPropertiesEditor extends JScrollPane {
          this.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
          this.setBorder(null);
 
-         scalePanel.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if (p != null) {
-                    p.setScale(scalePanel.getScale());
-                }
-            }
+         scalePanel.addChangeListener((ChangeEvent e) -> {
+             if (p != null) {
+                 p.setScale(scalePanel.getScale());
+             }
         });
     }
 

@@ -67,18 +67,13 @@ public final class TablesTopComponent extends TopComponent {
                 "HINT_TablesTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            tables = null;
-                            reinitialize();
-                        }
-                    }
-                });
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(
+                    evt.getPropertyName())) {
+                tables = null;
+                reinitialize();
+            }
+        });
 
         reinitialize();
 

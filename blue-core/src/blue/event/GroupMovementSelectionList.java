@@ -28,7 +28,7 @@ import javax.swing.JComponent;
 /**
  * @author steven
  */
-public class GroupMovementSelectionList extends SelectionList implements
+public class GroupMovementSelectionList<T> extends SelectionList<T> implements
         GroupMovementListener {
 
     ArrayList originPoints = new ArrayList();
@@ -46,6 +46,7 @@ public class GroupMovementSelectionList extends SelectionList implements
         this.gridSettings = gridSettings;
     }
 
+    @Override
     public void initiateMovement(JComponent source) {
         originPoints.clear();
 
@@ -84,6 +85,7 @@ public class GroupMovementSelectionList extends SelectionList implements
      * 
      * @see blue.event.GroupMovementListener#move(java.awt.Point)
      */
+    @Override
     public void move(int offsetX, int offsetY) {
 
         if(gridSettings != null && gridSettings.isSnapEnabled()) {

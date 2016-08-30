@@ -58,35 +58,32 @@ public class RemoveSemiColonLineCommentAction extends BaseAction {
             final Caret caret = target.getCaret();
             final BaseDocument doc = (BaseDocument) target.getDocument();
 
-            doc.runAtomicAsUser(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        int startPos;
-                        int endPos;
-
-                        if (Utilities.isSelectionShowing(caret)) {
-                            startPos = Utilities.getRowStart(doc,
-                                    target.getSelectionStart());
-                            endPos = target.getSelectionEnd();
-                            if (endPos > 0 && Utilities.getRowStart(doc, endPos) == endPos) {
-                                endPos--;
-                            }
-                            endPos = Utilities.getRowEnd(doc, endPos);
-                        } else { // selection not visible
-                            startPos = Utilities.getRowStart(doc, caret.getDot());
-                            endPos = Utilities.getRowEnd(doc, caret.getDot());
+            doc.runAtomicAsUser(() -> {
+                try {
+                    int startPos;
+                    int endPos;
+                    
+                    if (Utilities.isSelectionShowing(caret)) {
+                        startPos = Utilities.getRowStart(doc,
+                                target.getSelectionStart());
+                        endPos = target.getSelectionEnd();
+                        if (endPos > 0 && Utilities.getRowStart(doc, endPos) == endPos) {
+                            endPos--;
                         }
-
-                        int lineCount = Utilities.getRowCount(doc, startPos,
-                                endPos);
-
-                        uncomment(doc, startPos, lineCount);
-
-
-                    } catch (BadLocationException e) {
-                        target.getToolkit().beep();
+                        endPos = Utilities.getRowEnd(doc, endPos);
+                    } else { // selection not visible
+                        startPos = Utilities.getRowStart(doc, caret.getDot());
+                        endPos = Utilities.getRowEnd(doc, caret.getDot());
                     }
+                    
+                    int lineCount = Utilities.getRowCount(doc, startPos,
+                            endPos);
+                    
+                    uncomment(doc, startPos, lineCount);
+                    
+                    
+                } catch (BadLocationException e) {
+                    target.getToolkit().beep();
                 }
             });
         }

@@ -22,7 +22,7 @@ package blue.event;
 /**
  * @author steven
  */
-public class SelectionEvent {
+public class SelectionEvent<T> {
     public static final int SELECTION_CLEAR = -1;
 
     public static final int SELECTION_SINGLE = 0;
@@ -35,22 +35,22 @@ public class SelectionEvent {
 
     public static final Object SELECTION_BLUE_LIVE = new Object();
     
-    private Object itemSelected;
+    private T itemSelected;
 
     private int selectionType;
     private Object selectionSubType = null;
 
-    public SelectionEvent(Object itemSelected, int selectionType) {
+    public SelectionEvent(T itemSelected, int selectionType) {
         this(itemSelected, selectionType, null);
     }
 
-    public SelectionEvent(Object itemSelected, int selectionType, Object selectionSubType) {
+    public SelectionEvent(T itemSelected, int selectionType, Object selectionSubType) {
         this.itemSelected = itemSelected;
         this.selectionType = selectionType;
         this.selectionSubType = selectionSubType;
     }
 
-    public Object getSelectedItem() {
+    public T getSelectedItem() {
         return itemSelected;
     }
 

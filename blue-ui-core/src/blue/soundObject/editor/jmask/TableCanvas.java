@@ -53,12 +53,8 @@ public class TableCanvas extends JComponent {
     double duration = 1.0;
 
     public TableCanvas() {        
-        lineListener = new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
         
         new TableCanvasMouseListener(this);
@@ -172,6 +168,7 @@ public class TableCanvas extends JComponent {
         g2d.drawString(yText, xLoc, yLoc + 14);
     }
 
+    @SuppressWarnings("fallthrough")
     private final void drawTable(Graphics g, Table table, boolean drawPoints) {
         
         double min = table.getMin();

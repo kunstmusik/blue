@@ -126,7 +126,7 @@ public class DiskRenderSettings implements Serializable {
 
             String osName = System.getProperty("os.name");
 
-            String csoundExecutableDefault = (osName.toLowerCase().indexOf("mac") >= 0)
+            String csoundExecutableDefault = (osName.toLowerCase().contains("mac"))
                     ? "/usr/local/bin/csound" : "csound";
 
             instance.csoundExecutable = prefs.get(PREFIX + CSOUND_EXECUTABLE,

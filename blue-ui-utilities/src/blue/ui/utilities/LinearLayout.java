@@ -44,16 +44,20 @@ public class LinearLayout implements LayoutManager {
         this.spacer = spacer;
     }
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
         return minimumLayoutSize(parent);
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
         int count = parent.getComponentCount();
 
@@ -79,6 +83,7 @@ public class LinearLayout implements LayoutManager {
         return new Dimension(w, h);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
 
         int count = parent.getComponentCount();

@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 
 public final class NextProjectAction implements ActionListener {
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         BlueProjectManager.getInstance().selectNextProject();
     }

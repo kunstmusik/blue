@@ -20,7 +20,9 @@
 
 package blue.ui.utilities;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -33,7 +35,7 @@ public class SelectionModel {
 
     int lastIndexSet = -1;
 
-    Vector listeners = null;
+    List<ChangeListener> listeners = null;
 
     ChangeEvent ce = null;
 
@@ -81,7 +83,7 @@ public class SelectionModel {
 
     public void addChangeListener(ChangeListener cl) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new ArrayList<>();
         }
         listeners.add(cl);
     }
@@ -101,10 +103,7 @@ public class SelectionModel {
             ce = new ChangeEvent(this);
         }
 
-        Iterator iter = new Vector(listeners).iterator();
-
-        while (iter.hasNext()) {
-            ChangeListener cl = (ChangeListener) iter.next();
+        for(ChangeListener cl : listeners) {
             cl.stateChanged(ce);
         }
     }

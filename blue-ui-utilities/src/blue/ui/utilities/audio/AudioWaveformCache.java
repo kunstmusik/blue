@@ -2,10 +2,11 @@ package blue.ui.utilities.audio;
 
 import java.io.File;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 public class AudioWaveformCache {
 
@@ -16,7 +17,7 @@ public class AudioWaveformCache {
     private final Map<WaveformCacheKey, SoftReference<AudioWaveformData>> waveCache
             = new HashMap<>();
     
-    private Vector listeners = null;
+    private List<AudioWaveformListener> listeners = null;
 
     private AudioWaveformCacheGenerator generator = null;
 
@@ -94,7 +95,7 @@ public class AudioWaveformCache {
     public synchronized void addAudioWaveformListener(
             AudioWaveformListener audioWaveformListener) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = Collections.synchronizedList(new ArrayList<>());
         }
 
         listeners.add(audioWaveformListener);
@@ -107,20 +108,14 @@ public class AudioWaveformCache {
         }
 
         if (filename == AudioWaveformCacheGenerator.CACHE_GEN_COMPLETE) {
-            for (Iterator iterator = new Vector(listeners).iterator(); iterator
-                    .hasNext();) {
-                AudioWaveformListener listener = (AudioWaveformListener) iterator
-                        .next();
+            for(AudioWaveformListener listener : listeners) {
                 listener.waveDataGenerated();
             }
             listeners.clear();
             return;
         }
 
-        for (Iterator iterator = new Vector(listeners).iterator(); iterator
-                .hasNext();) {
-            AudioWaveformListener listener = (AudioWaveformListener) iterator
-                    .next();
+        for(AudioWaveformListener listener : listeners) {
             if (listener.getFilename().equals(filename)) {
                 listener.waveDataGenerated();
             }

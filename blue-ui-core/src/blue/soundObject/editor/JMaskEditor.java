@@ -94,31 +94,21 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         topPanel.add(optionsButton);
         topPanel.add(Box.createGlue());
 
-        optionsButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updatePopup();
-                popup.show(topPanel, optionsButton.getX(),
-                        optionsButton.getY() + optionsButton.getHeight());
-            }
+        optionsButton.addActionListener((ActionEvent e) -> {
+            updatePopup();
+            popup.show(topPanel, optionsButton.getX(),
+                    optionsButton.getY() + optionsButton.getHeight());
         });
 
-        useSeedCheckBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(jmask != null) {
-                    jmask.setSeedUsed(useSeedCheckBox.isSelected());
-                }
+        useSeedCheckBox.addActionListener((ActionEvent e) -> {
+            if(jmask != null) {
+                jmask.setSeedUsed(useSeedCheckBox.isSelected());
             }
         });
         
-        seedSpinner.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                if(jmask != null) {
-                    jmask.setSeed(((Number)seedSpinner.getValue()).longValue());
-                }
+        seedSpinner.addChangeListener((ChangeEvent e) -> {
+            if(jmask != null) {
+                jmask.setSeed(((Number)seedSpinner.getValue()).longValue());
             }
         });
         
@@ -132,12 +122,8 @@ public class JMaskEditor extends ScoreObjectEditor implements ActionListener {
         JButton testButton = new JButton("Test");
         testButton.setFocusPainted(false);
         testButton.setFocusable(false);
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testScore();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testScore();
         });
 
         topPanel.add(testButton);

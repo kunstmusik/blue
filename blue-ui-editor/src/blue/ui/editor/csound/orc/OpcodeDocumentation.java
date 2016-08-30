@@ -52,8 +52,7 @@ public class OpcodeDocumentation {
                 
         String imgDir = "src=\"file://" + manualDir + "/images";
         
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(docFile));
+        try (BufferedReader br = new BufferedReader(new FileReader(docFile))) {
             String line;
             while ((line = br.readLine().trim()) != null) {
                 
@@ -75,7 +74,6 @@ public class OpcodeDocumentation {
                 }
             }
 
-            br.close();
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

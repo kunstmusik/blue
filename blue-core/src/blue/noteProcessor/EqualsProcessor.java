@@ -52,6 +52,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
         this.value = value;
     }
 
+    @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
@@ -118,6 +119,7 @@ public class EqualsProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

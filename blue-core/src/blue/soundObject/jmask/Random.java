@@ -55,6 +55,7 @@ public class Random implements Generator, Serializable, Quantizable,
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -69,10 +70,12 @@ public class Random implements Generator, Serializable, Quantizable,
 //        return new RandomEditor(this);
 //    }
 
+    @Override
     public void initialize(double duration) {
 
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double range = max - min;
 

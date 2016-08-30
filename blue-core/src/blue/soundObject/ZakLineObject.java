@@ -28,6 +28,7 @@ public class ZakLineObject extends AbstractLineObject implements Serializable {
         this.setName("ZakLineObject");
     }
 
+    @Override
     protected String generateLineInstrument(Line line) {
         int channel = line.getChannel();
 

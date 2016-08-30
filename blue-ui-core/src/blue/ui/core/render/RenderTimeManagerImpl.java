@@ -74,25 +74,20 @@ public class RenderTimeManagerImpl implements RenderTimeManager {
 
         ts = new SwingTimerTimingSource((int) (1000.0f / fps), TimeUnit.MILLISECONDS);
         final long initialTime = System.nanoTime();
-        ts.addTickListener(new TickListener() {
-
-            @Override
-            public void timingSourceTick(TimingSource source, long nanoTime) {
-
-                if (timeAdjust != Float.NEGATIVE_INFINITY) {
-                    float elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
-                    float adjustedTime = elapsedTime - timeAdjust;
-                    setTimePointer(elapsedTime);
-
-                    if (tempoMapper != null) {
-                        float renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
-                        adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
-                        adjustedTime -= getRenderStartTime();
-                    }
-
-                    for (RenderTimeManagerListener listener : renderListeners) {
-                        listener.renderTimeUpdated(adjustedTime);
-                    }
+        ts.addTickListener((TimingSource source, long nanoTime) -> {
+            if (timeAdjust != Float.NEGATIVE_INFINITY) {
+                float elapsedTime = (nanoTime - initialTime) / 1000000000.0f;
+                float adjustedTime = elapsedTime - timeAdjust;
+                setTimePointer(elapsedTime);
+                
+                if (tempoMapper != null) {
+                    float renderStartSeconds = tempoMapper.beatsToSeconds(getRenderStartTime());
+                    adjustedTime = tempoMapper.secondsToBeats(adjustedTime + renderStartSeconds);
+                    adjustedTime -= getRenderStartTime();
+                }
+                
+                for (RenderTimeManagerListener listener : renderListeners) {
+                    listener.renderTimeUpdated(adjustedTime);
                 }
             }
         });

@@ -72,14 +72,17 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         return this.pythonCode;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
@@ -121,18 +124,22 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         return nl;
     }
 
+    @Override
     public int getTimeBehavior() {
         return this.timeBehavior;
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }
 
+    @Override
     public float getRepeatPoint() {
         return this.repeatPoint;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -172,6 +179,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
@@ -182,14 +190,17 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         return retVal;
     }
 
+    @Override
     public void setOnLoadProcessable(boolean onLoadProcessable) {
         this.onLoadProcessable = onLoadProcessable;
     }
 
+    @Override
     public boolean isOnLoadProcessable() {
         return this.onLoadProcessable;
     }
 
+    @Override
     public void processOnLoad() throws SoundObjectException {
         if (onLoadProcessable) {
             this.generateNotes(0.0f, -1.0f);

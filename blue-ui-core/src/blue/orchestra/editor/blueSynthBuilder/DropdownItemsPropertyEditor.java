@@ -57,14 +57,10 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
         ((JPanel) editor).add("East", button = new JButton("..."));
         button.setMargin(new Insets(0, 0, 0, 0));
 
-        button.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // selectColor();
-                // JOptionPane.showMessageDialog(null, "test");
-                editItems();
-            }
+        button.addActionListener((ActionEvent e) -> {
+            // selectColor();
+            // JOptionPane.showMessageDialog(null, "test");
+            editItems();
         });
 
         ((JPanel) editor).setOpaque(false);

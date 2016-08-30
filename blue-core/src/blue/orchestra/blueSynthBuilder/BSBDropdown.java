@@ -68,6 +68,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         return dropDown;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -85,6 +86,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
 
         if (parameters != null) {
@@ -167,6 +169,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         BSBDropdownItem item = (BSBDropdownItem) dropdownItems.get(selectedIndex);
         return "id:" + item.getUniqueId();
@@ -177,6 +180,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         if (val.startsWith("id:")) {
             String uniqueId = val.substring(3);
@@ -204,10 +208,12 @@ public class BSBDropdown extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
+    @Override
     public boolean isRandomizable() {
         return randomizable;
     }
 
+    @Override
     public void randomize() {
         if (randomizable) {
 
@@ -225,6 +231,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
         fireBSBObjectChanged();
@@ -289,6 +296,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
@@ -303,6 +311,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);
 

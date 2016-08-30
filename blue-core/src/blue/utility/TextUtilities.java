@@ -99,12 +99,12 @@ public class TextUtilities {
         String result = string;
 
         if ((result != null) && (result.length() > 0)
-                && (result.indexOf(oldSubstring) > -1)
+                && (result.contains(oldSubstring))
                 && (oldSubstring.length() > 0)
                 && (!oldSubstring.equals(newSubstring))
                 && (newSubstring != null)) {
 
-            while (result.indexOf(oldSubstring) > -1) {
+            while (result.contains(oldSubstring)) {
                 result = replace(result, oldSubstring, newSubstring);
             }
         }

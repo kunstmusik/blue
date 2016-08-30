@@ -29,6 +29,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#processNotes(blue.soundObject.NoteList)
      */
+    @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
         TempoMapper tm = TempoMapper.createTempoMapper(this.timeWarpString);
@@ -120,6 +121,7 @@ public class TimeWarpProcessor implements NoteProcessor, java.io.Serializable {
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

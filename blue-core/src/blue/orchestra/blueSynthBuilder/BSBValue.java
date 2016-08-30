@@ -82,6 +82,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      * 
      * @see blue.orchestra.blueSynthBuilder.BlueSynthBuilderObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -106,6 +107,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
@@ -227,6 +229,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         return NumberUtilities.formatFloat(getDefaultValue());
     }
@@ -236,11 +239,13 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         float fval = Float.parseFloat(val);
         setDefaultValue(fval);
     }
 
+    @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
@@ -296,6 +301,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         }
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);
 
@@ -307,10 +313,12 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
     // override to handle removing/adding parameters when this changes
+    @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
 

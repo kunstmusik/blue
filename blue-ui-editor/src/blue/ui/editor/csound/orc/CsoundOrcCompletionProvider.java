@@ -38,7 +38,7 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
     protected static ArrayList<String> opNames;
 
     static {
-        opNames = new ArrayList<String>(CsoundManualUtilities.getOpcodeNames());
+        opNames = new ArrayList<>(CsoundManualUtilities.getOpcodeNames());
         Collections.sort(opNames);
     }
 
@@ -124,7 +124,7 @@ public class CsoundOrcCompletionProvider implements CompletionProvider {
         Pattern p = Pattern.compile("\\b" + toMatch + "\\w*");
         Matcher m = p.matcher(source);
 
-        ArrayList<String> matches = new ArrayList<String>();
+        ArrayList<String> matches = new ArrayList<>();
 
         while (m.find()) {
             String match = m.group();

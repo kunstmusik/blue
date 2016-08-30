@@ -19,6 +19,7 @@
  */
 package blue.score.layers.patterns.core;
 
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupProvider;
 import java.util.Map;
@@ -35,14 +36,14 @@ public class PatternsLayerGroupProvider implements LayerGroupProvider {
     }
 
     @Override
-    public LayerGroup createLayerGroup() {
+    public LayerGroup<? extends Layer> createLayerGroup() {
         PatternsLayerGroup layerGroup =new PatternsLayerGroup();
         layerGroup.newLayerAt(0);
         return layerGroup;
     }
 
     @Override
-    public LayerGroup loadFromXML(electric.xml.Element element, Map<String, Object> objRefMap) {
+    public LayerGroup<? extends Layer> loadFromXML(electric.xml.Element element, Map<String, Object> objRefMap) {
         if ("patternsLayerGroup".equals(element.getName())) {
             try {
                 return PatternsLayerGroup.loadFromXML(element);

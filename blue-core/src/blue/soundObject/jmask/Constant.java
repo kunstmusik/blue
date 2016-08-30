@@ -47,6 +47,7 @@ public class Constant implements Generator, Serializable, Accumulatable {
         return constant;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("generator");
         retVal.setAttribute("type", getClass().getName());
@@ -64,10 +65,12 @@ public class Constant implements Generator, Serializable, Accumulatable {
         return this.value;
     }
 
+    @Override
     public void initialize(double duration) {
 
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         return value;
     }

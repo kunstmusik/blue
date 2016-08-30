@@ -345,6 +345,7 @@ public class Effect implements Serializable, Automatable {
         return buffer.toString();
     }
 
+    @Override
     public ParameterList getParameterList() {
         return parameterList;
     }

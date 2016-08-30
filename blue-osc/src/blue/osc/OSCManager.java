@@ -40,7 +40,7 @@ public class OSCManager implements OSCListener {
     
     private static OSCManager instance = null;
 
-    private ArrayList<OSCAction> oscActions = new ArrayList<OSCAction>();
+    private ArrayList<OSCAction> oscActions = new ArrayList<>();
    
     private OSCServer server = null;
     
@@ -48,14 +48,10 @@ public class OSCManager implements OSCListener {
                     OSCManager.class);
     
     private OSCManager() {
-        prefs.addPreferenceChangeListener(new PreferenceChangeListener() {
-
-            @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
-                if(server != null) {
-                    stop();
-                    start();
-                } 
+        prefs.addPreferenceChangeListener((PreferenceChangeEvent evt) -> {
+            if(server != null) {
+                stop();
+                start(); 
             }
         });
     }    

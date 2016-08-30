@@ -102,6 +102,7 @@ public class BSBLineObject extends BSBObject {
         return lineObj;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -137,6 +138,7 @@ public class BSBLineObject extends BSBObject {
         return vals;
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         for (Iterator iter = lines.iterator(); iter.hasNext();) {
             Line line = (Line) iter.next();
@@ -190,6 +192,7 @@ public class BSBLineObject extends BSBObject {
         return buffer.toString();
     }
 
+    @Override
     public String getPresetValue() {
         StringBuilder buffer = new StringBuilder();
 
@@ -217,6 +220,7 @@ public class BSBLineObject extends BSBObject {
         return buffer.toString();
     }
 
+    @Override
     public void setPresetValue(String val) {
         String[] parts = val.split("@_@");
 

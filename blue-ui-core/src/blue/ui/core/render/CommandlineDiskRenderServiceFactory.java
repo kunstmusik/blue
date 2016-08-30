@@ -31,11 +31,6 @@ import org.openide.util.lookup.ServiceProvider;
 public class CommandlineDiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
-    public Class getRenderServiceClass() {
-        return ProcessConsole.class;
-    }
-
-    @Override
     public DiskRenderService createInstance() {
         return new ProcessConsole();
     }

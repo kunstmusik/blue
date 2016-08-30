@@ -29,9 +29,6 @@ package blue.services.render;
  */
 public interface DiskRenderServiceFactory {
 
-    /** Returns the Class for the generated RenderServices */
-    public Class getRenderServiceClass();
-
     /** Creates an instance of a RealtimeRenderService */
     public DiskRenderService createInstance();
 

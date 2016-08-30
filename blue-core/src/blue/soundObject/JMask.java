@@ -76,10 +76,12 @@ public class JMask extends AbstractSoundObject {
         return nl;
     }
 
+    @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
     }
 
+    @Override
     public float getObjectiveDuration() {
         return subjectiveDuration;
     }
@@ -87,10 +89,12 @@ public class JMask extends AbstractSoundObject {
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
+    @Override
     public float getRepeatPoint() {
         return repeatPoint;
     }
 
+    @Override
     public int getTimeBehavior() {
         return timeBehavior;
     }
@@ -129,6 +133,7 @@ public class JMask extends AbstractSoundObject {
      * 
      * @see blue.soundObject.SoundObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
@@ -139,10 +144,12 @@ public class JMask extends AbstractSoundObject {
         return retVal;
     }
 
+    @Override
     public void setNoteProcessorChain(NoteProcessorChain chain) {
         this.npc = chain;
     }
 
+    @Override
     public void setRepeatPoint(float repeatPoint) {
         this.repeatPoint = repeatPoint;
 
@@ -152,6 +159,7 @@ public class JMask extends AbstractSoundObject {
         fireScoreObjectEvent(event);
     }
 
+    @Override
     public void setTimeBehavior(int timeBehavior) {
         this.timeBehavior = timeBehavior;
     }

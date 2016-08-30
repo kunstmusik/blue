@@ -67,7 +67,6 @@ public class BlueToolTipUI extends MetalToolTipUI {
         super.paint(g, c);
 
         Font font = c.getFont();
-        FontMetrics metrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
         String keyText = getAcceleratorString(tip);
         String tipText = tip.getTipText();
         if (tipText == null) {
@@ -76,6 +75,7 @@ public class BlueToolTipUI extends MetalToolTipUI {
         if (!(keyText.equals(""))) { // only draw control key if there is one
             g.setFont(smallFont);
             g.setColor(BlueLookAndFeel.getPrimaryControlDarkShadow());
+            FontMetrics metrics = g.getFontMetrics();
             g.drawString(keyText, metrics.stringWidth(tipText)
                     + padSpaceBetweenStrings, 2 + metrics.getAscent());
         }

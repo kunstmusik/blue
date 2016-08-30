@@ -88,20 +88,15 @@ public class ExternalEditor extends ScoreObjectEditor {
         score1EditPane.getJEditorPane().setEditable(true);
         score1EditPane.setUndoManager(undo);
         score1EditPane.getDocument().addUndoableEditListener(undo);
-        score1EditPane.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (isUpdating) {
-                    return;
-                }
-
-                if (evt.getPropertyName().equals("syntaxType")) {
-                    String type = (String) evt.getNewValue();
-                    external.setSyntaxType(type);
-                }
+        score1EditPane.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (isUpdating) {
+                return;
             }
 
+            if (evt.getPropertyName().equals("syntaxType")) {
+                String type = (String) evt.getNewValue();
+                external.setSyntaxType(type);
+            }
         });
 
         score1EditPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
@@ -133,12 +128,8 @@ public class ExternalEditor extends ScoreObjectEditor {
         this.add(commandPanel, BorderLayout.NORTH);
         this.add(score1EditPane, BorderLayout.CENTER);
 
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
 
         initActions();

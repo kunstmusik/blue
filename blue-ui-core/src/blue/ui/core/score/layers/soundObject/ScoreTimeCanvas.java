@@ -91,11 +91,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
 
         this.data = blueData;
 
-        heightListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                reset();
-            }
+        heightListener = (PropertyChangeEvent evt) -> {
+            reset();
         };
 
         sObjPanel.setLayout(null);
@@ -176,53 +173,42 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
     }
 
     public void reset() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Component[] components = sObjPanel.getComponents();
-
-                for (int i = 0; i < components.length; i++) {
-                    Component c = components[i];
-
-                    if (c instanceof SoundObjectView) {
-                        SoundObjectView sObjView = (SoundObjectView) c;
-
-                        int index = getPolyObject().getSoundLayerIndex(
+        SwingUtilities.invokeLater(() -> {
+            Component[] components = sObjPanel.getComponents();
+            for (int i = 0; i < components.length; i++) {
+                Component c = components[i];
+                
+                if (c instanceof SoundObjectView) {
+                    SoundObjectView sObjView = (SoundObjectView) c;
+                    
+                    int index = getPolyObject().getSoundLayerIndex(
+                            sObjView.getSoundObject());
+                    
+                    if (index < 0) {
+                        sObjView.cleanup();
+                        sObjPanel.remove(c);
+                        soundObjectToViewMap.remove(
                                 sObjView.getSoundObject());
-
-                        if (index < 0) {
-                            sObjView.cleanup();
-                            sObjPanel.remove(c);
-                            soundObjectToViewMap.remove(
-                                    sObjView.getSoundObject());
-                        } else {
-                            int newY = getPolyObject().getYForLayerNum(index);
-                            int newHeight = getPolyObject().getSoundLayerHeight(
-                                    index);
-
-                            sObjView.updateView(newY, newHeight);
-                        }
+                    } else {
+                        int newY = getPolyObject().getYForLayerNum(index);
+                        int newHeight = getPolyObject().getSoundLayerHeight(
+                                index);
+                        
+                        sObjView.updateView(newY, newHeight);
                     }
                 }
-
-                if (ScoreController.getInstance().getScorePath().getLastLayerGroup() == null) {
-                    BlueData data = BlueProjectManager.getInstance().getCurrentBlueData();
-
-                    if (data != null) {
-
-                        int startTime = (int) (data.getRenderStartTime() * timeState.getPixelSecond());
-                        int endTime = (int) (data.getRenderEndTime() * timeState.getPixelSecond());
-
-                    }
-                }
-
-                checkSize();
-
-                automationPanel.revalidate();
-
-                revalidate();
-                repaint();
             }
+            if (ScoreController.getInstance().getScorePath().getLastLayerGroup() == null) {
+                BlueData data1 = BlueProjectManager.getInstance().getCurrentBlueData();
+                if (data1 != null) {
+                    int startTime = (int) (data1.getRenderStartTime() * timeState.getPixelSecond());
+                    int endTime = (int) (data1.getRenderEndTime() * timeState.getPixelSecond());
+                }
+            }
+            checkSize();
+            automationPanel.revalidate();
+            revalidate();
+            repaint();
         });
 
     }
@@ -532,11 +518,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         if (SwingUtilities.isEventDispatchThread()) {
             addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
-                }
+            SwingUtilities.invokeLater(() -> {
+                addSoundObjectView(getPolyObject().getLayerNum(source), sObj);
             });
         }
     }
@@ -546,11 +529,8 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         if (SwingUtilities.isEventDispatchThread()) {
             removeSoundObjectView(sObj);
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    removeSoundObjectView(sObj);
-                }
+            SwingUtilities.invokeLater(() -> {
+                removeSoundObjectView(sObj);
             });
         }
     }

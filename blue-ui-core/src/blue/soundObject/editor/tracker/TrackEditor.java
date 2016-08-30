@@ -62,32 +62,27 @@ public class TrackEditor extends javax.swing.JPanel {
 
         columnsScroll.getVerticalScrollBar().setPreferredSize(miniScrollDim);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                if (selectedColumn == null) {
-                    return;
-                }
-
-                int colType = 0;
-
-                if (e.getSource() == pchRadioButton) {
-                    colType = Column.TYPE_PCH;
-                } else if (e.getSource() == bluePchRadioButton) {
-                    colType = Column.TYPE_BLUE_PCH;
-                } else if (e.getSource() == midiRadioButton) {
-                    colType = Column.TYPE_MIDI;
-                } else if (e.getSource() == stringRadioButton) {
-                    colType = Column.TYPE_STR;
-                } else if (e.getSource() == numberRadioButton) {
-                    colType = Column.TYPE_NUM;
-                }
-
-                selectedColumn.setType(colType);
-                setColumnUI(selectedColumn);
-
+        ActionListener al = (ActionEvent e) -> {
+            if (selectedColumn == null) {
+                return;
             }
+            
+            int colType = 0;
+            
+            if (e.getSource() == pchRadioButton) {
+                colType = Column.TYPE_PCH;
+            } else if (e.getSource() == bluePchRadioButton) {
+                colType = Column.TYPE_BLUE_PCH;
+            } else if (e.getSource() == midiRadioButton) {
+                colType = Column.TYPE_MIDI;
+            } else if (e.getSource() == stringRadioButton) {
+                colType = Column.TYPE_STR;
+            } else if (e.getSource() == numberRadioButton) {
+                colType = Column.TYPE_NUM;
+            }
+            
+            selectedColumn.setType(colType);
+            setColumnUI(selectedColumn);
         };
 
         MIN_DOUBLE_MODEL = new SpinnerNumberModel(0.0d,
@@ -201,30 +196,26 @@ public class TrackEditor extends javax.swing.JPanel {
         numberRadioButton.addActionListener(al);
 
         columnsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        columnsTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (!e.getValueIsAdjusting()) {
-                            int index = columnsTable.getSelectedRow();
-
-                            if (index < 0) {
-                                // clear props ?
-                                setColumn(null);
-                            } else {
-                                setColumn(track.getColumn(index + 1));
-                            }
-
-                            removeColumnButton
-                                    .setEnabled((selectedColumn != null && track
-                                            .getRowCount() > 1));
-
-                            pushUpButton.setEnabled(index > 0);
-                            pushDownButton.setEnabled(index < columnsTable
-                                    .getModel().getRowCount() - 1);
-                        }
-                    }
-                });
+        columnsTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (!e.getValueIsAdjusting()) {
+                int index = columnsTable.getSelectedRow();
+                
+                if (index < 0) {
+                    // clear props ?
+                    setColumn(null);
+                } else {
+                    setColumn(track.getColumn(index + 1));
+                }
+                
+                removeColumnButton
+                        .setEnabled((selectedColumn != null && track
+                                .getRowCount() > 1));
+                
+                pushUpButton.setEnabled(index > 0);
+                pushDownButton.setEnabled(index < columnsTable
+                        .getModel().getRowCount() - 1);
+            }
+        });
 
         /*
          * Setting up listeners for track value changes and setting values to
@@ -271,13 +262,8 @@ public class TrackEditor extends javax.swing.JPanel {
 
         });
 
-        baseFreqText.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateBaseFrequency();
-            }
-
+        baseFreqText.addActionListener((ActionEvent e) -> {
+            updateBaseFrequency();
         });
 
         setTrack(null);

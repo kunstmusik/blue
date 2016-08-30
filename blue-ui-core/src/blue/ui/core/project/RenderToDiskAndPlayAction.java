@@ -54,8 +54,7 @@ public final class RenderToDiskAndPlayAction implements ActionListener {
 
                                 try {
 
-                                    if (System.getProperty("os.name").indexOf(
-                                    "Windows") >= 0) {
+                                    if (System.getProperty("os.name").contains("Windows")) {
                                         Runtime.getRuntime().exec(command);
                                     } else {
                                         String[] cmdArray = ProcessConsole.
@@ -76,16 +75,12 @@ public final class RenderToDiskAndPlayAction implements ActionListener {
                                     ex.printStackTrace();
                                 }
                             } else {
-                                SwingUtilities.invokeLater(
-                                        new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        AudioFilePlayerTopComponent tc
-                                                = (AudioFilePlayerTopComponent) WindowManager.getDefault().
-                                                findTopComponent(
-                                                        "AudioFilePlayerTopComponent");
-                                        tc.setAudioFile(f);
-                                    }
+                                SwingUtilities.invokeLater(() -> {
+                                    AudioFilePlayerTopComponent tc
+                                            = (AudioFilePlayerTopComponent) WindowManager.getDefault().
+                                                    findTopComponent(
+                                                            "AudioFilePlayerTopComponent");
+                                    tc.setAudioFile(f);
                                 });
                             }
 

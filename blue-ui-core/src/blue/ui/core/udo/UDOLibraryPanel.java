@@ -335,47 +335,23 @@ class UDOTreePopup extends JPopupMenu {
 
     public UDOTreePopup() {
 
-        addCategoryMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addUDOCategory();
-            }
+        addCategoryMenuItem.addActionListener((ActionEvent e) -> {
+            addUDOCategory();
         });
-        removeCategoryMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeUDOCategory();
-            }
+        removeCategoryMenuItem.addActionListener((ActionEvent e) -> {
+            removeUDOCategory();
         });
-        removeInstrumentMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeUDO();
-            }
+        removeInstrumentMenuItem.addActionListener((ActionEvent e) -> {
+            removeUDO();
         });
-        cutMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cutNode();
-            }
+        cutMenuItem.addActionListener((ActionEvent e) -> {
+            cutNode();
         });
-        copyMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                copyNode();
-            }
+        copyMenuItem.addActionListener((ActionEvent e) -> {
+            copyNode();
         });
-        pasteMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pasteNode();
-            }
+        pasteMenuItem.addActionListener((ActionEvent e) -> {
+            pasteNode();
         });
 
         addInstrumentMenu = getAddUDOMenu();
@@ -567,11 +543,8 @@ class UDOTreePopup extends JPopupMenu {
     private JMenuItem getAddUDOMenu() {
         JMenuItem instrumentMenu = new JMenuItem("Add User-Defined Opcode");
 
-        instrumentMenu.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                addUDO();
-            }
+        instrumentMenu.addActionListener((ActionEvent ae) -> {
+            addUDO();
         });
 
         return instrumentMenu;

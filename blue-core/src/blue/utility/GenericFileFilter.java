@@ -31,6 +31,7 @@ public class GenericFileFilter extends FileFilter {
      * 
      * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
      */
+    @Override
     public boolean accept(File f) {
         if (f.isDirectory()) {
             return true;
@@ -52,6 +53,7 @@ public class GenericFileFilter extends FileFilter {
      * 
      * @see javax.swing.filechooser.FileFilter#getDescription()
      */
+    @Override
     public String getDescription() {
         return description;
     }

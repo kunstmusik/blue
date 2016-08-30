@@ -41,7 +41,8 @@ import java.io.InputStreamReader;
 import java.rmi.dgc.VMID;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -61,8 +62,8 @@ public class AudioLayer extends ArrayList<AudioClip>
 
     public static int HEIGHT_MAX_INDEX = 9;
 
-    private transient Vector<PropertyChangeListener> propListeners = null;
-    private transient Vector<AudioLayerListener> layerListeners = null;
+    private transient List<PropertyChangeListener> propListeners = null;
+    private transient List<AudioLayerListener> layerListeners = null;
     private String uniqueId;
 
     private static MessageFormat INSTR_TEXT = null;
@@ -124,10 +125,12 @@ public class AudioLayer extends ArrayList<AudioClip>
         this.solo = solo;
     }
 
+    @Override
     public int getHeightIndex() {
         return heightIndex;
     }
 
+    @Override
     public void setHeightIndex(int heightIndex) {
         if (this.heightIndex == heightIndex) {
             return;
@@ -150,6 +153,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         return uniqueId;
     }
 
+    @Override
     public ParameterIdList getAutomationParameters() {
         return automationParameters;
     }
@@ -168,8 +172,7 @@ public class AudioLayer extends ArrayList<AudioClip>
             retVal.addElement(clip.saveAsXML());
         }
 
-        for (Iterator iter = automationParameters.iterator(); iter.hasNext();) {
-            String id = (String) iter.next();
+        for (String id : automationParameters ) {
             retVal.addElement("parameterId").setText(id);
         }
 
@@ -390,19 +393,14 @@ public class AudioLayer extends ArrayList<AudioClip>
             return;
         }
 
-        Iterator<PropertyChangeListener> iter = new Vector<>(propListeners).iterator();
-
-        while (iter.hasNext()) {
-            PropertyChangeListener listener = (PropertyChangeListener) iter
-                    .next();
-
+        for (PropertyChangeListener listener : propListeners) {
             listener.propertyChange(pce);
         }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         if (propListeners == null) {
-            propListeners = new Vector<PropertyChangeListener>();
+            propListeners = Collections.synchronizedList(new ArrayList<>());
         }
 
         if (propListeners.contains(pcl)) {
@@ -440,7 +438,7 @@ public class AudioLayer extends ArrayList<AudioClip>
 
     public void addAudioLayerListener(AudioLayerListener listener) {
         if (layerListeners == null) {
-            layerListeners = new Vector<>();
+            layerListeners = Collections.synchronizedList(new ArrayList<>());
         }
 
         if (layerListeners.contains(listener)) {
@@ -496,5 +494,10 @@ public class AudioLayer extends ArrayList<AudioClip>
     @Override
     public boolean equals(Object obj) {
         return obj == this;
+    }
+
+    @Override
+    public void clearScoreObjects() {
+        this.clear();
     }
 }

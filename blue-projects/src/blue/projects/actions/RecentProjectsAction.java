@@ -33,17 +33,20 @@ public class RecentProjectsAction extends CallableSystemAction {
     /** {@inheritDoc}
      * do nothing
      */
+    @Override
     public void performAction() {
         // do nothing
     }
 
     /** {@inheritDoc} */
+    @Override
     public String getName() {
         return NbBundle.getMessage(RecentProjectsAction.class, "CTL_RecentProjectsAction");
     }
 
 
     /** {@inheritDoc} */
+    @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
@@ -71,22 +74,22 @@ public class RecentProjectsAction extends CallableSystemAction {
             super(s);
 
             RecentProjectsList opts = RecentProjectsList.getInstance();
-            opts.addPropertyChangeListener(new PropertyChangeListener() {
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (!evt.getPropertyName().equals(RecentProjectsList.MRU_FILE_LIST_PROPERTY)) {
-                       return;
-                    }
-                    updateMenu();
+            opts.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+                if (!evt.getPropertyName().equals(RecentProjectsList.MRU_FILE_LIST_PROPERTY)) {
+                    return;
                 }
+                updateMenu();
             });
 
             updateMenu();
         }
 
+        @Override
         public JComponent[] getMenuPresenters() {
             return new JComponent[] {this};
         }
 
+        @Override
         public JComponent[] synchMenuPresenters(JComponent[] items) {
             return getMenuPresenters();
         }
@@ -107,6 +110,7 @@ public class RecentProjectsAction extends CallableSystemAction {
 
         private Action createAction(String actionCommand) {
             Action action = new AbstractAction() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                     menuItemActionPerformed(e);
                 }

@@ -86,6 +86,7 @@ public class Gaussian implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -111,10 +112,12 @@ public class Gaussian implements ProbabilityGenerator {
 //        return new GaussianEditor(this);
 //    }
 
+    @Override
     public String getName() {
         return "Gaussian";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         // sigma = Standardabweichung
         // mu = Mittelwert

@@ -70,32 +70,20 @@ public class DropdownItemEditorDialog extends JDialog implements
         pushUpButton.setText(BlueSystem.getString("common.pushUp"));
         pushDownButton.setText(BlueSystem.getString("common.pushDown"));
 
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addItem();
-            }
+        addButton.addActionListener((ActionEvent e) -> {
+            addItem();
         });
 
-        removeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeItem();
-            }
+        removeButton.addActionListener((ActionEvent e) -> {
+            removeItem();
         });
 
-        pushUpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushUpItem();
-            }
+        pushUpButton.addActionListener((ActionEvent e) -> {
+            pushUpItem();
         });
 
-        pushDownButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushDownItem();
-            }
+        pushDownButton.addActionListener((ActionEvent e) -> {
+            pushDownItem();
         });
 
         topPanel.add(addButton);
@@ -112,11 +100,8 @@ public class DropdownItemEditorDialog extends JDialog implements
         JButton closeButton = new JButton(BlueSystem
                 .getString("menu.file.close.text"));
 
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                closeDialog();
-            }
+        closeButton.addActionListener((ActionEvent e) -> {
+            closeDialog();
         });
 
         closePanel.add(closeButton);
@@ -180,7 +165,7 @@ public class DropdownItemEditorDialog extends JDialog implements
         this.items = items;
         blue.utility.GUI.centerOnScreen(this);
         model.setDropdownItems(items);
-        super.show();
+        super.setVisible(true);
 
     }
 
@@ -257,7 +242,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        BSBDropdownItem item = (BSBDropdownItem) items.get(row);
+        BSBDropdownItem item = items.get(row);
 
         if (col == 0) {
             return item.getName();
@@ -292,7 +277,7 @@ final class DropdownItemsTableModel extends AbstractTableModel {
     public void setValueAt(Object value, int row, int col) {
         try {
             String val = (String) value;
-            BSBDropdownItem item = (BSBDropdownItem) items.get(row);
+            BSBDropdownItem item = items.get(row);
 
             if (col == 0) {
                 item.setName(val);

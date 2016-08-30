@@ -29,6 +29,7 @@ import blue.projects.BlueProjectManager;
 import blue.score.Score;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
+import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.score.tempo.Tempo;
 import blue.services.render.RenderTimeManager;
@@ -102,7 +103,7 @@ import org.openide.windows.WindowManager;
     "HINT_ScoreTopComponent=This is a Score window"
 })
 public final class ScoreTopComponent extends TopComponent
-        implements ObservableListListener<LayerGroup>, RenderTimeManagerListener,
+        implements ObservableListListener<LayerGroup<? extends Layer>>, RenderTimeManagerListener,
         PropertyChangeListener, SoundObjectProvider, ScoreControllerListener {
 
     private final InstanceContent content = new InstanceContent();
@@ -138,16 +139,8 @@ public final class ScoreTopComponent extends TopComponent
     TimeState currentTimeState = null;
     RenderTimeManager renderTimeManager
             = Lookup.getDefault().lookup(RenderTimeManager.class);
-    PropertyChangeListener layerPanelWidthListener = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    checkSize();
-                }
-            });
-        }
+    PropertyChangeListener layerPanelWidthListener = (PropertyChangeEvent evt) -> {
+        SwingUtilities.invokeLater(this::checkSize);
     };
 
     private ScoreTopComponent() {
@@ -169,25 +162,17 @@ public final class ScoreTopComponent extends TopComponent
         scoreController.setLookupAndContent(getLookup(), content);
         scoreController.setScrollPane(scrollPane);
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            reinitialize();
-                        }
-                    }
-                });
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(
+                    evt.getPropertyName())) {
+                reinitialize();
+            }
+        });
 
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(
-                new AdjustmentListener() {
-                    @Override
-                    public void adjustmentValueChanged(AdjustmentEvent ae) {
-                        syncPosition.setLocation(0, ae.getValue());
-                        layerHeaderViewPort.setViewPosition(syncPosition);
-                    }
-                });
+        scrollPane.getVerticalScrollBar().addAdjustmentListener((AdjustmentEvent ae) -> {
+            syncPosition.setLocation(0, ae.getValue());
+            layerHeaderViewPort.setViewPosition(syncPosition);
+        });
 
         renderTimeManager.addPropertyChangeListener(this);
         renderTimeManager.addRenderTimeManagerListener(this);
@@ -197,14 +182,10 @@ public final class ScoreTopComponent extends TopComponent
         layerPanel.addMouseListener(listener);
         layerPanel.addMouseMotionListener(listener);
 
-        layerHeaderViewPort.addMouseWheelListener(new MouseWheelListener() {
-
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                if (!e.isShiftDown()) {
-                    for (MouseWheelListener listener : scrollPane.getMouseWheelListeners()) {
-                        listener.mouseWheelMoved(e);
-                    }
+        layerHeaderViewPort.addMouseWheelListener((MouseWheelEvent e) -> {
+            if (!e.isShiftDown()) {
+                for (MouseWheelListener listener1 : scrollPane.getMouseWheelListeners()) {
+                    listener1.mouseWheelMoved(e);
                 }
             }
         });
@@ -323,16 +304,13 @@ public final class ScoreTopComponent extends TopComponent
             comp.addComponentListener(new ComponentAdapter() {
                 @Override
                 public void componentResized(ComponentEvent e) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            Dimension d = new Dimension(leftPanel.getWidth(),
-                                    comp.getHeight());
-                            //comp2.setPreferredSize(d);
-                            //comp2.setMaximumSize(d);
-                            comp2.setSize(d);
-                            comp2.revalidate();
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        Dimension d1 = new Dimension(leftPanel.getWidth(),
+                                comp.getHeight());
+                        //comp2.setPreferredSize(d);
+                        //comp2.setMaximumSize(d);
+                        comp2.setSize(d1);
+                        comp2.revalidate();
                     });
 
                 }
@@ -372,18 +350,15 @@ public final class ScoreTopComponent extends TopComponent
         horizontalViewChanger.add(plusHorz);
         horizontalViewChanger.add(minusHorz);
 
-        ActionListener al = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String command = e.getActionCommand();
-                switch (command) {
-                    case "minusHorizontal":
-                        currentTimeState.lowerPixelSecond();
-                        break;
-                    case "plusHorizontal":
-                        currentTimeState.raisePixelSecond();
-                        break;
-                }
+        ActionListener al = (ActionEvent e) -> {
+            String command = e.getActionCommand();
+            switch (command) {
+                case "minusHorizontal":
+                    currentTimeState.lowerPixelSecond();
+                    break;
+                case "plusHorizontal":
+                    currentTimeState.raisePixelSecond();
+                    break;
             }
         };
 
@@ -401,30 +376,27 @@ public final class ScoreTopComponent extends TopComponent
         tempoControlPanel.setBorder(BorderFactory.createRaisedBevelBorder());
 
         JButton manageButton = new JButton("Manage");
-        manageButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ScorePath path = ScoreController.getInstance().getScorePath();
-
-                JDialog dialog;
-
-                if (path.getLastLayerGroup() == null) {
-                    ScoreManagerDialog dlg = new ScoreManagerDialog(
-                            WindowManager.getDefault().getMainWindow(), true);
-                    dlg.setScore(data.getScore());
-                    dlg.setSize(600, 500);
-                    dialog = dlg;
-                } else {
-                    LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
-                            WindowManager.getDefault().getMainWindow(), true);
-                    dlg.setLayerGroup(path.getLastLayerGroup());
-                    dlg.setSize(300, 500);
-                    dialog = dlg;
-                }
-
-                GUI.centerOnScreen(dialog);
-                dialog.setVisible(true);
+        manageButton.addActionListener((ActionEvent e) -> {
+            ScorePath path = ScoreController.getInstance().getScorePath();
+            
+            JDialog dialog;
+            
+            if (path.getLastLayerGroup() == null) {
+                ScoreManagerDialog dlg = new ScoreManagerDialog(
+                        WindowManager.getDefault().getMainWindow(), true);
+                dlg.setScore(data.getScore());
+                dlg.setSize(600, 500);
+                dialog = dlg;
+            } else {
+                LayerGroupManagerDialog dlg = new LayerGroupManagerDialog(
+                        WindowManager.getDefault().getMainWindow(), true);
+                dlg.setLayerGroup(path.getLastLayerGroup());
+                dlg.setSize(300, 500);
+                dialog = dlg;
             }
+            
+            GUI.centerOnScreen(dialog);
+            dialog.setVisible(true);
         });
         manageButton.setPreferredSize(new Dimension(100, 20));
 
@@ -466,17 +438,14 @@ public final class ScoreTopComponent extends TopComponent
         ImageIcon icon = new ImageIcon(ImageUtilities.loadImage(
                 "blue/resources/images/ZoomIn16.gif"));
         JButton zoomButton = new JButton(icon);
-        zoomButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (navigator == null) {
-                    navigator = new ScoreNavigatorDialog(
-                            WindowManager.getDefault().getMainWindow());
-                    navigator.setJScrollPane(scrollPane);
-                    navigator.setLayerPanel(layerPanel);
-                }
-                navigator.setVisible(true);
+        zoomButton.addActionListener((ActionEvent e) -> {
+            if (navigator == null) {
+                navigator = new ScoreNavigatorDialog(
+                        WindowManager.getDefault().getMainWindow());
+                navigator.setJScrollPane(scrollPane);
+                navigator.setLayerPanel(layerPanel);
             }
+            navigator.setVisible(true);
         });
 
         scrollPane.setColumnHeaderView(headerPanel);
@@ -510,12 +479,9 @@ public final class ScoreTopComponent extends TopComponent
 
         this.add(timeProperties, BorderLayout.EAST);
 
-        snapButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // showSnapPopup();
-                timeProperties.setVisible(!timeProperties.isVisible());
-            }
+        snapButton.addActionListener((ActionEvent e) -> {
+            // showSnapPopup();
+            timeProperties.setVisible(!timeProperties.isVisible());
         });
 
         scorePanel.add(renderStartPointer, JLayeredPane.DRAG_LAYER);
@@ -563,11 +529,8 @@ public final class ScoreTopComponent extends TopComponent
 
         ModeManager.getInstance().setMode(ScoreMode.SCORE);
         
-        ModeManager.getInstance().addModeListener(new ModeListener() {
-            @Override
-            public void modeChanged(ScoreMode mode) {
-                getMarquee().setVisible(false);
-            }
+        ModeManager.getInstance().addModeListener((ScoreMode mode) -> {
+            getMarquee().setVisible(false);
         });
     }
 
@@ -928,7 +891,7 @@ public final class ScoreTopComponent extends TopComponent
     }
 
     @Override
-    public void listChanged(ObservableListEvent<LayerGroup> evt) {
+    public void listChanged(ObservableListEvent<LayerGroup<? extends Layer>> evt) {
         if (evt.getType() == ObservableListEvent.DATA_ADDED) {
             Score score = data.getScore();
             for (int i = evt.getStartIndex(); i <= evt.getEndIndex(); i++) {
@@ -940,7 +903,7 @@ public final class ScoreTopComponent extends TopComponent
         } else if (evt.getType() == ObservableListEvent.DATA_REMOVED) {
             removePanelsForLayerGroups(evt.getStartIndex(), evt.getEndIndex());
         } else if (evt.getType() == ObservableListEvent.DATA_CHANGED) {
-            List<LayerGroup> layerGroups = evt.getAffectedItems();
+            List<LayerGroup<? extends Layer>> layerGroups = evt.getAffectedItems();
             JComponent c = (JComponent) layerPanel.getComponent(
                     evt.getStartIndex());
             LayerGroup lGroup = (LayerGroup) c.getClientProperty("layerGroup");

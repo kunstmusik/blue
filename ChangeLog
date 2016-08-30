@@ -12,8 +12,92 @@ information.
 
 [CHANGE LOG]
 
-> Notes for 2.6.x<
-[release 2016.xx.xx]
+
+> Notes for 2.6.1 <
+[release 2016.08.30]
+
+NEW
+
+* Issue #292: added open file handling for Windows and Linux. (Was unable to get 
+  it working with OSX unfortunately.) On Windows and Linux, users can 
+  right-click on a .blue document and configure Blue to open the file.  Once the
+  association is made, users can double-click .blue files to open them in Blue.
+
+* Issue #55: Resize Soundobjects from left-side to adjust start and duration.
+  (This was implemented in 2.6.0 as part of Score internal redesign work but the
+  issue was not seen until after release.) 
+
+* ProjectPlugins - new plugin system for Project-level editors that can save 
+  data with Blue project and can participate in the project lifecycle.  
+
+* Clojure Project Plugin - project-level plugin that adds a new Clojure tab to
+  the Project Properties editor and allows setting Clojure library dependencies. 
+  Uses Chas Emerick's Pomegranate plugin to download direct and transitive 
+  dependencies from Clojars or Maven Central. Useful for using libraries within
+  Blue projects. Libraries are set using coordinates and version strings, much 
+  as one would with Leiningen-based projects. For example, one may use: 
+
+  kunstmusik/score 0.3.0
+
+  to use my Score library for generating and processing note lists.  
+
+* Issue #148 - Clojure REPL - new Clojure REPL window tied into the synthesized
+  namespace created for each project.  User can test and diagnose code that has
+  been entered into the namespace (e.g., if a function is defined in a 
+  ClojureObject, one can test it from the REPL)
+
+* Issue #309: Added 'alsaseq' driver to list of options in Blue's Realtime 
+  Render Settings and added input/output discovery code. 
+
+* Added Steven Yi's "Transit" to the examples/pieces/stevenYi folder
+
+* Issue #331 - Added Cut and Copy actions to popup for PianoRoll when 
+  right-clicking selected notes; added Paste menu when right-clicking on 
+  canvas and notes exist in the copy buffer
+
+* Issue #272 - Added a confirmation dialog when deleting UserInstrumentLibrary 
+  folder
+
+UPDATED
+
+* Updated included Clojure version to 1.8.0
+
+* Issue #149 - implemented cut/copy/paste for PianoRoll for multiple notes, as
+  well as shared copy buffer to allow pasting copy/pasting between PianoRolls
+
+* Issue #322 - pressing ctrl when moving mouse points will limit point 
+  modification only to the initial direction for line edit panels (i.e, 
+  automations, tempo, etc.).
+
+* Automation Parameters - Single-Line Mode Editing Updates
+  * When the selection marquee is shown, holding down ctrl when press/dragging 
+    will allow modifying just the horizontal locations of the points 
+  * When marquee is selected, left-clicking outside the marquee will disable the
+    marquee as before, but will not also add an additional point
+  * fixed issue when right-clicking a point to delete it that the popup menu
+    would also appear
+
+FIX
+
+* Adding new AudioLayerGroups did not properly handle change listening, 
+  resulting in NullPointerExceptions when trying to automate parameters on new 
+  AudioLayers added to a project.  (This problem only occurred when the 
+  AudioLayerGroup and AudioLayer was first added and did not present when 
+  loading an existing project or switching to another project and back again.)  
+
+* Issue #332 - "All" file filter did not properly allow all files
+
+* Issue #324 - (Potentially) fixed intermittent look and feel issue where 
+  sometimes tabs were not styled correctly
+
+* Issue #248 - partial fix to respect Automations when auditioning SoundObjects.
+  Auditioning is guaranteed only to work correctly with top-level SoundObjects.
+  (Issue #333 filed to continue looking into this once Blue 3.0 internal changes
+  are in place.)
+
+
+> Notes for 2.6.0 <
+[release 2016.07.29]
 
 NEW
 

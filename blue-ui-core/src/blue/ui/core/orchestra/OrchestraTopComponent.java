@@ -69,61 +69,45 @@ public final class OrchestraTopComponent extends TopComponent {
         jSplitPane2.setLeftComponent(arrangementPanel);
         jSplitPane2.setRightComponent(userInstrumentLibrary);
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            reinitialize();
-                        }
-                    }
-                });
-
-        userInstrumentLibrary.addSelectionListener(new SelectionListener() {
-
-            @Override
-            public void selectionPerformed(SelectionEvent e) {
-                Object obj = e.getSelectedItem();
-
-                if (obj instanceof Instrument) {
-                    isChanging = true;
-
-                    instrumentEditPanel1.setEditingLibraryObject(true);
-                    editInstrument((Instrument) obj);
-
-                    arrangementPanel.deselect();
-                    isChanging = false;
-                } else {
-                    isChanging = true;
-
-                    editInstrument(null);
-                    instrumentEditPanel1.setEditingLibraryObject(false);
-
-                    arrangementPanel.deselect();
-                    isChanging = false;
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(
+                    evt.getPropertyName())) {
+                reinitialize();
             }
-
         });
 
-        arrangementPanel.addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-
-                if (e.getValueIsAdjusting() || isChanging) {
-                    return;
-                }
-
-                Instrument instr = arrangementPanel.getSelectedInstrument();
-
-                editInstrument(instr);
+        userInstrumentLibrary.addSelectionListener((SelectionEvent e) -> {
+            Object obj = e.getSelectedItem();
+            
+            if (obj instanceof Instrument) {
+                isChanging = true;
+                
+                instrumentEditPanel1.setEditingLibraryObject(true);
+                editInstrument((Instrument) obj);
+                
+                arrangementPanel.deselect();
+                isChanging = false;
+            } else {
+                isChanging = true;
+                
+                editInstrument(null);
                 instrumentEditPanel1.setEditingLibraryObject(false);
-                userInstrumentLibrary.deselect();
-
+                
+                arrangementPanel.deselect();
+                isChanging = false;
             }
+        });
+
+        arrangementPanel.addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting() || isChanging) {
+                return;
+            }
+            
+            Instrument instr = arrangementPanel.getSelectedInstrument();
+            
+            editInstrument(instr);
+            instrumentEditPanel1.setEditingLibraryObject(false);
+            userInstrumentLibrary.deselect();
         });
 
         reinitialize();

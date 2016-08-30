@@ -63,10 +63,12 @@ class FTableTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getColumnCount() {
         return 5;
     }
 
+    @Override
     public Object getValueAt(int row, int col) {
         FTable temp = (FTable) ftables.get(row);
         switch (col) {
@@ -85,6 +87,7 @@ class FTableTableModel extends AbstractTableModel {
         }
     }
 
+    @Override
     public int getRowCount() {
         return ftables.size();
     }

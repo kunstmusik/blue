@@ -293,6 +293,7 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
      * Instantiate it only within subclasses of MetalSplitPaneDivider.
      */
     public class BlueDividerLayout implements LayoutManager {
+        @Override
         public void layoutContainer(Container c) {
             JButton leftButton = getLeftButtonFromSuper();
             JButton rightButton = getRightButtonFromSuper();
@@ -342,17 +343,21 @@ class BlueSplitPaneDivider extends BasicSplitPaneDivider {
             }
         }
 
+        @Override
         public Dimension minimumLayoutSize(Container c) {
             return new Dimension(0, 0);
         }
 
+        @Override
         public Dimension preferredLayoutSize(Container c) {
             return new Dimension(0, 0);
         }
 
+        @Override
         public void removeLayoutComponent(Component c) {
         }
 
+        @Override
         public void addLayoutComponent(String string, Component c) {
         }
     }

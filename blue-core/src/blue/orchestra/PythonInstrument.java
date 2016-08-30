@@ -62,16 +62,19 @@ public class PythonInstrument extends AbstractInstrument implements
         return false;
     }
 
+    @Override
     public void generateUserDefinedOpcodes(OpcodeList udoList) {
         udoReplacementValues = UDOUtilities.appendUserDefinedOpcodes(
                 opcodeList, udoList);
     }
 
+    @Override
     public void generateFTables(Tables tables) {
     }
 
     // -------------------------------------------
 
+    @Override
     public String generateInstrument() {
         String retVal = PythonProxy.processPythonInstrument(instrumentText);
 
@@ -93,6 +96,7 @@ public class PythonInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#generateGlobalOrc()
      */
+    @Override
     public String generateGlobalOrc() {
         return getGlobalOrc();
     }
@@ -102,6 +106,7 @@ public class PythonInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#generateGlobalSco()
      */
+    @Override
     public String generateGlobalSco() {
         return getGlobalSco();
     }
@@ -170,6 +175,7 @@ public class PythonInstrument extends AbstractInstrument implements
      * 
      * @see blue.orchestra.Instrument#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = InstrumentUtilities.getBasicXML(this);
 

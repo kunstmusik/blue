@@ -841,14 +841,17 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     /*
      * TABLE MODEL METHODS
      */
+    @Override
     public int getRowCount() {
         return this.size();
     }
 
+    @Override
     public int getColumnCount() {
         return 3;
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -862,6 +865,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         if (columnIndex == 0) {
             return Boolean.class;
@@ -869,10 +873,12 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return String.class;
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return true;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         InstrumentAssignment ia = this.getInstrumentAssignment(rowIndex);
 
@@ -888,6 +894,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 0) {
             InstrumentAssignment ia = this.getInstrumentAssignment(row);
@@ -911,6 +918,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         fireTableDataChanged();
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
         if (listeners == null) {
             listeners = new Vector<>();
@@ -918,6 +926,7 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         listeners.add(l);
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
         if (listeners == null) {
             return;

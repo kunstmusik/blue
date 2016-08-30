@@ -111,6 +111,7 @@ public class Marker implements Serializable, Comparable<Marker> {
         listeners.remove(pcl);
     }
 
+    @Override
     public int compareTo(Marker b) {
         if (this.time > b.time) {
             return 1;

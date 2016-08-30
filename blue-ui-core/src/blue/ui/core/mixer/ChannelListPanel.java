@@ -206,18 +206,14 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
         final int index0 = e.getStartIndex();
         final int index1 = e.getEndIndex();
 
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                for (int i = index0; i <= index1; i++) {
-                    Channel channel = channels.get(i);
-                    ChannelPanel cPanel = createChannelPanel(channel);
-
-                    add(cPanel, i);
-                }
-                revalidate();
+        SwingUtilities.invokeLater(() -> {
+            for (int i = index0; i <= index1; i++) {
+                Channel channel = channels.get(i);
+                ChannelPanel cPanel = createChannelPanel(channel);
+                
+                add(cPanel, i);
             }
+            revalidate();
         });
 
     }
@@ -226,29 +222,21 @@ public class ChannelListPanel extends JComponent implements ObservableListListen
         final int index0 = e.getStartIndex();
         final int index1 = e.getEndIndex();
 
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                for (int i = index1; i >= index0; i--) {
-                    ChannelPanel cPanel = (ChannelPanel) getComponent(i);
-                    cPanel.clear();
-
-                    remove(index0);
-                }
-
-                revalidate();
+        SwingUtilities.invokeLater(() -> {
+            for (int i = index1; i >= index0; i--) {
+                ChannelPanel cPanel = (ChannelPanel) getComponent(i);
+                cPanel.clear();
+                
+                remove(index0);
             }
+            
+            revalidate();
         });
     }
 
     public void contentsChanged() {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                rebuildChannelsUI(channels);
-            }
+        SwingUtilities.invokeLater(() -> {
+            rebuildChannelsUI(channels);
         });
     }
 }

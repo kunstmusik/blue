@@ -93,57 +93,41 @@ public final class MixerTopComponent extends TopComponent
                 "HINT_MixerTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (BlueProjectManager.CURRENT_PROJECT.equals(
-                                evt.getPropertyName())) {
-                            SwingUtilities.invokeLater(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    reinitialize();
-                                }
-                            });
-                        }
-                    }
-                });
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(
+                    evt.getPropertyName())) {
+                SwingUtilities.invokeLater(this::reinitialize);
+            }
+        });
 
         channelGroupsPanel.setLayout(new ChannelListLayout());
 
-        this.listChangeListener = new ObservableListListener<ChannelList>() {
-
-            @Override
-            public void listChanged(ObservableListEvent<ChannelList> listEvent) {
-                int index = listEvent.getStartIndex();
-                int index2 = listEvent.getEndIndex();
-
-                switch (listEvent.getType()) {
-                    case ObservableListEvent.DATA_ADDED:
-
-                        for (ChannelList list : listEvent.getAffectedItems()) {
-                            ChannelListPanel panel = new ChannelListPanel();
-                            channelGroupsPanel.add(panel, index);
-
-                            panel.setChannelList(list,
-                                    mixer.getSubChannels());
-                            panel.revalidate();
-                            index++;
-                        }
-                        break;
-                    case ObservableListEvent.DATA_REMOVED:
-                        for (int i = 0; i <= index2 - index2; i++) {
-                            channelGroupsPanel.remove(index);
-                        }
-                        break;
-                    case ObservableListEvent.DATA_CHANGED:
-                        reinitialize();
-                        break;
-                }
+        this.listChangeListener = (ObservableListEvent<ChannelList> listEvent) -> {
+            int index = listEvent.getStartIndex();
+            int index2 = listEvent.getEndIndex();
+            
+            switch (listEvent.getType()) {
+                case ObservableListEvent.DATA_ADDED:
+                    
+                    for (ChannelList list : listEvent.getAffectedItems()) {
+                        ChannelListPanel panel = new ChannelListPanel();
+                        channelGroupsPanel.add(panel, index);
+                        
+                        panel.setChannelList(list,
+                                mixer.getSubChannels());
+                        panel.revalidate();
+                        index++;
+                    }
+                    break;
+                case ObservableListEvent.DATA_REMOVED:
+                    for (int i = 0; i <= index2 - index2; i++) {
+                        channelGroupsPanel.remove(index);
+                    }
+                    break;
+                case ObservableListEvent.DATA_CHANGED:
+                    reinitialize();
+                    break;
             }
-
         };
         header = new MixerChannelsColumnHeader(channelGroupsPanel);
         jScrollPane1.setColumnHeaderView(header);

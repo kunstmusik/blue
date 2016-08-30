@@ -194,12 +194,14 @@ public class blueSHARC {
             File home = new File("g:\\sharc");
             File dir[] = home.listFiles(new FileFilter() {
                 // <-- gets subdirectories
+                @Override
                 public boolean accept(File in) {
                     return in.isDirectory();
                 }
             });
             for (int i = 0; i < dir.length; i++) {
                 File spects[] = dir[i].listFiles(new FileFilter() {
+                    @Override
                     public boolean accept(File in) {
                         return in.getName().endsWith(".spect");
                     }

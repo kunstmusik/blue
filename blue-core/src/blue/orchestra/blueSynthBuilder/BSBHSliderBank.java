@@ -218,6 +218,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BlueSynthBuilderObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -413,6 +414,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         Object[] vals = new Object[2];
         vals[0] = objectName;
@@ -488,6 +490,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
 
         boolean first = true;
@@ -514,6 +517,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         String vals[] = val.split(":");
 
@@ -558,6 +562,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         return retVal;
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent pce) {
         if (pce.getPropertyName().equals("value") && parameters != null) {
 
@@ -593,6 +598,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
@@ -690,6 +696,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         float time = ParameterTimeManagerFactory.getInstance().getTime();
 
@@ -704,10 +711,12 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
     // override to handle removing/adding parameters when this changes
+    @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
 
@@ -733,10 +742,12 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     /* RANDOMIZABLE METHODS */
 
+    @Override
     public boolean isRandomizable() {
         return randomizable;
     }
 
+    @Override
     public void randomize() {
         if (randomizable) {
             for (BSBHSlider slider : sliders) { 
@@ -745,6 +756,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
 

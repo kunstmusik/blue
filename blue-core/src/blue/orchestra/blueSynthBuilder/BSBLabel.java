@@ -47,6 +47,7 @@ public class BSBLabel extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BlueSynthBuilderObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -67,6 +68,7 @@ public class BSBLabel extends BSBObject {
         this.label = label;
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         // DO NOTHING
     }
@@ -76,6 +78,7 @@ public class BSBLabel extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         // TODO Auto-generated method stub
         return null;
@@ -86,6 +89,7 @@ public class BSBLabel extends BSBObject {
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         // TODO Auto-generated method stub
 

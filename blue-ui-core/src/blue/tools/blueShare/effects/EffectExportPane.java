@@ -144,12 +144,8 @@ public class EffectExportPane extends JComponent {
 
         mainSplitPane.setDividerLocation(200);
 
-        submitButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                submitEffect();
-            }
+        submitButton.addActionListener((ActionEvent e) -> {
+            submitEffect();
         });
 
         effectLibraryTree.addMouseListener(new MouseAdapter() {

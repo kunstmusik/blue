@@ -38,12 +38,9 @@ public class ColorCellEditor implements TableCellEditor {
     private ColorSelectionPanel panel = new ColorSelectionPanel();
 
     public ColorCellEditor() {
-        panel.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals("colorSelectionValue")) {
-                    fireEditingStopped();
-                }
+        panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals("colorSelectionValue")) {
+                fireEditingStopped();
             }
         });
     }

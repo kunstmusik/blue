@@ -35,8 +35,8 @@ import org.openide.util.Exceptions;
  */
 public class AntlrTokenReader {
 
-    private HashMap<String, String> tokenTypes = new HashMap<String, String>();
-    private ArrayList<ClojureTokenId> tokens = new ArrayList<ClojureTokenId>();
+    private HashMap<String, String> tokenTypes = new HashMap<>();
+    private ArrayList<ClojureTokenId> tokens = new ArrayList<>();
 
     public AntlrTokenReader() {
         init();

@@ -236,24 +236,15 @@ public class EffectImportPane extends JComponent {
             }
         });
 
-        instrumentTable.getSelectionModel().addListSelectionListener(
-                new ListSelectionListener() {
-
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        if (e.getValueIsAdjusting()) {
-                            return;
-                        }
-                        populateInstrument();
-                    }
-                });
-
-        importButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                importEffect();
+        instrumentTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                return;
             }
+            populateInstrument();
+        });
+
+        importButton.addActionListener((ActionEvent e) -> {
+            importEffect();
         });
     }
 

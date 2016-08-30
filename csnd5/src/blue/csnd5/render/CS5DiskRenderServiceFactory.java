@@ -31,11 +31,6 @@ import org.openide.util.lookup.ServiceProvider;
 public class CS5DiskRenderServiceFactory implements DiskRenderServiceFactory {
 
     @Override
-    public Class getRenderServiceClass() {
-        return APIDiskRenderer.class;
-    }
-
-    @Override
     public DiskRenderService createInstance() {
         return new APIDiskRenderer();
     }

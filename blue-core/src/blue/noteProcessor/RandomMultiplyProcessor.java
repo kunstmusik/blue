@@ -79,6 +79,7 @@ public class RandomMultiplyProcessor implements NoteProcessor,
         this.seed = Long.parseLong(seed);
     }
     
+    @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
@@ -141,6 +142,7 @@ public class RandomMultiplyProcessor implements NoteProcessor,
      * 
      * @see blue.noteProcessor.NoteProcessor#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

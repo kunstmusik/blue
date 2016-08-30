@@ -66,20 +66,12 @@ public class EffectManagementPane extends JComponent {
 
         // this.add(mainSplit, BorderLayout.CENTER);
 
-        fetchInstrumentsButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fetchEffects();
-            }
+        fetchInstrumentsButton.addActionListener((ActionEvent e) -> {
+            fetchEffects();
         });
 
-        removeInstrumentButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeEffect();
-            }
+        removeInstrumentButton.addActionListener((ActionEvent e) -> {
+            removeEffect();
         });
 
         /*

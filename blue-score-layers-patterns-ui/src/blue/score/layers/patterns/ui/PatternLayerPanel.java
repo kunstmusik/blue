@@ -90,12 +90,13 @@ public class PatternLayerPanel extends javax.swing.JPanel
         ActionListener al = new ActionListener() {
 
             @Override
+            @SuppressWarnings("unchecked")
             public void actionPerformed(ActionEvent e) {
                 JMenuItem temp = (JMenuItem) e.getSource();
-                Class c = (Class) temp.getClientProperty("sObjClass");
+                Class<? extends SoundObject> c = (Class<? extends SoundObject>) temp.getClientProperty("sObjClass");
 
                 try {
-                    SoundObject sObj = (SoundObject) c.newInstance();
+                    SoundObject sObj = c.newInstance();
                     patternLayer.setSoundObject(sObj);
                     editSoundObject();
                 } catch (InstantiationException ex) {
@@ -322,13 +323,14 @@ public class PatternLayerPanel extends javax.swing.JPanel
         patternLayer.setSolo(soloToggleButton.isSelected());
     }//GEN-LAST:event_soloToggleButtonActionPerformed
 
+    @SuppressWarnings("unchecked")
     private void otherMenuButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherMenuButtonActionPerformed
 
-        Class current = patternLayer.getSoundObject().getClass();
+        Class<? extends SoundObject> current = patternLayer.getSoundObject().getClass();
 
         for (Component c : changeSObjMenu.getMenuComponents()) {
             JMenuItem menuItem = (JMenuItem) c;
-            Class clazz = (Class) menuItem.getClientProperty("sObjClass");
+            Class<? extends SoundObject> clazz = (Class<? extends SoundObject>) menuItem.getClientProperty("sObjClass");
             menuItem.setEnabled(!current.equals(clazz));
         }
 

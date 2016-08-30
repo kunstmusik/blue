@@ -103,6 +103,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BlueSynthBuilderObject#saveAsXML()
      */
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -237,6 +238,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
 
         if (parameters != null) {
@@ -294,6 +296,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#getPresetValue()
      */
+    @Override
     public String getPresetValue() {
         return Float.toString(getValue());
     }
@@ -303,10 +306,12 @@ public class BSBHSlider extends AutomatableBSBObject implements
      * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setPresetValue(java.lang.String)
      */
+    @Override
     public void setPresetValue(String val) {
         setValue(Float.parseFloat(val));
     }
 
+    @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
@@ -362,6 +367,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);
 
@@ -372,10 +378,12 @@ public class BSBHSlider extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void parameterChanged(Parameter param) {
     }
 
     // override to handle removing/adding parameters when this changes
+    @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
 
@@ -390,10 +398,12 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     /* RANDOMIZABLE METHODS */
 
+    @Override
     public boolean isRandomizable() {
         return randomizable;
     }
 
+    @Override
     public void randomize() {
         if (randomizable) {
             float range = getMaximum() - getMinimum();
@@ -418,6 +428,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
         }
     }
 
+    @Override
     public void setRandomizable(boolean randomizable) {
         this.randomizable = randomizable;
         fireBSBObjectChanged();

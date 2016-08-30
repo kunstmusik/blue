@@ -2,7 +2,7 @@
 Encoding=UTF-8
 Name=Blue
 Comment=Blue Integrated Music Environment
-Exec=/bin/sh "DESKTOPDIR/blue"
+Exec=/bin/sh "DESKTOPDIR/blue" %U
 Icon=DESKTOPDIR/blueIcon.png
 Categories=Application;Multimedia
 Version=1.0

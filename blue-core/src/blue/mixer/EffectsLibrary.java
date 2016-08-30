@@ -289,6 +289,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getRoot()
      */
+    @Override
     public Object getRoot() {
         return getRootEffectCategory();
     }
@@ -298,6 +299,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
      */
+    @Override
     public int getChildCount(Object parent) {
         if (parent instanceof Effect) {
             return 0;
@@ -314,6 +316,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#isLeaf(java.lang.Object)
      */
+    @Override
     public boolean isLeaf(Object node) {
         return (node instanceof Effect);
     }
@@ -323,6 +326,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#addTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
         listeners.add(l);
     }
@@ -332,6 +336,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * 
      * @see javax.swing.tree.TreeModel#removeTreeModelListener(javax.swing.event.TreeModelListener)
      */
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
         listeners.remove(l);
     }
@@ -342,6 +347,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
      * @see javax.swing.tree.TreeModel#valueForPathChanged(javax.swing.tree.TreePath,
      *      java.lang.Object)
      */
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         Object obj = path.getLastPathComponent();
 
@@ -382,6 +388,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
         }
     }
 
+    @Override
     public Object getChild(Object parent, int index) {
         EffectCategory category = (EffectCategory) parent;
 
@@ -398,6 +405,7 @@ public class EffectsLibrary implements Serializable, TreeModel {
 
     }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
         EffectCategory category = (EffectCategory) parent;
 

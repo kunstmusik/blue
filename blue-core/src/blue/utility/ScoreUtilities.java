@@ -392,6 +392,7 @@ public class ScoreUtilities {
     public static float getProcessingStartTime(PolyObject pObj) {
         List<SoundObject> sObjects = pObj.getSoundObjects(false);
         Collections.sort(sObjects, new Comparator<SoundObject>() {
+            @Override
             public int compare(SoundObject s1, SoundObject s2) {
                 return (int)(s1.getStartTime() - s2.getStartTime());
             }

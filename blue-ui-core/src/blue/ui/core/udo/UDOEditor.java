@@ -75,13 +75,8 @@ public class UDOEditor extends javax.swing.JPanel {
         codeBody.getDocument().addDocumentListener(dl);
         comments.getDocument().addDocumentListener(dl);
 
-        testOpcodeButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testOpcode();
-            }
-
+        testOpcodeButton.addActionListener((ActionEvent e) -> {
+            testOpcode();
         });
 
 

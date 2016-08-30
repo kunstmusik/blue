@@ -34,6 +34,7 @@ public class UDOLibrarySearch implements BlueSearchType {
         this.library = library;
     }
 
+    @Override
     public String getSearchName() {
         return "UDO Library";
     }

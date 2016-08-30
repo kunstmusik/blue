@@ -67,58 +67,44 @@ public final class UserDefinedOpcodeTopComponent extends TopComponent {
                 "HINT_UserDefinedOpcodeTopComponent"));
 //        setIcon(Utilities.loadImage(ICON_PATH, true));
 
-          uDOLibraryPanel1.addSelectionListener(new SelectionListener() {
-
-            @Override
-            public void selectionPerformed(SelectionEvent e) {
-                Object obj = e.getSelectedItem();
-
-                isChanging = true;
-
-                if (obj instanceof UserDefinedOpcode) {
-                    uDOEditor1.editUserDefinedOpcode((UserDefinedOpcode) obj);
-                    uDOEditor1.setBorder(libraryBorder);
-                } else {
-                    uDOEditor1.editUserDefinedOpcode(null);
-                    uDOEditor1.setBorder(null);
-                }
-
-                opcodeListEditPanel1.deselect();
-                isChanging = false;
-            }
-
+          uDOLibraryPanel1.addSelectionListener((SelectionEvent e) -> {
+              Object obj = e.getSelectedItem();
+              
+              isChanging = true;
+              
+              if (obj instanceof UserDefinedOpcode) {
+                  uDOEditor1.editUserDefinedOpcode((UserDefinedOpcode) obj);
+                  uDOEditor1.setBorder(libraryBorder);
+              } else {
+                  uDOEditor1.editUserDefinedOpcode(null);
+                  uDOEditor1.setBorder(null);
+              }
+              
+              opcodeListEditPanel1.deselect();
+              isChanging = false;
         });
 
-        opcodeListEditPanel1.addListSelectionListener(new ListSelectionListener() {
-
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-
-                if (e.getValueIsAdjusting() || isChanging) {
-                    return;
-                }
-
-                UserDefinedOpcode[] udos = opcodeListEditPanel1.getSelectedUDOs();
-
-                if(udos != null && udos.length == 1) {
-                    uDOEditor1.editUserDefinedOpcode(udos[0]);
-                    uDOEditor1.setBorder(null);
-                } else {
-                    uDOEditor1.editUserDefinedOpcode(null);
-                    uDOEditor1.setBorder(null);
-                }
-                uDOLibraryPanel1.deselect();
+        opcodeListEditPanel1.addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting() || isChanging) {
+                return;
             }
+            
+            UserDefinedOpcode[] udos = opcodeListEditPanel1.getSelectedUDOs();
+            
+            if(udos != null && udos.length == 1) {
+                uDOEditor1.editUserDefinedOpcode(udos[0]);
+                uDOEditor1.setBorder(null);
+            } else {
+                uDOEditor1.editUserDefinedOpcode(null);
+                uDOEditor1.setBorder(null);
+            }
+            uDOLibraryPanel1.deselect();
         });
 
 
-        BlueProjectManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
-                    reinitialize();
-                }
+        BlueProjectManager.getInstance().addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (BlueProjectManager.CURRENT_PROJECT.equals(evt.getPropertyName())) {
+                reinitialize();
             }
         });
 

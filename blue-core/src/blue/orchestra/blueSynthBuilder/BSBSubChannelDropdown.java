@@ -49,6 +49,7 @@ public class BSBSubChannelDropdown extends BSBObject {
         return dropDown;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
@@ -57,15 +58,18 @@ public class BSBSubChannelDropdown extends BSBObject {
         return retVal;
     }
 
+    @Override
     public String getPresetValue() {
         // return channelOutput;
         return null;
     }
 
+    @Override
     public void setPresetValue(String val) {
         // BlueSystem.getCurrentBlueData().getMixer().getSubChannels();
     }
 
+    @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         compilationUnit.addReplacementValue(objectName, channelOutput);
     }

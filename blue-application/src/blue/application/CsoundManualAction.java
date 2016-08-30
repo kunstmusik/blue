@@ -35,7 +35,7 @@ public final class CsoundManualAction implements ActionListener {
         File index = new File(manualDir, "index.html");
 
         try {
-            URLDisplayer.getDefault().showURL(index.toURL());
+            URLDisplayer.getDefault().showURL(index.toURI().toURL());
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }

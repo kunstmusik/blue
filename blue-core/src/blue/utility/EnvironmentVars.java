@@ -44,11 +44,11 @@ public class EnvironmentVars {
         String OS = System.getProperty("os.name").toLowerCase();
 
         try {
-            if (OS.indexOf("windows 9") > -1) {
+            if (OS.contains("windows 9")) {
                 p = r.exec("command.com /c set");
-            } else if ((OS.indexOf("nt") > -1)
-                    || (OS.indexOf("windows 20") > -1)
-                    || (OS.indexOf("windows xp") > -1)) {
+            } else if ((OS.contains("nt"))
+                    || (OS.contains("windows 20"))
+                    || (OS.contains("windows xp"))) {
 
                 p = r.exec("cmd.exe /c set");
             } else {

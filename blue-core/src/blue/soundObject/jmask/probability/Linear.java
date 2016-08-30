@@ -46,6 +46,7 @@ public class Linear implements ProbabilityGenerator {
         return retVal;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
@@ -59,10 +60,12 @@ public class Linear implements ProbabilityGenerator {
 //        return new LinearEditor(this);
 //    }
 
+    @Override
     public String getName() {
         return "Linear";
     }
 
+    @Override
     public double getValue(double time, java.util.Random rnd) {
         double x1 = rnd.nextDouble();
         double x2 = rnd.nextDouble();

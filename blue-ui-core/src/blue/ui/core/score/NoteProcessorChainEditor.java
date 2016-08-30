@@ -146,43 +146,21 @@ public class NoteProcessorChainEditor extends JComponent {
         addButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.add"));
         addButton.setText("+");
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showNoteProcessorPopup(e);
-            }
-        });
+        addButton.addActionListener(this::showNoteProcessorPopup);
         removeButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.remove"));
         removeButton.setText("-");
-        removeButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeCurrentNoteProcessor();
-            }
+        removeButton.addActionListener((ActionEvent e) -> {
+            removeCurrentNoteProcessor();
         });
         pushUpButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.pushUp"));
         pushUpButton.setText("^");
-        pushUpButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushUpNoteProcessor(e);
-            }
-        });
+        pushUpButton.addActionListener(this::pushUpNoteProcessor);
         pushDownButton.setToolTipText(BlueSystem
                 .getString("soundObjectProperties.noteProcessors.pushDown"));
         pushDownButton.setText("V");
-        pushDownButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                pushDownNoteProcessor(e);
-            }
-        });
+        pushDownButton.addActionListener(this::pushDownNoteProcessor);
 
         noteProcessorEditPanel.setLayout(noteProcessorCardLayout);
         noteProcessorEditPanel.add(editPanel, "edit");
@@ -329,30 +307,18 @@ public class NoteProcessorChainEditor extends JComponent {
                 insertNoteProcessor.add(temp);
             }
 
-            insertChainListener = new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    insertChain(e.getActionCommand());
-                }
+            insertChainListener = (ActionEvent e) -> {
+                insertChain(e.getActionCommand());
             };
 
             saveChain = new JMenuItem("Save");
-            saveChain.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    saveChain();
-                }
+            saveChain.addActionListener((ActionEvent e) -> {
+                saveChain();
             });
 
             removeChain = new JMenuItem("Remove");
-            removeChain.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    removeChain();
-                }
+            removeChain.addActionListener((ActionEvent e) -> {
+                removeChain();
             });
 
             JMenu npcMapMenu = new JMenu("Note Processor Chains");
@@ -537,40 +503,24 @@ public class NoteProcessorChainEditor extends JComponent {
             this.npcEditor = npcEditor;
 
             cutProcessor.setText("Cut");
-            cutProcessor.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    npcEditor.cutCurrentNoteProcessor();
-                }
+            cutProcessor.addActionListener((ActionEvent e) -> {
+                npcEditor.cutCurrentNoteProcessor();
             });
 
             copyProcessor.setText("Copy");
-            copyProcessor.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    npcEditor.copyCurrentNoteProcessor();
-                }
+            copyProcessor.addActionListener((ActionEvent e) -> {
+                npcEditor.copyCurrentNoteProcessor();
             });
 
             pasteProcessor.setText("Paste");
-            pasteProcessor.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    npcEditor.pasteCurrentNoteProcessor();
-                }
+            pasteProcessor.addActionListener((ActionEvent e) -> {
+                npcEditor.pasteCurrentNoteProcessor();
             });
 
             removeProcessor.setText(BlueSystem
                     .getString("soundObjectProperties.noteProcessors.remove"));
-            removeProcessor.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    npcEditor.removeCurrentNoteProcessor();
-                }
+            removeProcessor.addActionListener((ActionEvent e) -> {
+                npcEditor.removeCurrentNoteProcessor();
             });
 
             this.add(cutProcessor);

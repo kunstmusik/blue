@@ -301,17 +301,14 @@ public class AudioHeaderLayerPanel extends javax.swing.JPanel
 
             JMenu layerHeightMenu = new JMenu("Layer Height");
 
-            ActionListener al = new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (audioLayer == null) {
-                        return;
-                    }
-
-                    int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
-
-                    audioLayer.setHeightIndex(heightIndex);
+            ActionListener al = (ActionEvent ae) -> {
+                if (audioLayer == null) {
+                    return;
                 }
+                
+                int heightIndex = Integer.parseInt(ae.getActionCommand()) - 1;
+                
+                audioLayer.setHeightIndex(heightIndex);
             };
 
             for (int i = 0; i < heightItems.length; i++) {

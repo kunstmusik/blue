@@ -68,7 +68,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
     AlignmentPanel alignPanel = new AlignmentPanel();
 
-    JPanel rightBar;
+    JPanel rightBar = new JPanel(new BorderLayout());
 
     private BSBGraphicInterface gInterface;
 
@@ -84,23 +84,13 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         presets.addPresetListener(this);
 
         editBox.addEditModeListener(bsbEditPanel);
-        editBox.addEditModeListener(new EditModeListener() {
+        editBox.addEditModeListener(isEditing ->
+                rightBar.setVisible(isEditing));
 
-            @Override
-            public void setEditing(boolean isEditing) {
-                rightBar.setVisible(isEditing);
+        editBox.addEditModeListener((boolean isEditing) -> {
+            if (!isUpdating && gInterface != null) {
+                gInterface.setEditEnabled(isEditing);
             }
-
-        });
-        editBox.addEditModeListener(new EditModeListener() {
-
-            @Override
-            public void setEditing(boolean isEditing) {
-                if (!isUpdating && gInterface != null) {
-                    gInterface.setEditEnabled(isEditing);
-                }
-            }
-
         });
 
         JPanel topBar = new JPanel(new BorderLayout());
@@ -124,17 +114,12 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
         gridPropertySheet.setPreferredSize(new Dimension(250, 30));
 
-        gridPropertySheet.addPropertySheetChangeListener(
-                new PropertyChangeListener() {
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        if (gInterface != null) {
-                            Property prop = (Property) evt.getSource();
-                            prop.writeToObject(gInterface.getGridSettings());
-                        }
-                    }
-                });
+        gridPropertySheet.addPropertySheetChangeListener((PropertyChangeEvent evt) -> {
+            if (gInterface != null) {
+                Property prop = (Property) evt.getSource();
+                prop.writeToObject(gInterface.getGridSettings());
+            }
+        });
 
         try {
             gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(
@@ -143,7 +128,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
             Exceptions.printStackTrace(ex);
         }
 
-        rightBar = new JPanel(new BorderLayout());
 //        rightBar.add(new JLabel(BlueSystem
 //                .getString("instrument.bsb.objectProperties")),
 //                BorderLayout.NORTH);
@@ -166,7 +150,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
         bsbEditPanel.addSelectionListener(bsbPropSheet);
 
-        alignPanel.setJComponentArrayList(bsbEditPanel.getSelectionList());
+        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
 
         rightBar.setVisible(false);
 
@@ -254,6 +238,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
          * @see com.l2fprod.common.propertysheet.PropertyEditorRegistry#getEditor(java.lang.Class)
          */
         @Override
+        @SuppressWarnings("rawtypes")
         public synchronized PropertyEditor getEditor(Class type) {
             PropertyEditor editor = super.getEditor(type);
 

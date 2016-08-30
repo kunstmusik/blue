@@ -50,6 +50,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         return "[tuning]";
     }
 
+    @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
 
         Note temp;
@@ -170,6 +171,7 @@ public class TuningProcessor implements NoteProcessor, Serializable {
         return tp;
     }
 
+    @Override
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessor");
         retVal.setAttribute("type", this.getClass().getName());

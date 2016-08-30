@@ -22,7 +22,7 @@ public class BlueIconFactory {
     private static Icon horizontalSliderThumbIcon;
     private static Icon verticalSliderThumbIcon;
     
-    private static HashMap<Color, GradientPaint> gpCache = new HashMap<Color, GradientPaint>();
+    private static HashMap<Color, GradientPaint> gpCache = new HashMap<>();
 
     public static GradientPaint getGradientPaint(Color c) {
         GradientPaint gp = gpCache.get(c);
@@ -71,6 +71,7 @@ public class BlueIconFactory {
             return 13;
         }
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
 //            if (MetalLookAndFeel.usingOcean()) {
 //                paintOceanIcon(c, g, x, y);
@@ -121,10 +122,12 @@ public class BlueIconFactory {
             g.drawLine(x + (controlSize - 4), y + 4, x + 5, y + (controlSize - 5));
         }
 
+        @Override
         public int getIconWidth() {
             return getControlSize();
         }
 
+        @Override
         public int getIconHeight() {
             return getControlSize();
         }
@@ -136,6 +139,7 @@ public class BlueIconFactory {
                 0, 6, BlueLookAndFeel.getControl());
         private static int controlSize = 13;
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
 
             JRadioButton rb = (JRadioButton) c;
@@ -176,10 +180,12 @@ public class BlueIconFactory {
             g.translate(-x, -y);
         }
 
+        @Override
         public int getIconWidth() {
             return 13;
         }
 
+        @Override
         public int getIconHeight() {
             return 13;
         }
@@ -187,6 +193,7 @@ public class BlueIconFactory {
 
     private static class HorizontalSliderThumbIcon implements Icon, Serializable, UIResource {
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             JSlider slider = (JSlider) c;
 
@@ -232,10 +239,12 @@ public class BlueIconFactory {
             g.translate(-x, -y);
         }
 
+        @Override
         public int getIconWidth() {
             return 15;
         }
 
+        @Override
         public int getIconHeight() {
             return 16;
         }
@@ -243,6 +252,7 @@ public class BlueIconFactory {
     
     private static class VerticalSliderThumbIcon implements Icon, Serializable, UIResource {
 
+    @Override
     public void paintIcon( Component c, Graphics g, int x, int y ) {
         JSlider slider = (JSlider)c;
 
@@ -319,10 +329,12 @@ public class BlueIconFactory {
         g.translate( -x, -y );
     }
 
+    @Override
     public int getIconWidth() {
         return 16;
     }
 
+    @Override
     public int getIconHeight() {
         return 15;
     }

@@ -155,7 +155,7 @@ public class AudioLayersDropTargetListener implements DropTargetListener {
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(DnDConstants.ACTION_LINK);
                 
-                List list = (List) tr
+                List<?> list = (List<?>) tr
                         .getTransferData(DataFlavor.javaFileListFlavor);
                 
                 if (list.size() != 1) {

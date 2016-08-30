@@ -46,7 +46,7 @@ import java.util.Objects;
  *
  * @author stevenyi
  */
-public class Score extends ObservableArrayList<LayerGroup> implements Serializable {
+public class Score extends ObservableArrayList<LayerGroup<? extends Layer>> implements Serializable {
 
     Tempo tempo = null;
     TimeState timeState = null;
@@ -182,7 +182,7 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
     public List<LayerGroup> getLayerGroupsForScoreObjects(Collection<? extends ScoreObject> scoreObjects) {
         List<LayerGroup> retVal = new ArrayList<>();
 
-        for (LayerGroup<Layer> layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 boolean found = false;
                 if (layer instanceof ScoreObjectLayer) {
@@ -206,7 +206,7 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
     public List<Layer> getAllLayers() {
         List<Layer> retVal = new ArrayList<>();
 
-        for (LayerGroup<Layer> layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             retVal.addAll(layerGroup);
         }
         return retVal;
@@ -216,7 +216,7 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
         int runningY = 0;
         int runningIndex = 0;
 
-        for (LayerGroup<Layer> layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 if (y <= runningY + layer.getLayerHeight()) {
                     return runningIndex;
@@ -236,7 +236,7 @@ public class Score extends ObservableArrayList<LayerGroup> implements Serializab
     public Layer getGlobalLayerForY(int y) {
         int runningY = 0;
 
-        for (LayerGroup<Layer> layerGroup : this) {
+        for (LayerGroup<? extends Layer> layerGroup : this) {
             for (Layer layer : layerGroup) {
                 if (y <= runningY + layer.getLayerHeight()) {
                     return layer;

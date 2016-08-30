@@ -95,12 +95,8 @@ public class AudioFileEditor extends ScoreObjectEditor {
         JTabbedPane tabs = new JTabbedPane();
 
         findAudioFile.setText("...");
-        findAudioFile.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                selectFile();
-            }
+        findAudioFile.addActionListener((ActionEvent e) -> {
+            selectFile();
         });
         findAudioFile.setToolTipText(BlueSystem
                 .getString("audioFile.selectFile"));

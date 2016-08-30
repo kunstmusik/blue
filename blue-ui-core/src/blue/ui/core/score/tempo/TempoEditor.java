@@ -4,6 +4,7 @@
  */
 package blue.ui.core.score.tempo;
 
+import blue.components.DragDirection;
 import blue.components.lines.Line;
 import blue.components.lines.LineEditorDialog;
 import blue.components.lines.LinePoint;
@@ -19,6 +20,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -54,12 +56,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
 
     public TempoEditor() {
-        lineListener = new TableModelListener() {
-
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                repaint();
-            }
+        lineListener = (TableModelEvent e) -> {
+            repaint();
         };
 
         TempoEditorMouseListener tempoEditorMouseListener = 
@@ -435,6 +433,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     public class TempoEditorMouseListener implements MouseListener, MouseMotionListener {
 
         TempoEditor tempoEditor;
+        DragDirection direction = DragDirection.NOT_SET;
+        Point pressPoint = null;
 
         public TempoEditorMouseListener(TempoEditor tempoEditor) {
             this.tempoEditor = tempoEditor;
@@ -458,6 +458,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 return;
             }
 
+            pressPoint = e.getPoint();
 
             if (selectedPoint != null) {
                 if (UiUtilities.isRightMouseButton(e)) {
@@ -500,6 +501,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         @Override
         public void mouseReleased(MouseEvent e) {
+            direction = DragDirection.NOT_SET;
             if (tempo == null || !tempo.isEnabled() || !tempo.isVisible()) {
                 return;
             }
@@ -518,6 +520,22 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
                 int x = e.getX();
                 int y = e.getY();
+
+                if(direction == DragDirection.NOT_SET) {
+                    int magx = Math.abs(x - (int)pressPoint.getX());
+                    int magy = Math.abs(y - (int)pressPoint.getY());
+
+                    direction = (magx > magy) ? DragDirection.LEFT_RIGHT :
+                            DragDirection.UP_DOWN;
+                }
+
+                if(e.isControlDown()) {
+                    if(direction == DragDirection.LEFT_RIGHT) {
+                        y = (int)pressPoint.getY();
+                    } else {
+                        x = (int)pressPoint.getX(); 
+                    }
+                }
 
                 int topY = 5;
                 int bottomY = getHeight() - 5;

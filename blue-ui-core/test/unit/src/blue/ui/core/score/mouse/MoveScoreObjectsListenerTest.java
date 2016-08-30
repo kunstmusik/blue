@@ -126,5 +126,9 @@ public class MoveScoreObjectsListenerTest {
         public boolean equals(Object obj) {
             return obj == this;
         }
+
+        @Override
+        public void clearScoreObjects() {
+        }
     }
 }

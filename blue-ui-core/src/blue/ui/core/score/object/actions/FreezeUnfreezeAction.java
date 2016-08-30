@@ -303,7 +303,7 @@ public final class FreezeUnfreezeAction extends AbstractAction
 
             String extension = ".wav";
 
-            if (System.getProperty("os.name").indexOf("Mac") >= 0) {
+            if (System.getProperty("os.name").contains("Mac")) {
                 extension = ".aif";
             }
 

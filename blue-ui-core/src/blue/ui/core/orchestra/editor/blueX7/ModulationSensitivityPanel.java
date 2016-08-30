@@ -41,11 +41,8 @@ public class ModulationSensitivityPanel extends JComponent {
         this.add(amplitude);
         this.add(pitch);
 
-        ChangeListener cl = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                checkData();
-            }
+        ChangeListener cl = (ChangeEvent e) -> {
+            checkData();
         };
 
         amplitude.addChangeListener(cl);

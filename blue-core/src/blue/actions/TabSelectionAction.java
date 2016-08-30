@@ -39,6 +39,7 @@ public class TabSelectionAction extends BlueAction {
         this.index = index;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         tabs.setSelectedIndex(index);
     }

@@ -108,22 +108,14 @@ public class CodeRepositoryDialog extends JDialog implements
         temp.add(okButton);
         temp.add(cancelButton);
 
-        okButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) codeTree
-                        .getModel().getRoot();
-                CodeRepositoryManager.saveCodeRepository(node);
-                setVisible(false);
-            }
+        okButton.addActionListener((ActionEvent e) -> {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) codeTree
+                    .getModel().getRoot();
+            CodeRepositoryManager.saveCodeRepository(node);
+            setVisible(false);
         });
-        cancelButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setVisible(false);
-            }
+        cancelButton.addActionListener((ActionEvent e) -> {
+            setVisible(false);
         });
 
         this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

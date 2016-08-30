@@ -37,7 +37,7 @@ import javax.swing.event.DocumentListener;
  * @author steven
  */
 public class NotePropertiesEditor extends JPanel implements
-        SelectionListener, PropertyChangeListener {
+        SelectionListener<PianoNoteView>, PropertyChangeListener {
 
     PianoNote note = null;
 
@@ -105,12 +105,12 @@ public class NotePropertiesEditor extends JPanel implements
     }
 
     @Override
-    public void selectionPerformed(SelectionEvent e) {
+    public void selectionPerformed(SelectionEvent<PianoNoteView> e) {
         isUpdating = true;
 
         switch (e.getSelectionType()) {
             case SelectionEvent.SELECTION_SINGLE:
-                PianoNoteView noteView = (PianoNoteView) e.getSelectedItem();
+                PianoNoteView noteView = e.getSelectedItem();
 
                 // if(note != null) {
                 // note.removePropertyChangeListener(this);

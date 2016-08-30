@@ -1130,28 +1130,24 @@ public final class BlueLiveTopComponent extends TopComponent
         String[] items = {"<START>", "<DUR>", "<KEY>", "<KEY_CPS>",
             "<KEY_OCT>", "<KEY_PCH>", "<VELOCITY>", "<VELOCITY_AMP>"};
 
-        final ActionListener al = new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (noteTemplateText.isEnabled()) {
-                    int loc = noteTemplateText.getCaret().getDot();
-                    int mark = noteTemplateText.getCaret().getMark();
-
-                    int start = loc < mark ? loc : mark;
-                    int len = Math.abs(loc - mark);
-
-                    Document doc = noteTemplateText.getDocument();
-
-                    try {
-                        if (len > 0) {
-                            doc.remove(start, len);
-                        }
-
-                        doc.insertString(start, e.getActionCommand(), null);
-                    } catch (BadLocationException ex) {
-                        ex.printStackTrace();
+        final ActionListener al = (ActionEvent e) -> {
+            if (noteTemplateText.isEnabled()) {
+                int loc = noteTemplateText.getCaret().getDot();
+                int mark = noteTemplateText.getCaret().getMark();
+                
+                int start = loc < mark ? loc : mark;
+                int len = Math.abs(loc - mark);
+                
+                Document doc = noteTemplateText.getDocument();
+                
+                try {
+                    if (len > 0) {
+                        doc.remove(start, len);
                     }
+                    
+                    doc.insertString(start, e.getActionCommand(), null);
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
                 }
             }
         };
@@ -1328,144 +1324,99 @@ public final class BlueLiveTopComponent extends TopComponent
         JMenuItem removeColumn = new JMenuItem("Remove Column");
 
         public BufferMenu() {
-            removeInstrumentMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-
-                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
-                            mouseRow, mouseColumn);
-
-                    if (lObj != null) {
-                        model.setValueAt(null, mouseRow, mouseColumn);
-                        content.set(Collections.emptyList(), null);
-                    }
+            removeInstrumentMenuItem.addActionListener((ActionEvent e) -> {
+                LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
+                        mouseRow, mouseColumn);
+                
+                if (lObj != null) {
+                    model.setValueAt(null, mouseRow, mouseColumn);
+                    content.set(Collections.emptyList(), null);
                 }
             });
-            cutMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
-                            mouseRow, mouseColumn);
-
-                    if (lObj != null) {
-
-                        SoundObject copy = lObj.getSoundObject().clone();
-
-                        ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                                = ScoreController.getInstance().getScoreObjectBuffer();
-
-                        scoreObjectBuffer.clear();
-                        scoreObjectBuffer.scoreObjects.add(copy);
-                        scoreObjectBuffer.layerIndexes.add(0);
-
-                        model.setValueAt(null, mouseRow, mouseColumn);
-                        content.set(Collections.emptyList(), null);
-                    }
-
-                }
-            });
-            copyMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-
-                    LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
-                            mouseRow, mouseColumn);
-
-                    if (lObj != null) {
-
-                        SoundObject copy = lObj.getSoundObject().clone();
-
-                        ScoreController.ScoreObjectBuffer scoreObjectBuffer
-                                = ScoreController.getInstance().getScoreObjectBuffer();
-
-                        scoreObjectBuffer.clear();
-                        scoreObjectBuffer.scoreObjects.add(copy);
-                        scoreObjectBuffer.layerIndexes.add(0);
-                    }
-
-                }
-            });
-            pasteMenuItem.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-
+            cutMenuItem.addActionListener((ActionEvent e) -> {
+                LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
+                        mouseRow, mouseColumn);
+                
+                if (lObj != null) {
+                    
+                    SoundObject copy = lObj.getSoundObject().clone();
+                    
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
-
-                    if (scoreObjectBuffer.scoreObjects.size() != 1) {
-                        return;
-                    }
-                    ScoreObject scoreObj = scoreObjectBuffer.scoreObjects.get(0);
-                    if (!(scoreObj instanceof SoundObject)) {
-                        return;
-                    }
-
-                    SoundObject sObj = (SoundObject) scoreObj;
-
-                    if (!liveSoundObjectTemplates.containsKey(sObj.getClass())) {
-                        return;
-                    }
-
-                    SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                            sObj);
-                    copy.setStartTime(0.0f);
-                    addSoundObject(mouseColumn, mouseRow, copy);
+                    
+                    scoreObjectBuffer.clear();
+                    scoreObjectBuffer.scoreObjects.add(copy);
+                    scoreObjectBuffer.layerIndexes.add(0);
+                    
+                    model.setValueAt(null, mouseRow, mouseColumn);
+                    content.set(Collections.emptyList(), null);
                 }
+            });
+            copyMenuItem.addActionListener((ActionEvent e) -> {
+                LiveObject lObj = (LiveObject) liveObjectsTable.getValueAt(
+                        mouseRow, mouseColumn);
+                
+                if (lObj != null) {
+                    
+                    SoundObject copy = lObj.getSoundObject().clone();
+                    
+                    ScoreController.ScoreObjectBuffer scoreObjectBuffer
+                            = ScoreController.getInstance().getScoreObjectBuffer();
+                    
+                    scoreObjectBuffer.clear();
+                    scoreObjectBuffer.scoreObjects.add(copy);
+                    scoreObjectBuffer.layerIndexes.add(0);
+                }
+            });
+            pasteMenuItem.addActionListener((ActionEvent e) -> {
+                ScoreController.ScoreObjectBuffer scoreObjectBuffer
+                        = ScoreController.getInstance().getScoreObjectBuffer();
+                
+                if (scoreObjectBuffer.scoreObjects.size() != 1) {
+                    return;
+                }
+                ScoreObject scoreObj = scoreObjectBuffer.scoreObjects.get(0);
+                if (!(scoreObj instanceof SoundObject)) {
+                    return;
+                }
+                
+                SoundObject sObj = (SoundObject) scoreObj;
+                
+                if (!liveSoundObjectTemplates.containsKey(sObj.getClass())) {
+                    return;
+                }
+                
+                SoundObject copy = (SoundObject) ObjectUtilities.clone(
+                        sObj);
+                copy.setStartTime(0.0f);
+                addSoundObject(mouseColumn, mouseRow, copy);
             });
 
             /*
              * Row and Column Handling
              */
-            insertRowBefore.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.insertRow(mouseRow);
-                }
+            insertRowBefore.addActionListener((ActionEvent e) -> {
+                model.insertRow(mouseRow);
             });
 
-            insertRowAfter.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.insertRow(mouseRow + 1);
-                }
+            insertRowAfter.addActionListener((ActionEvent e) -> {
+                model.insertRow(mouseRow + 1);
             });
 
-            removeRow.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.removeRow(mouseRow);
-                }
+            removeRow.addActionListener((ActionEvent e) -> {
+                model.removeRow(mouseRow);
             });
 
-            insertColumnBefore.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.insertColumn(mouseColumn);
-                }
+            insertColumnBefore.addActionListener((ActionEvent e) -> {
+                model.insertColumn(mouseColumn);
             });
 
-            insertColumnAfter.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.insertColumn(mouseColumn + 1);
-                }
+            insertColumnAfter.addActionListener((ActionEvent e) -> {
+                model.insertColumn(mouseColumn + 1);
             });
 
-            removeColumn.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    model.removeColumn(mouseColumn);
-                }
+            removeColumn.addActionListener((ActionEvent e) -> {
+                model.removeColumn(mouseColumn);
             });
 
             /*

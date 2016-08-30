@@ -53,6 +53,7 @@ public final class OpenProjectAction implements ActionListener {
                         GeneralSettings.getInstance().getDefaultDirectory() + File.separator + "default.blue"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
 
         FileChooserManager fcm = FileChooserManager.getDefault();
@@ -201,9 +202,9 @@ public final class OpenProjectAction implements ActionListener {
     private static void checkDependencies(BlueData tempData) {
         Score score = tempData.getScore();
 
-        ArrayList filesList = new ArrayList();
+        ArrayList<String> filesList = new ArrayList<>();
 
-        for (LayerGroup layerGroup : score) {
+        for (LayerGroup<?> layerGroup : score) {
 
             if (!(layerGroup instanceof PolyObject)) {
                 continue;
@@ -223,27 +224,24 @@ public final class OpenProjectAction implements ActionListener {
 
             if (dependencyDialog.ask()) {
 
-                HashMap map = dependencyDialog.getFilesMap();
+                Map<String, String> map = dependencyDialog.getFilesMap();
 
                 if (map == null || map.size() == 0) {
                     return;
                 }
 
-                for (Iterator iter = map.entrySet().iterator(); iter.hasNext();) {
-                    Map.Entry entry = (Entry) iter.next();
-
-                    String key = (String) entry.getKey();
-                    String val = (String) entry.getValue();
+                for ( Entry<String, String> entry : map.entrySet()) {
+                    String key = entry.getKey();
+                    String val = entry.getValue();
 
                     val = BlueSystem.getRelativePath(val);
 
                     entry.setValue(val);
-
                 }
 
                 System.out.println(map);
 
-                for (LayerGroup layerGroup : score) {
+                for (LayerGroup<?> layerGroup : score) {
 
                     if (!(layerGroup instanceof PolyObject)) {
                         continue;
@@ -258,9 +256,9 @@ public final class OpenProjectAction implements ActionListener {
 
     }
 
-    private static void checkAudioFiles(PolyObject pObj, ArrayList filesList) {
-        for (Iterator iter = pObj.getSoundObjects(true).iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+    private static void checkAudioFiles(PolyObject pObj, ArrayList<String> filesList) {
+        for (Iterator<SoundObject> iter = pObj.getSoundObjects(true).iterator(); iter.hasNext();) {
+            SoundObject sObj = iter.next();
             if (sObj instanceof AudioFile) {
                 AudioFile af = (AudioFile) sObj;
 
@@ -280,16 +278,15 @@ public final class OpenProjectAction implements ActionListener {
         }
     }
 
-    private static void reconcileAudioFiles(PolyObject pObj, HashMap map) {
-        for (Iterator iter = pObj.getSoundObjects(true).iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+    private static void reconcileAudioFiles(PolyObject pObj, Map<String, String> map) {
+        for (SoundObject sObj : pObj.getSoundObjects(true)) {
             if (sObj instanceof AudioFile) {
                 AudioFile af = (AudioFile) sObj;
 
                 String soundFileName = af.getSoundFileName();
 
                 if (map.containsKey(soundFileName)) {
-                    af.setSoundFileName((String) map.get(soundFileName));
+                    af.setSoundFileName(map.get(soundFileName));
                 }
             } else if (sObj instanceof PolyObject) {
                 reconcileAudioFiles((PolyObject) sObj, map);

@@ -68,12 +68,8 @@ public class ObjectBuilderEditor extends ScoreObjectEditor {
 
         JButton testButton = new JButton(BlueSystem.getString("common.test"));
 
-        testButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                testSoundObject();
-            }
+        testButton.addActionListener((ActionEvent e) -> {
+            testSoundObject();
         });
 
         topPanel.add(label, BorderLayout.WEST);
