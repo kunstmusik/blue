@@ -55,6 +55,9 @@ NEW
   right-clicking selected notes; added Paste menu when right-clicking on 
   canvas and notes exist in the copy buffer
 
+* Issue #272 - Added a confirmation dialog when deleting UserInstrumentLibrary 
+  folder
+
 UPDATED
 
 * Updated included Clojure version to 1.8.0

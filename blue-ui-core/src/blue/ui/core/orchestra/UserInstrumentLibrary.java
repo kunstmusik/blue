@@ -73,6 +73,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 
 /**
  * @author steven
@@ -571,7 +572,13 @@ class UserInstrumentTreePopup extends JPopupMenu {
     private void removeInstrumentCategory() {
         InstrumentCategory category = (InstrumentCategory) userObj;
 
-        instrGUI.iLibrary.removeCategory(category);
+        if(JOptionPane.YES_OPTION == 
+                JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), 
+                "Please confirm deleting folder (this action is not undoable at this time).", 
+                "Confirm", 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE )) {
+                instrGUI.iLibrary.removeCategory(category);
+        }
     }
 
     private void addInstrument(Instrument instr) {
