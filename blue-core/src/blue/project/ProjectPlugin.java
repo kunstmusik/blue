@@ -20,9 +20,6 @@
 package blue.project;
 
 import blue.BlueData;
-import blue.BlueDataObject;
-import blue.CompileData;
-import electric.xml.Element;
 
 /**
  * Interface for creating project plugins that augment the features of the 

@@ -22,7 +22,6 @@ package blue.ui.core.project;
 import blue.BlueData;
 import blue.project.ProjectPlugin;
 import java.util.Collection;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 
 /**

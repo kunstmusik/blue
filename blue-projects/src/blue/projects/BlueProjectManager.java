@@ -22,6 +22,7 @@ package blue.projects;
 import blue.BlueData;
 import blue.BlueSystem;
 import blue.ProjectProperties;
+import blue.project.ProjectPlugin;
 import blue.projects.recentProjects.RecentProjectsList;
 import blue.score.Score;
 import blue.score.layers.LayerGroup;
@@ -39,13 +40,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Vector;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javax.swing.JFileChooser;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.StatusDisplayer;
 import org.openide.util.Exceptions;
+import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 
 /**
@@ -177,7 +179,12 @@ public class BlueProjectManager {
             }
             
             final Score score = project.getData().getScore();
-            
+          
+            Collection<? extends ProjectPlugin> plugins = 
+                    Lookups.forPath("blue/project/plugins").lookupAll(ProjectPlugin.class);
+            for(ProjectPlugin plugin : plugins) {
+                plugin.preRender(project.getData());
+            }
             
             new Thread(() -> {
                 try {
