@@ -17,7 +17,16 @@ information.
 
 UPDATED
 
-* Issue #256 - Pushing up or down effects should keep the same effect selected
+* Mixer:
+  * Issue #256 - Pushing up or down effects should keep the same effect selected
+
+  * Issue #257 - Select effect when right-clicking pre or post effects so that 
+    popup menu reflects operation on where clicked 
+
+FIX
+
+* Mixer - using "Edit Effect" to edit the definition of an effect within the 
+  mixer would cause an exception after closing the editor
 
 
 > Notes for 2.6.1 <
