@@ -8,7 +8,7 @@ Score Timeline
 
 \subsubsection{Overview}
 
-The Score is the tool in blue for working with musical material in time.
+The Score is the tool in Blue for working with musical material in time.
 It is a canvas upon which to create and organize musical ideas. The
 Score features a modular timeline, where each
 \protect\hyperlink{layerGroups}{Layer Group} within the Score is a
@@ -55,21 +55,21 @@ tables, instruments, and anything else that is usable in Csound. It is
 up to the developer to choose what features the Layer Group will use.
 
 SoundObject Layer Groups are one of the primary Layer Group types. They
-support the SoundObject system in blue for scoring them in time on the
+support the SoundObject system in Blue for scoring them in time on the
 timeline. They also are the canvas on which
 \protect\hyperlink{parameterAutomation}{automations} are drawn.
 
 SoundObject Layer Groups are divided into SoundLayers. Each SoundLayer
 can contain SoundObjects of any type as well as have automations
 assigned to the layer. Unlike MIDI-based studio software, where layers
-are bound to a single instrument or channel in a mixer, blue's
+are bound to a single instrument or channel in a mixer, Blue's
 SoundLayers are free to hold SoundObjects that generate any data for any
 instrument. This design choice allows freedoms for you to design your
 project as you wish, though at the expense of being able to implement
 some things which may be commonly found in MIDI-based studio software.
 
 To use the SoundObject system, first create a SoundObject Layer Group
-using the Score Manager Dialog. (By default, new projects in blue start
+using the Score Manager Dialog. (By default, new projects in Blue start
 with a single SoundObject Layer Group.) Next, add as many layers as you
 would like to the LayerGroup. You can then edit the names of the layers
 using the ScoreManager Dialog, or back in the main Score area by
@@ -136,7 +136,7 @@ By default, new Pattern Layers will use a GenericScore SoundObject that
 is set to a duration of four beats, and use a time behavior of "None".
 This means that the score will generate "as-is". In the layer's popup
 menu options, you can replace the SoundObject that is being used for the
-layer with one from the SoundObject buffer (i.e. copied from blueLive or
+layer with one from the SoundObject buffer (i.e. copied from BlueLive or
 from a SoundObject Layer). Also, you can switch to a different type of
 SoundObject using the menu.
 
@@ -243,15 +243,15 @@ The play bar at the top has:
   \begin{itemize}
   \tightlist
   \item
-    blueLive toggle button to turn on/off blueLive
+    BlueLive toggle button to turn on/off BlueLive
   \item
-    Recompile button that will stop the current blueLive run, recompile
-    the project, and start blueLive again
+    Recompile button that will stop the current BlueLive run, recompile
+    the project, and start BlueLive again
   \item
-    All Notes Off Button to turn off any hanging notes in a blueLive run
+    All Notes Off Button to turn off any hanging notes in a BlueLive run
   \item
-    MIDI Input toggle button enabled/disables blue MIDI input into
-    blueLive
+    MIDI Input toggle button enabled/disables Blue MIDI input into
+    BlueLive
   \end{itemize}
 \end{itemize}
 
@@ -295,7 +295,7 @@ this will redraw the tempo line in green. To open up the tempo editor
 for a larger view and for editing, select the down arrow button next to
 the "Use Tempo" checkbox.
 
-Like other line editor objects in blue, left-clicking on an area where
+Like other line editor objects in Blue, left-clicking on an area where
 there is no point will insert a new point, while hovering over an
 existing point and pressing down, then dragging will allow moving of
 that point. Right-clicking a point will delete a point.
@@ -320,15 +320,15 @@ point values from the old range and scale them to the new range.
 
 Use of the tempo editor is completely optional and users familiar with
 Csound's t-statement for controlling global tempo may opt to disable
-using blue's tempo editor and to use a t-statement in the global orc
-section of the globals tab. Also, older blue projects that existed from
-before blue's tempo editor was developed can count on their projects
-loading and running correctly even if opened with versions of blue that
-do have a tempo editor, due to blue's default to disable the blue tempo
+using Blue's tempo editor and to use a t-statement in the global orc
+section of the globals tab. Also, older Blue projects that existed from
+before Blue's tempo editor was developed can count on their projects
+loading and running correctly even if opened with versions of Blue that
+do have a tempo editor, due to Blue's default to disable the Blue tempo
 editor. Regardless of which tempo system is chosen by the user, one
 should be careful not to use both at the same time as this will cause
 two t-statements to exist in the generated CSD (the hand-entered one and
-the one generated by blue), causing unexpected performance results.
+the one generated by Blue), causing unexpected performance results.
 
 \includegraphics{images/quickTimeDialog.png}
 
@@ -425,9 +425,9 @@ right.
 On the right hand side of the Orchestra Manager is the area for editing
 instruments. To make more space available for editing an instrument, you
 can drag the split pane splitter to the left, or double-click the
-splitter to have it collapse to the left-hand side. Each blue
+splitter to have it collapse to the left-hand side. Each Blue
 instrument-type has its own editor. Note: if you are editing and
-instrument from the Library, blue will show a green border with the
+instrument from the Library, Blue will show a green border with the
 title "Editing Library Instrument" to help notify you what instrument
 you are editing.
 
@@ -506,11 +506,11 @@ and the body of the code itself. For the body of the code, you will not
 need anything from the "opcode" line that normally starts a UDO
 definition (i.e. "opcode myOpcode, a, ak"), as those should be in the
 text fields for Opcode Name, In Types, and Out Types, and you will not
-need an "endop", as blue will add that itself.
+need an "endop", as Blue will add that itself.
 
 User-Defined Opcode Repository Browser
 
-\includegraphics{images/udoDB.png}
+\includegraphics[width=1.00000\textwidth]{images/udoDB.png}
 
 Using the "I" Button will open up the UDO Repository browser. The
 browser shows the available UDO's in the repository on Csounds.com and
@@ -566,7 +566,7 @@ settings copied to here and the "Complete Override" section will be
 enabled. When this setting is enabled, the commandline should set the
 call to the Csound executable to use and the flags to use but with the
 name of the CSD left out as it will automatically be appended to by
-blue. An example of a commandline to use here with "Complete Override"
+Blue. An example of a commandline to use here with "Complete Override"
 is:
 
 \begin{verbatim}
@@ -591,10 +591,10 @@ rendering to disk. If enabled, the value will be assigned to the value
 in the textfield. The default for the value is set ing Program Options,
 as well as if 0dbfs is enabled by default or not.
 \item[Filename]
-Name to use for the rendered sound file. If a value is not given, blue
+Name to use for the rendered sound file. If a value is not given, Blue
 will ask on each render what to name the file and where to render it to.
 
-If the "Ask on Render" is enabled, blue will always ask on each render
+If the "Ask on Render" is enabled, Blue will always ask on each render
 what to name the file and where to render it to. This is useful to
 enable if temporarily rendering parts of a project or if the project is
 only meant to be used to render small sound samples.
@@ -614,7 +614,7 @@ settings copied to here and the "Complete Override" section will be
 enabled. When this setting is enabled, the commandline should set the
 call to the Csound executable to use and the flags to use but with the
 name of the CSD left out as it will automatically be appended to by
-blue. An example of a commandline to use here with "Complete Override"
+Blue. An example of a commandline to use here with "Complete Override"
 is:
 
 \begin{verbatim}
@@ -643,7 +643,7 @@ Mixer
 
 \includegraphics{images/mixer.png}
 
-The Mixer system in blue allows for graphically editing levels for
+The Mixer system in Blue allows for graphically editing levels for
 instruments, applying pre- and post-fader effects, and routing and
 mixing of signals through subchannels.
 
@@ -685,7 +685,7 @@ to be a software synthesizer, the audio signals are then usually taken
 from the instrument and routed out to the Mixer channel that has been
 bound to that track.
 
-However, since blue does not bind music information on a SoundLayer to
+However, since Blue does not bind music information on a SoundLayer to
 an instrument (you can have heterogenous note data generated in any
 soundObject for any number of instruments, a flexibility which allows
 for soundObjects to be more representative of musical ideas), and nor
@@ -693,7 +693,7 @@ does it bind SoundLayers to channels, the abstraction of the musical
 system and the interaction with the Mixer system requires different
 handling.
 
-In blue's Mixer system, Mixer channels are automatically bound to
+In Blue's Mixer system, Mixer channels are automatically bound to
 instruments by their instrument ID. Binding to ID and not per-instrument
 in the Orchestra allows for the case where users have set multiple
 instruments to the same instrument ID but only having one which is
@@ -729,7 +729,7 @@ For the instruments in the orchestra to be able to route out to the
 Mixer, a special pseudo-opcode must be used for the output of the
 instrument, entitled "blueMixerOut". You use blueMixerOut in the same
 way as the outc opcode. If the Mixer is not enabled in the Dialog, when
-blue goes to process the instrument, blueMixerOut will be replaced with
+Blue goes to process the instrument, blueMixerOut will be replaced with
 outc, thus making the audio of that instrument directly route out to dac
 or disk, depending on how Csound is set to render. If the Mixer is
 enabled, blueMixerOut is translated into global variables and the
@@ -754,7 +754,7 @@ Effects, etc.
 
 \subsubsection{Effects}
 
-Effects in blue are implemented as User-Defined Opcodes, and
+Effects in Blue are implemented as User-Defined Opcodes, and
 understanding of how User-Defined Opcodes work in Csound is recommended
 before creating Effects. Understanding how UDO's work however is not
 necessary if one simply wants to use Effects.
@@ -805,7 +805,7 @@ Once an Effect or group is added, you can edit the the name by
 double-clicking the node in the tree. Selecting an effect by clicking it
 once will populate the editor on the right. The picture above shows the
 User Interface editor for the Effect. Like other BlueSynthBuilder-based
-editors in blue, clicking Edit Enabled will allow you to move between to
+editors in Blue, clicking Edit Enabled will allow you to move between to
 edit modes, one in which you can add, remove, and move around widgets,
 and another where you can interact with the widgets (useful for setting
 an initial value for the Effect.)
@@ -829,7 +829,7 @@ and code completion for opcodes (ctrl-space) and BSB widgets
 \begin{quote}
 \textbf{Note}
 
-blue currently expects Effects to have nchnls number of channels in and
+Blue currently expects Effects to have nchnls number of channels in and
 out where nchnls is the number set by the project.
 \end{quote}
 
@@ -865,8 +865,8 @@ Randomization}.
 
 \subsubsection{Code Generation Optimization}
 
-blue's mixer system optimizes when generated code for Csound to use.
-When compiling down to ORC code, blue checks all signal paths to see if
+Blue's mixer system optimizes when generated code for Csound to use.
+When compiling down to ORC code, Blue checks all signal paths to see if
 any path will result in unused audio and if so, will optimize out any
 code that is along that path. The rules for optimization are as follows:
 
@@ -913,7 +913,7 @@ want to try out a number of different ideas in realtime. You may tweak
 instrument parameters, mixer settings, try out different notes and
 chords with a MIDI keyboard, and even work with different SoundObjects.
 Later, when you have some ideas worked out, you can take your
-SoundObjects from blueLive into your score timeline and continue working
+SoundObjects from BlueLive into your score timeline and continue working
 from there.
 
 Beyond this primary capacity as a mode to aid composition, Blue Live has
@@ -923,8 +923,8 @@ second, though work continues to expand its usefulness in both regards.
 
 \subsubsection{Working with Blue Live}
 
-Blue Live is designed to work with the rest of your blue project file.
-When Blue Live is turned on, the blue project generates everything from
+Blue Live is designed to work with the rest of your Blue project file.
+When Blue Live is turned on, the Blue project generates everything from
 the project except for the Score generated from the Score timeline. The
 Global Score text will be used, but instead of
 \textless{}TOTAL\_DUR\textgreater{} being calculated from the score
@@ -932,16 +932,16 @@ timeline, a default value of 3600 is used. This allows your notes that
 would be used for effects instruments to run for 3600 seconds (this size
 can be modified; please make a request if desired).
 
-The main toolbar has four buttons for blue Live:
+The main toolbar has four buttons for Blue Live:
 
 \begin{description}
-\item[blueLive]
-Toggle button that stops and starts blueLive
+\item[BlueLive]
+Toggle button that stops and starts BlueLive
 \item[Recompile]
-If blueLive is running, this button will cause blue to recompile the CSD
-from your project and restart blueLive. This is useful if you modify
+If BlueLive is running, this button will cause Blue to recompile the CSD
+from your project and restart BlueLive. This is useful if you modify
 your orchestra code and want to quickly recompile and continue working
-with blueLive.
+with BlueLive.
 \item[All Notes Off]
 Turns off any score notes that are actively playing
 \item[MIDI Input]
@@ -983,7 +983,7 @@ ctrl-shift-T (cmd-shift-T on OSX).
 \end{description}
 
 Triggering a soundObject will take the score generated from it and pass
-it immediately to the active Csound instance for blueLive (blueLive must
+it immediately to the active Csound instance for BlueLive (BlueLive must
 be running for this to work). Scores are always generated with Time
 Behavior of None, processed through their NoteProcessors, then scaled
 according to the given tempo.
@@ -1017,39 +1017,39 @@ on. This feature is experimental at this time.
 
 \subsubsection{Options}
 
-The options panel allows setting up parameters for blue Live. Currently
+The options panel allows setting up parameters for Blue Live. Currently
 it contains options for modifying the commandline string used when
-running blueLive. For most users, these modification will not be
+running BlueLive. For most users, these modification will not be
 necessary and the default commandline used will be sufficient.
 
 \subsubsection{Working with MIDI}
 
-blue's MIDI system, when enabled, will listen to configured MIDI devices
+Blue's MIDI system, when enabled, will listen to configured MIDI devices
 for notes, map the key and velocity, and generate Csound notes to
 achieve MIDI-like note-on and note-off type behavior. This allows
 working with a MIDI keyboard in realtime with your project instruments
 without modifying your instruments specifically for MIDI. This also
-means that when blue's MIDI system is enabled, Csound MIDI processing
+means that when Blue's MIDI system is enabled, Csound MIDI processing
 should be disabled for your project.
 
 To configure what MIDI devices to use, go to the program Options
 settings (on OSX it is the application's Preferences, on other platofrms
 it is the Options menu item in the Tools menu) and under "blue", go to
 MIDI. There you will see a list of MIDI devices connected to your
-computer. If you connected a device after starting blue, you can rescan
+computer. If you connected a device after starting Blue, you can rescan
 to find your MIDI device. In this window you will configure what MIDI
-devices you want to use with blue, but these devices will not be opened
-for listening until you enable MIDI Input on the blueLive toolbar in the
+devices you want to use with Blue, but these devices will not be opened
+for listening until you enable MIDI Input on the BlueLive toolbar in the
 main application.
 
-Once you have configured what devices to use with blue, return to the
+Once you have configured what devices to use with Blue, return to the
 main program and enable MIDI input using the "MIDI Input" button, then
-start blueLive. At this point, when MIDI notes are played, blue will
+start BlueLive. At this point, when MIDI notes are played, Blue will
 take the incoming note data, map it according to the values configured
 in the MIDI Input Panel window (available from the Windows Menu), and
 then generate notes and pass them to Csound.
 
-For a MIDI note on, blue will the channel number of the note and map it
+For a MIDI note on, Blue will the channel number of the note and map it
 to the instrument in the orchestra manager by index. For example, if you
 have three instruments numbered 1, 3, and 5, notes for MIDI channel 1
 will generate with instr 1, notes for MIDI channel 2 will generate with
@@ -1058,21 +1058,21 @@ instr 3, and notes for MIDI channel 3 will generate with instr 5.
 The MIDI key number as well as the velocity will be mapped according to
 the settings set in the MIDI Input Panel window. This allows for
 generating frequency, Csound PCH, and using Scala Tuning files to
-generate either frequencies or bluePCH format text, amongst other
+generate either frequencies or BluePCH format text, amongst other
 values.
 
-Instruments that are intended to be used with blue's MIDI system will
+Instruments that are intended to be used with Blue's MIDI system will
 have to work with a 5 p-field note format. This does not mean your
 instrument can only work with 5 p-fields, but rather that your
-instrument must support at least that. An example blue project can be
+instrument must support at least that. An example Blue project can be
 found in examples/features/blueLiveMidi.blue (if you are using the OSX
-application, you may need to explore the contents of the blue.app
+application, you may need to explore the contents of the Blue.app
 program to find the examples folder).
 
 \subsubsection{Exploring Ideas}
 
 Blue Live uses a subset of the same soundObjects that are available on
-the score timeline within the main editing window of blue. Some possible
+the score timeline within the main editing window of Blue. Some possible
 ways you could explore ideas are:
 
 \begin{itemize}
@@ -1118,7 +1118,7 @@ time, a note in the score timeline at 2.0 will be translated to start at
 0.0, while a note with a start time of 2.0 in the global score section
 is not affected and will start at time 2.0.
 
-There are also certain variables made available from blue (blue
+There are also certain variables made available from Blue (Blue
 variables) that are useful for specific purposes. One of them is
 \textless{}TOTAL\_DUR\textgreater{}. An example of its use is:
 
@@ -1129,7 +1129,7 @@ i20 0 [<TOTAL_DUR> + 10] .95 1 1000
 The note given above is for a global effect(a global reverb unit). This
 note will always start at time zero regardless of when the score starts,
 and will always last as long as the duration of the generated score from
-the timeline plus 10 seconds. Because blue variables are a text swap,
+the timeline plus 10 seconds. Because Blue variables are a text swap,
 the above use of the bracket notation that Csound uses was necessary.
 For a score with a 20 second duration, the above note would have been
 generated as:
@@ -1138,15 +1138,15 @@ generated as:
 i20 0 [20 + 10] .95 1 1000
 \end{verbatim}
 
-Because of the blue variable used, the note will correclty play
-regardless of when the score starts. If the the blue variable was note
+Because of the Blue variable used, the note will correclty play
+regardless of when the score starts. If the the Blue variable was note
 used and was put as a note in the Score timeline, the reverb may not
 run.
 
 \begin{quote}
 \textbf{Note}
 
-When blue variables were created, blue did not have a Mixer system
+When Blue variables were created, Blue did not have a Mixer system
 implemented. The above system continues to function, the practice of
 using the Mixer is highly recommended. This feature is left in for
 legacy projects.

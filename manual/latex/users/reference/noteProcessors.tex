@@ -1,0 +1,693 @@
+\section{NoteProcessors}\label{noteProcessors}
+
+NoteProcessors are used in conjunction with soundObjects, and are used
+post-generation of the soundObject's noteList. They are used to modify
+values within the noteList.
+
+NoteProcessors can be added via the soundObject property dialog. When a
+soundObject is selected on the timeline, and if the soundObject supports
+noteProcessors, you can add, remove, push up, or push down
+noteProcessors on the property dialog.
+
+NoteProcessors are applied after the notes of the soundObject are
+generated and before time behavior is applied. Processing starts with
+the first NoteProcessor in the chain and the results of that are passed
+down the chain.
+
+
+\subsection{Add Processor}\label{addProcessor}
+
+Parameters: pfield, value
+
+The AddProcessor takes two parameters, one for pfield (positive integer
+\textgreater{} 0) and one for value (any number). When applied, it will
+add the user-defined value to the set pfield for all notes.
+
+For example, if you have a SoundObject with notes for an instrument that
+uses p4 as its amplitude. If you have values for p4 within the range of
+78 and 82, such as the following score:
+
+\begin{verbatim}
+i1 0 2 78
+i1 + . 80
+i1 + . 81
+i1 + . 82
+  
+\end{verbatim}
+
+If an AddProcessor is used that was set to 4.4 for value 4 for pfield,
+your notes afterwards would be moved to the range of 82.4 to 86.4:
+
+\begin{verbatim}
+i1  0.0 0.5 82.4
+i1  0.5 0.5 84.4
+i1  1.0 0.5 85.4
+i1  1.5 0.5 86.4
+  
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+SoundObject with time behavior set to scale.)
+
+
+\subsection{Equals Processor}\label{equalsProcessor}
+
+Parameters: pfield, value
+
+Sets user-given pField of all notes in soundObject to user-given value,
+i.e. set all p4's to value "440", or set all p6's to value
+"/work/audio/wav/mySample2.wav". The following score:
+
+\begin{verbatim}
+i1 0 2 8.00
+i1 + . 8.04
+i1 + . 8.07
+i1 + . 9.00    
+\end{verbatim}
+
+If used with an EqualsProcessor with value 7.00 and pfield 4, would
+result in the following score:
+
+\begin{verbatim}
+i1  0.0 0.5 7.00
+i1  0.5 0.5 7.00
+i1  1.0 0.5 7.00
+i1  1.5 0.5 7.00
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+SoundObject with time behavior set to scale.)
+
+Tip: One can use this NoteProcessor to quickly try testing a score with
+another insturment. To do this, use this NoteProcessor to reassign p1.
+
+
+\subsection{Inversion Processor}\label{inversionProcessor}
+
+Parameters: pfield, value
+
+This NoteProcessor flips all values in designated pfield about an axis
+(value). The following score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 85
+i1 + . 95
+i1 + . 100
+\end{verbatim}
+
+If processed with an InversionProcessor with value 90 and pfield 4 would
+result in:
+
+\begin{verbatim}
+i1  0.0 0.5 100.0
+i1  0.5 0.5 95.0
+i1  1.0 0.5 85.0
+i1  1.5 0.5 80.0    
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+SoundObject with time behavior set to scale.)
+
+
+\subsection{LineAdd Processor}\label{lineAddProcessor}
+
+Parameters: pfield, LineAdd String
+
+The LineAdd Processor adds values to a user-defined pfield. This
+noteProcessor differs from the AddProcessor in that the value added is
+variable over time. The LineAdd String is a set of beat/value pairs that
+are like the breakpoints on curve. The following score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 80
+i1 + . 80
+i1 + . 80
+\end{verbatim}
+
+If processed with a LineAdd Processor with LineAddString set to "0 0 6
+3" and pfield set to 4, would result in:
+
+\begin{verbatim}
+i1  0.0 0.5 80.0
+i1  0.5 0.5 81.0
+i1  1.0 0.5 82.0
+i1  1.5 0.5 83.0
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+The LineAddString can be interpreted to mean: start at beat 0 with value
+0, and by beat 6, arrive at value 3. For each note, the LineAddString
+will find the note's beat and compare against the LineAddString to see
+how much should be added. The user should be careful to remember that
+SoundObjects do not apply scaling of score until after processing with
+noteProcessors. Therefore, the beat values given in the LineAddString
+were to be applied against the beat values of the original score.
+
+
+\subsection{LineMultiply Processor}\label{lineMultiplyProcessor}
+
+Parameters: pfield, LineMultiply String
+
+The LineMultiply Processor multiplies values in a user-defined pfield.
+This noteProcessor differs from the Multiply Processor in that the value
+muliplied by is variable over time. The LineMultiply String is a set of
+beat/value pairs that are like the breakpoints on curve. The following
+score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 80
+i1 + . 80
+i1 + . 80
+\end{verbatim}
+
+If processed with a LineMultiple Processor with LineMultiplyString set
+to "0 0 6 2" and pfield set to 4, would result in:
+
+\begin{verbatim}
+i1  0.0 0.5 0.0
+i1  0.5 0.5 53.333336
+i1  1.0 0.5 106.66667
+i1  1.5 0.5 160.0
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+The LineMultiplyString can be interpreted to mean: start at beat 0 with
+value 0, and by beat 6, arrive at value 2. For each note, the
+LineMultiplyString will find the note's beat and compare against the
+LineMultiplyString to see how much should be multiplied. The user should
+be careful to remember that SoundObjects do not apply scaling of score
+until after processing with noteProcessors. Therefore, the beat values
+given in the LineMultiplyString were to be applied against the beat
+values of the original score.
+
+
+\subsection{Multiply Processor}\label{multiplyProcessor}
+
+Parameters: value, pfield
+
+The MultiplyProcessor works like the addProcessor, but multiplies the
+given pfield by the value. The following score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 80
+i1 + . 80
+i1 + . 80
+\end{verbatim}
+
+If processed with a MultiplyProcessor with value 2 and pfield 4 would
+result in:
+
+\begin{verbatim}
+i1  0.0 0.5 160.0
+i1  0.5 0.5 160.0
+i1  1.0 0.5 160.0
+i1  1.5 0.5 160.0
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+
+\subsection{Pch Add Processor}\label{pchAddProcessor}
+
+Parameters: pfield, value
+
+The PchAddProcessor works like the AddProcessor, but is used with
+pfields written in Csound pch notation(i.e. 8.00, 7.11, 9.03). The value
+field, unlike the AddProcessor, is a whole-number, representing the
+number of scale degrees in which to add to the pch value. If a
+soundObject has notes where p5 is a pch value, and you the notes have
+values of 8.00, 8.04, 8.07, and 9.00:
+
+\begin{verbatim}
+i1 0 2 8.00
+i1 + . 8.04
+i1 + . 8.07
+i1 + . 9.00
+\end{verbatim}
+
+If a PchAddProcessor with value 7 and pfield 5 is used, after
+processing, the score would result in:
+
+\begin{verbatim}
+i1  0.0 0.5 8.07
+i1  0.5 0.5 8.11
+i1  1.0 0.5 9.02
+i1  1.5 0.5 9.07
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+If you had used a regular AddProcessor and tried to transpose 7 scale
+degrees down using -.07, you would have gotten 7.93, 7.97, 8.00, and
+8.97, and the first few notes would have really be equal to 14.11,
+15.01, and 8.00 in pch notation. This is due to the way that Csound pch
+notation works to hold the scale degree, from 0-11, in the two fields to
+the right of the period.
+
+
+\subsection{Pch Inversion Processor}\label{pchInversionProcessor}
+
+Parameters: value, pfield
+
+This noteProcessor flips all values in designated pfield about an axis
+(value). The values that are read in the given pfield will be
+interpreted as Csound pch format. The following score:
+
+\begin{verbatim}
+i1 0 2 8.00
+i1 + . 8.04
+i1 + . 8.07
+i1 + . 9.00
+\end{verbatim}
+
+If processed with a PchInversionProcessor with value 8.06 and pfield 4
+would result in:
+
+\begin{verbatim}
+i1  0.0 0.5 9.0
+i1  0.5 0.5 8.08
+i1  1.0 0.5 8.05
+i1  1.5 0.5 8.0    
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+
+\subsection{Python Processor}\label{pythonProcessor}
+
+Parameters: code
+
+Allows user to write python code to process NoteList. The code is run
+using Jython, the Java implementation of Python that is included with
+Blue. Users using the PythonProcessor should be aware of Jython's
+implementation details: most classes and modules from CPython are
+included, users can not import modules with native libraries, and users
+can use any Java class that exists in the classpath.
+
+When Blue generates notes from a SoundObject, the SoundObject first
+generates its Notes as a NoteList, then NoteProcessors are called one at
+a time to process that NoteList in place. For the PythonProcessor,
+before any of the user-written code is run, the generated NoteList is
+first added and defined in the memory space as "noteList". From there,
+the script for the PythonProcessor should treat noteList as the list of
+Note objects that have been generated. The NoteList and Note objects are
+the very same and have the same methods and properties as those in the
+Java code, so one must work with them the same way as one would in Java.
+
+The following code shows an example of the Python Processor. The code
+first imports the random module, then for every note in the noteList it
+creates a random space variable between the values of -1 and 1, then
+assigns that to pfield 7 of the note. (This example code is used in the
+blue/examples/noteProcessors/pythonProcessor.blue and can be run within
+Blue to hear the example).
+
+\begin{verbatim}
+import random
+
+for i in noteList:
+  newVal = str((2 * random.random()) - 1)
+  i.setPField(newVal, 7)
+\end{verbatim}
+
+
+\subsection{Random Add Processor}\label{randomAddProcessor}
+
+Parameters: pfield, min, max, seedUsed, seed
+
+The RandomAddProcessor generates a random value between min and max and
+adds it to the designated pfield for all notes. A random value is
+generated for each note.
+
+The RandomAddProcessor expects either a positive or negative float value
+for the min and max, and a postive integer for the pfield. The following
+score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 80
+i1 + . 80
+i1 + . 80
+\end{verbatim}
+
+when processed with an RandomAddProcessor with min set to 0.0, max set
+to 1.0, and pfield set to 4, resulted in the following on one pass:
+
+\begin{verbatim}
+i1  0.0 0.5 80.92294
+i1  0.5 0.5 80.50539
+i1  1.0 0.5 80.112495
+i1  1.5 0.5 80.93934
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+The above is an example of random values, and because it is random, the
+results will be different on another processing pass. .
+
+If seedUsed is set to "true", the random number generator will be
+initialized using the given seed value. The seed value must be a valid
+long integer value (-2\^{}63, 2\^{}63-1).
+
+Hint: One useful way to use this noteProcessor is as a way to "humanize"
+velocity or pitch values values.
+
+
+\subsection{Random Multiply Processor}\label{randomMultiplyProcessor}
+
+Parameters: pfield, min, max
+
+The RandomMultiplyProcessor takes a pfield to apply the random multiply
+to, as well as a min and max for the boundaries of the random values.
+When applied, it will multiply a random value for each note in the
+assigned pfield, using a new random value per note.
+
+The RandomMultiplyProcessor expects either a positive or negative float
+value for the min and max, and a postive integer for the pfield. The
+following score:
+
+\begin{verbatim}
+i1 0 2 80
+i1 + . 80
+i1 + . 80
+i1 + . 80
+\end{verbatim}
+
+when processed with an RandomMultiplyProcessor with min set to 1.0, max
+set to 2.0, and pfield set to 4, results in the following:
+
+\begin{verbatim}
+i1  0.0 0.5 85.553246
+i1  0.5 0.5 148.94167
+i1  1.0 0.5 125.57565
+i1  1.5 0.5 97.00755
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+If seedUsed is set to "true", the random number generator will be
+initialized using the given seed value. The seed value must be a valid
+long integer value (-2\^{}63, 2\^{}63-1).
+
+The above is an example of random values, and because it is random, the
+results will be different on another processing pass.
+
+
+\subsection{Retrograde Processor}\label{retrogradeProcessor}
+
+Parameters: none
+
+Reverses all the generated notes in time. The following score:
+
+\begin{verbatim}
+i1 0 2 1
+i1 + . 2
+i1 + . 3
+i1 + . 4
+\end{verbatim}
+
+If processed with a RetrogradeProcessor would result in:
+
+\begin{verbatim}
+i1  1.5 0.5 1
+i1  1.0 0.5 2
+i1  0.5 0.5 3
+i1  0.0 0.5 4
+\end{verbatim}
+
+which if re-sorted by start time would result in:
+
+\begin{verbatim}
+i1  0.0 0.5 4
+i1  0.5 0.5 3
+i1  1.0 0.5 2
+i1  1.5 0.5 1
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+
+\subsection{Rotate Processor}\label{rotateProcessor}
+
+parameters: noteIndex
+
+The RotateProcessor rotates the order of the notes, making the noteIndex
+the first note. For example a noteIndex of 2 means "make the second note
+of the notes generated the first, shifting the first note to the end".
+With a noteIndex of 3, the following score:
+
+\begin{verbatim}
+i1 0 2 1
+i1 2 2 2
+i1 4 2 3
+i1 5 2 4
+i1 6 2 5
+\end{verbatim}
+
+will become:
+
+\begin{verbatim}
+i1 0 2 3
+i1 2 2 4
+i1 4 2 5
+i1 5 2 1
+i1 6 2 2
+\end{verbatim}
+
+As the third note now becomes the first. If a negative number is given,
+the number will count backwards as to what note should now become the
+first note. With a noteIndex of -2 (meaning, "Second note from the
+end"), the following score:
+
+\begin{verbatim}
+i1 0 2 1
+i1 2 2 2
+i1 4 2 3
+i1 5 2 4
+i1 6 2 5
+\end{verbatim}
+
+Will become:
+
+\begin{verbatim}
+i1 0 2 4
+i1 2 2 5
+i1 4 2 1
+i1 5 2 2
+i1 6 2 3
+\end{verbatim}
+
+Start times of notes are all modified such that the notes that are
+pushed to the end of list will start at the end time of the last note
+before it. For the above examples, the duration of the note list ast a
+whole did not change at all. However, when there are overlapping notes
+as in the following example, where note index of -3 was used:
+
+\begin{verbatim}
+i1  0   5.0 0   4   
+i1  2   5.0 1   4   
+i1  4   5.0 2   4   
+i1  6   5.0 3   4   
+i1  8   5.0 4   4   
+i1  10  5.0 5   4   
+i1  12  5.0 6   4   
+i1  14  5.0 7   4   
+i1  16  5.0 8   4   
+i1  18  5.0 9   4   
+\end{verbatim}
+
+The resultant scores duration has changed as shown below:
+
+\begin{verbatim}
+i1  0.0 5.0 7   4   
+i1  2.0 5.0 8   4   
+i1  4.0 5.0 9   4   
+i1  9.0 5.0 0   4   
+i1  11.0    5.0 1   4   
+i1  13.0    5.0 2   4   
+i1  15.0    5.0 3   4   
+i1  17.0    5.0 4   4   
+i1  19.0    5.0 5   4   
+i1  21.0    5.0 6   4   
+\end{verbatim}
+
+Please be aware of this behavior when using this NoteProcessor with
+scores that have overlapping notes.
+
+
+\subsection{SubList Processor}\label{sublistProcessor}
+
+Parameters: start, end
+
+The SubListProcessor will cut out notes from the soundObject's generated
+noteList. An example of it's use may be that you have a 12-tone row as
+soundObject in the soundObject library, and you're using instances of it
+as the basis of your work. You may only want to use notes 1-3 of the
+row, so you would use the SublistProcessor with a start of 1 and an end
+of 3.
+
+The SubListProcessor will cut out notes, then translate them to start at
+the start of the soundObject, and then scale them so that they take up
+the duration of the soundObject. If you had a five note soundObject with
+all notes have a duration of 1 second, all starting one after the other,
+with the soundObject starting at 0 seconds on the timeline, and if you
+used a SubListProcessor with start of 1 and end of 4, you'd end up with
+four notes being generated(the first four from the original
+soundObject), starting a 0 seconds on the timeline, with each notes
+duration lasting 1.25 seconds, each starting one right after the other.
+
+The following score:
+
+\begin{verbatim}
+i1 0 2 1
+i1 + . 2
+i1 + . 3
+i1 + . 4
+\end{verbatim}
+
+when processed with a SubList processor with start 2 and end 3, would
+result in:
+
+\begin{verbatim}
+i1  0.0 1   2
+i1  1.0 1   3
+\end{verbatim}
+
+(The p2 and p3 times above are post-processing for a 2 second duration
+soundObject with time behavior set to scale.)
+
+
+\subsection{Switch Processor}\label{switchProcessor}
+
+parameters: pfield1, pfield2
+
+A Switch Processor switches pfield1 with pfield2 for all notes in
+SoundObject. It is useful in conjunction with RetrogradeProcessor when
+reversing notes that have start and end values in pfields, i.e.
+
+\begin{verbatim}
+;inum start dur   start   end
+i1    0     1     8.04    8.00
+i1    1     2     8.00    8.07
+\end{verbatim}
+
+with just retrograde processor becomes:
+
+\begin{verbatim}
+;inum start dur   start   end
+i1    0     2     8.00    8.07
+i1    2     1     8.04    8.00
+\end{verbatim}
+
+with retrograde and switch on p4 and p5 becomes:
+
+\begin{verbatim}
+;inum start dur   start   end
+i1    0     2     8.07    8.00
+i1    2     1     8.00    8.04
+\end{verbatim}
+
+
+\subsection{Time Warp Processor}\label{timewarpProcessor}
+
+parameters: TimeWarpString
+
+Warps time in the same way as Csound t-statement, but does not require
+"t" to be used. Statements are in alternating pairs of beat number and
+tempo.
+
+From the Csound Manual:
+
+Time and Tempo-for-that-time are given as ordered couples that define
+points on a "tempo vs. time" graph. (The time-axis here is in beats so
+is not necessarily linear.) The beat-rate of a Section can be thought of
+as a movement from point to point on that graph: motion between two
+points of equal height signifies constant tempo, while motion between
+two points of unequal height will cause an accelarando or ritardando
+accordingly. The graph can contain discontinuities: two points given
+equal times but different tempi will cause an immediate tempo change.
+
+Motion between different tempos over non-zero time is inverse linear.
+That is, an accelerando between two tempos M1 and M2 proceeds by linear
+interpolation of the single-beat durations from 60/M1 to 60/M2.
+
+The first tempo given must be for beat 0.
+
+\begin{itemize}
+\item
+  Beat values for beat/tempo pairs should related to the score *before*
+  any time behavior is applied. For example, for the following score:
+
+\begin{verbatim}
+i1 0 1 2 3 4
+i1 1 1 3 4 5 
+i1 2 1 3 4 5 
+i1 3 1 3 4 5 
+\end{verbatim}
+
+  if it is in a GenericScore SoundObject of duration 20, if you want the
+  tempo to decrease in half by the last note, you would enter a value
+  for the processor as "0 60 3 30" and not "0 60 20 30"
+\item
+  If you're using a time behavior of "Repeat", remember that time
+  behavior is applied *after* noteProcessors, and the resulting score
+  will be a time warped score repeated x times and *NOT* a score
+  repeated x time and then timewarped
+\item
+  Time Warping, when used with a time behavior of "Scale", be aware that
+  estimating the final tempo of the object may be tricky, as the scaling
+  will alter the duration of notes.
+\end{itemize}
+
+
+\subsection{Tuning Processor}\label{tuningProcessor}
+
+Parameters: pfield, baseFrequency, scalaFile
+
+Converts Blue PCH notation to frequency according to scale values in a
+Scala scale file. The scale will default to 12TET wheen TuningProcessor
+is initially created. The file selector for choosing a Scala .scl file
+will default to user's .blue directory, under the scl subdirectory. It
+is advised that users download the 3000+ scale archive from the Scala
+website at: http://www.huygens-fokker.org/scala/ and place them in the
+.blue/scl directory or whever they find convenient.
+
+Base frequency determines what 8.00 should be set to, defaulting to
+middle-C below A440 (same as in Scala). Input for the noteProcessor
+should be:
+
+\begin{verbatim}
+oct.scaleDegree
+\end{verbatim}
+
+where oct is equal to octave, and scale degree equal to what degree of
+the scale to use. The output will be frequency values, so instruments
+should be set to accept values as frequency.
+
+\begin{itemize}
+\item
+  Fractional scaleDegree's are not supported.
+\item
+  For the scaleDegree, the Blue PCH does not work exactly like Csound
+  pch notation. In Csound pch, "8.01" would be different than "8.1",
+  while for the Tuning processor, there is no difference. The tuning
+  processor takes everything from the right side of the decimal and
+  converts that to an integer to figure out the scale degree.
+\item
+  If you enter in a scale degree higher than the number degrees in the
+  scale, it will be converted as if the octave is raised. For example,
+  in a 19 tone scale, an input of "8.21" would get converted to "9.1".
+\end{itemize}
