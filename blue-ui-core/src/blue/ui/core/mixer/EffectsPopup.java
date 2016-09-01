@@ -33,6 +33,8 @@ import javax.swing.Action;
 import javax.swing.ComboBoxModel;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
+import javax.swing.ListSelectionModel;
+import javax.swing.SingleSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.PopupMenuEvent;
@@ -85,6 +87,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     Action exportAction;
 
     private ComboBoxModel model;
+    private ListSelectionModel listSelectionModel;
 
     private EffectsPopup() {
 
@@ -357,6 +360,10 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         }
     }
 
+    void setListSelectionModel(ListSelectionModel selectionModel) {
+        this.listSelectionModel = selectionModel;
+    }
+
     class AddEffectAction extends AbstractAction {
         private Effect effect;
 
@@ -385,8 +392,13 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (chain != null) {
+            if (chain != null && selectedIndex > 0) {
                 chain.pushUp(selectedIndex);
+                if(listSelectionModel != null) {
+                    listSelectionModel.setSelectionInterval(
+                            listSelectionModel.getMinSelectionIndex() - 1,
+                            listSelectionModel.getMaxSelectionIndex() - 1);
+                }
             }
         }
 
@@ -400,8 +412,13 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (chain != null) {
+            if (chain != null && selectedIndex < chain.size() - 1) {
                 chain.pushDown(selectedIndex);
+                if(listSelectionModel != null) {
+                    listSelectionModel.setSelectionInterval(
+                            listSelectionModel.getMinSelectionIndex() + 1,
+                            listSelectionModel.getMaxSelectionIndex() + 1);
+                }
             }
         }
 

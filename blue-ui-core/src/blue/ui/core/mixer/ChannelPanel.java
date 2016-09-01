@@ -450,6 +450,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
                     .getSelectedIndex());
             popup.setComboBoxModel(outputList.getModel());
             popup.setMaster(isMaster());
+            popup.setListSelectionModel(postList.getSelectionModel());
 
             popup.show(postList, evt.getX(), evt.getY());
         } else if (SwingUtilities.isLeftMouseButton(evt)
@@ -494,6 +495,7 @@ public class ChannelPanel extends javax.swing.JPanel implements
                     .getSelectedIndex());
             popup.setComboBoxModel(outputList.getModel());
             popup.setMaster(isMaster());
+            popup.setListSelectionModel(preList.getSelectionModel());
 
             popup.show(preList, evt.getX(), evt.getY());
         } else if (SwingUtilities.isLeftMouseButton(evt)
