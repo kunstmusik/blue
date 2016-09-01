@@ -2,6 +2,7 @@
 \documentclass{book}
 
 \usepackage{url}
+\usepackage{hyperref}
 \usepackage{makeidx}
 \usepackage{color}
 \usepackage{graphicx}
@@ -18,6 +19,8 @@
 \usepackage{microtype}
 
 \usepackage[all]{nowidow}
+\usepackage{longtable}
+\usepackage{booktabs}
 
 
 \pdfpagewidth=\paperwidth
@@ -41,6 +44,9 @@
   morecomment=[l]{;}
 }
 
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
 
 \newenvironment{myitemize}
 { \begin{itemize}
@@ -54,7 +60,7 @@
 \title{Blue Manual}
 \author{Steven Yi}
 
-
+\maketitle
 
 \frontmatter
 \include{acknowledgements}

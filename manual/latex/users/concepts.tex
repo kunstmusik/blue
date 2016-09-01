@@ -1,0 +1,770 @@
+\chapter{Concepts}\label{concepts}
+
+\section{Rendering}\label{rendering}
+
+\subsection{Introduction}
+
+blue offers a number of ways to render a project, each method useful for
+different purposes you may have. The following section explains the ways
+which blue is able to render a .blue project file as well as possible
+use-case scenarios to guide you on how that feature may be useful.
+
+\subsection{Render Methods}
+
+Rendering in uses the project's Real-Time render settings to render the
+project in realtime to the users soundcard. This is the most common
+rendering one will likely use. To use this, you can press the play
+button at the top of the window, use the
+"Project-\textgreater{}Render/Stop Project" menu option, or use the F9
+shortcut key.
+
+blue's general method of communicating with Csound is by generating a
+CSD file and calling Csound to run it. For debugging purposes, it is
+often useful to see if what you think you are doing inside blue is
+matching the generated CSD file. You can generate the CSD to screen by
+using the "Project-\textgreater{}Generate CSD to Screen" menu option, or
+by using the ctrl-shift-g shortcut.
+
+If you'd like to generate a CSD from the current project to a file, you
+can do so by using the "Project-\textgreater{}Generate CSD to File" menu
+option, or by using the ctrl-g shortcut.
+
+The Render to Disk option will use the project's Disk Render Options
+from its project properties to generate a soundfile on disk (format of
+file depends on how user configures commandline options). I've found
+this useful for rendering a wav to disk and converting to MP3 to listen
+to on the go so I can review my current work. To render to disk, you can
+do so by using the "File-\textgreater{}Render to Disk" menu option or
+use the ctrl-shift-F9 shortcut.
+
+The Render to Disk and play option will use the project's Disk Render
+Options from its project properties to generate a soundfile on disk and
+after finishing, play the generated file using blue's soundfile player,
+located in the SoundFile manager tab. This feature is useful if you're
+working on a piece that has processing demands beyond what your computer
+is capable of in realtime, so you can have it render to disk first and
+then play, which will give very smooth playback. It is also useful if
+you render in realtime with lower quality settings but use higher
+quality settings for final project output, as you can occasionally test
+what the output would be like using this feature. To use this option,
+you can use the "File-\textgreater{}Render to Disk and Play" menu option
+or use the ctrl-F9 shortcut.
+
+The Render to Disk and Open option will use the project's Disk Render
+Options from its project properties to generate a soundfile on disk and
+after finishing, open the generated file using the configured command
+with the program options. This command may differ from the external
+command to use with "Render to Disk and Play". To use this option, you
+can use the "File-\textgreater{}Render to Disk and Open" menu option.
+
+%%
+\section{SoundObjects}\label{conceptsSoundObjects}
+
+\subsection{Introduction}
+
+The concept of SoundObjects is the foundation of blue's design in
+organizing musical ideas. This section will discuss what is a
+SoundObject, how this idea is implemented in blue, and strategies on how
+to use the concept of SoundObjects in organizing your own musical work.
+
+\subsection{What is a SoundObject?}
+
+SoundObjects in blue represent a \emph{perceived sound idea, whether it
+be a single atomic sound event or aggregate of other sound objects}. A
+SoundObject on the timeline can represent many things, whether it is a
+single sound, a melody, a rhythm, a phrase, a section involving phrases
+and multiple lines, a gesture, or anything else that is a perceived
+sound idea.
+
+Just as there are many ways to think about music, each with their own
+model for describing sound and vocabulary for explaining music, there
+are a number of different SoundObjects in blue. Each SoundObject in blue
+is useful for different purposes, with some being more appropriate for
+expressing certain musical ideas than others. For example, using a
+scripting object like the PythonObject or RhinoObject would service a
+user who is trying to express a musical idea that may require an
+algorithmic basis, while the PianoRoll would be useful for those
+interested in notating melodic and harmonic ideas. The variety of
+different SoundObjects allows for users to choose what tool will be the
+most appropriate to express their musical ideas.
+
+Since there are many ways to express musical ideas, to fully allow the
+range of expression that Csound offers, blue's SoundObjects are capable
+of generating different things that Csound will use. Although most often
+they are used mostly for generating Csound SCO text, SoundObjects may
+also generate ftables, instruments, user-defined opcodes, and everything
+else that would be needed to express a musical idea in Csound.
+
+Beyond each SoundObject's unique capabilities, SoundObjects do share
+common qualities: name, start time, duration, end time. Most will also
+support a Time Behavior (Scale, Repeat, or None) which affects how the
+notes generated by the SoundObject will be adjusted-\/-if at all-\/-to
+the duration of the SoundObject. Most will also support NoteProcessors,
+another key tool in Csound for manipulating notes generated from a
+SoundObject. All SoundObjects also support a background color property,
+used strictly for visual purposes on the timeline.
+
+%%
+\section{}\label{conceptsPolyObjects}
+
+\subsection{Introduction}
+
+PolyObjects are, in my opinion, one of the most powerful tools in blue.
+They provide encapsulation of any grouping of SoundObjects, any way you
+like, into one logical SoundObject. Once encapsulated, the rest of
+blue's powerful features (namely NoteProcessors) can be leveraged
+against the PolyObject, and that is when one really begins to realize
+the benefits of using PolyObjects.
+
+\subsection{Basic}
+
+To repeat what is stated in the reference documentation, a PolyObject
+can be seen as a container of other SoundObjects. It contains its own
+series of SoundLayers, just like the main score, and, like the main
+score, one can add as many SoundLayers and SoundObjects as one likes to
+a PolyObject.
+
+Think of the main score as a big box that holds sounds. Now, we can put
+whatever sounds we want in the box, but we can also put smaller boxes
+inside the main box; these smaller boxes are our PolyObjects. We can put
+sounds inside the smaller boxes, just like we can in the big box, and we
+can arrange them in the same manner too. When we put sound A in the
+upper-right corner of a smaller box, it will stay in that corner no
+matter where we move our box inside of the bigger box. However, it is
+the position and arrangement of the sounds themselves relative to the
+main score that is important and is, ultimately, the reason to use
+PolyObjects. With sound A in the upper-right corner of our small box,
+its relative position in the main box will be dependent on the smaller
+box's position in the big box. Keep in mind, too, that we can put boxes
+inside of boxes inside of boxes, as many layers as we like. And when you
+realize that you can change the sounds inside of any box by applying a
+NoteProcessor to it (like making the box metal instead of cardboard),
+you begin to see the power of using PolyObjects.
+
+The way it works is, you create a PolyObject in a SoundLayer like you
+would any other SoundObject; by right-clicking on the SoundLayer and
+selecting "Add New PolyObject;" it should be at the very top. After
+doing this, the PolyObject is empty and will not generate any notes in
+its current state. You have to double-click on it in order to edit the
+contents of the PolyObject. Once you're editing the empty PolyObject,
+the score editor looks a lot like it does when you're editing an empty
+blue score. That's because the main score is just one big container for
+notes, like PolyObjects (in fact, in the code, the main score IS a
+PolyObject).
+
+You can see which container you are currently editing by looking at the
+buttons just underneath the tabs for "score," "orchestra," etc. When
+you're editing the main score, there will only be one button there
+called "root;" you're editing the root container. When you're editing a
+PolyObject called "Group A," you'll see two buttons; "root" and "Group
+A." Pressing any of these buttons will change the view to edit that
+container.
+
+Once a PolyObject has been created, you can add and arrange SoundObject
+on it just like you do in the main score. Each PolyObject is going to
+have its own Snap and Time Display settings too, so you may want to set
+those accordingly. Add SoundLayers just as you would in the main score
+too.
+
+After you've added all of the notes you wish to the PolyObject, click on
+the "root" button and feel free to move the PolyObject around in the
+main score, just as you would any other SoundObject. Add NoteProcessors
+too, or alter the Time Behavior; these changes, in turn, will be applied
+to the contents of the PolyObject.
+
+\subsection{Advanced}
+
+Before tackling some of the more advanced concepts of PolyObjects, a
+couple of clarifications must be made. When this document refers to
+editing the actual PolyObject, that means editing it as a SoundObject
+(moving it around on the timeline, stretching it, editing its
+properties, etc.). This is very different from editing the contents of
+said PolyObject. The distinction will be made in this section whenever
+applicable.
+
+\subsubsection{Time}
+
+PolyObjects can have their Time Behavior changed like any other
+SoundObject when one is editing the actual PolyObject. This is very
+important to keep in mind, because your sounds within the PolyObject may
+span 10 beats, but if you leave the Time Behavior settings for the
+PolyObject to the default (Scale), they may in actuality span only two
+beats, depending on the size of your PolyObject. One can test this with
+the Test button: shrink a PolyObject that has the Scale Time Behavior
+and the notes within it will shrink as well.
+
+There are a couple of easy ways to make sure that the sounds you place
+in a PolyObject remain to scale in the parent container, or the root
+score. One method is to right-click on the PolyObject itself and click
+"Set Subjective Time to Objective Time." This will change the length of
+the PolyObject to be equal to the beat at the end of the last
+SoundObject within it. In other words, it will expand or contract to the
+actual total length of all of the notes within it. The other method is
+to change the Time Behavior of the PolyObject to None. Blue will not do
+any processing of the length of the notes within the PolyObject; they'll
+just be played exactly the way they are in the PolyObject.
+
+There are advantages and disadvantages to each method. The first is good
+because it allows one to see the actual length of the PolyObject within
+the main score, but you have to remember to click "Set Subjective Time
+to Objective Time" each and every time you make a change to the
+PolyObject's contents. If you set the Time Behavior to None, the length
+of the PolyObject may appear to be two beats, but it may actually be ten
+or 20 or whatever; you don't know until you edit the contents of that
+PolyObject. However, with a Time Behavior of None, you can edit the
+contents of the PolyObject frequently and drastically without having to
+worry if your changes will be accurately represented in the CSD
+rendering. A good way to work may be to set a new PolyObject's Time
+Behavior to None and edit the contents of it as much as you like. Then,
+when it sounds satisfactory, you can click "Set Subjective Time to
+Objective Time" on it, so that you may edit the rest of the score while
+having an accurate picture of the actual length of the PolyObject. Keep
+in mind that you may use the "Set Subjective Time to Objective Time"
+feature on any SoundObject with any Time Behavior setting.
+
+One can lay down a series of sounds in a PolyObject and setup the
+PolyObject to loop them. The Time Behavior of the PolyObject itself
+needs to be set to Repeat, and the notes will loop for as long as the
+PolyObject's length. When the PolyObject's contents actually start
+looping in relationship to each other is determined by the Repeat Point;
+one can edit the Repeat settings in the property box of any SoundObject.
+The Repeat Point specifies the beat at which the group of notes will
+begin after the previous note group begins. If the Use Repeat Point is
+not checked, the next note group will begin immediately after the
+previous note group's last note ends.
+
+An example would be a PolyObject whose contents are three one-beat notes
+played back-to-back:
+
+\begin{verbatim}
+i1 0.0 1.0 3 4 5
+i2 1.0 1.0 3 4 5
+i3 2.0 1.0 3 4 5
+\end{verbatim}
+
+If one set the Time Behavior to Repeat without using a Repeat Point and
+stretched the length of the actual PolyObject to six beats, six one-beat
+notes would play back-to-back, like this:
+
+\begin{verbatim}
+i1 0.0 1.0 3 4 5
+i2 1.0 1.0 3 4 5
+i3 2.0 1.0 3 4 5
+i1 3.0 1.0 3 4 5
+i2 4.0 1.0 3 4 5
+i3 5.0 1.0 3 4 5
+\end{verbatim}
+
+However, if one were to change the PolyObject to use Repeat Points and
+set the repeat point to 2.5, this would be the result:
+
+\begin{verbatim}
+i1 0.0 1.0 3 4 5
+i2 1.0 1.0 3 4 5
+i3 2.0 1.0 3 4 5
+i1 2.5 1.0 3 4 5
+ji2 3.5 1.0 3 4 5
+i3 4.5 1.0 3 4 5
+i1 5.0 1.0 3 4 5
+\end{verbatim}
+
+Note that there are more notes being played this time. Why? Because with
+a Time Behavior of Repeat, blue will try to fit as many notes that it
+can into the PolyObject using the repeat settings given, without
+violating the order and length of the PolyObject's note arrangement.
+With the previous example, blue played the second group of three notes
+at beat 2.5, and realized it could squeeze in a partial third loop. This
+third loop begins at beat five, since that is equivalent to beat 2.5 in
+the second loop, which is our Repeat Point. It inserted the first note
+there and realized it couldn't fit any more notes, since the next note
+would begin at beat six and play until beat seven; that's longer than
+the length of our PolyObject, which is six.
+
+\subsubsection{NoteProcessors and PolyObjects}
+
+NoteProcessors are great when used in conjunction with PolyObjects. They
+can be very powerful, but you have to be careful of a few gotcha's.
+
+One thing to be aware of with PolyObjects and NoteProcessors are
+p-fields. The user must make sure that the p-field(s) that is being
+operated on by the Note Processor(s) is the same for all sounds within
+the PolyObject. If one has a lot of typical notes in a PolyObject where
+p4 equals the pitch, and one errant note where p4 equals phase, for
+instance, things could get disastrous if one tries to apply a
+PchAddProcessor to the whole PolyObject. Please refer to the Best
+Practices section for more information.
+
+Everything that is to follow in this section can be summed up in one
+important fact: NoteProcessors get applied to SoundObjects before the
+Time Behavior does. What this means is, if you have a PolyObject with
+Repeat Time Behavior and set it up to loop twice, and have a
+LineAddProcessor on that same PolyObject, you will have a group of notes
+looped twice with the LineAddProcessor behavior applied twice; that is,
+applied individually to each looped group of notes.
+
+So, to borrow from the example in Repeat/Looping Time Behavior, our
+group of three notes with no NoteProcessor and no Repeat Point would
+render like this:
+
+\begin{verbatim}
+i1 0.0 1.0 3 4 5
+i2 1.0 1.0 3 4 5
+i3 2.0 1.0 3 4 5
+i1 3.0 1.0 3 4 5
+i2 4.0 1.0 3 4 5
+i3 5.0 1.0 3 4 5
+\end{verbatim}
+
+If I add a LineAddProcessor to p-field four, starting from zero and
+going to two, here's what the result would look like:
+
+\begin{verbatim}
+i1 0.0 1.0 3.0 4 5
+i2 1.0 1.0 4.0 4 5
+i3 2.0 1.0 5.0 4 5
+i1 3.0 1.0 3.0 4 5
+i2 4.0 1.0 4.0 4 5
+i3 5.0 1.0 5.0 4 5
+\end{verbatim}
+
+This may be the desired effect, and it may not. In order to apply a
+NoteProcessor after the Time Behavior has been applied, take the
+following steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Apply the Time Behavior to you PolyObject, with no NoteProcessor on
+  it.
+\item
+  Right-click on the PolyObject and select "Convert to PolyObject." What
+  this will do is embed your PolyObject in yet another PolyObject.
+\item
+  Edit the Properties of the new PolyObject and apply the NoteProcessor
+  to it.
+\end{enumerate}
+
+If one applies the previous steps to the example cited above, the
+rendered notes look like this:
+
+\begin{verbatim}
+i1 0.0 1.0 3.0 4 5
+i2 1.0 1.0 3.4 4 5
+i3 2.0 1.0 3.8 4 5
+i1 3.0 1.0 4.2 4 5
+i2 4.0 1.0 4.6 4 5
+i3 5.0 1.0 5.0 4 5
+\end{verbatim}
+
+One thing the user will have to keep in mind, though; when referring to
+beats, those beats will be applicable to the notes as they are after the
+Time Behavior change. So, in the previous example, in order to get those
+results, one has to change the ending beat in the LineAddProcessor to
+five instead of two, because five is the beat at which the last note
+plays in the looped sequence.
+
+As mentioned previously, PolyObjects can contain other PolyObjects. The
+thing to remember when doing this is that each PolyObject's settings,
+NoteProcessor's, etc. are local to itself. For blue, the notes generated
+from a PolyObject SoundObject are the same as the ones generated from a
+GenericScore or any other type of SoundObject, and can be manipulated in
+the same way.
+
+\subsection{Best Practices}
+
+Let's say you're making a PolyObject with lots of regular notes whose p4
+field represents the pitch. At some point you also want to insert a note
+that affects something a bit more irregular, like the phase of the other
+notes, and its p4 field represents, say, the amount of variance in the
+phase. It would be prudent to separate that irregular note away from the
+notes in this PolyObject in order to keep your expectations about the
+p-field of the PolyObject as a whole consistent. Without the irregular
+note, you can safely say that p4 of PolyObject X (or whatever its
+called) represents the pitch of all of the notes it contains. However,
+with that extra note in it, p4 has no consistent meaning in PolyObject
+X, and you can't safely apply NoteProcessors to it that affect that
+p-field.
+
+Co-reliant notes, in this case, would be notes that rely on each other
+to make their sound. For instance, if you had a group of notes that fed
+their output to a zak channel, then another note to process and play
+that channel's sound, those notes would be co-reliant. The reason to do
+this is to try to make each SoundObject in the main score independent so
+that one can move, remove, and edit each of them without worrying about
+affecting other notes. The PolyObjects, effectively, begin to represent
+one atomic sound in your score, making it easier to experiment with.
+
+Doing this also allows one to reliably freeze PolyObjects. If one tried
+to freeze a PolyObject that did nothing but write its output to a zak
+channel, the resulting sound file would be dead silence, and the score
+would never work (since a frozen sound does nothing but read and play a
+sound file).
+
+That's still possible with co-reliant but dissimilar notes. What one
+would do, to use the example in the previous section, is make a
+PolyObject that contained the instrument processing the zak channel
+output and another embedded PolyObject. The embedded PolyObject would
+then contain all of the actual notes writing to the zak channel. Now
+what you can do is apply all kinds of NoteProcessors to the embedded
+PolyObject, then freeze or do whatever to the parent PolyObject in a
+reliable fashion.
+
+It's much easier on the user as a composer to arrange the notes this
+way. This enables one to see opportunites for reuse of certain musical
+phrases, and implement that repetition easily by adding said PolyObjects
+to the SoundObject Library and copying instances wherever they're
+needed.
+
+This only really applies if the Time Behavior being used is None,
+otherwise a PolyObject's length is always going to represent accurately
+its length in the composition. Remember to use "Set Subjective Time to
+Objective Time" as needed.
+
+\subsection{Debugging}
+
+When things don't work out the way you expected them too (and they
+won't), a great tool to use to help track down the problem is the "Test"
+button. This button renders the i-statements that any given SoundObject
+will generate, and it comes in very useful with PolyObjects. So, if
+you've got a PolyObject that won't render when you Test it, drill down
+into it and test its constituent notes, Testing and drilling down into
+its sub-PolyObjects as well. You'll eventually find the cause. Examine
+NoteProcessors and the Time Behaviors of each SoundObject; these can be
+common culprits with sound problems too.
+
+If one follows the best practice "Group co-reliant notes together into
+PolyObjects," this also makes it easier to debug problems. You can
+isolate PolyObjects in the main score easily by soloing that SoundLayer,
+etc. (since they won't rely on other SoundObjects for their sound) and
+investigate the problem that way; many times, you'll find that the
+problem stems from the PolyObject not being as independent as you'd
+thought.
+
+%%
+\section{NoteProcessors}\label{conceptsNoteProcessors}
+
+NoteProcessors are a powerful tool for manipulating notes. Each type of
+NoteProcessor serves a different purpose to adjust values for pfields.
+They can be used to apply musical effects to a group of notes; some
+possible uses include humanizing rhythm, added crescendo/decrescendo,
+reassigning notes to different instruments, applying time curves, and
+transposition of material.
+
+NoteProcessors can be applied on a per-SoundObject basis. They can also
+be applied to an entire Layer to affect all SoundObjects in that layer,
+as well as applied to a LayerGroup or to the entire Score.
+
+You can add NoteProcessors to SoundObjects by using the SoundObject
+Properties window. You can add them to Layers the support them by using
+the "N" button the layer's header panel. To apply them to a LayerGroup
+or Score, right click the Root Score in the Score Bar and use the popup
+menus to choose which item you'd like to apply NoteProcessors to.
+
+NoteProcessors are applied after the notes of a SoundObject, Layer,
+LayerGroup, or Score are generated and before time behavior is applied.
+Processing starts with the first NoteProcessor in the chain and the
+results of that are passed down the chain.
+
+%%
+\section{SoundObject Library}\label{soundObjectLibrary}
+
+\subsection{Introduction}
+
+The SoundObject Library is a place where one can store soundObjects from
+the timeline. The library can simply be a place to store a soundObject
+idea that the user may want to user later, but more importantly it
+allows for Instances of the soundObject to be made. Instances of
+soundObjects point to and soundObject in the library and when the
+instance is generating its score, it will actually call the soundObject
+in the library to generate its score and then apply it's own properties
+and noteProcessors to the generated score. Updating a soundObject in the
+library will then update all instances of that soundObject. This feature
+is useful to represent the idea of a motive, with instances of the
+motive allowing to have transformations by use of noteProcessors.
+
+\subsection{Usage}
+
+The general pattern of usage for the SoundObject Library entails:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Add SoundObject to the Library. This is done by selecting a
+  soundObject, right-clicking the soundObject to open up the popup menu
+  and selecting "Add to SoundObject Library".
+\item
+  After doing this, your soundObject will have been added to the library
+  and the soundObject on the timeline will have been replaced with an
+  Instance soundObject which will be pointing to the soundObject now in
+  the library.
+\item
+  At this point, the user can now take advantage of the library by
+  making copies of the instance object on the timeline and pasting in
+  more instances. These instances can be placed anywhere, have different
+  durations and time behaviors, as well as have their own individual
+  noteProcessors. This allows expressing ideas such as "This is an
+  instance of the primary motive (soundObject in the library) but
+  transposed up a major 3rd, retrograded, and inverted", or an idea like
+  "I've got drum pattern A in the library and I have instances of it
+  here and here and ...".
+
+  \begin{quote}
+  \textbf{Note}
+
+  When copying and pasting Instance soundObjects, they are all pointing
+  to the soundObject in the library.
+  \end{quote}
+\item
+  You can also then make instances of soundObjects in the library by
+  opening up the SoundObject Library dialog (available from the Window
+  menu or by using the F4 shortcut key). There you have the following
+  options:
+
+  \begin{description}
+  \item[Copy]
+  This makes a copy of the selected SoundObject and puts it in the
+  buffer. This is a copy of the original soundObject and not an
+  Instance. After copying to the buffer, you can paste as normal on the
+  timeline.
+  \item[Copy Instance]
+  This makes a Instance of the selected SoundObject and puts it in the
+  buffer. This Instance will point to the original soundObject. After
+  copying to the buffer, you can paste as normal on the timeline.
+  \item[Remove]
+  This will remove the selected SoundObject from the library.
+  \end{description}
+\item
+  You can also then edit the soundObject in the library from within the
+  SoundObject Library dialog by selecting the soundObject in the list.
+  The editor for the SoundObject will appear below.
+
+  \begin{quote}
+  \textbf{Note}
+
+  Editing the SoundObject in the library will affect all instances of
+  that SoundObject.
+  \end{quote}
+\end{enumerate}
+
+
+%%
+\section{Parameter Automation}\label{parameterAutomation}
+
+\subsection{Introduction}
+
+Blue allows for a few ways to enter in values to automate parameters
+over time. The parameters that can be automated are those in
+BlueSynthBuilder Instruments, Mixer Effects, Mixer Sends, and Mixer
+Volumes. The following sections will describe how to use Parameter
+Automation and technical details in how this all works within the
+context of blue and Csound.
+
+\subsection{Available Parameters}
+
+Besides the Volume sliders in the mixer and level amount on mixer sends,
+the following GUI Parameters are automatable when found in
+BlueSynthBuilder instruments and Mixer Effects:
+
+\begin{itemize}
+\item
+  Knob
+\item
+  HSlider
+\item
+  HSliderBank
+\item
+  VSlider
+\item
+  VSliderBank
+\item
+  XYController
+\item
+  Dropdown
+\item
+  Checkbox
+\end{itemize}
+
+\subsection{Assigning Parameters}
+
+Automations for Parameters are assignable to SoundObject LayerGroup
+Layers that exist in the root Score by selecting from the popup menu
+that appears when selecting the "A" button on a SoundLayer's panel (on
+the left of the timeline). The menu shows what Parameters are available
+to use from Instruments and the Mixer. Those with normal color text are
+Parameters which are not currently automated, those in green are ones
+currently automated in that SoundLayer, and those in orange are ones
+which are currently automated on a different SoundLayer. Selecting
+normal color text will enable automation for that parameter on the
+SoundLayer, while selecting a green colored text one will disable
+automation for that parameter, and selecting an orange one will move it
+from the layer it is currently on to the one being worked with.
+
+\subsection{Score Timeline Modes}
+
+The Score timeline has three different modes:
+
+\begin{description}
+\item[Score]
+This is the primary mode for adding and editing SoundObjects. Parameter
+Automations will be drawn but are not editable in this mode.
+\item[Single Line]
+This is the primary mode for editing line points for Parameter
+Automations. The user is able to edit a single line at a time per
+SoundLayer, and can enter and remove points, modify points by dragging
+them, as well as selecting a region and move the the points by dragging
+the region. While dragging the region, the region will show that data
+will overwrite the area dragged to. This overwriting will not be
+committed however until the user releases the mouse button.
+\item[Multi Line]
+This is the mode for selecting and moving line points for all Parameter
+Automations on a single or multiple SoundLayers. The use can click and
+drag to create a selection region, then click within the selection
+region to move all points from all lines within the region. While
+dragging the region, the region will show that data will overwrite the
+area dragged to. This overwriting will not be committed however until
+the user releases the mouse button.
+\end{description}
+
+\subsection{Editing Automations}
+
+To edit line values in a Parameter Automation, first switch to Single
+Line mode. Then, for the desired SoundLayer, select which of the
+assigned parameters to edit. This can be done either by using the
+SoundLayer Edit Panel's Parameter selector (found on the second row
+below the row with mute, solo, etc.; only shown when SoundLayer size is
+greater than 1), or by right-clicking the SoundLayer in the main area
+and selecting from the popup menu (the actively editable Parameter
+Automation will be disabled from the popup menu).
+
+Once a parameter is selected, the user can change the color of the line
+by using the color box next to the parameter selector panel on the
+SoundLayer Edit Panel. To add new points, use the mouse and mouse over
+to where you would like to add a point and press the left mouse button.
+After pressing, the point will be added, and the user can drag to modify
+the just entered point. Releasing the button will complete the addition
+of the line point. To edit an existing point, mouse over a point until
+it is highlighted in red, then press the left mouse button, drag, and
+release when finished. To remove an existing point, mouse over a point
+until it is highlighted and press the right mouse button.
+
+For finer control over the line points, right-click on the parameter
+line panel when not over an existing line point. A popup menu will
+appear and select "Edit Line Points". A dialog showing a table of line
+points with time values in one column and parameter values in a second
+column. The user can then enter in values by text entry.
+
+\subsection{Technical Details}
+
+blue's parameter automation system is implemented in Csound code in a
+few different areas. For instruments and effects, when an Automatable
+Parameter is not set for automation, it will replace its replacement key
+in its ORC code with a constant value from the UI item. If the parameter
+is set to allow automation, then the replacement key is replaced with a
+blue generated global k-rate signal name. Therefore, when coding
+instruments and effects, the user should be careful to make sure that if
+they want the parameter to be automatable that the replacement key is
+placed in the code where a k-rate signal is legal to use. If the user is
+not expecting to automate that value, then it would be safe to place
+that replacement key wherever a constant is allowed. This is also useful
+to know when migrating older BSB Instruments and Effects to be used with
+the purpose of Automation.
+
+After setting up the Instrument and Effects, blue will then handle
+compiling the automations into a way that works with Csound. Currently,
+blue will first calculate init statements from where the render start
+time is and add that to the CSD to make sure that the global krate
+signals will be initiated by the time any instrument could use them.
+Then, blue creates instruments for each parameter that will be
+automated. The instruments are driven by score and either an instrument
+for continuous data or resolution dependent data will be created. Score
+is then generated for the parameter automation data that together with
+the instruments generated will create the signals.
+
+Care was taken to optimize the generated score and instruments.
+Unnecessary score will not be generated if multiple points with the same
+value are found as well as when there is a discontinous break in the
+values. Values from the parameter automation will also correctly be
+generated from render start time until render end time (if used). For
+parameters with resolution, every value is a discrete jump, so the
+instrument for resolution based parameters will on it's i-time run will
+simply set the new value and then turn the instrument instance off to
+save CPU cycles.
+
+%%
+\section{Command Blocks}\label{commandBlocks}
+
+\subsection{Introduction}
+
+Command Blocks are Csound ORC code with special directions to blue on
+how to processes them. The are available to use only within the Global
+Orchestra areas of Instruments (not to be confused with the global
+orchestra area in the globals manager tab) and were created to help
+users build fully-encapsulated instruments, such that an instrument and
+all of its necessary parts could be grouped together.
+
+\begin{quote}
+\textbf{Note}
+
+This feature has largely been made unnecessary due to new Csound
+programming practices that have developed since this was initially
+introduced. This feature is left in blue though to support legacy
+projects.
+\end{quote}
+
+\subsection{Basic Usage}
+
+To use a command block, you will need to wrap the section of orc code
+that you want blue to process with the command in the following manner:
+
+\begin{verbatim}
+;[command to use]{ 
+...Csound Orchestra Code... 
+;}
+\end{verbatim}
+
+\subsection{Available Commands}
+
+Once blocks are useful to limit how many times a block of code will be
+generated in the final CSD and is more for efficiency than anything else
+(so Csound doesn't define the same ftable more than it has to, for
+example). An example of this:
+
+\begin{verbatim}
+;[once]{ 
+gaLeft init 0 gaRight init 0 
+;}
+\end{verbatim}
+
+In this case, if the above gaLeft and gaRight init statement, wrapped in
+a once block, is used in multiple instruments, then regardless it will
+be generated only once in the final CSD. So a use case for the above
+would be if you have all of your instruments output to the above global
+variables for extra processing by an always-on reverb, you would want to
+add the above to all of the instruments and also the reverb. Then, if
+you start a new project and may want to reuse a few of your instruments
+as well as the reverb, you can just copy them into your new project's
+orchestra and start working away, knowing your global variables will be
+initialized and ready to go.
+
+Pre blocks are useful if you need the enclosed ORC code to be generated
+before any other global orc code. When blue goes to process the project
+to generate a CSD file, it normally starts of the existing global
+orchestra code from the globals manager, then appends all global orc
+from instruments and soundObjects to it, one after the other. By using a
+pre block, the code enclosed will be pushed up to the top of the global
+orchestra of the CSD (instrument 0).
+
+The scenario which required a solution such as this was when working
+with the fluidSynth opcodes. For those set of opcodes, a fluidEngine
+needs to be initialized before loading of soundfonts into that engine.
+The design I had wanted was to have the instrument that did the
+fluidOutput also have the engine initialization. This was a problem
+because the fluidOutput needed to be placed at an instrument number
+higher than the fluidNote playing instruments for the output chain to
+work correctly. So here was a case of an instrument that needed to have
+its instrument generate later than the instruments that it depended on,
+but also have its own fluidEngine initialization happen before all the
+other soundFonts load in in their own global orc statements. The
+solution then was to create the once block feature and allow for
+targetting global orc code to be prepended to the top of the generated
+global orc code.
