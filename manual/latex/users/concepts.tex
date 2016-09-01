@@ -4,9 +4,9 @@
 
 \subsection{Introduction}
 
-blue offers a number of ways to render a project, each method useful for
+Blue offers a number of ways to render a project, each method useful for
 different purposes you may have. The following section explains the ways
-which blue is able to render a .blue project file as well as possible
+which Blue is able to render a .blue project file as well as possible
 use-case scenarios to guide you on how that feature may be useful.
 
 \subsection{Render Methods}
@@ -18,9 +18,9 @@ button at the top of the window, use the
 "Project-\textgreater{}Render/Stop Project" menu option, or use the F9
 shortcut key.
 
-blue's general method of communicating with Csound is by generating a
+Blue's general method of communicating with Csound is by generating a
 CSD file and calling Csound to run it. For debugging purposes, it is
-often useful to see if what you think you are doing inside blue is
+often useful to see if what you think you are doing inside Blue is
 matching the generated CSD file. You can generate the CSD to screen by
 using the "Project-\textgreater{}Generate CSD to Screen" menu option, or
 by using the ctrl-shift-g shortcut.
@@ -39,7 +39,7 @@ use the ctrl-shift-F9 shortcut.
 
 The Render to Disk and play option will use the project's Disk Render
 Options from its project properties to generate a soundfile on disk and
-after finishing, play the generated file using blue's soundfile player,
+after finishing, play the generated file using Blue's soundfile player,
 located in the SoundFile manager tab. This feature is useful if you're
 working on a piece that has processing demands beyond what your computer
 is capable of in realtime, so you can have it render to disk first and
@@ -62,14 +62,14 @@ can use the "File-\textgreater{}Render to Disk and Open" menu option.
 
 \subsection{Introduction}
 
-The concept of SoundObjects is the foundation of blue's design in
+The concept of SoundObjects is the foundation of Blue's design in
 organizing musical ideas. This section will discuss what is a
-SoundObject, how this idea is implemented in blue, and strategies on how
+SoundObject, how this idea is implemented in Blue, and strategies on how
 to use the concept of SoundObjects in organizing your own musical work.
 
 \subsection{What is a SoundObject?}
 
-SoundObjects in blue represent a \emph{perceived sound idea, whether it
+SoundObjects in Blue represent a \emph{perceived sound idea, whether it
 be a single atomic sound event or aggregate of other sound objects}. A
 SoundObject on the timeline can represent many things, whether it is a
 single sound, a melody, a rhythm, a phrase, a section involving phrases
@@ -78,7 +78,7 @@ sound idea.
 
 Just as there are many ways to think about music, each with their own
 model for describing sound and vocabulary for explaining music, there
-are a number of different SoundObjects in blue. Each SoundObject in blue
+are a number of different SoundObjects in Blue. Each SoundObject in Blue
 is useful for different purposes, with some being more appropriate for
 expressing certain musical ideas than others. For example, using a
 scripting object like the PythonObject or RhinoObject would service a
@@ -89,7 +89,7 @@ different SoundObjects allows for users to choose what tool will be the
 most appropriate to express their musical ideas.
 
 Since there are many ways to express musical ideas, to fully allow the
-range of expression that Csound offers, blue's SoundObjects are capable
+range of expression that Csound offers, Blue's SoundObjects are capable
 of generating different things that Csound will use. Although most often
 they are used mostly for generating Csound SCO text, SoundObjects may
 also generate ftables, instruments, user-defined opcodes, and everything
@@ -105,14 +105,14 @@ SoundObject. All SoundObjects also support a background color property,
 used strictly for visual purposes on the timeline.
 
 %%
-\section{}\label{conceptsPolyObjects}
+\section{PolyObjects}\label{conceptsPolyObjects}
 
 \subsection{Introduction}
 
-PolyObjects are, in my opinion, one of the most powerful tools in blue.
+PolyObjects are, in my opinion, one of the most powerful tools in Blue.
 They provide encapsulation of any grouping of SoundObjects, any way you
 like, into one logical SoundObject. Once encapsulated, the rest of
-blue's powerful features (namely NoteProcessors) can be leveraged
+Blue's powerful features (namely NoteProcessors) can be leveraged
 against the PolyObject, and that is when one really begins to realize
 the benefits of using PolyObjects.
 
@@ -148,7 +148,7 @@ doing this, the PolyObject is empty and will not generate any notes in
 its current state. You have to double-click on it in order to edit the
 contents of the PolyObject. Once you're editing the empty PolyObject,
 the score editor looks a lot like it does when you're editing an empty
-blue score. That's because the main score is just one big container for
+Blue score. That's because the main score is just one big container for
 notes, like PolyObjects (in fact, in the code, the main score IS a
 PolyObject).
 
@@ -269,10 +269,10 @@ i1 5.0 1.0 3 4 5
 \end{verbatim}
 
 Note that there are more notes being played this time. Why? Because with
-a Time Behavior of Repeat, blue will try to fit as many notes that it
+a Time Behavior of Repeat, Blue will try to fit as many notes that it
 can into the PolyObject using the repeat settings given, without
 violating the order and length of the PolyObject's note arrangement.
-With the previous example, blue played the second group of three notes
+With the previous example, Blue played the second group of three notes
 at beat 2.5, and realized it could squeeze in a partial third loop. This
 third loop begins at beat five, since that is equivalent to beat 2.5 in
 the second loop, which is our Repeat Point. It inserted the first note
@@ -365,7 +365,7 @@ plays in the looped sequence.
 
 As mentioned previously, PolyObjects can contain other PolyObjects. The
 thing to remember when doing this is that each PolyObject's settings,
-NoteProcessor's, etc. are local to itself. For blue, the notes generated
+NoteProcessor's, etc. are local to itself. For Blue, the notes generated
 from a PolyObject SoundObject are the same as the ones generated from a
 GenericScore or any other type of SoundObject, and can be manipulated in
 the same way.
@@ -557,7 +557,7 @@ over time. The parameters that can be automated are those in
 BlueSynthBuilder Instruments, Mixer Effects, Mixer Sends, and Mixer
 Volumes. The following sections will describe how to use Parameter
 Automation and technical details in how this all works within the
-context of blue and Csound.
+context of Blue and Csound.
 
 \subsection{Available Parameters}
 
@@ -655,12 +655,12 @@ column. The user can then enter in values by text entry.
 
 \subsection{Technical Details}
 
-blue's parameter automation system is implemented in Csound code in a
+Blue's parameter automation system is implemented in Csound code in a
 few different areas. For instruments and effects, when an Automatable
 Parameter is not set for automation, it will replace its replacement key
 in its ORC code with a constant value from the UI item. If the parameter
 is set to allow automation, then the replacement key is replaced with a
-blue generated global k-rate signal name. Therefore, when coding
+Blue generated global k-rate signal name. Therefore, when coding
 instruments and effects, the user should be careful to make sure that if
 they want the parameter to be automatable that the replacement key is
 placed in the code where a k-rate signal is legal to use. If the user is
@@ -669,12 +669,12 @@ that replacement key wherever a constant is allowed. This is also useful
 to know when migrating older BSB Instruments and Effects to be used with
 the purpose of Automation.
 
-After setting up the Instrument and Effects, blue will then handle
+After setting up the Instrument and Effects, Blue will then handle
 compiling the automations into a way that works with Csound. Currently,
-blue will first calculate init statements from where the render start
+Blue will first calculate init statements from where the render start
 time is and add that to the CSD to make sure that the global krate
 signals will be initiated by the time any instrument could use them.
-Then, blue creates instruments for each parameter that will be
+Then, Blue creates instruments for each parameter that will be
 automated. The instruments are driven by score and either an instrument
 for continuous data or resolution dependent data will be created. Score
 is then generated for the parameter automation data that together with
@@ -695,7 +695,7 @@ save CPU cycles.
 
 \subsection{Introduction}
 
-Command Blocks are Csound ORC code with special directions to blue on
+Command Blocks are Csound ORC code with special directions to Blue on
 how to processes them. The are available to use only within the Global
 Orchestra areas of Instruments (not to be confused with the global
 orchestra area in the globals manager tab) and were created to help
@@ -707,14 +707,14 @@ all of its necessary parts could be grouped together.
 
 This feature has largely been made unnecessary due to new Csound
 programming practices that have developed since this was initially
-introduced. This feature is left in blue though to support legacy
+introduced. This feature is left in Blue though to support legacy
 projects.
 \end{quote}
 
 \subsection{Basic Usage}
 
 To use a command block, you will need to wrap the section of orc code
-that you want blue to process with the command in the following manner:
+that you want Blue to process with the command in the following manner:
 
 \begin{verbatim}
 ;[command to use]{ 
@@ -747,7 +747,7 @@ orchestra and start working away, knowing your global variables will be
 initialized and ready to go.
 
 Pre blocks are useful if you need the enclosed ORC code to be generated
-before any other global orc code. When blue goes to process the project
+before any other global orc code. When Blue goes to process the project
 to generate a CSD file, it normally starts of the existing global
 orchestra code from the globals manager, then appends all global orc
 from instruments and soundObjects to it, one after the other. By using a
