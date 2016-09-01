@@ -95,10 +95,14 @@ public class EffectEditorManager {
     }
 
     public void updateEffectInterface(Effect effect) {
-        Object val = map.get(effect);
 
-        if (val != null) {
-            JDialog dialog = (JDialog) val;
+        JDialog dialog = null;
+        WeakReference<JDialog> ref = map.get(effect);
+        if(ref != null) {
+            dialog = ref.get();
+        }
+
+        if (dialog != null) {
             dialog.getContentPane().removeAll();
 
             BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
