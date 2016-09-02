@@ -32,12 +32,13 @@ import javax.swing.KeyStroke;
 
 import blue.BlueSystem;
 import blue.components.EditEnabledCheckBox;
-import blue.event.EditModeListener;
+import blue.jfx.BlueFX;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
+import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
 import com.l2fprod.common.propertysheet.Property;
 import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
 import com.l2fprod.common.propertysheet.PropertySheet;
@@ -47,6 +48,10 @@ import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditor;
+import java.util.concurrent.CountDownLatch;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
 import javax.swing.JTabbedPane;
 import org.openide.util.Exceptions;
 
@@ -56,7 +61,7 @@ import org.openide.util.Exceptions;
 public class BSBInterfaceEditor extends JComponent implements PresetListener,
         PropertyChangeListener {
 
-    private final BSBEditPanel bsbEditPanel;
+    private BSBEditPane bsbEditPane = null;
 
     private final BSBObjectPropertySheet bsbPropSheet;
 
@@ -79,11 +84,29 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
         bsbPropSheet = new BSBObjectPropertySheet(showAutomatable);
 
-        bsbEditPanel = new BSBEditPanel(bsbObjectEntries);
+        JFXPanel jfxPanel = new JFXPanel();
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Platform.runLater(() -> {
+            bsbEditPane = new BSBEditPane(bsbObjectEntries);
+
+            final Scene scene = new Scene(bsbEditPane);
+            BlueFX.style(scene);
+            jfxPanel.setScene(scene);
+            latch.countDown();
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        }
 
         presets.addPresetListener(this);
 
-        editBox.addEditModeListener(bsbEditPanel);
+        // FIXME
+//        editBox.addEditModeListener(bsbEditPanel);
         editBox.addEditModeListener(isEditing ->
                 rightBar.setVisible(isEditing));
 
@@ -97,7 +120,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         topBar.add(presets, BorderLayout.CENTER);
         topBar.add(editBox, BorderLayout.EAST);
 
-        JScrollPane editScrollPane = new JScrollPane(bsbEditPanel);
+        JScrollPane editScrollPane = new JScrollPane(jfxPanel);
         editScrollPane.setAutoscrolls(true);
 
         JTabbedPane tabs = new JTabbedPane();
@@ -148,9 +171,11 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         this.add(rightBar, BorderLayout.EAST);
 
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
-        bsbEditPanel.addSelectionListener(bsbPropSheet);
+        // FIXME
+//        bsbEditPanel.addSelectionListener(bsbPropSheet);
 
-        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
+// FIXME
+//        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
 
         rightBar.setVisible(false);
 
@@ -196,7 +221,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
         bsbPropSheet.clear();
 
-        this.bsbEditPanel.editBSBGraphicInterface(gInterface);
+        this.bsbEditPane.editBSBGraphicInterface(gInterface);
 
         presets.setVisible(pGroup != null);
 
@@ -216,7 +241,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
     public void presetSelected(Preset preset) {
         if (gInterface != null) {
             preset.setInterfaceValues(gInterface);
-            this.bsbEditPanel.editBSBGraphicInterface(gInterface);
+            this.bsbEditPane.editBSBGraphicInterface(gInterface);
         }
     }
 
