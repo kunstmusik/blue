@@ -20,17 +20,18 @@
 package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
+import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyEditor;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
@@ -43,7 +44,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
 
     PropertyChangeSupport listeners = new PropertyChangeSupport(this);
 
-    BSBDropdownItemList items = null;
+    ObservableList<BSBDropdownItem> items = null;
 
     BSBDropdownView view = null;
 
@@ -70,8 +71,8 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
      * This method is a hack to get the view updated
      */
     protected void editItems() {
-        BSBDropdownItemList old = items;
-        BSBDropdownItemList newList = (BSBDropdownItemList) items.clone();
+        ObservableList<BSBDropdownItem> old = items;
+        ObservableList<BSBDropdownItem> newList = FXCollections.observableArrayList(old);
         dialog.show(newList);
 
         listeners.firePropertyChange("value", old, newList);
@@ -111,7 +112,7 @@ public class DropdownItemsPropertyEditor implements PropertyEditor {
     @Override
     public void setValue(Object value) {
         this.view = (BSBDropdownView) value;
-        this.items = ((BSBDropdown) view.getBSBObject()).getDropdownItems();
+        this.items = ((BSBDropdown) view.getBSBObject()).dropdownItemsProperty();
     }
 
     @Override

@@ -94,7 +94,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
         comboBox.addActionListener(updateIndexListener);
 
         int index = dropdown.getSelectedIndex();
-        if (index < dropdown.getDropdownItems().size()) {
+        if (index < dropdown.dropdownItemsProperty().size()) {
             comboBox.setSelectedIndex(index);
         }
 
@@ -142,7 +142,7 @@ public class BSBDropdownView extends AutomatableBSBObjectView implements
                 updating = true;
 
                 int index = dropdown.getSelectedIndex();
-                if (index < dropdown.getDropdownItems().size()) {
+                if (index < dropdown.dropdownItemsProperty().size()) {
                     comboBox.setSelectedIndex(index);
                 }
 
@@ -171,18 +171,18 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
      */
     @Override
     public BSBDropdownItem getSelectedItem() {
-        if (dropdown == null || dropdown.getDropdownItems().size() == 0) {
+        if (dropdown == null || dropdown.dropdownItemsProperty().size() == 0) {
             return null;
         }
 
         int index = dropdown.getSelectedIndex();
 
-        return dropdown.getDropdownItems().get(index);
+        return dropdown.dropdownItemsProperty().get(index);
 
     }
 
     public void refresh() {
-        int size = dropdown.getDropdownItems().size();
+        int size = dropdown.dropdownItemsProperty().size();
         int selectedIndex = dropdown.getSelectedIndex();
 
         if (selectedIndex >= size) {
@@ -197,7 +197,7 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 .getListeners(ListDataListener.class);
 
         ListDataEvent e = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, 0, dropdown.getDropdownItems()
+                ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
         for (int i = 0; i < eventListeners.length; i++) {
@@ -215,7 +215,7 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
                 .getListeners(ListDataListener.class);
 
         ListDataEvent e = new ListDataEvent(this,
-                ListDataEvent.CONTENTS_CHANGED, 0, dropdown.getDropdownItems()
+                ListDataEvent.CONTENTS_CHANGED, 0, dropdown.dropdownItemsProperty()
                         .size());
 
         for (int i = 0; i < eventListeners.length; i++) {
@@ -234,7 +234,7 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
             return;
         }
 
-        int index = dropdown.getDropdownItems().indexOf(anItem);
+        int index = dropdown.dropdownItemsProperty().indexOf(anItem);
         dropdown.setSelectedIndex(index);
     }
 
@@ -248,7 +248,7 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
         if (dropdown == null) {
             return 0;
         }
-        return dropdown.getDropdownItems().size();
+        return dropdown.dropdownItemsProperty().size();
     }
 
     /*
@@ -261,7 +261,7 @@ class DropdownComboBoxModel implements ComboBoxModel<BSBDropdownItem> {
         if (dropdown == null) {
             return null;
         }
-        return dropdown.getDropdownItems().get(index);
+        return dropdown.dropdownItemsProperty().get(index);
     }
 
     /*

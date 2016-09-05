@@ -27,20 +27,31 @@ import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 /**
  * @author Steven Yi
  */
 public class BSBDropdown extends AutomatableBSBObject implements
-        ParameterListener, Randomizable {
+        ParameterListener, Randomizable, Externalizable {
 
-    BSBDropdownItemList dropdownItems = new BSBDropdownItemList();
-
-    int selectedIndex = -1;
-
-    private boolean randomizable = true;
+    private ObservableList<BSBDropdownItem> dropdownItems;
+    private IntegerProperty selectedIndex;
+    private BooleanProperty randomizable;
 
     public BSBDropdown() {
+        dropdownItems = FXCollections.observableArrayList();
+        selectedIndex = new SimpleIntegerProperty(-1);
+        randomizable = new SimpleBooleanProperty(true);
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -52,15 +63,19 @@ public class BSBDropdown extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            Elements subNodes;
             switch (nodeName) {
                 case "bsbDropdownItemList":
-                    dropDown.setDropdownItems(BSBDropdownItemList.loadFromXML(node));
+                    subNodes = node.getElements();
+                    while (subNodes.hasMoreElements()) {
+                        dropDown.dropdownItems.add(BSBDropdownItem.loadFromXML(subNodes.next()));
+                    }
                     break;
                 case "selectedIndex":
                     dropDown.setSelectedIndex(Integer.parseInt(node.getTextString()));
                     break;
                 case "randomizable":
-                    dropDown.randomizable = XMLUtilities.readBoolean(node);
+                    dropDown.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
         }
@@ -72,11 +87,15 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement(dropdownItems.saveAsXML());
         retVal.addElement("selectedIndex").setText(
                 Integer.toString(this.getSelectedIndex()));
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
+        Element items = retVal.addElement("bsbDropdownItemList");
+
+        for (BSBDropdownItem item : dropdownItems) {
+            items.addElement(item.saveAsXML());
+        }
 
         return retVal;
     }
@@ -101,13 +120,13 @@ public class BSBDropdown extends AutomatableBSBObject implements
         if (dropdownItems.size() == 0) {
             compilationUnit.addReplacementValue(objectName, "0");
         } else {
-            
+
             String replaceVal;
-            
-            if(isAutomationAllowed()) {
+
+            if (isAutomationAllowed()) {
                 replaceVal = "" + selectedIndex;
             } else {
-                BSBDropdownItem item = (BSBDropdownItem) dropdownItems.get(selectedIndex);
+                BSBDropdownItem item = dropdownItems.get(getSelectedIndex());
                 replaceVal = item.getValue();
             }
 
@@ -116,31 +135,19 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     }
 
-    /**
-     * @return Returns the dropdownItems.
-     */
-    public BSBDropdownItemList getDropdownItems() {
+    public ObservableList<BSBDropdownItem> dropdownItemsProperty() {
         return dropdownItems;
-    }
-
-    /**
-     * @param dropdownItems
-     *            The dropdownItems to set.
-     */
-    public void setDropdownItems(BSBDropdownItemList dropdownItems) {
-        this.dropdownItems = dropdownItems;
     }
 
     /**
      * @return Returns the selectedIndex.
      */
     public int getSelectedIndex() {
-        return selectedIndex;
+        return selectedIndex.get();
     }
 
     /**
-     * @param selectedIndex
-     *            The selectedIndex to set.
+     * @param selectedIndex The selectedIndex to set.
      */
     public void setSelectedIndex(int selectedIndex) {
         int tempIndex = selectedIndex;
@@ -148,20 +155,38 @@ public class BSBDropdown extends AutomatableBSBObject implements
             tempIndex = dropdownItems.size() - 1;
         }
 
-        int oldValue = this.selectedIndex;
-        this.selectedIndex = tempIndex;
+        int oldValue = getSelectedIndex();
+        this.selectedIndex.set(tempIndex);
 
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
             if (param != null) {
-                param.setValue(this.selectedIndex);
+                param.setValue(selectedIndex);
             }
         }
 
         if (propListeners != null) {
             propListeners.firePropertyChange("value", new Integer(oldValue),
-                    new Integer(this.selectedIndex));
+                    new Integer(selectedIndex));
         }
+    }
+
+    public IntegerProperty selectedIndexProperty() {
+        return selectedIndex;
+    }
+
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+        fireBSBObjectChanged();
+    }
+
+    @Override
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
     }
 
     /*
@@ -171,7 +196,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
      */
     @Override
     public String getPresetValue() {
-        BSBDropdownItem item = (BSBDropdownItem) dropdownItems.get(selectedIndex);
+        BSBDropdownItem item = dropdownItems.get(getSelectedIndex());
         return "id:" + item.getUniqueId();
     }
 
@@ -209,18 +234,13 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     /* RANDOMIZABLE METHODS */
     @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
-
-    @Override
     public void randomize() {
-        if (randomizable) {
+        if (isRandomizable()) {
 
             int randomIndex = (int) (Math.random() * dropdownItems.size());
 
             if (randomIndex != this.getSelectedIndex()) {
-                int oldIndex = this.selectedIndex;
+                int oldIndex = getSelectedIndex();
                 setSelectedIndex(randomIndex);
 
                 if (propListeners != null) {
@@ -229,12 +249,6 @@ public class BSBDropdown extends AutomatableBSBObject implements
                 }
             }
         }
-    }
-
-    @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
-        fireBSBObjectChanged();
     }
 
     /* AUTOMATABLE METHODS */
@@ -274,7 +288,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
         Parameter param = new Parameter();
         param.setValue(getSelectedIndex());
-        param.setMax(this.getDropdownItems().size() - 1, true);
+        param.setMax(dropdownItems.size() - 1, true);
         param.setMin(0.0f, true);
         param.setName(getObjectName());
         param.setResolution(1.0f);
@@ -300,14 +314,13 @@ public class BSBDropdown extends AutomatableBSBObject implements
     public void parameterChanged(Parameter param) {
     }
 
-
     private void updateSelectedIndex(int index) {
-        int oldValue = this.selectedIndex;
-        this.selectedIndex = index;
+        int oldValue = getSelectedIndex();
+        setSelectedIndex(index);
 
         if (propListeners != null) {
             propListeners.firePropertyChange("updateValue",
-                    new Integer(oldValue), new Integer(this.selectedIndex));
+                    new Integer(oldValue), new Integer(index));
         }
     }
 
@@ -320,6 +333,29 @@ public class BSBDropdown extends AutomatableBSBObject implements
             int val = Math.round(parameter.getLine().getValue(time));
 
             updateSelectedIndex(val);
+        }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeUTF(getObjectName());
+        out.writeInt(getSelectedIndex());
+        out.writeBoolean(isRandomizable());
+        out.writeInt(dropdownItems.size());
+        for(BSBDropdownItem item : dropdownItems) {
+            out.writeObject(item);
+        }
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        setObjectName(in.readUTF());
+        setSelectedIndex(in.readInt());
+        setRandomizable(in.readBoolean());
+
+        int itemCount = in.readInt();
+        for(int i = 0; i < itemCount; i++) {
+            dropdownItems.add((BSBDropdownItem)in.readObject());
         }
     }
 }

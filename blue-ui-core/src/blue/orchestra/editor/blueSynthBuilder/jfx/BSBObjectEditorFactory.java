@@ -44,36 +44,11 @@ import javafx.scene.Node;
  */
 public class BSBObjectEditorFactory {
 
-//    private static final HashMap<Class<? extends BSBObject>, Class<? extends BSBObjectView>> map;
-//
-//
-//
-//    static {
-//
-//        map = new HashMap<Class<? extends BSBObject>, Class<? extends BSBObjectView>>();
-//
-//        map.put(BSBCheckBox.class, BSBCheckBoxView.class);
-//        map.put(BSBDropdown.class, BSBDropdownView.class);
-//        map.put(BSBEnvelopeGenerator.class, BSBEnvelopeGeneratorView.class);
-//        map.put(BSBFileSelector.class, BSBFileSelectorView.class);
-//        map.put(BSBHSlider.class, BSBHSliderView.class);
-//        map.put(BSBHSliderBank.class, BSBHSliderBankView.class);
-//        map.put(BSBKnob.class, BSBKnobView.class);
-//        map.put(BSBLabel.class, BSBLabelView.class);
-//        map.put(BSBLineObject.class, BSBLineObjectView.class);
-//        map.put(BSBSubChannelDropdown.class, BSBSubChannelDropdownView.class);
-//        map.put(BSBTabbedPane.class, BSBTabbedPaneView.class);
-//        map.put(BSBTextField.class, BSBTextFieldView.class);
-//        map.put(BSBVSlider.class, BSBVSliderView.class);
-//        map.put(BSBVSliderBank.class, BSBVSliderBankView.class);
-//        map.put(BSBXYController.class, BSBXYControllerView.class);
-//    }
-
     public static Node getView(BSBObject bsbObject) {
         if (bsbObject instanceof BSBCheckBox) {
             return new BSBCheckBoxView((BSBCheckBox) bsbObject);
         } else if (bsbObject instanceof BSBDropdown) {
-            return new BSBJfxDummy((BSBDropdown) bsbObject);
+            return new BSBDropdownView((BSBDropdown) bsbObject);
         } else if (bsbObject instanceof BSBEnvelopeGenerator) {
 //            return new BSBEnvelopeGenerator((BSBEnvelopeGenerator)bsbObject);
         } else if (bsbObject instanceof BSBFileSelector) {

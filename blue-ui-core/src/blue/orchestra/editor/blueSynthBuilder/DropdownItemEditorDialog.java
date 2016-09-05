@@ -24,15 +24,14 @@ import blue.BlueSystem;
 import blue.WindowSettingManager;
 import blue.WindowSettingsSavable;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
-import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import electric.xml.Element;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javafx.collections.ObservableList;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -46,7 +45,7 @@ import javax.swing.table.AbstractTableModel;
 public class DropdownItemEditorDialog extends JDialog implements
         WindowSettingsSavable {
 
-    BSBDropdownItemList items = null;
+    ObservableList<BSBDropdownItem> items = null;
 
     DropdownItemsTableModel model = new DropdownItemsTableModel();
 
@@ -161,7 +160,7 @@ public class DropdownItemEditorDialog extends JDialog implements
 
     }
 
-    public void show(BSBDropdownItemList items) {
+    public void show(ObservableList<BSBDropdownItem> items) {
         this.items = items;
         blue.utility.GUI.centerOnScreen(this);
         model.setDropdownItems(items);
@@ -182,13 +181,13 @@ public class DropdownItemEditorDialog extends JDialog implements
 
 final class DropdownItemsTableModel extends AbstractTableModel {
 
-    private BSBDropdownItemList items;
+    private ObservableList<BSBDropdownItem> items;
 
     public DropdownItemsTableModel() {
         super();
     }
 
-    public void setDropdownItems(BSBDropdownItemList items) {
+    public void setDropdownItems(ObservableList<BSBDropdownItem> items) {
         this.items = items;
         fireTableDataChanged();
     }
