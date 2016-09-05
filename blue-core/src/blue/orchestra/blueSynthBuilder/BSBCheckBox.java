@@ -25,6 +25,10 @@ import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -33,7 +37,7 @@ import javafx.beans.property.StringProperty;
 /**
  * @author steven
  */
-public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable {
+public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable, Externalizable {
 
     private StringProperty label;
     private BooleanProperty selected;
@@ -274,6 +278,24 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
                 updateSelected(newSelected);
             }
         }
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeUTF(getObjectName());
+        out.writeUTF(getLabel());
+        out.writeBoolean(isSelected());
+        out.writeBoolean(isRandomizable());
+        out.writeBoolean(isAutomationAllowed());
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        setObjectName(in.readUTF());
+        setLabel(in.readUTF());
+        setSelected(in.readBoolean());
+        setRandomizable(in.readBoolean());
+        setAutomationAllowed(in.readBoolean());
     }
 
 }
