@@ -71,7 +71,7 @@ public class BSBObjectEditorFactory {
 
     public static Node getView(BSBObject bsbObject) {
         if (bsbObject instanceof BSBCheckBox) {
-            return new BSBJfxDummy((BSBCheckBox) bsbObject);
+            return new BSBCheckBoxView((BSBCheckBox) bsbObject);
         } else if (bsbObject instanceof BSBDropdown) {
             return new BSBJfxDummy((BSBDropdown) bsbObject);
         } else if (bsbObject instanceof BSBEnvelopeGenerator) {

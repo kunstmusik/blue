@@ -22,7 +22,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JCheckBox;
