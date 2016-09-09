@@ -124,3 +124,7 @@
     -fx-text-fill: -fx-selection-bar-text;
     -fx-padding: 0.166667em;
 }
+
+.text-input {
+    -fx-prompt-text-fill: gray;
+}
