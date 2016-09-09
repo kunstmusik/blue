@@ -91,11 +91,11 @@ public class FileChooserManager {
 //                retVal.add(new File(f));
 //            }
 //        }
-        Platform.runLater(() -> {
+        Runnable r = () -> {
             Stage s = new Stage();
             s.initOwner(null);
             s.initModality(Modality.APPLICATION_MODAL);
-            
+
             if (temp.directoriesOnly) {
                 DirectoryChooser chooser = new DirectoryChooser();
                 chooser.setTitle(temp.dialogTitle);
@@ -114,7 +114,7 @@ public class FileChooserManager {
                 if (temp.currentDirectory != null) {
                     f.setInitialDirectory(temp.currentDirectory);
                 }
-                
+
                 if (temp.isMultiSelect) {
                     temp.selectedFile = null;
                     List<File> found = f.showOpenMultipleDialog(s);
@@ -127,18 +127,25 @@ public class FileChooserManager {
                         retVal.add(ret);
                     }
                 }
+
             }
 
             c.countDown();
-        });
+        };
 
-        try {
-            c.await();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(FileChooserManager.class.getName()).log(
-                    Level.SEVERE,
-                    null, ex);
+        if (Platform.isFxApplicationThread()) {
+            r.run();
+        } else {
+            Platform.runLater(r);
+            try {
+                c.await();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(FileChooserManager.class.getName()).log(
+                        Level.SEVERE,
+                        null, ex);
+            }
         }
+
 
         return retVal;
     }
@@ -172,7 +179,7 @@ public class FileChooserManager {
             FileChooser f = new FileChooser();
             f.setTitle(temp.dialogTitle);
             f.getExtensionFilters().addAll(temp.filters);
-            
+
             if (temp.selectedFile != null) {
                 f.setInitialFileName(temp.selectedFile.getName());
             }
