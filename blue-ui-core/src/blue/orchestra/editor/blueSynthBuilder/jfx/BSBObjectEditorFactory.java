@@ -52,7 +52,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBEnvelopeGenerator) {
 //            return new BSBEnvelopeGenerator((BSBEnvelopeGenerator)bsbObject);
         } else if (bsbObject instanceof BSBFileSelector) {
-            return new BSBJfxDummy((BSBFileSelector)bsbObject);
+            return new BSBFileSelectorView((BSBFileSelector)bsbObject);
         } else if (bsbObject instanceof BSBHSlider) {
             return new BSBJfxDummy((BSBHSlider)bsbObject);
         } else if (bsbObject instanceof BSBHSliderBank) {

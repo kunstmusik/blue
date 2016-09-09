@@ -25,24 +25,81 @@ package blue.orchestra.blueSynthBuilder;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 /**
  * @author steven
  * 
  */
 public class BSBFileSelector extends BSBObject implements StringChannelProvider {
-    String fileName = "";
 
-    int textFieldWidth = 100;
-    
-    boolean stringChannelEnabled = true;
+    StringProperty fileName;
+    IntegerProperty textFieldWidth; 
+    BooleanProperty stringChannelEnabled;
     
     private StringChannel stringChannel;
     
     public BSBFileSelector() {
+        fileName = new SimpleStringProperty("");
+        textFieldWidth = new SimpleIntegerProperty(100);
+        stringChannelEnabled = new SimpleBooleanProperty(true);
+
+        fileName.addListener((obs, oldVal, newVal) -> {
+            fireStringChannelChange(oldVal, newVal);
+        });
+
         stringChannel = new StringChannel();
         addPropertyChangeListener(stringChannel);
     }
+
+    public void fireStringChannelChange(String oldFileName, String newFileName) {
+        if(this.propListeners != null) {
+            this.propListeners.firePropertyChange("stringChannelValue", oldFileName, newFileName);
+        }
+    }
+
+    public final void setFileName(String value) {
+        fileName.set(value);
+    }
+
+    public final String getFileName() {
+        return fileName.get();
+    }
+
+    public final StringProperty fileNameProperty() {
+        return fileName;
+    }
+
+    public final void setTextFieldWidth(int value) {
+        textFieldWidth.set(value);
+    }
+
+    public final int getTextFieldWidth() {
+        return textFieldWidth.get();
+    }
+
+    public final IntegerProperty textFieldWidthProperty() {
+        return textFieldWidth;
+    }
+
+    public final void setStringChannelEnabled(boolean value) {
+        stringChannelEnabled.set(value);
+    }
+
+    public final boolean isStringChannelEnabled() {
+        return stringChannelEnabled.get();
+    }
+
+    public final BooleanProperty stringChannelEnabledProperty() {
+        return stringChannelEnabled;
+    }
+
+    
 
     public static BSBObject loadFromXML(Element data) {
         BSBFileSelector selector = new BSBFileSelector();
@@ -79,23 +136,23 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement("fileName").setText(fileName);
+        retVal.addElement("fileName").setText(getFileName());
 
         retVal.addElement("textFieldWidth").setText(
-                Integer.toString(textFieldWidth));
+                Integer.toString(getTextFieldWidth()));
         
-        retVal.addElement(XMLUtilities.writeBoolean("stringChannelEnabled", stringChannelEnabled));
+        retVal.addElement(XMLUtilities.writeBoolean("stringChannelEnabled", isStringChannelEnabled()));
 
         return retVal;
     }
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        String fileNameValue = fileName.replace('\\', '/');
+        String fileNameValue = getFileName().replace('\\', '/');
         
         // FIXME - need to figure out removing of prop change listeners when 
         // render is complete, yet all multiple string channels
-        if(stringChannelEnabled) {
+        if(isStringChannelEnabled()) {
            
             stringChannel.setValue(fileNameValue);
             stringChannel.setChannelName(stringChannel.getChannelName());
@@ -106,35 +163,6 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         }
         
     }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        String oldFileName = this.fileName;
-        this.fileName = (fileName == null) ? "" : fileName;
-
-        if(this.propListeners != null) {
-            this.propListeners.firePropertyChange("stringChannelValue", oldFileName, fileName);
-        }
-    }
-
-    /**
-     * @return Returns the textFieldWidth.
-     */
-    public int getTextFieldWidth() {
-        return textFieldWidth;
-    }
-
-    /**
-     * @param textFieldWidth
-     *            The textFieldWidth to set.
-     */
-    public void setTextFieldWidth(int textFieldWidth) {
-        this.textFieldWidth = textFieldWidth;
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -142,7 +170,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
      */
     @Override
     public String getPresetValue() {
-        return fileName;
+        return getFileName();
     }
 
     /*
@@ -153,15 +181,6 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     @Override
     public void setPresetValue(String val) {
         setFileName(val);
-    }
-
-    @Override
-    public boolean isStringChannelEnabled() {
-        return stringChannelEnabled;
-    }
-
-    public void setStringChannelEnabled(boolean stringChannelEnabled) {
-        this.stringChannelEnabled = stringChannelEnabled;
     }
 
     @Override
