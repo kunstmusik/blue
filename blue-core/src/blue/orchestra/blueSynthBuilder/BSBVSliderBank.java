@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author Steven Yi
@@ -377,7 +376,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                         }
 
                         param.setResolution(getResolution());
-                        param.setValue(copy.getValue());
+                        param.setValue((float)copy.getValue());
 
                         param.addParameterListener(this);
 
@@ -436,7 +435,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             }
 
             compilationUnit.addReplacementValue(key, NumberUtilities
-                    .formatFloat(slider.getValue()));
+                    .formatDouble(slider.getValue()));
         }
     }
 
@@ -506,7 +505,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
 
             BSBVSlider slider = sliders.get(i);
 
-            buffer.append(Float.toString(slider.getValue()));
+            buffer.append(Double.toString(slider.getValue()));
         }
 
         return buffer.toString();
@@ -651,7 +650,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             
             if(!param.isAutomationEnabled()) {
                 BSBVSlider slider = sliders.get(i);
-                param.setValue(slider.getValue());
+                param.setValue((float)slider.getValue());
             }
 
             param.addParameterListener(this);
@@ -683,7 +682,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             }
 
             param.setResolution(getResolution());
-            param.setValue(slider.getValue());
+            param.setValue((float)slider.getValue());
             param.addParameterListener(this);
 
             parameters.addParameter(param);
@@ -702,7 +701,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         float val = param.getLine().getValue(time);
         BSBVSlider slider = sliders.get(sliderIndex);
 
-        slider.updateValue(val);
+        slider.setValue(val);
     }
 
     @Override

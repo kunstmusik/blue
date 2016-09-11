@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
@@ -28,35 +27,151 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 
 /**
  * @author Steven Yi
- * 
+ *
  */
 public class BSBVSlider extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    public static final float defaultMinimum = 0.0f;
+    DoubleProperty minimum;
 
-    public static final float defaultMaximum = 1.0f;
+    DoubleProperty maximum;
 
-    float minimum = defaultMinimum;
+    DoubleProperty resolution;
 
-    float maximum = defaultMaximum;
+    DoubleProperty value;
 
-    float resolution = 0.1f;
+    IntegerProperty sliderHeight;
 
-    float value = 0.0f;
+    BooleanProperty randomizable;
 
-    int sliderHeight = 150;
+    public BSBVSlider() {
+        minimum = new SimpleDoubleProperty(0.0);
+        maximum = new SimpleDoubleProperty(1.0);
+        resolution = new SimpleDoubleProperty(0.1);
+        value = new SimpleDoubleProperty(0.0) {
+            @Override
+            public void set(double newValue) {
+                double v = newValue;
+                if (getResolution() > 0) {
+                    v = LineUtils.snapToResolution(v, getMinimum(),
+                            getMaximum(), getResolution());
+                }
 
-    private boolean randomizable = true;
+                super.set(v);
+
+                // FIXME - don't think this should be set here
+                if (parameters != null) {
+                    Parameter param = parameters.getParameter(getObjectName());
+                    if (param != null) {
+                        param.setValue((float)v);
+                    }
+                }
+            }
+            
+        };
+        sliderHeight = new SimpleIntegerProperty(150);
+        randomizable = new SimpleBooleanProperty(true);
+    }
+
+    public final void setMinimum(double value) {
+        minimum.set(value);
+    }
+
+    public final double getMinimum() {
+        return minimum.get();
+    }
+
+    public final DoubleProperty minimumProperty() {
+        return minimum;
+    }
+
+    public final void setMaximum(double value) {
+        maximum.set(value);
+    }
+
+    public final double getMaximum() {
+        return maximum.get();
+    }
+
+    public final DoubleProperty maximumProperty() {
+        return maximum;
+    }
+
+    public final void setResolution(double value) {
+        resolution.set(value);
+    }
+
+    public final double getResolution() {
+        return resolution.get();
+    }
+
+    public final DoubleProperty resolutionProperty() {
+        return resolution;
+    }
+
+    public final void setValue(double val) {
+        value.set(val);
+    }
+
+    public final double getValue() {
+        return value.get();
+    }
+
+    public final DoubleProperty valueProperty() {
+        return value;
+    }
+
+    public final void setSliderHeight(int value) {
+        sliderHeight.set(value);
+    }
+
+    public final int getSliderHeight() {
+        return sliderHeight.get();
+    }
+
+    public final IntegerProperty sliderHeightProperty() {
+        return sliderHeight;
+    }
+
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
+    }
+
+
+    
+    private static double parseNum(String string, int version) {
+       if(version < 2) {
+           return (double)Float.parseFloat(string);
+       } 
+       return Double.parseDouble(string);
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBVSlider slider = new BSBVSlider();
-        float minVal = 0;
-        float maxVal = 0;
+        double minVal = 0;
+        double maxVal = 0;
+
         initBasicFromXML(data, slider);
+        String verString = data.getAttributeValue("version");
+        int version = (verString == null) ? 1 : Integer.parseInt(verString);
+
 
         Elements nodes = data.getElements();
 
@@ -65,33 +180,33 @@ public class BSBVSlider extends AutomatableBSBObject implements
             String nodeName = node.getName();
             switch (nodeName) {
                 case "minimum":
-                    minVal = Float.parseFloat(node.getTextString());
+                    minVal = parseNum(node.getTextString(), version);
                     break;
                 case "maximum":
-                    maxVal = Float.parseFloat(node.getTextString());
+                    maxVal = parseNum(node.getTextString(), version);
                     break;
                 case "resolution":
-                    slider.resolution = Float.parseFloat(node.getTextString());
+                    slider.setResolution(parseNum(node.getTextString(), version));
                     break;
                 case "value":
-                    slider.value = Float.parseFloat(node.getTextString());
+                    slider.setValue(parseNum(node.getTextString(), version));
                     break;
                 case "sliderHeight":
                     slider.setSliderHeight(Integer.parseInt(node.getTextString()));
                     break;
                 case "randomizable":
-                    slider.randomizable = XMLUtilities.readBoolean(node);
+                    slider.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
         }
 
         // set min and max values
-        if (minVal > BSBVSlider.defaultMaximum) {
-            slider.maximum = maxVal;
-            slider.minimum = minVal;
+        if (minVal > slider.getMaximum()) {
+            slider.setMaximum(maxVal);
+            slider.setMinimum(minVal);
         } else {
-            slider.minimum = minVal;
-            slider.maximum = maxVal;
+            slider.setMinimum(minVal);
+            slider.setMaximum(maxVal);
         }
 
         return slider;
@@ -105,133 +220,121 @@ public class BSBVSlider extends AutomatableBSBObject implements
     @Override
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
+        retVal.setAttribute("version", "2");
 
-        retVal.addElement("minimum").setText(Float.toString(minimum));
-        retVal.addElement("maximum").setText(Float.toString(maximum));
-        retVal.addElement("resolution").setText(Float.toString(resolution));
-        retVal.addElement("value").setText(Float.toString(value));
-        retVal.addElement("sliderHeight").setText(
-                Integer.toString(sliderHeight));
+        retVal.addElement("minimum").setText(Double.toString(getMinimum()));
+        retVal.addElement("maximum").setText(Double.toString(getMaximum()));
+        retVal.addElement("resolution").setText(Double.toString(getResolution()));
+        retVal.addElement("value").setText(Double.toString(getValue()));
+        retVal.addElement("sliderHeight").setText(Integer.toString(getSliderHeight()));
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
 
         return retVal;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.orchestra.blueSynthBuilder.BSBObject#getBSBObjectView()
-     */
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBVSliderView(this);
+//    /**
+//     * @return Returns the maximum.
+//     */
+//    public float getMaximum() {
+//        return maximum;
 //    }
-
-    /**
-     * @return Returns the maximum.
-     */
-    public float getMaximum() {
-        return maximum;
-    }
-
-    /**
-     * @param maximum
-     *            The maximum to set.
-     */
-    public void setMaximum(float maximum, boolean truncate) {
-        if (maximum <= getMinimum()) {
-            return;
-        }
-        float oldMax = this.maximum;
-
-        this.maximum = maximum;
-
-        if (truncate) {
-            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-        } else {
-            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
-                    maximum, getResolution()));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setMax(this.maximum, truncate);
-            }
-        }
-
-        fireBSBObjectChanged();
-    }
-
-    /**
-     * @return Returns the minimum.
-     */
-    public float getMinimum() {
-        return minimum;
-    }
-
-    /**
-     * @param minimum
-     *            The minimum to set.
-     */
-    public void setMinimum(float minimum, boolean truncate) {
-        if (minimum >= maximum) {
-            return;
-        }
-
-        float oldMin = this.minimum;
-        this.minimum = minimum;
-
-        if (truncate) {
-            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-        } else {
-            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
-                    maximum, getResolution()));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setMin(this.minimum, truncate);
-            }
-        }
-
-        fireBSBObjectChanged();
-    }
-
-    /**
-     * @return
-     */
-    public float getValue() {
-        return this.value;
-    }
-
-    /**
-     * @param value
-     *            The value to set.
-     */
-    public void setValue(float value) {
-        float oldValue = this.value;
-        this.value = value;
-
-        if (getResolution() > 0) {
-            this.value = LineUtils.snapToResolution(this.value, minimum,
-                    maximum, resolution);
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setValue(this.value);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("value", new Float(oldValue),
-                    new Float(this.value));
-        }
-    }
+//
+//    /**
+//     * @param maximum The maximum to set.
+//     */
+//    public void setMaximum(float maximum, boolean truncate) {
+//        if (maximum <= getMinimum()) {
+//            return;
+//        }
+//        float oldMax = this.maximum;
+//
+//        this.maximum = maximum;
+//
+//        if (truncate) {
+//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
+//        } else {
+//            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
+//                    maximum, getResolution()));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setMax(this.maximum, truncate);
+//            }
+//        }
+//
+//        fireBSBObjectChanged();
+//    }
+//
+//    /**
+//     * @return Returns the minimum.
+//     */
+//    public float getMinimum() {
+//        return minimum;
+//    }
+//
+//    /**
+//     * @param minimum The minimum to set.
+//     */
+//    public void setMinimum(float minimum, boolean truncate) {
+//        if (minimum >= maximum) {
+//            return;
+//        }
+//
+//        float oldMin = this.minimum;
+//        this.minimum = minimum;
+//
+//        if (truncate) {
+//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
+//        } else {
+//            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
+//                    maximum, getResolution()));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setMin(this.minimum, truncate);
+//            }
+//        }
+//
+//        fireBSBObjectChanged();
+//    }
+//
+//    /**
+//     * @return
+//     */
+//    public float getValue() {
+//        return this.value;
+//    }
+//
+//    /**
+//     * @param value The value to set.
+//     */
+//    public void setValue(float value) {
+//        float oldValue = this.value;
+//        this.value = value;
+//
+//        if (getResolution() > 0) {
+//            this.value = LineUtils.snapToResolution(this.value, minimum,
+//                    maximum, resolution);
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setValue(this.value);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("value", new Float(oldValue),
+//                    new Float(this.value));
+//        }
+//    }
 
     /*
      * (non-Javadoc)
@@ -240,6 +343,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
      */
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
+
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
             if (param != null && param.getCompilationVarName() != null) {
@@ -250,45 +354,43 @@ public class BSBVSlider extends AutomatableBSBObject implements
         }
 
         compilationUnit.addReplacementValue(objectName, NumberUtilities
-                .formatFloat(value));
+                .formatDouble(getValue()));
     }
 
-    /**
-     * @return Returns the resolution.
-     */
-    public float getResolution() {
-        return resolution;
-    }
-
-    /**
-     * @param resolution
-     *            The resolution to set.
-     */
-    public void setResolution(float resolution) {
-        this.resolution = resolution;
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setResolution(this.resolution);
-            }
-        }
-    }
-
-    /**
-     * @return Returns the sliderWidth.
-     */
-    public int getSliderHeight() {
-        return sliderHeight;
-    }
-
-    /**
-     * @param sliderWidth
-     *            The sliderWidth to set.
-     */
-    public void setSliderHeight(int sliderWidth) {
-        this.sliderHeight = sliderWidth;
-    }
+//    /**
+//     * @return Returns the resolution.
+//     */
+//    public float getResolution() {
+//        return resolution;
+//    }
+//
+//    /**
+//     * @param resolution The resolution to set.
+//     */
+//    public void setResolution(float resolution) {
+//        this.resolution = resolution;
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setResolution(this.resolution);
+//            }
+//        }
+//    }
+//
+//    /**
+//     * @return Returns the sliderHeight.
+//     */
+//    public int getSliderHeight() {
+//        return sliderHeight;
+//    }
+//
+//    /**
+//     * @param sliderHeight The sliderHeight to set.
+//     */
+//    public void setSliderHeight(int sliderHeight) {
+//        this.sliderHeight = sliderHeight;
+//    }
 
     /*
      * (non-Javadoc)
@@ -297,7 +399,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
      */
     @Override
     public String getPresetValue() {
-        return Float.toString(getValue());
+        return Double.toString(getValue());
     }
 
     /*
@@ -307,7 +409,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
      */
     @Override
     public void setPresetValue(String val) {
-        setValue(Float.parseFloat(val));
+        setValue(Double.parseDouble(val));
     }
 
     @Override
@@ -315,11 +417,11 @@ public class BSBVSlider extends AutomatableBSBObject implements
         if (parameters == null) {
             return;
         }
-        
-        if(!automationAllowed) {
+
+        if (!automationAllowed) {
             if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(objectName);
-                if(param != null && param.isAutomationEnabled()) {
+                if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
                     parameters.removeParameter(objectName);
@@ -336,36 +438,36 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
         if (parameter != null) {
             parameter.addParameterListener(this);
-            
-            if(!parameter.isAutomationEnabled()) {
-                parameter.setValue(getValue());
+
+            if (!parameter.isAutomationEnabled()) {
+                // FIXME - make parameters use double??
+                parameter.setValue((float)getValue());
             }
-            
+
             return;
         }
 
         Parameter param = new Parameter();
-        param.setValue(getValue());
-        param.setMax(getMaximum(), true);
-        param.setMin(getMinimum(), true);
+        param.setValue((float)getValue());
+        param.setMax((float)getMaximum(), true);
+        param.setMin((float)getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution(getResolution());
+        param.setResolution((float)getResolution());
         param.addParameterListener(this);
-
-        param.setValue(getValue());
+        param.setValue((float)getValue());
 
         parameters.addParameter(param);
     }
 
-    public void updateValue(float value) {
-        float oldValue = this.value;
-        this.value = value;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("updateValue",
-                    new Float(oldValue), new Float(this.value));
-        }
-    }
+//    public void updateValue(float value) {
+//        float oldValue = this.value;
+//        this.value = value;
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("updateValue",
+//                    new Float(oldValue), new Float(this.value));
+//        }
+//    }
 
     @Override
     public void lineDataChanged(Parameter param) {
@@ -374,7 +476,8 @@ public class BSBVSlider extends AutomatableBSBObject implements
         if (parameter != null) {
             float time = ParameterTimeManagerFactory.getInstance().getTime();
             float val = parameter.getLine().getValue(time);
-            updateValue(val);
+//            updateValue(val);
+            setValue(val);
         }
     }
 
@@ -397,40 +500,39 @@ public class BSBVSlider extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
-
-    @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
+//    @Override
+//    public boolean isRandomizable() {
+//        return randomizable;
+//    }
 
     @Override
     public void randomize() {
-        if (randomizable) {
-            float range = getMaximum() - getMinimum();
-            float newValue;
+        if (isRandomizable()) {
+            double range = getMaximum() - getMinimum();
+            double newValue;
 
             if (getResolution() > 0.0f) {
                 long longRange = (long) (range / getResolution()) + 1;
-                newValue = (float) ((Math.random() * longRange) * getResolution());
+                newValue = ((Math.random() * longRange) * getResolution());
                 newValue = newValue + getMinimum();
             } else {
-                newValue = (float) (Math.random() * range) + getMinimum();
+                newValue = (Math.random() * range) + getMinimum();
             }
-            
-            float oldValue = this.value;
+
+            double oldValue = this.getValue();
 
             setValue(newValue);
 
             if (propListeners != null) {
-                propListeners.firePropertyChange("updateValue", new Float(
-                        oldValue), new Float(this.value));
+                propListeners.firePropertyChange("updateValue", new Double(
+                        oldValue), new Double(newValue));
             }
         }
     }
 
-    @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
-        fireBSBObjectChanged();
-    }
+//    @Override
+//    public void setRandomizable(boolean randomizable) {
+//        this.randomizable = randomizable;
+//        fireBSBObjectChanged();
+//    }
 }
