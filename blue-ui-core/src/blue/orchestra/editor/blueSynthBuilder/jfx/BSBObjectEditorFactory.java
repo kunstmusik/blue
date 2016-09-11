@@ -54,7 +54,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBFileSelector) {
             return new BSBFileSelectorView((BSBFileSelector)bsbObject);
         } else if (bsbObject instanceof BSBHSlider) {
-            return new BSBJfxDummy((BSBHSlider)bsbObject);
+            return new BSBHSliderView((BSBHSlider)bsbObject);
         } else if (bsbObject instanceof BSBHSliderBank) {
             return new BSBJfxDummy((BSBHSliderBank)bsbObject);
         } else if (bsbObject instanceof BSBKnob) {

@@ -105,9 +105,9 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
      * @param slider
      */
     private void updateSliderSettings() {
-        float minimum = slider.getMinimum();
-        float maximum = slider.getMaximum();
-        float value = slider.getValue();
+        double minimum = slider.getMinimum();
+        double maximum = slider.getMaximum();
+        double value = slider.getValue();
         int resolution;
 
         if (slider.getResolution() > 0) {
@@ -123,32 +123,32 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
     }
 
     private void updateValueText() {
-        float newVal;
+        double newVal;
         if (slider.getResolution() > 0.0f) {
             newVal = (valSlider.getValue() * slider.getResolution())
                     + this.slider.getMinimum();
         } else {
-            newVal = (valSlider.getValue() * .01f) + this.slider.getMinimum();
+            newVal = (valSlider.getValue() * .01) + this.slider.getMinimum();
         }
-        String valueStr = NumberUtilities.formatFloat(newVal);
+        String valueStr = NumberUtilities.formatDouble(newVal);
         valuePanel.setValue(valueStr);
     }
 
     protected void updateValue() {
-        float newVal;
+        double newVal;
 
         if (slider.getResolution() > 0) {
             newVal = (valSlider.getValue() * slider.getResolution())
                     + slider.getMinimum();
         } else {
-            newVal = (valSlider.getValue() * .01f) + slider.getMinimum();
+            newVal = (valSlider.getValue() * .01) + slider.getMinimum();
         }
 
-        valuePanel.setValue(NumberUtilities.formatFloat(newVal));
+        valuePanel.setValue(NumberUtilities.formatDouble(newVal));
         slider.setValue(newVal);
     }
 
-    public void setMinimum(float minimum) {
+    public void setMinimum(double minimum) {
         if (minimum >= slider.getMaximum()) {
             JOptionPane.showMessageDialog(null, "Error: Min value "
                     + "can not be set greater or equals to Max value.",
@@ -162,25 +162,25 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
             return;
         }
 
-        slider.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        slider.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
         updateSliderSettings();
     }
 
     /** used by BSBHSliderBankView */
-    public void setMinimum(float minimum, boolean truncate) {
-        slider.setMinimum(minimum, truncate);
+    public void setMinimum(double minimum, boolean truncate) {
+//        slider.setMinimum(minimum, truncate);
         updateSliderSettings();
     }
 
-    public float getMinimum() {
+    public double getMinimum() {
         return slider.getMinimum();
     }
 
-    public float getMaximum() {
+    public double getMaximum() {
         return slider.getMaximum();
     }
 
-    public void setMaximum(float maximum) {
+    public void setMaximum(double maximum) {
         if (maximum <= slider.getMinimum()) {
             JOptionPane.showMessageDialog(null, "Error: Max value "
                     + "can not be set less than or " + "equal to Min value.",
@@ -195,21 +195,21 @@ public class BSBHSliderView extends AutomatableBSBObjectView implements
             return;
         }
 
-        slider.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        slider.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
         updateSliderSettings();
     }
 
     /** used by BSBHSliderBankView */
-    public void setMaximum(float maximum, boolean truncate) {
-        slider.setMaximum(maximum, truncate);
+    public void setMaximum(double maximum, boolean truncate) {
+//        slider.setMaximum(maximum, truncate);
         updateSliderSettings();
     }
 
-    public float getResolution() {
+    public double getResolution() {
         return slider.getResolution();
     }
 
-    public void setResolution(float resolution) {
+    public void setResolution(double resolution) {
         updating = true;
 
         slider.setResolution(resolution);
