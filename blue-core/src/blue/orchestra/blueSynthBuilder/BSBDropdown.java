@@ -50,7 +50,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
 
     public BSBDropdown() {
         dropdownItems = FXCollections.observableArrayList();
-        selectedIndex = new SimpleIntegerProperty(-1);
+        selectedIndex = new SimpleIntegerProperty(0);
         randomizable = new SimpleBooleanProperty(true);
     }
 
