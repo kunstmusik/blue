@@ -34,6 +34,8 @@ public class BSBHSliderView extends BorderPane {
     ValuePanel valuePanel;
 
     public BSBHSliderView(BSBHSlider bsbHSlider) {
+        setUserData(bsbHSlider);
+
         slider = new Slider();
         slider.setOrientation(Orientation.HORIZONTAL);
         slider.setPrefHeight(30.0);

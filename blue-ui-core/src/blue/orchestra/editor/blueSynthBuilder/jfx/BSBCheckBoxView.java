@@ -31,6 +31,7 @@ public class BSBCheckBoxView extends CheckBox {
    private final BSBCheckBox checkBox;
 
    public BSBCheckBoxView(BSBCheckBox checkBox) {
+       setUserData(checkBox);
        this.checkBox = checkBox;
        this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
        this.textProperty().bind(checkBox.labelProperty());

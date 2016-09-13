@@ -22,8 +22,6 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.BlueSystem;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
 import blue.ui.utilities.FileChooserManager;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.DnDConstants;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -54,6 +52,7 @@ public class BSBFileSelectorView extends BorderPane {
     TextField fileNameField;
 
     public BSBFileSelectorView(BSBFileSelector fileSelector) {
+        setUserData(fileSelector);
         this.fileSelector = fileSelector;
 
         fileNameField = new TextField();

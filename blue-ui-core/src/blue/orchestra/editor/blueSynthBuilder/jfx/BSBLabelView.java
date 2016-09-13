@@ -32,6 +32,8 @@ public class BSBLabelView extends Text {
     private BSBLabel label;
 
     public BSBLabelView(BSBLabel label) {
+        setUserData(label);
+
         this.label = label;
         this.textProperty().bind(label.labelProperty());
         this.fontProperty().bind(label.fontProperty());

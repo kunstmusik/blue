@@ -52,6 +52,8 @@ public class BSBKnobView extends BorderPane {
      * @param knob
      */
     public BSBKnobView(BSBKnob knob) {
+        setUserData(knob);
+        
         updating = true;
 
         this.knob = knob;

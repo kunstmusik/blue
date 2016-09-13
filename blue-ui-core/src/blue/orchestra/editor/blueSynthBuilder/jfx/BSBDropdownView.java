@@ -33,10 +33,12 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
 
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());
+        setUserData(dropdown);
         this.dropdown = dropdown;
         getSelectionModel().select(dropdown.getSelectedIndex());
         dropdown.selectedIndexProperty().bind(
                 getSelectionModel().selectedIndexProperty());
+        setPrefWidth(USE_COMPUTED_SIZE);
     }
 
 }

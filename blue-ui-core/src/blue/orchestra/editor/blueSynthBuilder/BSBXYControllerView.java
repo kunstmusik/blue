@@ -17,10 +17,8 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.editor.blueSynthBuilder;
 
-import blue.components.lines.LineBoundaryDialog;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -34,7 +32,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class BSBXYControllerView extends AutomatableBSBObjectView implements
@@ -117,13 +114,8 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         float yVal = (drawPanel.getHeight() - newY)
                 / (float) drawPanel.getHeight();
 
-        xVal = (xVal * (controller.getXMax() - controller.getXMin()))
-                + controller.getXMin();
-        yVal = (yVal * (controller.getYMax() - controller.getYMin()))
-                + controller.getYMin();
-
-        controller.setXValue(xVal);
-        controller.setYValue(yVal);
+        controller.xProperty().setNormalizedValue(xVal);
+        controller.yProperty().setNormalizedValue(yVal);
     }
 
     private void updateSize() {
@@ -141,13 +133,12 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         this.setPreferredSize(d);
 
         // drawPanel.setSize(d);
-
     }
 
     private void updateLabel() {
-        Object[] vals = new Object[] { new Float(controller.getXValue()),
-                new Float(controller.getYValue()) };
-        label.setText(labelMessage.format(vals));
+//        Object[] vals = new Object[] { new Float(controller.getXValue()),
+//                new Float(controller.getYValue()) };
+//        label.setText(labelMessage.format(vals));
     }
 
     public int getViewWidth() {
@@ -175,89 +166,93 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
     }
 
     public float getXMin() {
-        return controller.getXMin();
+//        return controller.getXMin();
+        return 0;
     }
 
     public void setXMin(float value) {
-        if (value >= controller.getXMax()) {
-            JOptionPane.showMessageDialog(null, "Error: Min value "
-                    + "can not be set greater or equals to Max value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        controller.setXMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
+//        if (value >= controller.getXMax()) {
+//            JOptionPane.showMessageDialog(null, "Error: Min value "
+//                    + "can not be set greater or equals to Max value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        controller.setXMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
     }
 
     public float getXMax() {
-        return controller.getXMax();
+//        return controller.getXMax();
+        return 0;
     }
 
     public void setXMax(float value) {
-        if (value <= controller.getXMin()) {
-            JOptionPane.showMessageDialog(null, "Error: Max value "
-                    + "can not be set less than or " + "equal to Min value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        controller.setXMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
+//        if (value <= controller.getXMin()) {
+//            JOptionPane.showMessageDialog(null, "Error: Max value "
+//                    + "can not be set less than or " + "equal to Min value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        controller.setXMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
     }
 
     public float getYMin() {
-        return controller.getYMin();
+//        return controller.getYMin();
+        return 0;
     }
 
     public void setYMin(float value) {
-        if (value >= controller.getYMax()) {
-            JOptionPane.showMessageDialog(null, "Error: Min value "
-                    + "can not be set greater or equals to Max value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        controller.setYMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
+//        if (value >= controller.getYMax()) {
+//            JOptionPane.showMessageDialog(null, "Error: Min value "
+//                    + "can not be set greater or equals to Max value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        controller.setYMin(value, (retVal == LineBoundaryDialog.TRUNCATE));
     }
 
     public float getYMax() {
-        return controller.getYMax();
+//        return controller.getYMax();
+        return 0;
     }
 
     public void setYMax(float value) {
-        if (value <= controller.getYMin()) {
-            JOptionPane.showMessageDialog(null, "Error: Max value "
-                    + "can not be set less than or " + "equal to Min value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        controller.setYMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
+//        if (value <= controller.getYMin()) {
+//            JOptionPane.showMessageDialog(null, "Error: Max value "
+//                    + "can not be set less than or " + "equal to Min value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        controller.setYMax(value, (retVal == LineBoundaryDialog.TRUNCATE));
     }
 
     public boolean isRandomizable() {
@@ -312,28 +307,28 @@ class DrawPanel extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        int w = this.getWidth() - 1;
-        int h = this.getHeight() - 1;
-
-        float xPercent = getPercent(controller.getXValue(), controller
-                .getXMin(), controller.getXMax());
-        float yPercent = getPercent(controller.getYValue(), controller
-                .getYMin(), controller.getYMax());
-
-        int x = (int) (xPercent * w);
-        int y = h - ((int) (yPercent * h));
-
-        g.setColor(Color.DARK_GRAY);
-        g.drawRect(0, 0, w, h);
-
-        g.setColor(Color.WHITE);
-        g.drawLine(0, y, w, y);
-        g.drawLine(x, 0, x, h);
-
-        g.setColor(Color.GREEN);
-        g.fillRect(x - 1, y - 1, 3, 3);
+//        super.paintComponent(g);
+//
+//        int w = this.getWidth() - 1;
+//        int h = this.getHeight() - 1;
+//
+//        float xPercent = getPercent(controller.getXValue(), controller
+//                .getXMin(), controller.getXMax());
+//        float yPercent = getPercent(controller.getYValue(), controller
+//                .getYMin(), controller.getYMax());
+//
+//        int x = (int) (xPercent * w);
+//        int y = h - ((int) (yPercent * h));
+//
+//        g.setColor(Color.DARK_GRAY);
+//        g.drawRect(0, 0, w, h);
+//
+//        g.setColor(Color.WHITE);
+//        g.drawLine(0, y, w, y);
+//        g.drawLine(x, 0, x, h);
+//
+//        g.setColor(Color.GREEN);
+//        g.fillRect(x - 1, y - 1, 3, 3);
 
     }
 }
