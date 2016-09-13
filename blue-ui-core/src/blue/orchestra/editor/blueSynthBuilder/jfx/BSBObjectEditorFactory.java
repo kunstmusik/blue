@@ -74,7 +74,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBVSliderBank) {
             return new BSBJfxDummy((BSBVSliderBank)bsbObject);
         } else if (bsbObject instanceof BSBXYController) {
-            return new BSBJfxDummy((BSBXYController)bsbObject);
+            return new BSBXYControllerView((BSBXYController)bsbObject);
         } else if (bsbObject instanceof BSBValue) {
             return new BSBJfxDummy((BSBValue)bsbObject);
         }

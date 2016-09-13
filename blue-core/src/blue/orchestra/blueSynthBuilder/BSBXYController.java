@@ -17,38 +17,53 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import blue.components.lines.LineUtils;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 
 public class BSBXYController extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    int width = 100;
+    IntegerProperty width;
+    IntegerProperty height;
+    ClampedValue x;
+    ClampedValue y;
+    BooleanProperty randomizable;
 
-    int height = 80;
-
-    float xMin = 0.0f;
-
-    float xMax = 1.0f;
-
-    float yMin = 0.0f;
-
-    float yMax = 1.0f;
-
-    float xValue = 0.5f;
-
-    float yValue = 0.5f;
-
-    boolean randomizable = true;
+//    int width = 100;
+//
+//    int height = 80;
+//
+//    float xMin = 0.0f;
+//
+//    float xMax = 1.0f;
+//
+//    float yMin = 0.0f;
+//
+//    float yMax = 1.0f;
+//
+//    float xValue = 0.5f;
+//
+//    float yValue = 0.5f;
+//
+//    boolean randomizable = true;
+    public BSBXYController() {
+        width = new SimpleIntegerProperty(100);
+        height = new SimpleIntegerProperty(80);
+        x = new ClampedValue(0.0, 1.0, 0.5);
+        y = new ClampedValue(0.0, 1.0, 0.5);
+        randomizable = new SimpleBooleanProperty(true);
+    }
 
     // OVERRIDE to handle parameter name changes and multiple parameters
     @Override
@@ -98,6 +113,52 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     }
 
+    public final void setWidth(int value) {
+        width.set(value);
+    }
+
+    public final int getWidth() {
+        return width.get();
+    }
+
+    public final IntegerProperty widthProperty() {
+        return width;
+    }
+
+    public final void setHeight(int value) {
+        height.set(value);
+    }
+
+    public final int getHeight() {
+        return height.get();
+    }
+
+    public final IntegerProperty heightProperty() {
+        return height;
+    }
+
+    @Override
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+
+    @Override
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
+    }
+
+    public final ClampedValue xProperty() {
+        return x;
+    }
+
+    public final ClampedValue yProperty() {
+        return y;
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBXYController xyController = new BSBXYController();
 
@@ -116,44 +177,49 @@ public class BSBXYController extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            final String nodeText = node.getTextString();
             switch (nodeName) {
                 case "width":
-                    xyController.setWidth(Integer.parseInt(node.getTextString()));
+                    xyController.setWidth(Integer.parseInt(nodeText));
                     break;
                 case "height":
-                    xyController.setHeight(Integer.parseInt(node.getTextString()));
+                    xyController.setHeight(Integer.parseInt(nodeText));
                     break;
                 case "xMin":
-                    xyController.xMin = Float.parseFloat(node.getTextString());
+                    xyController.x.setMin(Double.parseDouble(nodeText));
                     break;
                 case "xMax":
-                    xyController.xMax = Float.parseFloat(node.getTextString());
+                    xyController.x.setMax(Double.parseDouble(nodeText));
                     break;
                 case "yMin":
-                    xyController.yMin = Float.parseFloat(node.getTextString());
+                    xyController.x.setMin(Double.parseDouble(nodeText));
                     break;
                 case "yMax":
-                    xyController.yMax = Float.parseFloat(node.getTextString());
+                    xyController.y.setMax(Double.parseDouble(nodeText));
                     break;
                 case "xValue":
-                    xyController.xValue = Float.parseFloat(node.getTextString());
+                    xyController.x.setValue(Double.parseDouble(nodeText));
                     break;
                 case "yValue":
-                    xyController.yValue = Float.parseFloat(node.getTextString());
+                    xyController.y.setValue(Float.parseFloat(nodeText));
                     break;
                 case "randomizable":
-                    xyController.randomizable = XMLUtilities.readBoolean(node);
+                    xyController.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
         }
 
         // convert from relative to absolute values (0.110.0)
         if (version == 1) {
-            float xrange = xyController.xMax - xyController.xMin;
-            xyController.xValue = (xyController.x * xrange) + xyController.xMin;
+            double xrange = xyController.x.getMax() - xyController.x.getMin();
+            xyController.x.setValue(
+                    (xyController.x.getValue() * xrange)
+                    + xyController.x.getMin());
 
-            float yrange = xyController.yMax - xyController.yMin;
-            xyController.yValue = (xyController.y * yrange) + xyController.yMin;
+            double yrange = xyController.y.getMax() - xyController.y.getMin();
+            xyController.y.setValue(
+                    (xyController.y.getValue() * yrange)
+                    + xyController.y.getMin());
         }
 
         return xyController;
@@ -165,19 +231,19 @@ public class BSBXYController extends AutomatableBSBObject implements
 
         retVal.setAttribute("version", "2");
 
-        retVal.addElement("width").setText(Integer.toString(width));
-        retVal.addElement("height").setText(Integer.toString(height));
+        retVal.addElement("width").setText(Integer.toString(getWidth()));
+        retVal.addElement("height").setText(Integer.toString(getHeight()));
 
-        retVal.addElement("xMin").setText(Float.toString(xMin));
-        retVal.addElement("xMax").setText(Float.toString(xMax));
-        retVal.addElement("yMin").setText(Float.toString(yMin));
-        retVal.addElement("yMax").setText(Float.toString(yMax));
+        retVal.addElement("xMin").setText(Double.toString(x.getMin()));
+        retVal.addElement("xMax").setText(Double.toString(x.getMax()));
+        retVal.addElement("yMin").setText(Double.toString(y.getMin()));
+        retVal.addElement("yMax").setText(Double.toString(y.getMax()));
 
-        retVal.addElement("xValue").setText(Float.toString(xValue));
-        retVal.addElement("yValue").setText(Float.toString(yValue));
+        retVal.addElement("xValue").setText(Double.toString(x.getValue()));
+        retVal.addElement("yValue").setText(Double.toString(y.getValue()));
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
 
         return retVal;
     }
@@ -185,14 +251,13 @@ public class BSBXYController extends AutomatableBSBObject implements
 //    public BSBObjectView getBSBObjectView() {
 //        return new BSBXYControllerView(this);
 //    }
-
     @Override
     public String[] getReplacementKeys() {
         if (this.objectName == null || this.objectName.trim().length() == 0) {
-            return new String[] {};
+            return new String[]{};
         }
 
-        return new String[] { this.objectName + "X", this.objectName + "Y" };
+        return new String[]{this.objectName + "X", this.objectName + "Y"};
     }
 
     @Override
@@ -216,253 +281,252 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
 
         compilationUnit.addReplacementValue(objectName + "X",
-                (xCompVal == null) ? NumberUtilities.formatFloat(xValue)
+                (xCompVal == null) ? NumberUtilities.formatDouble(x.getValue())
                         : xCompVal);
         compilationUnit.addReplacementValue(objectName + "Y",
-                (yCompVal == null) ? NumberUtilities.formatFloat(yValue)
+                (yCompVal == null) ? NumberUtilities.formatDouble(y.getValue())
                         : yCompVal);
     }
 
     @Override
     public String getPresetValue() {
-        return "ver2:" + xValue + ":" + yValue;
+        return "ver2:" + x.getValue() + ":" + y.getValue();
     }
 
     @Override
     public void setPresetValue(String val) {
         String[] vals = val.split(":");
 
-        float x, y;
+        double xVal, yVal;
 
         // version1 uses relative values and has no ver string
         if (vals.length == 2) {
-            x = Float.parseFloat(vals[0]);
-            y = Float.parseFloat(vals[1]);
+            xVal = Double.parseDouble(vals[0]);
+            yVal = Double.parseDouble(vals[1]);
 
-            x = (x * (xMax - xMin)) + xMin;
-            y = (y * (yMax - yMin)) + yMin;
+            xVal = (xVal * (x.getMax() - x.getMin())) + x.getMin();
+            yVal = (yVal * (y.getMax() - y.getMin())) + y.getMin();
         } else {
-            x = Float.parseFloat(vals[1]);
-            y = Float.parseFloat(vals[2]);
+            xVal = Double.parseDouble(vals[1]);
+            yVal = Double.parseDouble(vals[2]);
         }
 
-        setXValue(x);
-        setYValue(y);
+        x.setValue(xVal);
+        y.setValue(yVal);
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        int oldHeight = this.height;
-        this.height = height;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("height", oldHeight, height);
-        }
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        int oldWidth = this.width;
-        this.width = width;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("width", oldWidth, width);
-        }
-    }
-
-    public float getXValue() {
-        return xValue;
-    }
-
-    public void setXValue(float value) {
-        float oldVal = xValue;
-        xValue = value;
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "X");
-            if (param != null) {
-                param.setValue(this.xValue);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("xValue", new Float(oldVal),
-                    new Float(value));
-        }
-    }
-
-    public float getYValue() {
-        return yValue;
-    }
-
-    public void setYValue(float value) {
-        float oldVal = yValue;
-        yValue = value;
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "Y");
-            if (param != null) {
-                param.setValue(this.yValue);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yValue", new Float(oldVal),
-                    new Float(value));
-        }
-    }
-
-    public float getXMax() {
-        return xMax;
-    }
-
-    public void setXMax(float value, boolean truncate) {
-        if (value <= getXMin()) {
-            return;
-        }
-
-        float oldMax = xMax;
-        xMax = value;
-
-        if (truncate) {
-            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
-        } else {
-            setXValue(LineUtils.rescale(getXValue(), xMin, oldMax, xMin, xMax,
-                    -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "X");
-            if (param != null) {
-                param.setMax(this.xMax, truncate);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("xMax", new Float(oldMax),
-                    new Float(value));
-        }
-    }
-
-    public float getXMin() {
-        return xMin;
-    }
-
-    public void setXMin(float value, boolean truncate) {
-        if (value >= getXMax()) {
-            return;
-
-        }
-        float oldMin = xMin;
-        xMin = value;
-
-        if (truncate) {
-            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
-        } else {
-            setXValue(LineUtils.rescale(getXValue(), oldMin, xMax, xMin, xMax,
-                    -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "X");
-            if (param != null) {
-                param.setMin(this.xMin, truncate);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("xMin", new Float(oldMin),
-                    new Float(value));
-        }
-    }
-
-    public float getYMax() {
-        return yMax;
-    }
-
-    public void setYMax(float value, boolean truncate) {
-        if (value <= getYMin()) {
-            return;
-        }
-
-        float oldMax = yMax;
-        yMax = value;
-
-        if (truncate) {
-            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
-        } else {
-            setYValue(LineUtils.rescale(getYValue(), yMin, oldMax, yMin, yMax,
-                    -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "Y");
-            if (param != null) {
-                param.setMax(this.yMax, truncate);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yMax", new Float(oldMax),
-                    new Float(value));
-        }
-    }
-
-    public float getYMin() {
-        return yMin;
-    }
-
-    public void setYMin(float value, boolean truncate) {
-        if (value >= getYMax()) {
-            return;
-        }
-
-        float oldMin = yMin;
-        yMin = value;
-
-        if (truncate) {
-            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
-        } else {
-            setYValue(LineUtils.rescale(getYValue(), oldMin, yMax, yMin, yMax,
-                    -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName()
-                    + "Y");
-            if (param != null) {
-                param.setMin(this.yMin, truncate);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yMin", new Float(oldMin),
-                    new Float(value));
-        }
-    }
-
+//    public int getHeight() {
+//        return height;
+//    }
+//
+//    public void setHeight(int height) {
+//        int oldHeight = this.height;
+//        this.height = height;
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("height", oldHeight, height);
+//        }
+//    }
+//
+//    public int getWidth() {
+//        return width;
+//    }
+//
+//    public void setWidth(int width) {
+//        int oldWidth = this.width;
+//        this.width = width;
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("width", oldWidth, width);
+//        }
+//    }
+//
+//    public float getXValue() {
+//        return xValue;
+//    }
+//
+//    public void setXValue(float value) {
+//        float oldVal = xValue;
+//        xValue = value;
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "X");
+//            if (param != null) {
+//                param.setValue(this.xValue);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("xValue", new Float(oldVal),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public float getYValue() {
+//        return yValue;
+//    }
+//
+//    public void setYValue(float value) {
+//        float oldVal = yValue;
+//        yValue = value;
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "Y");
+//            if (param != null) {
+//                param.setValue(this.yValue);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("yValue", new Float(oldVal),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public float getXMax() {
+//        return xMax;
+//    }
+//
+//    public void setXMax(float value, boolean truncate) {
+//        if (value <= getXMin()) {
+//            return;
+//        }
+//
+//        float oldMax = xMax;
+//        xMax = value;
+//
+//        if (truncate) {
+//            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
+//        } else {
+//            setXValue(LineUtils.rescale(getXValue(), xMin, oldMax, xMin, xMax,
+//                    -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "X");
+//            if (param != null) {
+//                param.setMax(this.xMax, truncate);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("xMax", new Float(oldMax),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public float getXMin() {
+//        return xMin;
+//    }
+//
+//    public void setXMin(float value, boolean truncate) {
+//        if (value >= getXMax()) {
+//            return;
+//
+//        }
+//        float oldMin = xMin;
+//        xMin = value;
+//
+//        if (truncate) {
+//            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
+//        } else {
+//            setXValue(LineUtils.rescale(getXValue(), oldMin, xMax, xMin, xMax,
+//                    -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "X");
+//            if (param != null) {
+//                param.setMin(this.xMin, truncate);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("xMin", new Float(oldMin),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public float getYMax() {
+//        return yMax;
+//    }
+//
+//    public void setYMax(float value, boolean truncate) {
+//        if (value <= getYMin()) {
+//            return;
+//        }
+//
+//        float oldMax = yMax;
+//        yMax = value;
+//
+//        if (truncate) {
+//            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
+//        } else {
+//            setYValue(LineUtils.rescale(getYValue(), yMin, oldMax, yMin, yMax,
+//                    -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "Y");
+//            if (param != null) {
+//                param.setMax(this.yMax, truncate);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("yMax", new Float(oldMax),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public float getYMin() {
+//        return yMin;
+//    }
+//
+//    public void setYMin(float value, boolean truncate) {
+//        if (value >= getYMax()) {
+//            return;
+//        }
+//
+//        float oldMin = yMin;
+//        yMin = value;
+//
+//        if (truncate) {
+//            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
+//        } else {
+//            setYValue(LineUtils.rescale(getYValue(), oldMin, yMax, yMin, yMax,
+//                    -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName()
+//                    + "Y");
+//            if (param != null) {
+//                param.setMin(this.yMin, truncate);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("yMin", new Float(oldMin),
+//                    new Float(value));
+//        }
+//    }
     @Override
     public void initializeParameters() {
         if (parameters == null) {
             return;
         }
-        
-        if(!automationAllowed) {
+
+        if (!automationAllowed) {
             if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(this.objectName + "X");
 
-                if(param != null && param.isAutomationEnabled()) {
+                if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
                     parameters.removeParameter(this.objectName + "X");
@@ -482,15 +546,15 @@ public class BSBXYController extends AutomatableBSBObject implements
         if (param != null && param2 != null) {
             param.addParameterListener(this);
             param2.addParameterListener(this);
-            
-            if(!param.isAutomationEnabled()) {
-                param.setValue(getXValue());
+
+            if (!param.isAutomationEnabled()) {
+                param.setValue((float)x.getValue());
             }
-            
-            if(!param2.isAutomationEnabled()) {
-                param2.setValue(getYValue());
+
+            if (!param2.isAutomationEnabled()) {
+                param2.setValue((float)y.getValue());
             }
-            
+
             return;
         }
 
@@ -502,47 +566,47 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
 
         param = new Parameter();
-        param.setValue(getXValue());
-        param.setMax(getXMax(), true);
-        param.setMin(getXMin(), true);
+        param.setValue((float)x.getValue());
+        param.setMax((float)x.getMax(), true);
+        param.setMin((float)x.getMin(), true);
         param.setName(getObjectName() + "X");
         param.setResolution(-1);
         param.addParameterListener(this);
-        param.setValue(getXValue());
+        param.setValue((float)x.getValue());
 
         parameters.addParameter(param);
 
         param = new Parameter();
-        param.setValue(getYValue());
-        param.setMax(getYMax(), true);
-        param.setMin(getYMin(), true);
+        param.setValue((float)y.getValue());
+        param.setMax((float)y.getMax(), true);
+        param.setMin((float)y.getMin(), true);
         param.setName(getObjectName() + "Y");
         param.setResolution(-1);
         param.addParameterListener(this);
-        param.setValue(getYValue());
+        param.setValue((float)y.getValue());
 
         parameters.addParameter(param);
     }
 
-    public void updateXValue(float value) {
-        float oldVal = xValue;
-        xValue = value;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("xValue", new Float(oldVal),
-                    new Float(value));
-        }
-    }
-
-    public void updateYValue(float value) {
-        float oldVal = yValue;
-        yValue = value;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yValue", new Float(oldVal),
-                    new Float(value));
-        }
-    }
+//    public void updateXValue(double value) {
+//        double oldVal = x.getValue();
+//        x.setValue(value);
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("xValue", new Double(oldVal),
+//                    new Float(value));
+//        }
+//    }
+//
+//    public void updateYValue(float value) {
+//        float oldVal = yValue;
+//        yValue = value;
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("yValue", new Float(oldVal),
+//                    new Float(value));
+//        }
+//    }
 
     @Override
     public void lineDataChanged(Parameter param) {
@@ -553,9 +617,11 @@ public class BSBXYController extends AutomatableBSBObject implements
         String paramName = param.getName();
 
         if (paramName.endsWith("X")) {
-            updateXValue(val);
+//            updateXValue(val);
+            x.setValue(val);
         } else if (paramName.endsWith("Y")) {
-            updateYValue(val);
+//            updateYValue(val);
+            y.setValue(val);
         }
     }
 
@@ -579,29 +645,21 @@ public class BSBXYController extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
-
-    @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
-
+//    @Override
+//    public boolean isRandomizable() {
+//        return randomizable;
+//    }
     @Override
     public void randomize() {
-        if (randomizable) {
-            float rangeX = getXMax() - getXMin();
-            float rangeY = getYMax() - getYMin();
-
-            float newX = (float) (Math.random() * rangeX) + getXMin();
-            float newY = (float) (Math.random() * rangeY) + getYMin();
-
-            setXValue(newX);
-            setYValue(newY);
+        if (isRandomizable()) {
+            x.randomizeValue();
+            y.randomizeValue();
         }
     }
 
-    @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
-        fireBSBObjectChanged();
-    }
+//    @Override
+//    public void setRandomizable(boolean randomizable) {
+//        this.randomizable = randomizable;
+//        fireBSBObjectChanged();
+//    }
 }
