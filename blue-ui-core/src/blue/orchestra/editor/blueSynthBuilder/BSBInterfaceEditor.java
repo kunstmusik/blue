@@ -221,7 +221,9 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
         bsbPropSheet.clear();
 
-        this.bsbEditPane.editBSBGraphicInterface(gInterface);
+        BlueFX.runOnFXThread(() ->
+                bsbEditPane.editBSBGraphicInterface(gInterface)
+        );
 
         presets.setVisible(pGroup != null);
 
@@ -241,7 +243,9 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
     public void presetSelected(Preset preset) {
         if (gInterface != null) {
             preset.setInterfaceValues(gInterface);
-            this.bsbEditPane.editBSBGraphicInterface(gInterface);
+            BlueFX.runOnFXThread(() ->
+                    bsbEditPane.editBSBGraphicInterface(gInterface)
+            );
         }
     }
 
