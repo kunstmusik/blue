@@ -52,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javax.swing.JTabbedPane;
 import org.openide.util.Exceptions;
 
@@ -91,7 +92,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         Platform.runLater(() -> {
             bsbEditPane = new BSBEditPane(bsbObjectEntries);
 
-            final Scene scene = new Scene(bsbEditPane);
+            final Scene scene = new Scene(new ScrollPane(bsbEditPane));
             BlueFX.style(scene);
             jfxPanel.setScene(scene);
             latch.countDown();
@@ -119,9 +120,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.add(presets, BorderLayout.CENTER);
         topBar.add(editBox, BorderLayout.EAST);
-
-        JScrollPane editScrollPane = new JScrollPane(jfxPanel);
-        editScrollPane.setAutoscrolls(true);
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.add(BlueSystem
@@ -167,7 +165,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         // split.add(editScrollPane, JSplitPane.LEFT);
         // split.add(rightBar, JSplitPane.RIGHT);
         // this.add(split, BorderLayout.CENTER);
-        this.add(editScrollPane, BorderLayout.CENTER);
+        this.add(jfxPanel, BorderLayout.CENTER);
         this.add(rightBar, BorderLayout.EAST);
 
         bsbPropSheet.setPreferredSize(new Dimension(250, 30));
