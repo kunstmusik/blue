@@ -26,8 +26,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import javax.swing.JOptionPane;
 
 /**
@@ -68,7 +67,7 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
             return;
         }
 
-        ArrayList<BSBHSlider> sliders = sliderBank.getSliders();
+        List<BSBHSlider> sliders = sliderBank.getSliders();
 
         for (BSBHSlider vSlider : sliders) {
             this.add(new BSBHSliderView(vSlider));
@@ -126,7 +125,7 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
         }
 
         boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-        sliderBank.setMinimum(minimum, truncate);
+//        sliderBank.setMinimum(minimum, truncate);
 
         for (int i = 0; i < getComponentCount(); i++) {
             BSBHSliderView view = (BSBHSliderView) getComponent(i);
@@ -135,11 +134,11 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
     }
 
     public float getMinimum() {
-        return sliderBank.getMinimum();
+        return (float)sliderBank.getMinimum();
     }
 
     public float getMaximum() {
-        return sliderBank.getMaximum();
+        return (float)sliderBank.getMaximum();
     }
 
     public void setMaximum(float maximum) {
@@ -158,7 +157,7 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
         }
 
         boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-        sliderBank.setMaximum(maximum, truncate);
+//        sliderBank.setMaximum(maximum, truncate);
 
         for (int i = 0; i < getComponentCount(); i++) {
             BSBHSliderView view = (BSBHSliderView) getComponent(i);
@@ -167,7 +166,7 @@ public class BSBHSliderBankView extends AutomatableBSBObjectView {
     }
 
     public float getResolution() {
-        return sliderBank.getResolution();
+        return (float)sliderBank.getResolution();
     }
 
     public void setResolution(float resolution) {
