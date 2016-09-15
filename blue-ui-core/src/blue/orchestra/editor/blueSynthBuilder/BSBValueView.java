@@ -71,11 +71,11 @@ public class BSBValueView extends AutomatableBSBObjectView implements
         displayLabel.setOpaque(false);
     }
 
-    public float getMinimum() {
+    public double getMinimum() {
         return value.getMinimum();
     }
 
-    public void setMinimum(float minimum) {
+    public void setMinimum(double minimum) {
         if (minimum >= value.getMaximum()) {
             JOptionPane.showMessageDialog(null, "Error: Min value "
                     + "can not be set greater or equals to Max value.",
@@ -89,14 +89,14 @@ public class BSBValueView extends AutomatableBSBObjectView implements
             return;
         }
 
-        value.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        value.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
     }
 
-    public float getMaximum() {
+    public double getMaximum() {
         return value.getMaximum();
     }
 
-    public void setMaximum(float maximum) {
+    public void setMaximum(double maximum) {
         if (maximum <= value.getMinimum()) {
             JOptionPane.showMessageDialog(null, "Error: Max value "
                     + "can not be set less than or " + "equal to Min value.",
@@ -110,14 +110,14 @@ public class BSBValueView extends AutomatableBSBObjectView implements
         if (retVal == null) {
             return;
         }
-        value.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        value.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
     }
     
-    public float getDefaultValue() {
+    public double getDefaultValue() {
         return value.getDefaultValue();
     }
     
-    public void setDefaultValue(float defaultValue) {
+    public void setDefaultValue(double defaultValue) {
         value.setDefaultValue(defaultValue);
     }
 
