@@ -26,8 +26,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import javax.swing.JOptionPane;
 
 public class BSBVSliderBankView extends AutomatableBSBObjectView {
@@ -63,7 +62,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
             return;
         }
 
-        ArrayList<BSBVSlider> sliders = sliderBank.getSliders();
+        List<BSBVSlider> sliders = sliderBank.getSliders();
 
         for (BSBVSlider vSlider : sliders) {
             this.add(new BSBVSliderView(vSlider));
@@ -120,7 +119,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
         }
 
         boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-        sliderBank.setMinimum(minimum, truncate);
+//        sliderBank.setMinimum(minimum, truncate);
 
         for (int i = 0; i < getComponentCount(); i++) {
             BSBVSliderView view = (BSBVSliderView) getComponent(i);
@@ -129,11 +128,11 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
     }
 
     public float getMinimum() {
-        return sliderBank.getMinimum();
+        return (float)sliderBank.getMinimum();
     }
 
     public float getMaximum() {
-        return sliderBank.getMaximum();
+        return (float)sliderBank.getMaximum();
     }
 
     public void setMaximum(float maximum) {
@@ -152,7 +151,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
         }
 
         boolean truncate = (retVal == LineBoundaryDialog.TRUNCATE);
-        sliderBank.setMaximum(maximum, truncate);
+//        sliderBank.setMaximum(maximum, truncate);
 
         for (int i = 0; i < getComponentCount(); i++) {
             BSBVSliderView view = (BSBVSliderView) getComponent(i);
@@ -161,7 +160,7 @@ public class BSBVSliderBankView extends AutomatableBSBObjectView {
     }
 
     public float getResolution() {
-        return sliderBank.getResolution();
+        return (float)sliderBank.getResolution();
     }
 
     public void setResolution(float resolution) {
