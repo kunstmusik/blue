@@ -31,3 +31,4 @@ jython/release/*.pyc
 /TestApps/JfxControlsTest/nbproject/private/
 /TestApps/JfxControlsTest/TestApp/nbproject/private/
 /libs/target/
+/update_stable.sh
