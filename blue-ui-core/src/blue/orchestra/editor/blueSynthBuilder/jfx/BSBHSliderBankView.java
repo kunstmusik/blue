@@ -25,13 +25,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBHSliderBankView extends HBox {
+public class BSBHSliderBankView extends VBox {
 
     public BSBHSliderBankView(BSBHSliderBank sliderBank) {
         setUserData(sliderBank);
