@@ -64,7 +64,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBLineObject) {
             return new BSBJfxDummy((BSBLineObject)bsbObject);
         } else if (bsbObject instanceof BSBSubChannelDropdown) {
-            return new BSBJfxDummy((BSBSubChannelDropdown)bsbObject);
+            return new BSBSubChannelDropdownView((BSBSubChannelDropdown)bsbObject);
         } else if (bsbObject instanceof BSBTabbedPane) {
 //            return new BSBTabbedPaneView((BSBTabbedPane)bsbObject);
         } else if (bsbObject instanceof BSBTextField) {
@@ -76,7 +76,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBXYController) {
             return new BSBXYControllerView((BSBXYController)bsbObject);
         } else if (bsbObject instanceof BSBValue) {
-            return new BSBJfxDummy((BSBValue)bsbObject);
+            return new BSBValueView((BSBValue)bsbObject);
         }
         
         return null;
