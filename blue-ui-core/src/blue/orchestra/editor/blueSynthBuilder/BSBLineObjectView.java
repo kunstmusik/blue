@@ -272,11 +272,11 @@ public class BSBLineObjectView extends BSBObjectView implements
     }
 
     public String getSeparatorType() {
-        return lineObj.getSeparatorType();
+        return lineObj.getSeparatorType().toString();
     }
 
     public void setSeparatorType(String separatorType) {
-        lineObj.setSeparatorType(separatorType);
+        lineObj.setSeparatorType(BSBLineObject.SeparatorType.fromString(separatorType));
     }
 
     public boolean isLocked() {

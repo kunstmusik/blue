@@ -29,14 +29,22 @@ import javax.swing.JComboBox;
 
 public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
 
-    private JComboBox<String> options;
+    private JComboBox<BSBLineObject.SeparatorType> options;
+    private String[] tags;
 
     public SeparatorTypePropertyEditor() {
         super();
-        options = new JComboBox<>(BSBLineObject.SEPARATOR_TYPES);
+        BSBLineObject.SeparatorType[] sepTypes = 
+                BSBLineObject.SeparatorType.values();
+        options = new JComboBox<>();
         options.addActionListener((ActionEvent e) -> {
             setValueFromComboBox();
         });
+
+        tags = new String[sepTypes.length];
+        for(int i = 0; i < sepTypes.length; i++) {
+           tags[i] = sepTypes[i].toString();
+        }
     }
 
     private void setValueFromComboBox() {
@@ -51,7 +59,7 @@ public class SeparatorTypePropertyEditor extends PropertyEditorSupport {
 
     @Override
     public String[] getTags() {
-        return BSBLineObject.SEPARATOR_TYPES;
+        return tags;
     }
 
     @Override

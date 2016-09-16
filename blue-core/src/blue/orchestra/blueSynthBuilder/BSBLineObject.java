@@ -31,15 +31,37 @@ import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
 
-    private static String SEPARATOR_NONE = "None";
+    public enum SeparatorType {
+        NONE("None", " "), COMMA("Comma", ", "), SINGLE_QUOTE("Single Quote", "' ");
 
-    private static String SEPARATOR_COMMA = "Comma";
+        private final String value;
+        private final String separatorString;
 
-    private static String SEPARATOR_SINGLE_QUOTE = "Single Quote";
+        private SeparatorType(String value, String separatorString) {
+            this.value = value;
+            this.separatorString = separatorString;
+        }
 
-    public static String[] SEPARATOR_TYPES = new String[] { SEPARATOR_NONE,
-            SEPARATOR_COMMA, SEPARATOR_SINGLE_QUOTE };
+        public static SeparatorType fromString(String string) {
+            switch(string) {
+                case "None":
+                    return NONE;
+                case "Comma":
+                    return COMMA;
+                case "Single Quote":
+                    return SINGLE_QUOTE;
+            }
+            return SeparatorType.valueOf(string);
+        }
 
+        public String getSeparatorString() {
+            return separatorString;
+        }
+
+        @Override
+        public String toString() { return value; }
+    };
+ 
     int canvasWidth = 200;
 
     int canvasHeight = 160;
@@ -52,7 +74,7 @@ public class BSBLineObject extends BSBObject {
 
     boolean leadingZero = true;
 
-    String separatorType = SEPARATOR_TYPES[0];
+    SeparatorType separatorType = SeparatorType.NONE;
 
     boolean locked = false;
 
@@ -78,11 +100,12 @@ public class BSBLineObject extends BSBObject {
                 case "commaSeparated":
                     boolean val = XMLUtilities.readBoolean(node);
                     if (val) {
-                        lineObj.setSeparatorType(SEPARATOR_TYPES[1]);
+                        lineObj.setSeparatorType(SeparatorType.COMMA);
                     }
                     break;
                 case "separatorType":
-                    lineObj.setSeparatorType(node.getTextString());
+                    lineObj.setSeparatorType(
+                            SeparatorType.fromString(node.getTextString()));
                     break;
                 case "relativeXValues":
                     lineObj.setRelativeXValues(XMLUtilities.readBoolean(node));
@@ -111,7 +134,7 @@ public class BSBLineObject extends BSBObject {
         retVal.addElement(XMLUtilities.writeFloat("xMax", xMax));
         retVal.addElement(XMLUtilities.writeBoolean("relativeXValues",
                 relativeXValues));
-        retVal.addElement("separatorType").setText(separatorType);
+        retVal.addElement("separatorType").setText(separatorType.name());
         retVal
                 .addElement(XMLUtilities.writeBoolean("leadingZero",
                         leadingZero));
@@ -170,13 +193,7 @@ public class BSBLineObject extends BSBObject {
             }
         }
 
-        String spacer = " ";
-
-        if (separatorType.equals(SEPARATOR_COMMA)) {
-            spacer = ", ";
-        } else if (separatorType.equals(SEPARATOR_SINGLE_QUOTE)) {
-            spacer = "' ";
-        }
+        String spacer = separatorType.getSeparatorString();
 
         if (isLeadingZero()) {
             buffer.append("0.0").append(spacer);
@@ -358,11 +375,11 @@ public class BSBLineObject extends BSBObject {
         this.locked = locked;
     }
 
-    public String getSeparatorType() {
+    public SeparatorType getSeparatorType() {
         return separatorType;
     }
 
-    public void setSeparatorType(String separatorType) {
+    public void setSeparatorType(SeparatorType separatorType) {
         this.separatorType = separatorType;
     }
 
