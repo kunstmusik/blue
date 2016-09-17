@@ -82,8 +82,6 @@ public class BSBEditPane extends Pane {
         BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
                 selection, objectView);
 
-        viewHolder.setLayoutX(bsbObj.getX());
-        viewHolder.setLayoutY(bsbObj.getY());
         getChildren().add(viewHolder);
 
         return viewHolder;

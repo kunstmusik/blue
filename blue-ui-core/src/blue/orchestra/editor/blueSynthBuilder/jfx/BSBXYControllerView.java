@@ -51,8 +51,8 @@ public class BSBXYControllerView extends BorderPane {
         Label label = new Label();
         label.textProperty().bind(
                 Bindings.format("x: %.4g y: %.4g",
-                        bsbXYController.xProperty().valueProperty(),
-                        bsbXYController.yProperty().valueProperty()));
+                        bsbXYController.xValueProperty().valueProperty(),
+                        bsbXYController.yValueProperty().valueProperty()));
         label.setFont(new Font(10));
         label.setTextFill(Color.WHITE);
         label.prefWidthProperty().bind(pane.prefWidthProperty());
@@ -65,9 +65,9 @@ public class BSBXYControllerView extends BorderPane {
         yLine.setHeight(1.0);
         yLine.widthProperty().bind(pane.widthProperty());
         yLine.yProperty().bind(Bindings.createDoubleBinding(() -> {
-            double percent = bsbXYController.yProperty().getNormalizedValue();
+            double percent = bsbXYController.yValueProperty().getNormalizedValue();
             return Math.floor(pane.getPrefHeight() * (1 - percent));
-        }, bsbXYController.yProperty().valueProperty()));
+        }, bsbXYController.yValueProperty().valueProperty()));
         yLine.setFill(Color.WHITE);
 
         Rectangle xLine = new Rectangle();
@@ -75,22 +75,22 @@ public class BSBXYControllerView extends BorderPane {
         xLine.setWidth(1.0);
         xLine.heightProperty().bind(pane.heightProperty());
         xLine.xProperty().bind(Bindings.createDoubleBinding(() -> {
-            double percent = bsbXYController.xProperty().getNormalizedValue();
+            double percent = bsbXYController.xValueProperty().getNormalizedValue();
             return Math.floor(pane.getPrefWidth() * percent);
-        }, bsbXYController.xProperty().valueProperty()));
+        }, bsbXYController.xValueProperty().valueProperty()));
         xLine.setFill(Color.WHITE);
 
         Rectangle rect = new Rectangle(3, 3);
         rect.setFill(Color.color(0, 1.0, 0));
         rect.xProperty().bind(Bindings.createDoubleBinding(()
-                -> (int) (bsbXYController.xProperty().getNormalizedValue()
+                -> (int) (bsbXYController.xValueProperty().getNormalizedValue()
                 * pane.getPrefWidth()) - 1.0,
-                bsbXYController.xProperty().valueProperty()));
+                bsbXYController.xValueProperty().valueProperty()));
 
         rect.yProperty().bind(Bindings.createDoubleBinding(()
-                -> (int) ((1.0 - bsbXYController.yProperty().getNormalizedValue())
+                -> (int) ((1.0 - bsbXYController.yValueProperty().getNormalizedValue())
                 * pane.getPrefHeight()) - 1.0,
-                bsbXYController.yProperty().valueProperty()));
+                bsbXYController.yValueProperty().valueProperty()));
 
         pane.getChildren().addAll(xLine, yLine, rect);
 
@@ -107,19 +107,19 @@ public class BSBXYControllerView extends BorderPane {
         });
 
         pane.setOnMousePressed(me -> {
-            bsbXYController.xProperty().setNormalizedValue(
+            bsbXYController.xValueProperty().setNormalizedValue(
                     me.getX() / pane.getWidth()
             );
-            bsbXYController.yProperty().setNormalizedValue(
+            bsbXYController.yValueProperty().setNormalizedValue(
                     1.0 - (me.getY() / pane.getHeight())
             );
         });
         pane.setOnMouseDragged(me -> {
             if (me.getSource() == pane) {
-                bsbXYController.xProperty().setNormalizedValue(
+                bsbXYController.xValueProperty().setNormalizedValue(
                         me.getX() / pane.getWidth()
                 );
-                bsbXYController.yProperty().setNormalizedValue(
+                bsbXYController.yValueProperty().setNormalizedValue(
                         1.0 - (me.getY() / pane.getHeight())
                 );
             }

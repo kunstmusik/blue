@@ -27,6 +27,8 @@ import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
@@ -43,7 +45,13 @@ public abstract class BSBObject implements Serializable, Cloneable {
 
     // String label = "";
 
-    int x = 0, y = 0;
+    private IntegerProperty x;
+    private IntegerProperty y;
+
+    public BSBObject() {
+        x = new SimpleIntegerProperty(0);
+        y = new SimpleIntegerProperty(0);
+    }
 
     transient Vector listeners = null;
 
@@ -51,35 +59,6 @@ public abstract class BSBObject implements Serializable, Cloneable {
 
     transient UniqueNameManager unm = null;
 
-    /**
-     * @return Returns the x.
-     */
-    public int getX() {
-        return x;
-    }
-
-    /**
-     * @param x
-     *            The x to set.
-     */
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    /**
-     * @return Returns the y.
-     */
-    public int getY() {
-        return y;
-    }
-
-    /**
-     * @param y
-     *            The y to set.
-     */
-    public void setY(int y) {
-        this.y = y;
-    }
 
     /**
      * @return Returns the objectName.
@@ -112,6 +91,30 @@ public abstract class BSBObject implements Serializable, Cloneable {
             propListeners.firePropertyChange("objectName", oldName,
                     this.objectName);
         }
+    }
+
+    public final void setX(int value) {
+        x.set(value);
+    }
+
+    public final int getX() {
+        return x.get();
+    }
+
+    public final IntegerProperty xProperty() {
+        return x;
+    }
+
+    public final void setY(int value) {
+        y.set(value);
+    }
+
+    public final int getY() {
+        return y.get();
+    }
+
+    public final IntegerProperty yProperty() {
+        return y;
     }
 
     /**

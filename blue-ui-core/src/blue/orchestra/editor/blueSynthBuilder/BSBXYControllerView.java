@@ -114,8 +114,8 @@ public class BSBXYControllerView extends AutomatableBSBObjectView implements
         float yVal = (drawPanel.getHeight() - newY)
                 / (float) drawPanel.getHeight();
 
-        controller.xProperty().setNormalizedValue(xVal);
-        controller.yProperty().setNormalizedValue(yVal);
+        controller.xValueProperty().setNormalizedValue(xVal);
+        controller.yValueProperty().setNormalizedValue(yVal);
     }
 
     private void updateSize() {

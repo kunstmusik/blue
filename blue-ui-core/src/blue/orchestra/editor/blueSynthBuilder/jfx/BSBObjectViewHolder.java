@@ -21,9 +21,14 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
 /**
  *
@@ -55,13 +60,13 @@ public class BSBObjectViewHolder extends StackPane {
                 selection.selection.add(bsbObj);
             }
             selection.initiateMove();
-            startX = me.getX();
-            startY = me.getY();
+            startX = me.getSceneX();
+            startY = me.getSceneY();
             me.consume();
         });
 
         mousePane.setOnMouseDragged(me -> {
-            selection.move(me.getX() - startX, me.getY() - startY);
+            selection.move(me.getSceneX() - startX, me.getSceneY() - startY);
         });
 
         mousePane.setOnMouseReleased(me -> selection.endMove());
@@ -73,6 +78,8 @@ public class BSBObjectViewHolder extends StackPane {
                 mousePane.prefWidthProperty().unbind();
                 mousePane.prefHeightProperty().unbind();
                 mousePane.mouseTransparentProperty().unbind();
+                layoutXProperty().unbind();
+                layoutYProperty().unbind();
             } else {
                 mousePane.prefWidthProperty().bind(
                         bsbObjView.prefWidthProperty());
@@ -81,8 +88,12 @@ public class BSBObjectViewHolder extends StackPane {
                 mousePane.mouseTransparentProperty().bind(
                         bsbGraphicInterface.editEnabledProperty().not());
 
-//                layoutXProperty().bind(bsbObjView.getUserData())
+                layoutXProperty().bind(bsbObj.xProperty());
+                layoutYProperty().bind(bsbObj.yProperty());
             }
         });
+
+//        setBorder(new Border(new BorderStroke(Color.rgb(0, 255, 0), BorderStrokeStyle.SOLID, null, BorderWidths.DEFAULT)));
+//        border
     }
 }
