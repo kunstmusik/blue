@@ -22,8 +22,8 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
-import javafx.scene.Node;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 
 /**
  *
@@ -33,19 +33,14 @@ public class BSBEditPane extends Pane {
 
     BSBObjectEntry[] bsbObjectEntries;
     BSBGraphicInterface bsbInterface;
+    BSBEditSelection selection;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
+        this.bsbObjectEntries = bsbObjectEntries;
+        selection = new BSBEditSelection();
     }
 
-
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
-
-//      Commented out to fix issue with updating interface after setting preset
-//      However, the whole code for updating from presets needs to be fixed
-//      so that UI is only listening to changes from data model
-//        if (this.bsbInterface == bsbInterface) {
-//            return;
-//        }
 
         if (this.bsbInterface != null) {
 //            this.bsbInterface.getGridSettings().removePropertyChangeListener(
@@ -54,78 +49,42 @@ public class BSBEditPane extends Pane {
 
         this.bsbInterface = null;
 
-//        this.selectionList.setGridSettings(null);
-
         getChildren().clear();
+
+        this.bsbInterface = bsbInterface;
 
         if (bsbInterface != null) {
             for (BSBObject bsbObj : bsbInterface) {
-                addBSBObject(bsbObj, false);
+                addBSBObject(bsbObj);
             }
 //            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
 //            bsbInterface.getGridSettings().addPropertyChangeListener(this);
         }
 
-        this.bsbInterface = bsbInterface;
 
 //        recalculateSize();
-
 //        revalidate();
 //        repaint();
-
     }
-    
-    private void clearBSBObjects() {
 
-//        this.removeAll();
 
-//        this.add(marquee, JLayeredPane.DRAG_LAYER);
-//        marquee.setVisible(false);
+//    /**
+//     * Called when adding a new BSBObject or when pasting.
+//     *
+//     * @param bsbObj
+//     */
+//    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
+//        return addBSBObject(bsbObj, true);
+//    }
 
-//        for (BSBObjectViewHolder viewHolder : objectViews) {
-//            viewHolder.removeSelectionListener(this);
-//            viewHolder.setGroupMovementListener(null);
-//            viewHolder.removeComponentListener(cl);
-//            viewHolder.getBSBObjectView().cleanup();
-//        }
-//
-//        objectViews.clear();
-    }
-    
-    /**
-     * Called when adding a new BSBObject or when pasting.
-     *
-     * @param bsbObj
-     */
     public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
-        return addBSBObject(bsbObj, true);
-    }
+        Region objectView = BSBObjectEditorFactory.getView(bsbObj);
+        BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
+                selection, objectView);
 
-    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj, boolean revalidate) {
-        if (bsbInterface != null) {
-            bsbInterface.addBSBObject(bsbObj);
-        }
-
-        Node objectView = BSBObjectEditorFactory.getView(bsbObj);
-        BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(objectView);
-
-//        viewHolder.setEditing(this.isEditing());
-viewHolder.setLayoutX(bsbObj.getX());
-viewHolder.setLayoutY(bsbObj.getY());
-getChildren().add(viewHolder);
-//        viewHolder.setLocation(bsbObj.getX(), bsbObj.getY());
-//        objectViews.add(viewHolder);
-
-//        this.add(viewHolder);
-
-//        viewHolder.addSelectionListener(this);
-//        viewHolder.setGroupMovementListener(selectionList);
-//        viewHolder.addComponentListener(cl);
-
-//        if (revalidate) {
-//            revalidate();
-//            repaint();
-//        }
+        viewHolder.setLayoutX(bsbObj.getX());
+        viewHolder.setLayoutY(bsbObj.getY());
+        getChildren().add(viewHolder);
 
         return viewHolder;
     }

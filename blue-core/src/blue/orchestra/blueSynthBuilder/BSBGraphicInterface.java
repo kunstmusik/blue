@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
@@ -47,13 +49,14 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
     transient Vector<BSBGraphicInterfaceListener> listeners = null;
 
-    private boolean editEnabled = true;
+    private BooleanProperty editEnabled;
 
     private GridSettings gridSettings = new GridSettings();
 
     public BSBGraphicInterface() {
         nameManager.setUniqueNameCollection(this);
         nameManager.setDefaultPrefix("bsbObj");
+        editEnabled = new SimpleBooleanProperty(true);
     }
 
     public BSBObject getBSBObject(int index) {
@@ -150,7 +153,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
     public Element saveAsXML() {
         Element retVal = new Element("graphicInterface");
 
-        retVal.setAttribute("editEnabled", Boolean.toString(editEnabled));
+        retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
 
         retVal.addElement(gridSettings.saveAsXML());
         
@@ -225,12 +228,16 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         return EqualsBuilder.reflectionEquals(this, obj);
     }
 
-    public boolean isEditEnabled() {
-        return editEnabled;
+    public final void setEditEnabled(boolean value) {
+        editEnabled.set(value);
     }
 
-    public void setEditEnabled(boolean editEnabled) {
-        this.editEnabled = editEnabled;
+    public final boolean isEditEnabled() {
+        return editEnabled.get();
+    }
+
+    public final BooleanProperty editEnabledProperty() {
+        return editEnabled;
     }
 
     public GridSettings getGridSettings() {

@@ -20,14 +20,13 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBLabel;
-import javafx.scene.text.FontSmoothingType;
-import javafx.scene.text.Text;
+import javafx.scene.control.Label;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBLabelView extends Text {
+public class BSBLabelView extends Label {
     
     private BSBLabel label;
 
@@ -37,7 +36,7 @@ public class BSBLabelView extends Text {
         this.label = label;
         this.textProperty().bind(label.labelProperty());
         this.fontProperty().bind(label.fontProperty());
-        this.setStyle("-fx-fill: white");
-        this.setFontSmoothingType(FontSmoothingType.LCD);
+        this.setStyle("-fx-fill: white; "
+                + "-fx-font-smooth-type: lcd");
     } 
 }

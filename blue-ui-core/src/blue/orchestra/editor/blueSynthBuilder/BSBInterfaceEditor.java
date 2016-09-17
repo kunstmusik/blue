@@ -113,7 +113,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
         editBox.addEditModeListener((boolean isEditing) -> {
             if (!isUpdating && gInterface != null) {
-                gInterface.setEditEnabled(isEditing);
+                BlueFX.runOnFXThread(
+                        () -> gInterface.setEditEnabled(isEditing));
             }
         });
 

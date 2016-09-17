@@ -19,7 +19,10 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
-import javafx.scene.Node;
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
+import blue.orchestra.blueSynthBuilder.BSBObject;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 /**
@@ -27,7 +30,59 @@ import javafx.scene.layout.StackPane;
  * @author stevenyi
  */
 public class BSBObjectViewHolder extends StackPane {
-    public BSBObjectViewHolder(Node bsbObjView) {
-        this.getChildren().add(bsbObjView);
+
+    double startX = 0.0;
+    double startY = 0.0;
+
+    public BSBObjectViewHolder(BSBGraphicInterface bsbGraphicInterface,
+            BSBEditSelection selection,
+            Region bsbObjView) {
+
+        final BSBObject bsbObj = (BSBObject) bsbObjView.getUserData();
+        Pane mousePane = new Pane();
+
+        mousePane.setOnMousePressed(me -> {
+            if (me.isPopupTrigger()) {
+
+            } else if (selection.selection.contains(bsbObj)) {
+                if (me.isShiftDown()) {
+                    selection.selection.remove(bsbObj);
+                }
+            } else {
+                if (!me.isShiftDown()) {
+                    selection.selection.clear();
+                }
+                selection.selection.add(bsbObj);
+            }
+            selection.initiateMove();
+            startX = me.getX();
+            startY = me.getY();
+            me.consume();
+        });
+
+        mousePane.setOnMouseDragged(me -> {
+            selection.move(me.getX() - startX, me.getY() - startY);
+        });
+
+        mousePane.setOnMouseReleased(me -> selection.endMove());
+
+        this.getChildren().addAll(bsbObjView, mousePane);
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                mousePane.prefWidthProperty().unbind();
+                mousePane.prefHeightProperty().unbind();
+                mousePane.mouseTransparentProperty().unbind();
+            } else {
+                mousePane.prefWidthProperty().bind(
+                        bsbObjView.prefWidthProperty());
+                mousePane.prefHeightProperty().bind(
+                        bsbObjView.prefHeightProperty());
+                mousePane.mouseTransparentProperty().bind(
+                        bsbGraphicInterface.editEnabledProperty().not());
+
+//                layoutXProperty().bind(bsbObjView.getUserData())
+            }
+        });
     }
 }

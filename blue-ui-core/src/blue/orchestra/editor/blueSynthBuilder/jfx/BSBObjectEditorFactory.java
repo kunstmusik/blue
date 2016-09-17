@@ -36,7 +36,7 @@ import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
 import blue.orchestra.blueSynthBuilder.BSBValue;
 import blue.orchestra.blueSynthBuilder.BSBXYController;
-import javafx.scene.Node;
+import javafx.scene.layout.Region;
 
 /**
  *
@@ -44,7 +44,7 @@ import javafx.scene.Node;
  */
 public class BSBObjectEditorFactory {
 
-    public static Node getView(BSBObject bsbObject) {
+    public static Region getView(BSBObject bsbObject) {
         if (bsbObject instanceof BSBCheckBox) {
             return new BSBCheckBoxView((BSBCheckBox) bsbObject);
         } else if (bsbObject instanceof BSBDropdown) {
