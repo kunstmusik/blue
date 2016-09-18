@@ -175,8 +175,8 @@ public abstract class BSBObject implements Serializable, Cloneable {
     public abstract void setPresetValue(String val);
 
     @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
+    public BSBObject clone() {
+        return (BSBObject) ObjectUtilities.clone(this);
     }
 
     @Override
