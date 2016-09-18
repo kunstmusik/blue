@@ -88,7 +88,6 @@ public class BSBObjectViewHolder extends StackPane {
 
         SetChangeListener<BSBObject> scl = e -> {
             rect.setVisible(e.getSet().contains(bsbObj));
-            System.out.println(bsbObjView.getPrefWidth() + " : " + bsbObjView.getPrefHeight());
         };
 
         sceneProperty().addListener(new ChangeListener<Scene>() {
