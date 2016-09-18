@@ -22,12 +22,14 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import javafx.beans.binding.Bindings;
 import javafx.collections.SetChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -73,6 +75,15 @@ public class BSBEditPane extends Pane {
             m.setOnAction(al);
             popupMenu.getItems().add(m);
         }
+
+        MenuItem paste = new MenuItem("Paste");
+        paste.setOnAction(ae -> paste(addX, addY));
+        paste.disableProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> 
+                            selection.copyBufferProperty().size() == 0
+                        , selection.copyBufferProperty()));
+        popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
 
         marquee = new Rectangle();
         marquee.setFill(null);
@@ -148,6 +159,24 @@ public class BSBEditPane extends Pane {
 
         if (found != null) {
             getChildren().remove(found);
+        }
+    }
+
+    protected void paste(int x, int y) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        
+        for(BSBObject bsbObj : selection.copyBufferProperty()) {
+            minX = Math.min(minX, bsbObj.getX());
+            minY = Math.min(minX, bsbObj.getY());
+        }
+
+        for(BSBObject bsbObj : selection.copyBufferProperty()) {
+            BSBObject copy = (BSBObject) bsbObj.clone();
+            copy.setX(x + copy.getX() - minX);
+            copy.setY(y + copy.getY() - minY);
+
+            bsbInterface.addBSBObject(bsbObj);
         }
     }
 }

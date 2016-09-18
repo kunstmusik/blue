@@ -21,9 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 
@@ -35,14 +33,18 @@ public class BSBEditSelection {
 
     public final ObservableSet<BSBObject> selection;
     private final Map<BSBObject, Point> startPositions;
-    double minX = 0.0;
-    double minY = 0.0;
+    private double minX = 0.0;
+    private double minY = 0.0;
     private BSBGraphicInterface bsbInterface = null;
-    Set<BSBObject> copyBuffer = new HashSet<>();
+    private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
 
     public BSBEditSelection() {
         selection = FXCollections.observableSet();
         startPositions = new HashMap<>();
+    }
+
+    public ObservableSet<BSBObject> copyBufferProperty() {
+        return copyBuffer;
     }
 
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
