@@ -21,6 +21,10 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.SetChangeListener;
+import javafx.scene.Scene;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
@@ -29,6 +33,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 /**
  *
@@ -71,25 +76,44 @@ public class BSBObjectViewHolder extends StackPane {
 
         mousePane.setOnMouseReleased(me -> selection.endMove());
 
-        this.getChildren().addAll(bsbObjView, mousePane);
+        Rectangle rect = new Rectangle();
+        rect.setStroke(Color.rgb(0, 255, 0));
+        rect.widthProperty().bind(mousePane.widthProperty().subtract(1));
+        rect.heightProperty().bind(mousePane.heightProperty().subtract(1));
+        rect.setMouseTransparent(true);
+        rect.setFill(null);
+        rect.setVisible(false);
 
-        sceneProperty().addListener((obs, old, newVal) -> {
-            if (newVal == null) {
-                mousePane.prefWidthProperty().unbind();
-                mousePane.prefHeightProperty().unbind();
-                mousePane.mouseTransparentProperty().unbind();
-                layoutXProperty().unbind();
-                layoutYProperty().unbind();
-            } else {
-                mousePane.prefWidthProperty().bind(
-                        bsbObjView.prefWidthProperty());
-                mousePane.prefHeightProperty().bind(
-                        bsbObjView.prefHeightProperty());
-                mousePane.mouseTransparentProperty().bind(
-                        bsbGraphicInterface.editEnabledProperty().not());
+        this.getChildren().addAll(bsbObjView, mousePane, rect);
 
-                layoutXProperty().bind(bsbObj.xProperty());
-                layoutYProperty().bind(bsbObj.yProperty());
+        SetChangeListener<BSBObject> scl = e -> {
+            rect.setVisible(e.getSet().contains(bsbObj));
+            System.out.println(bsbObjView.getPrefWidth() + " : " + bsbObjView.getPrefHeight());
+        };
+
+        sceneProperty().addListener(new ChangeListener<Scene>() {
+            @Override
+            public void changed(ObservableValue<? extends Scene> obs, Scene old, Scene newVal) {
+                if (newVal == null) {
+                    mousePane.prefWidthProperty().unbind();
+                    mousePane.prefHeightProperty().unbind();
+                    mousePane.mouseTransparentProperty().unbind();
+                    layoutXProperty().unbind();
+                    layoutYProperty().unbind();
+                    selection.selection.removeListener(scl);
+                } else {
+                    mousePane.prefWidthProperty().bind(
+                            bsbObjView.prefWidthProperty());
+                    mousePane.prefHeightProperty().bind(
+                            bsbObjView.prefHeightProperty());
+                    mousePane.mouseTransparentProperty().bind(
+                            bsbGraphicInterface.editEnabledProperty().not());
+
+                    layoutXProperty().bind(bsbObj.xProperty());
+                    layoutYProperty().bind(bsbObj.yProperty());
+
+                    selection.selection.addListener(scl);
+                }
             }
         });
 
