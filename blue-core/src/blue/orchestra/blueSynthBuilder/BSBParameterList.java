@@ -37,9 +37,7 @@ public class BSBParameterList extends ParameterList implements
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         bsbInterface.addBSBGraphicInterfaceListener(this);
 
-        for (int i = 0; i < bsbInterface.size(); i++) {
-            BSBObject bsbObj = bsbInterface.getBSBObject(i);
-
+        for (BSBObject bsbObj : bsbInterface) {
             if (bsbObj instanceof AutomatableBSBObject) {
                 AutomatableBSBObject autoBsb = (AutomatableBSBObject) bsbObj;
                 autoBsb.setBSBParameterList(this);

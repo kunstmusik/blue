@@ -28,5 +28,6 @@ import javafx.scene.layout.Region;
  */
 public class BSBJfxDummy extends Region {
     public BSBJfxDummy(BSBObject obj) {
+        setUserData(obj);
     }
 }

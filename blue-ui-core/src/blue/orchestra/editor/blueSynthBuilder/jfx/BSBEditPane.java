@@ -22,8 +22,15 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import javafx.collections.SetChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -31,13 +38,54 @@ import javafx.scene.layout.Region;
  */
 public class BSBEditPane extends Pane {
 
-    BSBObjectEntry[] bsbObjectEntries;
-    BSBGraphicInterface bsbInterface;
-    BSBEditSelection selection;
+    private BSBGraphicInterface bsbInterface;
+    private BSBEditSelection selection;
+
+    private ContextMenu popupMenu;
+
+    private SetChangeListener<BSBObject> scl;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
-        this.bsbObjectEntries = bsbObjectEntries;
         selection = new BSBEditSelection();
+
+        popupMenu = new ContextMenu();
+        EventHandler<ActionEvent> al = e -> {
+            MenuItem m = (MenuItem) e.getSource();
+            Class<? extends BSBObject> clazz = (Class<? extends BSBObject>) m.getUserData();
+            try {
+                BSBObject bsbObj = clazz.newInstance();
+                bsbObj.setX((int) popupMenu.getX());
+                bsbObj.setY((int) popupMenu.getY());
+                bsbInterface.addBSBObject(bsbObj);
+            } catch (InstantiationException | IllegalAccessException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        };
+
+        for (BSBObjectEntry entry : bsbObjectEntries) {
+            MenuItem m = new MenuItem("Add " + entry.label);
+            m.setUserData(entry.bsbObjectClass);
+            m.setOnAction(al);
+            popupMenu.getItems().add(m);
+        }
+
+        setOnMousePressed(me -> {
+            if (!me.isConsumed() && bsbInterface != null && bsbInterface.isEditEnabled()) {
+                selection.selection.clear();
+
+                if (me.isSecondaryButtonDown()) {
+                    popupMenu.show(BSBEditPane.this, me.getX(), me.getY());
+                }
+            }
+        });
+
+        scl = sce -> {
+            if (sce.wasAdded()) {
+                addBSBObject(sce.getElementAdded());
+            } else {
+                removeBSBObject(sce.getElementRemoved());
+            }
+        };
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
@@ -45,9 +93,8 @@ public class BSBEditPane extends Pane {
         if (this.bsbInterface != null) {
 //            this.bsbInterface.getGridSettings().removePropertyChangeListener(
 //                    this);
+            this.bsbInterface.interfaceItemsProperty().removeListener(scl);
         }
-
-        this.bsbInterface = null;
 
         getChildren().clear();
 
@@ -59,31 +106,34 @@ public class BSBEditPane extends Pane {
             }
 //            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
 //            bsbInterface.getGridSettings().addPropertyChangeListener(this);
+            bsbInterface.interfaceItemsProperty().addListener(scl);
         }
 
-
-//        recalculateSize();
-//        revalidate();
-//        repaint();
     }
 
+    protected void addBSBObject(BSBObject bsbObj) {
+        try {
+            Region objectView = BSBObjectEditorFactory.getView(bsbObj);
+            BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
+                    selection, objectView);
 
-//    /**
-//     * Called when adding a new BSBObject or when pasting.
-//     *
-//     * @param bsbObj
-//     */
-//    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
-//        return addBSBObject(bsbObj, true);
-//    }
+            getChildren().add(viewHolder);
+        } catch (Exception e) {
+            Exceptions.printStackTrace(e);
+        }
+    }
 
-    public BSBObjectViewHolder addBSBObject(BSBObject bsbObj) {
-        Region objectView = BSBObjectEditorFactory.getView(bsbObj);
-        BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
-                selection, objectView);
+    protected void removeBSBObject(BSBObject bsbObj) {
+        Node found = null;
+        for (Node n : getChildren()) {
+            if (n.getUserData() == bsbObj) {
+                found = n;
+                break;
+            }
+        }
 
-        getChildren().add(viewHolder);
-
-        return viewHolder;
+        if (found != null) {
+            getChildren().remove(found);
+        }
     }
 }

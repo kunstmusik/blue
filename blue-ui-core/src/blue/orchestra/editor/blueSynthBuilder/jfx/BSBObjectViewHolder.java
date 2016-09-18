@@ -21,14 +21,11 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.scene.Scene;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -49,10 +46,11 @@ public class BSBObjectViewHolder extends StackPane {
             Region bsbObjView) {
 
         final BSBObject bsbObj = (BSBObject) bsbObjView.getUserData();
+        setUserData(bsbObj);
         Pane mousePane = new Pane();
 
         mousePane.setOnMousePressed(me -> {
-            if (me.isPopupTrigger()) {
+            if (me.isSecondaryButtonDown()) {
 
             } else if (selection.selection.contains(bsbObj)) {
                 if (me.isShiftDown()) {
@@ -86,9 +84,17 @@ public class BSBObjectViewHolder extends StackPane {
 
         this.getChildren().addAll(bsbObjView, mousePane, rect);
 
-        SetChangeListener<BSBObject> scl = e -> {
-            rect.setVisible(e.getSet().contains(bsbObj));
-        };
+//        SetChangeListener<BSBObject> scl = e -> {
+//            rect.setVisible(e.getSet().contains(bsbObj));
+//        };
+
+        rect.visibleProperty().bind(
+                Bindings.createBooleanBinding(
+                        () -> bsbGraphicInterface.isEditEnabled()
+                        && selection.selection.contains(bsbObj),
+                        bsbGraphicInterface.editEnabledProperty(),
+                        selection.selection
+                ));
 
         sceneProperty().addListener(new ChangeListener<Scene>() {
             @Override
@@ -99,7 +105,7 @@ public class BSBObjectViewHolder extends StackPane {
                     mousePane.mouseTransparentProperty().unbind();
                     layoutXProperty().unbind();
                     layoutYProperty().unbind();
-                    selection.selection.removeListener(scl);
+//                    selection.selection.removeListener(scl);
                 } else {
                     mousePane.prefWidthProperty().bind(
                             bsbObjView.prefWidthProperty());
@@ -111,7 +117,7 @@ public class BSBObjectViewHolder extends StackPane {
                     layoutXProperty().bind(bsbObj.xProperty());
                     layoutYProperty().bind(bsbObj.yProperty());
 
-                    selection.selection.addListener(scl);
+//                    selection.selection.addListener(scl);
                 }
             }
         });

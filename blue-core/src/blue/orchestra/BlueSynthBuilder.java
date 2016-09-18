@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra;
 
 import blue.Tables;
@@ -39,9 +38,8 @@ import java.util.HashMap;
 
 /**
  * @author Steven Yi
- * 
+ *
  */
-
 @InstrumentPlugin(displayName = "BlueSynthBuilder", position = 50)
 public class BlueSynthBuilder extends AbstractInstrument implements
         Serializable, Automatable {
@@ -141,7 +139,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         String retVal = bsbCompilationUnit.replaceBSBValues(getGlobalSco());
 
         // doPostCompilation();
-
         return retVal;
     }
 
@@ -155,7 +152,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     // }
 
     /* XML SERIALIZATION */
-
     public static Instrument loadFromXML(Element data) throws Exception {
         BlueSynthBuilder bsb = new BlueSynthBuilder(false);
         InstrumentUtilities.initBasicFromXML(data, bsb);
@@ -247,7 +243,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /* ACCESSOR METHODS */
-
     /**
      * @return Returns the graphicInterface.
      */
@@ -256,8 +251,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param graphicInterface
-     *            The graphicInterface to set.
+     * @param graphicInterface The graphicInterface to set.
      */
     public void setGraphicInterface(BSBGraphicInterface graphicInterface) {
         this.graphicInterface = graphicInterface;
@@ -271,8 +265,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param instrumentText
-     *            The instrumentText to set.
+     * @param instrumentText The instrumentText to set.
      */
     public void setInstrumentText(String instrumentText) {
         this.instrumentText = (instrumentText == null) ? "" : instrumentText;
@@ -300,8 +293,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param globalOrc
-     *            The globalOrc to set.
+     * @param globalOrc The globalOrc to set.
      */
     public void setGlobalOrc(String globalOrc) {
         this.globalOrc = globalOrc;
@@ -315,8 +307,7 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     }
 
     /**
-     * @param globalSco
-     *            The globalSco to set.
+     * @param globalSco The globalSco to set.
      */
     public void setGlobalSco(String globalSco) {
         this.globalSco = globalSco;
@@ -340,13 +331,11 @@ public class BlueSynthBuilder extends AbstractInstrument implements
      * by the user. Not implemented to do automatically on serialization as
      * BlueData is copied via serialization before rendering and all data must
      * stay valid.
-     * 
+     *
      * In 0.114.0, modified to also reset any subchannel dropdowns to MASTER
      */
     public void clearParameters() {
-        for (int i = 0; i < graphicInterface.size(); i++) {
-            BSBObject bsbObj = graphicInterface.getBSBObject(i);
-
+        for (BSBObject bsbObj : graphicInterface) {
             if (bsbObj instanceof BSBSubChannelDropdown) {
                 ((BSBSubChannelDropdown) bsbObj)
                         .setChannelOutput(Channel.MASTER);
@@ -388,18 +377,16 @@ public class BlueSynthBuilder extends AbstractInstrument implements
     @Override
     public ArrayList<StringChannel> getStringChannels() {
         ArrayList<StringChannel> stringChannels = new ArrayList<>();
-        
-        for(int i = 0; i < graphicInterface.size(); i++) {
-            BSBObject bsbObj = graphicInterface.getBSBObject(i);
-            
-            if(bsbObj instanceof StringChannelProvider) {
-                StringChannelProvider provider = (StringChannelProvider)bsbObj;
-                if(provider.isStringChannelEnabled()) {
+
+        for (BSBObject bsbObj : graphicInterface) {
+            if (bsbObj instanceof StringChannelProvider) {
+                StringChannelProvider provider = (StringChannelProvider) bsbObj;
+                if (provider.isStringChannelEnabled()) {
                     stringChannels.add(provider.getStringChannel());
                 }
             }
         }
-        
+
         return stringChannels;
     }
 }

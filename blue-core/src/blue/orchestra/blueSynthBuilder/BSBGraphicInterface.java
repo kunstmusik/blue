@@ -24,7 +24,6 @@ import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,6 +31,8 @@ import java.util.Set;
 import java.util.Vector;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
@@ -43,7 +44,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  */
 public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
 
-    ArrayList<BSBObject> interfaceItems = new ArrayList<>();
+    ObservableSet<BSBObject> interfaceItems = FXCollections.observableSet();
 
     UniqueNameManager nameManager = new UniqueNameManager();
 
@@ -59,8 +60,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         editEnabled = new SimpleBooleanProperty(true);
     }
 
-    public BSBObject getBSBObject(int index) {
-        return (BSBObject) interfaceItems.get(index);
+    public ObservableSet<BSBObject> interfaceItemsProperty() {
+        return interfaceItems;
     }
 
     public void addBSBObject(BSBObject bsbObj) {
@@ -157,8 +158,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
         retVal.addElement(gridSettings.saveAsXML());
         
-        for (Iterator<BSBObject> iter = interfaceItems.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = iter.next();
+        for (BSBObject bsbObj : interfaceItems) {
             retVal.addElement(bsbObj.saveAsXML());
         }
 
@@ -211,8 +211,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
     public Set<String> getNames() {
         Set<String> names = new HashSet<>();
 
-        for (int i = 0; i < size(); i++) {
-            BSBObject bsbObj = getBSBObject(i);
+        for (BSBObject bsbObj : interfaceItems) {
             String[] replacementKeys = bsbObj.getReplacementKeys();
 
             if (replacementKeys != null) {
@@ -249,8 +248,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
     }
 
     public void randomize() {
-        for (int i = 0; i < size(); i++) {
-            BSBObject bsbObj = getBSBObject(i);
+        for (BSBObject bsbObj : interfaceItems) {
             if (bsbObj instanceof Randomizable) {
                 Randomizable randomizable = (Randomizable) bsbObj;
                 if (randomizable.isRandomizable()) {
