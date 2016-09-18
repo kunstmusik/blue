@@ -24,8 +24,10 @@ import blue.orchestra.blueSynthBuilder.BSBObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.SetChangeListener;
+import javafx.event.EventType;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -41,6 +43,34 @@ public class BSBObjectViewHolder extends StackPane {
     double startX = 0.0;
     double startY = 0.0;
 
+    private static ContextMenu MENU = null;
+
+    private static ContextMenu getContextMenu() {
+        if (MENU == null) {
+            MENU = new ContextMenu();
+
+            MenuItem cut = new MenuItem("Cut");
+            cut.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.cut();
+            });
+            MenuItem copy = new MenuItem("Copy");
+            copy.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.copy();
+            });
+
+            MenuItem remove = new MenuItem("Remove");
+            remove.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.remove();
+            });
+            MENU.getItems().addAll(cut, copy, remove);
+            MENU.setOnHidden(e -> MENU.setUserData(null));
+        }
+        return MENU;
+    }
+
     public BSBObjectViewHolder(BSBGraphicInterface bsbGraphicInterface,
             BSBEditSelection selection,
             Region bsbObjView) {
@@ -50,9 +80,15 @@ public class BSBObjectViewHolder extends StackPane {
         Pane mousePane = new Pane();
 
         mousePane.setOnMousePressed(me -> {
+            me.consume();
             if (me.isSecondaryButtonDown()) {
+                ContextMenu menu = getContextMenu();
+                menu.setUserData(selection);
+                menu.show(BSBObjectViewHolder.this, me.getScreenX(), me.getScreenY());
+                return;
+            }
 
-            } else if (selection.selection.contains(bsbObj)) {
+            if (selection.selection.contains(bsbObj)) {
                 if (me.isShiftDown()) {
                     selection.selection.remove(bsbObj);
                 }
@@ -65,7 +101,6 @@ public class BSBObjectViewHolder extends StackPane {
             selection.initiateMove();
             startX = me.getSceneX();
             startY = me.getSceneY();
-            me.consume();
         });
 
         mousePane.setOnMouseDragged(me -> {
@@ -87,7 +122,6 @@ public class BSBObjectViewHolder extends StackPane {
 //        SetChangeListener<BSBObject> scl = e -> {
 //            rect.setVisible(e.getSet().contains(bsbObj));
 //        };
-
         rect.visibleProperty().bind(
                 Bindings.createBooleanBinding(
                         () -> bsbGraphicInterface.isEditEnabled()

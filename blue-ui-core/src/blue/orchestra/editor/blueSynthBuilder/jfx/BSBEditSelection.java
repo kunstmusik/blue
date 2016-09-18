@@ -18,9 +18,12 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 
@@ -34,10 +37,17 @@ public class BSBEditSelection {
     private final Map<BSBObject, Point> startPositions;
     double minX = 0.0;
     double minY = 0.0;
+    private BSBGraphicInterface bsbInterface = null;
+    Set<BSBObject> copyBuffer = new HashSet<>();
 
     public BSBEditSelection() {
         selection = FXCollections.observableSet();
         startPositions = new HashMap<>();
+    }
+
+    public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
+        this.bsbInterface = bsbInterface;
+        selection.clear();
     }
 
     public void initiateMove() {
@@ -54,15 +64,15 @@ public class BSBEditSelection {
     }
 
     public void move(double xDiff, double yDiff) {
-        double xDiffAdj = Math.min(-minX,  xDiff); 
-        double yDiffAdj = Math.min(-minY,  yDiff); 
+        double xDiffAdj = Math.min(-minX, xDiff);
+        double yDiffAdj = Math.min(-minY, yDiff);
 
-        for(Map.Entry<BSBObject, Point> entry : startPositions.entrySet()) {
+        for (Map.Entry<BSBObject, Point> entry : startPositions.entrySet()) {
             BSBObject obj = entry.getKey();
             Point pt = entry.getValue();
 
-            obj.setX((int)Math.round(pt.x + xDiff));
-            obj.setY((int)Math.round(pt.y + yDiff));
+            obj.setX((int) Math.round(pt.x + xDiff));
+            obj.setY((int) Math.round(pt.y + yDiff));
         }
     }
 
@@ -70,6 +80,27 @@ public class BSBEditSelection {
         startPositions.clear();
         minX = 0.0;
         minY = 0.0;
+    }
+
+    void cut() {
+        if (bsbInterface != null) {
+            copy();
+            remove();
+        }
+    }
+
+    void copy() {
+        if (bsbInterface != null) {
+            copyBuffer.clear();
+            copyBuffer.addAll(selection);
+        }
+    }
+
+    void remove() {
+        if (bsbInterface != null) {
+            bsbInterface.interfaceItemsProperty().removeAll(selection);
+            selection.clear();
+        }
     }
 
     private class Point {

@@ -30,6 +30,8 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.openide.util.Exceptions;
 
 /**
@@ -44,6 +46,9 @@ public class BSBEditPane extends Pane {
     private ContextMenu popupMenu;
 
     private SetChangeListener<BSBObject> scl;
+    
+    private Rectangle marquee;
+    int addX = 0, addY = 0;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
         selection = new BSBEditSelection();
@@ -54,8 +59,8 @@ public class BSBEditPane extends Pane {
             Class<? extends BSBObject> clazz = (Class<? extends BSBObject>) m.getUserData();
             try {
                 BSBObject bsbObj = clazz.newInstance();
-                bsbObj.setX((int) popupMenu.getX());
-                bsbObj.setY((int) popupMenu.getY());
+                bsbObj.setX(addX);
+                bsbObj.setY(addY);
                 bsbInterface.addBSBObject(bsbObj);
             } catch (InstantiationException | IllegalAccessException ex) {
                 Exceptions.printStackTrace(ex);
@@ -69,12 +74,20 @@ public class BSBEditPane extends Pane {
             popupMenu.getItems().add(m);
         }
 
+        marquee = new Rectangle();
+        marquee.setFill(null);
+        marquee.setStroke(Color.WHITE);
+
         setOnMousePressed(me -> {
             if (!me.isConsumed() && bsbInterface != null && bsbInterface.isEditEnabled()) {
-                selection.selection.clear();
-
                 if (me.isSecondaryButtonDown()) {
-                    popupMenu.show(BSBEditPane.this, me.getX(), me.getY());
+                    addX = (int) me.getX();
+                    addY = (int) me.getY();
+                    popupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
+                } else if(me.isPrimaryButtonDown()) {
+                    if(!me.isShiftDown()) {
+                        selection.selection.clear();
+                    }            
                 }
             }
         });
@@ -99,6 +112,7 @@ public class BSBEditPane extends Pane {
         getChildren().clear();
 
         this.bsbInterface = bsbInterface;
+        selection.setBSBGraphicInterface(bsbInterface);
 
         if (bsbInterface != null) {
             for (BSBObject bsbObj : bsbInterface) {
