@@ -91,11 +91,14 @@ public class BSBObjectViewHolder extends StackPane {
             if (selection.selection.contains(bsbObj)) {
                 if (me.isShiftDown()) {
                     selection.selection.remove(bsbObj);
+                    return;
                 }
             } else {
-                if (!me.isShiftDown()) {
-                    selection.selection.clear();
+                if (me.isShiftDown()) {
+                    selection.selection.add(bsbObj);
+                    return;
                 }
+                selection.selection.clear();
                 selection.selection.add(bsbObj);
             }
             selection.initiateMove();

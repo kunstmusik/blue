@@ -37,6 +37,7 @@ public class BSBEditSelection {
     private double minY = 0.0;
     private BSBGraphicInterface bsbInterface = null;
     private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
+    private boolean processingMove = false;
 
     public BSBEditSelection() {
         selection = FXCollections.observableSet();
@@ -63,9 +64,13 @@ public class BSBEditSelection {
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
         }
+        processingMove = true;
     }
 
     public void move(double xDiff, double yDiff) {
+        if(!processingMove) {
+            return;
+        }
         double xDiffAdj = Math.min(-minX, xDiff);
         double yDiffAdj = Math.min(-minY, yDiff);
 

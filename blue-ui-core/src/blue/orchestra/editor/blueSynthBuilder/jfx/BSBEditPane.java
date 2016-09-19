@@ -22,6 +22,8 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import java.util.HashSet;
+import java.util.Set;
 import javafx.beans.binding.Bindings;
 import javafx.collections.SetChangeListener;
 import javafx.event.ActionEvent;
@@ -48,9 +50,15 @@ public class BSBEditPane extends Pane {
     private ContextMenu popupMenu;
 
     private SetChangeListener<BSBObject> scl;
-    
+
     private Rectangle marquee;
     int addX = 0, addY = 0;
+
+    double startMarqueeX = -1.0;
+    double startMarqueeY = -1.0;
+
+    Set<BSBObject> startSet = null;
+    Set<BSBObject> selecting = new HashSet<>();
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
         selection = new BSBEditSelection();
@@ -80,9 +88,8 @@ public class BSBEditPane extends Pane {
         paste.setOnAction(ae -> paste(addX, addY));
         paste.disableProperty().bind(
                 Bindings.createBooleanBinding(
-                        () -> 
-                            selection.copyBufferProperty().size() == 0
-                        , selection.copyBufferProperty()));
+                        ()
+                        -> selection.copyBufferProperty().size() == 0, selection.copyBufferProperty()));
         popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
 
         marquee = new Rectangle();
@@ -95,11 +102,31 @@ public class BSBEditPane extends Pane {
                     addX = (int) me.getX();
                     addY = (int) me.getY();
                     popupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
-                } else if(me.isPrimaryButtonDown()) {
-                    if(!me.isShiftDown()) {
+                } else if (me.isPrimaryButtonDown()) {
+                    if (!me.isShiftDown()) {
                         selection.selection.clear();
-                    }            
+                    }
+
+                    startSet = new HashSet(selection.selection);
+                    startMarqueeX = me.getX();
+                    startMarqueeY = me.getY();
+                    updateMarquee(startMarqueeX, startMarqueeY);
+                    getChildren().add(marquee);
                 }
+            }
+        });
+
+        setOnMouseDragged(me -> {
+            if (startMarqueeX >= 0) {
+                updateMarquee(me.getX(), me.getY());
+            }
+        });
+
+        setOnMouseReleased(me -> {
+            if (startMarqueeX >= 0) {
+                startMarqueeX = -1.0;
+                startMarqueeY = -1.0;
+                getChildren().remove(marquee);
             }
         });
 
@@ -165,18 +192,64 @@ public class BSBEditPane extends Pane {
     protected void paste(int x, int y) {
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
-        
-        for(BSBObject bsbObj : selection.copyBufferProperty()) {
+
+        for (BSBObject bsbObj : selection.copyBufferProperty()) {
             minX = Math.min(minX, bsbObj.getX());
             minY = Math.min(minX, bsbObj.getY());
         }
 
-        for(BSBObject bsbObj : selection.copyBufferProperty()) {
+        for (BSBObject bsbObj : selection.copyBufferProperty()) {
             BSBObject copy = (BSBObject) bsbObj.clone();
             copy.setX(x + copy.getX() - minX);
             copy.setY(y + copy.getY() - minY);
 
             bsbInterface.addBSBObject(bsbObj);
         }
+    }
+
+    protected void updateMarquee(double newMouseX, double newMouseY) {
+        double left, right, top, bottom;
+
+        if (newMouseX < startMarqueeX) {
+            left = newMouseX;
+            right = startMarqueeX;
+        } else {
+            left = startMarqueeX;
+            right = newMouseX;
+        }
+
+        if (newMouseY < startMarqueeY) {
+            top = newMouseY;
+            bottom = startMarqueeY;
+        } else {
+            bottom = newMouseY;
+            top = startMarqueeY;
+        }
+
+        top = Math.max(0.0, top);
+        left = Math.max(0.0, left);
+
+        double width = right - left;
+        double height = bottom - top;
+
+        marquee.setX(left);
+        marquee.setY(top);
+        marquee.setWidth(width);
+        marquee.setHeight(height);
+
+        selecting.clear();
+
+        for (Node n : getChildren()) {
+            if (n != marquee && marquee.intersects(n.getBoundsInParent())) {
+                Object obj = n.getUserData();
+                if (obj instanceof BSBObject) {
+                    selecting.add((BSBObject) obj);
+                }
+            }
+        }
+
+        selecting.addAll(startSet);
+        selection.selection.addAll(selecting);
+        selection.selection.retainAll(selecting);
     }
 }
