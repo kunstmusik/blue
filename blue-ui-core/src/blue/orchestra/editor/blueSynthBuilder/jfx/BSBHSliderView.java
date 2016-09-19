@@ -30,6 +30,7 @@ import javafx.scene.layout.BorderPane;
  * @author stevenyi
  */
 public class BSBHSliderView extends BorderPane {
+
     Slider slider;
     ValuePanel valuePanel;
 
@@ -39,19 +40,31 @@ public class BSBHSliderView extends BorderPane {
         slider = new Slider();
         slider.setOrientation(Orientation.HORIZONTAL);
         slider.setPrefHeight(30.0);
-       
-        slider.maxProperty().bind(bsbHSlider.maximumProperty());
-        slider.minProperty().bind(bsbHSlider.minimumProperty());
-        slider.valueProperty().bindBidirectional(bsbHSlider.valueProperty());
-        slider.prefWidthProperty().bind(bsbHSlider.sliderWidthProperty());
 
         valuePanel = new ValuePanel();
-        valuePanel.valueProperty().bind(bsbHSlider.valueProperty().asString());
         valuePanel.setPrefHeight(30.0);
         valuePanel.setPrefWidth(50.0);
 
         setCenter(slider);
         setRight(valuePanel);
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                slider.maxProperty().unbind();
+                slider.minProperty().unbind();
+                slider.valueProperty().unbind();
+                slider.prefWidthProperty().unbind();
+
+                valuePanel.valueProperty().unbind();
+            } else {
+                slider.maxProperty().bind(bsbHSlider.maximumProperty());
+                slider.minProperty().bind(bsbHSlider.minimumProperty());
+                slider.valueProperty().bindBidirectional(bsbHSlider.valueProperty());
+                slider.prefWidthProperty().bind(bsbHSlider.sliderWidthProperty());
+
+                valuePanel.valueProperty().bind(bsbHSlider.valueProperty().asString());
+            }
+        });
     }
-    
+
 }

@@ -28,12 +28,20 @@ import javafx.scene.control.CheckBox;
  */
 public class BSBCheckBoxView extends CheckBox {
 
-   private final BSBCheckBox checkBox;
+    private final BSBCheckBox checkBox;
 
-   public BSBCheckBoxView(BSBCheckBox checkBox) {
-       setUserData(checkBox);
-       this.checkBox = checkBox;
-       this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
-       this.textProperty().bind(checkBox.labelProperty());
-   } 
+    public BSBCheckBoxView(BSBCheckBox checkBox) {
+        setUserData(checkBox);
+        this.checkBox = checkBox;
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                this.selectedProperty().unbindBidirectional(checkBox.selectedProperty());
+                this.textProperty().unbind();
+            } else {
+                this.selectedProperty().bindBidirectional(checkBox.selectedProperty());
+                this.textProperty().bind(checkBox.labelProperty());
+            }
+        });
+    }
 }

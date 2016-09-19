@@ -27,16 +27,24 @@ import javafx.scene.control.Label;
  * @author stevenyi
  */
 public class BSBLabelView extends Label {
-    
+
     private BSBLabel label;
 
     public BSBLabelView(BSBLabel label) {
         setUserData(label);
 
         this.label = label;
-        this.textProperty().bind(label.labelProperty());
-        this.fontProperty().bind(label.fontProperty());
         this.setStyle("-fx-fill: white; "
                 + "-fx-font-smooth-type: lcd");
-    } 
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                this.textProperty().unbind();
+                this.fontProperty().unbind();
+            } else {
+                this.textProperty().bind(label.labelProperty());
+                this.fontProperty().bind(label.fontProperty());
+            }
+        });
+    }
 }

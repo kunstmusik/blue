@@ -40,18 +40,31 @@ public class BSBVSliderView extends BorderPane {
         slider.setOrientation(Orientation.VERTICAL);
         slider.setPrefWidth(30.0);
        
-        slider.maxProperty().bind(bsbVSlider.maximumProperty());
-        slider.minProperty().bind(bsbVSlider.minimumProperty());
-        slider.valueProperty().bindBidirectional(bsbVSlider.valueProperty());
-        slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
-
         valuePanel = new ValuePanel();
-        valuePanel.valueProperty().bind(bsbVSlider.valueProperty().asString());
         valuePanel.setPrefHeight(30.0);
         valuePanel.setPrefWidth(50.0);
 
         setCenter(slider);
         setBottom(valuePanel);
+
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                slider.maxProperty().unbind();
+                slider.minProperty().unbind();
+                slider.valueProperty().unbind();
+                slider.prefWidthProperty().unbind();
+
+                valuePanel.valueProperty().unbind();
+            } else {
+                slider.maxProperty().bind(bsbVSlider.maximumProperty());
+                slider.minProperty().bind(bsbVSlider.minimumProperty());
+                slider.valueProperty().bindBidirectional(bsbVSlider.valueProperty());
+                slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
+
+                valuePanel.valueProperty().bind(bsbVSlider.valueProperty().asString());
+            }
+        });
     }
     
 }

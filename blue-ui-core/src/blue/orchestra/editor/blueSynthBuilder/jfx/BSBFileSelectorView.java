@@ -56,8 +56,6 @@ public class BSBFileSelectorView extends BorderPane {
         this.fileSelector = fileSelector;
 
         fileNameField = new TextField();
-        fileNameField.textProperty().bind(fileSelector.fileNameProperty());
-        fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
         fileNameField.setPrefHeight(OBJECT_HEIGHT);
         fileNameField.setEditable(false);
         fileNameField.setPromptText("Select a File");
@@ -190,6 +188,16 @@ public class BSBFileSelectorView extends BorderPane {
                 event.setDropCompleted(false);
             }
 
+        });
+
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                fileNameField.textProperty().unbind();
+                fileNameField.prefWidthProperty().unbind();
+            } else {
+                fileNameField.textProperty().bind(fileSelector.fileNameProperty());
+                fileNameField.prefWidthProperty().bind(fileSelector.textFieldWidthProperty());
+            }
         });
     }
 }
