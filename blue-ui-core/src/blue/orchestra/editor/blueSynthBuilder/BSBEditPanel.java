@@ -369,8 +369,8 @@ public class BSBEditPanel extends JLayeredPane implements
 //        }
 
         if (this.bsbInterface != null) {
-            this.bsbInterface.getGridSettings().removePropertyChangeListener(
-                    this);
+//            this.bsbInterface.getGridSettings().removePropertyChangeListener(
+//                    this);
         }
 
         this.bsbInterface = null;
@@ -383,7 +383,7 @@ public class BSBEditPanel extends JLayeredPane implements
                 addBSBObject(bsbObj, false);
             }
             this.selectionList.setGridSettings(bsbInterface.getGridSettings());
-            bsbInterface.getGridSettings().addPropertyChangeListener(this);
+//            bsbInterface.getGridSettings().addPropertyChangeListener(this);
         }
 
         this.bsbInterface = bsbInterface;

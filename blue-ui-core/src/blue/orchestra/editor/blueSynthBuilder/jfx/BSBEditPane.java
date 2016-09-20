@@ -22,13 +22,17 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.util.HashSet;
 import java.util.Set;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.collections.SetChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
@@ -60,7 +64,28 @@ public class BSBEditPane extends Pane {
     Set<BSBObject> startSet = null;
     Set<BSBObject> selecting = new HashSet<>();
 
+    private Pane interfaceItemsPane;
+    private Canvas gridCanvas;
+
+    private InvalidationListener gridListener;
+
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
+
+        gridCanvas = new Canvas();
+        interfaceItemsPane = new Pane();
+
+        gridCanvas.widthProperty().bind(widthProperty());
+        gridCanvas.heightProperty().bind(heightProperty());
+
+        widthProperty().addListener((obs, old, newVal) -> {
+            redrawGrid();
+        });
+        heightProperty().addListener((obs, old, newVal) -> {
+            redrawGrid();
+        });
+
+        getChildren().addAll(gridCanvas, interfaceItemsPane);
+
         selection = new BSBEditSelection();
 
         popupMenu = new ContextMenu();
@@ -107,7 +132,7 @@ public class BSBEditPane extends Pane {
                         selection.selection.clear();
                     }
 
-                    startSet = new HashSet(selection.selection);
+                    startSet = new HashSet<>(selection.selection);
                     startMarqueeX = me.getX();
                     startMarqueeY = me.getY();
                     updateMarquee(startMarqueeX, startMarqueeY);
@@ -137,17 +162,24 @@ public class BSBEditPane extends Pane {
                 removeBSBObject(sce.getElementRemoved());
             }
         };
+
+        gridListener = cl -> {
+            redrawGrid();
+        };
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
         if (this.bsbInterface != null) {
-//            this.bsbInterface.getGridSettings().removePropertyChangeListener(
-//                    this);
             this.bsbInterface.interfaceItemsProperty().removeListener(scl);
+            GridSettings gridSettings = this.bsbInterface.getGridSettings();
+            gridSettings.widthProperty().removeListener(gridListener);
+            gridSettings.heightProperty().removeListener(gridListener);
+            gridSettings.gridStyleProperty().removeListener(gridListener);
         }
 
-        getChildren().clear();
+        interfaceItemsPane.getChildren().clear();
+        gridCanvas.visibleProperty().unbind();
 
         this.bsbInterface = bsbInterface;
         selection.setBSBGraphicInterface(bsbInterface);
@@ -156,9 +188,12 @@ public class BSBEditPane extends Pane {
             for (BSBObject bsbObj : bsbInterface) {
                 addBSBObject(bsbObj);
             }
-//            this.selectionList.setGridSettings(bsbInterface.getGridSettings());
-//            bsbInterface.getGridSettings().addPropertyChangeListener(this);
             bsbInterface.interfaceItemsProperty().addListener(scl);
+            gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            GridSettings gridSettings = bsbInterface.getGridSettings();
+            gridSettings.widthProperty().addListener(gridListener);
+            gridSettings.heightProperty().addListener(gridListener);
+            gridSettings.gridStyleProperty().addListener(gridListener);
         }
 
     }
@@ -169,7 +204,7 @@ public class BSBEditPane extends Pane {
             BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
                     selection, objectView);
 
-            getChildren().add(viewHolder);
+            interfaceItemsPane.getChildren().add(viewHolder);
         } catch (Exception e) {
             Exceptions.printStackTrace(e);
         }
@@ -177,7 +212,7 @@ public class BSBEditPane extends Pane {
 
     protected void removeBSBObject(BSBObject bsbObj) {
         Node found = null;
-        for (Node n : getChildren()) {
+        for (Node n : interfaceItemsPane.getChildren()) {
             if (n.getUserData() == bsbObj) {
                 found = n;
                 break;
@@ -185,7 +220,7 @@ public class BSBEditPane extends Pane {
         }
 
         if (found != null) {
-            getChildren().remove(found);
+            interfaceItemsPane.getChildren().remove(found);
         }
     }
 
@@ -239,7 +274,7 @@ public class BSBEditPane extends Pane {
 
         selecting.clear();
 
-        for (Node n : getChildren()) {
+        for (Node n : interfaceItemsPane.getChildren()) {
             if (n != marquee && marquee.intersects(n.getBoundsInParent())) {
                 Object obj = n.getUserData();
                 if (obj instanceof BSBObject) {
@@ -251,5 +286,47 @@ public class BSBEditPane extends Pane {
         selecting.addAll(startSet);
         selection.selection.addAll(selecting);
         selection.selection.retainAll(selecting);
+    }
+
+    private double snap(double v) {
+        return ((int)v) + 0.5;
+    }
+
+    private void redrawGrid() {
+        int totalWidth = (int)getWidth();
+        int totalHeight = (int)getHeight();
+
+        GraphicsContext gc = gridCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, getWidth(), getHeight());
+
+        if(this.bsbInterface == null) { 
+            return;
+        }
+
+        gc.setFill(Color.color(1.0, 1.0, 1.0, 0.25));
+        gc.setStroke(Color.color(1.0, 1.0, 1.0, 0.25));
+        GridSettings grid = bsbInterface.getGridSettings();
+
+        int w = grid.getWidth();
+        int h = grid.getHeight();
+
+        switch (grid.getGridStyle()) {
+            case DOT:
+                for (int x = 0; x < totalWidth; x += w) {
+                    for (int y = 0; y < totalHeight; y += h) {
+                        gc.fillRect(snap(x), snap(y), 1, 1);
+                    }
+                }
+                break;
+            case LINE:
+                for (int x = 0; x < totalWidth; x += w) {
+                    gc.strokeLine(snap(x), 0, snap(x), snap(totalHeight));
+                }
+                for (int y = 0; y < totalHeight; y += h) {
+                    gc.strokeLine(0, snap(y), totalWidth, snap(y));
+                }
+                break;
+        }
+
     }
 }
