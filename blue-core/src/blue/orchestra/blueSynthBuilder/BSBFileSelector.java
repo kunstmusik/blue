@@ -189,7 +189,7 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     }
     
     @Override
-    public Object clone() {
+    public BSBFileSelector clone() {
         BSBFileSelector clone = (BSBFileSelector) super.clone();
         clone.stringChannel = new StringChannel();
         clone.addPropertyChangeListener(clone.stringChannel);
