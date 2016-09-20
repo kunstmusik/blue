@@ -48,6 +48,9 @@ import org.openide.util.Exceptions;
  */
 public class BSBEditPane extends Pane {
 
+    private static final Color GRID_COLOR = 
+        Color.rgb(38, 51, 76).brighter();
+
     private BSBGraphicInterface bsbInterface;
     private BSBEditSelection selection;
 
@@ -71,18 +74,19 @@ public class BSBEditPane extends Pane {
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
 
-        gridCanvas = new Canvas();
+        gridCanvas = new Canvas(); 
         interfaceItemsPane = new Pane();
 
+        gridListener = cl -> {
+            redrawGrid();
+        };
+
+        gridCanvas.setManaged(false);
         gridCanvas.widthProperty().bind(widthProperty());
         gridCanvas.heightProperty().bind(heightProperty());
 
-        widthProperty().addListener((obs, old, newVal) -> {
-            redrawGrid();
-        });
-        heightProperty().addListener((obs, old, newVal) -> {
-            redrawGrid();
-        });
+        widthProperty().addListener(gridListener);
+        heightProperty().addListener(gridListener);
 
         getChildren().addAll(gridCanvas, interfaceItemsPane);
 
@@ -163,9 +167,6 @@ public class BSBEditPane extends Pane {
             }
         };
 
-        gridListener = cl -> {
-            redrawGrid();
-        };
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
@@ -303,8 +304,8 @@ public class BSBEditPane extends Pane {
             return;
         }
 
-        gc.setFill(Color.color(1.0, 1.0, 1.0, 0.25));
-        gc.setStroke(Color.color(1.0, 1.0, 1.0, 0.25));
+        gc.setFill(GRID_COLOR);
+        gc.setStroke(GRID_COLOR);
         GridSettings grid = bsbInterface.getGridSettings();
 
         int w = grid.getWidth();
@@ -314,7 +315,7 @@ public class BSBEditPane extends Pane {
             case DOT:
                 for (int x = 0; x < totalWidth; x += w) {
                     for (int y = 0; y < totalHeight; y += h) {
-                        gc.fillRect(snap(x), snap(y), 1, 1);
+                        gc.strokeRect(snap(x), snap(y), 1, 1);
                     }
                 }
                 break;
