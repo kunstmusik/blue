@@ -101,7 +101,7 @@ public class BSBObjectViewHolder extends StackPane {
                 selection.selection.clear();
                 selection.selection.add(bsbObj);
             }
-            selection.initiateMove();
+            selection.initiateMove(bsbObj);
             startX = me.getSceneX();
             startY = me.getSceneY();
         });

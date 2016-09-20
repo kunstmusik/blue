@@ -228,6 +228,12 @@ public class BSBEditPane extends Pane {
     protected void paste(int x, int y) {
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
+        GridSettings gridSettings = bsbInterface.getGridSettings();
+
+        if(gridSettings.isSnapEnabled()) {
+            x = x - (x % gridSettings.getWidth());
+            y = y - (y % gridSettings.getHeight());
+        }
 
         for (BSBObject bsbObj : selection.copyBufferProperty()) {
             minX = Math.min(minX, bsbObj.getX());

@@ -20,6 +20,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.FXCollections;
@@ -35,9 +36,12 @@ public class BSBEditSelection {
     private final Map<BSBObject, Point> startPositions;
     private double minX = 0.0;
     private double minY = 0.0;
+    private int gridOffsetX = 0;
+    private int gridOffsetY = 0;
     private BSBGraphicInterface bsbInterface = null;
     private ObservableSet<BSBObject> copyBuffer = FXCollections.observableSet();
     private boolean processingMove = false;
+    GridSettings gridSettings = null;
 
     public BSBEditSelection() {
         selection = FXCollections.observableSet();
@@ -50,10 +54,11 @@ public class BSBEditSelection {
 
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         this.bsbInterface = bsbInterface;
+        this.gridSettings = bsbInterface.getGridSettings();
         selection.clear();
     }
 
-    public void initiateMove() {
+    public void initiateMove(BSBObject sourceDragObject) {
         startPositions.clear();
         minX = Double.MAX_VALUE;
         minY = Double.MAX_VALUE;
@@ -64,6 +69,14 @@ public class BSBEditSelection {
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
         }
+
+        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+            gridOffsetX = sourceDragObject.getX() % gridSettings.getWidth();
+            gridOffsetY = sourceDragObject.getY() % gridSettings.getHeight();
+        } else {
+            gridOffsetX = gridOffsetY = 0;
+        }
+
         processingMove = true;
     }
 
@@ -71,15 +84,24 @@ public class BSBEditSelection {
         if(!processingMove) {
             return;
         }
-        double xDiffAdj = Math.min(-minX, xDiff);
-        double yDiffAdj = Math.min(-minY, yDiff);
+
+        if(gridSettings != null && gridSettings.isSnapEnabled()) {
+            int w = gridSettings.getWidth();
+            int h = gridSettings.getHeight();
+                    
+            xDiff = (Math.round(xDiff / w) * w) - gridOffsetX;
+            yDiff = (Math.round(yDiff / h) * h) - gridOffsetY;
+        }
+
+        double xDiffAdj = Math.max(-minX, xDiff);
+        double yDiffAdj = Math.max(-minY, yDiff);
 
         for (Map.Entry<BSBObject, Point> entry : startPositions.entrySet()) {
             BSBObject obj = entry.getKey();
             Point pt = entry.getValue();
 
-            obj.setX((int) Math.round(pt.x + xDiff));
-            obj.setY((int) Math.round(pt.y + yDiff));
+            obj.setX((int) Math.round(pt.x + xDiffAdj));
+            obj.setY((int) Math.round(pt.y + yDiffAdj));
         }
     }
 
