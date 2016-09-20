@@ -88,8 +88,8 @@ public class BSBEditPane extends Pane {
         paste.setOnAction(ae -> paste(addX, addY));
         paste.disableProperty().bind(
                 Bindings.createBooleanBinding(
-                        ()
-                        -> selection.copyBufferProperty().size() == 0, selection.copyBufferProperty()));
+                        () -> selection.copyBufferProperty().size() == 0, 
+                        selection.copyBufferProperty()));
         popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
 
         marquee = new Rectangle();

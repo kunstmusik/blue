@@ -27,7 +27,6 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 
 import blue.BlueSystem;
@@ -50,7 +49,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditor;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javax.swing.JTabbedPane;
@@ -91,8 +92,16 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
         Platform.runLater(() -> {
             bsbEditPane = new BSBEditPane(bsbObjectEntries);
+            ScrollPane scrollPane = new ScrollPane(bsbEditPane);
 
-            final Scene scene = new Scene(new ScrollPane(bsbEditPane));
+            // ensure edit pane is at least size of viewport so that mouse
+            // actions will work even on empty interface
+            scrollPane.viewportBoundsProperty().addListener((obs, old, newVal) -> {
+                bsbEditPane.setMinWidth(newVal.getWidth());
+                bsbEditPane.setMinHeight(newVal.getHeight());
+            });
+            
+            final Scene scene = new Scene(scrollPane);
             BlueFX.style(scene);
             jfxPanel.setScene(scene);
             latch.countDown();
