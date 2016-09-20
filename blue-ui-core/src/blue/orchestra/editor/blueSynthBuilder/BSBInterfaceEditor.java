@@ -49,11 +49,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditor;
 import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.JFXPanel;
-import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Border;
 import javax.swing.JTabbedPane;
 import org.openide.util.Exceptions;
 
@@ -100,6 +99,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                 bsbEditPane.setMinWidth(newVal.getWidth());
                 bsbEditPane.setMinHeight(newVal.getHeight());
             });
+            scrollPane.getStyleClass().add("edge-to-edge");
             
             final Scene scene = new Scene(scrollPane);
             BlueFX.style(scene);
