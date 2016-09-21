@@ -46,7 +46,8 @@ public class BSBLabel extends BSBObject implements Externalizable {
     StringProperty label; 
     ObjectProperty<Font> font;
 
-    static final Pattern SIZE_REGEX = Pattern.compile("size=\"(.*)\"", Pattern.CASE_INSENSITIVE); 
+    static final Pattern SIZE_REGEX = Pattern.compile("size=\"([^\"]*)\"", 
+            Pattern.CASE_INSENSITIVE); 
     static final int SIZE_MAP[] = { 8, 10, 12, 14, 18, 24, 36 };
 
     public BSBLabel() {
