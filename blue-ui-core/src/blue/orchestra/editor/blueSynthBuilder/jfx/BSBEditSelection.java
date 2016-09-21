@@ -109,6 +109,7 @@ public class BSBEditSelection {
         startPositions.clear();
         minX = 0.0;
         minY = 0.0;
+        processingMove = false;
     }
 
     void cut() {

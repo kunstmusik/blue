@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.SetChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -71,6 +73,8 @@ public class BSBEditPane extends Pane {
     private Canvas gridCanvas;
 
     private InvalidationListener gridListener;
+
+    private BooleanProperty marqueeSelecting;    
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
 
@@ -125,6 +129,8 @@ public class BSBEditPane extends Pane {
         marquee.setFill(null);
         marquee.setStroke(Color.WHITE);
 
+        marqueeSelecting = new SimpleBooleanProperty(false);
+
         setOnMousePressed(me -> {
             if (!me.isConsumed() && bsbInterface != null && bsbInterface.isEditEnabled()) {
                 if (me.isSecondaryButtonDown()) {
@@ -139,6 +145,7 @@ public class BSBEditPane extends Pane {
                     startSet = new HashSet<>(selection.selection);
                     startMarqueeX = me.getX();
                     startMarqueeY = me.getY();
+                    setMarqueeSelecting(true);
                     updateMarquee(startMarqueeX, startMarqueeY);
                     getChildren().add(marquee);
                 }
@@ -157,6 +164,7 @@ public class BSBEditPane extends Pane {
                 startMarqueeY = -1.0;
                 getChildren().remove(marquee);
             }
+            setMarqueeSelecting(false);
         });
 
         scl = sce -> {
@@ -171,6 +179,18 @@ public class BSBEditPane extends Pane {
 
     public BSBEditSelection getSelection() {
         return selection;
+    }
+
+    private void setMarqueeSelecting(boolean val) {
+        marqueeSelecting.set(val);
+    }
+
+    public boolean isMarqueeSelecting() {
+        return marqueeSelecting.get();
+    }
+
+    public BooleanProperty marqueeSelectingProperty() {
+        return marqueeSelecting;
     }
 
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {

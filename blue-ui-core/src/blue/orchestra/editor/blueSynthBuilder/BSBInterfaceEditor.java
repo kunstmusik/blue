@@ -113,14 +113,16 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
                 bsbEditPane.getSelection().selection.addListener(
                         (SetChangeListener<? super BSBObject>) se -> {
-                            ObservableSet<? extends BSBObject> set = se.getSet();
-                            if (set.size() != 1) {
-                                bsbObjPropSheet.getItems().clear();
-                            } else {
-                                bsbObjPropSheet.getItems().addAll(
-                                        BeanPropertyUtils.getProperties(set.iterator().next()));
+                            if (!bsbEditPane.isMarqueeSelecting()) {
+                                updateBsbObjPropSheet();
                             }
                         });
+
+                bsbEditPane.marqueeSelectingProperty().addListener((obs, old, newVal) -> {
+                    if (!newVal) {
+                        updateBsbObjPropSheet();
+                    }
+                });
 
                 // ensure edit pane is at least size of viewport so that mouse
                 // actions will work even on empty interface
@@ -133,7 +135,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                 presetPane = new PresetPane();
                 editEnabledCheckBox = new CheckBox("Edit Enabled");
 
-                presetPane.setMargin(editEnabledCheckBox, 
+                presetPane.setMargin(editEnabledCheckBox,
                         new Insets(5, 5, 5, 0));
                 presetPane.getChildren().add(editEnabledCheckBox);
 
@@ -149,16 +151,14 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
                 editEnabledCheckBox.selectedProperty().addListener((obs, old, newVal) -> {
                     ObservableList<Node> items = editAreaPane.getItems();
-                    if(newVal) {
-                        if(!items.contains(rightPane)) {
+                    if (newVal) {
+                        if (!items.contains(rightPane)) {
                             items.add(rightPane);
                             editAreaPane.setDividerPosition(0, dividerPosition);
-                        } 
-                    } else {
-                        if(items.contains(rightPane)) {
-                            dividerPosition = editAreaPane.getDividerPositions()[0];
-                            items.remove(rightPane);
-                        } 
+                        }
+                    } else if (items.contains(rightPane)) {
+                        dividerPosition = editAreaPane.getDividerPositions()[0];
+                        items.remove(rightPane);
                     }
                 });
             } finally {
@@ -322,6 +322,17 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private void updateBsbObjPropSheet() {
+        ObservableSet<? extends BSBObject> set
+                = bsbEditPane.getSelection().selection;
+
+        bsbObjPropSheet.getItems().clear();
+        if (set.size() != 1) {
+            bsbObjPropSheet.getItems().addAll(
+                    BeanPropertyUtils.getProperties(set.iterator().next()));
+        }
     }
 
     /**
