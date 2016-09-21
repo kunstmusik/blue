@@ -169,6 +169,10 @@ public class BSBEditPane extends Pane {
 
     }
 
+    public BSBEditSelection getSelection() {
+        return selection;
+    }
+
     public void editBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
 
         if (this.bsbInterface != null) {
@@ -316,6 +320,10 @@ public class BSBEditPane extends Pane {
 
         int w = grid.getWidth();
         int h = grid.getHeight();
+         
+        if (w < 1 || h < 1) {
+            return;
+        }
 
         switch (grid.getGridStyle()) {
             case DOT:
