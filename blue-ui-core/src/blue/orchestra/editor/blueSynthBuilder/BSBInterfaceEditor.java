@@ -35,10 +35,8 @@ import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
 import blue.orchestra.editor.blueSynthBuilder.jfx.PresetPane;
-import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyEditor;
 import java.util.concurrent.CountDownLatch;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -63,23 +61,14 @@ import org.openide.util.Exceptions;
 public class BSBInterfaceEditor extends JComponent implements PresetListener,
         PropertyChangeListener {
 
-    // JFX
     private BSBEditPane bsbEditPane = null;
+    private TabPane rightPane;
+    private PresetPane presetPane;
+    private CheckBox editEnabledCheckBox;
+    private PropertySheet bsbObjPropSheet;
+    private PropertySheet gridPropSheet;
 
-    TabPane rightPane;
-    PresetPane presetPane;
-    CheckBox editEnabledCheckBox;
-
-    PropertySheet bsbObjPropSheet;
-    PropertySheet gridPropSheet;
-
-    // SWING
-    AlignmentPanel alignPanel = new AlignmentPanel();
-
-    // data
     private BSBGraphicInterface gInterface;
-
-    boolean isUpdating = false;
 
     private double dividerPosition = 0.8;
 
@@ -172,72 +161,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
             Exceptions.printStackTrace(ex);
         }
 
-//        presets.addPresetListener(this);
-        // FIXME
-//        editBox.addEditModeListener(bsbEditPanel);
-//        editBox.addEditModeListener(isEditing ->
-//                rightBar.setVisible(isEditing));
-//
-//        editBox.addEditModeListener((boolean isEditing) -> {
-//            if (!isUpdating && gInterface != null) {
-//                BlueFX.runOnFXThread(
-//                        () -> gInterface.setEditEnabled(isEditing));
-//            }
-//        });
-//        JPanel topBar = new JPanel(new BorderLayout());
-//        topBar.add(presets, BorderLayout.CENTER);
-//
-//        JTabbedPane tabs = new JTabbedPane();
-//        tabs.add(BlueSystem
-//                .getString("instrument.bsb.objectProperties"), bsbPropSheet);
-//        tabs.add("Grid", gridPropertySheet);
-//
-//        gridPropertySheet.setMode(PropertySheet.VIEW_AS_FLAT_LIST);
-//        gridPropertySheet.setToolBarVisible(false);
-//        gridPropertySheet.setDescriptionVisible(false);
-//        gridPropertySheet.getTable().setEditorFactory(
-//                new PropertyEditorRegistryEx());
-//        PropertyEditorRegistry registry = (PropertyEditorRegistry) gridPropertySheet.getTable().getEditorFactory();
-//        registry.registerEditor(Enum.class, new EnumComboBoxPropertyEditor());
-//        gridPropertySheet.setPreferredSize(new Dimension(250, 30));
-//
-//        gridPropertySheet.addPropertySheetChangeListener((PropertyChangeEvent evt) -> {
-//            if (gInterface != null) {
-//                Property prop = (Property) evt.getSource();
-//                prop.writeToObject(gInterface.getGridSettings());
-//            }
-//        });
-//
-//        try {
-//            gridPropertySheet.setBeanInfo(Introspector.getBeanInfo(
-//                    GridSettings.class, Object.class));
-//        } catch (IntrospectionException ex) {
-//            Exceptions.printStackTrace(ex);
-//        }
-//        rightBar.add(new JLabel(BlueSystem
-//                .getString("instrument.bsb.objectProperties")),
-//                BorderLayout.NORTH);
-//        rightBar.add(bsbPropSheet, BorderLayout.CENTER);
-//        rightBar.add(tabs, BorderLayout.CENTER);
-//        rightBar.add(alignPanel, BorderLayout.SOUTH);
-//
-//        rightBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         this.setLayout(new BorderLayout());
-//        this.add(topBar, BorderLayout.NORTH);
-
-        // JSplitPane split = new JSplitPane();
-        // split.add(editScrollPane, JSplitPane.LEFT);
-        // split.add(rightBar, JSplitPane.RIGHT);
-        // this.add(split, BorderLayout.CENTER);
         this.add(jfxPanel, BorderLayout.CENTER);
-//        this.add(rightBar, BorderLayout.EAST);
-
-//        bsbPropSheet.setPreferredSize(new Dimension(250, 30));
-        // FIXME
-//        bsbEditPanel.addSelectionListener(bsbPropSheet);
-// FIXME
-//        alignPanel.setJComponentList(bsbEditPanel.getSelectionList());
-//        rightBar.setVisible(false);
         initActions();
     }
 
@@ -268,8 +193,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                 return;
             }
 
-            isUpdating = true;
-
             if (this.gInterface != null) {
                 editEnabledCheckBox.selectedProperty().unbindBidirectional(
                         this.gInterface.editEnabledProperty());
@@ -297,11 +220,9 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
         presetPane.setVisible(pGroup != null);
 
         if (pGroup != null) {
-//            this.presets.editPresetGroup(gInterface, pGroup);
             presetPane.setPresetGroup(pGroup);
         }
 
-        isUpdating = false;
     }
 
     /*
@@ -329,42 +250,10 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                 = bsbEditPane.getSelection().selection;
 
         bsbObjPropSheet.getItems().clear();
-        if (set.size() != 1) {
+        if (set.size() == 1) {
             bsbObjPropSheet.getItems().addAll(
                     BeanPropertyUtils.getProperties(set.iterator().next()));
         }
     }
 
-    /**
-     * The Class PropertyEditorRegistryEx.
-     *
-     * Code used from:
-     * http://cgu-emp.googlecode.com/svn/trunk/EMP/src/edu/cgu/emp/swing/analysis/ObjectInspectorJPanel.java
-     */
-    private static class PropertyEditorRegistryEx extends PropertyEditorRegistry {
-
-        // We will try to get the "nearest" super class.        
-        /* (non-Javadoc)
-         * @see com.l2fprod.common.propertysheet.PropertyEditorRegistry#getEditor(java.lang.Class)
-         */
-        @Override
-        @SuppressWarnings("rawtypes")
-        public synchronized PropertyEditor getEditor(Class type) {
-            PropertyEditor editor = super.getEditor(type);
-
-            Class c = type;
-
-            while (editor == null) {
-                c = c.getSuperclass();
-
-                if (c == null) {
-                    return editor;
-                }
-
-                editor = super.getEditor(c);
-            }
-
-            return editor;
-        }
-    }
 }
