@@ -91,12 +91,7 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             BlueFX.style(scene);
             knobPanel.setScene(scene);
 
-
-            float val = knob.getValue();
-            val = (val - knob.getMinimum())
-                    / (knob.getMaximum() - knob.getMinimum());
-
-            knobView.setValue(val);
+            knobView.setValue(knob.knobValueProperty().getNormalizedValue());
 
             knobView.valueProperty().addListener((obs, o, n) -> {
                 if(!updating) {
@@ -105,10 +100,10 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             });
 
             valuePanel.valueProperty().addListener((obs, o, n) -> {
-                float newVal = (Float.parseFloat(n) - knob.getMinimum())
-                        / (knob.getMaximum() - knob.getMinimum());
+//                float newVal = (Float.parseFloat(n) - knob.getMinimum())
+//                        / (knob.getMaximum() - knob.getMinimum());
 
-                knobView.setValue(newVal); 
+//                knobView.setValue(newVal); 
             });
 
         });
@@ -133,58 +128,58 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
     }
 
     protected void updateKnobValue() {
-        float value = (float)knobView.getValue();
-        value = (value * (knob.getMaximum() - knob.getMinimum()))
-                + knob.getMinimum();
-        knob.setValue(value);
-        updateValueDisplay();
+//        float value = (float)knobView.getValue();
+//        value = (value * (knob.getMaximum() - knob.getMinimum()))
+//                + knob.getMinimum();
+//        knob.setValue(value);
+//        updateValueDisplay();
 
     }
 
     private void updateValueDisplay() {
-        float val = knob.getValue();
-
-        String strVal = NumberUtilities.formatFloat(val);
-
-        if (strVal.length() > 7) {
-            strVal = strVal.substring(0, 7);
-        }
-
-        final String v = strVal;
-
-        BlueFX.runOnFXThread(() -> valuePanel.setValue(v));
+//        float val = knob.getValue();
+//
+//        String strVal = NumberUtilities.formatFloat(val);
+//
+//        if (strVal.length() > 7) {
+//            strVal = strVal.substring(0, 7);
+//        }
+//
+//        final String v = strVal;
+//
+//        BlueFX.runOnFXThread(() -> valuePanel.setValue(v));
 
     }
 
     public float getMinimum() {
-        return knob.getMinimum();
+        return (float)knob.getMinimum();
     }
 
     public void setMinimum(float minimum) {
-        if (minimum >= knob.getMaximum()) {
-            JOptionPane.showMessageDialog(null, "Error: Min value "
-                    + "can not be set greater or equals to Max value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
-
-        float newVal = (knob.getValue() - knob.getMinimum())
-                / (knob.getMaximum() - knob.getMinimum());
-        
-        BlueFX.runOnFXThread(() -> knobView.setValue(newVal));
-        updateValueDisplay();
+//        if (minimum >= knob.getMaximum()) {
+//            JOptionPane.showMessageDialog(null, "Error: Min value "
+//                    + "can not be set greater or equals to Max value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+//
+//        float newVal = (knob.getValue() - knob.getMinimum())
+//                / (knob.getMaximum() - knob.getMinimum());
+//        
+//        BlueFX.runOnFXThread(() -> knobView.setValue(newVal));
+//        updateValueDisplay();
     }
 
     public float getMaximum() {
-        return knob.getMaximum();
+        return (float)knob.getMaximum();
     }
 
     public void setMaximum(float maximum) {
@@ -202,10 +197,10 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
             return;
         }
 
-        knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
-        float newVal = (knob.getValue() - knob.getMinimum())
-                / (knob.getMaximum() - knob.getMinimum());
-        knobView.setValue(newVal);
+//        knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        float newVal = (knob.getValue() - knob.getMinimum())
+//                / (knob.getMaximum() - knob.getMinimum());
+//        knobView.setValue(newVal);
         updateValueDisplay();
     }
 
@@ -240,13 +235,13 @@ public class BSBKnobView extends AutomatableBSBObjectView implements
                 updating = true;
 
                 updateValueDisplay();
-
-                float val = knob.getValue();
-
-                val = (val - knob.getMinimum())
-                        / (knob.getMaximum() - knob.getMinimum());
-
-                knobView.setValue(val);
+//
+//                float val = knob.getValue();
+//
+//                val = (val - knob.getMinimum())
+//                        / (knob.getMaximum() - knob.getMinimum());
+//
+//                knobView.setValue(val);
 
                 updating = false;
             }

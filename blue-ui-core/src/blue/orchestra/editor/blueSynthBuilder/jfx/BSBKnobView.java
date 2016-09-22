@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2004 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2016 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -19,22 +19,16 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
-import blue.components.lines.LineBoundaryDialog;
-import blue.jfx.BlueFX;
 import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
-import blue.utility.NumberUtilities;
+import javafx.beans.binding.Bindings;
 import javafx.scene.layout.BorderPane;
-import javax.swing.JOptionPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javafx.util.StringConverter;
 
 /**
  * @author steven
  *
- * To change the template for this generated type comment go to Window -
- * Preferences - Java - Code Generation - Code and Comments
  */
 public class BSBKnobView extends BorderPane {
 
@@ -45,25 +39,19 @@ public class BSBKnobView extends BorderPane {
 
     ValuePanel valuePanel;
 
-    ChangeListener cl;
-    boolean updating = false;
-
     /**
      * @param knob
      */
     public BSBKnobView(BSBKnob knob) {
         setUserData(knob);
-        
-        updating = true;
 
         this.knob = knob;
-//        this.setBSBObject(this.knob);
 
         knobView = new Knob();
         valuePanel = new ValuePanel();
         valuePanel.setValidator(v -> {
             try {
-                float f = Float.parseFloat(v);
+                double f = Double.parseDouble(v);
                 return (f >= knob.getMinimum() && f <= knob.getMaximum());
             } catch (NumberFormatException nfe) {
                 return false;
@@ -73,144 +61,141 @@ public class BSBKnobView extends BorderPane {
         this.setCenter(knobView);
         this.setBottom(valuePanel);
 
-        float val = knob.getValue();
-        val = (val - knob.getMinimum())
-                / (knob.getMaximum() - knob.getMinimum());
+        valuePanel.setPrefHeight(VALUE_HEIGHT);
 
-        knobView.setValue(val);
-
-        knobView.valueProperty().addListener((obs, o, n) -> {
-            if (!updating) {
-                updateKnobValue();
+        StringConverter<Number> converter = new StringConverter<Number>() {
+            @Override
+            public String toString(Number object) {
+                return (object == null) ? "" : object.toString();
             }
-        });
 
-        valuePanel.valueProperty().addListener((obs, o, n) -> {
-            float newVal = (Float.parseFloat(n) - knob.getMinimum())
-                    / (knob.getMaximum() - knob.getMinimum());
-
-            knobView.setValue(newVal);
-        });
-
-        cl = (ChangeEvent e) -> {
-            if (!updating) {
-                updateKnobValue();
+            @Override
+            public Number fromString(String string) {
+                try {
+                    return Double.parseDouble(string);
+                } catch (NumberFormatException nfe) {
+                    return 0.0;
+                }
             }
+
         };
 
-        setKnobWidth(knob.getKnobWidth());
-
-        updateValueDisplay();
-
-//        knob.addPropertyChangeListener(this);
-        updating = false;
+        sceneProperty().addListener((obs, old, newVal) -> {
+            if (newVal == null) {
+                knobView.minProperty().unbind();
+                knobView.maxProperty().unbind();
+                knobView.valueProperty().unbindBidirectional(
+                        knob.knobValueProperty().valueProperty());
+                knobView.prefWidthProperty().unbind();
+                knobView.prefHeightProperty().unbind();
+                valuePanel.prefWidthProperty().unbind();
+                Bindings.unbindBidirectional(valuePanel.valueProperty(),
+                        knob.knobValueProperty().valueProperty());
+            } else {
+                knobView.minProperty().bind(knob.knobValueProperty().minProperty());
+                knobView.maxProperty().bind(knob.knobValueProperty().maxProperty());
+                knobView.valueProperty().bindBidirectional(
+                        knob.knobValueProperty().valueProperty());
+                knobView.prefWidthProperty().bind(knob.knobWidthProperty());
+                knobView.prefHeightProperty().bind(knob.knobWidthProperty());
+                valuePanel.prefWidthProperty().bind(knobView.widthProperty());
+                Bindings.bindBidirectional(valuePanel.valueProperty(),
+                        knob.knobValueProperty().valueProperty(), converter);
+            }
+        });
     }
 
-    protected void updateKnobValue() {
-        float value = (float) knobView.getValue();
-        value = (value * (knob.getMaximum() - knob.getMinimum()))
-                + knob.getMinimum();
-        knob.setValue(value);
-        updateValueDisplay();
-
-    }
-
-    private void updateValueDisplay() {
-        float val = knob.getValue();
-
-        String strVal = NumberUtilities.formatFloat(val);
-
-        if (strVal.length() > 7) {
-            strVal = strVal.substring(0, 7);
-        }
-
-        final String v = strVal;
-
-        BlueFX.runOnFXThread(() -> valuePanel.setValue(v));
-
-    }
-
-    public float getMinimum() {
-        return knob.getMinimum();
-    }
-
-    public void setMinimum(float minimum) {
-        if (minimum >= knob.getMaximum()) {
-            JOptionPane.showMessageDialog(null, "Error: Min value "
-                    + "can not be set greater or equals to Max value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
-
-        float newVal = (knob.getValue() - knob.getMinimum())
-                / (knob.getMaximum() - knob.getMinimum());
-
-        BlueFX.runOnFXThread(() -> knobView.setValue(newVal));
-        updateValueDisplay();
-    }
-
-    public float getMaximum() {
-        return knob.getMaximum();
-    }
-
-    public void setMaximum(float maximum) {
-        if (maximum <= knob.getMinimum()) {
-            JOptionPane.showMessageDialog(null, "Error: Max value "
-                    + "can not be set less than or " + "equal to Min value.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-
-            return;
-        }
-
-        String retVal = LineBoundaryDialog.getLinePointMethod();
-
-        if (retVal == null) {
-            return;
-        }
-
-        knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
-        float newVal = (knob.getValue() - knob.getMinimum())
-                / (knob.getMaximum() - knob.getMinimum());
-        knobView.setValue(newVal);
-        updateValueDisplay();
-    }
-
-    public int getKnobWidth() {
-        return knob.getKnobWidth();
-    }
-
-    public void setKnobWidth(int knobWidth) {
-
-//        Dimension d = new Dimension(knobWidth, knobWidth + 23);
-
-//        this.setPreferredSize(d);
-//        this.setSize(d);
-        setPrefWidth(knobWidth);
-        setPrefHeight(knobWidth + 23);
-
-        knob.setKnobWidth(knobWidth);
-
-//        revalidate();
-    }
-
-    public boolean isRandomizable() {
-        return knob.isRandomizable();
-    }
-
-    public void setRandomizable(boolean randomizable) {
-        knob.setRandomizable(randomizable);
-    }
-
-     
-
+//    protected void updateKnobValue() {
+//        float value = (float) knobView.getValue();
+//        value = (value * (knob.getMaximum() - knob.getMinimum()))
+//                + knob.getMinimum();
+//        knob.setValue(value);
+//        updateValueDisplay();
+//    }
+//    private void updateValueDisplay() {
+//        double val = knob.getValue();
+//
+//        String strVal = NumberUtilities.formatDouble(val);
+//
+//        if (strVal.length() > 7) {
+//            strVal = strVal.substring(0, 7);
+//        }
+//
+//        final String v = strVal;
+//
+//        BlueFX.runOnFXThread(() -> valuePanel.setValue(v));
+//    }
+//    public void setMinimum(float minimum) {
+//        if (minimum >= knob.getMaximum()) {
+//            JOptionPane.showMessageDialog(null, "Error: Min value "
+//                    + "can not be set greater or equals to Max value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        knob.setMinimum(minimum, (retVal == LineBoundaryDialog.TRUNCATE));
+//
+//        float newVal = (knob.getValue() - knob.getMinimum())
+//                / (knob.getMaximum() - knob.getMinimum());
+//
+//        BlueFX.runOnFXThread(() -> knobView.setValue(newVal));
+//        updateValueDisplay();
+//    }
+//    public float getMaximum() {
+//        return knob.getMaximum();
+//    }
+//
+//    public void setMaximum(float maximum) {
+//        if (maximum <= knob.getMinimum()) {
+//            JOptionPane.showMessageDialog(null, "Error: Max value "
+//                    + "can not be set less than or " + "equal to Min value.",
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//
+//            return;
+//        }
+//
+//        String retVal = LineBoundaryDialog.getLinePointMethod();
+//
+//        if (retVal == null) {
+//            return;
+//        }
+//
+//        knob.setMaximum(maximum, (retVal == LineBoundaryDialog.TRUNCATE));
+//        float newVal = (knob.getValue() - knob.getMinimum())
+//                / (knob.getMaximum() - knob.getMinimum());
+//        knobView.setValue(newVal);
+//        updateValueDisplay();
+//    }
+//
+//    public int getKnobWidth() {
+//        return knob.getKnobWidth();
+//    }
+//
+//    public void setKnobWidth(int knobWidth) {
+//
+////        Dimension d = new Dimension(knobWidth, knobWidth + 23);
+////        this.setPreferredSize(d);
+////        this.setSize(d);
+//        setPrefWidth(knobWidth);
+//        setPrefHeight(knobWidth + 23);
+//
+//        knob.setKnobWidth(knobWidth);
+//
+////        revalidate();
+//    }
+//    public boolean isRandomizable() {
+//        return knob.isRandomizable();
+//    }
+//
+//    public void setRandomizable(boolean randomizable) {
+//        knob.setRandomizable(randomizable);
+//    }
 //    @Override
 //    public void propertyChange(PropertyChangeEvent pce) {
 //        if (pce.getSource() == this.knob) {
@@ -229,10 +214,5 @@ public class BSBKnobView extends BorderPane {
 //                updating = false;
 //            }
 //        }
-//    }
-
-//    @Override
-//    public void cleanup() {
-//        knob.removePropertyChangeListener(this);
 //    }
 }

@@ -17,39 +17,96 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import blue.components.lines.LineUtils;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 
 /**
  * @author Steven Yi
- * 
+ *
  */
 public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         Randomizable {
 
-    float value = 0.0f;
+    private ClampedValue knobValue;
 
-    float minimum = 0.0f;
+    private IntegerProperty knobWidth;
 
-    float maximum = 1.0f;
+    private BooleanProperty randomizable;
 
-    int knobWidth = 60;
+    public BSBKnob() {
+        knobValue = new ClampedValue(0.0, 1.0, 0.0);
+        knobWidth = new SimpleIntegerProperty(60);
+        randomizable = new SimpleBooleanProperty(true);
+    }
 
-    private boolean randomizable = true;
+    public final void setKnobWidth(int value) {
+        knobWidth.set(value);
+    }
+
+    public final int getKnobWidth() {
+        return knobWidth.get();
+    }
+
+    public final IntegerProperty knobWidthProperty() {
+        return knobWidth;
+    }
+
+    public final void setRandomizable(boolean value) {
+        randomizable.set(value);
+    }
+
+    public final boolean isRandomizable() {
+        return randomizable.get();
+    }
+
+    public final BooleanProperty randomizableProperty() {
+        return randomizable;
+    }
+
+    public final ClampedValue knobValueProperty() {
+        return knobValue;
+    }
+
+    public final void setValue(double val) {
+        knobValue.setValue(val);
+    }
+
+    public final double getValue() {
+        return knobValue.getValue();
+    }
+
+    public final void setMinimum(double value) {
+        knobValue.setMin(value);
+    }
+
+    public final double getMinimum() {
+        return knobValue.getMin();
+    }
+
+    public final void setMaximum(double value) {
+        knobValue.setMax(value);
+    }
+
+    public final double getMaximum() {
+        return knobValue.getMax();
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBKnob knob = new BSBKnob();
-        float minVal = 0;
-        float maxVal = 0;
+        double minVal = 0;
+        double maxVal = 0;
+        double value = 0;
         initBasicFromXML(data, knob);
 
         int version = 1;
@@ -67,19 +124,19 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             String nodeName = node.getName();
             switch (nodeName) {
                 case "minimum":
-                    minVal = Float.parseFloat(node.getTextString());
+                    minVal = Double.parseDouble(node.getTextString());
                     break;
                 case "maximum":
-                    maxVal = Float.parseFloat(node.getTextString());
+                    maxVal = Double.parseDouble(node.getTextString());
                     break;
                 case "value":
-                    knob.value = Float.parseFloat(node.getTextString());
+                    value = Double.parseDouble(node.getTextString());
                     break;
                 case "knobWidth":
                     knob.setKnobWidth(Integer.parseInt(node.getTextString()));
                     break;
                 case "randomizable":
-                    knob.randomizable = XMLUtilities.readBoolean(node);
+                    knob.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
 
@@ -87,18 +144,21 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         // set min and max values
         if (minVal > 1.0f) {
-            knob.maximum = maxVal;
-            knob.minimum = minVal;
+            knob.setMaximum(maxVal);
+            knob.setMinimum(minVal);
         } else {
-            knob.minimum = minVal;
-            knob.maximum = maxVal;
+            knob.setMinimum(minVal);
+            knob.setMaximum(maxVal);
         }
+
 
         // convert from relative to absolute values (0.110.0)
         if (version == 1) {
-            float range = knob.maximum - knob.minimum;
-            knob.value = (knob.value * range) + knob.minimum;
+            double range = maxVal - minVal;
+            value = (value * range) + minVal;
         }
+
+        knob.setValue(value);
 
         return knob;
     }
@@ -114,25 +174,16 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         retVal.setAttribute("version", "2");
 
-        retVal.addElement("minimum").setText(Float.toString(minimum));
-        retVal.addElement("maximum").setText(Float.toString(maximum));
-        retVal.addElement("value").setText(Float.toString(value));
-        retVal.addElement("knobWidth").setText(Integer.toString(knobWidth));
+        retVal.addElement("minimum").setText(Double.toString(getMinimum()));
+        retVal.addElement("maximum").setText(Double.toString(getMaximum()));
+        retVal.addElement("value").setText(Double.toString(getValue()));
+        retVal.addElement("knobWidth").setText(Integer.toString(getKnobWidth()));
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
-                randomizable));
+                isRandomizable()));
 
         return retVal;
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.orchestra.blueSynthBuilder.BSBObject#getBSBObjectView()
-     */
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBKnobView(this);
-//    }
 
     /*
      * (non-Javadoc)
@@ -150,125 +201,85 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             }
         }
 
-        compilationUnit.addReplacementValue(objectName, Float.toString(value));
+        compilationUnit.addReplacementValue(objectName, Double.toString(
+                knobValue.getValue()));
     }
 
-    // ACCESSOR METHODS
-
-    /**
-     * @return Returns the maximum.
-     */
-    public float getMaximum() {
-        return maximum;
-    }
-
-    /**
-     * @param maximum
-     *            The maximum to set.
-     */
-    public void setMaximum(float maximum, boolean truncate) {
-        if (maximum <= getMinimum()) {
-            return;
-        }
-        float oldMax = this.maximum;
-
-        this.maximum = maximum;
-
-        if (truncate) {
-            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-        } else {
-            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
-                    maximum, -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setMax(this.maximum, truncate);
-            }
-        }
-
-        fireBSBObjectChanged();
-    }
-
-    /**
-     * @return Returns the minimum.
-     */
-    public float getMinimum() {
-        return minimum;
-    }
-
-    /**
-     * @param minimum
-     *            The minimum to set.
-     */
-    public void setMinimum(float minimum, boolean truncate) {
-        if (minimum >= maximum) {
-            return;
-        }
-
-        float oldMin = this.minimum;
-        this.minimum = minimum;
-
-        if (truncate) {
-            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-        } else {
-            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
-                    maximum, -1.0f));
-        }
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setMin(this.minimum, truncate);
-            }
-        }
-
-        fireBSBObjectChanged();
-    }
-
-    /**
-     * @return Returns the value.
-     */
-    public float getValue() {
-        return value;
-    }
-
-    /**
-     * @param value
-     */
-    public void setValue(float value) {
-        float oldValue = this.value;
-        this.value = value;
-
-        if (parameters != null) {
-            Parameter param = parameters.getParameter(this.getObjectName());
-            if (param != null) {
-                param.setValue(this.value);
-            }
-        }
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("value", new Float(oldValue),
-                    new Float(this.value));
-        }
-    }
-
-    /**
-     * @return Returns the knobWidth.
-     */
-    public int getKnobWidth() {
-        return knobWidth;
-    }
-
-    /**
-     * @param knobWidth
-     *            The knobWidth to set.
-     */
-    public void setKnobWidth(int knobWidth) {
-        this.knobWidth = knobWidth;
-    }
-
+//    /**
+//     * @param maximum
+//     *            The maximum to set.
+//     */
+//    public void setMaximum(float maximum, boolean truncate) {
+//        if (maximum <= getMinimum()) {
+//            return;
+//        }
+//        float oldMax = this.maximum;
+//
+//        this.maximum = maximum;
+//
+//        if (truncate) {
+//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
+//        } else {
+//            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
+//                    maximum, -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setMax(this.maximum, truncate);
+//            }
+//        }
+//
+//        fireBSBObjectChanged();
+//    }
+//    /**
+//     * @param minimum
+//     *            The minimum to set.
+//     */
+//    public void setMinimum(float minimum, boolean truncate) {
+//        if (minimum >= maximum) {
+//            return;
+//        }
+//
+//        float oldMin = this.minimum;
+//        this.minimum = minimum;
+//
+//        if (truncate) {
+//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
+//        } else {
+//            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
+//                    maximum, -1.0f));
+//        }
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setMin(this.minimum, truncate);
+//            }
+//        }
+//
+//        fireBSBObjectChanged();
+//    }
+//    /**
+//     * @param value
+//     */
+//    public void setValue(float value) {
+//        float oldValue = this.value;
+//        this.value = value;
+//
+//        if (parameters != null) {
+//            Parameter param = parameters.getParameter(this.getObjectName());
+//            if (param != null) {
+//                param.setValue(this.value);
+//            }
+//        }
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("value", new Float(oldValue),
+//                    new Float(this.value));
+//        }
+//    }
     /*
      * (non-Javadoc)
      * 
@@ -276,7 +287,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
      */
     @Override
     public String getPresetValue() {
-        return "ver2:" + NumberUtilities.formatFloat(getValue());
+        return "ver2:" + NumberUtilities.formatDouble(knobValue.getValue());
     }
 
     /*
@@ -286,18 +297,19 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
      */
     @Override
     public void setPresetValue(String val) {
-        float fval;
+        double dval;
 
         // version1 uses relative values and has no ver string
         if (val.indexOf(':') < 0) {
-            fval = Float.parseFloat(val);
-            fval = (fval * (maximum - minimum)) + minimum;
+            float fval = Float.parseFloat(val);
+            dval = (fval * (knobValue.getMax() - knobValue.getMin()))
+                    + knobValue.getMin();
         } else {
             String[] parts = val.split(":");
-            fval = Float.parseFloat(parts[1]);
+            dval = Double.parseDouble(parts[1]);
         }
 
-        setValue(fval);
+        setValue(dval);
     }
 
     @Override
@@ -305,11 +317,11 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         if (parameters == null) {
             return;
         }
-        
-        if(!automationAllowed) {
+
+        if (!automationAllowed) {
             if (objectName != null && objectName.length() != 0) {
                 Parameter param = parameters.getParameter(objectName);
-                if(param != null && param.isAutomationEnabled()) {
+                if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
                     parameters.removeParameter(objectName);
@@ -326,34 +338,35 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         if (parameter != null) {
             parameter.addParameterListener(this);
-            
-            if(!parameter.isAutomationEnabled()) {
-                parameter.setValue(getValue());
+
+            if (!parameter.isAutomationEnabled()) {
+                parameter.setValue((float) getValue());
             }
-            
+
             return;
         }
 
         Parameter param = new Parameter();
-        param.setValue(getValue());
-        param.setMax(getMaximum(), true);
-        param.setMin(getMinimum(), true);
+        param.setValue((float) getValue());
+        param.setMax((float) getMaximum(), true);
+        param.setMin((float) getMinimum(), true);
         param.setName(getObjectName());
         param.setResolution(-1);
         param.addParameterListener(this);
-        param.setValue(getValue());
+        param.setValue((float) getValue());
 
         parameters.addParameter(param);
     }
 
     private void updateValue(float value) {
-        float oldValue = this.value;
-        this.value = value;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("updateValue",
-                    new Float(oldValue), new Float(this.value));
-        }
+//        float oldValue = this.value;
+//        this.value = value;
+//
+//        if (propListeners != null) {
+//            propListeners.firePropertyChange("updateValue",
+//                    new Float(oldValue), new Float(this.value));
+//        }
+        setValue(value);
     }
 
     @Override
@@ -387,33 +400,13 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     }
 
     /* RANDOMIZABLE METHODS */
-
-    @Override
-    public boolean isRandomizable() {
-        return randomizable;
-    }
-
     @Override
     public void randomize() {
-        if (randomizable) {
-            float range = getMaximum() - getMinimum();
-
-            float newValue = (float) (Math.random() * range) + getMinimum();
-
-            float oldValue = this.value;
-
+        if (isRandomizable()) {
+            double range = getMaximum() - getMinimum();
+            double newValue = (Math.random() * range) + getMinimum();
             setValue(newValue);
-
-            if (propListeners != null) {
-                propListeners.firePropertyChange("updateValue", new Float(
-                        oldValue), new Float(this.value));
-            }
         }
     }
 
-    @Override
-    public void setRandomizable(boolean randomizable) {
-        this.randomizable = randomizable;
-        fireBSBObjectChanged();
-    }
 }
