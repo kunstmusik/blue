@@ -17,10 +17,8 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.utility;
 
-import Silence.XMLSerializer;
 import blue.BlueData;
 import blue.Orchestra;
 import blue.orchestra.GenericInstrument;
@@ -29,7 +27,7 @@ import java.util.StringTokenizer;
 
 /**
  * Description of the Class
- * 
+ *
  * @author steven
  * @created November 11, 2001
  */
@@ -43,9 +41,8 @@ public class blueSHARC {
 
     /**
      * Gets the instName attribute of the blueSHARC object
-     * 
-     * @param fileName
-     *            Description of the Parameter
+     *
+     * @param fileName Description of the Parameter
      * @return The instName value
      */
     public String getInstName(String fileName) {
@@ -55,9 +52,8 @@ public class blueSHARC {
 
     /**
      * Gets the pitch attribute of the blueSHARC object
-     * 
-     * @param fileName
-     *            Description of the Parameter
+     *
+     * @param fileName Description of the Parameter
      * @return The pitch value
      */
     public String getPitch(String fileName) {
@@ -103,9 +99,8 @@ public class blueSHARC {
 
     /**
      * Description of the Method
-     * 
-     * @param fileName
-     *            Description of the Parameter
+     *
+     * @param fileName Description of the Parameter
      * @return Description of the Return Value
      */
     public String convertSHARC(File fileName) {
@@ -179,9 +174,8 @@ public class blueSHARC {
 
     /**
      * Description of the Method
-     * 
-     * @param args
-     *            Description of the Parameter
+     *
+     * @param args Description of the Parameter
      */
     public static void main(String args[]) {
 
@@ -190,40 +184,36 @@ public class blueSHARC {
         BlueData data = new BlueData();
         Orchestra orch = data.getOrchestra();
 
-        try {
-            File home = new File("g:\\sharc");
-            File dir[] = home.listFiles(new FileFilter() {
-                // <-- gets subdirectories
+        File home = new File("g:\\sharc");
+        File dir[] = home.listFiles(new FileFilter() {
+            // <-- gets subdirectories
+            @Override
+            public boolean accept(File in) {
+                return in.isDirectory();
+            }
+        });
+        for (int i = 0; i < dir.length; i++) {
+            File spects[] = dir[i].listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File in) {
-                    return in.isDirectory();
+                    return in.getName().endsWith(".spect");
                 }
             });
-            for (int i = 0; i < dir.length; i++) {
-                File spects[] = dir[i].listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File in) {
-                        return in.getName().endsWith(".spect");
-                    }
-                });
-                for (int j = 0; j < spects.length; j++) {
-                    String temp = bSHARC.convertSHARC(spects[j]);
-                    GenericInstrument tempInst = new GenericInstrument();
-                    tempInst.setName(bSHARC.getInstName(spects[j].getName()));
-                    tempInst.setText(temp);
-                    orch.addInstrument(tempInst);
-                }
+            for (int j = 0; j < spects.length; j++) {
+                String temp = bSHARC.convertSHARC(spects[j]);
+                GenericInstrument tempInst = new GenericInstrument();
+                tempInst.setName(bSHARC.getInstName(spects[j].getName()));
+                tempInst.setText(temp);
+                orch.addInstrument(tempInst);
             }
-
-            XMLSerializer xmlSer = new XMLSerializer();
-            try (PrintWriter out = new PrintWriter(new FileWriter(
-                         "C:\\WINDOWS\\Desktop\\SHARC.blue"))) {
-                xmlSer.write(out, data);
-                out.flush();
-            }
-        } catch (IOException | IllegalAccessException e) {
-            e.printStackTrace();
-            System.exit(1);
         }
+
+        // FIXME - is this class file even worth keeping...?
+//            XMLSerializer xmlSer = new XMLSerializer();
+//            try (PrintWriter out = new PrintWriter(new FileWriter(
+//                         "C:\\WINDOWS\\Desktop\\SHARC.blue"))) {
+//                xmlSer.write(out, data);
+//                out.flush();
+//            }
     }
 }

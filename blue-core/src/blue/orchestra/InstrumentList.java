@@ -1,6 +1,5 @@
 package blue.orchestra;
 
-import Silence.XMLSerializer;
 import blue.Tables;
 import blue.utility.ObjectUtilities;
 import java.io.IOException;
@@ -135,14 +134,14 @@ public class InstrumentList extends ArrayList implements ListModel {
         return listenerList.getListeners(listenerType);
     }
 
-    public static void main(String args[]) {
-        XMLSerializer xmlSer = new XMLSerializer();
-        try {
-            xmlSer.write(new java.io.PrintWriter(System.out, true),
-                    new InstrumentList());
-        } catch (IOException | IllegalAccessException e) {
-
-        }
-    }
+//    public static void main(String args[]) {
+//        XMLSerializer xmlSer = new XMLSerializer();
+//        try {
+//            xmlSer.write(new java.io.PrintWriter(System.out, true),
+//                    new InstrumentList());
+//        } catch (IOException | IllegalAccessException e) {
+//
+//        }
+//    }
 
 }

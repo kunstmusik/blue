@@ -18,7 +18,6 @@ package blue.tools.blueShare;
  * @version 1.0
  */
 
-import Silence.XMLSerializer;
 import blue.mixer.Effect;
 import blue.orchestra.Instrument;
 import blue.tools.blueShare.effects.BlueShareEffectCategory;
@@ -30,10 +29,7 @@ import electric.xml.Document;
 import electric.xml.Element;
 import electric.xml.Elements;
 import electric.xml.ParseException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
 import org.apache.xmlrpc.XmlRpcClient;
 import org.apache.xmlrpc.XmlRpcException;
@@ -220,17 +216,19 @@ public class BlueShareRemoteCaller {
         } catch (Exception e) {
         }
 
-        if (instrument == null) {
-            try {
-                XMLSerializer xmlSer = new XMLSerializer();
-                BufferedReader reader = new BufferedReader(new StringReader(
-                        result));
-                instrument = (Instrument) xmlSer.read(reader);
-                return instrument;
-            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
+        // FIXME - analyze what instruments may be in BlueShare that would require
+        // this and handle
+//        if (instrument == null) {
+//            try {
+//                XMLSerializer xmlSer = new XMLSerializer();
+//                BufferedReader reader = new BufferedReader(new StringReader(
+//                        result));
+//                instrument = (Instrument) xmlSer.read(reader);
+//                return instrument;
+//            } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         return instrument;
 

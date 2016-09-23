@@ -19,7 +19,6 @@
  */
 package blue;
 
-import Silence.XMLSerializer;
 import blue.data.BlueDataObjectManager;
 import blue.ftable.FTableSet;
 import blue.midi.MidiInputProcessor;
@@ -227,69 +226,71 @@ public class BlueData implements Serializable, BlueDataObject {
         this.globalOrcSco = globalOrcSco;
     }
 
-    public void upgradeData() {
-        if (commandLine != null || title != null || author != null
-                || notes != null || CsOptions != null || sampleRate != null
-                || controlRate != null || channels != null
-                || commandLine != null) {
-
-            projectProperties.title = title;
-            projectProperties.author = author;
-            projectProperties.notes = notes;
-            projectProperties.sampleRate = sampleRate;
-
-            String ksmps = "1";
-
-            try {
-                int ksmpsNum = Integer.parseInt(sampleRate)
-                        / Integer.parseInt(controlRate);
-                ksmps = Integer.toString(ksmpsNum);
-            } catch (NumberFormatException nfe) {
-
-            }
-
-            projectProperties.ksmps = ksmps;
-
-            projectProperties.channels = channels;
-
-            projectProperties.advancedSettings = commandLine;
-            projectProperties.completeOverride = true;
-        }
-
-        projectProperties.upgradeData();
-
-        commandLine = null;
-        title = null;
-        author = null;
-        notes = null;
-        CsOptions = null;
-        sampleRate = null;
-        controlRate = null;
-        channels = null;
-        commandLine = null;
-
-        // for version 0.89.5, moving data to globalOrcSco
-        if (this.globalScore != null) {
-            this.globalOrcSco.setGlobalSco(this.globalScore);
-        }
-        this.globalScore = null;
-
-        if (this.orchestra != null && this.orchestra.globals != null) {
-            this.globalOrcSco.setGlobalOrc(this.orchestra.globals);
-            this.orchestra.globals = null;
-        }
-
-        if (this.tables != null) {
-            System.out.println("tables not null");
-            this.tableSet.setTables(this.tables);
-        }
-        this.tables = null;
-
-        // for 0.91.5, converting all repetitionObjects to genericScore
-//        convertRepetitionObjects(this.pObj);
-        convertOrchestra();
-
-    }
+    // FIXME - ensure upgradeData info is taken into account when developing
+    // upgrader after 2.7.0
+//    public void upgradeData() {
+//        if (commandLine != null || title != null || author != null
+//                || notes != null || CsOptions != null || sampleRate != null
+//                || controlRate != null || channels != null
+//                || commandLine != null) {
+//
+//            projectProperties.title = title;
+//            projectProperties.author = author;
+//            projectProperties.notes = notes;
+//            projectProperties.sampleRate = sampleRate;
+//
+//            String ksmps = "1";
+//
+//            try {
+//                int ksmpsNum = Integer.parseInt(sampleRate)
+//                        / Integer.parseInt(controlRate);
+//                ksmps = Integer.toString(ksmpsNum);
+//            } catch (NumberFormatException nfe) {
+//
+//            }
+//
+//            projectProperties.ksmps = ksmps;
+//
+//            projectProperties.channels = channels;
+//
+//            projectProperties.advancedSettings = commandLine;
+//            projectProperties.completeOverride = true;
+//        }
+//
+//        projectProperties.upgradeData();
+//
+//        commandLine = null;
+//        title = null;
+//        author = null;
+//        notes = null;
+//        CsOptions = null;
+//        sampleRate = null;
+//        controlRate = null;
+//        channels = null;
+//        commandLine = null;
+//
+//        // for version 0.89.5, moving data to globalOrcSco
+//        if (this.globalScore != null) {
+//            this.globalOrcSco.setGlobalSco(this.globalScore);
+//        }
+//        this.globalScore = null;
+//
+//        if (this.orchestra != null && this.orchestra.globals != null) {
+//            this.globalOrcSco.setGlobalOrc(this.orchestra.globals);
+//            this.orchestra.globals = null;
+//        }
+//
+//        if (this.tables != null) {
+//            System.out.println("tables not null");
+//            this.tableSet.setTables(this.tables);
+//        }
+//        this.tables = null;
+//
+//        // for 0.91.5, converting all repetitionObjects to genericScore
+////        convertRepetitionObjects(this.pObj);
+//        convertOrchestra();
+//
+//    }
 
     /**
      * Added in 0.95.0 for converting Arrangement to not depend on references to
@@ -406,13 +407,15 @@ public class BlueData implements Serializable, BlueDataObject {
         if (text.startsWith("<blueData")) {
             Document d = new Document(text);
             tempData = BlueData.loadFromXML(d.getElement("blueData"));
-        } else {
-            XMLSerializer xmlSer = new XMLSerializer();
-            try (BufferedReader xmlIn = new BufferedReader(new StringReader(text))) {
-                tempData = (BlueData) xmlSer.read(xmlIn);
-            }
-            tempData.upgradeData();
-        }
+        } 
+// FIXME - Dead Code
+//        else {
+//            XMLSerializer xmlSer = new XMLSerializer();
+//            try (BufferedReader xmlIn = new BufferedReader(new StringReader(text))) {
+//                tempData = (BlueData) xmlSer.read(xmlIn);
+//            }
+//            tempData.upgradeData();
+//        }
 
         return tempData;
     }
