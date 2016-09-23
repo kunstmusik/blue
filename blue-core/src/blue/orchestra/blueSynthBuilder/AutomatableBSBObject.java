@@ -44,11 +44,19 @@ public abstract class AutomatableBSBObject extends BSBObject {
 
     transient BSBParameterList parameters = null;
 
+    public AutomatableBSBObject() {
+       super(); 
+    }
+
+    public AutomatableBSBObject(AutomatableBSBObject bsbObj){
+        super(bsbObj);
+        automationAllowed = bsbObj.isAutomationAllowed();
+    }
+
     public void setBSBParameterList(BSBParameterList parameters) {
         this.parameters = parameters;
         initializeParameters();
     }
-
 
     // OVERRIDE to handle parameter name changes
     @Override

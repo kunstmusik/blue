@@ -34,104 +34,109 @@ import javafx.beans.property.SimpleDoubleProperty;
  */
 public class BSBValue extends AutomatableBSBObject implements ParameterListener {
 
-    private DoubleProperty defaultValue;
-    private DoubleProperty minimum;
-    private DoubleProperty maximum;
+    private DoubleProperty defaultValue = new SimpleDoubleProperty(0.0) {
+        @Override
+        protected void invalidated() {
+        }
+    };
+    private DoubleProperty minimum = new SimpleDoubleProperty(0.0) {
+        @Override
+        protected void invalidated() {
+
+        }
+    };
+
+    private DoubleProperty maximum = new SimpleDoubleProperty(1.0) {
+        @Override
+        protected void invalidated() {
+        }
+    };
 
     public BSBValue() {
-	defaultValue = new SimpleDoubleProperty(0.0) {
-	    @Override
-	    protected void invalidated() {
-	    }
-	};
-	minimum = new SimpleDoubleProperty(0.0) {
-	    @Override
-	    protected void invalidated() {
+    }
 
-	    }
-	};
-	maximum = new SimpleDoubleProperty(1.0) {
-	    @Override
-	    protected void invalidated() {
-	    }
-	};
+    public BSBValue(BSBValue val) {
+        super(val);
+        setDefaultValue(val.getDefaultValue());
+        setMinimum(val.getMinimum());
+        setMaximum(val.getMaximum());
     }
 
     public final void setDefaultValue(double value) {
-	defaultValue.set(value);
+        defaultValue.set(value);
     }
 
     public final double getDefaultValue() {
-	return defaultValue.get();
+        return defaultValue.get();
     }
 
     public final DoubleProperty defaultValueProperty() {
-	return defaultValue;
+        return defaultValue;
     }
 
     public final void setMinimum(double value) {
-	minimum.set(value);
+        minimum.set(value);
     }
 
     public final double getMinimum() {
-	return minimum.get();
+        return minimum.get();
     }
 
     public final DoubleProperty minimumProperty() {
-	return minimum;
+        return minimum;
     }
 
     public final void setMaximum(double value) {
-	maximum.set(value);
+        maximum.set(value);
     }
 
     public final double getMaximum() {
-	return maximum.get();
+        return maximum.get();
     }
 
     public final DoubleProperty maximumProperty() {
-	return maximum;
+        return maximum;
     }
 
     public static BSBObject loadFromXML(Element data) {
-	BSBValue value = new BSBValue();
-	double minVal = 0.0;
-	double maxVal = 1.0;
-	double val = 0.0;
-	initBasicFromXML(data, value);
+        BSBValue value = new BSBValue();
+        double minVal = 0.0;
+        double maxVal = 1.0;
+        double val = 0.0;
+        initBasicFromXML(data, value);
 
-	Elements nodes = data.getElements();
+        Elements nodes = data.getElements();
 
-	while (nodes.hasMoreElements()) {
-	    Element node = nodes.next();
-	    String nodeName = node.getName();
-	    final String nodeText = node.getTextString();
-	    switch (nodeName) {
-		case "minimum":
-		    minVal = Double.parseDouble(nodeText);
-		    break;
-		case "maximum":
-		    maxVal = Double.parseDouble(nodeText);
-		    break;
-		case "defaultValue":
-		    val = Double.parseDouble(nodeText);
-		    break;
-	    }
+        while (nodes.hasMoreElements()) {
+            Element node = nodes.next();
+            String nodeName = node.getName();
+            final String nodeText = node.getTextString();
+            switch (nodeName) {
+                case "minimum":
+                    minVal = Double.parseDouble(nodeText);
+                    break;
+                case "maximum":
+                    maxVal = Double.parseDouble(nodeText);
+                    break;
+                case "defaultValue":
+                    val = Double.parseDouble(nodeText);
+                    break;
+            }
 
-	}
+        }
 
-	// set min and max values
-	if (minVal > 1.0f) {
-	    value.setMaximum(maxVal);
-	    value.setMinimum(minVal);
-	} else {
-	    value.setMinimum(minVal);
-	    value.setMaximum(maxVal);
-	}
+        // set min and max values
+        if (minVal > 1.0f) {
+            value.setMaximum(maxVal);
+            value.setMinimum(minVal);
+        } else {
+            value.setMinimum(minVal);
+            value.setMaximum(maxVal);
+        }
 
-	value.setDefaultValue(val);
+        value.setDefaultValue(val);
 
-	return value;
+        return value;
     }
 
     /*
@@ -141,14 +146,14 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      */
     @Override
     public Element saveAsXML() {
-	Element retVal = getBasicXML(this);
+        Element retVal = getBasicXML(this);
 
-	retVal.addElement("minimum").setText(Double.toString(getMinimum()));
-	retVal.addElement("maximum").setText(Double.toString(getMaximum()));
-	retVal.addElement("defaultValue").setText(
-		Double.toString(getDefaultValue()));
+        retVal.addElement("minimum").setText(Double.toString(getMinimum()));
+        retVal.addElement("maximum").setText(Double.toString(getMaximum()));
+        retVal.addElement("defaultValue").setText(
+                Double.toString(getDefaultValue()));
 
-	return retVal;
+        return retVal;
     }
 
     /*
@@ -167,17 +172,17 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      */
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-	if (parameters != null) {
-	    Parameter param = parameters.getParameter(this.getObjectName());
-	    if (param != null && param.getCompilationVarName() != null) {
-		compilationUnit.addReplacementValue(objectName, param
-			.getCompilationVarName());
-		return;
-	    }
-	}
+        if (parameters != null) {
+            Parameter param = parameters.getParameter(this.getObjectName());
+            if (param != null && param.getCompilationVarName() != null) {
+                compilationUnit.addReplacementValue(objectName, param
+                        .getCompilationVarName());
+                return;
+            }
+        }
 
-	compilationUnit.addReplacementValue(objectName,
-		Double.toString(getDefaultValue()));
+        compilationUnit.addReplacementValue(objectName,
+                Double.toString(getDefaultValue()));
     }
 
 //    /**
@@ -265,7 +270,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      */
     @Override
     public String getPresetValue() {
-	return NumberUtilities.formatDouble(getDefaultValue());
+        return NumberUtilities.formatDouble(getDefaultValue());
     }
 
     /*
@@ -275,54 +280,54 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
      */
     @Override
     public void setPresetValue(String val) {
-	double fval = Double.parseDouble(val);
-	setDefaultValue(fval);
+        double fval = Double.parseDouble(val);
+        setDefaultValue(fval);
     }
 
     @Override
     public void initializeParameters() {
-	if (parameters == null) {
-	    return;
-	}
+        if (parameters == null) {
+            return;
+        }
 
-	if (!automationAllowed) {
-	    if (objectName != null && objectName.length() != 0) {
-		Parameter param = parameters.getParameter(objectName);
-		if (param != null && param.isAutomationEnabled()) {
-		    automationAllowed = true;
-		} else {
-		    parameters.removeParameter(objectName);
-		    return;
-		}
-	    }
-	}
+        if (!automationAllowed) {
+            if (objectName != null && objectName.length() != 0) {
+                Parameter param = parameters.getParameter(objectName);
+                if (param != null && param.isAutomationEnabled()) {
+                    automationAllowed = true;
+                } else {
+                    parameters.removeParameter(objectName);
+                    return;
+                }
+            }
+        }
 
-	if (this.objectName == null || this.objectName.trim().length() == 0) {
-	    return;
-	}
+        if (this.objectName == null || this.objectName.trim().length() == 0) {
+            return;
+        }
 
-	Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.objectName);
 
-	if (parameter != null) {
-	    parameter.addParameterListener(this);
+        if (parameter != null) {
+            parameter.addParameterListener(this);
 
-	    if (!parameter.isAutomationEnabled()) {
-		parameter.setValue((float)getDefaultValue());
-	    }
+            if (!parameter.isAutomationEnabled()) {
+                parameter.setValue((float) getDefaultValue());
+            }
 
-	    return;
-	}
+            return;
+        }
 
-	Parameter param = new Parameter();
-	param.setValue((float) getDefaultValue());
-	param.setMax((float) getMaximum(), true);
-	param.setMin((float) getMinimum(), true);
-	param.setName(getObjectName());
-	param.setResolution(-1);
-	param.addParameterListener(this);
-	param.setValue((float) getDefaultValue());
+        Parameter param = new Parameter();
+        param.setValue((float) getDefaultValue());
+        param.setMax((float) getMaximum(), true);
+        param.setMin((float) getMinimum(), true);
+        param.setName(getObjectName());
+        param.setResolution(-1);
+        param.addParameterListener(this);
+        param.setValue((float) getDefaultValue());
 
-	parameters.addParameter(param);
+        parameters.addParameter(param);
     }
 
 //    private void updateValue(float value) {
@@ -336,14 +341,14 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
 //    }
     @Override
     public void lineDataChanged(Parameter param) {
-	Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.objectName);
 
-	if (parameter != null) {
-	    float time = ParameterTimeManagerFactory.getInstance().getTime();
-	    float val = parameter.getLine().getValue(time);
+        if (parameter != null) {
+            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            float val = parameter.getLine().getValue(time);
 
-	    setDefaultValue(val);
-	}
+            setDefaultValue(val);
+        }
     }
 
     @Override
@@ -353,14 +358,19 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
     // override to handle removing/adding parameters when this changes
     @Override
     public void setAutomationAllowed(boolean allowAutomation) {
-	this.automationAllowed = allowAutomation;
+        this.automationAllowed = allowAutomation;
 
-	if (parameters != null) {
-	    if (allowAutomation) {
-		initializeParameters();
-	    } else if (objectName != null && objectName.length() != 0) {
-		parameters.removeParameter(objectName);
-	    }
-	}
+        if (parameters != null) {
+            if (allowAutomation) {
+                initializeParameters();
+            } else if (objectName != null && objectName.length() != 0) {
+                parameters.removeParameter(objectName);
+            }
+        }
+    }
+
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBValue(this);
     }
 }

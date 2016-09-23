@@ -34,35 +34,21 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBXYController extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    IntegerProperty width;
-    IntegerProperty height;
-    ClampedValue xValue;
-    ClampedValue yValue;
-    BooleanProperty randomizable;
-
-//    int width = 100;
-//
-//    int height = 80;
-//
-//    float xMin = 0.0f;
-//
-//    float xMax = 1.0f;
-//
-//    float yMin = 0.0f;
-//
-//    float yMax = 1.0f;
-//
-//    float xValue = 0.5f;
-//
-//    float yValue = 0.5f;
-//
-//    boolean randomizable = true;
+    private final IntegerProperty width = new SimpleIntegerProperty(100);
+    private final IntegerProperty height = new SimpleIntegerProperty(80);
+    private final ClampedValue xValue;
+    private final ClampedValue yValue;
+    private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
+            
     public BSBXYController() {
-        width = new SimpleIntegerProperty(100);
-        height = new SimpleIntegerProperty(80);
         xValue = new ClampedValue(0.0, 1.0, 0.5);
         yValue = new ClampedValue(0.0, 1.0, 0.5);
-        randomizable = new SimpleBooleanProperty(true);
+    }
+
+    public BSBXYController(BSBXYController xy){
+        super(xy);
+        xValue = new ClampedValue(xy.xValueProperty());
+        yValue = new ClampedValue(xy.yValueProperty());
     }
 
     // OVERRIDE to handle parameter name changes and multiple parameters
@@ -645,10 +631,6 @@ public class BSBXYController extends AutomatableBSBObject implements
     }
 
     /* RANDOMIZABLE METHODS */
-//    @Override
-//    public boolean isRandomizable() {
-//        return randomizable;
-//    }
     @Override
     public void randomize() {
         if (isRandomizable()) {
@@ -657,9 +639,8 @@ public class BSBXYController extends AutomatableBSBObject implements
         }
     }
 
-//    @Override
-//    public void setRandomizable(boolean randomizable) {
-//        this.randomizable = randomizable;
-//        fireBSBObjectChanged();
-//    }
+    @Override
+    public BSBXYController deepCopy() {
+        return new BSBXYController(this);
+    }
 }

@@ -1,6 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (c) 2000-2004 Steven Yi (stevenyi@gmail.com)
+ * Copyright (c) 2000-2016 Steven Yi (stevenyi@gmail.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published
@@ -19,8 +19,6 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
-//import blue.orchestra.editor.blueSynthBuilder.BSBLabelView;
-//import blue.orchestra.editor.blueSynthBuilder.BSBObjectView;
 import electric.xml.Element;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -37,22 +35,23 @@ import javafx.scene.text.FontWeight;
 
 /**
  * @author steven
- * 
- * To change the template for this generated type comment go to Window -
- * Preferences - Java - Code Generation - Code and Comments
  */
-public class BSBLabel extends BSBObject implements Externalizable {
+public class BSBLabel extends BSBObject {
 
-    StringProperty label; 
-    ObjectProperty<Font> font;
+    static final Pattern SIZE_REGEX = Pattern.compile("size=\"([^\"]*)\"",
+            Pattern.CASE_INSENSITIVE);
+    static final int SIZE_MAP[] = {8, 10, 12, 14, 18, 24, 36};
 
-    static final Pattern SIZE_REGEX = Pattern.compile("size=\"([^\"]*)\"", 
-            Pattern.CASE_INSENSITIVE); 
-    static final int SIZE_MAP[] = { 8, 10, 12, 14, 18, 24, 36 };
+    StringProperty label = new SimpleStringProperty("label");
+    ObjectProperty<Font> font = new SimpleObjectProperty<>(new Font(12));
 
     public BSBLabel() {
-        label = new SimpleStringProperty("label");
-        font = new SimpleObjectProperty<>(new Font(12));
+    }
+
+    public BSBLabel(BSBLabel label) {
+        super(label);
+        setLabel(label.getLabel());
+        setFont(label.getFont());
     }
 
     public final void setLabel(String value) {
@@ -82,16 +81,16 @@ public class BSBLabel extends BSBObject implements Externalizable {
     protected static Font parseFont(String text) {
         Matcher m = SIZE_REGEX.matcher(text);
         int retVal = 2;
-        if(m.find()) {
+        if (m.find()) {
             try {
                 String t = m.group(1);
                 int v = Integer.parseInt(m.group(1));
 
-                if(t.charAt(0) == '+' || 
-                        t.charAt(0) == '-') {
+                if (t.charAt(0) == '+'
+                        || t.charAt(0) == '-') {
                     retVal += v + 1;
                 } else {
-                    retVal = v - 1; 
+                    retVal = v - 1;
                 }
             } catch (NumberFormatException nfe) {
                 nfe.printStackTrace();
@@ -101,7 +100,7 @@ public class BSBLabel extends BSBObject implements Externalizable {
         retVal = Math.min(Math.max(0, retVal), 6);
 
         FontWeight weight = FontWeight.NORMAL;
-        if(text.indexOf("<b>") >= 0 || retVal > 2) {
+        if (text.indexOf("<b>") >= 0 || retVal > 2) {
             weight = FontWeight.BOLD;
         }
         Font f = Font.font("System Regular", weight, SIZE_MAP[retVal]);
@@ -109,7 +108,7 @@ public class BSBLabel extends BSBObject implements Externalizable {
     }
 
     protected static String stripHTML(String text) {
-        return text.replaceAll("\\<[^>]*?>","");
+        return text.replaceAll("\\<[^>]*?>", "");
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -125,8 +124,11 @@ public class BSBLabel extends BSBObject implements Externalizable {
         }
 
         String labelText = data.getTextString("label");
+        if(labelText == null) {
+            labelText = "";
+        }
 
-        if(version < 2) {
+        if (version < 2) {
             label.setFont(parseFont(labelText));
             labelText = stripHTML(labelText);
         } else {
@@ -154,7 +156,6 @@ public class BSBLabel extends BSBObject implements Externalizable {
         return retVal;
     }
 
-
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         // DO NOTHING
@@ -180,21 +181,7 @@ public class BSBLabel extends BSBObject implements Externalizable {
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(objectName);
-        out.writeUTF(getLabel());
-        out.writeUTF(getFont().getName());
-        out.writeDouble(getFont().getSize());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setObjectName(in.readUTF());
-        setLabel(in.readUTF());
-
-        String fontName = in.readUTF();
-        double fontSize = in.readDouble();
-
-        setFont(new Font(fontName, fontSize));
+    public BSBObject deepCopy() {
+        return new BSBLabel(this);
     }
 }

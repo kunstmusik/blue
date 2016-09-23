@@ -25,10 +25,6 @@ import blue.automation.ParameterTimeManagerFactory;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -37,7 +33,7 @@ import javafx.beans.property.StringProperty;
 /**
  * @author steven
  */
-public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable, Externalizable {
+public class BSBCheckBox extends AutomatableBSBObject implements ParameterListener, Randomizable {
 
     private StringProperty label;
     private BooleanProperty selected;
@@ -47,6 +43,14 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         label = new SimpleStringProperty("label");
         selected = new SimpleBooleanProperty(false);
         randomizable = new SimpleBooleanProperty(true);
+    }
+
+    public BSBCheckBox(BSBCheckBox checkBox) {
+        super(checkBox);
+
+        label = new SimpleStringProperty(checkBox.getLabel());
+        selected = new SimpleBooleanProperty(checkBox.isSelected());
+        randomizable = new SimpleBooleanProperty(checkBox.isRandomizable());
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -281,21 +285,8 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(getObjectName());
-        out.writeUTF(getLabel());
-        out.writeBoolean(isSelected());
-        out.writeBoolean(isRandomizable());
-        out.writeBoolean(isAutomationAllowed());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setObjectName(in.readUTF());
-        setLabel(in.readUTF());
-        setSelected(in.readBoolean());
-        setRandomizable(in.readBoolean());
-        setAutomationAllowed(in.readBoolean());
+    public BSBCheckBox deepCopy() {
+        return new BSBCheckBox(this);
     }
 
 }

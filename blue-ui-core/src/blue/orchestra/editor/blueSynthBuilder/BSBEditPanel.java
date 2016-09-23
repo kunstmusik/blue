@@ -537,7 +537,7 @@ public class BSBEditPanel extends JLayeredPane implements
         selectionPerformed(clearSelection);
 
         for(BSBObject bsbObj : copyBuffer) {
-            BSBObject clone = (BSBObject) bsbObj.clone();
+            BSBObject clone = bsbObj.deepCopy();
 
             BSBObjectViewHolder viewHolder = addBSBObject(clone);
 

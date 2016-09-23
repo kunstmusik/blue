@@ -20,11 +20,11 @@
 
 package blue.orchestra.blueSynthBuilder;
 
+import blue.DeepCopyable;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import javafx.beans.property.IntegerProperty;
@@ -35,7 +35,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author Steven Yi
  * 
  */
-public abstract class BSBObject implements Serializable, Cloneable {
+public abstract class BSBObject implements DeepCopyable<BSBObject> {
 
     /**
      * Object name should be non-null and unique within BSBGraphicsInterface
@@ -51,6 +51,12 @@ public abstract class BSBObject implements Serializable, Cloneable {
     public BSBObject() {
         x = new SimpleIntegerProperty(0);
         y = new SimpleIntegerProperty(0);
+    }
+
+    public BSBObject(BSBObject bsbObj) {
+        x = new SimpleIntegerProperty(bsbObj.getX());
+        y = new SimpleIntegerProperty(bsbObj.getY());
+        objectName = bsbObj.objectName;
     }
 
     transient Vector listeners = null;
@@ -173,11 +179,6 @@ public abstract class BSBObject implements Serializable, Cloneable {
     public abstract String getPresetValue();
 
     public abstract void setPresetValue(String val);
-
-    @Override
-    public BSBObject clone() {
-        return (BSBObject) ObjectUtilities.clone(this);
-    }
 
     @Override
     public boolean equals(Object obj) {

@@ -28,21 +28,24 @@ import javafx.beans.property.StringProperty;
 
 public class BSBTextField extends BSBObject {
 
-    private StringProperty value;
+    private StringProperty value = new SimpleStringProperty("");
 
-    private IntegerProperty textFieldWidth;
+    private IntegerProperty textFieldWidth = new SimpleIntegerProperty(100) {
+        @Override
+        protected void invalidated() {
+            if (get() < 5) {
+                set(5);
+            }
+        }
+    };
 
     public BSBTextField() {
-        value = new SimpleStringProperty("");
-        textFieldWidth = new SimpleIntegerProperty(100) {
-            @Override
-            protected void invalidated() {
-                if (get() < 5) {
-                    set(5);
-                }
-            }
+    }
 
-        };
+    public BSBTextField(BSBTextField tf) {
+        super(tf);
+        setValue(tf.getValue());
+        setTextFieldWidth(tf.getTextFieldWidth());
     }
 
     public final void setValue(String val) {
@@ -118,6 +121,11 @@ public class BSBTextField extends BSBObject {
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         compilationUnit.addReplacementValue(objectName, getValue());
+    }
+
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBTextField(this);
     }
 
 }

@@ -265,11 +265,11 @@ public class BSBEditPane extends Pane {
         }
 
         for (BSBObject bsbObj : selection.copyBufferProperty()) {
-            BSBObject copy = (BSBObject) bsbObj.clone();
+            BSBObject copy = bsbObj.deepCopy();
             copy.setX(x + copy.getX() - minX);
             copy.setY(y + copy.getY() - minY);
 
-            bsbInterface.addBSBObject(bsbObj);
+            bsbInterface.addBSBObject(copy);
         }
     }
 

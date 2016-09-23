@@ -39,17 +39,20 @@ public class GridSettings {
     public static enum GridStyle {
         NONE, DOT, LINE
     }
-    
-    private IntegerProperty width;
-    private IntegerProperty height;
-    private ObjectProperty<GridStyle> gridStyle;
-    private BooleanProperty snapEnabled;
+
+    private IntegerProperty width = new SimpleIntegerProperty(15);
+    private IntegerProperty height = new SimpleIntegerProperty(15);
+    private ObjectProperty<GridStyle> gridStyle = new SimpleObjectProperty(GridStyle.DOT);
+    private BooleanProperty snapEnabled = new SimpleBooleanProperty(true);
 
     public GridSettings() {
-        width = new SimpleIntegerProperty(15);
-        height = new SimpleIntegerProperty(15);
-        gridStyle = new SimpleObjectProperty(GridStyle.DOT);
-        snapEnabled = new SimpleBooleanProperty(true);
+    }
+
+    public GridSettings(GridSettings settings){
+        setWidth(settings.getWidth());
+        setHeight(settings.getHeight());
+        setGridStyle(settings.getGridStyle());
+        setSnapEnabled(settings.isSnapEnabled());
     }
 
     public final void setWidth(int value) {

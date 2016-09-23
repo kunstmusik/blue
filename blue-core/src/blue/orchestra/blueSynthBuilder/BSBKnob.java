@@ -39,15 +39,17 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         Randomizable {
 
     private ClampedValue knobValue;
+    private IntegerProperty knobWidth = new SimpleIntegerProperty(60);
+    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
-    private IntegerProperty knobWidth;
-
-    private BooleanProperty randomizable;
 
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0);
-        knobWidth = new SimpleIntegerProperty(60);
-        randomizable = new SimpleBooleanProperty(true);
+    }
+
+    public BSBKnob(BSBKnob knob) {
+        super(knob);
+        knobValue = new ClampedValue(knob.knobValueProperty());
     }
 
     public final void setKnobWidth(int value) {
@@ -407,6 +409,11 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             double newValue = (Math.random() * range) + getMinimum();
             setValue(newValue);
         }
+    }
+
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBKnob(this);
     }
 
 }

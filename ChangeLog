@@ -28,6 +28,11 @@ FIX
 * Mixer - using "Edit Effect" to edit the definition of an effect within the 
   mixer would cause an exception after closing the editor
 
+INTERNAL
+
+* Replaced use of Cloneable and Serializable with copy constructors and new 
+  DeepCopyable interface for all project data models
+
 
 > Notes for 2.6.1 <
 [release 2016.08.30]

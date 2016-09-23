@@ -21,7 +21,6 @@ package blue.orchestra.editor.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.BSBCheckBox;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
-import blue.orchestra.blueSynthBuilder.BSBEnvelopeGenerator;
 import blue.orchestra.blueSynthBuilder.BSBFileSelector;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.orchestra.blueSynthBuilder.BSBHSliderBank;
@@ -30,7 +29,6 @@ import blue.orchestra.blueSynthBuilder.BSBLabel;
 import blue.orchestra.blueSynthBuilder.BSBLineObject;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
-import blue.orchestra.blueSynthBuilder.BSBTabbedPane;
 import blue.orchestra.blueSynthBuilder.BSBTextField;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.orchestra.blueSynthBuilder.BSBVSliderBank;
@@ -73,8 +71,6 @@ public class BSBObjectEditorFactory {
             return new BSBCheckBoxView((BSBCheckBox) bsbObject);
         } else if (bsbObject instanceof BSBDropdown) {
             return new BSBDropdownView((BSBDropdown) bsbObject);
-        } else if (bsbObject instanceof BSBEnvelopeGenerator) {
-//            return new BSBEnvelopeGenerator((BSBEnvelopeGenerator)bsbObject);
         } else if (bsbObject instanceof BSBFileSelector) {
             return new BSBFileSelectorView((BSBFileSelector)bsbObject);
         } else if (bsbObject instanceof BSBHSlider) {
@@ -89,8 +85,6 @@ public class BSBObjectEditorFactory {
             return new BSBLineObjectView((BSBLineObject)bsbObject);
         } else if (bsbObject instanceof BSBSubChannelDropdown) {
             return new BSBSubChannelDropdownView((BSBSubChannelDropdown)bsbObject);
-        } else if (bsbObject instanceof BSBTabbedPane) {
-//            return new BSBTabbedPaneView((BSBTabbedPane)bsbObject);
         } else if (bsbObject instanceof BSBTextField) {
             return new BSBTextFieldView((BSBTextField)bsbObject);
         } else if (bsbObject instanceof BSBVSlider) {

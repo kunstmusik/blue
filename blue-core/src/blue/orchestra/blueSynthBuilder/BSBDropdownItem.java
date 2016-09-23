@@ -40,6 +40,12 @@ public class BSBDropdownItem implements Serializable {
         this.uniqueId = Integer.toString(new VMID().hashCode());
     }
 
+    public BSBDropdownItem(BSBDropdownItem item) {
+       this();
+       name = item.name;
+       value = item.value;
+    }
+
     public static BSBDropdownItem loadFromXML(Element data) {
         BSBDropdownItem item = new BSBDropdownItem();
 

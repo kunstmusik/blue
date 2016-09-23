@@ -30,37 +30,6 @@ import java.util.Iterator;
 import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
-
-    public enum SeparatorType {
-        NONE("None", " "), COMMA("Comma", ", "), SINGLE_QUOTE("Single Quote", "' ");
-
-        private final String value;
-        private final String separatorString;
-
-        private SeparatorType(String value, String separatorString) {
-            this.value = value;
-            this.separatorString = separatorString;
-        }
-
-        public static SeparatorType fromString(String string) {
-            switch(string) {
-                case "None":
-                    return NONE;
-                case "Comma":
-                    return COMMA;
-                case "Single Quote":
-                    return SINGLE_QUOTE;
-            }
-            return SeparatorType.valueOf(string);
-        }
-
-        public String getSeparatorString() {
-            return separatorString;
-        }
-
-        @Override
-        public String toString() { return value; }
-    };
  
     int canvasWidth = 200;
 
@@ -383,4 +352,39 @@ public class BSBLineObject extends BSBObject {
         this.separatorType = separatorType;
     }
 
+    @Override
+    public BSBObject deepCopy() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public enum SeparatorType {
+        NONE("None", " "), COMMA("Comma", ", "), SINGLE_QUOTE("Single Quote", "' ");
+
+        private final String value;
+        private final String separatorString;
+
+        private SeparatorType(String value, String separatorString) {
+            this.value = value;
+            this.separatorString = separatorString;
+        }
+
+        public static SeparatorType fromString(String string) {
+            switch(string) {
+                case "None":
+                    return NONE;
+                case "Comma":
+                    return COMMA;
+                case "Single Quote":
+                    return SINGLE_QUOTE;
+            }
+            return SeparatorType.valueOf(string);
+        }
+
+        public String getSeparatorString() {
+            return separatorString;
+        }
+
+        @Override
+        public String toString() { return value; }
+    };
 }

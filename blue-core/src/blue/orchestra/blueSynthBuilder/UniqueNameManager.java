@@ -76,7 +76,7 @@ public class UniqueNameManager implements Serializable {
 
         Set<String> names = collection.getNames();
 
-        BSBObject clone = (BSBObject) bsbObj.clone();
+        BSBObject clone = bsbObj.deepCopy();
 
         clone.setObjectName(NAME_FMT.format(vals));
 

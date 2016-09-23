@@ -57,6 +57,21 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
         addPropertyChangeListener(stringChannel);
     }
 
+    public BSBFileSelector(BSBFileSelector fs) {
+        super(fs);    
+
+        fileName = new SimpleStringProperty(fs.getFileName());
+        textFieldWidth = new SimpleIntegerProperty(fs.getTextFieldWidth());
+        stringChannelEnabled = new SimpleBooleanProperty(fs.isStringChannelEnabled());
+
+        fileName.addListener((obs, oldVal, newVal) -> {
+            fireStringChannelChange(oldVal, newVal);
+        });
+
+        stringChannel = new StringChannel();
+        addPropertyChangeListener(stringChannel);
+    }
+
     public void fireStringChannelChange(String oldFileName, String newFileName) {
         if(this.propListeners != null) {
             this.propListeners.firePropertyChange("stringChannelValue", oldFileName, newFileName);
@@ -98,8 +113,6 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     public final BooleanProperty stringChannelEnabledProperty() {
         return stringChannelEnabled;
     }
-
-    
 
     public static BSBObject loadFromXML(Element data) {
         BSBFileSelector selector = new BSBFileSelector();
@@ -187,12 +200,9 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
     public StringChannel getStringChannel() {
         return stringChannel;
     }
-    
+
     @Override
-    public BSBFileSelector clone() {
-        BSBFileSelector clone = (BSBFileSelector) super.clone();
-        clone.stringChannel = new StringChannel();
-        clone.addPropertyChangeListener(clone.stringChannel);
-        return clone;
+    public BSBObject deepCopy() {
+        return new BSBFileSelector(this);
     }
 }

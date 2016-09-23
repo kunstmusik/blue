@@ -7,17 +7,6 @@
             <suite-component/>
             <module-dependencies/>
             <public-packages>
-                <package>impl.org.controlsfx</package>
-                <package>impl.org.controlsfx.autocompletion</package>
-                <package>impl.org.controlsfx.behavior</package>
-                <package>impl.org.controlsfx.i18n</package>
-                <package>impl.org.controlsfx.skin</package>
-                <package>impl.org.controlsfx.spreadsheet</package>
-                <package>impl.org.controlsfx.table</package>
-                <package>impl.org.controlsfx.tools</package>
-                <package>impl.org.controlsfx.tools.rectangle</package>
-                <package>impl.org.controlsfx.tools.rectangle.change</package>
-                <package>impl.org.controlsfx.version</package>
                 <package>org.controlsfx.control</package>
                 <package>org.controlsfx.control.action</package>
                 <package>org.controlsfx.control.cell</package>

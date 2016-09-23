@@ -38,6 +38,10 @@ public class ClampedValue {
         this(0.0, 1.0, 0.5);    
     }
 
+    public ClampedValue(ClampedValue cv) {
+        this(cv.getMin(), cv.getMax(), cv.getValue());
+    }
+
     public ClampedValue(double minVal, double maxVal, double val) {
         min = new DoublePropertyBase(minVal) {
             @Override

@@ -27,10 +27,15 @@ import javafx.beans.property.StringProperty;
 
 public class BSBSubChannelDropdown extends BSBObject {
 
-    private StringProperty channelOutput;
+    private StringProperty channelOutput = 
+            new SimpleStringProperty(Channel.MASTER);
 
     public BSBSubChannelDropdown() {
-        channelOutput = new SimpleStringProperty(Channel.MASTER);
+    }
+
+    public BSBSubChannelDropdown(BSBSubChannelDropdown scd) {
+        super(scd);
+        setChannelOutput(scd.getChannelOutput());
     }
 
     public final void setChannelOutput(String value) {
@@ -84,5 +89,10 @@ public class BSBSubChannelDropdown extends BSBObject {
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         compilationUnit.addReplacementValue(objectName, getChannelOutput());
+    }
+
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBSubChannelDropdown(this);
     }
 }

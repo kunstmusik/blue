@@ -42,7 +42,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author steven
  *
  */
-public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, UniqueNameCollection {
+public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameCollection {
 
     ObservableSet<BSBObject> interfaceItems = FXCollections.observableSet();
 
@@ -50,14 +50,26 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
     transient Vector<BSBGraphicInterfaceListener> listeners = null;
 
-    private BooleanProperty editEnabled;
+    private BooleanProperty editEnabled = new SimpleBooleanProperty(true);
 
-    private GridSettings gridSettings = new GridSettings();
+    private GridSettings gridSettings;
 
     public BSBGraphicInterface() {
+        gridSettings = new GridSettings();
         nameManager.setUniqueNameCollection(this);
         nameManager.setDefaultPrefix("bsbObj");
-        editEnabled = new SimpleBooleanProperty(true);
+    }
+
+    public BSBGraphicInterface(BSBGraphicInterface bsbInterface) {
+        gridSettings = new GridSettings(bsbInterface.getGridSettings());
+        nameManager.setUniqueNameCollection(this);
+        nameManager.setDefaultPrefix("bsbObj");
+
+        setEditEnabled(bsbInterface.isEditEnabled());
+
+        for (BSBObject bsbObj : interfaceItems) {
+            interfaceItems.add(bsbObj.deepCopy());
+        }
     }
 
     public ObservableSet<BSBObject> interfaceItemsProperty() {
@@ -120,7 +132,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         }
 
         GridSettings gridSettings = null;
-        
+
         while (giNodes.hasMoreElements()) {
             Element node = giNodes.next();
             String name = node.getName();
@@ -136,7 +148,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
             }
         }
 
-        if(gridSettings == null) {
+        if (gridSettings == null) {
             // preserve behavior of older projects (before 2.5.8)
             graphicInterface.getGridSettings().setGridStyle(
                     GridStyle.NONE);
@@ -157,7 +169,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
         retVal.setAttribute("editEnabled", Boolean.toString(isEditEnabled()));
 
         retVal.addElement(gridSettings.saveAsXML());
-        
+
         for (BSBObject bsbObj : interfaceItems) {
             retVal.addElement(bsbObj.saveAsXML());
         }
@@ -183,8 +195,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
     public void fireBSBObjectAdded(BSBObject bsbObj) {
         if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter =
-                    new Vector<>(listeners).iterator();
+            Iterator<BSBGraphicInterfaceListener> iter
+                    = new Vector<>(listeners).iterator();
 
             while (iter.hasNext()) {
                 BSBGraphicInterfaceListener listener = iter
@@ -196,8 +208,8 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, Serializable, U
 
     public void fireBSBObjectRemoved(BSBObject bsbObj) {
         if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter =
-                    new Vector<>(listeners).iterator();
+            Iterator<BSBGraphicInterfaceListener> iter
+                    = new Vector<>(listeners).iterator();
 
             while (iter.hasNext()) {
                 BSBGraphicInterfaceListener listener = (BSBGraphicInterfaceListener) iter

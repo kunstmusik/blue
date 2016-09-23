@@ -41,46 +41,46 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBVSlider extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    DoubleProperty minimum;
+    private DoubleProperty minimum = new SimpleDoubleProperty(0.0);
+    private DoubleProperty maximum = new SimpleDoubleProperty(1.0);
+    private DoubleProperty resolution = new SimpleDoubleProperty(0.1);
+    private DoubleProperty value = new SimpleDoubleProperty(0.0) {
+        @Override
+        public void set(double newValue) {
+            double v = newValue;
+            if (getResolution() > 0) {
+                v = LineUtils.snapToResolution(v, getMinimum(),
+                        getMaximum(), getResolution());
+            }
 
-    DoubleProperty maximum;
+            super.set(v);
 
-    DoubleProperty resolution;
-
-    DoubleProperty value;
-
-    IntegerProperty sliderHeight;
-
-    BooleanProperty randomizable;
-
-    public BSBVSlider() {
-        minimum = new SimpleDoubleProperty(0.0);
-        maximum = new SimpleDoubleProperty(1.0);
-        resolution = new SimpleDoubleProperty(0.1);
-        value = new SimpleDoubleProperty(0.0) {
-            @Override
-            public void set(double newValue) {
-                double v = newValue;
-                if (getResolution() > 0) {
-                    v = LineUtils.snapToResolution(v, getMinimum(),
-                            getMaximum(), getResolution());
-                }
-
-                super.set(v);
-
-                // FIXME - don't think this should be set here
-                if (parameters != null) {
-                    Parameter param = parameters.getParameter(getObjectName());
-                    if (param != null) {
-                        param.setValue((float)v);
-                    }
+            // FIXME - don't think this should be set here
+            if (parameters != null) {
+                Parameter param = parameters.getParameter(getObjectName());
+                if (param != null) {
+                    param.setValue((float) v);
                 }
             }
-            
-        };
-        sliderHeight = new SimpleIntegerProperty(150);
-        randomizable = new SimpleBooleanProperty(true);
+        }
+
+    };
+
+    private IntegerProperty sliderHeight = new SimpleIntegerProperty(150);
+    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+
+    public BSBVSlider() {
     }
+
+    public BSBVSlider(BSBVSlider slider){
+         super(slider);
+         setMinimum(slider.getMinimum());
+         setMaximum(slider.getMaximum());
+         setResolution(slider.getResolution());
+         setValue(slider.getValue());
+         setSliderHeight(slider.getSliderHeight());
+         setRandomizable(slider.isRandomizable());
+    }        
 
     public final void setMinimum(double value) {
         minimum.set(value);
@@ -154,13 +154,11 @@ public class BSBVSlider extends AutomatableBSBObject implements
         return randomizable;
     }
 
-
-    
     private static double parseNum(String string, int version) {
-       if(version < 2) {
-           return (double)Float.parseFloat(string);
-       } 
-       return Double.parseDouble(string);
+        if (version < 2) {
+            return (double) Float.parseFloat(string);
+        }
+        return Double.parseDouble(string);
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -171,7 +169,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
         initBasicFromXML(data, slider);
         String verString = data.getAttributeValue("version");
         int version = (verString == null) ? 1 : Integer.parseInt(verString);
-
 
         Elements nodes = data.getElements();
 
@@ -441,20 +438,20 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
             if (!parameter.isAutomationEnabled()) {
                 // FIXME - make parameters use double??
-                parameter.setValue((float)getValue());
+                parameter.setValue((float) getValue());
             }
 
             return;
         }
 
         Parameter param = new Parameter();
-        param.setValue((float)getValue());
-        param.setMax((float)getMaximum(), true);
-        param.setMin((float)getMinimum(), true);
+        param.setValue((float) getValue());
+        param.setMax((float) getMaximum(), true);
+        param.setMin((float) getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution((float)getResolution());
+        param.setResolution((float) getResolution());
         param.addParameterListener(this);
-        param.setValue((float)getValue());
+        param.setValue((float) getValue());
 
         parameters.addParameter(param);
     }
@@ -468,7 +465,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
 //                    new Float(oldValue), new Float(this.value));
 //        }
 //    }
-
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);
@@ -504,7 +500,6 @@ public class BSBVSlider extends AutomatableBSBObject implements
 //    public boolean isRandomizable() {
 //        return randomizable;
 //    }
-
     @Override
     public void randomize() {
         if (isRandomizable()) {
@@ -530,9 +525,8 @@ public class BSBVSlider extends AutomatableBSBObject implements
         }
     }
 
-//    @Override
-//    public void setRandomizable(boolean randomizable) {
-//        this.randomizable = randomizable;
-//        fireBSBObjectChanged();
-//    }
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBVSlider(this);
+    }
 }

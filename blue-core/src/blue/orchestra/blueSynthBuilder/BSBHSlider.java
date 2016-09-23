@@ -41,23 +41,11 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBHSlider extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    DoubleProperty minimum;
+    private DoubleProperty minimum = new SimpleDoubleProperty(0.0);
+    private DoubleProperty maximum = new SimpleDoubleProperty(1.0);
+    private DoubleProperty resolution = new SimpleDoubleProperty(0.1);
 
-    DoubleProperty maximum;
-
-    DoubleProperty resolution;
-
-    DoubleProperty value;
-
-    IntegerProperty sliderWidth;
-
-    BooleanProperty randomizable;
-
-    public BSBHSlider() {
-        minimum = new SimpleDoubleProperty(0.0);
-        maximum = new SimpleDoubleProperty(1.0);
-        resolution = new SimpleDoubleProperty(0.1);
-        value = new SimpleDoubleProperty(0.0) {
+    private DoubleProperty value = new SimpleDoubleProperty(0.0) {
             @Override
             public void set(double newValue) {
                 double v = newValue;
@@ -76,10 +64,23 @@ public class BSBHSlider extends AutomatableBSBObject implements
                     }
                 }
             }
-            
         };
-        sliderWidth = new SimpleIntegerProperty(150);
-        randomizable = new SimpleBooleanProperty(true);
+
+    private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
+
+    private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+
+    public BSBHSlider() {
+    }
+
+    public BSBHSlider(BSBHSlider slider) {
+         super(slider);
+         setMinimum(slider.getMinimum());
+         setMaximum(slider.getMaximum());
+         setResolution(slider.getResolution());
+         setValue(slider.getValue());
+         setSliderWidth(slider.getSliderWidth());
+         setRandomizable(slider.isRandomizable());
     }
 
     public final void setMinimum(double value) {
@@ -153,16 +154,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
     public final BooleanProperty randomizableProperty() {
         return randomizable;
     }
-
-
     
-    private static double parseNum(String string, int version) {
-       if(version < 2) {
-           return (double)Float.parseFloat(string);
-       } 
-       return Double.parseDouble(string);
-    }
-
     public static BSBObject loadFromXML(Element data) {
         BSBHSlider slider = new BSBHSlider();
         double minVal = 0;
@@ -178,21 +170,22 @@ public class BSBHSlider extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            final String nodeText = node.getTextString();
             switch (nodeName) {
                 case "minimum":
-                    minVal = parseNum(node.getTextString(), version);
+                    minVal = Double.parseDouble(nodeText);
                     break;
                 case "maximum":
-                    maxVal = parseNum(node.getTextString(), version);
+                    maxVal = Double.parseDouble(nodeText);
                     break;
                 case "resolution":
-                    slider.setResolution(parseNum(node.getTextString(), version));
+                    slider.setResolution(Double.parseDouble(nodeText));
                     break;
                 case "value":
-                    slider.setValue(parseNum(node.getTextString(), version));
+                    slider.setValue(Double.parseDouble(nodeText));
                     break;
                 case "sliderWidth":
-                    slider.setSliderWidth(Integer.parseInt(node.getTextString()));
+                    slider.setSliderWidth(Integer.parseInt(nodeText));
                     break;
                 case "randomizable":
                     slider.setRandomizable(XMLUtilities.readBoolean(node));
@@ -530,9 +523,8 @@ public class BSBHSlider extends AutomatableBSBObject implements
         }
     }
 
-//    @Override
-//    public void setRandomizable(boolean randomizable) {
-//        this.randomizable = randomizable;
-//        fireBSBObjectChanged();
-//    }
+    @Override
+    public BSBObject deepCopy() {
+        return new BSBHSlider(this);
+    }
 }
