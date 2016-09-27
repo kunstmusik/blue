@@ -32,3 +32,4 @@ jython/release/*.pyc
 /TestApps/JfxControlsTest/TestApp/nbproject/private/
 /libs/target/
 /update_stable.sh
+nb_jr_remoting.cfg
