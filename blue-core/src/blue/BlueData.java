@@ -35,18 +35,15 @@ import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.Serializable;
 import java.util.*;
 import org.openide.util.Lookup;
 
 /**
  * Main Data class for blue
  */
-public class BlueData implements Serializable, BlueDataObject {
+public class BlueData implements BlueDataObject {
 
     private final transient Vector listeners = new Vector();
-
-    private InstrumentLibrary instrumentLibrary = null; // No Longer in Use
 
     private String version;
 
@@ -74,9 +71,9 @@ public class BlueData implements Serializable, BlueDataObject {
 
     private ScratchPadData scratchData;
 
-    private float renderStartTime;
+    private double renderStartTime;
 
-    private float renderEndTime;
+    private double renderEndTime;
 
     private MarkersList markersList;
 
@@ -84,7 +81,9 @@ public class BlueData implements Serializable, BlueDataObject {
 
     private MidiInputProcessor midiInputProcessor;
 
-    /** Holds data for ProjectPlugins */
+    /**
+     * Holds data for ProjectPlugins
+     */
     private List<BlueDataObject> pluginData;
 
     public BlueData() {
@@ -109,12 +108,42 @@ public class BlueData implements Serializable, BlueDataObject {
 
         score = new Score();
 //        score.addLayerGroup(new PolyObject());
-
         liveData = new LiveData();
-
         midiInputProcessor = new MidiInputProcessor();
-
         pluginData = new ArrayList<>();
+    }
+
+    /**
+     * Copy Constructor *
+     */
+    public BlueData(BlueData data) {
+        arrangement = new Arrangement(data.getArrangement());
+        mixer = new Mixer(data.getMixer());
+
+        projectProperties = new ProjectProperties(data.getProjectProperties());
+        sObjLib = new SoundObjectLibrary(data.getSoundObjectLibrary());
+        globalOrcSco = new GlobalOrcSco(data.getGlobalOrcSco());
+        tableSet = new Tables(data.getTableSet());
+
+        opcodeList = new OpcodeList(data.getOpcodeList());
+
+        noteProcessorChainMap = new NoteProcessorChainMap(data.getNoteProcessorChainMap());
+
+        scratchData = new ScratchPadData(data.getScratchPadData());
+
+        renderStartTime = data.getRenderStartTime();
+        renderEndTime = data.getRenderEndTime();
+        markersList = new MarkersList(data.getMarkersList());
+        loopRendering = data.isLoopRendering();
+
+        score = new Score(data.getScore());
+        liveData = new LiveData(data.getLiveData());
+        midiInputProcessor = new MidiInputProcessor(data.getMidiInputProcessor());
+        pluginData = new ArrayList<>();
+
+        for (BlueDataObject pData : data.getPluginData()) {
+            pluginData.add(pData.deepCopy());
+        }
     }
 
     /**
@@ -171,7 +200,6 @@ public class BlueData implements Serializable, BlueDataObject {
         this.globalOrcSco = globalOrcSco;
     }
 
-
     public Tables getTableSet() {
         return tableSet;
     }
@@ -194,20 +222,6 @@ public class BlueData implements Serializable, BlueDataObject {
         this.arrangement = arrangement;
     }
 
-    /**
-     * @return Returns the instrumentLibrary.
-     */
-    public InstrumentLibrary getInstrumentLibrary() {
-        return instrumentLibrary;
-    }
-
-    /**
-     * @param instrumentLibrary The instrumentLibrary to set.
-     */
-    public void setInstrumentLibrary(InstrumentLibrary instrumentLibrary) {
-        this.instrumentLibrary = instrumentLibrary;
-    }
-
     public List<BlueDataObject> getPluginData() {
         return pluginData;
     }
@@ -228,7 +242,7 @@ public class BlueData implements Serializable, BlueDataObject {
         if (text.startsWith("<blueData")) {
             Document d = new Document(text);
             tempData = BlueData.loadFromXML(d.getElement("blueData"));
-        } 
+        }
 // FIXME - Dead Code
 //        else {
 //            XMLSerializer xmlSer = new XMLSerializer();
@@ -320,12 +334,12 @@ public class BlueData implements Serializable, BlueDataObject {
                             .loadFromXML(node);
                     break;
                 case "renderStartTime":
-                    blueData.setRenderStartTime(Float.parseFloat(node
+                    blueData.setRenderStartTime(Double.parseDouble(node
                             .getTextString()));
                     break;
                 case "renderEndTime":
-                    blueData.setRenderEndTime(Float
-                            .parseFloat(node.getTextString()));
+                    blueData.setRenderEndTime(Double
+                            .parseDouble(node.getTextString()));
                     break;
                 case "markersList":
                     blueData.setMarkersList(MarkersList.loadFromXML(node));
@@ -350,10 +364,10 @@ public class BlueData implements Serializable, BlueDataObject {
         }
 
         if (instrumentLibraryNode != null) {
-            blueData.instrumentLibrary = InstrumentLibrary
+            InstrumentLibrary instrumentLibrary = InstrumentLibrary
                     .loadFromXML(instrumentLibraryNode);
             blueData.arrangement = Arrangement.loadFromXML(arrangementNode,
-                    blueData.instrumentLibrary);
+                    instrumentLibrary);
         } else {
             blueData.arrangement = Arrangement.loadFromXML(arrangementNode);
         }
@@ -394,9 +408,9 @@ public class BlueData implements Serializable, BlueDataObject {
         retVal.addElement(noteProcessorChainMap.saveAsXML());
 
         retVal.addElement("renderStartTime").setText(
-                Float.toString(renderStartTime));
+                Double.toString(renderStartTime));
         retVal.addElement("renderEndTime").setText(
-                Float.toString(renderEndTime));
+                Double.toString(renderEndTime));
         retVal.addElement(markersList.saveAsXML());
         retVal.addElement("loopRendering").setText(
                 Boolean.toString(loopRendering));
@@ -427,18 +441,18 @@ public class BlueData implements Serializable, BlueDataObject {
         this.noteProcessorChainMap = noteProcessorChainMap;
     }
 
-    public float getRenderStartTime() {
+    public double getRenderStartTime() {
         return renderStartTime;
     }
 
-    public void setRenderStartTime(float renderStartTime) {
+    public void setRenderStartTime(double renderStartTime) {
 
         if (renderStartTime == this.renderStartTime) {
             return;
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderStartTime", new Float(this.renderStartTime), new Float(
+                "renderStartTime", new Double(this.renderStartTime), new Double(
                         renderStartTime));
 
         this.renderStartTime = renderStartTime;
@@ -447,7 +461,7 @@ public class BlueData implements Serializable, BlueDataObject {
 
         if (renderStartTime >= this.renderEndTime) {
             PropertyChangeEvent pce2 = new PropertyChangeEvent(this,
-                    "renderLoopTime", new Float(this.renderEndTime), new Float(
+                    "renderLoopTime", new Double(this.renderEndTime), new Double(
                             -1.0f));
 
             this.renderEndTime = -1.0f;
@@ -456,13 +470,13 @@ public class BlueData implements Serializable, BlueDataObject {
         }
     }
 
-    public float getRenderEndTime() {
+    public double getRenderEndTime() {
         return renderEndTime;
     }
 
-    public void setRenderEndTime(float renderLoopTime) {
+    public void setRenderEndTime(double renderLoopTime) {
 
-        float newRenderLoopTime = renderLoopTime;
+        double newRenderLoopTime = renderLoopTime;
 
         if (renderLoopTime <= this.renderStartTime) {
             newRenderLoopTime = -1.0f;
@@ -473,7 +487,7 @@ public class BlueData implements Serializable, BlueDataObject {
         }
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this,
-                "renderLoopTime", new Float(this.renderEndTime), new Float(
+                "renderLoopTime", new Double(this.renderEndTime), new Double(
                         newRenderLoopTime));
 
         this.renderEndTime = newRenderLoopTime;
@@ -547,6 +561,11 @@ public class BlueData implements Serializable, BlueDataObject {
         return midiInputProcessor;
     }
 
+    @Override
+    public BlueDataObject deepCopy() {
+        return new BlueData(this);
+    }
+
     // FIXME - ensure upgradeData info is taken into account when developing
     // upgrader after 2.7.0
 //    public void upgradeData() {
@@ -612,7 +631,6 @@ public class BlueData implements Serializable, BlueDataObject {
 //        convertOrchestra();
 //
 //    }
-
 //    /**
 //     * Added in 0.95.0 for converting Arrangement to not depend on references to
 //     * instrument in project Instrument
@@ -671,5 +689,4 @@ public class BlueData implements Serializable, BlueDataObject {
 //            }
 //        }
 //    }
-
 }

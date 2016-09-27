@@ -34,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
@@ -153,11 +152,11 @@ public class NoteCanvasMouseListener implements MouseListener,
                 int x = e.getX();
                 int y = e.getY();
 
-                float startTime = (float) x / canvas.p.getPixelSecond();
-                float duration = 5.0f / canvas.p.getPixelSecond();
+                double startTime = (double) x / canvas.p.getPixelSecond();
+                double duration = 5.0f / canvas.p.getPixelSecond();
 
                 if (canvas.p.isSnapEnabled()) {
-                    float snapValue = canvas.p.getSnapValue();
+                    double snapValue = canvas.p.getSnapValue();
                     startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
 
                     duration = canvas.p.getSnapValue();
@@ -188,15 +187,15 @@ public class NoteCanvasMouseListener implements MouseListener,
     }
 
     private void pasteNotes(int x, int y) {
-        float startTime = (float) x / canvas.p.getPixelSecond();
+        double startTime = (double) x / canvas.p.getPixelSecond();
         int[] pchBase = canvas.getOctaveScaleDegreeForY(y);
-        float timeAdjust = Float.MAX_VALUE;
+        double timeAdjust = Double.MAX_VALUE;
         int topPitchNum = Integer.MIN_VALUE;
         int bottomPitchNum = Integer.MAX_VALUE;
         int scaleDegrees = canvas.p.getScale().getNumScaleDegrees();
         
         if (canvas.p.isSnapEnabled()) {
-            float snapValue = canvas.p.getSnapValue();
+            double snapValue = canvas.p.getSnapValue();
             startTime = ScoreUtilities.getSnapValueStart(startTime, snapValue);
         }
         
@@ -215,7 +214,7 @@ public class NoteCanvasMouseListener implements MouseListener,
         int pitchNumAdjust = basePitchNum - topPitchNum;
         
         for (PianoNote note : PianoRollCanvas.NOTE_COPY_BUFFER) {
-            PianoNote copy = note.clone();
+            PianoNote copy = new PianoNote(note);
             copy.setStart(startTime + (copy.getStart() - timeAdjust));
             
             int pitchNum = copy.getOctave() * scaleDegrees + copy.getScaleDegree();
@@ -296,16 +295,16 @@ public class NoteCanvasMouseListener implements MouseListener,
         int layerDiff = (e.getPoint().y / noteHeight) - (start.y / noteHeight);
 
         if (canvas.p.isSnapEnabled()) {
-            float timeAdjust = (float) diffX / canvas.p.getPixelSecond();
+            double timeAdjust = (double) diffX / canvas.p.getPixelSecond();
 
-            float initialStartTime = canvas.noteBuffer.initialStartTimes[0];
+            double initialStartTime = canvas.noteBuffer.initialStartTimes[0];
 
-            float tempStart = initialStartTime + timeAdjust;
+            double tempStart = initialStartTime + timeAdjust;
 
             if (tempStart < 0.0f) {
                 timeAdjust = -initialStartTime;
             } else {
-                float snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
+                double snappedStart = ScoreUtilities.getSnapValueMove(tempStart,
                         canvas.p.getSnapValue());
 
                 timeAdjust = snappedStart - initialStartTime;
@@ -323,18 +322,18 @@ public class NoteCanvasMouseListener implements MouseListener,
 
         if (canvas.p.isSnapEnabled()) {
 
-            float snapValue = canvas.p.getSnapValue();
+            double snapValue = canvas.p.getSnapValue();
 
-            float endTime = ScoreUtilities.getSnapValueMove((float) mouseX / canvas.p.getPixelSecond(),
+            double endTime = ScoreUtilities.getSnapValueMove((double) mouseX / canvas.p.getPixelSecond(),
                     snapValue);
 
-            float minTime = ScoreUtilities.getSnapValueMove(
+            double minTime = ScoreUtilities.getSnapValueMove(
                     canvas.noteBuffer.initialStartTimes[0] + snapValue / 2,
                     snapValue);
 
             endTime = (endTime < minTime) ? minTime : endTime;
 
-            float newDuration = endTime - canvas.noteBuffer.initialStartTimes[0];
+            double newDuration = endTime - canvas.noteBuffer.initialStartTimes[0];
 
             canvas.noteBuffer.setDuration(newDuration);
 

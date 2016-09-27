@@ -5,10 +5,8 @@ import blue.plugin.NoteProcessorPlugin;
 import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
-import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Random;
 
 /**
@@ -20,20 +18,26 @@ import java.util.Random;
  */
 
 @NoteProcessorPlugin(displayName="RandomAddProcessor", position = 40)
-public class RandomAddProcessor implements NoteProcessor, Serializable {
+public class RandomAddProcessor implements NoteProcessor {
 
     int pfield = 4;
 
-    float min = 0f;
+    double min = 0.0;
 
-    float max = 1f;
+    double max = 1.0;
     
     boolean seedUsed = false;
     
     long seed = 0L;
-    
 
     public RandomAddProcessor() {
+    }
+    public RandomAddProcessor(RandomAddProcessor rap) {
+        pfield = rap.pfield;
+        min = rap.min;
+        max = rap.max;
+        seedUsed = rap.seedUsed;
+        seed = rap.seed;
     }
 
     @Override
@@ -50,19 +54,19 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
     }
 
     public String getMin() {
-        return Float.toString(min);
+        return Double.toString(min);
     }
 
     public void setMin(String value) {
-        this.min = Float.parseFloat(value);
+        this.min = Double.parseDouble(value);
     }
 
     public String getMax() {
-        return Float.toString(max);
+        return Double.toString(max);
     }
 
     public void setMax(String value) {
-        this.max = Float.parseFloat(value);
+        this.max = Double.parseDouble(value);
     }
 
     public String getSeedUsed() {
@@ -85,27 +89,27 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
-        float range = max - min;
-        float fieldVal = 0f;
+        double range = max - min;
+        double fieldVal = 0.0;
 
         Random r = seedUsed ? new Random(seed) : new Random();
 
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                fieldVal = Float.parseFloat(temp.getPField(pfield));
+                fieldVal = Double.parseDouble(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.missingPfield"),
                         pfield);
             }
-            float randVal = (float) ((r.nextDouble() * range) + min);
+            double randVal = (double) ((r.nextDouble() * range) + min);
 
-            temp.setPField(Float.toString(fieldVal + randVal), pfield);
+            temp.setPField(Double.toString(fieldVal + randVal), pfield);
         }
     }
 
@@ -182,5 +186,10 @@ public class RandomAddProcessor implements NoteProcessor, Serializable {
         }
 
         System.out.println("after: \n\n" + n + "\n\n");
+    }
+
+    @Override
+    public RandomAddProcessor deepCopy() {
+        return new RandomAddProcessor(this);
     }
 }

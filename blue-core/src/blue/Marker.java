@@ -22,18 +22,25 @@ package blue;
 import electric.xml.Element;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Marker implements Serializable, Comparable<Marker> {
+public class Marker implements Comparable<Marker> {
 
-    private float time = 0.0f;
+    private double time = 0.0f;
 
     private String name;
 
     transient Vector listeners = null;
+
+    public Marker() {
+    }
+
+    public Marker(Marker marker) {
+        time = marker.time;
+        name = marker.name;
+    }
 
     public String getName() {
         return name;
@@ -50,17 +57,17 @@ public class Marker implements Serializable, Comparable<Marker> {
         firePropertyChangeEvent(pce);
     }
 
-    public float getTime() {
+    public double getTime() {
         return time;
     }
 
-    public void setTime(float time) {
-        float oldVal = this.time;
+    public void setTime(double time) {
+        double oldVal = this.time;
 
         this.time = time;
 
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "time",
-                new Float(oldVal), new Float(time));
+                new Double(oldVal), new Double(time));
 
         firePropertyChangeEvent(pce);
     }
@@ -68,7 +75,7 @@ public class Marker implements Serializable, Comparable<Marker> {
     public static Marker loadFromXML(Element data) {
         Marker m = new Marker();
 
-        m.setTime(Float.parseFloat(data.getAttributeValue("time")));
+        m.setTime(Double.parseDouble(data.getAttributeValue("time")));
         m.setName(data.getAttributeValue("name"));
 
         return m;
@@ -77,7 +84,7 @@ public class Marker implements Serializable, Comparable<Marker> {
     public Element saveAsXML() {
         Element retVal = new Element("marker");
 
-        retVal.setAttribute("time", Float.toString(getTime()));
+        retVal.setAttribute("time", Double.toString(getTime()));
         retVal.setAttribute("name", getName());
 
         return retVal;

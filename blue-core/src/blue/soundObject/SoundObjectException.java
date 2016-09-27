@@ -78,7 +78,7 @@ public class SoundObjectException extends ScoreGenerationException {
     public String getMessage() {
         Object[] mainArgs = new Object[] {
                 ObjectUtilities.getShortClassName(soundObject),
-                soundObject.getName(), new Float(soundObject.getStartTime()) };
+                soundObject.getName(), new Double(soundObject.getStartTime()) };
         String retVal = mainMessageFormat.format(mainArgs);
 
         if (this.message != null) {

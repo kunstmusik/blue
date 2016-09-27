@@ -40,54 +40,45 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.python.core.PyException;
 
-@SoundObjectPlugin(displayName = "ObjectBuilder", live=true, position = 70)
+@SoundObjectPlugin(displayName = "ObjectBuilder", live = true, position = 70)
 public class ObjectBuilder extends AbstractSoundObject {
-//    private static BarRenderer renderer = new LetterRenderer("O");
 
     BSBGraphicInterface graphicInterface;
-
     PresetGroup presetGroup;
-
     String code;
-
     String commandLine;
-
     private boolean editEnabled = true;
-
     boolean isExternal = false;
-
     private String syntaxType = "Python";
-
-    // String instrumentText;
-    // String globalOrc;
-    // String globalSco;
-
     private NoteProcessorChain npc = new NoteProcessorChain();
-
     private int timeBehavior;
-
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     public ObjectBuilder() {
         setName("ObjectBuilder");
-
         graphicInterface = new BSBGraphicInterface();
         presetGroup = new PresetGroup();
-
         code = "";
         commandLine = "";
-        // instrumentText = "";
-        // globalOrc = "";
-        // globalSco = "";
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
+    public ObjectBuilder(ObjectBuilder objBuilder) {
+        super(objBuilder);
+        graphicInterface = new BSBGraphicInterface(objBuilder.graphicInterface);
+        presetGroup = new PresetGroup(objBuilder.presetGroup);
+        code = objBuilder.code;
+        commandLine = objBuilder.commandLine;
+        timeBehavior = objBuilder.timeBehavior;
+        editEnabled = objBuilder.editEnabled;
+        isExternal = objBuilder.isExternal;
+        repeatPoint = objBuilder.repeatPoint;
+        syntaxType = objBuilder.syntaxType;
+        npc = new NoteProcessorChain(objBuilder.npc);
+    }
 
     // GENERATION METHODS
-
-
-    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(BSBCompilationUnit bsbCompilationUnit, double renderStart, double renderEnd) throws SoundObjectException {
         String codeToRun = bsbCompilationUnit.replaceBSBValues(code);
 
         String tempScore = null;
@@ -116,7 +107,6 @@ public class ObjectBuilder extends AbstractSoundObject {
                 // program
                 // outputs to screen
                 // and grab from stdin
-
                 if (!this.getCommandLine().contains("$outfile")) {
                     String commandLine = this.getPreparedCommandLine(temp
                             .getName());
@@ -221,16 +211,14 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     // END GENERATION METHODS
-
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
 //    public BarRenderer getRenderer() {
 //        return renderer;
 //    }
-
     @Override
     public NoteProcessorChain getNoteProcessorChain() {
         return npc;
@@ -252,12 +240,12 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -398,13 +386,18 @@ public class ObjectBuilder extends AbstractSoundObject {
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
         BSBCompilationUnit bsbCompilationUnit = new BSBCompilationUnit();
         graphicInterface.setupForCompilation(bsbCompilationUnit);
-        
-        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);  
+
+        NoteList nl = generateNotes(bsbCompilationUnit, startTime, endTime);
         return nl;
-        
+
+    }
+
+    @Override
+    public ObjectBuilder deepCopy() {
+        return new ObjectBuilder(this);
     }
 }

@@ -33,6 +33,8 @@ INTERNAL
 * Replaced use of Cloneable and Serializable with copy constructors and new 
   DeepCopyable interface for all project data models
 
+* Replaced all uses of float with double
+
 
 > Notes for 2.6.1 <
 [release 2016.08.30]

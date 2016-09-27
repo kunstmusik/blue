@@ -44,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 /**
  *
@@ -54,24 +53,38 @@ import java.util.Vector;
 public class AudioLayer extends ArrayList<AudioClip>
         implements ScoreObjectLayer<AudioClip>, AutomatableLayer {
 
-    private String name = "";
-    private boolean muted = false;
-    private boolean solo = false;
-
-    private int heightIndex = 0;
-
     public static int HEIGHT_MAX_INDEX = 9;
-
-    private transient List<PropertyChangeListener> propListeners = null;
-    private transient List<AudioLayerListener> layerListeners = null;
-    private String uniqueId;
 
     private static MessageFormat INSTR_TEXT = null;
 
-    private ParameterIdList automationParameters = new ParameterIdList();
+    private String name = "";
+    private boolean muted = false;
+    private boolean solo = false;
+    private String uniqueId;
+
+    private int heightIndex = 0;
+    private ParameterIdList automationParameters; 
+
+    private transient List<PropertyChangeListener> propListeners = null;
+    private transient List<AudioLayerListener> layerListeners = null;
 
     public AudioLayer() {
         this.uniqueId = new VMID().toString();
+        automationParameters = new ParameterIdList();
+    }
+
+    public AudioLayer(AudioLayer al) {
+        super(al.size());
+        this.uniqueId = al.uniqueId;
+        automationParameters = new ParameterIdList(al.automationParameters);
+        name = al.name;
+        muted = al.muted;
+        solo = al.solo;
+        heightIndex = al.heightIndex;
+
+        for(AudioClip ac : al) {
+            add(ac.deepCopy());
+        }
     }
 
     @Override
@@ -305,7 +318,7 @@ public class AudioLayer extends ArrayList<AudioClip>
         return instrId;
     }
 
-    NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws SoundObjectException {
+    NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
         
         if(compileData.getCompilationVariable("BLUE_FADE_UDO") == null) {
             StringBuilder str = new StringBuilder();
@@ -332,14 +345,14 @@ public class AudioLayer extends ArrayList<AudioClip>
 
         int instrId = generateInstrumentForAudioLayer(compileData);
         boolean usesEndTime = endTime > startTime;
-        float adjustedEndTime = endTime - startTime;
+        double adjustedEndTime = endTime - startTime;
 
         for (AudioClip clip : this) {
 
-            float clipStart = clip.getStartTime();
-            float clipFileStart = clip.getFileStartTime();
-            float clipDur = clip.getSubjectiveDuration();
-            float clipEnd = clipStart + clipDur;
+            double clipStart = clip.getStartTime();
+            double clipFileStart = clip.getFileStartTime();
+            double clipDur = clip.getSubjectiveDuration();
+            double clipEnd = clipStart + clipDur;
 
             if (clipEnd <= startTime
                     || (usesEndTime && clipStart >= endTime)) {
@@ -348,14 +361,14 @@ public class AudioLayer extends ArrayList<AudioClip>
 
             Note n = Note.createNote(11);
 
-            float adjustedStart = clipStart - startTime;
-            float adjustedEnd = clipEnd - startTime;
+            double adjustedStart = clipStart - startTime;
+            double adjustedEnd = clipEnd - startTime;
 
-            float startOffset = Math.max(startTime - clipStart, 0.0f);
-            float newStart = Math.max(adjustedStart, 0.0f);
-            float newEnd = clipEnd - startTime;
+            double startOffset = Math.max(startTime - clipStart, 0.0f);
+            double newStart = Math.max(adjustedStart, 0.0f);
+            double newEnd = clipEnd - startTime;
 
-            float newDuration
+            double newDuration
                     = (usesEndTime && newEnd > adjustedEndTime)
                             ? adjustedEndTime - newStart
                             : (newEnd - newStart);
@@ -366,19 +379,19 @@ public class AudioLayer extends ArrayList<AudioClip>
             n.setPField(
                     "\"" + clip.getAudioFile().getAbsolutePath() + "\"",
                     4);
-            n.setPField(Float.toString(clipFileStart), 5);
+            n.setPField(Double.toString(clipFileStart), 5);
             
-            n.setPField(Float.toString(startOffset), 6);
-            n.setPField(Float.toString(clipDur), 7);
+            n.setPField(Double.toString(startOffset), 6);
+            n.setPField(Double.toString(clipDur), 7);
 
             
             int fadeType = clip.getFadeInType().ordinal();
             n.setPField(Integer.toString(fadeType), 8);
-            n.setPField(Float.toString(clip.getFadeIn()), 9);
+            n.setPField(Double.toString(clip.getFadeIn()), 9);
             
             fadeType = clip.getFadeOutType().ordinal();
             n.setPField(Integer.toString(fadeType), 10);
-            n.setPField(Float.toString(clip.getFadeOut()), 11);
+            n.setPField(Double.toString(clip.getFadeOut()), 11);
 
             notes.add(n);
 
@@ -474,11 +487,11 @@ public class AudioLayer extends ArrayList<AudioClip>
         return super.contains(object);
     }
 
-    public float getMaxTime() {
-        float max = 0.0f;
+    public double getMaxTime() {
+        double max = 0.0f;
 
         for (AudioClip clip : this) {
-            float end = clip.getStartTime() + clip.getSubjectiveDuration();
+            double end = clip.getStartTime() + clip.getSubjectiveDuration();
             if (end > max) {
                 max = end;
             }
@@ -499,5 +512,10 @@ public class AudioLayer extends ArrayList<AudioClip>
     @Override
     public void clearScoreObjects() {
         this.clear();
+    }
+
+    @Override
+    public AudioLayer deepCopy() {
+        return new AudioLayer(this);
     }
 }

@@ -23,18 +23,27 @@ package blue;
 import blue.orchestra.Instrument;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author Steven Yi
  */
-public class InstrumentAssignment implements Serializable, Comparable<InstrumentAssignment> {
+public class InstrumentAssignment implements Comparable<InstrumentAssignment> {
 
     public String arrangementId = "";
 
     public Instrument instr;
 
     public boolean enabled = true;
+
+    public InstrumentAssignment(){
+    }
+
+    /** Copy Constructor */
+    public InstrumentAssignment(InstrumentAssignment ia) {
+        arrangementId = ia.arrangementId;    
+        enabled = ia.enabled;    
+        instr = ia.instr.deepCopy();    
+    }
 
     // NEW SERIALIZATION METHODS
 
@@ -97,25 +106,6 @@ public class InstrumentAssignment implements Serializable, Comparable<Instrument
         return retVal;
     }
 
-    /**
-     * Used by old pre 0.95.0 code before instrument libraries removed from
-     * project and user instrument library was implemented.
-     * 
-     * This code is here to maintain compatibility with projects that still
-     * contain InstrumentLibraries and is used when migrating to new format.
-     * 
-     * @deprecated
-     */
-    public Element saveAsXML(InstrumentLibrary iLibrary) {
-        Element retVal = new Element("instrumentAssignment");
-
-        retVal.setAttribute("arrangementId", arrangementId);
-        retVal.setAttribute("instrumentId", iLibrary.getInstrumentId(instr));
-        retVal.setAttribute("isEnabled", Boolean.toString(enabled));
-
-        return retVal;
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -134,10 +124,4 @@ public class InstrumentAssignment implements Serializable, Comparable<Instrument
         }
     }
 
-    /**
-     * 
-     */
-    public void normalize() {
-        this.instr = (Instrument) this.instr.clone();
-    }
 }

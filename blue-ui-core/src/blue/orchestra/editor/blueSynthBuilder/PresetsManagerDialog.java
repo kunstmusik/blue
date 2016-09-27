@@ -154,8 +154,7 @@ public class PresetsManagerDialog extends JDialog implements
     }
 
     public PresetGroup editPresetGroup(PresetGroup presetGroup) {
-        PresetGroup groupCopy = (PresetGroup) ObjectUtilities
-                .clone(presetGroup);
+        PresetGroup groupCopy = new PresetGroup(presetGroup);
 
         setPresetGroup(groupCopy);
 
@@ -225,12 +224,10 @@ public class PresetsManagerDialog extends JDialog implements
                 }
 
                 if (userObj instanceof Preset) {
-                    buffer.setBufferedItem((Preset) ObjectUtilities
-                            .clone(userObj));
+                    buffer.setBufferedItem(new Preset((Preset)userObj));
                     model.removePreset((Preset) userObj);
                 } else {
-                    buffer.setBufferedItem((PresetGroup) ObjectUtilities
-                            .clone(userObj));
+                    buffer.setBufferedItem(new PresetGroup((PresetGroup)userObj));
                     model.removePresetGroup((PresetGroup) userObj);
                 }
             });
@@ -241,11 +238,9 @@ public class PresetsManagerDialog extends JDialog implements
                 }
 
                 if (userObj instanceof Preset) {
-                    buffer.setBufferedItem((Preset) ObjectUtilities
-                            .clone(userObj));
+                    buffer.setBufferedItem(new Preset((Preset)userObj));
                 } else {
-                    buffer.setBufferedItem((PresetGroup) ObjectUtilities
-                            .clone(userObj));
+                    buffer.setBufferedItem(new PresetGroup((PresetGroup)userObj));
                 }
             });
 
@@ -259,11 +254,10 @@ public class PresetsManagerDialog extends JDialog implements
                 Object item = buffer.getBufferedItem();
                 
                 if (item instanceof Preset) {
-                    model.addPreset(group, (Preset) ObjectUtilities
-                            .clone(item));
+                    model.addPreset(group, new Preset((Preset)item));
                 } else {
                     model.addPresetGroup(group,
-                            (PresetGroup) ObjectUtilities.clone(item));
+                            new PresetGroup((PresetGroup) item));
                 }
             });
 

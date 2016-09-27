@@ -38,13 +38,13 @@ public interface RenderTimeManager {
 
     void endRender();
 
-    float getRenderStartTime();
+    double getRenderStartTime();
 
-    float getRenderTime();
+    double getRenderTime();
 
     TempoMapper getTempoMapper();
 
-    void initiateRender(float renderStart);
+    void initiateRender(double renderStart);
 
     boolean isCurrentProjectRendering();
 
@@ -54,6 +54,6 @@ public interface RenderTimeManager {
 
     void setTempoMapper(TempoMapper tempoMapper);
 
-    void updateTimePointer(float timePointer);
+    void updateTimePointer(double timePointer);
     
 }

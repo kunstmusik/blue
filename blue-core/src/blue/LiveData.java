@@ -27,20 +27,35 @@ import blue.utility.ObjectUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class LiveData implements Serializable {
+public class LiveData {
 
     private String commandLine = "csound -Wdo devaudio -L stdin";
     private int tempo = 60;
     private int repeat = 4;
-    private LiveObjectBins liveObjectBins = new LiveObjectBins();
-    private LiveObjectSetList liveObjectSets = new LiveObjectSetList();
+    private LiveObjectBins liveObjectBins;
+    private LiveObjectSetList liveObjectSets;
     private boolean commandLineEnabled = false;
     private boolean commandLineOverride = false;
     private boolean repeatEnabled = false;
+
+    public LiveData() {
+        liveObjectBins = new LiveObjectBins();
+        liveObjectSets = new LiveObjectSetList();
+    }
+
+    public LiveData(LiveData liveData) {
+        commandLine = liveData.commandLine;
+        tempo = liveData.tempo;
+        repeat = liveData.repeat;
+        commandLineEnabled = liveData.commandLineEnabled;
+        commandLineOverride = liveData.commandLineOverride;
+        repeatEnabled = liveData.repeatEnabled;
+        liveObjectBins = new LiveObjectBins(liveData.liveObjectBins);
+        liveObjectSets = new LiveObjectSetList(liveData.liveObjectSets);
+    }
 
     public String getCommandLine() {
         return commandLine;
@@ -56,7 +71,7 @@ public class LiveData implements Serializable {
 
     public LiveObjectSetList getLiveObjectSets() {
         return liveObjectSets;
-    }    
+    }
 
     public int getRepeat() {
         return repeat;
@@ -202,5 +217,4 @@ public class LiveData implements Serializable {
         this.repeatEnabled = repeatEnabled;
     }
 
-    
 }

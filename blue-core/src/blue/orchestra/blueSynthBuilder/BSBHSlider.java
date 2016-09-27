@@ -60,7 +60,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
                 if (parameters != null) {
                     Parameter param = parameters.getParameter(getObjectName());
                     if (param != null) {
-                        param.setValue((float)v);
+                        param.setValue(v);
                     }
                 }
             }
@@ -230,18 +230,18 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //    /**
 //     * @return Returns the maximum.
 //     */
-//    public float getMaximum() {
+//    public double getMaximum() {
 //        return maximum;
 //    }
 //
 //    /**
 //     * @param maximum The maximum to set.
 //     */
-//    public void setMaximum(float maximum, boolean truncate) {
+//    public void setMaximum(double maximum, boolean truncate) {
 //        if (maximum <= getMinimum()) {
 //            return;
 //        }
-//        float oldMax = this.maximum;
+//        double oldMax = this.maximum;
 //
 //        this.maximum = maximum;
 //
@@ -265,19 +265,19 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //    /**
 //     * @return Returns the minimum.
 //     */
-//    public float getMinimum() {
+//    public double getMinimum() {
 //        return minimum;
 //    }
 //
 //    /**
 //     * @param minimum The minimum to set.
 //     */
-//    public void setMinimum(float minimum, boolean truncate) {
+//    public void setMinimum(double minimum, boolean truncate) {
 //        if (minimum >= maximum) {
 //            return;
 //        }
 //
-//        float oldMin = this.minimum;
+//        double oldMin = this.minimum;
 //        this.minimum = minimum;
 //
 //        if (truncate) {
@@ -300,15 +300,15 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //    /**
 //     * @return
 //     */
-//    public float getValue() {
+//    public double getValue() {
 //        return this.value;
 //    }
 //
 //    /**
 //     * @param value The value to set.
 //     */
-//    public void setValue(float value) {
-//        float oldValue = this.value;
+//    public void setValue(double value) {
+//        double oldValue = this.value;
 //        this.value = value;
 //
 //        if (getResolution() > 0) {
@@ -324,8 +324,8 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //        }
 //
 //        if (propListeners != null) {
-//            propListeners.firePropertyChange("value", new Float(oldValue),
-//                    new Float(this.value));
+//            propListeners.firePropertyChange("value", new Double(oldValue),
+//                    new Double(this.value));
 //        }
 //    }
 
@@ -353,14 +353,14 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //    /**
 //     * @return Returns the resolution.
 //     */
-//    public float getResolution() {
+//    public double getResolution() {
 //        return resolution;
 //    }
 //
 //    /**
 //     * @param resolution The resolution to set.
 //     */
-//    public void setResolution(float resolution) {
+//    public void setResolution(double resolution) {
 //        this.resolution = resolution;
 //
 //        if (parameters != null) {
@@ -433,32 +433,31 @@ public class BSBHSlider extends AutomatableBSBObject implements
             parameter.addParameterListener(this);
 
             if (!parameter.isAutomationEnabled()) {
-                // FIXME - make parameters use double??
-                parameter.setValue((float)getValue());
+                parameter.setValue(getValue());
             }
 
             return;
         }
 
         Parameter param = new Parameter();
-        param.setValue((float)getValue());
-        param.setMax((float)getMaximum(), true);
-        param.setMin((float)getMinimum(), true);
+        param.setValue(getValue());
+        param.setMax(getMaximum(), true);
+        param.setMin(getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution((float)getResolution());
+        param.setResolution(getResolution());
         param.addParameterListener(this);
-        param.setValue((float)getValue());
+        param.setValue(getValue());
 
         parameters.addParameter(param);
     }
 
-//    public void updateValue(float value) {
-//        float oldValue = this.value;
+//    public void updateValue(double value) {
+//        double oldValue = this.value;
 //        this.value = value;
 //
 //        if (propListeners != null) {
 //            propListeners.firePropertyChange("updateValue",
-//                    new Float(oldValue), new Float(this.value));
+//                    new Double(oldValue), new Double(this.value));
 //        }
 //    }
 
@@ -467,8 +466,8 @@ public class BSBHSlider extends AutomatableBSBObject implements
         Parameter parameter = parameters.getParameter(this.objectName);
 
         if (parameter != null) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            float val = parameter.getLine().getValue(time);
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            double val = parameter.getLine().getValue(time);
 //            updateValue(val);
             setValue(val);
         }

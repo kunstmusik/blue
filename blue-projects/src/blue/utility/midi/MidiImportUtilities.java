@@ -74,13 +74,13 @@ public class MidiImportUtilities {
 
         Track[] tracks = sequence.getTracks();
 
-        float divType = sequence.getDivisionType();
+        double divType = sequence.getDivisionType();
 
         if (divType == Sequence.PPQ) {
             divType = 1.0f;
         }
 
-        float ticksLength = (float) sequence.getResolution();
+        double ticksLength = (double) sequence.getResolution();
 
         MidiImportSettings settings = getMidiImportSettings(tracks);
 
@@ -115,7 +115,7 @@ public class MidiImportUtilities {
 
             if (trSettings.isTrim()) {
                 // Assumes NoteList is already sorted
-                float start = nl.get(0).getStartTime();
+                double start = nl.get(0).getStartTime();
                 genSco.setStartTime(start);
                 ScoreUtilities.normalizeNoteList(nl);
             } else {
@@ -134,8 +134,8 @@ public class MidiImportUtilities {
         return pObj;
     }
 
-    private static NoteList getNoteListForTrack(Track track, float divType,
-            float ticksLength, String template, String instrId)
+    private static NoteList getNoteListForTrack(Track track, double divType,
+            double ticksLength, String template, String instrId)
             throws NoteParseException {
         if (track.size() == 0) {
             return null;
@@ -159,7 +159,7 @@ public class MidiImportUtilities {
                 int noteNum, velocity;
                 MNote n;
 
-                float time = (me.getTick() / ticksLength) * divType;
+                double time = (me.getTick() / ticksLength) * divType;
 
                 switch (shortMsg.getCommand()) {
                     case ShortMessage.NOTE_ON:
@@ -173,8 +173,8 @@ public class MidiImportUtilities {
                             n.start = time;
                             n.velocity = velocity;
                         } else {
-                            float start = n.start;
-                            float duration = time - n.start;
+                            double start = n.start;
+                            double duration = time - n.start;
 
                             String note = MidiUtilities.processNoteTemplate(
                                     template, instrId, start, duration,
@@ -192,8 +192,8 @@ public class MidiImportUtilities {
 
                         n = notes[noteNum];
 
-                        float start = n.start;
-                        float duration = time - n.start;
+                        double start = n.start;
+                        double duration = time - n.start;
 
                         String note = MidiUtilities.processNoteTemplate(
                                 template, instrId, start, duration, noteNum,
@@ -289,7 +289,7 @@ public class MidiImportUtilities {
     private static class MNote {
         public int velocity = -1;
 
-        public float start = -1.0f;
+        public double start = -1.0f;
 
         public void clear() {
             velocity = -1;

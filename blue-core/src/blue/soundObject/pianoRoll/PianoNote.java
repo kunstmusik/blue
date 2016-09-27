@@ -23,7 +23,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -31,18 +30,30 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 /**
  * @author steven
  */
-public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote> {
+public class PianoNote implements Comparable<PianoNote> {
     int octave = 8;
 
     int scaleDegree = 0;
 
-    float start = 0.0f;
+    double start = 0.0f;
 
-    float duration = 1.0f;
+    double duration = 1.0f;
 
     String noteTemplate = "";
 
     private transient ArrayList listeners;
+
+    public PianoNote() {
+    }
+
+    public PianoNote(PianoNote pn) {
+        octave = pn.octave;
+        scaleDegree = pn.scaleDegree;
+        start = pn.start;
+        duration = pn.duration;
+        noteTemplate = pn.noteTemplate;
+    }
+    
 
     // public Note generateNote(final String noteTemplate) {
     // String template = noteTemplate;
@@ -50,13 +61,13 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
     // return Note.createNote(template);
     // }
 
-    public float getDuration() {
+    public double getDuration() {
         return duration;
     }
 
-    public void setDuration(float duration) {
+    public void setDuration(double duration) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "duration",
-                new Float(this.duration), new Float(duration));
+                new Double(this.duration), new Double(duration));
         this.duration = duration;
         firePropertyChange(pce);
     }
@@ -83,13 +94,13 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
         firePropertyChange(pce);
     }
 
-    public float getStart() {
+    public double getStart() {
         return start;
     }
 
-    public void setStart(float start) {
+    public void setStart(double start) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "start",
-                new Float(this.start), new Float(start));
+                new Double(this.start), new Double(start));
         this.start = start;
         firePropertyChange(pce);
     }
@@ -154,10 +165,10 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
                     note.setScaleDegree(Integer.parseInt(node.getTextString()));
                     break;
                 case "start":
-                    note.setStart(Float.parseFloat(node.getTextString()));
+                    note.setStart(Double.parseDouble(node.getTextString()));
                     break;
                 case "duration":
-                    note.setDuration(Float.parseFloat(node.getTextString()));
+                    note.setDuration(Double.parseDouble(node.getTextString()));
                     break;
                 case "noteTemplate":
                     note.setNoteTemplate(node.getTextString());
@@ -174,25 +185,12 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
         retVal.addElement("octave").setText(Integer.toString(octave));
         retVal.addElement("scaleDegree").setText(Integer.toString(scaleDegree));
 
-        retVal.addElement("start").setText(Float.toString(start));
-        retVal.addElement("duration").setText(Float.toString(duration));
+        retVal.addElement("start").setText(Double.toString(start));
+        retVal.addElement("duration").setText(Double.toString(duration));
 
         retVal.addElement("noteTemplate").setText(noteTemplate);
 
         return retVal;
-    }
-
-    @Override
-    public PianoNote clone() {
-        PianoNote note = new PianoNote();
-
-        note.octave = this.octave;
-        note.scaleDegree = this.scaleDegree;
-        note.start = this.start;
-        note.duration = this.duration;
-        note.noteTemplate = this.noteTemplate;
-
-        return note;
     }
 
     @Override
@@ -209,7 +207,7 @@ public class PianoNote implements Serializable, Cloneable, Comparable<PianoNote>
             return val;
         }
         
-        float val2 = this.start - note2.start;
+        double val2 = this.start - note2.start;
         
         if(val2 != 0) {
             if(val2 > 0) {

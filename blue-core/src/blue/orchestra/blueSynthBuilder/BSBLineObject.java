@@ -30,14 +30,14 @@ import java.util.Iterator;
 import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
- 
+
     int canvasWidth = 200;
 
     int canvasHeight = 160;
 
-    float xMax = 1.0f;
+    double xMax = 1.0f;
 
-    private LineList lines = new LineList();
+    private LineList lines;
 
     boolean relativeXValues = true;
 
@@ -46,6 +46,22 @@ public class BSBLineObject extends BSBObject {
     SeparatorType separatorType = SeparatorType.NONE;
 
     boolean locked = false;
+
+    public BSBLineObject() {
+        lines = new LineList();
+    }
+
+    public BSBLineObject(BSBLineObject lineObj) {
+        super(lineObj);
+        canvasWidth = lineObj.canvasWidth;
+        canvasHeight = lineObj.canvasHeight;
+        xMax = lineObj.xMax;
+        lines = new LineList(lineObj.lines);
+        relativeXValues = lineObj.relativeXValues;
+        leadingZero = lineObj.leadingZero;
+        separatorType = lineObj.separatorType;
+        locked = lineObj.locked;
+    }
 
     public static BSBObject loadFromXML(Element data) {
         BSBLineObject lineObj = new BSBLineObject();
@@ -64,7 +80,7 @@ public class BSBLineObject extends BSBObject {
                     lineObj.setCanvasHeight(XMLUtilities.readInt(node));
                     break;
                 case "xMax":
-                    lineObj.setXMax(XMLUtilities.readFloat(node));
+                    lineObj.setXMax(XMLUtilities.readDouble(node));
                     break;
                 case "commaSeparated":
                     boolean val = XMLUtilities.readBoolean(node);
@@ -100,7 +116,7 @@ public class BSBLineObject extends BSBObject {
 
         retVal.addElement(XMLUtilities.writeInt("canvasWidth", canvasWidth));
         retVal.addElement(XMLUtilities.writeInt("canvasHeight", canvasHeight));
-        retVal.addElement(XMLUtilities.writeFloat("xMax", xMax));
+        retVal.addElement(XMLUtilities.writeDouble("xMax", xMax));
         retVal.addElement(XMLUtilities.writeBoolean("relativeXValues",
                 relativeXValues));
         retVal.addElement("separatorType").setText(separatorType.name());
@@ -116,7 +132,6 @@ public class BSBLineObject extends BSBObject {
 //    public BSBObjectView getBSBObjectView() {
 //        return new BSBLineObjectView(this);
 //    }
-
     @Override
     public String[] getReplacementKeys() {
         String[] vals = new String[lines.size()];
@@ -145,8 +160,8 @@ public class BSBLineObject extends BSBObject {
     private String getLineString(Line line) {
         StrBuilder buffer = new StrBuilder();
 
-        float[] xVals = new float[line.size()];
-        float[] yVals = new float[line.size()];
+        double[] xVals = new double[line.size()];
+        double[] yVals = new double[line.size()];
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint p = line.getLinePoint(i);
@@ -171,8 +186,8 @@ public class BSBLineObject extends BSBObject {
         buffer.append(yVals[0]);
 
         for (int i = 1; i < xVals.length; i++) {
-            buffer.append(spacer).append(NumberUtilities.formatFloat(xVals[i]));
-            buffer.append(spacer).append(NumberUtilities.formatFloat(yVals[i]));
+            buffer.append(spacer).append(NumberUtilities.formatDouble(xVals[i]));
+            buffer.append(spacer).append(NumberUtilities.formatDouble(yVals[i]));
         }
 
         return buffer.toString();
@@ -202,7 +217,6 @@ public class BSBLineObject extends BSBObject {
         }
 
         // System.out.println(buffer.toString());
-
         return buffer.toString();
     }
 
@@ -222,7 +236,6 @@ public class BSBLineObject extends BSBObject {
             String lineStr = parts[i];
 
             // System.out.println(lineStr);
-
             String[] vals = lineStr.split(":");
 
             String name = vals[0];
@@ -232,15 +245,15 @@ public class BSBLineObject extends BSBObject {
             if (line != null) {
                 line.clear();
 
-                float min = line.getMin();
-                float max = line.getMax();
-                float range = max - min;
+                double min = line.getMin();
+                double max = line.getMax();
+                double range = max - min;
 
                 for (int j = 1; j < vals.length; j += 2) {
                     LinePoint p = new LinePoint();
 
-                    float x = (Float.parseFloat(vals[j]));
-                    float y = (Float.parseFloat(vals[j + 1]));
+                    double x = (Double.parseDouble(vals[j]));
+                    double y = (Double.parseDouble(vals[j + 1]));
 
                     if (version == 1) {
                         y = (y * range) + min;
@@ -306,17 +319,17 @@ public class BSBLineObject extends BSBObject {
         }
     }
 
-    public float getXMax() {
+    public double getXMax() {
         return xMax;
     }
 
-    public void setXMax(float max) {
-        float oldMax = xMax;
+    public void setXMax(double max) {
+        double oldMax = xMax;
         xMax = max;
 
         if (propListeners != null) {
-            propListeners.firePropertyChange("yMax", new Float(oldMax),
-                    new Float(xMax));
+            propListeners.firePropertyChange("yMax", new Double(oldMax),
+                    new Double(xMax));
         }
     }
 
@@ -354,7 +367,7 @@ public class BSBLineObject extends BSBObject {
 
     @Override
     public BSBObject deepCopy() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new BSBLineObject(this);
     }
 
     public enum SeparatorType {
@@ -369,7 +382,7 @@ public class BSBLineObject extends BSBObject {
         }
 
         public static SeparatorType fromString(String string) {
-            switch(string) {
+            switch (string) {
                 case "None":
                     return NONE;
                 case "Comma":
@@ -385,6 +398,8 @@ public class BSBLineObject extends BSBObject {
         }
 
         @Override
-        public String toString() { return value; }
+        public String toString() {
+            return value;
+        }
     };
 }

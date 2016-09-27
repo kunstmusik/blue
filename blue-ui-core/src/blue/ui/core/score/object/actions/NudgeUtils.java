@@ -31,17 +31,17 @@ import java.util.Collection;
 public class NudgeUtils {
 
     // TODO - Respect snap values, Make Undoable
-    public static void nudgeHorizontal(float timeValue,
+    public static void nudgeHorizontal(double timeValue,
             Collection<? extends ScoreObject> scoreObjects) {
         if (scoreObjects == null || scoreObjects.size() == 0) {
             return;
         }
 
-        float adjustedTime = timeValue;
+        double adjustedTime = timeValue;
 
         if (timeValue < 0.0f) {
             for (ScoreObject scoreObj : scoreObjects) {
-                float start = scoreObj.getStartTime();
+                double start = scoreObj.getStartTime();
                 if (start == 0.0) {
                     return;
                 }
@@ -57,8 +57,8 @@ public class NudgeUtils {
         int len = scoreObjects.size();
         ScoreObject[] objects = scoreObjects.<ScoreObject>toArray(
                 new ScoreObject[scoreObjects.size()]);
-        float[] startTimes = new float[len];
-        float[] endTimes = new float[len];
+        double[] startTimes = new double[len];
+        double[] endTimes = new double[len];
 
         for (int i = 0; i < objects.length; i++) {
             ScoreObject scoreObj = objects[i];

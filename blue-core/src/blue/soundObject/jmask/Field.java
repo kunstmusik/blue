@@ -26,7 +26,6 @@ import blue.soundObject.NoteList;
 import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
@@ -36,7 +35,7 @@ import javax.swing.event.ListDataListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Field implements Serializable, ListModel {
+public class Field implements ListModel {
 
     ArrayList<Parameter> parameters = new ArrayList<>();
 
@@ -56,6 +55,12 @@ public class Field implements Serializable, ListModel {
             parameters.get(1).setName("Start");
             parameters.get(2).setName("Duration");
         }
+    }
+
+    public Field(Field field) {
+        for(Parameter param: field.parameters){
+            parameters.add(new Parameter(param));
+        } 
     }
 
     public static Field loadFromXML(Element data) throws Exception {

@@ -27,7 +27,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,7 +36,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class Track implements Serializable, TableModel {
+public class Track implements TableModel {
 
     private static final MessageFormat COL_NAME = new MessageFormat("<{0}>");
 
@@ -49,9 +48,9 @@ public class Track implements Serializable, TableModel {
 
     private String instrumentId = "1";
 
-    ArrayList columns = new ArrayList();
+    ArrayList<Column> columns = new ArrayList<>();
 
-    ArrayList trackerNotes = new ArrayList();
+    ArrayList<TrackerNote> trackerNotes = new ArrayList<>();
 
     private transient Vector listeners = null;
 
@@ -61,11 +60,23 @@ public class Track implements Serializable, TableModel {
         this(true);
     }
 
-    public Track(boolean init) {
+    private Track(boolean init) {
         if (init) {
             addColumn(new Column.PitchColumn());
             addColumn(new Column.AmpColumn());
         }
+    }
+
+    public Track(Track track) {
+       name = track.name;
+       noteTemplate = track.noteTemplate;
+       instrumentId = track.instrumentId;
+       for(Column col : track.columns) {
+            addColumn(new Column(col));
+       }
+       for(TrackerNote n :track.trackerNotes) {
+            trackerNotes.add(new TrackerNote(n));
+       }
     }
 
     public void resizeSteps(int steps) {
@@ -158,18 +169,15 @@ public class Track implements Serializable, TableModel {
             return;
         }
 
-        Object obj = columns.remove(index - 1);
+        Column obj = columns.remove(index - 1);
         columns.add(index, obj);
 
-        for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-            TrackerNote trNote = (TrackerNote) iter.next();
+        for (TrackerNote trNote : trackerNotes) {
+            String val1 = trNote.getValue(index);
+            String val2 = trNote.getValue(index + 1);
 
-            Object val1 = trNote.getValue(index);
-            Object val2 = trNote.getValue(index + 1);
-
-            trNote.setValue(index, (String) val2);
-            trNote.setValue(index + 1, (String) val1);
-
+            trNote.setValue(index, val2);
+            trNote.setValue(index + 1, val1);
         }
 
         fireTableDataChanged();
@@ -180,18 +188,15 @@ public class Track implements Serializable, TableModel {
             return;
         }
 
-        Object obj = columns.remove(index + 1);
+        Column obj = columns.remove(index + 1);
         columns.add(index, obj);
 
-        for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-            TrackerNote trNote = (TrackerNote) iter.next();
+        for (TrackerNote trNote : trackerNotes) {
+            String val1 = trNote.getValue(index + 1);
+            String val2 = trNote.getValue(index + 2);
 
-            Object val1 = trNote.getValue(index + 1);
-            Object val2 = trNote.getValue(index + 2);
-
-            trNote.setValue(index + 1, (String) val2);
-            trNote.setValue(index + 2, (String) val1);
-
+            trNote.setValue(index + 1, val2);
+            trNote.setValue(index + 2, val1);
         }
 
         fireTableDataChanged();
@@ -200,10 +205,8 @@ public class Track implements Serializable, TableModel {
     public void addColumn(Column col) {
         columns.add(col);
 
-        for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-            TrackerNote trNote = (TrackerNote) iter.next();
+        for (TrackerNote trNote : trackerNotes) {
             trNote.addColumn();
-
         }
 
         fireTableDataChanged();
@@ -235,7 +238,7 @@ public class Track implements Serializable, TableModel {
         String instrId = getInstrumentId();
 
         try {
-            Float.parseFloat(instrId);
+            Double.parseDouble(instrId);
         } catch (NumberFormatException nfe) {
             instrId = "\"" + instrId + "\"";
         }
@@ -246,7 +249,7 @@ public class Track implements Serializable, TableModel {
                 getInstrumentId());
 
         for (int i = 0; i < trackerNotes.size(); i++) {
-            TrackerNote trNote = (TrackerNote) trackerNotes.get(i);
+            TrackerNote trNote = trackerNotes.get(i);
 
             if (trNote.isActive() && !trNote.isOff()) {
 
@@ -255,7 +258,7 @@ public class Track implements Serializable, TableModel {
                 int dur = 1;
 
                 for (int j = i + 1; j < trackerNotes.size(); j++) {
-                    TrackerNote temp = (TrackerNote) trackerNotes.get(j);
+                    TrackerNote temp = trackerNotes.get(j);
                     if (temp.isActive() || temp.isOff()) {
                         break;
                     }
@@ -285,10 +288,10 @@ public class Track implements Serializable, TableModel {
                         int octave = Integer.parseInt(parts[0]);
                         int scaleDegree = Integer.parseInt(parts[1]);
 
-                        float freq = col.getScale().getFrequency(octave,
+                        double freq = col.getScale().getFrequency(octave,
                                 scaleDegree);
 
-                        newValue = Float.toString(freq);
+                        newValue = Double.toString(freq);
                     }
 
                     noteStr = TextUtilities.replaceAll(noteStr, colNameStr,
@@ -328,9 +331,9 @@ public class Track implements Serializable, TableModel {
 
     /* PROPERTY CHANGE SUPPORT */
 
-    public void firePropertyChange(String propertyName, float oldVal,
-            float newVal) {
-        firePropertyChange(propertyName, new Float(oldVal), new Float(newVal));
+    public void firePropertyChange(String propertyName, double oldVal,
+            double newVal) {
+        firePropertyChange(propertyName, new Double(oldVal), new Double(newVal));
     }
 
     public void firePropertyChange(String propertyName, boolean oldVal,
@@ -470,8 +473,7 @@ public class Track implements Serializable, TableModel {
 
         retVal.addElement(trNotesElement);
 
-        for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-            TrackerNote note = (TrackerNote) iter.next();
+        for (TrackerNote note : trackerNotes) {
             trNotesElement.addElement(note.saveAsXML());
         }
 
@@ -529,8 +531,7 @@ public class Track implements Serializable, TableModel {
     }
 
     public void clearNotes() {
-        for (Iterator iter = trackerNotes.iterator(); iter.hasNext();) {
-            TrackerNote note = (TrackerNote) iter.next();
+        for (TrackerNote note : trackerNotes) {
             note.clear();
         }
 

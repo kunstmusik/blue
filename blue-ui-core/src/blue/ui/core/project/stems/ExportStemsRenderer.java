@@ -39,7 +39,7 @@ public class ExportStemsRenderer {
 
     public void exportStemsByInstrument(BlueData data) {
         
-        BlueData tempData = (BlueData)ObjectUtilities.clone(data);
+        BlueData tempData = new BlueData(data);
         
         ArrayList<InstrumentAssignment> instrumentAssignments = tempData.getArrangement().getArrangement();
 

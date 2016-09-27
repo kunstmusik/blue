@@ -355,7 +355,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
                return; 
             }
             SoundObject sObj = (SoundObject) scoreObj;
-            SoundObject copy = sObj.clone();
+            SoundObject copy = sObj.deepCopy();
             copy.setStartTime(0.0f);
             copy.setSubjectiveDuration(4);
             copy.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
@@ -365,7 +365,7 @@ public class PatternLayerPanel extends javax.swing.JPanel
     }//GEN-LAST:event_setSObjFromBufferMenuItemActionPerformed
 
     private void copySObjToBufferMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySObjToBufferMenuItemActionPerformed
-        ScoreObject copy = patternLayer.getSoundObject().clone();
+        ScoreObject copy = patternLayer.getSoundObject().deepCopy();
         ScoreController.getInstance().setSelectedScoreObjects(Collections.singleton(copy));
     }//GEN-LAST:event_copySObjToBufferMenuItemActionPerformed
 

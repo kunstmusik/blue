@@ -27,52 +27,60 @@ import java.util.Arrays;
  * @author stevenyi
  */
 public class PatternData {
-    
+
     protected static final int BLOCK_SIZE = 16;
-    
+
     boolean[] patterns = new boolean[BLOCK_SIZE];
     int maxSelected = -1;
-    
+
+    public PatternData() {
+    }
+
+    public PatternData(PatternData pd) {
+        patterns = pd.patterns.clone();
+        maxSelected = pd.maxSelected;
+    }
+
     public boolean isPatternSet(int index) {
-        if(index < 0 || index >= patterns.length) {
+        if (index < 0 || index >= patterns.length) {
             return false;
         }
         return patterns[index];
     }
-    
+
     public void setPattern(int index, boolean selected) {
-        if(index < 0 || isPatternSet(index) == selected) {
+        if (index < 0 || isPatternSet(index) == selected) {
             return;
         }
-        if(index >= patterns.length) {
-            if(selected) {
+        if (index >= patterns.length) {
+            if (selected) {
                 resizePatterns(index);
             } else {
                 return;
             }
         }
         patterns[index] = selected;
-        
-        if(index >= maxSelected) {
-            if(selected) {
+
+        if (index >= maxSelected) {
+            if (selected) {
                 maxSelected = index;
             } else {
                 maxSelected = calculateMaxSelected();
             }
-        } 
+        }
     }
-    
+
     public int getSize() {
         return patterns.length;
     }
-    
+
     public int getMaxSelected() {
         return maxSelected;
     }
 
     protected int calculateMaxSelected() {
-        for(int i = patterns.length - 1; i >= 0; i--) {
-            if(patterns[i]) {
+        for (int i = patterns.length - 1; i >= 0; i--) {
+            if (patterns[i]) {
                 return i;
             }
         }
@@ -81,26 +89,26 @@ public class PatternData {
 
     protected void resizePatterns(int index) {
         int newSize = ((index / BLOCK_SIZE) + 1) * BLOCK_SIZE;
-        
-        if(newSize == patterns.length) {
+
+        if (newSize == patterns.length) {
             return;
         }
-        
+
         boolean[] newPatterns = new boolean[newSize];
-        
+
         int length = Math.min(patterns.length, newPatterns.length);
-        
+
         System.arraycopy(patterns, 0, newPatterns, 0, length);
-        
+
         patterns = newPatterns;
     }
-    
+
     public Element saveAsXML() {
         Element retVal = new Element("patternData");
-        
+
         // resize array for efficiency
-        resizePatterns(calculateMaxSelected());  
-        
+        resizePatterns(calculateMaxSelected());
+
         StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i < patterns.length; i++) {
@@ -112,27 +120,20 @@ public class PatternData {
         }
 
         retVal.setText(buffer.toString());
-        
+
         return retVal;
     }
-    
+
     public static PatternData loadFromXML(Element data) {
         PatternData patternData = new PatternData();
-        
+
         String valStr = data.getTextString();
         patternData.patterns = new boolean[valStr.length()];
 
         for (int i = 0; i < valStr.length(); i++) {
             patternData.patterns[i] = (valStr.charAt(i) == '1');
         }
-        
-        return patternData;
-    }
-    
-    @Override
-    public PatternData clone() {
-        PatternData patternData = new PatternData();
-        patternData.patterns = Arrays.copyOf(this.patterns, this.patterns.length);
+
         return patternData;
     }
 }

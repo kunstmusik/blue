@@ -374,7 +374,7 @@ public final class BlueLiveTopComponent extends TopComponent
 
                 if (lObj != null) {
 
-                    ScoreObject copy = lObj.getSoundObject().clone();
+                    ScoreObject copy = lObj.getSoundObject().deepCopy();
                     final ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
 
@@ -412,7 +412,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     return;
                 }
 
-                SoundObject copy = sObj.clone();
+                SoundObject copy = sObj.deepCopy();
                 copy.setStartTime(0.0f);
 
                 addSoundObject(column, row, copy);
@@ -922,11 +922,11 @@ public final class BlueLiveTopComponent extends TopComponent
                 return;
         }
 
-        float start = ((Double) startSpinner.getValue()).floatValue();
+        double start = ((Double) startSpinner.getValue()).doubleValue();
         String template = noteTemplateText.getText();
         String instrId = instrIdText.getText();
-        float quarterNote = ((Double) quarterNoteSpinner.getValue()).floatValue();
-        float dur = quarterNote * (float) time;
+        double quarterNote = ((Double) quarterNoteSpinner.getValue()).doubleValue();
+        double dur = quarterNote * (double) time;
 
         outputTextArea.setText(
                 outputTextArea.getText() + scoPadReceiver.getNotes(
@@ -1339,7 +1339,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 
                 if (lObj != null) {
                     
-                    SoundObject copy = lObj.getSoundObject().clone();
+                    SoundObject copy = lObj.getSoundObject().deepCopy();
                     
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
@@ -1358,7 +1358,7 @@ public final class BlueLiveTopComponent extends TopComponent
                 
                 if (lObj != null) {
                     
-                    SoundObject copy = lObj.getSoundObject().clone();
+                    SoundObject copy = lObj.getSoundObject().deepCopy();
                     
                     ScoreController.ScoreObjectBuffer scoreObjectBuffer
                             = ScoreController.getInstance().getScoreObjectBuffer();
@@ -1386,8 +1386,7 @@ public final class BlueLiveTopComponent extends TopComponent
                     return;
                 }
                 
-                SoundObject copy = (SoundObject) ObjectUtilities.clone(
-                        sObj);
+                SoundObject copy = sObj.deepCopy();
                 copy.setStartTime(0.0f);
                 addSoundObject(mouseColumn, mouseRow, copy);
             });

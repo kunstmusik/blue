@@ -54,7 +54,7 @@ public class CsoundCodePanel extends JComponent {
             @Override
             public void documentChanged(DocumentEvent e) {
                  if (blueX7 != null) {
-                    blueX7.setProperty("postCode", postCodeText.getText());
+                    blueX7.setCsoundPostCode(postCodeText.getText());
                 }
             }
 
@@ -65,7 +65,7 @@ public class CsoundCodePanel extends JComponent {
 
     public void editBlueX7(BlueX7 blueX7) {
         this.blueX7 = null;
-        postCodeText.setText(blueX7.getProperty("postCode"));
+        postCodeText.setText(blueX7.getCsoundPostCode());
         undo.discardAllEdits();
         this.blueX7 = blueX7;
     }

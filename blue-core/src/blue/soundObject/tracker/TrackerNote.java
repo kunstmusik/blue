@@ -22,18 +22,26 @@ package blue.soundObject.tracker;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class TrackerNote implements Serializable {
+public class TrackerNote {
 
     boolean tied = false;
 
     boolean off = false;
 
-    ArrayList fields = new ArrayList();
+    ArrayList<String> fields; 
+
+    public TrackerNote() {
+        fields = new ArrayList<>();
+    }
+
+    public TrackerNote(TrackerNote tn) {
+        tied = tn.tied;
+        off = tn.off;
+        fields = new ArrayList<>(tn.fields);
+    }
 
     public boolean isTied() {
         return tied;
@@ -93,19 +101,18 @@ public class TrackerNote implements Serializable {
         }
 
         int index = col - 1;
-        return (String) fields.get(index);
+        return fields.get(index);
     }
 
     /**
      * Return if the note has anything set and is active. Used when generating
      * notes by Track and TrackerObject to see if note is to be used for
      * compilation.
-     * 
+     *
      * @return
      */
     public boolean isActive() {
-        for (Iterator iter = fields.iterator(); iter.hasNext();) {
-            String field = (String) iter.next();
+        for (String field : fields) {
             if (field.length() != 0) {
                 return true;
             }
@@ -125,8 +132,7 @@ public class TrackerNote implements Serializable {
         retVal.addElement(XMLUtilities.writeBoolean("tied", tied));
         retVal.addElement(XMLUtilities.writeBoolean("off", off));
 
-        for (Iterator iter = fields.iterator(); iter.hasNext();) {
-            String val = (String) iter.next();
+        for (String val : fields) {
             retVal.addElement("field").setAttribute("val", val);
         }
 
@@ -149,18 +155,16 @@ public class TrackerNote implements Serializable {
                 case "off":
                     retVal.off = Boolean.valueOf(nodeVal).booleanValue();
                     break;
-                case "pitch":
-                    {
-                        String val = (nodeVal == null) ? "" : nodeVal;
-                        retVal.fields.add(val);
-                        break;
-                    }
-                case "amp":
-                    {
-                        String val = (nodeVal == null) ? "" : nodeVal;
-                        retVal.fields.add(val);
-                        break;
-                    }
+                case "pitch": {
+                    String val = (nodeVal == null) ? "" : nodeVal;
+                    retVal.fields.add(val);
+                    break;
+                }
+                case "amp": {
+                    String val = (nodeVal == null) ? "" : nodeVal;
+                    retVal.fields.add(val);
+                    break;
+                }
                 case "field":
                 case "otherField":
                     String atVal = node.getAttributeValue("val");

@@ -60,6 +60,14 @@ public class NotationNote {
     public NotationNote() {
     }
 
+    public NotationNote(NotationNote note) {
+        isRest = note.isRest;
+        accidental = note.accidental;
+        dots = note.dots;
+        midiPitch = note.midiPitch;
+        noteDuration = note.noteDuration;
+    }
+
     public int getMidiPitch() {
         return this.midiPitch;
     }

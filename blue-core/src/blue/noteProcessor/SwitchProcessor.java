@@ -26,11 +26,17 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="SwitchProcessor", position = 120)
-public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
+public class SwitchProcessor implements NoteProcessor {
 
     int pfield1 = 4;
 
     int pfield2 = 5;
+
+    public SwitchProcessor(){}
+    public SwitchProcessor(SwitchProcessor sp){
+        pfield1 = sp.pfield1;
+        pfield2 = sp.pfield2;
+    }
 
     @Override
     public String toString() {
@@ -129,5 +135,10 @@ public class SwitchProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("pfield2").setText(this.getPfield2());
 
         return retVal;
+    }
+
+    @Override
+    public SwitchProcessor deepCopy() {
+        return new SwitchProcessor(this);
     }
 }

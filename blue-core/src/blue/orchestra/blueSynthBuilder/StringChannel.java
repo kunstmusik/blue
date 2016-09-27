@@ -21,13 +21,12 @@ package blue.orchestra.blueSynthBuilder;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public class StringChannel implements Serializable, PropertyChangeListener {
+public class StringChannel implements PropertyChangeListener {
 
     public boolean dirty = true;
     String value = "";

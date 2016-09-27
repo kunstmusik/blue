@@ -40,8 +40,8 @@ public class FadeHandle extends JPanel {
     boolean adjustingFade = false;
 
     private final MouseAdapter mouseAdapter = new MouseAdapter() {
-        float max = 0.0f;
-        float startFade;
+        double max = 0.0f;
+        double startFade;
         int startX;
 
         @Override
@@ -98,9 +98,9 @@ public class FadeHandle extends JPanel {
         @Override
         public void mouseDragged(MouseEvent e) {
             if (adjustingFade) {
-                float timeAdj = (e.getXOnScreen() - startX)
-                        / (float) timeState.getPixelSecond();
-                float newFade = fadeIn ? startFade + timeAdj : startFade - timeAdj;
+                double timeAdj = (e.getXOnScreen() - startX)
+                        / (double) timeState.getPixelSecond();
+                double newFade = fadeIn ? startFade + timeAdj : startFade - timeAdj;
 
                 newFade = Math.max(0.0f, newFade);
                 newFade = Math.min(max, newFade);

@@ -10,7 +10,6 @@ import blue.components.lines.Line;
 import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -21,11 +20,15 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "ZakLineObject", live=false, position = 150)
-public class ZakLineObject extends AbstractLineObject implements Serializable {
+public class ZakLineObject extends AbstractLineObject {
 
     /** Creates a new instance of ZakLineObject */
     public ZakLineObject() {
         this.setName("ZakLineObject");
+    }
+
+    public ZakLineObject(ZakLineObject zlo) {
+        super(zlo);
     }
 
     @Override
@@ -64,10 +67,9 @@ public class ZakLineObject extends AbstractLineObject implements Serializable {
         return lObj;
     }
 
-    /**
-     * Retrieves the editor to use on this SoundObject
-     */
-//    public SoundObjectEditor getEditor() {
-//        return new ZakLineEditor();
-//    }
+    @Override
+    public ZakLineObject deepCopy() {
+        return new ZakLineObject(this);
+    }
+
 }

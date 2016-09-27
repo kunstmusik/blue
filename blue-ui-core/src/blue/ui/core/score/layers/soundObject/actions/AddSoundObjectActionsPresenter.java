@@ -98,7 +98,7 @@ public final class AddSoundObjectActionsPresenter extends AbstractAction impleme
             
             TimeState timeState = stc.getTimeState();
 
-            float start = (float) p.getX() / timeState.getPixelSecond();
+            double start = (double) p.getX() / timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
                 start = ScoreUtilities.getSnapValueStart(start,

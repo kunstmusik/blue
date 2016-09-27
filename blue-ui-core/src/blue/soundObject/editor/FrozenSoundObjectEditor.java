@@ -107,7 +107,7 @@ public class FrozenSoundObjectEditor extends ScoreObjectEditor {
 
         frozenWaveFileName.setText(fso.getFrozenWaveFileName());
 
-        frozenSoundObjectDuration.setText(Float.toString(fso.
+        frozenSoundObjectDuration.setText(Double.toString(fso.
                 getFrozenSoundObject().getSubjectiveDuration()));
 
     }

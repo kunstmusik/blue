@@ -24,6 +24,12 @@ import javax.swing.JComponent;
 
 public class Uniform implements ProbabilityGenerator {
 
+    public Uniform() {
+    }
+
+    public Uniform(Uniform uniform) {
+    }
+
     public static ProbabilityGenerator loadFromXML(Element data) {
         Uniform retVal = new Uniform();
 
@@ -38,11 +44,6 @@ public class Uniform implements ProbabilityGenerator {
         return retVal;
     }
 
-    public JComponent getEditor() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     @Override
     public String getName() {
         return "Uniform";
@@ -51,6 +52,11 @@ public class Uniform implements ProbabilityGenerator {
     @Override
     public double getValue(double time, java.util.Random rnd) {
         return rnd.nextDouble();
+    }
+
+    @Override
+    public Uniform deepCopy() {
+        return new Uniform(this);
     }
 
 }

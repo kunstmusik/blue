@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.ui.core.mixer;
 
 import blue.BlueSystem;
@@ -42,6 +41,7 @@ import javax.swing.event.PopupMenuListener;
 import org.openide.windows.WindowManager;
 
 public class EffectsPopup extends JPopupMenu implements ChangeListener {
+
     private static EffectsPopup popup = null;
 
     private EffectEditorDialog effectDialog = null;
@@ -121,7 +121,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                     Object obj = chain.removeElementAt(selectedIndex);
 
                     if (obj instanceof Effect) {
-                        bufferedEffect = (Effect) ObjectUtilities.clone(obj);
+                        bufferedEffect = new Effect((Effect) obj);
                         EffectEditorManager.getInstance().removeEffect(
                                 (Effect) obj);
                     }
@@ -138,7 +138,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                     Object obj = chain.getElementAt(selectedIndex);
 
                     if (obj instanceof Effect) {
-                        bufferedEffect = (Effect) ObjectUtilities.clone(obj);
+                        bufferedEffect = new Effect((Effect) obj);
                     }
 
                 }
@@ -149,8 +149,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 if (chain != null && bufferedEffect != null) {
-                    Effect clone = (Effect) ObjectUtilities
-                            .clone(bufferedEffect);
+                    Effect clone = new Effect(bufferedEffect);
                     clone.clearParameters();
                     chain.addEffect(clone);
                 }
@@ -365,6 +364,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class AddEffectAction extends AbstractAction {
+
         private Effect effect;
 
         public AddEffectAction(Effect effect) {
@@ -375,7 +375,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (chain != null) {
-                Effect copy = (Effect) ObjectUtilities.clone(effect);
+                Effect copy = new Effect(effect);
                 copy.clearParameters();
                 copy.setEnabled(true);
                 chain.addEffect(copy);
@@ -394,7 +394,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         public void actionPerformed(ActionEvent e) {
             if (chain != null && selectedIndex > 0) {
                 chain.pushUp(selectedIndex);
-                if(listSelectionModel != null) {
+                if (listSelectionModel != null) {
                     listSelectionModel.setSelectionInterval(
                             listSelectionModel.getMinSelectionIndex() - 1,
                             listSelectionModel.getMaxSelectionIndex() - 1);
@@ -414,7 +414,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
         public void actionPerformed(ActionEvent e) {
             if (chain != null && selectedIndex < chain.size() - 1) {
                 chain.pushDown(selectedIndex);
-                if(listSelectionModel != null) {
+                if (listSelectionModel != null) {
                     listSelectionModel.setSelectionInterval(
                             listSelectionModel.getMinSelectionIndex() + 1,
                             listSelectionModel.getMaxSelectionIndex() + 1);
@@ -438,7 +438,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
                 if (obj instanceof Effect) {
                     Effect effect = (Effect) obj;
 
-                    Effect copy = (Effect) ObjectUtilities.clone(effect);
+                    Effect copy = new Effect(effect);
 
                     EffectsLibrary library = EffectsLibrary.getInstance();
 
@@ -450,6 +450,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class OpenEditorAction extends AbstractAction {
+
         public OpenEditorAction() {
             putValue(NAME, "Open Interface for Effect");
         }
@@ -489,6 +490,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class EditEffectAction extends AbstractAction {
+
         public EditEffectAction() {
             putValue(NAME, "Edit Effect");
         }
@@ -520,6 +522,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class EnableDisableEffectAction extends AbstractAction {
+
         public EnableDisableEffectAction() {
             putValue(NAME, "Disable Effect");
         }
@@ -541,6 +544,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class AddNewEffectAction extends AbstractAction {
+
         public AddNewEffectAction() {
             putValue(NAME, "Add New Effect");
         }
@@ -567,6 +571,7 @@ public class EffectsPopup extends JPopupMenu implements ChangeListener {
     }
 
     class AddNewSendAction extends AbstractAction {
+
         public AddNewSendAction() {
             putValue(NAME, "Add New Send");
         }

@@ -16,15 +16,22 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
+public class EnvelopePoint {
 
-public class EnvelopePoint implements java.io.Serializable {
     public int x = 0;
-
     public int y = 0;
+
+    public EnvelopePoint() {
+    }
+
+    public EnvelopePoint(EnvelopePoint ep) {
+        x = ep.x;
+        y = ep.y;
+    }
 
     /**
      * @return

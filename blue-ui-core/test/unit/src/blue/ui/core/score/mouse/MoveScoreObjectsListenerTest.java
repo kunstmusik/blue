@@ -130,5 +130,10 @@ public class MoveScoreObjectsListenerTest {
         @Override
         public void clearScoreObjects() {
         }
+
+        @Override
+        public Layer deepCopy() {
+            return new InvalidLayer();
+        }
     }
 }

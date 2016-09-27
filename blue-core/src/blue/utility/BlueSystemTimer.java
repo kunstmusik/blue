@@ -61,7 +61,7 @@ public class BlueSystemTimer {
             return "No Timer Found";
         }
 
-        float elapsedDur = (System.currentTimeMillis() - calendar
+        double elapsedDur = (System.currentTimeMillis() - calendar
                 .getTimeInMillis()) / 1000;
 
         return NumberUtilities.formatTime(elapsedDur);

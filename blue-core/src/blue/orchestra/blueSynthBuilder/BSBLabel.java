@@ -20,10 +20,6 @@
 package blue.orchestra.blueSynthBuilder;
 
 import electric.xml.Element;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.beans.property.ObjectProperty;

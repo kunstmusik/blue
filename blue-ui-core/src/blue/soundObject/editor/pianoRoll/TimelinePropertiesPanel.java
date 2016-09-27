@@ -69,13 +69,13 @@ public class TimelinePropertiesPanel extends JComponent {
             isUpdating = true;
             
             try {
-                float val = Float.parseFloat(snapValue.getText());
+                double val = Double.parseDouble(snapValue.getText());
                 if (val < 0) {
                     return;
                 }
                 pianoRoll.setSnapValue(val);
             } catch (NumberFormatException nfe) {
-                snapValue.setText(Float.toString(pianoRoll.getSnapValue()));
+                snapValue.setText(Double.toString(pianoRoll.getSnapValue()));
             }
 
             isUpdating = false;
@@ -151,7 +151,7 @@ public class TimelinePropertiesPanel extends JComponent {
         this.pianoRoll = pianoRoll;
 
         snapEnabledBox.setSelected(pianoRoll.isSnapEnabled());
-        snapValue.setText(Float.toString(pianoRoll.getSnapValue()));
+        snapValue.setText(Double.toString(pianoRoll.getSnapValue()));
         timeUnit.setText(Integer.toString(pianoRoll.getTimeUnit()));
 
         if (pianoRoll.getTimeDisplay() == PianoRoll.DISPLAY_TIME) {

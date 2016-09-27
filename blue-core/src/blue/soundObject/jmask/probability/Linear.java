@@ -24,11 +24,19 @@ import electric.xml.Element;
 import electric.xml.Elements;
 
 public class Linear implements ProbabilityGenerator {
+
     public static final int DECREASING = 0;
 
     public static final int INCREASING = 1;
 
     private int direction = DECREASING;
+
+    public Linear() {
+    }
+
+    public Linear(Linear linear) {
+        this.direction = linear.direction;
+    }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
         Linear retVal = new Linear();
@@ -51,14 +59,10 @@ public class Linear implements ProbabilityGenerator {
         Element retVal = new Element("probabilityGenerator");
         retVal.setAttribute("type", getClass().getName());
 
-        retVal.addElement(XMLUtilities.writeInt("direction",getDirection()));
+        retVal.addElement(XMLUtilities.writeInt("direction", getDirection()));
 
         return retVal;
     }
-
-//    public JComponent getEditor() {
-//        return new LinearEditor(this);
-//    }
 
     @Override
     public String getName() {
@@ -87,6 +91,11 @@ public class Linear implements ProbabilityGenerator {
 
     public void setDirection(int direction) {
         this.direction = direction;
+    }
+
+    @Override
+    public Linear deepCopy() {
+        return new Linear(this);
     }
 
 }

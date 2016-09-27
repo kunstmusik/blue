@@ -99,7 +99,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
         } else if (SwingUtilities.isLeftMouseButton(e)) {
             startX = Math.max(e.getX(), 0);
 
-            float startTime = startX / (float) timeState.getPixelSecond();
+            double startTime = startX / (double) timeState.getPixelSecond();
             if (timeState.isSnapEnabled()) {
                 startTime = ScoreUtilities.getSnapValueStart(startTime,
                         timeState.getSnapValue());
@@ -132,7 +132,7 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
 
         if (SwingUtilities.isLeftMouseButton(e)) {
             int x = Math.max(e.getX(), 0);
-            float mouseDragTime = x / (float) timeState.getPixelSecond();
+            double mouseDragTime = x / (double) timeState.getPixelSecond();
 
             if (timeState.isSnapEnabled()) {
                 mouseDragTime = ScoreUtilities.getSnapValueMove(mouseDragTime,
@@ -183,8 +183,8 @@ class MultiLineSelectionMouseProcessor extends BlueMouseAdapter {
             marquee.setStart(new Point(leftX, topY));
             marquee.setDragPoint(new Point(rightX, bottomY));
 
-            float start = leftX / (float) timeState.getPixelSecond();
-            float end = rightX / (float) timeState.getPixelSecond();
+            double start = leftX / (double) timeState.getPixelSecond();
+            double end = rightX / (double) timeState.getPixelSecond();
 
             marquee.startTime = start;
             marquee.endTime = end;

@@ -27,7 +27,6 @@ import blue.plugin.SoundObjectPlugin;
 import blue.scripting.PythonProxy;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 import org.python.core.PyException;
 
@@ -40,8 +39,8 @@ import org.python.core.PyException;
  */
 
 @SoundObjectPlugin(displayName = "PythonObject", live=true, position = 110)
-public class PythonObject extends AbstractSoundObject implements Serializable,
-        Cloneable, OnLoadProcessable {
+public class PythonObject extends AbstractSoundObject implements 
+        OnLoadProcessable {
 
 //    private static BarRenderer renderer = new LetterRenderer("P");
 
@@ -49,7 +48,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private String pythonCode;
 
@@ -57,11 +56,18 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
 
     public PythonObject() {
         setName("PythonObject");
-
         pythonCode = BlueSystem.getString("pythonObject.defaultCode");
         pythonCode += "\n\nscore = \"i1 0 2 3 4 5\"";
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    }
+
+    public PythonObject(PythonObject pObj) {
+        super(pObj);
+        npc = new NoteProcessorChain(pObj.npc);
+        timeBehavior = pObj.timeBehavior;
+        repeatPoint = pObj.repeatPoint;
+        pythonCode = pObj.pythonCode;
+        onLoadProcessable = pObj.onLoadProcessable;
     }
 
     public void setText(String text) {
@@ -73,7 +79,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -87,7 +93,7 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
         this.npc = chain;
     }
 
-    public final NoteList generateNotes(float renderStart, float renderEnd) throws
+    public final NoteList generateNotes(double renderStart, double renderEnd) throws
             SoundObjectException {
         /*
          * System.out.println( "[pythonObject] attempting to generate score for
@@ -135,12 +141,12 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -208,10 +214,15 @@ public class PythonObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
         return generateNotes(startTime, endTime);
         
+    }
+
+    @Override
+    public PythonObject deepCopy() {
+        return new PythonObject(this);
     }
 }

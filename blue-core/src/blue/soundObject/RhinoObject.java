@@ -27,7 +27,6 @@ import blue.noteProcessor.NoteProcessorException;
 import blue.plugin.SoundObjectPlugin;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -39,8 +38,7 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "RhinoObject", live=true, position = 120)
-public class RhinoObject extends AbstractSoundObject implements Serializable,
-        Cloneable {
+public class RhinoObject extends AbstractSoundObject {
 
     private String javaScriptCode;
 
@@ -48,15 +46,21 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     public RhinoObject() {
         setName("rhinoObject");
-
         javaScriptCode = BlueSystem.getString("rhinoObject.defaultCode");
         javaScriptCode += "\n\nscore = \"i1 0 2 3 4 5\";";
-
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    }
+
+    public RhinoObject(RhinoObject ro) {
+        super(ro);
+        npc = new NoteProcessorChain(ro.npc);
+        timeBehavior = ro.timeBehavior;
+        repeatPoint = ro.repeatPoint;
+        javaScriptCode = ro.javaScriptCode;
     }
 
     public void setText(String text) {
@@ -68,7 +72,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -82,7 +86,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
         this.npc = chain;
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         // System.out.println("[RhinoObject] attempting to generate score for
         // object " + this.name + " at time " + this.startTime);
         String soundObjectId = "[ " + this.name + " : " + this.startTime
@@ -104,7 +108,7 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
             throw new SoundObjectException(this, e);
         }
 
-        // float totalDur = ScoreUtilities.getTotalDuration(notes);
+        // double totalDur = ScoreUtilities.getTotalDuration(notes);
         // ScoreUtilities.scaleScore(notes, (subjectiveDuration/totalDur));
 
         ScoreUtilities.applyTimeBehavior(nl, this.getTimeBehavior(), this
@@ -134,12 +138,12 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -179,10 +183,15 @@ public class RhinoObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
         return generateNotes(startTime, endTime);
         
+    }
+
+    @Override
+    public SoundObject deepCopy() {
+        return new RhinoObject(this);
     }
 }

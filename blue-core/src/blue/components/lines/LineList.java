@@ -21,10 +21,19 @@ package blue.components.lines;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class LineList extends ArrayList<Line> implements Serializable {
+public class LineList extends ArrayList<Line> {
+
+    public LineList() {
+    }
+
+    public LineList(LineList ll) {
+        super(ll.size());
+        for (Line line : ll) {
+            add(new Line(line));
+        }
+    }
 
     public static LineList loadFromXML(Element data) {
         LineList retVal = new LineList();

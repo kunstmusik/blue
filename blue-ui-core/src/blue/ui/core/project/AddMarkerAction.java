@@ -36,7 +36,7 @@ public final class AddMarkerAction implements ActionListener {
 
         ScorePath path = ScoreController.getInstance().getScorePath();
         if (path.getLastLayerGroup() == null) {
-            float markerTime = MainToolBar.getInstance().isRendering()
+            double markerTime = MainToolBar.getInstance().isRendering()
                     ? timeManager.getRenderTime() + timeManager.getRenderStartTime()
                     : data.getRenderStartTime();
             data.getMarkersList().addMarker(markerTime);

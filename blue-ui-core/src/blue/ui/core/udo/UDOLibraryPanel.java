@@ -407,8 +407,14 @@ class UDOTreePopup extends JPopupMenu {
             return;
         }
 
-        UDOBuffer.getInstance().setBufferedObject(
-                ObjectUtilities.clone(userObj));
+        Object bufObj;
+        if (userObj instanceof UserDefinedOpcode) {
+            bufObj = new UserDefinedOpcode((UserDefinedOpcode) userObj);
+        } else {
+            bufObj = new UDOCategory((UDOCategory) userObj); 
+        }
+
+        UDOBuffer.getInstance().setBufferedObject(bufObj);
     }
 
     protected void pasteNode() {
@@ -425,7 +431,7 @@ class UDOTreePopup extends JPopupMenu {
                 addUDO(udo);
             }
         } else {
-            addUDOCategory((UDOCategory) ObjectUtilities.clone(bufferedObj));
+            addUDOCategory(new UDOCategory((UDOCategory) bufferedObj));
         }
     }
 
@@ -464,8 +470,7 @@ class UDOTreePopup extends JPopupMenu {
     }
 
     private void addUDO(UserDefinedOpcode udo) {
-        UserDefinedOpcode newUDO = (UserDefinedOpcode) ObjectUtilities
-                .clone(udo);
+        UserDefinedOpcode newUDO = new UserDefinedOpcode(udo);
 
         UDOCategory currentCategory = (UDOCategory) userObj;
 

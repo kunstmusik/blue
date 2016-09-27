@@ -115,7 +115,7 @@ public class AutomationLayerPanel extends JComponent implements
         }
     }
 
-//    public void addSelectionDragRegion(float startTime, float endTime, int layerNum) {
+//    public void addSelectionDragRegion(double startTime, double endTime, int layerNum) {
 //        if(layerNum >= getComponentCount()) {
 //            return;
 //        }
@@ -160,7 +160,7 @@ public class AutomationLayerPanel extends JComponent implements
         }
     }
 
-    public void setMultiLineDragStart(float startTime, float endTime,
+    public void setMultiLineDragStart(double startTime, double endTime,
             Collection<Layer> selectedLayers) {
         for (int i = 0; i < getComponentCount(); i++) {
             ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
@@ -182,7 +182,7 @@ public class AutomationLayerPanel extends JComponent implements
         }
     }
 
-    public void setMultiLineTranslation(float timeTranslate) {
+    public void setMultiLineTranslation(double timeTranslate) {
         for (int i = 0; i < getComponentCount(); i++) {
             ParameterLinePanel paramLinePanel = (ParameterLinePanel) getComponent(
                     i);
@@ -199,7 +199,7 @@ public class AutomationLayerPanel extends JComponent implements
     }
 
     /* SCORE SCALING */
-    public void initiateScoreScale(float startTime, float endTime, int scaleLayerNum) {
+    public void initiateScoreScale(double startTime, double endTime, int scaleLayerNum) {
         this.scaleLayerNum = scaleLayerNum;
 
         ParameterLinePanel paramLinePanel
@@ -207,13 +207,13 @@ public class AutomationLayerPanel extends JComponent implements
         paramLinePanel.initiateScoreScale(startTime, endTime);
     }
 
-    public void setScoreScaleStart(float newSelectionStartTime) {
+    public void setScoreScaleStart(double newSelectionStartTime) {
         ParameterLinePanel paramLinePanel
                 = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.setScoreScaleStart(newSelectionStartTime);
     }
 
-    public void setScoreScaleEnd(float newSelectionEndTime) {
+    public void setScoreScaleEnd(double newSelectionEndTime) {
         ParameterLinePanel paramLinePanel
                 = ((ParameterLinePanel) this.getComponent(this.scaleLayerNum));
         paramLinePanel.setScoreScaleEnd(newSelectionEndTime);

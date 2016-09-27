@@ -1,8 +1,6 @@
 package blue.orchestra.flowGraph;
 
-import java.io.Serializable;
-
-public class Cable implements Serializable {
+public class Cable {
 
     private GraphUnit send;
 

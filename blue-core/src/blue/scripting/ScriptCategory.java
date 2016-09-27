@@ -23,7 +23,6 @@ package blue.scripting;
 import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -32,7 +31,7 @@ import java.util.Iterator;
  * 
  * ScriptCategory holds Scripts and other ScriptCategories
  */
-public class ScriptCategory implements Serializable {
+public class ScriptCategory {
 
     private String categoryName = "New Script Category";
 

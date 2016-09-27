@@ -21,7 +21,6 @@
 package blue.components.lines;
 
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
@@ -31,20 +30,26 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 /**
  * @author Steven Yi
  */
-public class LinePoint implements Serializable, Comparable<LinePoint> {
-    private float y;
+public class LinePoint implements Comparable<LinePoint> {
+    private double y;
 
-    private float x;
+    private double x;
 
     private transient Vector listeners = null;
 
     private transient ChangeEvent changeEvent = null;
 
+    public LinePoint(){}
+    public LinePoint(LinePoint lp){
+        x = lp.x;
+        y = lp.y;
+    }
+
     public static LinePoint loadFromXML(Element data) {
         LinePoint lp = new LinePoint();
 
-        float x = Float.parseFloat(data.getAttributeValue("x"));
-        float y = Float.parseFloat(data.getAttributeValue("y"));
+        double x = Double.parseDouble(data.getAttributeValue("x"));
+        double y = Double.parseDouble(data.getAttributeValue("y"));
 
         lp.setLocation(x, y);
 
@@ -54,8 +59,8 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
     public Element saveAsXML() {
         Element retVal = new Element("linePoint");
 
-        retVal.setAttribute("x", Float.toString(getX()));
-        retVal.setAttribute("y", Float.toString(getY()));
+        retVal.setAttribute("x", Double.toString(getX()));
+        retVal.setAttribute("y", Double.toString(getY()));
 
         return retVal;
     }
@@ -64,7 +69,7 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
     public int compareTo(LinePoint b) {
         LinePoint a = this;
 
-        float val = a.getX() - b.getX();
+        double val = a.getX() - b.getX();
 
         if (val > 0.0f) {
             return 1;
@@ -75,7 +80,7 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
         }
     }
 
-    public void setLocation(float x, float y) {
+    public void setLocation(double x, double y) {
         this.x = x;
         this.y = y;
 
@@ -86,11 +91,11 @@ public class LinePoint implements Serializable, Comparable<LinePoint> {
         fireChangeEvent(changeEvent);
     }
 
-    public float getX() {
+    public double getX() {
         return x;
     }
 
-    public float getY() {
+    public double getY() {
         return y;
     }
 

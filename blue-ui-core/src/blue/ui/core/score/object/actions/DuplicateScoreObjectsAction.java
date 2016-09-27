@@ -58,7 +58,7 @@ public final class DuplicateScoreObjectsAction implements ActionListener {
             AddScoreObjectEdit top = null;
 
             for (ScoreObject sObj : scoreObjects) {
-                ScoreObject clone = sObj.clone();
+                ScoreObject clone = sObj.deepCopy();
                 clone.setStartTime(clone.getStartTime() + clone.getSubjectiveDuration());
 
                 ScoreObjectLayer layer = (ScoreObjectLayer) path.getLayerForScoreObject(sObj);

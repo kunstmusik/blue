@@ -21,12 +21,10 @@
 package blue.ui.core.mixer;
 
 import blue.mixer.*;
-import blue.ui.core.mixer.EffectCategory;
 
 import blue.utility.ListUtil;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -35,15 +33,29 @@ import java.util.Iterator;
  * 
  * InstrumentCategory holds instruments and other InstrumentCategories
  */
-public class EffectCategory implements Serializable {
+public class EffectCategory {
 
     private String categoryName = "New Effect Category";
 
-    private ArrayList subCategories = new ArrayList();
+    private ArrayList<EffectCategory> subCategories = new ArrayList<>();
 
-    private ArrayList effects = new ArrayList();
+    private ArrayList<Effect> effects = new ArrayList<>();
 
     private boolean isRoot = false;
+
+    public EffectCategory(){
+    }        
+
+    public EffectCategory(EffectCategory ec){
+        categoryName = ec.categoryName;
+        isRoot = ec.isRoot;
+        for(EffectCategory ecat :ec.subCategories) {
+            subCategories.add(new EffectCategory(ecat));
+        }
+        for(Effect effect :ec.effects) {
+            effects.add(new Effect(effect));
+        }
+    }        
 
     @Override
     public String toString() {

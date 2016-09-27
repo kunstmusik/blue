@@ -26,13 +26,13 @@ import blue.soundObject.NoteList;
 class lo extends CybilAlgorithm {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
-        float start = getFloatValue(args.get(0));
-        float end = getFloatValue(args.get(1));
+    public double[] getValue(CybilNoteList cybilNoteList) {
+        double start = getDoubleValue(args.get(0));
+        double end = getDoubleValue(args.get(1));
 
-        float diff = end / start;
+        double diff = end / start;
 
-        float timeValue = getTimeValue(args.get(2));
+        double timeValue = getTimeValue(args.get(2));
         boolean isTime = isTime(args.get(2));
 
         NoteList notes = cybilNoteList.notes;
@@ -48,7 +48,7 @@ class lo extends CybilAlgorithm {
 
             } else {
                 for (int i = 0; i < timeValue; i++) {
-                    float x = i / (timeValue - 1);
+                    double x = i / (timeValue - 1);
 
                     double val = Math.pow(diff, x) * start;
 

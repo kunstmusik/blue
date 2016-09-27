@@ -33,7 +33,7 @@ abstract class CybilAlgorithm extends CybilArg {
      * @param endTime
      * @return
      */
-    protected int getCount(NoteList notes, int startIndex, float endTime) {
+    protected int getCount(NoteList notes, int startIndex, double endTime) {
         for (int i = startIndex; i < notes.size(); i++) {
             if (notes.get(i).getStartTime() >= endTime) {
                 return i - startIndex;

@@ -24,11 +24,10 @@ package blue.soundObject.jmask;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Quantizer implements Serializable {
+public class Quantizer {
 
     private double gridSize = 1.0;
 
@@ -49,7 +48,7 @@ public class Quantizer implements Serializable {
     private Table offsetTable = new Table();
 
     private boolean enabled = false;
-    
+
     private transient double duration = 1.0;
 
     public Quantizer() {
@@ -62,6 +61,20 @@ public class Quantizer implements Serializable {
 
         offsetTable.getPoint(0).setValue(0.0);
         offsetTable.getPoint(0).setValue(0.0);
+    }
+
+    public Quantizer(Quantizer q) {
+        gridSize = q.gridSize;
+        strength = q.strength;
+        offset = q.offset;
+        gridSizeTableEnabled = q.gridSizeTableEnabled;
+        strengthTableEnabled = q.strengthTableEnabled;
+        offsetTableEnabled = q.offsetTableEnabled;
+        gridSizeTable = new Table(q.gridSizeTable);
+        strengthTable = new Table(q.strengthTable);
+        offsetTable = new Table(q.offsetTable);
+        enabled = q.enabled;
+        duration = q.duration;
     }
 
     public static Quantizer loadFromXML(Element data) {
@@ -148,37 +161,35 @@ public class Quantizer implements Serializable {
 
     public double getValue(double time, double val) {
 
-        if(!enabled) {
+        if (!enabled) {
             return val;
         }
 
-	double retVal,err,d,r;
+        double retVal, err, d, r;
 
-        double localGridSize = gridSizeTableEnabled ?
-            gridSizeTable.getValue(time / duration) : gridSize;
+        double localGridSize = gridSizeTableEnabled
+                ? gridSizeTable.getValue(time / duration) : gridSize;
 
-        double localStrength = strengthTableEnabled ?
-            strengthTable.getValue(time / duration) : strength;
+        double localStrength = strengthTableEnabled
+                ? strengthTable.getValue(time / duration) : strength;
 
-        double localOffset = offsetTableEnabled ?
-            offsetTable.getValue(time / duration) : offset;
+        double localOffset = offsetTableEnabled
+                ? offsetTable.getValue(time / duration) : offset;
 
 //        if(localGridSize == 0) {
 //            throw new Exception("GridSize == 0");
 //        }
-
-	d = val - localOffset;
-	r = Math.floor((d + localGridSize / 2.0) / localGridSize);
-	err = d / localGridSize - r;
-	retVal = localOffset + (r + err * (1 - localStrength)) * localGridSize;
+        d = val - localOffset;
+        r = Math.floor((d + localGridSize / 2.0) / localGridSize);
+        err = d / localGridSize - r;
+        retVal = localOffset + (r + err * (1 - localStrength)) * localGridSize;
 
 //	if(limit)
 //		{
 //		if (erg < g1) erg = localOffset + (r + 1.0 + err*(1-localStrength)) * localGridSize;
 //		if (erg > g2) erg = localOffset + (r - 1.0 + err*(1-localStrength)) * localGridSize;
 //		}
-
-	return retVal;
+        return retVal;
 
     }
 
@@ -275,7 +286,6 @@ public class Quantizer implements Serializable {
 //    public JComponent getEditor() {
 //        return new QuantizerEditor(this);
 //    }
-    
     public void setDuration(double duration) {
         this.duration = duration;
     }

@@ -36,7 +36,6 @@ import blue.soundObject.SoundObjectUtilities;
 import blue.utility.ScoreUtilities;
 import electric.xml.Element;
 import java.io.File;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import javax.script.ScriptException;
@@ -46,14 +45,14 @@ import javax.script.ScriptException;
  * @author stevenyi
  */
 @SoundObjectPlugin(displayName="ClojureObject", position=25)
-public class ClojureObject extends AbstractSoundObject implements Serializable,
-        Cloneable, OnLoadProcessable {
+public class ClojureObject extends AbstractSoundObject implements 
+        OnLoadProcessable {
     
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0;
 
     private String clojureCode;
 
@@ -66,6 +65,15 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
         clojureCode += "(def score \"i1 0 2 3 4 5\")";
 
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    }
+
+    public ClojureObject(ClojureObject co) {
+        super(co);
+        npc = new NoteProcessorChain(co.npc);
+        timeBehavior = co.timeBehavior;
+        repeatPoint = co.repeatPoint;
+        clojureCode = co.clojureCode;
+        onLoadProcessable = co.onLoadProcessable;
     }
 
     public String getClojureCode() {
@@ -88,7 +96,7 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
         return root.getCause();
     }
     
-    protected final NoteList generateNotes(float renderStart, float renderEnd) throws
+    protected final NoteList generateNotes(double renderStart, double renderEnd) throws
             SoundObjectException {
         
         String tempScore = null;
@@ -136,12 +144,12 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
     
     
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) throws SoundObjectException {
         return generateNotes(startTime, endTime);
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -161,12 +169,12 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
         
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -231,6 +239,11 @@ public class ClojureObject extends AbstractSoundObject implements Serializable,
         if (onLoadProcessable) {
             this.generateNotes(0.0f, -1.0f);
         }
+    }
+
+    @Override
+    public ClojureObject deepCopy() {
+        return new ClojureObject(this);
     }
     
 }

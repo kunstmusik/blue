@@ -41,7 +41,6 @@ import blue.soundObject.SoundObjectException;
 import blue.udo.OpcodeList;
 import blue.ui.core.project.ProjectPluginManager;
 import blue.utility.NumberUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreUtilities;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -72,10 +71,10 @@ public class CSDRender extends CSDRenderService {
 
         ParameterHelper.clearCompilationVarNames(data);
 
-        float totalDur = 36000f;
+        double totalDur = 36000f;
 
         // making copies to use for adding compileTime tables and instruments
-        Tables tables = (Tables) data.getTableSet().clone();
+        Tables tables = new Tables(data.getTableSet());
 
         ArrayList<Parameter> originalParameters = null;
 
@@ -85,7 +84,7 @@ public class CSDRender extends CSDRenderService {
             assignParameterNames(originalParameters, new ParameterNameManager());
         }
 
-        Arrangement arrangement = (Arrangement) data.getArrangement().clone();
+        Arrangement arrangement = new Arrangement(data.getArrangement());
         arrangement.clearUnusedInstrAssignments();
 
         String[] instrIds = arrangement.getInstrumentIds();
@@ -93,10 +92,9 @@ public class CSDRender extends CSDRenderService {
         //PolyObject tempPObj = (PolyObject) data.getPolyObject().clone();
         boolean hasInstruments = arrangement.size() > 0;
 
-        GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco().clone();
+        GlobalOrcSco globalOrcSco = new GlobalOrcSco(data.getGlobalOrcSco());
 
-        OpcodeList udos = (OpcodeList) ObjectUtilities.clone(
-                data.getOpcodeList());
+        OpcodeList udos = new OpcodeList(data.getOpcodeList());
 
         // add all UDO's from instruments and effects
         arrangement.generateUserDefinedOpcodes(udos);
@@ -109,7 +107,7 @@ public class CSDRender extends CSDRenderService {
         boolean mixerEnabled = data.getMixer().isEnabled();
         Mixer mixer = null;
         if (mixerEnabled) {
-            mixer = (Mixer) data.getMixer().clone();
+            mixer = new Mixer(data.getMixer());
             assignChannelIds(compileData, mixer);
         }
 
@@ -187,7 +185,7 @@ public class CSDRender extends CSDRenderService {
 
     @Override
     protected CsdRenderResult generateCSDImpl(BlueData data,
-            float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
+            double startTime, double endTime, boolean isRealTime, boolean _usingAPI) {
 
         ProjectPluginManager.getInstance().preRender(data);
 
@@ -201,10 +199,10 @@ public class CSDRender extends CSDRenderService {
 
         boolean usingAPI = isRealTime && _usingAPI;
 
-        float renderStartTime = data.getRenderStartTime();
+        double renderStartTime = data.getRenderStartTime();
 
         // making copies to use for adding compileTime tables and instruments
-        Tables tables = (Tables) data.getTableSet().clone();
+        Tables tables = new Tables(data.getTableSet());
 
         ArrayList originalParameters;
 
@@ -217,7 +215,7 @@ public class CSDRender extends CSDRenderService {
 //        }
         assignParameterNames(originalParameters, pnm);
 
-        Arrangement arrangement = (Arrangement) data.getArrangement().clone();
+        Arrangement arrangement = new Arrangement(data.getArrangement());
         arrangement.clearUnusedInstrAssignments();
         boolean hasInstruments = arrangement.size() > 0;
 
@@ -228,7 +226,7 @@ public class CSDRender extends CSDRenderService {
         boolean mixerEnabled = data.getMixer().isEnabled();
 
         if (mixerEnabled) {
-            mixer = (Mixer) data.getMixer().clone();
+            mixer = new Mixer(data.getMixer());
             assignChannelIds(compileData, mixer);
         }
         
@@ -255,10 +253,9 @@ public class CSDRender extends CSDRenderService {
 //            parameters = ParameterHelper.getActiveParameters(
 //                    arrangement, mixer);
 //        }
-        GlobalOrcSco globalOrcSco = (GlobalOrcSco) data.getGlobalOrcSco().clone();
+        GlobalOrcSco globalOrcSco = new GlobalOrcSco(data.getGlobalOrcSco());
 
-        OpcodeList udos = (OpcodeList) ObjectUtilities.clone(
-                data.getOpcodeList());
+        OpcodeList udos = new OpcodeList(data.getOpcodeList());
 
         // add all UDO's from instruments and effects
         arrangement.generateUserDefinedOpcodes(udos);
@@ -276,7 +273,7 @@ public class CSDRender extends CSDRenderService {
             Instrument instr = createRenderEndInstrument();
             int instrId = arrangement.addInstrument(instr);
 
-            float endStartTime = endTime - startTime;
+            double endStartTime = endTime - startTime;
 
             try {
                 Note renderEndNote = Note.createNote(
@@ -297,13 +294,13 @@ public class CSDRender extends CSDRenderService {
             tempoMapper = getTempoMapper(globalOrcSco.getGlobalSco());
         }
 
-        float totalDur = blue.utility.ScoreUtilities.getTotalDuration(
+        double totalDur = blue.utility.ScoreUtilities.getTotalDuration(
                 generatedNotes);
 
-//        float processingStart = blue.utility.ScoreUtilities.getProcessingStartTime(
+//        double processingStart = blue.utility.ScoreUtilities.getProcessingStartTime(
 //                tempPObj);
         // FIXME - figure out what to do about PROCESSING_START
-        float processingStart = renderStartTime;
+        double processingStart = renderStartTime;
 
         System.out.println("<TOTAL_DUR> = " + totalDur);
         System.out.println("<RENDER_START> = " + renderStartTime);
@@ -322,7 +319,7 @@ public class CSDRender extends CSDRenderService {
         globalSco = preprocessSco(globalSco, totalDur, renderStartTime,
                 processingStart, tempoMapper);
 
-        float globalDur;
+        double globalDur;
         try {
             globalDur = getGlobalDuration(globalSco);
         } catch (SoundObjectException ex) {
@@ -468,13 +465,13 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void createParamNote(StrBuilder paramScore, int instrId,
-            float startTime, float dur, float startVal, float endVal) {
+            double startTime, double dur, double startVal, double endVal) {
         paramScore.append("i");
         paramScore.append(instrId).append("\t");
-        paramScore.append(NumberUtilities.formatFloat(startTime)).append("\t");
-        paramScore.append(NumberUtilities.formatFloat(dur)).append("\t");
-        paramScore.append(NumberUtilities.formatFloat(startVal)).append("\t");
-        paramScore.append(NumberUtilities.formatFloat(endVal)).append("\n");
+        paramScore.append(NumberUtilities.formatDouble(startTime)).append("\t");
+        paramScore.append(NumberUtilities.formatDouble(dur)).append("\t");
+        paramScore.append(NumberUtilities.formatDouble(startVal)).append("\t");
+        paramScore.append(NumberUtilities.formatDouble(endVal)).append("\n");
     }
 
     /**
@@ -482,7 +479,7 @@ public class CSDRender extends CSDRenderService {
      * @return
      * @throws SoundObjectException
      */
-    private float getGlobalDuration(String globalSco)
+    private double getGlobalDuration(String globalSco)
             throws SoundObjectException {
         NoteList globalNotes;
         try {
@@ -493,7 +490,7 @@ public class CSDRender extends CSDRenderService {
             throw new SoundObjectException(gs, e);
         }
 
-        float globalDur = ScoreUtilities.getTotalDuration(globalNotes);
+        double globalDur = ScoreUtilities.getTotalDuration(globalNotes);
         return globalDur;
     }
 
@@ -531,7 +528,7 @@ public class CSDRender extends CSDRenderService {
         GenericInstrument instr = new GenericInstrument();
 
         int fps = PlaybackSettings.getInstance().getPlaybackFPS();
-        float time = 1.0f / fps;
+        double time = 1.0f / fps;
 
         String instrText = "ktime	times\n" + "printks \"blueTimePointer=%f\\\\n\", " + time + ", ktime";
 
@@ -589,7 +586,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void appendCsScore(String globalSco, String ftables,
-            NoteList generatedNotes, float totalDur, StrBuilder score) {
+            NoteList generatedNotes, double totalDur, StrBuilder score) {
 
         score.append("<CsScore>\n\n");
         score.append(ftables).append("\n");
@@ -663,17 +660,17 @@ public class CSDRender extends CSDRenderService {
         score.append("</CsInstruments>\n\n");
     }
 
-    private String preprocessSco(String in, float totalDur,
-            float renderStartTime, float processingStart,
+    private String preprocessSco(String in, double totalDur,
+            double renderStartTime, double processingStart,
             TempoMapper tempoMapper) {
         String temp = blue.utility.TextUtilities.replaceAll(in, "<TOTAL_DUR>",
-                Float.toString(totalDur));
+                Double.toString(totalDur));
 
         temp = blue.utility.TextUtilities.replaceAll(temp,
-                "<PROCESSING_START>", Float.toString(processingStart));
+                "<PROCESSING_START>", Double.toString(processingStart));
 
         temp = blue.utility.TextUtilities.replaceAll(temp, "<RENDER_START>",
-                Float.toString(renderStartTime));
+                Double.toString(renderStartTime));
 
         TempoMapper localTempoMapper = tempoMapper;
 
@@ -684,11 +681,11 @@ public class CSDRender extends CSDRenderService {
         if (tempoMapper != null) {
             temp = blue.utility.TextUtilities.replaceAll(temp,
                     "<RENDER_START_ABSOLUTE>",
-                    Float.toString(tempoMapper.beatsToSeconds(renderStartTime)));
+                    Double.toString(tempoMapper.beatsToSeconds(renderStartTime)));
         } else {
             temp = blue.utility.TextUtilities.replaceAll(temp,
                     "<RENDER_START_ABSOLUTE>",
-                    Float.toString(renderStartTime));
+                    Double.toString(renderStartTime));
         }
 
         return temp;
@@ -718,7 +715,7 @@ public class CSDRender extends CSDRenderService {
     }
 
     private void appendParameterScore(Parameter param, int instrId,
-            StrBuilder paramScore, float renderStart, float renderEnd) {
+            StrBuilder paramScore, double renderStart, double renderEnd) {
 
         Line line = param.getLine();
 
@@ -726,15 +723,15 @@ public class CSDRender extends CSDRenderService {
             return;
         }
 
-        float resolution = param.getResolution();
+        double resolution = param.getResolution();
 
         if (resolution > 0.0f) {
             for (int i = 1; i < line.size(); i++) {
                 LinePoint p1 = line.getLinePoint(i - 1);
                 LinePoint p2 = line.getLinePoint(i);
 
-                float startTime = p1.getX();
-                float endTime = p2.getX();
+                double startTime = p1.getX();
+                double endTime = p2.getX();
 
                 if (renderEnd > 0 && startTime >= renderEnd) {
                     return;
@@ -744,8 +741,8 @@ public class CSDRender extends CSDRenderService {
                     continue;
                 }
 
-                float startVal = p1.getY();
-                float endVal = p2.getY();
+                double startVal = p1.getY();
+                double endVal = p2.getY();
 
                 // to skip points that don't contribute to end value
                 if (startTime == endTime) {
@@ -760,18 +757,18 @@ public class CSDRender extends CSDRenderService {
                     continue;
                 }
 
-                float dur = endTime - startTime;
+                double dur = endTime - startTime;
 
-                float currentVal = startVal;
+                double currentVal = startVal;
 
-                int numSteps = Math.abs(Math.round(
+                int numSteps = (int)Math.abs(Math.round(
                         (endVal - startVal) / resolution));
 
-                float step = dur / numSteps;
+                double step = dur / numSteps;
 
-                float start = startTime;
+                double start = startTime;
 
-                float valStep = resolution;
+                double valStep = resolution;
 
                 if (endVal < startVal) {
                     valStep = -valStep;
@@ -794,10 +791,10 @@ public class CSDRender extends CSDRenderService {
                     paramScore.append("i");
                     paramScore.append(instrId).append("\t");
                     paramScore.append(
-                            NumberUtilities.formatFloat(start - renderStart)).
+                            NumberUtilities.formatDouble(start - renderStart)).
                             append("\t");
                     paramScore.append(".0001\t");
-                    paramScore.append(NumberUtilities.formatFloat(currentVal)).
+                    paramScore.append(NumberUtilities.formatDouble(currentVal)).
                             append("\n");
                 }
 
@@ -810,23 +807,23 @@ public class CSDRender extends CSDRenderService {
                 paramScore.append("i");
                 paramScore.append(instrId).append("\t");
                 paramScore.append(
-                        NumberUtilities.formatFloat(start - renderStart)).append(
+                        NumberUtilities.formatDouble(start - renderStart)).append(
                         "\t");
                 paramScore.append(".0001\t");
-                paramScore.append(NumberUtilities.formatFloat(endVal)).append(
+                paramScore.append(NumberUtilities.formatDouble(endVal)).append(
                         "\n");
 
             }
 
         } else {
-            float lastValue = line.getLinePoint(0).getY();
+            double lastValue = line.getLinePoint(0).getY();
 
             for (int i = 1; i < line.size(); i++) {
                 LinePoint p1 = line.getLinePoint(i - 1);
                 LinePoint p2 = line.getLinePoint(i);
 
-                float startTime = p1.getX();
-                float endTime = p2.getX();
+                double startTime = p1.getX();
+                double endTime = p2.getX();
 
                 if (renderEnd > 0 && startTime >= renderEnd) {
                     return;
@@ -849,8 +846,8 @@ public class CSDRender extends CSDRenderService {
 //                if (p1.getY() == p2.getY() && p1.getY() == lastValue) {
 //                    continue;
 //                }
-                float startVal = p1.getY();
-                float endVal = p2.getY();
+                double startVal = p1.getY();
+                double endVal = p2.getY();
 
                 if (startTime < renderStart) {
                     startVal = line.getValue(renderStart);
@@ -864,7 +861,7 @@ public class CSDRender extends CSDRenderService {
 
                 lastValue = endVal;
 
-                float dur;
+                double dur;
 
                 if (p1.getY() == p2.getY()) {
                     dur = .0001f;
@@ -886,8 +883,8 @@ public class CSDRender extends CSDRenderService {
 
     }
 
-    protected String getTempoScore(Tempo tempo, float renderStart,
-            float renderEnd) {
+    protected String getTempoScore(Tempo tempo, double renderStart,
+            double renderEnd) {
 
         Line line = tempo.getLine();
 
@@ -904,7 +901,7 @@ public class CSDRender extends CSDRenderService {
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint lp = line.getLinePoint(i);
-            float pointBeat = lp.getX();
+            double pointBeat = lp.getX();
             if (pointBeat > renderStart) {
                 if (renderEnd < 0 || pointBeat < renderEnd) {
                     buffer.append(" ").append(pointBeat - renderStart);
@@ -935,7 +932,7 @@ public class CSDRender extends CSDRenderService {
     private void handleParameters(ArrayList parameters,
             ArrayList<StringChannel> stringChannels,
             GlobalOrcSco globalOrcSco, NoteList notes, Arrangement arrangement,
-            float startTime, float endTime, boolean isRealTime, boolean _usingAPI) {
+            double startTime, double endTime, boolean isRealTime, boolean _usingAPI) {
 
         Object[] varNum = new Object[1];
 
@@ -964,13 +961,13 @@ public class CSDRender extends CSDRenderService {
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
-            float initialVal;
+            double initialVal;
 
             if (param.isAutomationEnabled()) {
 
                 initialVal = param.getLine().getValue(startTime);
 
-                float resolution = param.getResolution();
+                double resolution = param.getResolution();
 
                 if (resolution > 0.0f) {
                     initialVal = param.getResolutionAdjustedValue(initialVal);
@@ -983,7 +980,7 @@ public class CSDRender extends CSDRenderService {
             // init statements
             initStatements.append(varName);
             initStatements.append(" init ");
-            initStatements.append(NumberUtilities.formatFloat(initialVal));
+            initStatements.append(NumberUtilities.formatDouble(initialVal));
             initStatements.append("\n");
 
             if (useAPI) {
@@ -1042,9 +1039,9 @@ public class CSDRender extends CSDRenderService {
             String varName = param.getCompilationVarName();
 
             //param.setCompilationVarName(varName);
-            float initialVal = param.getFixedValue();
+            double initialVal = param.getFixedValue();
 
-            float resolution = param.getResolution();
+            double resolution = param.getResolution();
 
             if (resolution > 0.0f) {
 
@@ -1054,7 +1051,7 @@ public class CSDRender extends CSDRenderService {
             // init statements
             initStatements.append(varName);
             initStatements.append(" init ");
-            initStatements.append(NumberUtilities.formatFloat(initialVal));
+            initStatements.append(NumberUtilities.formatDouble(initialVal));
             initStatements.append("\n");
 
             if (useAPI) {

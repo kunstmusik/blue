@@ -70,13 +70,13 @@ class TimelinePropertiesPanel extends JComponent {
             isUpdating = true;
             
             try {
-                float val = Float.parseFloat(snapValue.getText());
+                double val = Double.parseDouble(snapValue.getText());
                 if (val < 0) {
                     return;
                 }
                 timeState.setSnapValue(val);
             } catch (NumberFormatException nfe) {
-                snapValue.setText(Float.toString(timeState.getSnapValue()));
+                snapValue.setText(Double.toString(timeState.getSnapValue()));
             }
 
             isUpdating = false;
@@ -151,7 +151,7 @@ class TimelinePropertiesPanel extends JComponent {
         this.timeState = timeState;
 
         snapEnabledBox.setSelected(timeState.isSnapEnabled());
-        snapValue.setText(Float.toString(timeState.getSnapValue()));
+        snapValue.setText(Double.toString(timeState.getSnapValue()));
         timeUnit.setText(Integer.toString(timeState.getTimeUnit()));
 
         if (timeState.getTimeDisplay() == TimeState.DISPLAY_TIME) {

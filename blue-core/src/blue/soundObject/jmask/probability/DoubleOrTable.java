@@ -20,9 +20,8 @@
 package blue.soundObject.jmask.probability;
 
 import blue.soundObject.jmask.Table;
-import java.io.Serializable;
 
-public class DoubleOrTable implements Serializable {
+public class DoubleOrTable {
     double value = 0.0;
 
     Table table;
@@ -30,7 +29,6 @@ public class DoubleOrTable implements Serializable {
     boolean tableEnabled = false;
 
     private DoubleOrTable() {
-
     }
 
     public double getValue(double time) {

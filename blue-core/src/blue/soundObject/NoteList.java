@@ -1,6 +1,5 @@
 package blue.soundObject;
 
-import blue.utility.ObjectUtilities;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.apache.commons.lang3.text.StrBuilder;
@@ -13,10 +12,17 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
-public class NoteList extends ArrayList<Note> implements Cloneable {
+public class NoteList extends ArrayList<Note> {
 
     public NoteList() {
         super();
+    }
+
+    public NoteList(NoteList nl) {
+        super(nl.size());
+        for(Note note :nl) {
+            add(new Note(note));
+        }
     }
 
     public final void sort() {
@@ -59,11 +65,6 @@ public class NoteList extends ArrayList<Note> implements Cloneable {
         tempScore.appendWithSeparators(str, "\n");
         // return "";
         return tempScore.toString();
-    }
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
     }
 
 }

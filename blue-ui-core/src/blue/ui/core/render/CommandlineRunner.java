@@ -114,8 +114,8 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 //            System.out.println(tempoMapper);
             // FIXME
 //            timeManager.setRootPolyObject(data.getPolyObject());
-            float startTime = data.getRenderStartTime();
-            float endTime = data.getRenderEndTime();
+            double startTime = data.getRenderStartTime();
+            double endTime = data.getRenderEndTime();
 
             CsdRenderResult result = CSDRenderService.getDefault()
                     .generateCSD(data, startTime, endTime, true, false);
@@ -190,7 +190,7 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
     }
 
     public void play(String command, File currentWorkingDirectory,
-            float renderStart) {
+            double renderStart) {
         // if(runProxy != null) {
         // stop();
         // }
@@ -251,10 +251,10 @@ public class CommandlineRunner implements PlayModeListener, RealtimeRenderServic
 
         String command;
         File currentWorkingDirectory;
-        float renderStart = -1.0f;
+        double renderStart = -1.0f;
 
         public RunProxy(String command, File currentWorkingDirectory,
-                float renderStart) {
+                double renderStart) {
             this.renderStart = renderStart;
             this.command = command;
             this.currentWorkingDirectory = currentWorkingDirectory;

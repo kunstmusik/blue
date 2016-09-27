@@ -50,14 +50,14 @@ import org.apache.commons.lang3.text.StrBuilder;
  * 
  * @author Steven
  */
-public class Line implements TableModel, Serializable, ChangeListener, Iterable<LinePoint> {
+public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     String varName = "";
 
-    float max = 1.0f;
+    double max = 1.0f;
 
-    float min = 0.0f;
+    double min = 0.0f;
 
-    float resolution = -1.0f;
+    double resolution = -1.0f;
 
     Color color = null;
 
@@ -106,6 +106,29 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         uniqueID = Integer.toString(new VMID().hashCode());
     }
 
+    public Line(Line line) {
+        varName = line.varName;    
+        max = line.max;
+        min = line.min;
+        resolution = line.resolution;
+
+        color = line.color;
+        isZak = line.isZak;
+        rightBound = line.rightBound;
+        channel = line.channel;
+        // FIXME - verify uniqueID copy is correct...
+        uniqueID = line.uniqueID;
+        endPointsLinked = line.endPointsLinked;
+
+        points.ensureCapacity(line.points.size());
+
+        for(LinePoint lp :line.points) {
+            LinePoint newLp = new LinePoint(lp);
+            points.add(newLp);
+            newLp.addChangeListener(this);
+        }
+    }
+
     public static Line loadFromXML(Element data) {
         Line line = new Line(false, false);
         switch (data.getName()) {
@@ -127,11 +150,11 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             version = Integer.parseInt(versionStr);
         }
 
-        line.max = Float.parseFloat(data.getAttributeValue("max"));
-        line.min = Float.parseFloat(data.getAttributeValue("min"));
+        line.max = Double.parseDouble(data.getAttributeValue("max"));
+        line.min = Double.parseDouble(data.getAttributeValue("min"));
 
         if (data.getAttributeValue("resolution") != null) {
-            line.resolution = Float.parseFloat(data
+            line.resolution = Double.parseDouble(data
                     .getAttributeValue("resolution"));
         }
 
@@ -187,9 +210,9 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             retVal.setAttribute("name", this.varName);
         }
         retVal.setAttribute("version", "2");
-        retVal.setAttribute("max", Float.toString(max));
-        retVal.setAttribute("min", Float.toString(min));
-        retVal.setAttribute("resolution", Float.toString(resolution));
+        retVal.setAttribute("max", Double.toString(max));
+        retVal.setAttribute("min", Double.toString(min));
+        retVal.setAttribute("resolution", Double.toString(resolution));
         retVal.setAttribute("color", Integer.toString(color.getRGB()));
         retVal.setAttribute("rightBound", Boolean.toString(rightBound));
         retVal.setAttribute("endPointsLinked", Boolean.toString(endPointsLinked));
@@ -247,7 +270,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     /**
      * @return Returns the max.
      */
-    public float getMax() {
+    public double getMax() {
         return max;
     }
 
@@ -255,13 +278,13 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
      * @param max
      *            The max to set.
      */
-    public void setMax(float max, boolean truncate) {
-        float oldMax = this.max;
+    public void setMax(double max, boolean truncate) {
+        double oldMax = this.max;
         this.max = max;
 
         for (LinePoint point : points) {
             
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), this.min, this.max);
@@ -279,7 +302,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
     /**
      * @return Returns the min.
      */
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
@@ -287,13 +310,13 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
      * @param min
      *            The min to set.
      */
-    public void setMin(float min, boolean truncate) {
-        float oldMin = this.min;
+    public void setMin(double min, boolean truncate) {
+        double oldMin = this.min;
         this.min = min;
 
         for (LinePoint point : points) {
 
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), this.min, this.max);
@@ -308,7 +331,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         fireTableDataChanged();
     }
 
-    public void setMinMax(float newMin, float newMax, boolean truncate) {
+    public void setMinMax(double newMin, double newMax, boolean truncate) {
         
         if(this.min == newMin && this.max == newMax) {
             return;
@@ -316,7 +339,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         
         for (LinePoint point : points) {
             
-            float newVal;
+            double newVal;
 
             if (truncate) {
                 newVal = LineUtils.truncate(point.getY(), newMin, newMax);
@@ -351,8 +374,8 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         fireTableDataChanged();
     }
 
-    // public float getYValue(LinePoint p) {
-    // float range = max - min;
+    // public double getYValue(LinePoint p) {
+    // double range = max - min;
     //
     // return ((p.getY() * range) + min);
     // }
@@ -442,7 +465,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
 
     @Override
     public Class getColumnClass(int columnIndex) {
-        return Float.class;
+        return Double.class;
     }
 
     @Override
@@ -450,26 +473,26 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         LinePoint p = points.get(rowIndex);
 
         if (columnIndex == 0) {
-            return new Float(p.getX());
+            return new Double(p.getX());
         }
 
-        return new Float(p.getY());
+        return new Double(p.getY());
     }
 
     /*
      * Only to be used for migration from pre-0.110.0 files, converts 0-1.0
      * range values to absolute values
      */
-    private static float migrateYValue(float y, float max, float min) {
-        float range = max - min;
-        float yVal = (y * range) + min;
+    private static double migrateYValue(double y, double max, double min) {
+        double range = max - min;
+        double yVal = (y * range) + min;
 
         return yVal;
     }
 
-    // private float convertYValue(float y) {
-    // float range = getMax() - getMin();
-    // float yVal = (y - getMin()) / range;
+    // private double convertYValue(double y) {
+    // double range = getMax() - getMin();
+    // double yVal = (y - getMin()) / range;
     //
     // if(yVal < getMin()) {
     // yVal = getMin();
@@ -485,8 +508,8 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        Float val = (Float) aValue;
-        float newValue = val.floatValue();
+        Double val = (Double) aValue;
+        double newValue = val.doubleValue();
 
         LinePoint point = getLinePoint(rowIndex);
 
@@ -514,14 +537,14 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
                 newValue = next.getX();
             }
 
-            float y = point.getY();
+            double y = point.getY();
             point.setLocation(newValue, y);
         } else {
             if (newValue < getMin() || newValue > getMax()) {
                 return;
             }
 
-            float x = point.getX();
+            double x = point.getX();
             point.setLocation(x, newValue);
         }
 
@@ -594,20 +617,6 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         }
     }
 
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect this Line as a listener to its LinePoints
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        for (Iterator iter = points.iterator(); iter.hasNext();) {
-            LinePoint lp = (LinePoint) iter.next();
-            lp.addChangeListener(this);
-        }
-    }
-
     /**
      * Returns value for time given, developed for use in non-bound right
      * Automations. If beyond last point will return value of last point,
@@ -618,7 +627,7 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
      * Current assumes straight lines between points.
      */
 
-    public float getValue(float time) {
+    public double getValue(double time) {
 
         int size = size();
         if (size == 0) {
@@ -665,10 +674,10 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             return b.getY();
         }
 
-        float m = (b.getY() - a.getY()) / (b.getX() - a.getX());
-        float x = (time - a.getX());
+        double m = (b.getY() - a.getY()) / (b.getX() - a.getX());
+        double x = (time - a.getX());
 
-        float y = (m * x) + a.getY();
+        double y = (m * x) + a.getY();
 
         return y;
     }
@@ -682,16 +691,16 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
         return rightBound;
     }  
     
-    public float getResolution() {
+    public double getResolution() {
         return resolution;
     }
 
-    public void setResolution(float resolution) {
+    public void setResolution(double resolution) {
         this.resolution = resolution;
         for (Iterator iter = points.iterator(); iter.hasNext();) {
             LinePoint point = (LinePoint) iter.next();
 
-            float newVal = LineUtils.snapToResolution(point.getY(), this.min,
+            double newVal = LineUtils.snapToResolution(point.getY(), this.min,
                     this.max, this.resolution);
 
             point.setLocation(point.getX(), newVal);
@@ -764,8 +773,8 @@ public class Line implements TableModel, Serializable, ChangeListener, Iterable<
             }
 
             LinePoint lp = new LinePoint();
-            lp.setLocation(Float.parseFloat(parts[0]), Float
-                    .parseFloat(parts[1]));
+            lp.setLocation(Double.parseDouble(parts[0]), Double
+                    .parseDouble(parts[1]));
 
             temp.add(lp);
         }

@@ -130,7 +130,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
     protected SoundObject getReplacementObject(ScoreController.ScoreObjectBuffer buffer,
             List<Instance> instances) {
         if (buffer.scoreObjects.size() == 1) {
-            SoundObject sObj = (SoundObject) buffer.scoreObjects.get(0).clone();
+            SoundObject sObj = (SoundObject) buffer.scoreObjects.get(0).deepCopy();
             if (sObj instanceof Instance) {
                 instances.add((Instance) sObj);
             }
@@ -162,7 +162,7 @@ public final class ReplaceWithBufferSoundObjectAction extends AbstractAction
             int layerIndex = buffer.layerIndexes.get(i);
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
-            SoundObject clone = (SoundObject) scoreObj.clone();
+            SoundObject clone = (SoundObject) scoreObj.deepCopy();
             layer.add(clone);
 
             if (clone instanceof Instance) {

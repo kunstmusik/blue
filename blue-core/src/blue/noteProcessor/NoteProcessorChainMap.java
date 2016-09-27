@@ -22,12 +22,22 @@ package blue.noteProcessor;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * @author steven
  */
-public class NoteProcessorChainMap extends HashMap {
+public class NoteProcessorChainMap extends HashMap<String, NoteProcessorChain> {
+
+    public NoteProcessorChainMap(){
+    }
+
+    public NoteProcessorChainMap(NoteProcessorChainMap npcMap) {
+        super(npcMap.size());
+        for (Entry<String, NoteProcessorChain> entry : npcMap.entrySet()) {    
+            put(entry.getKey(), new NoteProcessorChain(entry.getValue())); 
+        }
+    }
+
 
     public NoteProcessorChain getNoteProcessorChain(Object key) {
         return (NoteProcessorChain) get(key);
@@ -55,8 +65,7 @@ public class NoteProcessorChainMap extends HashMap {
     public Element saveAsXML() {
         Element retVal = new Element("noteProcessorChainMap");
 
-        for (Iterator iter = this.keySet().iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
+        for (String name : this.keySet()) {
             NoteProcessorChain npc = this.getNoteProcessorChain(name);
 
             Element npcNode = new Element("npc");

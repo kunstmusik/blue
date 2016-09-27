@@ -26,8 +26,6 @@ import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.text.MessageFormat;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -75,7 +73,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             Parameter param = parameters.getParameter(key);
             if (param != null) {
-                param.setValue(newVal.floatValue());
+                param.setValue(newVal.doubleValue());
             }
         }
     };
@@ -118,10 +116,10 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     public BSBHSliderBank(BSBHSliderBank bank) {
         super(bank);
-        sliders.addListener(listChangeListener);    
+        sliders.addListener(listChangeListener);
 
-        for(BSBHSlider slider : bank.sliders) {
-            sliders.add(new BSBHSlider(slider));        
+        for (BSBHSlider slider : bank.sliders) {
+            sliders.add(new BSBHSlider(slider));
         }
     }
 
@@ -371,7 +369,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 //    /**
 //     * @param maximum The maximum to set.
 //     */
-//    public void setMaximum(float maximum, boolean truncate) {
+//    public void setMaximum(double maximum, boolean truncate) {
 //        if (maximum <= minimum) {
 //            return;
 //        }
@@ -398,7 +396,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 //    /**
 //     * @param minimum The minimum to set.
 //     */
-//    public void setMinimum(float minimum, boolean truncate) {
+//    public void setMinimum(double minimum, boolean truncate) {
 //        if (minimum >= maximum) {
 //            return;
 //        }
@@ -471,15 +469,15 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
                         // order of setting these is important
                         if (getMinimum() > param.getMax()) {
-                            param.setMax((float) getMaximum(), true);
-                            param.setMin((float) getMinimum(), true);
+                            param.setMax(getMaximum(), true);
+                            param.setMin(getMinimum(), true);
                         } else {
-                            param.setMin((float) getMinimum(), true);
-                            param.setMax((float) getMaximum(), true);
+                            param.setMin(getMinimum(), true);
+                            param.setMax(getMaximum(), true);
                         }
 
-                        param.setResolution((float) getResolution());
-                        param.setValue((float) copy.getValue());
+                        param.setResolution(getResolution());
+                        param.setValue(copy.getValue());
 
                         param.addParameterListener(this);
 
@@ -544,7 +542,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 //    /**
 //     * @param resolution The resolution to set.
 //     */
-//    public void setResolution(float resolution) {
+//    public void setResolution(double resolution) {
 //        this.resolution = resolution;
 //
 //        if (parameters != null) {
@@ -630,20 +628,6 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         return retVal;
     }
 
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect this SliderBank as a listener to its Sliders
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        for (BSBHSlider slider : sliders) {
-            // FIXME - maybe don't bother and just implement Clone...
-//            slider.addPropertyChangeListener(this);
-        }
-    }
-
     @Override
     public void initializeParameters() {
         if (parameters == null) {
@@ -701,7 +685,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             if (!param.isAutomationEnabled()) {
                 BSBHSlider slider = (BSBHSlider) sliders.get(i);
-                param.setValue((float) slider.getValue());
+                param.setValue(slider.getValue());
             }
 
             param.addParameterListener(this);
@@ -725,15 +709,15 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
             // order of setting these is important
             if (getMinimum() > param.getMax()) {
-                param.setMax((float) getMaximum(), true);
-                param.setMin((float) getMinimum(), true);
+                param.setMax(getMaximum(), true);
+                param.setMin(getMinimum(), true);
             } else {
-                param.setMin((float) getMinimum(), true);
-                param.setMax((float) getMaximum(), true);
+                param.setMin(getMinimum(), true);
+                param.setMax(getMaximum(), true);
             }
 
-            param.setResolution((float) getResolution());
-            param.setValue((float) slider.getValue());
+            param.setResolution(getResolution());
+            param.setValue(slider.getValue());
 
             param.addParameterListener(this);
 
@@ -744,13 +728,13 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     @Override
     public void lineDataChanged(Parameter param) {
-        float time = ParameterTimeManagerFactory.getInstance().getTime();
+        double time = ParameterTimeManagerFactory.getInstance().getTime();
 
         String paramName = param.getName();
         String strIndex = paramName.substring(paramName.lastIndexOf('_') + 1);
         int sliderIndex = Integer.parseInt(strIndex);
 
-        float val = param.getLine().getValue(time);
+        double val = param.getLine().getValue(time);
         BSBHSlider slider = sliders.get(sliderIndex);
 
         slider.setValue(val);

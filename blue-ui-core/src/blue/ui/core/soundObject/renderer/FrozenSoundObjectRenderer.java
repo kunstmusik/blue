@@ -45,7 +45,7 @@ public class FrozenSoundObjectRenderer implements BarRenderer {
         int h = sObjView.getSize().height;
 
         FrozenSoundObject fso = (FrozenSoundObject) sObjView.getSoundObject();
-        float percentOriginal = fso.getFrozenSoundObject()
+        double percentOriginal = fso.getFrozenSoundObject()
                 .getSubjectiveDuration()
                 / fso.getSubjectiveDuration();
 

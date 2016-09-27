@@ -21,7 +21,6 @@
 package blue.soundObject.ceciliaModule;
 
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author steven yi
@@ -29,11 +28,18 @@ import java.io.Serializable;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class CGraphPoint implements Serializable, Comparable<CGraphPoint> {
+public class CGraphPoint implements Comparable<CGraphPoint> {
 
-    public float time = 0.0f;
+    public double time = 0.0f;
 
-    public float value = 0.0f;
+    public double value = 0.0f;
+
+    public CGraphPoint(){}
+
+    public CGraphPoint(CGraphPoint pt) {
+        time = pt.time;
+        value = pt.value;
+    }
 
     @Override
     public String toString() {
@@ -43,8 +49,8 @@ public class CGraphPoint implements Serializable, Comparable<CGraphPoint> {
     public static CGraphPoint loadFromXML(Element data) {
         CGraphPoint cgp = new CGraphPoint();
 
-        cgp.time = Float.parseFloat(data.getAttributeValue("time"));
-        cgp.value = Float.parseFloat(data.getAttributeValue("value"));
+        cgp.time = Double.parseDouble(data.getAttributeValue("time"));
+        cgp.value = Double.parseDouble(data.getAttributeValue("value"));
 
         return cgp;
     }
@@ -52,8 +58,8 @@ public class CGraphPoint implements Serializable, Comparable<CGraphPoint> {
     public Element saveAsXML() {
         Element retVal = new Element("cgraphPoint");
 
-        retVal.setAttribute("time", Float.toString(time));
-        retVal.setAttribute("value", Float.toString(value));
+        retVal.setAttribute("time", Double.toString(time));
+        retVal.setAttribute("value", Double.toString(value));
 
         return retVal;
     }
@@ -62,7 +68,7 @@ public class CGraphPoint implements Serializable, Comparable<CGraphPoint> {
     public int compareTo(CGraphPoint b) {
         CGraphPoint a = this;
 
-        float val = a.time - b.time;
+        double val = a.time - b.time;
 
         if (val > 0.0f) {
             return 1;

@@ -2,7 +2,6 @@ package blue.score.layers.audio.ui;
 
 import blue.score.layers.audio.core.AudioClip;
 import blue.score.layers.audio.core.AudioLayer;
-import blue.utility.ObjectUtilities;
 
 /**
  *
@@ -12,10 +11,10 @@ import blue.utility.ObjectUtilities;
 
 public class AudioLayerGroupUtils {
 
-    public static void splitAudioClip(AudioLayer layer, AudioClip clip, float time) {
+    public static void splitAudioClip(AudioLayer layer, AudioClip clip, double time) {
         
-        AudioClip first = (AudioClip) ObjectUtilities.clone(clip);
-        AudioClip second = (AudioClip) ObjectUtilities.clone(clip);
+        AudioClip first = new AudioClip(clip);
+        AudioClip second = new AudioClip(clip);
 
         
         if(first.getFadeIn() > time) {

@@ -25,18 +25,15 @@ import blue.SoundLayer;
 import blue.event.PlayModeListener;
 import blue.gui.ExceptionDialog;
 import blue.mixer.Mixer;
-import blue.score.layers.Layer;
 import blue.score.layers.LayerGroup;
 import blue.services.render.CsoundBinding;
 import blue.services.render.RealtimeRenderService;
 import blue.services.render.RealtimeRenderServiceFactory;
 import blue.settings.RealtimeRenderSettings;
-import blue.soundObject.GenericScore;
 import blue.soundObject.PolyObject;
 import blue.soundObject.SoundObject;
 import blue.soundObject.SoundObjectException;
 import blue.utility.ObjectUtilities;
-import blue.utility.ScoreUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import org.openide.awt.StatusDisplayer;
@@ -206,7 +203,7 @@ public final class RealtimeRenderManager {
             stopRendering();
         }
 
-        BlueData tempData = (BlueData) ObjectUtilities.clone(data);
+        BlueData tempData = new BlueData(data);
 
         List<PolyObject> path = null;
         for(LayerGroup slg : data.getScore()) {
@@ -248,8 +245,8 @@ public final class RealtimeRenderManager {
 //                    if(last == null) {
 //                        last = temp;
 //                    } else {
-//                        float end = last.getStartTime() + last.getSubjectiveDuration(); 
-//                        float end1 = temp.getStartTime() + temp.getSubjectiveDuration();
+//                        double end = last.getStartTime() + last.getSubjectiveDuration(); 
+//                        double end1 = temp.getStartTime() + temp.getSubjectiveDuration();
 //                        if(end1 > end) {
 //                            last = temp;
 //                        }
@@ -264,13 +261,13 @@ public final class RealtimeRenderManager {
 //        } 
 
 
-        float minTime = Float.MAX_VALUE;
-        float maxTime = Float.MIN_VALUE;
+        double minTime = Double.MAX_VALUE;
+        double maxTime = Double.MIN_VALUE;
 
         for (int i = 0; i < soundObjects.length; i++) {
             SoundObject sObj = soundObjects[i];
-            float startTime = sObj.getStartTime();
-            float endTime = startTime + sObj.getSubjectiveDuration();
+            double startTime = sObj.getStartTime();
+            double endTime = startTime + sObj.getSubjectiveDuration();
 
             if (startTime < minTime) {
                 minTime = startTime;
@@ -280,7 +277,7 @@ public final class RealtimeRenderManager {
                 maxTime = endTime;
             }
 
-            base.get(0).add((SoundObject) sObj.clone());
+            base.get(0).add(sObj.deepCopy());
         }
 
         tempData.getScore().add(tempPObj);

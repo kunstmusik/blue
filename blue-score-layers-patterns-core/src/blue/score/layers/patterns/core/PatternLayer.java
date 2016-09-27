@@ -33,7 +33,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Iterator;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,20 +44,30 @@ import java.util.logging.Logger;
  */
 public class PatternLayer implements Layer {
 
-    private SoundObject soundObject = new GenericScore();
+    private SoundObject soundObject;
     private String name = "";
     private boolean muted = false;
     private boolean solo = false;
-    private PatternData patternData = new PatternData();
-    
+    private PatternData patternData;
+
     private transient Vector<PropertyChangeListener> propListeners = null;
 
-    public PatternLayer(){
-        this.soundObject.setStartTime(0);
-        this.soundObject.setSubjectiveDuration(4.0f);
-        this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+    public PatternLayer() {
+        soundObject = new GenericScore();
+        soundObject.setStartTime(0);
+        soundObject.setSubjectiveDuration(4.0f);
+        soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
+        patternData = new PatternData();
     }
-    
+
+    public PatternLayer(PatternLayer pl) {
+        name = pl.name;
+        muted = pl.muted;
+        solo = pl.solo;
+        soundObject = pl.soundObject.deepCopy();
+        patternData = new PatternData(pl.patternData);
+    }
+
     public SoundObject getSoundObject() {
         return soundObject;
     }
@@ -76,8 +85,8 @@ public class PatternLayer implements Layer {
     public void setName(String name) {
         String oldName = this.name;
         this.name = (name == null) ? "" : name;
-        
-        if(!this.name.equals(oldName)) {
+
+        if (!this.name.equals(oldName)) {
             firePropertyChangeEvent(new PropertyChangeEvent(this, "name",
                     oldName, name));
         }
@@ -157,39 +166,37 @@ public class PatternLayer implements Layer {
         //
     }
 
-    NoteList generateForCSD(CompileData compileData, float startTime, float endTime, int patternBeatsLength) throws SoundObjectException {
+    NoteList generateForCSD(CompileData compileData, double startTime, double endTime, int patternBeatsLength) throws SoundObjectException {
         NoteList notes = new NoteList();
 
         this.soundObject.setStartTime(0);
         //this.soundObject.setSubjectiveDuration(patternBeatsLength);
         //this.soundObject.setTimeBehavior(SoundObject.TIME_BEHAVIOR_NONE);
         NoteList tempNotes = this.soundObject.generateForCSD(compileData, -1, -1);
-        
-        
-        int currentIndex = (int)(startTime / patternBeatsLength);
-        while(currentIndex < this.patternData.getSize()) {
-            
-            if(this.patternData.isPatternSet(currentIndex)) {
-                float time = currentIndex * patternBeatsLength;
-                final NoteList copy = (NoteList)tempNotes.clone();
+
+        int currentIndex = (int) (startTime / patternBeatsLength);
+        while (currentIndex < this.patternData.getSize()) {
+
+            if (this.patternData.isPatternSet(currentIndex)) {
+                double time = currentIndex * patternBeatsLength;
+                final NoteList copy = new NoteList(tempNotes);
                 ScoreUtilities.setScoreStart(copy, time);
                 notes.addAll(copy);
             }
-            
-            currentIndex++;   
+
+            currentIndex++;
         }
-       
+
         return notes;
     }
-    
-     /* Property Change Event Code */
 
+    /* Property Change Event Code */
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (propListeners == null) {
             return;
         }
 
-        for(PropertyChangeListener listener : propListeners) {
+        for (PropertyChangeListener listener : propListeners) {
             listener.propertyChange(pce);
         }
     }
@@ -213,10 +220,9 @@ public class PatternLayer implements Layer {
         propListeners.remove(pcl);
     }
 
-
     @Override
     public int getLayerHeight() {
-        return LAYER_HEIGHT;    
+        return LAYER_HEIGHT;
     }
 
     @Override
@@ -233,7 +239,7 @@ public class PatternLayer implements Layer {
     public boolean remove(ScoreObject object) {
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
@@ -246,5 +252,10 @@ public class PatternLayer implements Layer {
 
     @Override
     public void clearScoreObjects() {
+    }
+
+    @Override
+    public PatternLayer deepCopy() {
+        return new PatternLayer(this);
     }
 }

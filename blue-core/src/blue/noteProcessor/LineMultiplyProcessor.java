@@ -26,18 +26,25 @@ import blue.soundObject.Note;
 import blue.soundObject.NoteList;
 import blue.soundObject.NoteParseException;
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author steven
  * 
  */
 @NoteProcessorPlugin(displayName="LineMultiplyProcessor", position = 150)
-public class LineMultiplyProcessor implements NoteProcessor, Serializable {
+public class LineMultiplyProcessor implements NoteProcessor {
 
     private String lineMultiplyString = "0 0";
 
     private int pfield = 4;
+
+    public LineMultiplyProcessor() {
+    }
+
+    public LineMultiplyProcessor(LineMultiplyProcessor lmp) {
+        lineMultiplyString = lmp.lineMultiplyString;
+        pfield = lmp.pfield;
+    }
 
     /*
      * (non-Javadoc)
@@ -47,8 +54,8 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
     @Override
     public void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
-        float oldVal = 0f;
-        float multiplyVal = 0f;
+        double oldVal = 0f;
+        double multiplyVal = 0f;
         ValueTimeMapper tm = ValueTimeMapper
                 .createValueTimeMapper(this.lineMultiplyString);
 
@@ -61,11 +68,11 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                oldVal = Float.parseFloat(temp.getPField(this.pfield));
+                oldVal = Double.parseDouble(temp.getPField(this.pfield));
                 multiplyVal = tm.getValueForBeat(temp.getStartTime());
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -73,12 +80,12 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
                         pfield);
             }
 
-            if (Float.isNaN(multiplyVal)) {
+            if (Double.isNaN(multiplyVal)) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.noteBeatErr"),
                         pfield);
             }
-            temp.setPField(Float.toString(oldVal * multiplyVal), this.pfield);
+            temp.setPField(Double.toString(oldVal * multiplyVal), this.pfield);
 
         }
     }
@@ -154,6 +161,11 @@ public class LineMultiplyProcessor implements NoteProcessor, Serializable {
                 this.getLineMultiplyString());
 
         return retVal;
+    }
+
+    @Override
+    public LineMultiplyProcessor deepCopy() {
+        return new LineMultiplyProcessor(this);
     }
 
 }

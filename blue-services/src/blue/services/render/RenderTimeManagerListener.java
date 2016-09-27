@@ -11,5 +11,5 @@ package blue.services.render;
 public interface RenderTimeManagerListener {
     public void renderInitiated();
     public void renderEnded();
-    public void renderTimeUpdated(float timePointer);
+    public void renderTimeUpdated(double timePointer);
 }

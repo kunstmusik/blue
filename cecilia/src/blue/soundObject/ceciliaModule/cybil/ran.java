@@ -23,21 +23,21 @@ package blue.soundObject.ceciliaModule.cybil;
 class ran extends CybilFunction {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
-        float[] val = new float[1];
+    public double[] getValue(CybilNoteList cybilNoteList) {
+        double[] val = new double[1];
 
         String ranType = (String) args.get(0);
 
         Object arg1 = args.get(1);
         Object arg2 = args.get(2);
 
-        float min;
-        float max;
+        double min;
+        double max;
 
-        min = getFloatValue(arg1);
-        max = getFloatValue(arg2);
+        min = getDoubleValue(arg1);
+        max = getDoubleValue(arg2);
 
-        float ranValue = (float) (Math.random() * (max - min));
+        double ranValue = (double) (Math.random() * (max - min));
         ranValue += min;
 
         if (ranType.equals("i")) {

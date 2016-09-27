@@ -96,7 +96,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
         ScoreController.ScoreObjectBuffer buffer
                 = ScoreController.getInstance().getScoreObjectBuffer();
 
-        float start = (float) p.x / timeState.getPixelSecond();
+        double start = (double) p.x / timeState.getPixelSecond();
 
         if (timeState.isSnapEnabled()) {
             start = ScoreUtilities.getSnapValueStart(start,
@@ -126,7 +126,7 @@ public final class PasteAsPolyObjectAction extends AbstractAction implements Con
             int layerIndex = layerIndexes.get(i);
             SoundLayer layer = pObj.get(layerIndex - minLayer);
 
-            SoundObject clone = (SoundObject) scoreObj.clone();
+            SoundObject clone = (SoundObject)scoreObj.deepCopy();
             layer.add(clone);
 
             if (clone instanceof Instance) {

@@ -13,7 +13,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  * A Mixer's channels and subchannels are translated to a MixerNode graph that
  * represents to the toplogy of the channels and subChannels as a tree
  * structure.
- * 
+ *
  * Child nodes represent sources to the current node. Within childNodes, the
  * order is important and represents the interdependency from Sends. Channel
  * nodes must be first as they are the earliest sources of signals into the
@@ -21,13 +21,12 @@ import org.apache.commons.lang3.text.StrBuilder;
  * SubChannel children feed into the current node. Since they may send signals
  * to each other, they must be sorted so that their signals are process in the
  * correct order.
- * 
+ *
  * Because SubChannelOutComboBox limits the user to only feedforward without
  * feedback loops and all channels must have an outChannel, certain assumptions
  * are encoded into the graph.
- * 
+ *
  */
-
 class MixerNode {
 
     public String name;
@@ -71,22 +70,22 @@ class MixerNode {
      * Generates Csound Instrument for Mixer. Effects are added as UDO's to
      * project. Code generations for Channels and SubChannels is optimized to
      * not generate unnecessary code by following rules:
-     * 
+     *
      * <ol>
-     * 
+     *
      * <li>if channel does not generate signal to channel output (if no
      * automation for level fader and fader == -96.0f), only generate code up to
      * last send in preFader effects chain</li>
-     * 
+     *
      * <li> when processing Sends, checks down the graph to see if send signal
      * will make it to the Master output or not, checking both down graph of
      * output channels as well as sends for each channel. If not, does not
      * generate output for Send. </li>
-     * 
+     *
      * <li> if channel does not have channel output and no valid prefader sends,
      * do not generate anything </li>
      * </ol>
-     * 
+     *
      * @param mixer
      * @param udos
      * @param manager
@@ -94,7 +93,6 @@ class MixerNode {
      * @param nchnls
      * @return
      */
-
     public static String getMixerCode(CompileData data, Mixer mixer, OpcodeList udos,
             EffectManager manager, MixerNode mixerNode, int nchnls) {
 
@@ -118,7 +116,6 @@ class MixerNode {
             }
 
             // get signal string
-
             String signalChannels = "";
 
             for (int j = 0; j < nchnls; j++) {
@@ -131,7 +128,6 @@ class MixerNode {
             }
 
             // apply pre-fader effects
-
             EffectsChain preEffects = tempNode.channel.getPreEffects();
 
             int lastIndex = Integer.MAX_VALUE;
@@ -154,7 +150,6 @@ class MixerNode {
                 applyFader(data, mixer, tempNode, nchnls, buffer);
 
                 // apply post-fader effects
-
                 EffectsChain postEffects = tempNode.channel.getPostEffects();
 
                 lastIndex = Integer.MAX_VALUE;
@@ -172,7 +167,6 @@ class MixerNode {
                         buffer, lastIndex, inputSignalCache);
 
                 // mix into out channel
-
                 if (tempNode.outChannelValid && i != nodes.size() - 1) {
 
                     String outChannelName = tempNode.channel.getOutChannel();
@@ -227,7 +221,7 @@ class MixerNode {
     /**
      * Depth first flattening of MixerNode tree structure to ArrayList. Should
      * be sorted in correct order from getMixerGraph(mixer).
-     * 
+     *
      * @param node
      * @param channels
      */
@@ -237,14 +231,14 @@ class MixerNode {
 
     private static void flattenToList(MixerNode node, List<MixerNode> channels,
             int depthCount) {
-        for (MixerNode child : node.children) { 
+        for (MixerNode child : node.children) {
 
             if (child.children.size() > 0) {
                 flattenToList(child, channels, depthCount + 1);
             }
         }
 
-        for (MixerNode child : node.children) { 
+        for (MixerNode child : node.children) {
             channels.add(child);
         }
 
@@ -256,7 +250,7 @@ class MixerNode {
     /**
      * Walks down all subchannels to find if it ends up at Master, either
      * through output channels or sends.
-     * 
+     *
      * @param channelName
      * @param subChannelCache
      * @return
@@ -328,7 +322,7 @@ class MixerNode {
 
         Parameter levelParam = node.channel.getLevelParameter();
         String compilationVarName = levelParam.getCompilationVarName();
-        
+
         if (levelParam.isAutomationEnabled()) {
             if (compilationVarName != null) {
 
@@ -338,20 +332,18 @@ class MixerNode {
                 modifier = "ktempdb";
             }
         } else {
-            float multiplier = (float) MusicFunctions.ampdb(node.channel
+            double multiplier = MusicFunctions.ampdb(node.channel
                     .getLevel());
-            
-            if(compilationVarName != null) {
+
+            if (compilationVarName != null) {
                 buffer.append("ktempdb = ampdb(");
                 buffer.append(compilationVarName).append(")\n");
 
-                modifier = "ktempdb";                
-            } else {
-                if (multiplier != 1.0f) {
-                    modifier = getMultiplierString(multiplier);
-                }
+                modifier = "ktempdb";
+            } else if (multiplier != 1.0f) {
+                modifier = getMultiplierString(multiplier);
             }
-            
+
         }
 
         if (modifier != null) {
@@ -430,7 +422,7 @@ class MixerNode {
                             buffer.append(parts[j].trim()).append("\n");
                         } else {
 
-                            String levelStr = NumberUtilities.formatFloat(send
+                            String levelStr = NumberUtilities.formatDouble(send
                                     .getLevel());
 
                             buffer.append("(").append(parts[j].trim()).append(
@@ -444,8 +436,8 @@ class MixerNode {
         }
     }
 
-    private static String getMultiplierString(float multiplier) {
-        return NumberUtilities.formatFloat(multiplier);
+    private static String getMultiplierString(double multiplier) {
+        return NumberUtilities.formatDouble(multiplier);
     }
 
     private static void configureNode(MixerNode node, Map<String, Boolean> validOutCache) {
@@ -478,7 +470,7 @@ class MixerNode {
 
     private static boolean hasOutSignal(Channel channel) {
         Parameter levelParam = channel.getLevelParameter();
-        float level = channel.getLevel();
+        double level = channel.getLevel();
 
         boolean hasOutSignal = (levelParam.isAutomationEnabled() || (level > -96.0f));
         return hasOutSignal;
@@ -490,7 +482,7 @@ class MixerNode {
      * feedforward only and that the mixer graph is generated depth first, the
      * only requirement for correctly handling Sends is sorting SubChannel
      * children nodes to make sure that they are processed in the correct order.
-     * 
+     *
      * @param mixer
      * @return rootNode
      */

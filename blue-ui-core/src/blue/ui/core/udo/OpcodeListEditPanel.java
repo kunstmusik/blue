@@ -298,7 +298,7 @@ public class OpcodeListEditPanel extends JComponent {
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.length];
             
             for(int i = 0; i < udos.length; i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos[i]);
+                copies[i] = new UserDefinedOpcode(udos[i]);
             }
             
             UDOBuffer.getInstance().setBufferedObject(
@@ -320,7 +320,7 @@ public class OpcodeListEditPanel extends JComponent {
     private void handlePaste(Object obj) {
         if(obj instanceof UserDefinedOpcode) {
             
-            opcodeList.addOpcode((UserDefinedOpcode)ObjectUtilities.clone(obj));
+            opcodeList.addOpcode(new UserDefinedOpcode((UserDefinedOpcode) obj));
             
         } else if(obj instanceof UserDefinedOpcode[]) {
             
@@ -329,7 +329,7 @@ public class OpcodeListEditPanel extends JComponent {
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.length];
 
             for(int i = 0; i < udos.length; i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos[i]);
+                copies[i] = new UserDefinedOpcode(udos[i]);
             }
 
             opcodeList.addOpcodes(copies);
@@ -341,7 +341,7 @@ public class OpcodeListEditPanel extends JComponent {
             UserDefinedOpcode[] copies = new UserDefinedOpcode[udos.size()];
 
             for(int i = 0; i < udos.size(); i++) {
-                copies[i] = (UserDefinedOpcode)ObjectUtilities.clone(udos.get(i));
+                copies[i] = new UserDefinedOpcode(udos.get(i));
             }
             
             opcodeList.addOpcodes(copies);
@@ -429,8 +429,7 @@ public class OpcodeListEditPanel extends JComponent {
 
             UserDefinedOpcode udo = opcodeList.getOpcode(index);
 
-            // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = ObjectUtilities.clone(udo);
+            Object cloneNode = new UserDefinedOpcode(udo);
 
             transferable = new TransferableUDO(cloneNode);
             source.startDrag(dge, null, transferable, this);

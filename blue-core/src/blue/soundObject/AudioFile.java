@@ -28,7 +28,6 @@ import blue.plugin.SoundObjectPlugin;
 import blue.utility.SoundFileUtilities;
 import electric.xml.Element;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 import javax.swing.JOptionPane;
 
@@ -37,8 +36,7 @@ import javax.swing.JOptionPane;
  *
  */
 @SoundObjectPlugin(displayName = "AudioFile", live=false, position = 10)
-public class AudioFile extends AbstractSoundObject implements Serializable,
-        Cloneable {
+public class AudioFile extends AbstractSoundObject {
 
     private String soundFileName;
 
@@ -50,18 +48,24 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
 
     public AudioFile() {
         this.setName("Audio File");
-
         soundFileName = "";
         csoundPostCode = "\touts\taChannel1, aChannel1";
+    }
 
+    public AudioFile(AudioFile af) {
+        super(af);
+        soundFileName = af.soundFileName;
+        csoundPostCode = af.csoundPostCode;
+        useCustomWindowSize = af.useCustomWindowSize;
+        windowSize = af.windowSize;
     }
 
     // TODO - EXCEPTION - Look at Code to determine if Exception is Needed
-    public NoteList generateNotes(int instrumentNumber, float renderStart, 
-            float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(int instrumentNumber, double renderStart, 
+            double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
-        float newDur = subjectiveDuration;
+        double newDur = subjectiveDuration;
 
         if(renderEnd > 0 && renderEnd < subjectiveDuration) {
             newDur = renderEnd;
@@ -101,8 +105,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         GenericInstrument temp = new GenericInstrument();
         temp.setName(this.name);
         temp.setText(instrumentText);
-        temp.setEnabled(true);
-        //int iNum = arrangement.addInstrument(temp);
+
         return temp;
     }
 
@@ -159,9 +162,9 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         return info;
     }
 
-    public int findPowerOfTwo(float seconds) {
+    public int findPowerOfTwo(double seconds) {
         int sr = 44100;
-        int samples = Math.round(seconds * sr);
+        int samples = (int)Math.round(seconds * sr);
 
         int powTwoSamples = 2;
 
@@ -173,7 +176,7 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -196,12 +199,12 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
 
@@ -264,8 +267,8 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime)  throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime)  throws SoundObjectException {
         Instrument instr = this.generateInstrument();
         if(instr == null) {
              throw new RuntimeException(new SoundObjectException(this, BlueSystem
@@ -275,6 +278,11 @@ public class AudioFile extends AbstractSoundObject implements Serializable,
         int instrNum = compileData.addInstrument(instr);
         NoteList nl = this.generateNotes(instrNum, startTime, endTime);
         return nl;
+    }
+
+    @Override
+    public AudioFile deepCopy() {
+        return new AudioFile(this);
     }
 
 }

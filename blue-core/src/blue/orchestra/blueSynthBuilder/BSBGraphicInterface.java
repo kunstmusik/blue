@@ -21,17 +21,15 @@ package blue.orchestra.blueSynthBuilder;
 
 import blue.orchestra.blueSynthBuilder.GridSettings.GridStyle;
 import blue.utility.ObjectUtilities;
+import com.sun.javafx.collections.ObservableSetWrapper;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Vector;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -44,11 +42,27 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  */
 public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameCollection {
 
-    ObservableSet<BSBObject> interfaceItems = FXCollections.observableSet();
+    private Set<BSBObject> backingSet = new HashSet<BSBObject>() {
+        @Override
+        public boolean add(BSBObject bsbObj) {
+            String objName = bsbObj.getObjectName();
+
+            // guarantee unique names for objects
+            if (objName != null && objName.length() != 0) {
+                if (!nameManager.isUniquelyNamed(bsbObj)) {
+                    nameManager.setUniqueName(bsbObj);
+                }
+            }
+
+            bsbObj.setUniqueNameManager(nameManager);
+            return super.add(bsbObj); 
+        }
+    };
+
+    private ObservableSet<BSBObject> interfaceItems = 
+            new ObservableSetWrapper<>(backingSet);
 
     UniqueNameManager nameManager = new UniqueNameManager();
-
-    transient Vector<BSBGraphicInterfaceListener> listeners = null;
 
     private BooleanProperty editEnabled = new SimpleBooleanProperty(true);
 
@@ -56,18 +70,18 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
 
     public BSBGraphicInterface() {
         gridSettings = new GridSettings();
-        nameManager.setUniqueNameCollection(this);
         nameManager.setDefaultPrefix("bsbObj");
+        nameManager.setUniqueNameCollection(this);
     }
 
     public BSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         gridSettings = new GridSettings(bsbInterface.getGridSettings());
-        nameManager.setUniqueNameCollection(this);
         nameManager.setDefaultPrefix("bsbObj");
+        nameManager.setUniqueNameCollection(this);
 
         setEditEnabled(bsbInterface.isEditEnabled());
 
-        for (BSBObject bsbObj : interfaceItems) {
+        for (BSBObject bsbObj : bsbInterface.interfaceItems) {
             interfaceItems.add(bsbObj.deepCopy());
         }
     }
@@ -80,27 +94,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
         if (bsbObj == null) {
             return;
         }
-
-        String objName = bsbObj.getObjectName();
-
-        // guarantee unique names for objects
-        if (objName != null && objName.length() != 0) {
-            if (!nameManager.isUniquelyNamed(bsbObj)) {
-                nameManager.setUniqueName(bsbObj);
-            }
-        }
-
         interfaceItems.add(bsbObj);
-        fireBSBObjectAdded(bsbObj);
-        bsbObj.setUniqueNameManager(nameManager);
-    }
-
-    public void remove(BSBObject bsbObj) {
-        if (interfaceItems.contains(bsbObj)) {
-            interfaceItems.remove(bsbObj);
-            fireBSBObjectRemoved(bsbObj);
-            bsbObj.setUniqueNameManager(null);
-        }
     }
 
     @Override
@@ -113,8 +107,7 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
     }
 
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        for (Iterator<BSBObject> iter = interfaceItems.iterator(); iter.hasNext();) {
-            BSBObject bsbObj = iter.next();
+        for (BSBObject bsbObj : interfaceItems) {
             bsbObj.setupForCompilation(compilationUnit);
         }
     }
@@ -177,47 +170,6 @@ public class BSBGraphicInterface implements Iterable<BSBObject>, UniqueNameColle
         return retVal;
     }
 
-    public void addBSBGraphicInterfaceListener(
-            BSBGraphicInterfaceListener listener) {
-        if (listeners == null) {
-            listeners = new Vector<>();
-        }
-
-        listeners.add(listener);
-    }
-
-    public void removeBSBGraphicInterfaceListener(
-            BSBGraphicInterfaceListener listener) {
-        if (listeners != null) {
-            listeners.remove(listener);
-        }
-    }
-
-    public void fireBSBObjectAdded(BSBObject bsbObj) {
-        if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter
-                    = new Vector<>(listeners).iterator();
-
-            while (iter.hasNext()) {
-                BSBGraphicInterfaceListener listener = iter
-                        .next();
-                listener.bsbObjectAdded(bsbObj);
-            }
-        }
-    }
-
-    public void fireBSBObjectRemoved(BSBObject bsbObj) {
-        if (listeners != null) {
-            Iterator<BSBGraphicInterfaceListener> iter
-                    = new Vector<>(listeners).iterator();
-
-            while (iter.hasNext()) {
-                BSBGraphicInterfaceListener listener = (BSBGraphicInterfaceListener) iter
-                        .next();
-                listener.bsbObjectRemoved(bsbObj);
-            }
-        }
-    }
 
     @Override
     public Set<String> getNames() {

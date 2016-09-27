@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class ObjectUtilities {
 
-    public static Object clone(Object obj) {
+    public static Object serializeClone(Object obj) {
         try {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(

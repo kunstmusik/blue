@@ -18,14 +18,13 @@ import java.util.Random;
  */
 
 @NoteProcessorPlugin(displayName="RandomMultiplyProcessor", position = 50)
-public class RandomMultiplyProcessor implements NoteProcessor,
-        java.io.Serializable {
+public class RandomMultiplyProcessor implements NoteProcessor {
 
     int pfield = 4;
 
-    float min = 0f;
+    double min = 0f;
 
-    float max = 1f;
+    double max = 1f;
     
     boolean seedUsed = false;
     
@@ -34,6 +33,13 @@ public class RandomMultiplyProcessor implements NoteProcessor,
     public RandomMultiplyProcessor() {
     }
 
+    public RandomMultiplyProcessor(RandomMultiplyProcessor rmp) {
+        pfield = rmp.pfield;
+        min = rmp.min;
+        max = rmp.max;
+        seedUsed = rmp.seedUsed;
+        seed = rmp.seed;
+    }
     @Override
     public String toString() {
         return "[random multiply]";
@@ -48,19 +54,19 @@ public class RandomMultiplyProcessor implements NoteProcessor,
     }
 
     public String getMin() {
-        return Float.toString(min);
+        return Double.toString(min);
     }
 
     public void setMin(String value) {
-        this.min = Float.parseFloat(value);
+        this.min = Double.parseDouble(value);
     }
 
     public String getMax() {
-        return Float.toString(max);
+        return Double.toString(max);
     }
 
     public void setMax(String value) {
-        this.max = Float.parseFloat(value);
+        this.max = Double.parseDouble(value);
     }
 
        public String getSeedUsed() {
@@ -83,18 +89,18 @@ public class RandomMultiplyProcessor implements NoteProcessor,
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
 
-        float range = max - min;
-        float fieldVal = 0f;
+        double range = max - min;
+        double fieldVal = 0f;
         
         Random r = seedUsed ? new Random(seed) : new Random();
 
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                fieldVal = Float.parseFloat(temp.getPField(pfield));
+                fieldVal = Double.parseDouble(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -102,9 +108,9 @@ public class RandomMultiplyProcessor implements NoteProcessor,
                         pfield);
             }
 
-            float randVal = (float) ((r.nextDouble() * range) + min);
+            double randVal = (double) ((r.nextDouble() * range) + min);
 
-            temp.setPField(Float.toString(fieldVal * randVal), pfield);
+            temp.setPField(Double.toString(fieldVal * randVal), pfield);
         }
     }
 
@@ -181,5 +187,10 @@ public class RandomMultiplyProcessor implements NoteProcessor,
         }
 
         System.out.println("after: \n\n" + n + "\n\n");
+    }
+
+    @Override
+    public RandomMultiplyProcessor deepCopy() {
+        return new RandomMultiplyProcessor(this);
     }
 }

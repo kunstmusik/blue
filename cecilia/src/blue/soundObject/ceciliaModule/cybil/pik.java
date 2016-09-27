@@ -23,13 +23,13 @@ package blue.soundObject.ceciliaModule.cybil;
 class pik extends CybilFunction {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
-        float[] val = new float[1];
+    public double[] getValue(CybilNoteList cybilNoteList) {
+        double[] val = new double[1];
 
         int index = (int) (Math.random() * args.size());
 
         Object obj = args.get(index);
-        val[0] = getFloatValue(obj);
+        val[0] = getDoubleValue(obj);
 
         return val;
     }

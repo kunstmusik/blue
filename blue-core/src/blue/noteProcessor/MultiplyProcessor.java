@@ -16,12 +16,16 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="MultiplyProcessor", position = 30)
-public class MultiplyProcessor implements NoteProcessor, java.io.Serializable {
-    float value = 1f;
+public class MultiplyProcessor implements NoteProcessor {
+    double value = 1;
 
     int pfield = 4;
 
     public MultiplyProcessor() {
+    }
+    public MultiplyProcessor(MultiplyProcessor mp) {
+        value = mp.value;
+        pfield = mp.pfield;
     }
 
     @Override
@@ -39,31 +43,31 @@ public class MultiplyProcessor implements NoteProcessor, java.io.Serializable {
     }
 
     public String getVal() {
-        return Float.toString(value);
+        return Double.toString(value);
     }
 
     public void setVal(String value) {
-        this.value = Float.parseFloat(value);
+        this.value = Double.parseDouble(value);
     }
 
     @Override
     public final void processNotes(NoteList in) throws NoteProcessorException {
         Note temp;
-        float fieldVal = 0f;
+        double fieldVal = 0;
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                fieldVal = Float.parseFloat(temp.getPField(pfield));
+                fieldVal = Double.parseDouble(temp.getPField(pfield));
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
                         .getString("noteProcessorException.missingPfield"),
                         pfield);
             }
-            temp.setPField(Float.toString(fieldVal * value), pfield);
+            temp.setPField(Double.toString(fieldVal * value), pfield);
         }
     }
 
@@ -116,5 +120,10 @@ public class MultiplyProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public MultiplyProcessor deepCopy() {
+        return new MultiplyProcessor(this);
     }
 }

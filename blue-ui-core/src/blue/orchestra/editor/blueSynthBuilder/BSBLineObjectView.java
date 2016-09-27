@@ -29,7 +29,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
@@ -252,11 +251,11 @@ public class BSBLineObjectView extends BSBObjectView implements
 
     }
 
-    public float getXMax() {
+    public double getXMax() {
         return lineObj.getXMax();
     }
 
-    public void setXMax(float max) {
+    public void setXMax(double max) {
         if (max <= 0.0f) {
             return;
         }

@@ -559,7 +559,7 @@ public class BSBEditPanel extends JLayeredPane implements
             BSBObject bsbObj = viewHolder.getBSBObjectView().getBSBObject();
 
             if (bsbInterface != null) {
-                bsbInterface.remove(bsbObj);
+                bsbInterface.interfaceItemsProperty().remove(bsbObj);
             }
 
             viewHolder.removeSelectionListener(this);

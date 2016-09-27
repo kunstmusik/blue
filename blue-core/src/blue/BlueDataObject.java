@@ -20,12 +20,11 @@
 package blue;
 
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  *
  * @author stevenyi
  */
-public interface BlueDataObject extends Serializable {
+public interface BlueDataObject extends DeepCopyable<BlueDataObject> {
    public Element saveAsXML(); 
 }

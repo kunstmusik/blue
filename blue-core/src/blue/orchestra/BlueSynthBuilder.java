@@ -30,9 +30,6 @@ import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -42,7 +39,7 @@ import java.util.HashMap;
  */
 @InstrumentPlugin(displayName = "BlueSynthBuilder", position = 50)
 public class BlueSynthBuilder extends AbstractInstrument implements
-        Serializable, Automatable {
+        Automatable {
 
     BSBGraphicInterface graphicInterface;
 
@@ -74,7 +71,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         if (init) {
             graphicInterface = new BSBGraphicInterface();
             parameterList = new BSBParameterList();
-
             parameterList.setBSBGraphicInterface(graphicInterface);
 
             presetGroup = new PresetGroup();
@@ -86,6 +82,22 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         alwaysOnInstrumentText = "";
         globalOrc = "";
         globalSco = "";
+    }
+
+    public BlueSynthBuilder(BlueSynthBuilder bsb) {
+        super(bsb); 
+        graphicInterface = new BSBGraphicInterface(bsb.graphicInterface);
+        parameterList = new BSBParameterList(bsb.parameterList);
+        parameterList.setBSBGraphicInterface(graphicInterface);
+
+        presetGroup = new PresetGroup(bsb.presetGroup);
+
+        opcodeList = new OpcodeList(bsb.opcodeList);
+
+        instrumentText = bsb.instrumentText;
+        alwaysOnInstrumentText = bsb.alwaysOnInstrumentText;
+        globalOrc = bsb.globalOrc;
+        globalSco = bsb.globalSco;
     }
 
     @Override
@@ -346,18 +358,6 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         parameterList.setBSBGraphicInterface(graphicInterface);
     }
 
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the BSBGraphicInterface to the
-     * BSBParameterList
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        parameterList.setBSBGraphicInterface(graphicInterface);
-    }
-
     public boolean isEditEnabled() {
         return editEnabled;
     }
@@ -388,5 +388,10 @@ public class BlueSynthBuilder extends AbstractInstrument implements
         }
 
         return stringChannels;
+    }
+
+    @Override
+    public BlueSynthBuilder deepCopy() {
+        return new BlueSynthBuilder(this); 
     }
 }

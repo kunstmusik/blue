@@ -12,7 +12,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -34,15 +33,14 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "External", live=true, position = 30)
-public class External extends AbstractSoundObject implements Serializable,
-        Cloneable {
+public class External extends AbstractSoundObject {
 //    private static BarRenderer renderer = new LetterRenderer("E");
 
-    private NoteProcessorChain npc = new NoteProcessorChain();
+    private NoteProcessorChain npc; 
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private String commandLine = "";
 
@@ -52,7 +50,18 @@ public class External extends AbstractSoundObject implements Serializable,
 
     public External() {
         this.setName("External");
+        npc = new NoteProcessorChain();
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
+    }
+
+    public External(External external) {
+        super(external);
+        timeBehavior = external.timeBehavior;
+        npc = new NoteProcessorChain(external.getNoteProcessorChain());
+        repeatPoint = external.repeatPoint;
+        commandLine = external.commandLine;
+        text = external.text;
+        syntaxType = external.syntaxType;
     }
 
     @Override
@@ -66,7 +75,7 @@ public class External extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
 
@@ -78,7 +87,7 @@ public class External extends AbstractSoundObject implements Serializable,
         this.text = text;
     }
 
-    public final NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public final NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
 
         if (commandLine.trim().length() == 0 && getText().trim().length() == 0) {
             return null;
@@ -240,12 +249,12 @@ public class External extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -312,12 +321,17 @@ public class External extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
         NoteList retVal = generateNotes(startTime, endTime);
         return retVal;
         
+    }
+
+    @Override
+    public External deepCopy() {
+        return new External(this);
     }
 
 }

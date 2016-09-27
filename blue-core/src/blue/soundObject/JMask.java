@@ -43,7 +43,7 @@ public class JMask extends AbstractSoundObject {
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     boolean seedUsed = false;
 
@@ -54,9 +54,19 @@ public class JMask extends AbstractSoundObject {
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public JMask(JMask jmask) {
+        super(jmask);
+        npc = new NoteProcessorChain(jmask.npc);
+        field = new Field(jmask.field);
+        timeBehavior = jmask.timeBehavior;
+        repeatPoint = jmask.repeatPoint;
+        seedUsed = jmask.seedUsed;
+        seed = jmask.seed;
+    }
 
-        Field temp = (Field) ObjectUtilities.clone(field);
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
+
+        Field temp = new Field(field);
 
         Random rnd = seedUsed ? new Random(seed) : new Random();
 
@@ -82,7 +92,7 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -90,7 +100,7 @@ public class JMask extends AbstractSoundObject {
 //        return renderer;
 //    }
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return repeatPoint;
     }
 
@@ -150,7 +160,7 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -199,16 +209,16 @@ public class JMask extends AbstractSoundObject {
     }
 
     @Override
-    public SoundObject clone() {
-        return (SoundObject) ObjectUtilities.clone(this);
-    }
-
-    @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime,
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
 
         NoteList nl = generateNotes(startTime, endTime);
         return nl;
 
+    }
+
+    @Override
+    public JMask deepCopy() {
+        return new JMask(this);
     }
 }

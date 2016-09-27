@@ -17,7 +17,6 @@
  * the Free Software Foundation Inc., 59 Temple Place - Suite 330,
  * Boston, MA  02111-1307 USA
  */
-
 package blue.soundObject;
 
 import blue.score.ScoreObjectEvent;
@@ -31,7 +30,6 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -43,18 +41,16 @@ import javax.swing.table.TableModel;
 /**
  * @author Steven Yi
  */
-
-@SoundObjectPlugin(displayName = "PatternObject", live=true, position = 80)
-public class PatternObject extends AbstractSoundObject implements Serializable,
-        TableModel, GenericViewable {
+@SoundObjectPlugin(displayName = "PatternObject", live = true, position = 80)
+public class PatternObject extends AbstractSoundObject implements TableModel,
+        GenericViewable {
 
 //    private static BarRenderer renderer = new GenericRenderer();
-
     private NoteProcessorChain npc = new NoteProcessorChain();
 
     private int timeBehavior;
 
-    float repeatPoint = -1.0f;
+    double repeatPoint = -1.0f;
 
     private int beats = 4;
 
@@ -71,9 +67,19 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         this.timeBehavior = TIME_BEHAVIOR_SCALE;
     }
 
-//    public SoundObjectEditor getEditor() {
-//        return new PatternEditor();
-//    }
+    public PatternObject(PatternObject pObj) {
+        super(pObj);
+
+        npc = new NoteProcessorChain(pObj.npc);
+        timeBehavior = pObj.timeBehavior;
+        repeatPoint = pObj.repeatPoint;
+        beats = pObj.beats;
+        subDivisions = pObj.subDivisions;
+
+        for (Pattern p : pObj.patterns) {
+            patterns.add(new Pattern(p));
+        }
+    }
 
     public void addPattern(int index) {
         Pattern pattern = new Pattern(beats * subDivisions);
@@ -84,7 +90,9 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         fireTableDataChanged();
     }
 
-    /** Used only during deserialization */
+    /**
+     * Used only during deserialization
+     */
     private void addPattern(Pattern p) {
         patterns.add(p);
     }
@@ -118,16 +126,14 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     /* COMPILATION METHODS */
-
-    public NoteList generateNotes(float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
         NoteList tempNoteList = new NoteList();
 
         // check if solo is selected, if so, return only that layer's notes if
         // not muted
-
         boolean soloFound = false;
 
-        float timeIncrement = 1.0f / this.subDivisions;
+        double timeIncrement = 1.0f / this.subDivisions;
 
         for (int i = 0; i < this.size(); i++) {
             Pattern p = this.getPattern(i);
@@ -135,7 +141,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
             if (p.isSolo() && !p.isMuted()) {
 
                 soloFound = true;
-                
+
                 boolean[] tempPatternArray = p.values;
 
                 for (int j = 0; j < tempPatternArray.length; j++) {
@@ -150,7 +156,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
                             throw new SoundObjectException(this, e);
                         }
 
-                        float start = (j * timeIncrement);
+                        double start = (j * timeIncrement);
 
                         ScoreUtilities.setScoreStart(tempPattern, start);
 
@@ -162,7 +168,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
         }
 
         if (!soloFound) {
-           
+
             for (int i = 0; i < this.size(); i++) {
                 Pattern p = this.getPattern(i);
 
@@ -180,7 +186,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
                                 throw new SoundObjectException(this, e);
                             }
 
-                            float start = (j * timeIncrement);
+                            double start = (j * timeIncrement);
 
                             ScoreUtilities.setScoreStart(tempPattern, start);
 
@@ -207,7 +213,7 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
@@ -227,12 +233,12 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return this.repeatPoint;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
         this.repeatPoint = repeatPoint;
 
         ScoreObjectEvent event = new ScoreObjectEvent(this,
@@ -247,7 +253,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     /* SERIALIZATION */
-
     public static SoundObject loadFromXML(Element data,
             Map<String, Object> objRefMap) throws Exception {
 
@@ -302,7 +307,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     /* GETTER/SETTER METHODS */
-
     public int getBeats() {
         return beats;
     }
@@ -347,7 +351,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     /* TABLE MODEL METHODS */
-
     @Override
     public int getRowCount() {
         return patterns.size();
@@ -448,7 +451,6 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     /* PROPERTY CHANGE LISTENER CODE */
-
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (pListeners == null) {
             return;
@@ -477,11 +479,16 @@ public class PatternObject extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
-        
+    public NoteList generateForCSD(CompileData compileData, double startTime,
+            double endTime) throws SoundObjectException {
+
         return generateNotes(startTime, endTime);
-        
+
+    }
+
+    @Override
+    public PatternObject deepCopy() {
+        return new PatternObject(this);
     }
 
 }

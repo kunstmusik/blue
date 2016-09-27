@@ -19,12 +19,12 @@ import org.apache.commons.lang3.text.StrBuilder;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
+public class Operator {
 
-public class Operator implements java.io.Serializable {
     public int mode = 0;
 
     public int sync = 0;
@@ -60,6 +60,28 @@ public class Operator implements java.io.Serializable {
     public Operator() {
         for (int i = 0; i < envelopePoints.length; i++) {
             envelopePoints[i] = new EnvelopePoint();
+        }
+    }
+
+    public Operator(Operator op) {
+        mode = op.mode;
+        sync = op.sync;
+        freqCoarse = op.freqCoarse;
+        freqFine = op.freqFine;
+        detune = op.detune;
+        breakpoint = op.breakpoint;
+        curveLeft = op.curveLeft;
+        curveRight = op.curveRight;
+        depthLeft = op.depthLeft;
+        depthRight = op.depthRight;
+        keyboardRateScaling = op.keyboardRateScaling;
+        outputLevel = op.outputLevel;
+        velocitySensitivity = op.velocitySensitivity;
+        modulationAmplitude = op.modulationAmplitude;
+        modulationPitch = op.modulationPitch;
+
+        for (int i = 0; i < envelopePoints.length; i++) {
+            envelopePoints[i] = new EnvelopePoint(op.envelopePoints[i]);
         }
     }
 

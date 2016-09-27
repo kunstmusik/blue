@@ -22,13 +22,12 @@ package blue.scripting;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 
 /**
  * 
  * @author steven
  */
-public class Script implements Serializable {
+public class Script {
 
     private String name = "New Script";
 

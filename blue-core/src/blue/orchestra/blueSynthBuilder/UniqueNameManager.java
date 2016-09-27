@@ -20,7 +20,6 @@
 
 package blue.orchestra.blueSynthBuilder;
 
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Set;
 
@@ -31,7 +30,7 @@ import java.util.Set;
  * 
  * @author Steven
  */
-public class UniqueNameManager implements Serializable {
+public class UniqueNameManager  {
     private static MessageFormat NAME_FMT = new MessageFormat("{0}{1}");
 
     private UniqueNameCollection collection = null;

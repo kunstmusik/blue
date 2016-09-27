@@ -40,10 +40,6 @@ public class XMLUtilities {
         return Integer.parseInt(data.getTextString());
     }
 
-    public static float readFloat(Element data) {
-        return Float.parseFloat(data.getTextString());
-    }
-
     public static boolean readBoolean(Element data) {
         return Boolean.valueOf(data.getTextString()).booleanValue();
     }
@@ -62,13 +58,6 @@ public class XMLUtilities {
     public static Element writeLong(String nodeName, long val) {
         Element elem = new Element(nodeName);
         elem.setText(Long.toString(val));
-
-        return elem;
-    }
-
-    public static Element writeFloat(String nodeName, float val) {
-        Element elem = new Element(nodeName);
-        elem.setText(Float.toString(val));
 
         return elem;
     }

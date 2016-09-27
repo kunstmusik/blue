@@ -38,7 +38,7 @@ public class GenericScoreTest extends TestCase {
         genScore.setSubjectiveDuration(40.0f);
         genScore.setText("Test");
 
-        GenericScore clone = (GenericScore) genScore.clone();
+        GenericScore clone = new GenericScore(genScore);
 
         assertEquals(clone.getName(), genScore.getName());
         assertTrue(clone.getStartTime() == genScore.getStartTime());

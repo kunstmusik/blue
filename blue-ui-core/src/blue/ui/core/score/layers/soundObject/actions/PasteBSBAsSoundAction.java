@@ -27,7 +27,6 @@ import blue.projects.BlueProjectManager;
 import blue.score.ScoreObject;
 import blue.score.TimeState;
 import blue.score.layers.Layer;
-import blue.score.layers.ScoreObjectLayer;
 import blue.soundObject.Sound;
 import blue.ui.core.score.ScorePath;
 import blue.ui.core.score.undo.AddScoreObjectEdit;
@@ -87,7 +86,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        float start = (float) p.x / timeState.getPixelSecond();
+        double start = (double) p.x / timeState.getPixelSecond();
         
         if (timeState.isSnapEnabled()) {
             start = ScoreUtilities.getSnapValueStart(start,
@@ -98,7 +97,7 @@ public final class PasteBSBAsSoundAction extends AbstractAction implements Conte
 
         Sound sound = new Sound();
         sound.setStartTime(start);
-        sound.setBlueSynthBuilder((BlueSynthBuilder) ObjectUtilities.clone(obj));
+        sound.setBlueSynthBuilder(new BlueSynthBuilder((BlueSynthBuilder)obj));
         
         Layer layer = scorePath.getGlobalLayerForY(p.y);
         

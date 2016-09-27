@@ -22,9 +22,7 @@ package blue.soundObject;
 
 import blue.BlueSystem;
 import blue.utility.NumberUtilities;
-import blue.utility.ObjectUtilities;
 import blue.utility.ScoreExpressionParser;
-import java.io.Serializable;
 import java.util.ArrayList;
 import org.apache.commons.lang3.text.StrBuilder;
 
@@ -36,18 +34,21 @@ import org.apache.commons.lang3.text.StrBuilder;
  * @version 1.0
  */
 
-public class Note implements Serializable, Comparable<Note> {
+public class Note implements Comparable<Note> {
 
     private String[] fields;
 
-    private float subjectiveDuration;
+    private double subjectiveDuration;
 
     boolean isTied = false;
 
     private Note() {
-        /*
-         * try { noteInit(input); } catch(Exception e) { e.printStackTrace(); }
-         */
+    }
+
+    public Note(Note note) {
+        subjectiveDuration = note.subjectiveDuration;
+        fields = note.fields.clone();
+        isTied = note.isTied;
     }
 
     public static Note createNote(int numFields) {
@@ -120,12 +121,12 @@ public class Note implements Serializable, Comparable<Note> {
                     i++;
                 }
 
-                float val = ScoreExpressionParser.eval(input
+                double val = ScoreExpressionParser.eval(input
                         .substring(start, i));
 
                 i++;
 
-                buffer.add(Float.toString(val));
+                buffer.add(Double.toString(val));
             } else if (Character.isWhitespace(input.charAt(i))) {
                 while (i < size
                         && Character.isWhitespace(input.charAt(i))) {
@@ -148,8 +149,8 @@ public class Note implements Serializable, Comparable<Note> {
 
             if(!performCarry) {
                 try {
-                    int instr1 = (int) (Float.parseFloat((String)buffer.get(0)));
-                    int instr2 = (int) (Float.parseFloat(previousNote.getPField(1)));
+                    int instr1 = (int) (Double.parseDouble((String)buffer.get(0)));
+                    int instr2 = (int) (Double.parseDouble(previousNote.getPField(1)));
 
                     if(instr1 == instr2) {
                         performCarry = true;
@@ -184,7 +185,7 @@ public class Note implements Serializable, Comparable<Note> {
             }
         }
 
-        float dur = Float.parseFloat(fields[2]);
+        double dur = Double.parseDouble(fields[2]);
 
         setSubjectiveDuration(dur);
         setTied(dur < 0.0f);
@@ -210,7 +211,7 @@ public class Note implements Serializable, Comparable<Note> {
                 if (this.isTied) {
                     temp.append("-");
                 }
-                temp.append(NumberUtilities.formatFloat(subjectiveDuration))
+                temp.append(NumberUtilities.formatDouble(subjectiveDuration))
                         .append("\t");
             } else {
                 temp.append(fields[i]);
@@ -224,23 +225,23 @@ public class Note implements Serializable, Comparable<Note> {
         return temp.toString();
     }
 
-    public void setStartTime(float yo) {
-        fields[1] = Float.toString(yo);
+    public void setStartTime(double start) {
+        fields[1] = Double.toString(start);
     }
 
-    public float getStartTime() {
-        return Float.parseFloat(fields[1]);
+    public double getStartTime() {
+        return Double.parseDouble(fields[1]);
     }
 
-    public void setSubjectiveDuration(float dur) {
+    public void setSubjectiveDuration(double dur) {
         subjectiveDuration = Math.abs(dur);
     }
 
-    public float getSubjectiveDuration() {
+    public double getSubjectiveDuration() {
         return subjectiveDuration;
     }
 
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return getSubjectiveDuration();
     }
 
@@ -254,21 +255,16 @@ public class Note implements Serializable, Comparable<Note> {
 
     public void setPField(String arg, int index) {
         if (index == 3) {
-            setSubjectiveDuration(Float.parseFloat(arg));
+            setSubjectiveDuration(Double.parseDouble(arg));
         }
         fields[index - 1] = arg;
     }
 
     @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
-    }
-
-    @Override
     public int compareTo(Note b) {
 
-        float t1 = this.getStartTime();
-        float t2 = b.getStartTime();
+        double t1 = this.getStartTime();
+        double t2 = b.getStartTime();
 
         if (t1 > t2) {
             return 1;
@@ -318,7 +314,7 @@ public class Note implements Serializable, Comparable<Note> {
     /**
      * @return
      */
-    public float getEndTime() {
+    public double getEndTime() {
         return getStartTime() + getSubjectiveDuration();
     }
 }

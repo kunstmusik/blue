@@ -40,11 +40,11 @@ public abstract class CSDRenderService {
     protected abstract CsdRenderResult generateCSDForBlueLiveImpl(BlueData data, boolean useAPI);
     
     public final synchronized CsdRenderResult generateCSD(BlueData data,
-            float startTime, float endTime, boolean isRealTime, boolean useAPI) throws ScoreGenerationException {
+            double startTime, double endTime, boolean isRealTime, boolean useAPI) throws ScoreGenerationException {
         return generateCSDImpl(data, startTime, endTime, isRealTime, useAPI);
     }
 
     protected abstract CsdRenderResult generateCSDImpl(BlueData data,
-            float startTime, float endTime, boolean isRealTime, boolean useAPI); 
+            double startTime, double endTime, boolean isRealTime, boolean useAPI); 
             
     }

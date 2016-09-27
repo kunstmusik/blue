@@ -16,15 +16,15 @@ import javax.swing.undo.UndoableEdit;
  * 
  */
 public class StartTimeEdit extends AbstractUndoableEdit {
-    float initialStart;
+    double initialStart;
 
-    float newStart;
+    double newStart;
 
     ScoreObject sObj;
 
     UndoableEdit nextEdit = null;
 
-    public StartTimeEdit(float initialStart, float newStart, ScoreObject sObj) {
+    public StartTimeEdit(double initialStart, double newStart, ScoreObject sObj) {
 
         this.initialStart = initialStart;
         this.newStart = newStart;

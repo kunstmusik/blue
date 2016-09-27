@@ -35,35 +35,23 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 import org.apache.commons.lang3.text.StrBuilder;
 
-public class Effect implements Serializable, Automatable {
+public class Effect implements Automatable {
 
     private int numIns = 2;
-
     private int numOuts = 2;
-
     private BSBGraphicInterface graphicInterface;
-
     private String code = "";
-
     private String name = "New Effect";
-
     private String comments = "";
-
     private OpcodeList opcodeList;
-
     private boolean enabled = true;
-
     private transient Vector listeners = null;
-
     private BSBParameterList parameterList = null;
 
     public Effect() {
@@ -77,6 +65,19 @@ public class Effect implements Serializable, Automatable {
             parameterList.setBSBGraphicInterface(graphicInterface);
             opcodeList = new OpcodeList();
         }
+    }
+
+    public Effect(Effect effect) {
+        numIns = effect.numIns;
+        numOuts = effect.numOuts;
+        code = effect.code;
+        name = effect.name;
+        comments = effect.comments;
+        enabled = effect.enabled;
+        graphicInterface = new BSBGraphicInterface(effect.graphicInterface);
+        parameterList = new BSBParameterList(effect.parameterList);
+        parameterList.setBSBGraphicInterface(graphicInterface);
+        opcodeList = new OpcodeList(effect.opcodeList);
     }
 
     public UserDefinedOpcode generateUDO(OpcodeList udoList) {
@@ -358,18 +359,6 @@ public class Effect implements Serializable, Automatable {
      */
     public void clearParameters() {
         parameterList = new BSBParameterList();
-        parameterList.setBSBGraphicInterface(graphicInterface);
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the BSBGraphicInterface to the
-     * BSBParameterList
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
         parameterList.setBSBGraphicInterface(graphicInterface);
     }
 

@@ -25,9 +25,6 @@ import blue.components.lines.LinePoint;
 import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.rmi.dgc.VMID;
 import java.util.Iterator;
 import java.util.Vector;
@@ -44,31 +41,23 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * 
  * @author steven
  */
-public class Parameter implements TableModelListener, Serializable {
+public class Parameter implements TableModelListener {
 
-    private float min = 0.0f;
-
-    private float max = 1.0f;
-    
-    private float value = 0.0f;
-
+    private double min = 0.0f;
+    private double max = 1.0f;
+    private double value = 0.0f;
     private String name = "";
-
     private String label = "";
-
-    private float resolution = -1.0f;
-
+    private double resolution = -1.0f;
     private Line line;
-
     transient Vector listeners;
-
     private boolean automationEnabled = false;
-
     private boolean updatingLine = false;
-
     private String uniqueId;
 
-    /* Used only at compilation time */
+    /* Used only at compilation time; not transient as it should be copied. 
+    *  FIXME: this should be rewrittten. 
+    */
     private String compilationVarName = null;
 
     /** Creates a new instance of Parameter */
@@ -77,6 +66,20 @@ public class Parameter implements TableModelListener, Serializable {
         line.addTableModelListener(this);
 
         uniqueId = Integer.toString(new VMID().hashCode());
+    }
+
+    public Parameter(Parameter param) {
+        min = param.min;
+        max = param.max;
+        value = param.value;
+        name = param.name;
+        label = param.label;
+        resolution = param.resolution;
+        line = new Line(param.line);
+        line.addTableModelListener(this);
+        automationEnabled = param.automationEnabled;
+        uniqueId = param.uniqueId;
+        compilationVarName = param.compilationVarName;
     }
 
     /* Change Listener Code */
@@ -124,16 +127,16 @@ public class Parameter implements TableModelListener, Serializable {
 
     /* GETTER/SETTER CODE */
 
-    public float getMin() {
+    public double getMin() {
         return min;
     }
 
-    public float getMax() {
+    public double getMax() {
         return max;
     }
 
-    public void setMin(float min, boolean truncate) {
-        float oldMin = this.min;
+    public void setMin(double min, boolean truncate) {
+        double oldMin = this.min;
         this.min = min;
 
         updatingLine = true;
@@ -151,8 +154,8 @@ public class Parameter implements TableModelListener, Serializable {
         fireParameterChanged();
     }
 
-    public void setMax(float max, boolean truncate) {
-        float oldMax = this.max;
+    public void setMax(double max, boolean truncate) {
+        double oldMax = this.max;
         this.max = max;
 
         updatingLine = true;
@@ -181,11 +184,11 @@ public class Parameter implements TableModelListener, Serializable {
         fireParameterChanged();
     }
 
-    public float getResolution() {
+    public double getResolution() {
         return resolution;
     }
 
-    public void setResolution(float resolution) {
+    public void setResolution(double resolution) {
         // if(this.resolution == resolution) {
         // return;
         // }
@@ -216,11 +219,11 @@ public class Parameter implements TableModelListener, Serializable {
         }
     }
 
-    public void setValue(float value) {
+    public void setValue(double value) {
 
         if (isAutomationEnabled()) {
 
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
             if (time < 0) {
                 return;
@@ -262,8 +265,8 @@ public class Parameter implements TableModelListener, Serializable {
 
     }
     
-    public float getValue(float time) {
-        float retValue;
+    public double getValue(double time) {
+        double retValue;
         
         if (isAutomationEnabled()) {
 
@@ -280,17 +283,17 @@ public class Parameter implements TableModelListener, Serializable {
         return retValue;
     }
     
-    public float getFixedValue() {
+    public double getFixedValue() {
         return this.value;
     }
 
-     public float getResolutionAdjustedValue(float val) {
+     public double getResolutionAdjustedValue(double val) {
         if (val == max) {
             return max;
         }
 
-        float valTarget = val - min;
-        float temp = 0.0f;
+        double valTarget = val - min;
+        double temp = 0.0f;
 
         while (temp <= valTarget) {
             temp += resolution;
@@ -316,12 +319,12 @@ public class Parameter implements TableModelListener, Serializable {
         retVal.setAttribute("uniqueId", uniqueId);
         retVal.setAttribute("name", name);
         retVal.setAttribute("label", label);
-        retVal.setAttribute("min", Float.toString(min));
-        retVal.setAttribute("max", Float.toString(max));
-        retVal.setAttribute("resolution", Float.toString(resolution));
+        retVal.setAttribute("min", Double.toString(min));
+        retVal.setAttribute("max", Double.toString(max));
+        retVal.setAttribute("resolution", Double.toString(resolution));
         retVal.setAttribute("automationEnabled", Boolean
                 .toString(automationEnabled));
-        retVal.setAttribute("value", Float.toString(value));
+        retVal.setAttribute("value", Double.toString(value));
 
         retVal.addElement(line.saveAsXML());
 
@@ -348,17 +351,17 @@ public class Parameter implements TableModelListener, Serializable {
 
         val = data.getAttributeValue("min");
         if (val != null && val.length() > 0) {
-            retVal.min = Float.parseFloat(val);
+            retVal.min = Double.parseDouble(val);
         }
 
         val = data.getAttributeValue("max");
         if (val != null && val.length() > 0) {
-            retVal.max = Float.parseFloat(val);
+            retVal.max = Double.parseDouble(val);
         }
 
         val = data.getAttributeValue("resolution");
         if (val != null && val.length() > 0) {
-            retVal.resolution = Float.parseFloat(val);
+            retVal.resolution = Double.parseDouble(val);
         }
 
         val = data.getAttributeValue("automationEnabled");
@@ -393,7 +396,7 @@ public class Parameter implements TableModelListener, Serializable {
         
         val = data.getAttributeValue("value");
         if (val != null && val.length() > 0) {
-            retVal.value = Float.parseFloat(val);
+            retVal.value = Double.parseDouble(val);
         }
 
         return retVal;
@@ -432,17 +435,6 @@ public class Parameter implements TableModelListener, Serializable {
 
     public void setLabel(String label) {
         this.label = label;
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect the parameter as a listener to the Line
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        line.addTableModelListener(this);
     }
 
     public String getCompilationVarName() {

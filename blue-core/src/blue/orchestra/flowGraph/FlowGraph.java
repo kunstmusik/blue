@@ -1,12 +1,11 @@
 package blue.orchestra.flowGraph;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class FlowGraph implements Serializable {
+public class FlowGraph{ 
 
     private ArrayList units;
 

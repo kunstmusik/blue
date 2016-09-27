@@ -23,11 +23,11 @@ import junit.framework.TestCase;
 
 public class NumberUtilitiesTest extends TestCase {
 
-    public final void testFormatFloat() {
-        float f = 0.00000001f;
+    public final void testFormatDouble() {
+        double f = 0.00000001;
 
-        assertEquals("1.0E-8", Float.toString(f));
-        assertEquals("0.00000001", NumberUtilities.formatFloat(f));
+        assertEquals("1.0E-8", Double.toString(f));
+        assertEquals("0.00000001", NumberUtilities.formatDouble(f));
     }
 
     public final void testFormatTime() {

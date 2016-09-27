@@ -1,6 +1,5 @@
 package blue;
 
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.util.HashMap;
 
@@ -22,7 +21,7 @@ import java.util.HashMap;
  * @version 1.0
  */
 
-public class GlobalOrcSco implements java.io.Serializable {
+public class GlobalOrcSco {
     String globalOrc = "";
 
     String globalSco = "";
@@ -30,6 +29,11 @@ public class GlobalOrcSco implements java.io.Serializable {
     private transient HashMap compilationVariables;
 
     public GlobalOrcSco() {
+    }
+
+    public GlobalOrcSco(GlobalOrcSco orcSco) {
+        globalOrc = orcSco.globalOrc;
+        globalSco = orcSco.globalSco;
     }
 
     public String getGlobalOrc() {
@@ -46,11 +50,6 @@ public class GlobalOrcSco implements java.io.Serializable {
 
     public String getGlobalSco() {
         return globalSco;
-    }
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
     }
 
     public void appendGlobalOrc(String string) {

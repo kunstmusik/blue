@@ -23,10 +23,6 @@ import blue.BlueDataObject;
 import blue.project.ProjectPluginUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -35,13 +31,18 @@ import javafx.collections.transformation.FilteredList;
  *
  * @author stevenyi
  */
-public class ClojureProjectData implements BlueDataObject, Externalizable {
+public class ClojureProjectData implements BlueDataObject {
 
     ObservableList<ClojureLibraryEntry> libraryList = 
             FXCollections.observableArrayList();
 
     public ClojureProjectData() {
-        
+    }
+
+    public ClojureProjectData(ClojureProjectData cpd) {
+        for(ClojureLibraryEntry lib : cpd.libraryList) {
+            libraryList.add(new ClojureLibraryEntry(lib));
+        }
     }
 
     public ObservableList<ClojureLibraryEntry> libraryList() {
@@ -107,17 +108,8 @@ public class ClojureProjectData implements BlueDataObject, Externalizable {
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        for(ClojureLibraryEntry lib : libraryList) {
-           out.writeObject(lib);
-        }
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        while(in.available() > 0) {
-            libraryList.add((ClojureLibraryEntry)in.readObject());
-        }
+    public ClojureProjectData deepCopy() {
+        return new ClojureProjectData(this);
     }
     
 }

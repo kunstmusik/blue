@@ -43,8 +43,8 @@ public class ScoPadReceiver implements Receiver {
         }
     }
 
-    public String getNotes(String noteTemplate, String instrId, float start,
-            float duration) {
+    public String getNotes(String noteTemplate, String instrId, double start,
+            double duration) {
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < notes.length; i++) {

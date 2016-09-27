@@ -94,7 +94,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        float start = (float) p.x / timeState.getPixelSecond();
+        double start = (double) p.x / timeState.getPixelSecond();
 
         if (timeState.isSnapEnabled()) {
             start = ScoreUtilities.getSnapValueStart(start,
@@ -107,7 +107,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
 
         int minLayer = Integer.MAX_VALUE;
         int maxLayer = Integer.MIN_VALUE;
-        float bufferStart = Float.POSITIVE_INFINITY;
+        double bufferStart = Double.POSITIVE_INFINITY;
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
             ScoreObject scoreObj = buffer.scoreObjects.get(i);
@@ -125,7 +125,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         }
 
         int layerTranslation = selectedLayerIndex - minLayer;
-        float startTranslation = start - bufferStart;
+        double startTranslation = start - bufferStart;
 
         if ((maxLayer + layerTranslation) >= allLayers.size()) {
             JOptionPane.showMessageDialog(null, "Not Enough Layers to Paste");
@@ -156,7 +156,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
         List<Instance> instanceSoundObjects = new ArrayList<>();
 
         for (int i = 0; i < buffer.scoreObjects.size(); i++) {
-            ScoreObject sObj = buffer.scoreObjects.get(i).clone();
+            ScoreObject sObj = buffer.scoreObjects.get(i).deepCopy();
 
             int newLayerIndex = buffer.layerIndexes.get(i) + layerTranslation;
 
@@ -220,7 +220,7 @@ public final class PasteSoundObjectAction extends AbstractAction implements Cont
                 if (originalToCopyMap.containsKey(instanceSObj)) {
                     copy = originalToCopyMap.get(instanceSObj);
                 } else {
-                    copy = (SoundObject) instance.getSoundObject().clone();
+                    copy = (SoundObject) instance.getSoundObject().deepCopy();
                     sObjLib.addSoundObject(copy);
                     originalToCopyMap.put(instanceSObj, copy);
                 }

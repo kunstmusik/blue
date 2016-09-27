@@ -22,7 +22,6 @@
 package blue.soundObject.jmask;
 
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.ChangeEvent;
@@ -30,14 +29,23 @@ import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class TablePoint implements Serializable {
+public class TablePoint {
+
     private double time = 0.0;
 
     private double value = .5;
-    
+
     private transient Vector listeners = null;
 
     private transient ChangeEvent changeEvent = null;
+
+    public TablePoint() {
+    }
+
+    public TablePoint(TablePoint tp) {
+        time = tp.time;
+        value = tp.value;
+    }
 
     public static TablePoint loadFromXML(Element data) {
         TablePoint tp = new TablePoint();
@@ -82,7 +90,7 @@ public class TablePoint implements Serializable {
     public void setValue(double value) {
         this.value = value;
     }
-    
+
     public void setLocation(double time, double value) {
         this.time = time;
         this.value = value;
@@ -93,9 +101,8 @@ public class TablePoint implements Serializable {
 
         fireChangeEvent(changeEvent);
     }
-    
-    /* EVENT CODE */
 
+    /* EVENT CODE */
     public void addChangeListener(ChangeListener pcl) {
         if (listeners == null) {
             listeners = new Vector();

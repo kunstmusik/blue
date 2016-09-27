@@ -15,7 +15,6 @@ import electric.xml.Elements;
 import java.rmi.dgc.VMID;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.swing.event.ChangeEvent;
@@ -29,7 +28,13 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
             = new ArrayList<>();
 
     public SoundObjectLibrary() {
+    }
 
+    public SoundObjectLibrary(SoundObjectLibrary sObjLib) {
+        super(sObjLib.size());
+        for(SoundObject sObj :sObjLib) {
+            add(sObj.deepCopy());
+        }
     }
 
     public void addSoundObject(SoundObject sObj) {
@@ -106,8 +111,7 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = new Element("soundObjectLibrary");
 
-        for (Iterator iter = this.iterator(); iter.hasNext();) {
-            SoundObject sObj = (SoundObject) iter.next();
+        for (SoundObject sObj : this) {
             String objRefId = Integer.toString(new VMID().hashCode());
             objRefMap.put(sObj, objRefId);
 
@@ -138,7 +142,7 @@ public final class SoundObjectLibrary extends ArrayList<SoundObject> {
                 if (originalToCopyMap.containsKey(instanceSObj)) {
                     copy = originalToCopyMap.get(instanceSObj);
                 } else {
-                    copy = (SoundObject) instance.getSoundObject().clone();
+                    copy = instance.getSoundObject().deepCopy();
                     this.addSoundObject(copy);
                     originalToCopyMap.put(instanceSObj, copy);
                 }

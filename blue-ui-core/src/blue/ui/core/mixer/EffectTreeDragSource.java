@@ -21,8 +21,6 @@ package blue.ui.core.mixer;
 
 import blue.gui.DragManager;
 import blue.mixer.*;
-import blue.ui.core.mixer.EffectCategory;
-import blue.ui.core.mixer.EffectsLibrary;
 import blue.utility.ObjectUtilities;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
@@ -71,9 +69,12 @@ public class EffectTreeDragSource implements DragSourceListener,
         if (path.getLastPathComponent() instanceof Effect
                 || path.getLastPathComponent() instanceof EffectCategory) {
             oldNode = path.getLastPathComponent();
-
-            // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = ObjectUtilities.clone(oldNode);
+            Object cloneNode = null;
+            if (oldNode instanceof Effect) {
+                 cloneNode = new Effect((Effect)oldNode);
+            } else if(oldNode instanceof EffectCategory) {
+                cloneNode = new EffectCategory((EffectCategory)oldNode);
+            }
 
             transferable = new TransferableEffect(cloneNode);
             source.startDrag(dge, null, transferable, this);
@@ -86,7 +87,6 @@ public class EffectTreeDragSource implements DragSourceListener,
         if (dsde.getDropSuccess()) {
 
             // System.out.println("DragSource: " + oldNode.hashCode());
-
             if (dsde.getDropAction() == DnDConstants.ACTION_MOVE) {
 
                 if (oldNode instanceof Effect) {

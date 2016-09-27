@@ -69,7 +69,7 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
                 .getString("scoreGUI.action.shift.message"));
 
         try {
-            float val = Float.parseFloat(value);
+            double val = Double.parseDouble(value);
 
             for (ScoreObject scoreObj : selected) {
                 if ((scoreObj.getStartTime() + val) < 0) {
@@ -82,8 +82,8 @@ public final class ShiftAction extends AbstractAction implements ContextAwareAct
             int len = selected.size();
             ScoreObject[] objects = selected.<ScoreObject>toArray(
                     new ScoreObject[selected.size()]);
-            float[] startTimes = new float[len];
-            float[] endTimes = new float[len];
+            double[] startTimes = new double[len];
+            double[] endTimes = new double[len];
 
             for (int i = 0; i < len; i++) {
                 ScoreObject scoreObj = objects[i];

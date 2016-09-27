@@ -1,7 +1,6 @@
 /*
  * blue - object composition environment for csound
- * Copyright (C) 2013
- * Steven Yi <stevenyi@gmail.com>
+ * Copyright (C) 2016 stevenyi
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,33 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package blue.services.render;
-
-import blue.automation.Parameter;
-import blue.noteProcessor.TempoMapper;
-import java.io.File;
-import java.util.ArrayList;
+package blue.score.layers;
 
 /**
- *
+ * This interface mimics DeepCopyable but has a different method name.  This 
+ * was introduced to get around issue with PolyObject, which is both a 
+ * LayerGroup and a SoundObject.  Using DeepCopyable for both resulted in a 
+ * problem with generic types.
+ * 
  * @author stevenyi
  */
-public interface DiskRenderService {
-
-    public void execWait(String[] args,
-            File currentWorkingDirectory,
-            double startTime,
-            TempoMapper mapper,
-            ArrayList<Parameter> parameters);
-
-    public String execWaitAndCollect(String[] args, File currentWorkingDirectory);
-
-    public void renderToDisk(DiskRenderJob job);
-            
-    public boolean isRunning();
-
-    public void stop();
-
-    public int getCsoundVersion(String csoundCommand);
-    
+public interface DeepCopyableLG<T> {
+    public T deepCopyLG(); 
 }

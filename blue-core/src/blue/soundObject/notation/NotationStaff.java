@@ -16,12 +16,12 @@ import java.util.ArrayList;
  * <p>
  * Company: steven yi music
  * </p>
- * 
+ *
  * @author unascribed
  * @version 1.0
  */
+public class NotationStaff extends ArrayList<NotationNote> {
 
-public class NotationStaff extends ArrayList {
     public static final int TREBLE = 0;
 
     public static final int BASS = 1;
@@ -33,7 +33,15 @@ public class NotationStaff extends ArrayList {
     private String staffName = "new staff";
 
     public NotationStaff() {
+    }
 
+    public NotationStaff(NotationStaff staff) {
+        clef = staff.clef;
+        noteTemplate = staff.noteTemplate;
+        staffName = staff.staffName;
+        for (NotationNote n : staff) {
+            add(new NotationNote(n));
+        }
     }
 
     public void setClef(int clefType) {

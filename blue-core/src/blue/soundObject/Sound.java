@@ -26,7 +26,6 @@ import blue.orchestra.BlueSynthBuilder;
 import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.Map;
 
 
@@ -39,27 +38,22 @@ import java.util.Map;
  * @version 1.0
  */
 @SoundObjectPlugin(displayName = "Sound", live=false, position = 130)
-public class Sound extends AbstractSoundObject implements Serializable,
-        Cloneable {
+public class Sound extends AbstractSoundObject {
 
-//    BSBGraphicInterface graphicInterface;
-//
-//    PresetGroup presetGroup;
-    
     BlueSynthBuilder bsbObj;
     
-    String instrument;
-
     public Sound() {
         setName("Sound");
-//        instrument = BlueSystem.getString("sound.defaultCode");
-//        graphicInterface = new BSBGraphicInterface();
-//        presetGroup = new PresetGroup();
         bsbObj = new BlueSynthBuilder();
     }
 
+    public Sound(Sound sound) {
+        super(sound);
+        bsbObj = new BlueSynthBuilder(sound.bsbObj);
+    }
+
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return subjectiveDuration;
     }
 
@@ -79,32 +73,8 @@ public class Sound extends AbstractSoundObject implements Serializable,
     public void setBlueSynthBuilder(BlueSynthBuilder bsbObj) {
         this.bsbObj = bsbObj;
     }
-    
-//    public String getText() {
-//        return instrument;
-//    }
-//
-//    public void setText(String text) {
-//        this.instrument = text;
-//    }
-    
-//    public BSBGraphicInterface getGraphicInterface() {
-//        return graphicInterface;
-//    }
-//
-//    public void setGraphicInterface(BSBGraphicInterface graphicInterface) {
-//        this.graphicInterface = graphicInterface;
-//    }
-//
-//    public PresetGroup getPresetGroup() {
-//        return presetGroup;
-//    }
-//
-//    public void setPresetGroup(PresetGroup presetGroup) {
-//        this.presetGroup = presetGroup;
-//    }
 
-    public NoteList generateNotes(int instrumentNumber, float renderStart, float renderEnd) throws SoundObjectException {
+    public NoteList generateNotes(int instrumentNumber, double renderStart, double renderEnd) throws SoundObjectException {
         NoteList n = new NoteList();
 
         String noteText = "i" + instrumentNumber + "\t" + startTime + "\t"
@@ -135,12 +105,12 @@ public class Sound extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     /*
@@ -167,18 +137,9 @@ public class Sound extends AbstractSoundObject implements Serializable,
                 case "instrument":
                     sObj.bsbObj = (BlueSynthBuilder) 
                             BlueSynthBuilder.loadFromXML(node);
-//                case "graphicInterface":
-//                    sObj.setGraphicInterface(BSBGraphicInterface.loadFromXML(node));
-//                    break;
-//                case "presetGroup":
-//                    sObj.setPresetGroup(PresetGroup.loadFromXML(node));
-//                    break;
             }
 
         }
- 
-//       
-//        sObj.setText(data.getTextString("instrumentText"));
 
         return sObj;
     }
@@ -191,24 +152,23 @@ public class Sound extends AbstractSoundObject implements Serializable,
     @Override
     public Element saveAsXML(Map<Object, String> objRefMap) {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
-
         retVal.addElement(bsbObj.saveAsXML());
-//        retVal.addElement("instrumentText").setText(this.getText());
-//        retVal.addElement(graphicInterface.saveAsXML());
-//        retVal.addElement(presetGroup.saveAsXML());
-        
         return retVal;
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, 
-            float endTime) throws SoundObjectException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, 
+            double endTime) throws SoundObjectException {
         
-//        Instrument instr = generateInstrument();
         bsbObj.getParameterList().clearCompilationVarNames();
         int instrNum = compileData.addInstrument(bsbObj);
         
         return generateNotes(instrNum, startTime, endTime);
 
+    }
+
+    @Override
+    public Sound deepCopy() {
+        return new Sound(this);
     }
 }

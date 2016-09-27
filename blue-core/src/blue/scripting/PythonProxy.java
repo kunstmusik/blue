@@ -74,7 +74,7 @@ public class PythonProxy {
     }
 
     public static final String processPythonScore(String pythonCode,
-            float subjectiveDuration) {
+            double subjectiveDuration) {
         if (interp == null) {
             reinitialize();
         }
@@ -158,7 +158,7 @@ public class PythonProxy {
 
     }
 
-    public static final float evalExpression(final String expression) {
+    public static final double evalExpression(final String expression) {
         if (interp == null) {
             reinitialize();
         }
@@ -167,10 +167,10 @@ public class PythonProxy {
         PyObject retVal = expressionInterpreter.get("temp");
 
         if (retVal.isNumberType()) {
-            return Float.parseFloat(retVal.toString());
+            return Double.parseDouble(retVal.toString());
         }
 
-        return Float.MIN_VALUE;
+        return Double.MIN_VALUE;
     }
 
     private static final String getPythonLibPath() {

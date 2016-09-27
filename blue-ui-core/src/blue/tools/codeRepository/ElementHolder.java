@@ -20,9 +20,7 @@
 
 package blue.tools.codeRepository;
 
-import java.io.Serializable;
-
-public class ElementHolder implements Serializable {
+public class ElementHolder {
     public String title = "";
 
     public String text = "";

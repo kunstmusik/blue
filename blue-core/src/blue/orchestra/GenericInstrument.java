@@ -27,7 +27,6 @@ import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -39,8 +38,7 @@ import java.util.HashMap;
  */
 
 @InstrumentPlugin(displayName = "GenericInstrument", position = 10)
-public class GenericInstrument extends AbstractInstrument implements
-        Serializable {
+public class GenericInstrument extends AbstractInstrument {
 
     String instrumentText;
 
@@ -57,6 +55,14 @@ public class GenericInstrument extends AbstractInstrument implements
         globalOrc = "";
         globalSco = "";
         opcodeList = new OpcodeList();
+    }
+
+    public GenericInstrument(GenericInstrument genericInstr) {
+        super(genericInstr);
+        instrumentText = genericInstr.instrumentText;
+        globalOrc = genericInstr.globalOrc;
+        globalSco = genericInstr.globalSco;
+        opcodeList = new OpcodeList(genericInstr.opcodeList);
     }
 
     @Override
@@ -211,6 +217,11 @@ public class GenericInstrument extends AbstractInstrument implements
 
     public OpcodeList getOpcodeList() {
         return opcodeList;
+    }
+
+    @Override
+    public GenericInstrument deepCopy() {
+        return new GenericInstrument(this);
     }
 
 }

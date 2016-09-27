@@ -34,14 +34,11 @@ public class NumberUtilities {
     private static final Object[] TIME_ARRAY = new Object[4];
 
     /**
-     * Formats a float to String and prevents scientific notation
+     * Formats a double to String and prevents scientific notation
      * 
      * @param val
      * @return
      */
-    public static String formatFloat(float val) {
-        return FLOAT_FMT.format(new Object[] { new Float(val) });
-    }
     
     public static String formatDouble(double val) {
         return FLOAT_FMT.format(new Object[] { new Double(val) });
@@ -53,7 +50,7 @@ public class NumberUtilities {
      * @param seconds
      * @return
      */
-    public static String formatTime(float seconds) {
+    public static String formatTime(double seconds) {
         int s = (int) seconds;
 
         int ms = (int) ((seconds - s) * 100);

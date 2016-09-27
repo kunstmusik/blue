@@ -116,7 +116,7 @@ public class AddEffectEditorDialog extends BaseDialog implements
         } else {
             setTitle("Edit Effect");
             this.effect = effect;
-            this.copy = (Effect) ObjectUtilities.clone(effect);
+            this.copy = new Effect(effect);
 
             this.nameText.setText(copy.getName());
             effectEditor.setEffect(copy);

@@ -24,6 +24,7 @@ import blue.noteProcessor.NoteProcessorChain;
 import blue.score.ScoreGenerationException;
 import blue.score.ScoreObject;
 import blue.score.layers.Layer;
+import blue.score.layers.LayerGroup;
 import blue.score.layers.LayerGroupDataEvent;
 import blue.score.layers.LayerGroupListener;
 import blue.score.layers.ScoreObjectLayerGroup;
@@ -34,7 +35,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.rmi.dgc.VMID;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -54,6 +54,15 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
 
     public AudioLayerGroup() {
         this.uniqueId = new VMID().toString();
+    }
+
+    public AudioLayerGroup(AudioLayerGroup alg) {
+        this.uniqueId = alg.uniqueId;
+        name = alg.name;
+        
+        for(AudioLayer al : alg) {
+            add(al.deepCopy());
+        }
     }
 
     @Override
@@ -83,7 +92,7 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime, boolean processWithSolo) throws ScoreGenerationException {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime, boolean processWithSolo) throws ScoreGenerationException {
 
         NoteList noteList = new NoteList();
 
@@ -259,9 +268,9 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
         return runningHeight * Layer.LAYER_HEIGHT;
     }
 
-    public final float getMaxTime() {
-        float max = 0.0f;
-        float temp;
+    public final double getMaxTime() {
+        double max = 0.0f;
+        double temp;
 
         for (AudioLayer tempLayer : this) {
             temp = tempLayer.getMaxTime();
@@ -325,5 +334,10 @@ public class AudioLayerGroup extends ArrayList<AudioLayer> implements ScoreObjec
             return;
         }
         propListeners.remove(pcl);
+    }
+
+    @Override
+    public AudioLayerGroup deepCopyLG() {
+        return new AudioLayerGroup(this);
     }
 }

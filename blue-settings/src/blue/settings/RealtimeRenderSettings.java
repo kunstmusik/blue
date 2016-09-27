@@ -20,7 +20,6 @@
 package blue.settings;
 
 import blue.services.render.RealtimeRenderServiceFactory;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.prefs.BackingStoreException;
@@ -33,7 +32,7 @@ import org.openide.util.NbPreferences;
  *
  * @author steven
  */
-public class RealtimeRenderSettings implements Serializable {
+public class RealtimeRenderSettings {
 
     private static final String PREFIX = "realtimeRender.";
     private static final String ADVANCED_SETTINGS = "advancedSettings";

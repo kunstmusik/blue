@@ -8,7 +8,6 @@ import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -30,8 +29,7 @@ import java.util.HashMap;
  */
 
 @InstrumentPlugin(displayName = "PythonInstrument", position = 20)
-public class PythonInstrument extends AbstractInstrument implements
-        Serializable {
+public class PythonInstrument extends AbstractInstrument {
 
     String instrumentText;
 
@@ -48,6 +46,15 @@ public class PythonInstrument extends AbstractInstrument implements
         globalSco = "";
 
         opcodeList = new OpcodeList();
+    }
+
+    /** Copy Constructor */
+    public PythonInstrument(PythonInstrument pyInstr) {
+        super(pyInstr);
+        instrumentText = pyInstr.instrumentText; 
+        globalOrc = pyInstr.globalOrc; 
+        globalSco = pyInstr.globalSco; 
+        opcodeList = new OpcodeList(pyInstr.opcodeList); 
     }
 
     public String getText() {
@@ -190,5 +197,10 @@ public class PythonInstrument extends AbstractInstrument implements
 
     public OpcodeList getOpcodeList() {
         return opcodeList;
+    }
+
+    @Override
+    public PythonInstrument deepCopy() {
+        return new PythonInstrument(this); 
     }
 }

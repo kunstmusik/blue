@@ -52,8 +52,8 @@ public class ValueTimeMapper {
                 tempo = st.nextToken();
 
                 temp = new BeatValuePair();
-                temp.beat = Float.parseFloat(time);
-                temp.value = Float.parseFloat(tempo);
+                temp.beat = Double.parseDouble(time);
+                temp.value = Double.parseDouble(tempo);
 
                 if (temp.beat < 0.0f) {
                     return null;
@@ -70,7 +70,7 @@ public class ValueTimeMapper {
         return tm;
     }
 
-    public float getValueForBeat(float beat) {
+    public double getValueForBeat(double beat) {
         if (beat >= timeMap[timeMap.length - 1].beat) {
             return timeMap[timeMap.length - 1].value;
         }
@@ -79,27 +79,27 @@ public class ValueTimeMapper {
             // System.err.println(beat + " : " + timeMap[i].beat + " : " +
             // timeMap[i + 1].beat );
             if (beat >= timeMap[i].beat && beat < timeMap[i + 1].beat) {
-                float x1 = timeMap[i].value;
-                float x2 = timeMap[i + 1].value;
+                double x1 = timeMap[i].value;
+                double x2 = timeMap[i + 1].value;
 
-                float m = x2 - x1;
+                double m = x2 - x1;
 
-                float x = (beat - timeMap[i].beat)
+                double x = (beat - timeMap[i].beat)
                         / (timeMap[i + 1].beat - timeMap[i].beat);
 
-                float y = m * x + x1;
+                double y = m * x + x1;
 
                 return y;
             }
         }
-        return Float.NaN;
+        return Double.NaN;
 
     }
 
 }
 
 class BeatValuePair {
-    public float beat = 0.0f;
+    public double beat = 0.0f;
 
-    public float value = 0;
+    public double value = 0;
 }

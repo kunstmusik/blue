@@ -23,15 +23,15 @@ public class MoveScoreObjectsEdit extends AbstractUndoableEdit {
 
     private ScoreObjectLayer[] endLayers;
 
-    private float[] initialStartTimes;
+    private double[] initialStartTimes;
 
-    private float[] endingStartTimes;
+    private double[] endingStartTimes;
 
     private String presentationName = null;
 
     public MoveScoreObjectsEdit(ScoreObject[] soundObjects,
             ScoreObjectLayer[] startLayers, ScoreObjectLayer[] endLayers,
-            float[] initialStartTimes, float[] endingStarttimes) {
+            double[] initialStartTimes, double[] endingStarttimes) {
 
         this.scoreObjects = soundObjects;
         this.startLayers = startLayers;

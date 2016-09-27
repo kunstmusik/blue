@@ -19,13 +19,14 @@
  */
 package blue.orchestra.blueSynthBuilder;
 
+import java.util.Objects;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.DoublePropertyBase;
 
 /**
  * Provides double value property that is clamped to reside between min and max
- * value properties.  
- * 
+ * value properties.
+ *
  * @author stevenyi
  */
 public class ClampedValue {
@@ -35,7 +36,7 @@ public class ClampedValue {
     private DoubleProperty max;
 
     public ClampedValue() {
-        this(0.0, 1.0, 0.5);    
+        this(0.0, 1.0, 0.5);
     }
 
     public ClampedValue(ClampedValue cv) {
@@ -106,10 +107,10 @@ public class ClampedValue {
         double v = getValue();
         double min = getMin();
         double max = getMax();
-        if(v < min || v > max) {
-           setValue(Math.max(min, Math.min(max, v))); 
+        if (v < min || v > max) {
+            setValue(Math.max(min, Math.min(max, v)));
         }
-        
+
     }
 
     public final void setValue(double val) {
@@ -149,11 +150,11 @@ public class ClampedValue {
     }
 
     public final void randomizeValue() {
-        setNormalizedValue(Math.random()); 
+        setNormalizedValue(Math.random());
     }
 
-    /** 
-     * Utility method for setting a normalized value in range [0.0,1.0] that 
+    /**
+     * Utility method for setting a normalized value in range [0.0,1.0] that
      * will be rescaled and translated within [min,max] range.
      */
     public void setNormalizedValue(double value) {
@@ -163,10 +164,11 @@ public class ClampedValue {
         setValue(newVal);
     }
 
-    /** Utility method for getting a normalized value in range [0.0, 1.0]. 
-     * Useful for percentage calculation when drawing.
-     * 
-     * @return 
+    /**
+     * Utility method for getting a normalized value in range [0.0, 1.0]. Useful
+     * for percentage calculation when drawing.
+     *
+     * @return
      */
     public double getNormalizedValue() {
         double min = getMin();
@@ -174,4 +176,27 @@ public class ClampedValue {
         double newVal = (getValue() - min) / range;
         return newVal;
     }
+
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (!(obj instanceof ClampedValue)) {
+//            return false;
+//        }
+//
+//        ClampedValue cv = (ClampedValue) obj;
+//
+//        return getMax() == cv.getMax() &&
+//                getMin() == cv.getMin()&&
+//                getValue()== cv.getValue();
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        int hash = 7;
+//        hash = 83 * hash + Objects.hashCode(this.value);
+//        hash = 83 * hash + Objects.hashCode(this.min);
+//        hash = 83 * hash + Objects.hashCode(this.max);
+//        return hash;
+//    }
+
 }

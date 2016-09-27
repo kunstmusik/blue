@@ -33,16 +33,16 @@ class gr extends CybilAlgorithm {
     }
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
+    public double[] getValue(CybilNoteList cybilNoteList) {
 
         /*
          * TODO - Build in terms of li algorithm
          */
 
-        // float start = getFloatValue(args.get(0));
-        // float end = getFloatValue(args.get(1));
+        // double start = getDoubleValue(args.get(0));
+        // double end = getDoubleValue(args.get(1));
 
-        float timeValue = getTimeValue(args.get(args.size() - 1));
+        double timeValue = getTimeValue(args.get(args.size() - 1));
 
         ArrayList points = cgraph.getPoints();
 
@@ -52,11 +52,11 @@ class gr extends CybilAlgorithm {
 
             li line = new li();
 
-            float duration = (endPoint.time - startPoint.time) * timeValue;
+            double duration = (endPoint.time - startPoint.time) * timeValue;
 
-            line.args.add(Float.toString(startPoint.value));
-            line.args.add(Float.toString(endPoint.value));
-            line.args.add(Float.toString(duration) + "s");
+            line.args.add(Double.toString(startPoint.value));
+            line.args.add(Double.toString(endPoint.value));
+            line.args.add(Double.toString(duration) + "s");
 
             System.out.println("gr:\n " + startPoint + "\n" + endPoint);
 

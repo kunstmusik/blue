@@ -18,11 +18,14 @@ import java.util.Collections;
  */
 
 @NoteProcessorPlugin(displayName="RotateProcessor", position = 70)
-public class RotateProcessor implements NoteProcessor, java.io.Serializable {
+public class RotateProcessor implements NoteProcessor {
 
     int noteIndex = 1;
 
     public RotateProcessor() {
+    }
+    public RotateProcessor(RotateProcessor rp) {
+        noteIndex = rp.noteIndex;
     }
 
     @Override
@@ -49,7 +52,7 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
 
         Note lastNote = in.get(in.size() - 1);
 
-        float startTime = lastNote.getStartTime()
+        double startTime = lastNote.getStartTime()
                 + lastNote.getSubjectiveDuration();
 
         int index = noteIndex;
@@ -123,5 +126,10 @@ public class RotateProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("noteIndex").setText(this.getNoteIndex());
 
         return retVal;
+    }
+
+    @Override
+    public RotateProcessor deepCopy() {
+        return new RotateProcessor(this);
     }
 }

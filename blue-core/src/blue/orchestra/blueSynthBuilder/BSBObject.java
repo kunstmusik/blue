@@ -21,7 +21,6 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.DeepCopyable;
-import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

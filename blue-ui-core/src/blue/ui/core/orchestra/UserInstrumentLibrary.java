@@ -532,9 +532,9 @@ class UserInstrumentTreePopup extends JPopupMenu {
         Object bufferedObj;
 
         if (userObj instanceof Instrument) {
-            bufferedObj = ((Instrument) userObj).clone();
+            bufferedObj = ((Instrument) userObj).deepCopy();
         } else {
-            bufferedObj = ObjectUtilities.clone(userObj);
+            bufferedObj = new InstrumentCategory((InstrumentCategory)userObj);
         }
         
         CopyBuffer.setBufferedObject(CopyBuffer.INSTRUMENT, userObj);
@@ -549,8 +549,8 @@ class UserInstrumentTreePopup extends JPopupMenu {
         if (bufferedObj instanceof Instrument) {
             addInstrument((Instrument) bufferedObj);
         } else {
-            addInstrumentCategory((InstrumentCategory) ObjectUtilities.clone(
-                    bufferedObj));
+            addInstrumentCategory(
+                    new InstrumentCategory((InstrumentCategory)bufferedObj));
         }
     }
 
@@ -582,7 +582,7 @@ class UserInstrumentTreePopup extends JPopupMenu {
     }
 
     private void addInstrument(Instrument instr) {
-        Instrument newInstrument = (Instrument) instr.clone();
+        Instrument newInstrument = (Instrument) instr.deepCopy();
 
         InstrumentCategory currentCategory = (InstrumentCategory) userObj;
 

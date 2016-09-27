@@ -29,7 +29,6 @@ import blue.ui.core.render.RealtimeRenderManager;
 import blue.utility.NumberUtilities;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.AbstractAction;
@@ -187,15 +186,15 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
             
             if (evt.getSource() == renderTimeManager) {
                 if (prop.equals(RenderTimeManager.TIME_POINTER)) {
-                    float val = ((Float) evt.getNewValue()).floatValue();
+                    double val = ((Double) evt.getNewValue()).doubleValue();
                     
                     if (val <= 0.0f) {
                         playTimeText.setText(EMPTY_TIME);
                     } else {
-                        float latency = PlaybackSettings.getInstance().
+                        double latency = PlaybackSettings.getInstance().
                                 getPlaybackLatencyCorrection();
                         
-                        float newVal = val + renderTimeManager.getRenderStartTime() - latency;
+                        double newVal = val + renderTimeManager.getRenderStartTime() - latency;
                         
                         playTimeText.setText(NumberUtilities.formatTime(
                                 newVal));
@@ -319,14 +318,14 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
         data.addPropertyChangeListener(this);
 
         this.loopBox.setSelected(data.isLoopRendering());
-        playStartText.setText(Float.toString(data.getRenderStartTime()));
+        playStartText.setText(Double.toString(data.getRenderStartTime()));
 
-        float endTime = data.getRenderEndTime();
+        double endTime = data.getRenderEndTime();
 
         if (endTime < 0.0f) {
             playEndText.setText("");
         } else {
-            playEndText.setText(Float.toString(endTime));
+            playEndText.setText(Double.toString(endTime));
         }
 
         this.isUpdating = false;
@@ -357,8 +356,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                     playStartText.setText(evt.getNewValue().toString());
                     break;
                 case "renderLoopTime":
-                    float floatVal = Float.parseFloat(evt.getNewValue().toString());
-                    if (floatVal < 0.0f) {
+                    double doubleVal = Double.parseDouble(evt.getNewValue().toString());
+                    if (doubleVal < 0.0f) {
                         playEndText.setText("");
                     } else {
                         playEndText.setText(evt.getNewValue().toString());
@@ -383,16 +382,16 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
     }
 
     @Override
-    public void renderTimeUpdated(float timePointer) {
-        float val = timePointer;
+    public void renderTimeUpdated(double timePointer) {
+        double val = timePointer;
 
         if (val <= 0.0f) {
             playTimeText.setText(EMPTY_TIME);
         } else {
-            float latency = PlaybackSettings.getInstance().
+            double latency = PlaybackSettings.getInstance().
                     getPlaybackLatencyCorrection();
 
-            float newVal = val + renderTimeManager.getRenderStartTime() - latency;
+            double newVal = val + renderTimeManager.getRenderStartTime() - latency;
 
             playTimeText.setText(NumberUtilities.formatTime(
                     newVal));
@@ -414,7 +413,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            float startTime = data.getRenderStartTime();
+            double startTime = data.getRenderStartTime();
 
             MarkersList markers = data.getMarkersList();
 
@@ -433,7 +432,7 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
                 return;
             }
 
-            float newStartTime = selected.getTime();
+            double newStartTime = selected.getTime();
 
             data.setRenderStartTime(newStartTime);
 
@@ -455,8 +454,8 @@ public class MainToolBar extends JToolBar implements PlayModeListener,
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            float startTime = data.getRenderStartTime();
-            float newStartTime = 0.0f;
+            double startTime = data.getRenderStartTime();
+            double newStartTime = 0.0f;
 
             MarkersList markers = data.getMarkersList();
 

@@ -51,8 +51,8 @@ public class TempoMapper {
                 tempo = st.nextToken();
 
                 temp = new BeatTempoPair();
-                temp.beat = Float.parseFloat(time);
-                temp.tempo = Float.parseFloat(tempo);
+                temp.beat = Double.parseDouble(time);
+                temp.tempo = Double.parseDouble(tempo);
 
                 if (temp.beat < 0.0f || temp.tempo <= 0.0f) {
                     return null;
@@ -62,11 +62,11 @@ public class TempoMapper {
 
                 if (index > 0) {
 
-                    float factor1 = 60.0f / tMap[index - 1].tempo;
-                    float factor2 = 60.0f / tMap[index].tempo;
-                    float deltaBeat = tMap[index].beat - tMap[index - 1].beat;
+                    double factor1 = 60.0f / tMap[index - 1].tempo;
+                    double factor2 = 60.0f / tMap[index].tempo;
+                    double deltaBeat = tMap[index].beat - tMap[index - 1].beat;
 
-                    float acceleration = 0.0f;
+                    double acceleration = 0.0f;
 
                     if (deltaBeat >= 0.0f) {
                         acceleration = (factor2 - factor1)
@@ -94,7 +94,7 @@ public class TempoMapper {
         return tm;
     }
 
-    public float beatsToSeconds(float beat) {
+    public double beatsToSeconds(double beat) {
         if (beat == 0.0f) {
             return 0.0f;
         }
@@ -103,11 +103,11 @@ public class TempoMapper {
 
             if (beat >= timeMap[i].beat && beat < timeMap[i + 1].beat) {
 
-                float factor1 = 60.0f / timeMap[i].tempo;
-                float factor2 = 60.0f / timeMap[i + 1].tempo;
-                float deltaBeat = beat - timeMap[i].beat;
+                double factor1 = 60.0f / timeMap[i].tempo;
+                double factor2 = 60.0f / timeMap[i + 1].tempo;
+                double deltaBeat = beat - timeMap[i].beat;
 
-                float acceleration;
+                double acceleration;
 
                 if (deltaBeat == 0.0f) {
                     acceleration = 0;
@@ -116,7 +116,7 @@ public class TempoMapper {
                             / (timeMap[i + 1].beat - timeMap[i].beat);
                 }
 
-                float t = getAreaUnderCurve(factor1, deltaBeat, acceleration);
+                double t = getAreaUnderCurve(factor1, deltaBeat, acceleration);
 
                 return timeMap[i].accumulatedTime + t;
             }
@@ -124,27 +124,27 @@ public class TempoMapper {
 
         BeatTempoPair lastTempoPair = timeMap[timeMap.length - 1];
 
-        float factor1 = 60.0f / lastTempoPair.tempo;
-        float deltaBeat = beat - lastTempoPair.beat;
+        double factor1 = 60.0f / lastTempoPair.tempo;
+        double deltaBeat = beat - lastTempoPair.beat;
 
-        float t = (factor1 * deltaBeat) + lastTempoPair.accumulatedTime;
+        double t = (factor1 * deltaBeat) + lastTempoPair.accumulatedTime;
 
         return t;
     }
 
-    private static float getAreaUnderCurve(float factor1, float deltaBeat,
-            float acceleration) {
+    private static double getAreaUnderCurve(double factor1, double deltaBeat,
+            double acceleration) {
         return (factor1 * deltaBeat)
-                + (0.5f * acceleration * (float) Math.pow(deltaBeat, 2));
+                + (0.5f * acceleration * (double) Math.pow(deltaBeat, 2));
     }
 
-    public float secondsToBeats(float seconds) {
+    public double secondsToBeats(double seconds) {
         if (seconds == 0.0f) {
             return 0.0f;
         }
 
         if (timeMap.length == 1) {
-            float factor = timeMap[0].tempo / 60.0f;
+            double factor = timeMap[0].tempo / 60.0f;
             return seconds * factor;
         }
 
@@ -160,23 +160,23 @@ public class TempoMapper {
                  * btime1: (60 / tempo) at end of segment
                  */
 
-                float beat0 = timeMap[i].beat;
-                float beat1 = timeMap[i + 1].beat;
-                float time0 = timeMap[i].accumulatedTime;
+                double beat0 = timeMap[i].beat;
+                double beat1 = timeMap[i + 1].beat;
+                double time0 = timeMap[i].accumulatedTime;
 
-                float btime0 = (60 / timeMap[i].tempo);
-                float btime1 = (60 / timeMap[i + 1].tempo);
+                double btime0 = (60 / timeMap[i].tempo);
+                double btime1 = (60 / timeMap[i + 1].tempo);
 
-                float x;
+                double x;
                 
                 if(btime0 == btime1) {
-                    float elapsedTime = seconds - time0;
+                    double elapsedTime = seconds - time0;
                     x = elapsedTime / btime0;
                 } else {
-                    float a = 0.5f * (btime1 - btime0) / (beat1 - beat0);
-                    float b = btime0;
-                    float c = time0 - seconds;
-                    x = (float) (Math.sqrt(b * b - (4 * a * c)) - b)
+                    double a = 0.5f * (btime1 - btime0) / (beat1 - beat0);
+                    double b = btime0;
+                    double c = time0 - seconds;
+                    x = (double) (Math.sqrt(b * b - (4 * a * c)) - b)
                             / (2 * a);
                 }
                 
@@ -186,9 +186,9 @@ public class TempoMapper {
         }
 
         BeatTempoPair last = timeMap[timeMap.length - 1];
-        float beat = last.beat;
+        double beat = last.beat;
 
-        float factor = last.tempo / 60.0f;
+        double factor = last.tempo / 60.0f;
 
         return ((seconds - last.accumulatedTime) * factor) + beat;
 
@@ -212,10 +212,10 @@ public class TempoMapper {
 
     private static class BeatTempoPair {
 
-        public float beat = 0.0f;
+        public double beat = 0.0f;
 
-        public float tempo = 60.0f;
+        public double tempo = 60.0f;
 
-        public float accumulatedTime = 0.0f;
+        public double accumulatedTime = 0.0f;
     }
 }

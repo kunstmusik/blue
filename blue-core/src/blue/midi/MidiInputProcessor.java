@@ -23,14 +23,13 @@ import blue.soundObject.pianoRoll.Scale;
 import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.text.MessageFormat;
 
 /**
  *
  * @author syi
  */
-public class MidiInputProcessor implements Serializable {
+public class MidiInputProcessor {
 
     private static final MessageFormat PCH_FORMAT = new MessageFormat("{0}.{1}");
 
@@ -53,6 +52,19 @@ public class MidiInputProcessor implements Serializable {
     private double ampMin = 0.0;
 
     private double ampMax = 1.0;
+
+    public MidiInputProcessor() {
+    }
+
+    public MidiInputProcessor(MidiInputProcessor mip) {
+        keyMapping = mip.keyMapping;
+        velMapping = mip.velMapping;
+        scale = new Scale(mip.scale);
+        pitchConstant = mip.pitchConstant;
+        ampConstant = mip.ampConstant;
+        ampMin = mip.ampMin;
+        ampMax = mip.ampMax;
+    }
 
     public String getAmpConstant() {
         return ampConstant;
@@ -93,24 +105,24 @@ public class MidiInputProcessor implements Serializable {
     public void setScale(Scale scale) {
         this.scale = scale;
     }
-    
+
     private String getPaddedNoteNum(int noteNum) {
         String noteStr = Integer.toString(noteNum);
         StringBuilder bdr = new StringBuilder();
-        if(noteStr.length() < 3) {
+        if (noteStr.length() < 3) {
             bdr.append("0");
         }
-        if(noteStr.length() < 2) {
+        if (noteStr.length() < 2) {
             bdr.append("1");
         }
         bdr.append(noteStr);
-        
+
         return bdr.toString();
     }
 
     public String getNoteOn(String id, int noteNum, int key, int velocity) {
         return NOTE_FORMAT.format(new Object[]{id, getPaddedNoteNum(noteNum), processKey(key), processVelocity(
-                    velocity)});
+            velocity)});
     }
 
     public String getNoteOff(String id, int noteNum) {
@@ -144,7 +156,7 @@ public class MidiInputProcessor implements Serializable {
                     scaleDegree = scale.getNumScaleDegrees() + scaleDegree;
                 }
 
-                retVal = NumberUtilities.formatFloat(scale.getFrequency(octave,
+                retVal = NumberUtilities.formatDouble(scale.getFrequency(octave,
                         scaleDegree));
                 break;
             case TUNING_BLUE_PCH:
@@ -223,7 +235,7 @@ public class MidiInputProcessor implements Serializable {
                 case "keyMapping":
                     try {
                         processor.keyMapping = MidiKeyMapping.valueOf(
-                            node.getTextString());
+                                node.getTextString());
                     } catch (IllegalArgumentException iae) {
 
                     }
@@ -231,7 +243,7 @@ public class MidiInputProcessor implements Serializable {
                 case "velMapping":
                     try {
                         processor.velMapping = MidiVelocityMapping.valueOf(node.
-                            getTextString());
+                                getTextString());
                     } catch (IllegalArgumentException iae) {
 
                     }

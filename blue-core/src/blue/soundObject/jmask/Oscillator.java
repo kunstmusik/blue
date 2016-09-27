@@ -25,11 +25,10 @@ import blue.utility.MathUtils;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Oscillator implements Generator, Serializable, Maskable,
+public class Oscillator implements Generator, Maskable,
         Quantizable, Accumulatable {
 
     public static final int SINE = 0;
@@ -60,13 +59,14 @@ public class Oscillator implements Generator, Serializable, Maskable,
 
     private double frequency = 1.0;
 
-    private Table freqTable = new Table();
+    private Table freqTable;
 
     private boolean freqTableEnabled = false;
 
     double exponent = 1.0;
     
     public Oscillator() {
+        freqTable = new Table();
         freqTable.setMin(.001, false);
         freqTable.setMax(10, false);
         
@@ -75,6 +75,15 @@ public class Oscillator implements Generator, Serializable, Maskable,
         
         point1.setValue(1);
         point2.setValue(1);
+    }
+
+    public Oscillator(Oscillator osc) {
+        oscillatorType = osc.oscillatorType;
+        phaseInit = osc.phaseInit;
+        frequency = osc.frequency;
+        freqTable = new Table(osc.freqTable);
+        freqTableEnabled = osc.freqTableEnabled;
+        exponent = osc.exponent;
     }
 
     public static Generator loadFromXML(Element data) {
@@ -284,5 +293,10 @@ public class Oscillator implements Generator, Serializable, Maskable,
 
     public void setFreqTableEnabled(boolean freqTableEnabled) {
         this.freqTableEnabled = freqTableEnabled;
+    }
+
+    @Override
+    public Oscillator deepCopy() {
+        return new Oscillator(this);
     }
 }

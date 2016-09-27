@@ -23,16 +23,22 @@ package blue.soundObject.jmask;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Random implements Generator, Serializable, Quantizable,
-        Accumulatable {
+public class Random implements Generator, Quantizable, Accumulatable {
 
     private double min = 0.0;
 
     private double max = 1.0;
+
+    public Random() {
+    }
+
+    public Random(Random rand) {
+        min = rand.min;
+        max = rand.max;
+    }
 
     public static Generator loadFromXML(Element data) {
         Random retVal = new Random();
@@ -69,7 +75,6 @@ public class Random implements Generator, Serializable, Quantizable,
 //    public JComponent getEditor() {
 //        return new RandomEditor(this);
 //    }
-
     @Override
     public void initialize(double duration) {
 
@@ -106,5 +111,10 @@ public class Random implements Generator, Serializable, Quantizable,
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public Random deepCopy() {
+        return new Random(this);
     }
 }

@@ -20,7 +20,6 @@
 package blue.settings;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import org.openide.util.Exceptions;
@@ -30,7 +29,7 @@ import org.openide.util.NbPreferences;
  *
  * @author steven
  */
-public class GeneralSettings implements Serializable {
+public class GeneralSettings {
 
     private static final String PREFIX = "general.";
     private static final String CSOUND_ERROR_WARNING_ENABLED = "csoundErrorWarningEnabled";

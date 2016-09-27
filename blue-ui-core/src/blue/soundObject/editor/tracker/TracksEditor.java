@@ -1044,7 +1044,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
+                noteCopyBuffer.add(new TrackerNote(note));
                 note.clear();
             }
 
@@ -1083,7 +1083,7 @@ public class TracksEditor extends JPanel {
 
             for (int i = 0; i < table.getSelectedRowCount(); i++) {
                 TrackerNote note = selectedTrack.getTrackerNote(start + i);
-                noteCopyBuffer.add((TrackerNote)ObjectUtilities.clone(note));
+                noteCopyBuffer.add(new TrackerNote(note));
             }
         }
     }

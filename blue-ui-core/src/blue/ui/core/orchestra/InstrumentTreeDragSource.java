@@ -23,7 +23,6 @@ import blue.InstrumentLibrary;
 import blue.gui.DragManager;
 import blue.orchestra.Instrument;
 import blue.orchestra.InstrumentCategory;
-import blue.utility.ObjectUtilities;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -71,8 +70,12 @@ public class InstrumentTreeDragSource implements DragSourceListener,
                 || path.getLastPathComponent() instanceof InstrumentCategory) {
             oldNode = path.getLastPathComponent();
 
-            // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = ObjectUtilities.clone(oldNode);
+            Object cloneNode = null;
+            if(oldNode instanceof Instrument) {
+                cloneNode = ((Instrument)oldNode).deepCopy();
+            } else if(oldNode instanceof InstrumentCategory){
+                cloneNode = new InstrumentCategory((InstrumentCategory) oldNode);
+            }
 
             transferable = new TransferableInstrument(cloneNode);
             source.startDrag(dge, null, transferable, this);

@@ -24,25 +24,35 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import java.util.Vector;
 
 /**
  *
  * @author stevenyi
  */
-public class TimeState implements Serializable, Cloneable {
+public class TimeState {
 
     public static final int DISPLAY_TIME = 0;
     public static final int DISPLAY_NUMBER = 1;
-    
+
     private transient Vector<PropertyChangeListener> listeners = null;
 
     private int pixelSecond = 64;
     private boolean snapEnabled = false;
-    private float snapValue = 1.0f;
+    private double snapValue = 1.0f;
     private int timeDisplay = DISPLAY_TIME;
     private int timeUnit = 5;
+
+    public TimeState() {
+    }
+
+    public TimeState(TimeState timeState) {
+        pixelSecond = timeState.pixelSecond;
+        snapEnabled = timeState.snapEnabled;
+        snapValue = timeState.snapValue;
+        timeDisplay = timeState.timeDisplay;
+        timeUnit = timeState.timeUnit;
+    }
 
     public int getPixelSecond() {
         return this.pixelSecond;
@@ -56,7 +66,7 @@ public class TimeState implements Serializable, Cloneable {
 
         firePropertyChangeEvent(pce);
     }
-    
+
     public void lowerPixelSecond() {
         int temp = getPixelSecond();
 
@@ -87,13 +97,13 @@ public class TimeState implements Serializable, Cloneable {
         firePropertyChangeEvent(pce);
     }
 
-    public float getSnapValue() {
+    public double getSnapValue() {
         return this.snapValue;
     }
 
-    public void setSnapValue(float snapValue) {
+    public void setSnapValue(double snapValue) {
         PropertyChangeEvent pce = new PropertyChangeEvent(this, "snapValue",
-                new Float(this.snapValue), new Float(snapValue));
+                new Double(this.snapValue), new Double(snapValue));
 
         this.snapValue = snapValue;
 
@@ -125,9 +135,8 @@ public class TimeState implements Serializable, Cloneable {
 
         firePropertyChangeEvent(pce);
     }
-    
+
     /* PROPERTY CHANGE LISTENER CODE */
-    
     private void firePropertyChangeEvent(PropertyChangeEvent pce) {
         if (listeners == null) {
             return;
@@ -157,9 +166,9 @@ public class TimeState implements Serializable, Cloneable {
      * SERIALIZATION CODE
      */
     public static TimeState loadFromXML(Element data) {
-        
+
         TimeState timeState = new TimeState();
-        
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -176,7 +185,7 @@ public class TimeState implements Serializable, Cloneable {
                             booleanValue();
                     break;
                 case "snapValue":
-                    timeState.snapValue = Float.parseFloat(nodeText);
+                    timeState.snapValue = Double.parseDouble(nodeText);
                     break;
                 case "timeDisplay":
                     timeState.timeDisplay = Integer.parseInt(nodeText);
@@ -186,35 +195,22 @@ public class TimeState implements Serializable, Cloneable {
                     break;
             }
         }
-        
+
         return timeState;
     }
 
     public Element saveAsXML() {
         Element retVal = new Element("timeState");
-        
-        retVal.addElement(XMLUtilities.writeInt("pixelSecond", 
+
+        retVal.addElement(XMLUtilities.writeInt("pixelSecond",
                 this.pixelSecond));
-        retVal.addElement(XMLUtilities.writeBoolean("snapEnabled", 
+        retVal.addElement(XMLUtilities.writeBoolean("snapEnabled",
                 this.snapEnabled));
-        retVal.addElement(XMLUtilities.writeFloat("snapValue", this.snapValue));
+        retVal.addElement(XMLUtilities.writeDouble("snapValue", this.snapValue));
         retVal.addElement(XMLUtilities.writeInt("timeDisplay", this.timeDisplay));
         retVal.addElement(XMLUtilities.writeInt("timeUnit", this.timeUnit));
 
         return retVal;
     }
 
-    @Override
-    public TimeState clone() {
-        TimeState timeState = new TimeState();
-        timeState.pixelSecond = this.pixelSecond;
-        timeState.snapEnabled = this.snapEnabled;
-        timeState.snapValue = this.snapValue;
-        timeState.timeDisplay = this.timeDisplay;
-        timeState.timeUnit = this.timeUnit;
-        
-        return timeState;
-    }
-    
-    
 }

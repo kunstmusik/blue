@@ -93,7 +93,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         int startRow = 0;
 
         for (int i = 0; i < npc.size(); i++) {
-            startRow += setupNoteProcessor(npc.getNoteProcessor(i), startRow);
+            startRow += setupNoteProcessor(npc.get(i), startRow);
         }
         this.fireTableDataChanged();
     }
@@ -152,7 +152,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
     // METHODS FOR NOTEPROCESSORCHAIN
 
     public void addNoteProcessor(NoteProcessor np) {
-        npc.addNoteProcessor(np);
+        npc.add(np);
         setNoteProcessorChain(npc);
     }
 
@@ -171,7 +171,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         int index = npc.indexOf(currentNoteProcessor);
 
         if (index > 0) {
-            Object a = npc.remove(index - 1);
+            NoteProcessor a = npc.remove(index - 1);
             npc.add(index, a);
             NoteProcessor temp = currentNoteProcessor;
             setNoteProcessorChain(npc);
@@ -186,7 +186,7 @@ public class NoteProcessorChainTableModel extends AbstractTableModel {
         int index = npc.indexOf(currentNoteProcessor);
 
         if (index < npc.size() - 1) {
-            Object a = npc.remove(index + 1);
+            NoteProcessor a = npc.remove(index + 1);
             npc.add(index, a);
             NoteProcessor temp = currentNoteProcessor;
             setNoteProcessorChain(npc);

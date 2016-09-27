@@ -22,19 +22,13 @@ package blue.clojure.project;
 import blue.BlueDataObject;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 
 /**
  *
  * @author stevenyi
  */
-public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
+public class ClojureLibraryEntry implements BlueDataObject {
     private SimpleStringProperty dependencyCoordinates;
     private SimpleStringProperty version;
 
@@ -42,6 +36,11 @@ public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
        dependencyCoordinates = new SimpleStringProperty(this, "coordinates", 
        "org/library-name");
        version = new SimpleStringProperty(this, "version", "1.0.0");
+    }
+
+    public ClojureLibraryEntry(ClojureLibraryEntry cle){
+        setDependencyCoordinates(cle.getDependencyCoordinates());
+        setVersion(cle.getVersion());
     }
 
     public String getDependencyCoordinates() {
@@ -101,14 +100,7 @@ public class ClojureLibraryEntry implements BlueDataObject, Externalizable {
     }
 
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeUTF(getDependencyCoordinates());
-        out.writeUTF(getVersion());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setDependencyCoordinates(in.readUTF());
-        setVersion(in.readUTF());
+    public ClojureLibraryEntry deepCopy() {
+        return new ClojureLibraryEntry(this);
     }
 }

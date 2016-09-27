@@ -73,7 +73,7 @@ public final class AddToSoundObjectLibraryAction extends AbstractAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SoundObject sObj = (SoundObject) soundObjects.iterator().next().clone();
+        SoundObject sObj = (SoundObject) soundObjects.iterator().next().deepCopy();
 
         if (sObj instanceof Instance) {
             return;

@@ -143,13 +143,13 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
         if (obj instanceof SoundObjectView) {
             SoundObject sObj = ((SoundObjectView) obj).getSoundObject();
 
-            float subjectiveDuration = sObj.getSubjectiveDuration();
-            float startTime = sObj.getStartTime();
+            double subjectiveDuration = sObj.getSubjectiveDuration();
+            double startTime = sObj.getStartTime();
 
             Object[] args = {sObj.getName(),
                 ObjectUtilities.getShortClassName(sObj),
-                new Float(startTime), new Float(subjectiveDuration),
-                new Float(startTime + subjectiveDuration)};
+                new Double(startTime), new Double(subjectiveDuration),
+                new Double(startTime + subjectiveDuration)};
 
             tip = toolTipFormat.format(args);
         }
@@ -406,9 +406,9 @@ public final class ScoreTimeCanvas extends JLayeredPane //implements Scrollable,
             }
 
             int height = getPolyObject().getTotalHeight();
-            float snapValue = timeState.getSnapValue();
+            double snapValue = timeState.getSnapValue();
             int pixelSecond = timeState.getPixelSecond();
-            float time;
+            double time;
             for (int i = 0; x < width; i++) {
                 x = (int) ((i * snapValue) * pixelSecond);
                 g.drawLine(x, 0, x, height);

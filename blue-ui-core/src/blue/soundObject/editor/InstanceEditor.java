@@ -86,7 +86,7 @@ public class InstanceEditor extends ScoreObjectEditor {
         String generatedNoteText = null;
 
         try {
-            SoundObject clone = instance.getSoundObject().clone();
+            SoundObject clone = instance.getSoundObject().deepCopy();
 
             generatedNoteText = clone.generateForCSD(CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f).toString();
@@ -109,7 +109,7 @@ public class InstanceEditor extends ScoreObjectEditor {
 
         try {
 
-            SoundObject clone = instance.getSoundObject().clone();
+            SoundObject clone = instance.getSoundObject().deepCopy();
 
             notes = clone.generateForCSD(CompileData.createEmptyCompileData(), 
                     0.0f, -1.0f);

@@ -19,7 +19,6 @@
  */
 package blue.soundObject.jmask.probability;
 
-//import blue.soundObject.editor.jmask.probability.CauchyEditor;
 import blue.soundObject.jmask.Table;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -35,18 +34,30 @@ public class Cauchy implements ProbabilityGenerator {
 
     private boolean muTableEnabled = false;
 
-    private Table alphaTable = new Table();
+    private Table alphaTable;
 
-    private Table muTable = new Table();
+    private Table muTable;
 
     public Cauchy() {
         alpha = 0.1;
         mu = 0.5;
 
+        alphaTable = new Table();
+        muTable = new Table();
+
         alphaTable.getPoint(0).setValue(0.1);
         alphaTable.getPoint(1).setValue(0.1);
         muTable.getPoint(0).setValue(0.5);
         muTable.getPoint(1).setValue(0.5);
+    }
+
+    public Cauchy(Cauchy cauchy) {
+        alpha = cauchy.alpha;
+        mu = cauchy.mu;
+        alphaTableEnabled = cauchy.alphaTableEnabled;
+        muTableEnabled = cauchy.muTableEnabled;
+        alphaTable = new Table(cauchy.alphaTable);
+        muTable = new Table(cauchy.muTable);
     }
 
     public static ProbabilityGenerator loadFromXML(Element data) {
@@ -108,10 +119,6 @@ public class Cauchy implements ProbabilityGenerator {
 
         return retVal;
     }
-
-//    public JComponent getEditor() {
-//        return new CauchyEditor(this);
-//    }
 
     @Override
     public String getName() {
@@ -195,5 +202,10 @@ public class Cauchy implements ProbabilityGenerator {
 
     public void setMuTable(Table muTable) {
         this.muTable = muTable;
+    }
+
+    @Override
+    public Cauchy deepCopy() {
+        return new Cauchy(this);
     }
 }

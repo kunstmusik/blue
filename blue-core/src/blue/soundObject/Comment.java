@@ -4,7 +4,6 @@ import blue.*;
 import blue.noteProcessor.NoteProcessorChain;
 import blue.plugin.SoundObjectPlugin;
 import electric.xml.Element;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -16,8 +15,7 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "Comment", live=false, position = 20)
-public class Comment extends AbstractSoundObject implements Serializable,
-        Cloneable {
+public class Comment extends AbstractSoundObject {
 
 //    private static BarRenderer renderer = new CommentRenderer();
 
@@ -26,6 +24,11 @@ public class Comment extends AbstractSoundObject implements Serializable,
     public Comment() {
         commentText = "";
         this.setName("Comment");
+    }
+
+    public Comment(Comment comment) {
+        super(comment);
+        commentText = comment.commentText;
     }
 
     public String getText() {
@@ -46,7 +49,7 @@ public class Comment extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getObjectiveDuration() {
+    public double getObjectiveDuration() {
         return this.getSubjectiveDuration();
     }
 
@@ -60,12 +63,12 @@ public class Comment extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public float getRepeatPoint() {
+    public double getRepeatPoint() {
         return -1.0f;
     }
 
     @Override
-    public void setRepeatPoint(float repeatPoint) {
+    public void setRepeatPoint(double repeatPoint) {
     }
 
     /*
@@ -100,7 +103,12 @@ public class Comment extends AbstractSoundObject implements Serializable,
     }
 
     @Override
-    public NoteList generateForCSD(CompileData compileData, float startTime, float endTime) {
+    public NoteList generateForCSD(CompileData compileData, double startTime, double endTime) {
         return null;
+    }
+
+    @Override
+    public Comment deepCopy() {
+        return new Comment(this);
     }
 }

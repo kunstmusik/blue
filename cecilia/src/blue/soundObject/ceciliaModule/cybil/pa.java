@@ -26,17 +26,17 @@ import blue.soundObject.NoteList;
 class pa extends CybilFunction {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
+    public double[] getValue(CybilNoteList cybilNoteList) {
         NoteList nl = cybilNoteList.notes;
 
         int index = Integer.parseInt((String) args.get(0));
 
-        float[] val = new float[1];
+        double[] val = new double[1];
 
         int currentNoteIndex = cybilNoteList.index;
         Note note = cybilNoteList.notes.get(currentNoteIndex);
 
-        val[0] = Float.parseFloat(note.getPField(index));
+        val[0] = Double.parseDouble(note.getPField(index));
 
         return val;
 

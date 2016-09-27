@@ -250,7 +250,7 @@ public final class SoundObjectLibraryTopComponent extends TopComponent
         if (index != -1) {
             SoundObject sObj = sObjLib.getSoundObject(index);
             ScoreController.getInstance().setSelectedScoreObjects(
-                    Collections.singleton(sObj.clone()));
+                    Collections.singleton(sObj.deepCopy()));
         }
 }//GEN-LAST:event_copyButtonActionPerformed
 

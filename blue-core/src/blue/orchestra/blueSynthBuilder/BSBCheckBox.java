@@ -273,8 +273,8 @@ public class BSBCheckBox extends AutomatableBSBObject implements ParameterListen
         Parameter parameter = parameters.getParameter(this.objectName);
 
         if (parameter != null) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            int val = Math.round(parameter.getLine().getValue(time));
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            long val = Math.round(parameter.getLine().getValue(time));
 
             boolean newSelected = (val > 0);
 

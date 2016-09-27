@@ -133,11 +133,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         }
 
         if (enabled && selectedPoint != null) {
-            float min = tempoLine.getMin();
-            float max = tempoLine.getMax();
+            double min = tempoLine.getMin();
+            double max = tempoLine.getMax();
 
-            int x = floatToScreenX(selectedPoint.getX());
-            int y = floatToScreenY(selectedPoint.getY(), min, max);
+            int x = doubleToScreenX(selectedPoint.getX());
+            int y = doubleToScreenY(selectedPoint.getY(), min, max);
 
             g2d.setColor(Color.red);
             paintPoint(g2d, x, y);
@@ -160,11 +160,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         // Line currentLine = currentParameter.getLine();
 
-        float yVal = selectedPoint.getY();
-        float xVal = selectedPoint.getX();
+        double yVal = selectedPoint.getY();
+        double xVal = selectedPoint.getX();
 
-        String xText = "x: " + NumberUtilities.formatFloat(xVal);
-        String yText = "y: " + NumberUtilities.formatFloat(yVal) + " bpm";
+        String xText = "x: " + NumberUtilities.formatDouble(xVal);
+        String yText = "y: " + NumberUtilities.formatDouble(yVal) + " bpm";
 
         int width = 95;
         int height = 28;
@@ -194,11 +194,11 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         if (line.size() == 1) {
             LinePoint lp = line.getLinePoint(0);
 
-            float min = line.getMin();
-            float max = line.getMax();
+            double min = line.getMin();
+            double max = line.getMax();
 
-            int x = floatToScreenX(lp.getX());
-            int y = floatToScreenY(lp.getY(), min, max);
+            int x = doubleToScreenX(lp.getX());
+            int y = doubleToScreenY(lp.getY(), min, max);
 
             g.drawLine(0, y, getWidth(), y);
 
@@ -212,14 +212,14 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         int prevY = -1;
         int x, y;
 
-        float min = line.getMin();
-        float max = line.getMax();
+        double min = line.getMin();
+        double max = line.getMax();
 
         for (int i = 0; i < line.size(); i++) {
             LinePoint point = line.getLinePoint(i);
 
-            x = floatToScreenX(point.getX());
-            y = floatToScreenY(point.getY(), min, max);
+            x = doubleToScreenX(point.getX());
+            y = doubleToScreenY(point.getY(), min, max);
 
             if (drawPoints) {
                 paintPoint(g, x, y);
@@ -247,28 +247,28 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         g.fillRect(x - 2, y - 2, 5, 5);
     }
 
-    private int floatToScreenX(float val) {
+    private int doubleToScreenX(double val) {
         if (timeState == null) {
             return -1;
         }
-        return Math.round(val * timeState.getPixelSecond());
+        return (int)Math.round(val * timeState.getPixelSecond());
     }
 
-    private int floatToScreenY(float yVal, float min, float max) {
-        return floatToScreenY(yVal, min, max, -1.0f);
+    private int doubleToScreenY(double yVal, double min, double max) {
+        return doubleToScreenY(yVal, min, max, -1.0f);
     }
 
-    private int floatToScreenY(float yVal, float min, float max,
-            float resolution) {
+    private int doubleToScreenY(double yVal, double min, double max,
+            double resolution) {
         int height = this.getHeight() - 10;
 
-        float range = max - min;
+        double range = max - min;
 
-        float adjustedY = yVal - min;
+        double adjustedY = yVal - min;
 
         if (resolution > 0.0f) {
 
-            float tempY = 0.0f;
+            double tempY = 0.0f;
 
             while (tempY <= adjustedY) {
                 tempY += resolution;
@@ -276,36 +276,36 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
             tempY -= resolution;
 
-            // adjustedY = (float) (adjustedY - Math.IEEEremainder(adjustedY,
+            // adjustedY = (double) (adjustedY - Math.IEEEremainder(adjustedY,
             // resolution));
             adjustedY = (tempY > range) ? range : tempY;
 
         }
 
-        float percent = adjustedY / range;
+        double percent = adjustedY / range;
 
-        int y = Math.round(height * (1.0f - percent)) + 5;
+        int y = (int)Math.round(height * (1.0f - percent)) + 5;
 
         return y;
     }
 
-    private float screenToFloatX(int val) {
+    private double screenToDoubleX(int val) {
         if (timeState == null) {
             return -1;
         }
 
-        return (float) val / timeState.getPixelSecond();
+        return (double) val / timeState.getPixelSecond();
     }
 
-    private float screenToFloatY(int val, float min, float max, float resolution) {
-        float height = this.getHeight() - 10;
-        float percent = 1 - ((val - 5) / height);
-        float range = max - min;
+    private double screenToDoubleY(int val, double min, double max, double resolution) {
+        double height = this.getHeight() - 10;
+        double percent = 1 - ((val - 5) / height);
+        double range = max - min;
 
-        float value = percent * range;
+        double value = percent * range;
 
         if (resolution > 0.0f) {
-            value = (float) (value - Math.IEEEremainder(value, resolution));
+            value = (double) (value - Math.IEEEremainder(value, resolution));
         }
 
         if (value > range) {
@@ -331,7 +331,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                 .getLinePoint(currentLine.size() - 1)) {
             LinePoint p1 = currentLine.getLinePoint(currentLine.size() - 2);
 
-            leftBoundaryX = floatToScreenX(p1.getX());
+            leftBoundaryX = doubleToScreenX(p1.getX());
             rightBoundaryX = this.getWidth();
             return;
         }
@@ -340,8 +340,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
             if (currentLine.getLinePoint(i) == selectedPoint) {
                 LinePoint p1 = currentLine.getLinePoint(i - 1);
                 LinePoint p2 = currentLine.getLinePoint(i + 1);
-                leftBoundaryX = floatToScreenX(p1.getX());
-                rightBoundaryX = floatToScreenX(p2.getX());
+                leftBoundaryX = doubleToScreenX(p1.getX());
+                rightBoundaryX = doubleToScreenX(p2.getX());
                 return;
             }
         }
@@ -360,10 +360,10 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
 
         Line currentLine = tempo.getLine();
         
-        float min = currentLine.getMin();
-        float max = currentLine.getMax();
+        double min = currentLine.getMin();
+        double max = currentLine.getMax();
 
-        point.setLocation(screenToFloatX(x), screenToFloatY(y, min, max,
+        point.setLocation(screenToDoubleX(x), screenToDoubleY(y, min, max,
                 -1));
 
         int index = 1;
@@ -393,14 +393,14 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
     public LinePoint findGraphPoint(int x, int y) {
         Line currentLine = tempo.getLine();
 
-        float min = currentLine.getMin();
-        float max = currentLine.getMax();
+        double min = currentLine.getMin();
+        double max = currentLine.getMax();
 
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
-            int tempY = floatToScreenY(point.getY(), min, max);
+            int tempX = doubleToScreenX(point.getX());
+            int tempY = doubleToScreenY(point.getY(), min, max);
 
             if (tempX >= x - 2 && tempX <= x + 2 && tempY >= y - 2
                     && tempY <= y + 2) {
@@ -418,7 +418,7 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
         for (int i = 0; i < currentLine.size(); i++) {
             LinePoint point = currentLine.getLinePoint(i);
 
-            int tempX = floatToScreenX(point.getX());
+            int tempX = doubleToScreenX(point.getX());
 
             if (tempX >= x - 2 && tempX <= x + 2) {
                 return point;
@@ -563,12 +563,12 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                     }
                 }
 
-                float min = tempo.getLine().getMin();
-                float max = tempo.getLine().getMax();
+                double min = tempo.getLine().getMin();
+                double max = tempo.getLine().getMax();
 
                 if (selectedPoint != null) {
-                    selectedPoint.setLocation(screenToFloatX(x),
-                            screenToFloatY(y, min, max, -1));
+                    selectedPoint.setLocation(screenToDoubleX(x),
+                            screenToDoubleY(y, min, max, -1));
                     repaint();
                 }
             }
@@ -648,8 +648,8 @@ public class TempoEditor extends JComponent implements PropertyChangeListener {
                         tempoMinMaxDialog.setVisible(true);
                         
                         if(tempoMinMaxDialog.getReturnStatus() == TempoMinMaxDialog.RET_OK) {
-                            float min = tempoMinMaxDialog.getMin();
-                            float max = tempoMinMaxDialog.getMax();
+                            double min = tempoMinMaxDialog.getMin();
+                            double max = tempoMinMaxDialog.getMax();
                             boolean truncate = tempoMinMaxDialog.isTruncate();
                             
                             line.setMinMax(min, max, truncate);

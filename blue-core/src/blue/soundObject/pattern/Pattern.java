@@ -21,11 +21,10 @@ package blue.soundObject.pattern;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-public class Pattern implements Serializable {
+public class Pattern {
     public boolean[] values;
 
     String patternName = "pattern";
@@ -42,6 +41,14 @@ public class Pattern implements Serializable {
         for (int i = 0; i < values.length; i++) {
             values[i] = false;
         }
+    }
+
+    public Pattern(Pattern p) {
+        values = p.values.clone();
+        patternName = p.patternName;
+        patternScore = p.patternScore;
+        muted = p.muted;
+        solo = p.solo;
     }
 
     public String getPatternName() {

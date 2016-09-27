@@ -21,12 +21,11 @@ package blue.automation;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.*;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.text.StrBuilder;
 
-public class ParameterList implements Serializable, Iterable<Parameter> {
+public class ParameterList implements Iterable<Parameter> {
     private static final Comparator<Parameter> comparator = new Comparator<Parameter>() {
         @Override
         public int compare(Parameter o1, Parameter o2) {
@@ -44,13 +43,22 @@ public class ParameterList implements Serializable, Iterable<Parameter> {
 
     transient Vector tableListeners = null;
 
+    public ParameterList() {
+    }
+
+    public ParameterList(ParameterList pl) {
+        for(Parameter param : pl.parameters) {
+            parameters.add(new Parameter(param)); 
+        } 
+    }
+
+    
     public Parameter getParameter(int index) {
         return parameters.get(index);
     }
 
     public Parameter getParameter(String objectName) {
-        for (int i = 0; i < size(); i++) {
-            Parameter param = getParameter(i);
+        for (Parameter param : parameters) {
             if (param.getName().equals(objectName)) {
                 return param;
             }

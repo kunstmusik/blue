@@ -24,7 +24,6 @@ import blue.utility.ListUtil;
 import blue.utility.ObjectUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,7 +34,7 @@ import java.util.Vector;
  * 
  * InstrumentCategory holds instruments and other InstrumentCategories
  */
-public class InstrumentCategory implements Serializable {
+public class InstrumentCategory {
 
     private String categoryName = "New Instrument Category";
 
@@ -44,6 +43,21 @@ public class InstrumentCategory implements Serializable {
     private List<Instrument> instruments = new Vector<>();
 
     private boolean isRoot = false;
+
+
+    public InstrumentCategory(){
+    }        
+
+    public InstrumentCategory(InstrumentCategory ec){
+        categoryName = ec.categoryName;
+        isRoot = ec.isRoot;
+        for(InstrumentCategory ic :ec.subCategories) {
+            subCategories.add(new InstrumentCategory(ic));
+        }
+        for(Instrument instr :ec.instruments) {
+            instruments.add(instr.deepCopy());
+        }
+    }        
 
     @Override
     public String toString() {

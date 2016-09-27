@@ -7,13 +7,12 @@
 package blue.soundObject.ceciliaModule;
 
 import electric.xml.Element;
-import java.io.Serializable;
 
 /**
  * @author steven
  * 
  */
-public abstract class CeciliaObject implements Serializable {
+public abstract class CeciliaObject {
 
     String objectName = "";
 

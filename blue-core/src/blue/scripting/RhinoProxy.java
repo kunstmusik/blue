@@ -9,19 +9,12 @@ package blue.scripting;
  * @version 1.0
  */
 
-//import org.mozilla.javascript.Context;
-//import org.mozilla.javascript.JavaScriptException;
-//import org.mozilla.javascript.Scriptable;
 import blue.BlueSystem;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 public class RhinoProxy {
-//    private static Context cx;
-//
-//    private static Scriptable scope;
-
     private static ScriptEngine engine = null;    
     
     static {
@@ -35,13 +28,13 @@ public class RhinoProxy {
     }
 
     public static final String processJavascriptScore(String script,
-            float subjectiveDuration, String soundObjectId) {
+            double subjectiveDuration, String soundObjectId) {
         if (engine == null) {
             reinitialize();
         }
         String returnScore = "";
 
-        String init = "blueDuration = " + Float.toString(subjectiveDuration)
+        String init = "blueDuration = " + Double.toString(subjectiveDuration)
                 + ";\n";
         init += "score = '';";
 

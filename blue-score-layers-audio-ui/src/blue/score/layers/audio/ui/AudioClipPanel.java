@@ -89,7 +89,7 @@ public class AudioClipPanel extends JPanel
     private final FadeHandle leftFadeHandle;
     private final FadeHandle rightFadeHandle;
 
-    private final BiConsumer<AudioClip, Float> splitHandler;
+    private final BiConsumer<AudioClip, Double> splitHandler;
 
     ChangeListener<Number> fadeListener = (obs, o, n) -> {
         updateFadeHandleLocations();
@@ -116,7 +116,7 @@ public class AudioClipPanel extends JPanel
     MouseAdapter mouseAdapter = new RedispatchMouseAdapter() {
         boolean active = false;
         int startX = 0;
-        private float initialStartTime = 0.0f;
+        private double initialStartTime = 0.0f;
 
         @Override
         public void mouseEntered(MouseEvent e) {
@@ -183,8 +183,8 @@ public class AudioClipPanel extends JPanel
                 if (xDiff == 0) {
                     audioClip.setFileStartTime(initialStartTime);
                 } else {
-                    float newTime = initialStartTime
-                            - ((float) xDiff / timeState.getPixelSecond());
+                    double newTime = initialStartTime
+                            - ((double) xDiff / timeState.getPixelSecond());
                     newTime = Math.max(0.0f, newTime);
                     newTime = Math.min(audioClip.getAudioDuration() - audioClip.getDuration(), newTime);
                     audioClip.setFileStartTime(newTime);
@@ -229,7 +229,7 @@ public class AudioClipPanel extends JPanel
                 }
             } else if (e.isAltDown()) {
                 if (e.isShiftDown()) {
-                    float time = e.getX() / (float) timeState.getPixelSecond();
+                    double time = e.getX() / (double) timeState.getPixelSecond();
                     splitHandler.accept(audioClip, time);
                 } else {
                     active = true;
@@ -246,7 +246,7 @@ public class AudioClipPanel extends JPanel
     };
 
     public AudioClipPanel(AudioClip audioClip, TimeState timeState,
-            BiConsumer<AudioClip, Float> splitHandler) {
+            BiConsumer<AudioClip, Double> splitHandler) {
         this.audioClip = audioClip;
         this.timeState = timeState;
         this.splitHandler = splitHandler;
@@ -351,7 +351,7 @@ public class AudioClipPanel extends JPanel
         return c.getRed() + c.getGreen() + c.getBlue() > (128 * 3);
     }
 
-    private void paintFade(Graphics g, int xOffset, FadeType fadeType, float fadeTime, boolean fadeIn) {
+    private void paintFade(Graphics g, int xOffset, FadeType fadeType, double fadeTime, boolean fadeIn) {
 
         int len = (int) (fadeTime * timeState.getPixelSecond());
         double dlen = (double) len;

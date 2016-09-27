@@ -24,10 +24,10 @@ import blue.utility.ScoreUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public class Column implements Serializable {
+public class Column {
+
     public static final int TYPE_PCH = 0;
 
     public static final int TYPE_BLUE_PCH = 1;
@@ -38,15 +38,14 @@ public class Column implements Serializable {
 
     public static final int TYPE_NUM = 4;
 
-    public static final String[] TYPES = { "PCH", "blue PCH", "MIDI", "String",
-            "Number" };
+    public static final String[] TYPES = {"PCH", "blue PCH", "MIDI", "String",
+        "Number"};
 
     private Scale scale;
 
     private boolean outputFrequency = true;
 
     // protected String defaultValue = "0.0";
-
     protected String name = "col";
 
     private double rangeMin = 0;
@@ -63,6 +62,17 @@ public class Column implements Serializable {
         setScale(Scale.get12TET());
     }
 
+    public Column(Column col) {
+        scale = new Scale(col.scale);
+        outputFrequency = col.outputFrequency;
+        name = col.name;
+        rangeMin = col.rangeMin;
+        rangeMax = col.rangeMax;
+        type = col.type;
+        restrictedToInteger = col.restrictedToInteger;
+        usingRange = col.usingRange;
+    }
+
     public String getName() {
         return name;
     }
@@ -72,6 +82,7 @@ public class Column implements Serializable {
     }
 
     public static class PitchColumn extends Column {
+
         public PitchColumn() {
             this.name = "pch";
             this.type = TYPE_PCH;
@@ -80,6 +91,7 @@ public class Column implements Serializable {
     }
 
     public static class AmpColumn extends Column {
+
         public AmpColumn() {
             this.name = "db";
             this.type = TYPE_NUM;
@@ -89,7 +101,6 @@ public class Column implements Serializable {
     }
 
     /* GETTER/SETTERS */
-
     public int getType() {
         return type;
     }
@@ -101,11 +112,9 @@ public class Column implements Serializable {
     // public String getDefaultValue() {
     // return defaultValue;
     // }
-
     // public void setDefaultValue(String defaultValue) {
     // this.defaultValue = defaultValue;
     // }
-
     public boolean isRestrictedToInteger() {
         return restrictedToInteger;
     }
@@ -160,7 +169,6 @@ public class Column implements Serializable {
     }
 
     /* VALIDATION AND OTHER METHODS */
-
     public boolean isValid(final String input) {
 
         String val = input.trim();
@@ -182,7 +190,7 @@ public class Column implements Serializable {
                     retVal = false;
                 } else {
                     try {
-                        float fVal = Float.parseFloat(val);
+                        double fVal = Double.parseDouble(val);
 
                         retVal = true;
 
@@ -285,14 +293,14 @@ public class Column implements Serializable {
 
         switch (type) {
             case TYPE_PCH:
-                float baseTen = ScoreUtilities.getBaseTen(val);
+                double baseTen = ScoreUtilities.getBaseTen(val);
 
                 baseTen += 1.0f;
 
                 int octave = (int) (baseTen / 12);
-                float strPch = (baseTen % 12) / 100;
+                double strPch = (baseTen % 12) / 100;
 
-                retVal = Float.toString(octave + strPch);
+                retVal = Double.toString(octave + strPch);
 
                 if (retVal.endsWith(".0") || retVal.endsWith(".1")) {
                     retVal = retVal + "0";
@@ -354,14 +362,14 @@ public class Column implements Serializable {
 
         switch (type) {
             case TYPE_PCH:
-                float baseTen = ScoreUtilities.getBaseTen(val);
+                double baseTen = ScoreUtilities.getBaseTen(val);
 
                 baseTen -= 1.0f;
 
                 int octave = (int) (baseTen / 12);
-                float strPch = (baseTen % 12) / 100;
+                double strPch = (baseTen % 12) / 100;
 
-                retVal = Float.toString(octave + strPch);
+                retVal = Double.toString(octave + strPch);
 
                 if (retVal.endsWith(".0") || retVal.endsWith(".1")) {
                     retVal = retVal + "0";
@@ -420,7 +428,6 @@ public class Column implements Serializable {
     }
 
     /* SERIALIZATION METHODS */
-
     public Element saveAsXML() {
         Element retVal = new Element("track");
 

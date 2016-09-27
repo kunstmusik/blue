@@ -23,9 +23,9 @@ package blue.soundObject.ceciliaModule.cybil;
 class co extends CybilFunction {
 
     @Override
-    public float[] getValue(CybilNoteList cybilNoteList) {
-        float[] val = new float[1];
-        val[0] = getFloatValue(args.get(0));
+    public double[] getValue(CybilNoteList cybilNoteList) {
+        double[] val = new double[1];
+        val[0] = getDoubleValue(args.get(0));
         return val;
     }
 

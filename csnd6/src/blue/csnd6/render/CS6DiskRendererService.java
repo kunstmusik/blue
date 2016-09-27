@@ -61,7 +61,7 @@ public class CS6DiskRendererService implements DiskRenderService {
 
     private void exec(String[] args,
             File currentWorkingDirectory,
-            float startTime,
+            double startTime,
             TempoMapper mapper,
             ArrayList<Parameter> parameters) {
 
@@ -128,18 +128,18 @@ public class CS6DiskRendererService implements DiskRenderService {
         do {
             counter++;
 
-            float scoreTime = (float) csound.GetScoreTime();
+            double scoreTime = (double) csound.GetScoreTime();
 
             if (counter > updateRate) {
                 manager.updateTimePointer(scoreTime);
                 counter = 0;
             }
 
-            float currentTime = 0.0f;
+            double currentTime = 0.0f;
 
             if (startTime >= 0.0f) {
                 if (mapper != null) {
-                    float renderStartSeconds = mapper.beatsToSeconds(startTime);
+                    double renderStartSeconds = mapper.beatsToSeconds(startTime);
                     currentTime = mapper.secondsToBeats(
                             scoreTime + renderStartSeconds);
                     currentTime -= startTime;
@@ -154,7 +154,7 @@ public class CS6DiskRendererService implements DiskRenderService {
                     param = parameters.get(i);
                     String varName = param.getCompilationVarName();
 
-                    float value = param.getValue(currentTime);
+                    double value = param.getValue(currentTime);
                     csound.SetChannel(varName, (double) value);
 
                 }
@@ -177,7 +177,7 @@ public class CS6DiskRendererService implements DiskRenderService {
     @Override
     public void execWait(String[] args,
             File currentWorkingDirectory,
-            float startTime,
+            double startTime,
             TempoMapper mapper,
             ArrayList<Parameter> parameters) {
         initialize();
@@ -264,8 +264,8 @@ public class CS6DiskRendererService implements DiskRenderService {
      */
     protected String generateCsd(BlueData data) {
 
-        float startTime = data.getRenderStartTime();
-        float endTime = data.getRenderEndTime();
+        double startTime = data.getRenderStartTime();
+        double endTime = data.getRenderEndTime();
 
         if (data.getProjectProperties().diskAlwaysRenderEntireProject) {
             startTime = 0.0f;

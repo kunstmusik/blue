@@ -57,7 +57,7 @@ public class InstanceTest extends TestCase {
      * Test for Object clone()
      */
     public void testClone() {
-        Instance newInst = (Instance) this.inst.clone();
+        Instance newInst = this.inst.deepCopy();
         assertSame(newInst.getSoundObject(), this.inst.getSoundObject());
     }
 

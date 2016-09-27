@@ -8,7 +8,6 @@ package blue.components.lines;
 
 import blue.BlueSystem;
 import java.awt.Color;
-import java.util.Iterator;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 
@@ -116,9 +115,9 @@ public class LineListTableModel extends AbstractTableModel {
             case 1:
                 return line.getVarName();
             case 2:
-                return new Float(line.getMin());
+                return new Double(line.getMin());
             case 3:
-                return new Float(line.getMax());
+                return new Double(line.getMax());
             case 4:
                 return Boolean.valueOf(line.isEndPointsLinked());
         }
@@ -140,7 +139,7 @@ public class LineListTableModel extends AbstractTableModel {
                 return String.class;
             case 2:
             case 3:
-                return Float.class;
+                return Double.class;
             case 4:
                 return Boolean.class;
         }
@@ -150,7 +149,7 @@ public class LineListTableModel extends AbstractTableModel {
     @Override
     public void setValueAt(Object value, int row, int col) {
         Line line = lines.get(row);
-        float fval;
+        double dval;
         String retVal;
 
         switch (col) {
@@ -163,8 +162,8 @@ public class LineListTableModel extends AbstractTableModel {
                 }
                 break;
             case 2:
-                fval = Float.parseFloat(value.toString());
-                if (fval >= line.getMax()) {
+                dval = Double.parseDouble(value.toString());
+                if (dval >= line.getMax()) {
                     JOptionPane.showMessageDialog(null, "Error: Min value "
                             + "can not be set greater or equals to Max value.",
                             "Error", JOptionPane.ERROR_MESSAGE);
@@ -177,11 +176,11 @@ public class LineListTableModel extends AbstractTableModel {
                     return;
                 }
 
-                line.setMin(fval, retVal.equals(LineBoundaryDialog.TRUNCATE));
+                line.setMin(dval, retVal.equals(LineBoundaryDialog.TRUNCATE));
                 break;
             case 3:
-                fval = Float.parseFloat(value.toString());
-                if (fval <= line.getMin()) {
+                dval = Double.parseDouble(value.toString());
+                if (dval <= line.getMin()) {
                     JOptionPane.showMessageDialog(null, "Error: Max value "
                             + "can not be set less than or "
                             + "equal to Min value.", "Error",
@@ -195,7 +194,7 @@ public class LineListTableModel extends AbstractTableModel {
                 if (retVal == null) {
                     return;
                 }
-                line.setMax(fval, retVal.equals(LineBoundaryDialog.TRUNCATE));
+                line.setMax(dval, retVal.equals(LineBoundaryDialog.TRUNCATE));
                 break;
             case 4:
                 boolean linked = ((Boolean)value).booleanValue();

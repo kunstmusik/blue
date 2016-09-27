@@ -177,7 +177,7 @@ public class CSDUtility {
         String line = "";
 
         StringBuffer currentSection = new StringBuffer();
-        float sectionStartTime = 0.0f;
+        double sectionStartTime = 0.0f;
 
         while (st.hasMoreTokens()) {
             line = st.nextToken().trim();
@@ -302,7 +302,7 @@ public class CSDUtility {
             }
 
             notes.sort();
-            float minStart = notes.get(0).getStartTime();
+            double minStart = notes.get(0).getStartTime();
 
             ScoreUtilities.normalizeNoteList(notes);
 
@@ -368,7 +368,6 @@ public class CSDUtility {
 
                         instr = new GenericInstrument();
                         instr.setName(iName);
-                        instr.setEnabled(true);
 
                         state = 1;
 
@@ -462,9 +461,9 @@ public class CSDUtility {
 
         if (kr != null && ksmps == null) {
             try {
-                float krFloat = Float.parseFloat(kr);
-                float srFloat = Float.parseFloat(sr);
-                ksmps = Integer.toString((int) (srFloat / krFloat));
+                double krDouble = Double.parseDouble(kr);
+                double srDouble = Double.parseDouble(sr);
+                ksmps = Integer.toString((int) (srDouble / krDouble));
             } catch (NumberFormatException nfe) {
                 ksmps = null;
             }
@@ -507,5 +506,5 @@ public class CSDUtility {
 class ScoreSection {
     String scoreText = "";
 
-    float sectionStartTime = 0.0f;
+    double sectionStartTime = 0.0f;
 }

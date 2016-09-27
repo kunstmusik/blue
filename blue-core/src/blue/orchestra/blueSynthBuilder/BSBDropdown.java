@@ -63,6 +63,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
         initBasicFromXML(data, dropDown);
 
         Elements nodes = data.getElements();
+        int selectedIndex = 0;
 
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
@@ -72,17 +73,19 @@ public class BSBDropdown extends AutomatableBSBObject implements
                 case "bsbDropdownItemList":
                     subNodes = node.getElements();
                     while (subNodes.hasMoreElements()) {
-                        dropDown.dropdownItems.add(BSBDropdownItem.loadFromXML(subNodes.next()));
+                        dropDown.dropdownItems.add(
+                                BSBDropdownItem.loadFromXML(subNodes.next()));
                     }
                     break;
                 case "selectedIndex":
-                    dropDown.setSelectedIndex(Integer.parseInt(node.getTextString()));
+                    selectedIndex = Integer.parseInt(node.getTextString());
                     break;
                 case "randomizable":
                     dropDown.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
             }
         }
+        dropDown.setSelectedIndex(selectedIndex);
 
         return dropDown;
     }
@@ -95,11 +98,13 @@ public class BSBDropdown extends AutomatableBSBObject implements
                 Integer.toString(this.getSelectedIndex()));
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
+
         Element items = retVal.addElement("bsbDropdownItemList");
 
         for (BSBDropdownItem item : dropdownItems) {
             items.addElement(item.saveAsXML());
         }
+
 
         return retVal;
     }
@@ -128,7 +133,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
             String replaceVal;
 
             if (isAutomationAllowed()) {
-                replaceVal = "" + selectedIndex;
+                replaceVal = "" + getSelectedIndex();
             } else {
                 BSBDropdownItem item = dropdownItems.get(getSelectedIndex());
                 replaceVal = item.getValue();
@@ -157,6 +162,10 @@ public class BSBDropdown extends AutomatableBSBObject implements
         int tempIndex = selectedIndex;
         if (tempIndex >= dropdownItems.size()) {
             tempIndex = dropdownItems.size() - 1;
+        }
+
+        if(tempIndex < 0) {
+            tempIndex = 0;
         }
 
         int oldValue = getSelectedIndex();
@@ -333,8 +342,8 @@ public class BSBDropdown extends AutomatableBSBObject implements
         Parameter parameter = parameters.getParameter(this.objectName);
 
         if (parameter != null) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            int val = Math.round(parameter.getLine().getValue(time));
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            int val = (int)Math.round(parameter.getLine().getValue(time));
 
             updateSelectedIndex(val);
         }

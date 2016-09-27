@@ -28,7 +28,6 @@ import blue.util.ObservableList;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +43,7 @@ import org.apache.commons.lang3.text.StrBuilder;
  *
  * @author Steven Yi
  */
-public class Mixer implements Serializable {
+public class Mixer {
 
     private static final MessageFormat GA_VAR = new MessageFormat(
             "ga_bluemix_{0}_{1}");
@@ -54,7 +53,8 @@ public class Mixer implements Serializable {
 
     public static final String MASTER_CHANNEL = "Master";
 
-    private ObservableList<ChannelList> channelListGroups;
+    private ObservableList<ChannelList> channelListGroups = 
+            new ObservableArrayList<>();
 
     private ChannelList channels = new ChannelList();
 
@@ -64,15 +64,31 @@ public class Mixer implements Serializable {
 
     private boolean enabled = false;
 
-    private float extraRenderTime = 0.0f;
+    private double extraRenderTime = 0.0f;
 
     private transient Map<String, String> subChannelDependencies = null;
 
     public Mixer() {
-        this.channelListGroups = new ObservableArrayList<>();
+        channels = new ChannelList();
+        subChannels = new ChannelList();
+        master = new Channel();
+
         master.setName(MASTER_CHANNEL);
         channels.setListName("Orchestra");
         subChannels.setListName("SubChannels");
+    }
+
+    public Mixer(Mixer mixer) {
+        channels = new ChannelList(mixer.channels);
+        subChannels = new ChannelList(mixer.subChannels);
+        master = new Channel(mixer.master);
+
+        for(ChannelList chanList : mixer.channelListGroups) {
+            channelListGroups.add(new ChannelList(chanList));
+        }
+
+        enabled = mixer.enabled;
+        extraRenderTime = mixer.extraRenderTime;
     }
 
     public static Mixer loadFromXML(Element data) throws Exception {
@@ -88,7 +104,7 @@ public class Mixer implements Serializable {
                     mixer.setEnabled(XMLUtilities.readBoolean(node));
                     break;
                 case "extraRenderTime":
-                    mixer.setExtraRenderTime(XMLUtilities.readFloat(node));
+                    mixer.setExtraRenderTime(XMLUtilities.readDouble(node));
                     break;
                 case "channelList":
                     String listType = node.getAttributeValue("list");
@@ -128,7 +144,7 @@ public class Mixer implements Serializable {
         Element retVal = new Element("mixer");
 
         retVal.addElement(XMLUtilities.writeBoolean("enabled", isEnabled()));
-        retVal.addElement(XMLUtilities.writeFloat("extraRenderTime",
+        retVal.addElement(XMLUtilities.writeDouble("extraRenderTime",
                 extraRenderTime));
 
         if (channelListGroups.size() > 0) {
@@ -377,16 +393,11 @@ public class Mixer implements Serializable {
         this.subChannels = subChannels;
     }
 
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
-    }
-
-    public float getExtraRenderTime() {
+    public double getExtraRenderTime() {
         return extraRenderTime;
     }
 
-    public void setExtraRenderTime(float extraRenderTime) {
+    public void setExtraRenderTime(double extraRenderTime) {
         this.extraRenderTime = extraRenderTime;
     }
 

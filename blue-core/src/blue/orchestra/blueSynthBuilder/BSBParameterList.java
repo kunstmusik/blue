@@ -23,49 +23,30 @@ import blue.automation.Parameter;
 import blue.automation.ParameterList;
 import electric.xml.Element;
 import electric.xml.Elements;
+import javafx.collections.SetChangeListener;
 
 /**
  * Listens to BSBGraphic Interface changes
- * 
+ *
  * @author steven
  */
-public class BSBParameterList extends ParameterList implements
-        BSBGraphicInterfaceListener {
+public class BSBParameterList extends ParameterList implements SetChangeListener<BSBObject> {
 
-    // BSBGraphicInterface bsbInterface = null;
+    public BSBParameterList() {
+    }
+
+    public BSBParameterList(BSBParameterList bsbParamList) {
+        super(bsbParamList);
+    }
 
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
-        bsbInterface.addBSBGraphicInterfaceListener(this);
+        bsbInterface.interfaceItemsProperty().addListener(this);
 
         for (BSBObject bsbObj : bsbInterface) {
             if (bsbObj instanceof AutomatableBSBObject) {
                 AutomatableBSBObject autoBsb = (AutomatableBSBObject) bsbObj;
                 autoBsb.setBSBParameterList(this);
             }
-        }
-    }
-
-    @Override
-    public void bsbObjectAdded(BSBObject bsbObj) {
-        if (bsbObj instanceof AutomatableBSBObject) {
-            AutomatableBSBObject autoBsb = (AutomatableBSBObject) bsbObj;
-            autoBsb.setBSBParameterList(this);
-        }
-    }
-
-    @Override
-    public void bsbObjectRemoved(BSBObject bsbObj) {
-        String[] keys = bsbObj.getReplacementKeys();
-
-        if (keys == null) {
-            return;
-        }
-
-        for (int i = 0; i < keys.length; i++) {
-            if (keys[i] == null || keys[i].length() == 0) {
-                continue;
-            }
-            this.removeParameter(keys[i]);
         }
     }
 
@@ -94,6 +75,30 @@ public class BSBParameterList extends ParameterList implements
         }
 
         return retVal;
+    }
+
+    @Override
+    public void onChanged(Change<? extends BSBObject> change) {
+        if (change.wasAdded()) {
+            BSBObject bsbObj = change.getElementAdded();
+            if (bsbObj instanceof AutomatableBSBObject) {
+                AutomatableBSBObject autoBsb = (AutomatableBSBObject) bsbObj;
+                autoBsb.setBSBParameterList(this);
+            }
+        } else {
+            String[] keys = change.getElementRemoved().getReplacementKeys();
+
+            if (keys == null) {
+                return;
+            }
+
+            for (String key : keys) {
+                if (key == null || key.length() == 0) {
+                    continue;
+                }
+                this.removeParameter(key);
+            }
+        }
     }
 
 }

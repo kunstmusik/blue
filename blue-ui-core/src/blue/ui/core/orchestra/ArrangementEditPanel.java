@@ -365,7 +365,7 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument instr = arrangement.getInstrument(selectedRow);
 
-        Object clone = instr.clone();
+        Object clone = instr.deepCopy();
 
         CopyBuffer.setBufferedObject(CopyBuffer.INSTRUMENT, clone);
     }
@@ -379,7 +379,7 @@ public class ArrangementEditPanel extends JComponent
 
         Instrument instr = (Instrument) obj;
 
-        Instrument clone = (Instrument) instr.clone();
+        Instrument clone = (Instrument) instr.deepCopy();
 
         if (clone instanceof BlueSynthBuilder) {
             ((BlueSynthBuilder) clone).clearParameters();
@@ -487,7 +487,7 @@ public class ArrangementEditPanel extends JComponent
             Instrument instr = arr.getInstrument(index);
 
             // USE CLONE OF OBJ AS TRANSFERRABLE ISN'T MAKING CLONE (WHY?)
-            Object cloneNode = instr.clone();
+            Object cloneNode = instr.deepCopy();
 
             transferable = new TransferableInstrument(cloneNode);
             source.startDrag(dge, null, transferable, this);

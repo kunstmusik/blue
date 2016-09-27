@@ -10,19 +10,23 @@ import electric.xml.Element;
 /**
  * Title: blue Description: an object composition environment for csound
  * Copyright: Copyright (c) 2001 Company: steven yi music
- * 
+ *
  * @author steven yi
  * @version 1.0
  */
+@NoteProcessorPlugin(displayName = "InversionProcessor", position = 90)
+public class InversionProcessor implements NoteProcessor {
 
-@NoteProcessorPlugin(displayName="InversionProcessor", position = 90)
-public class InversionProcessor implements NoteProcessor, java.io.Serializable {
-
-    float value = 10;
+    double value = 10;
 
     int pfield = 4;
 
     public InversionProcessor() {
+    }
+
+    public InversionProcessor(InversionProcessor ip) {
+        value = ip.value;
+        pfield = ip.pfield;
     }
 
     @Override
@@ -40,11 +44,11 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
     }
 
     public String getVal() {
-        return Float.toString(value);
+        return Double.toString(value);
     }
 
     public void setVal(String value) {
-        this.value = Float.parseFloat(value);
+        this.value = Double.parseDouble(value);
     }
 
     @Override
@@ -53,12 +57,12 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
         for (int i = 0; i < in.size(); i++) {
             temp = in.get(i);
             try {
-                float fieldVal = Float.parseFloat(temp.getPField(pfield));
-                float addVal = -1 * (fieldVal - this.value);
-                temp.setPField(Float.toString(this.value + addVal), pfield);
+                double fieldVal = Double.parseDouble(temp.getPField(pfield));
+                double addVal = -1 * (fieldVal - this.value);
+                temp.setPField(Double.toString(this.value + addVal), pfield);
             } catch (NumberFormatException ex) {
                 throw new NoteProcessorException(this, BlueSystem
-                        .getString("noteProcessorException.pfieldNotFloat"),
+                        .getString("noteProcessorException.pfieldNotDouble"),
                         pfield);
             } catch (Exception ex) {
                 throw new NoteProcessorException(this, BlueSystem
@@ -117,5 +121,10 @@ public class InversionProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("value").setText(this.getVal());
 
         return retVal;
+    }
+
+    @Override
+    public InversionProcessor deepCopy() {
+        return new InversionProcessor(this);
     }
 }

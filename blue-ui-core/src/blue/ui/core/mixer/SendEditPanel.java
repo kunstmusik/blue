@@ -8,14 +8,12 @@ package blue.ui.core.mixer;
 
 import blue.mixer.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.Locale;
 import javax.swing.ComboBoxModel;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * 

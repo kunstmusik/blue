@@ -16,13 +16,17 @@ import electric.xml.Element;
  */
 
 @NoteProcessorPlugin(displayName="SubListProcessor", position = 60)
-public class SubListProcessor implements NoteProcessor, java.io.Serializable {
+public class SubListProcessor implements NoteProcessor {
 
     int start = 1;
 
     int end = 2;
 
     public SubListProcessor() {
+    }
+    public SubListProcessor(SubListProcessor slp) {
+        start = slp.start;
+        end = slp.end;
     }
 
     @Override
@@ -116,5 +120,10 @@ public class SubListProcessor implements NoteProcessor, java.io.Serializable {
         retVal.addElement("end").setText(this.getEnd());
 
         return retVal;
+    }
+
+    @Override
+    public SubListProcessor deepCopy() {
+        return new SubListProcessor(this);
     }
 }

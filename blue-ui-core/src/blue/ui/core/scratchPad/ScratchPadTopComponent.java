@@ -25,8 +25,6 @@ import blue.projects.BlueProject;
 import blue.projects.BlueProjectManager;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.Serializable;
 import javax.swing.event.DocumentEvent;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
@@ -34,7 +32,6 @@ import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-//import org.openide.util.Utilities;
 
 /**
  * TopComponent for project scratchpad

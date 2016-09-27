@@ -39,7 +39,7 @@ public class PatternObjectTest extends TestCase {
             }
         }
 
-        SoundObject clone = (SoundObject) p.clone();
+        SoundObject clone =  p.deepCopy();
 
         boolean isEqual = EqualsBuilder.reflectionEquals(p, clone);
 

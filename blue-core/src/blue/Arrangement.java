@@ -30,7 +30,6 @@ import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Pattern;
 import javax.swing.event.TableModelEvent;
@@ -44,11 +43,11 @@ import org.apache.commons.lang3.text.StrBuilder;
  * Selected instruments from instrument library to use for CSD generation.
  * Instruments are held in a TreeMap.
  */
-public class Arrangement implements Cloneable, Serializable, TableModel {
+public class Arrangement implements TableModel {
 
     private static final Pattern NEW_LINES = Pattern.compile("\\n");
 
-    private ArrayList<InstrumentAssignment> arrangement;
+    private ArrayList<InstrumentAssignment> arrangement = new ArrayList<>();
 
     private transient Vector<TableModelListener> listeners = null;
 
@@ -63,7 +62,13 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
     private transient ArrayList<InstrumentAssignment> preGenList = new ArrayList<>();
 
     public Arrangement() {
-        arrangement = new ArrayList<>();
+    }
+
+    /** Copy Constructor */
+    public Arrangement(Arrangement arr){
+        for(InstrumentAssignment ia :arr.getArrangement()) {
+            arrangement.add(new InstrumentAssignment(ia));
+        }        
     }
 
     public int addInstrument(Instrument instrument) {
@@ -301,11 +306,6 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
                 return;
             }
         }
-    }
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
     }
 
     public ArrayList<InstrumentAssignment> getArrangement() {
@@ -720,19 +720,6 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         return arr;
     }
 
-    public Element saveAsXML() {
-        Element retVal = new Element("arrangement");
-
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
-            retVal.addElement(ia.saveAsXML());
-        }
-
-        return retVal;
-    }
-
     // OLD SAVING AND LOADING METHODS
     /**
      * Used by old pre 0.95.0 code before instrument libraries removed from
@@ -760,46 +747,16 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
         }
 
         return arr;
-    }
+    } 
 
-    /**
-     * Used by old pre 0.95.0 code before instrument libraries removed from
-     * project and user instrument library was implemented.
-     *
-     * This code is here to maintain compatibility with projects that still
-     * contain InstrumentLibraries and is used when migrating to new format.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public Element saveAsXML(InstrumentLibrary iLibrary) {
+    public Element saveAsXML() {
         Element retVal = new Element("arrangement");
 
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
-            retVal.addElement(ia.saveAsXML(iLibrary));
+        for (InstrumentAssignment ia : arrangement) {
+            retVal.addElement(ia.saveAsXML());
         }
 
         return retVal;
-    }
-
-    /**
-     * @param instr
-     * @return
-     */
-    public boolean containsInstrument(Instrument instr) {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
-            if (ia.instr == instr) {
-                return true;
-            }
-
-        }
-        return false;
     }
 
     /**
@@ -823,19 +780,6 @@ public class Arrangement implements Cloneable, Serializable, TableModel {
      */
     public InstrumentAssignment getInstrumentAssignment(int rowIndex) {
         return arrangement.get(rowIndex);
-    }
-
-    /**
-     *
-     */
-    public void normalize() {
-        for (Iterator<InstrumentAssignment> iter = arrangement.iterator(); iter.
-                hasNext();) {
-            InstrumentAssignment ia = iter.next();
-
-            ia.normalize();
-
-        }
     }
 
     /*

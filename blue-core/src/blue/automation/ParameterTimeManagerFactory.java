@@ -34,7 +34,7 @@ public class ParameterTimeManagerFactory {
     static class DefaultParameterTimeManager implements ParameterTimeManager {
 
         @Override
-        public float getTime() {
+        public double getTime() {
             return -1.0f;
         }
 

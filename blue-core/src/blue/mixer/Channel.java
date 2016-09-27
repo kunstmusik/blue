@@ -32,7 +32,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -46,7 +45,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author Steven Yi
  */
 
-public class Channel implements Serializable, Comparable<Channel>, ParameterListener {
+public class Channel implements Comparable<Channel>, ParameterListener {
 
     public static final String MASTER = "Master";
 
@@ -62,9 +61,9 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
 
     private transient List<PropertyChangeListener> listeners;
 
-    private EffectsChain preEffects = new EffectsChain();
+    private EffectsChain preEffects;
 
-    private EffectsChain postEffects = new EffectsChain();
+    private EffectsChain postEffects;
 
     private String outChannel = MASTER;
 
@@ -74,15 +73,20 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
 
     private boolean solo = false;
 
-    private float level = 0.0f;
+    private double level = 0.0f;
 
-    Parameter levelParameter = new Parameter();
-
-    private boolean updatingLine = false;
+    Parameter levelParameter; 
 
     private String association = null;
 
+    private transient boolean updatingLine = false;
+
+
     public Channel() {
+        preEffects = new EffectsChain();
+        postEffects = new EffectsChain();
+
+        levelParameter = new Parameter();
         levelParameter.setName("Volume");
         levelParameter.setLabel("dB");
         levelParameter.setMin(-96.0f, false);
@@ -91,6 +95,23 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         levelParameter.setResolution(-1.0f);
 
         levelParameter.addParameterListener(this);
+    }
+
+    public Channel(Channel channel){
+
+        preEffects = new EffectsChain(channel.preEffects);
+        postEffects = new EffectsChain(channel.postEffects);
+
+        outChannel = channel.outChannel;
+        name = channel.name;
+        muted = channel.muted;
+        solo = channel.solo;
+        level = channel.level;
+
+        levelParameter = new Parameter(channel.levelParameter);
+        levelParameter.addParameterListener(this);
+
+        association = channel.association;
     }
 
     public static Channel loadFromXML(Element data) throws Exception {
@@ -114,7 +135,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
                     channel.setOutChannel(node.getTextString());
                     break;
                 case "level":
-                    channel.setLevel(XMLUtilities.readFloat(node));
+                    channel.setLevel(XMLUtilities.readDouble(node));
                     break;
                 case "muted":
                     channel.setMuted(XMLUtilities.readBoolean(node));
@@ -154,7 +175,7 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         
         retVal.addElement(new Element("name").setText(name));
         retVal.addElement(new Element("outChannel").setText(outChannel));
-        retVal.addElement(XMLUtilities.writeFloat("level", level));
+        retVal.addElement(XMLUtilities.writeDouble("level", level));
         retVal.addElement(XMLUtilities.writeBoolean("muted", muted));
         retVal.addElement(XMLUtilities.writeBoolean("solo", solo));
 
@@ -231,16 +252,16 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         firePropertyChange(SOLO, oldVal, solo);
     }
 
-    public float getLevel() {
+    public double getLevel() {
         // if(levelParameter.isAutomationEnabled()) {
         // return levelParameter.getLine().getValue(0.0f);
         // }
         return level;
     }
 
-    public void setLevel(float level) {
+    public void setLevel(double level) {
         if (levelParameter.isAutomationEnabled()) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
 
             if (time < 0) {
                 return;
@@ -273,11 +294,11 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
             levelParameter.setValue(level);
         }
 
-        float oldVal = this.level;
+        double oldVal = this.level;
 
         this.level = level;
 
-        firePropertyChange(LEVEL, new Float(oldVal), new Float(level));
+        firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
     }
 
     public Parameter getLevelParameter() {
@@ -314,9 +335,9 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
         listeners.remove(pcl);
     }
 
-    public void firePropertyChange(String propertyName, float oldVal,
-            float newVal) {
-        firePropertyChange(propertyName, new Float(oldVal), new Float(newVal));
+    public void firePropertyChange(String propertyName, double oldVal,
+            double newVal) {
+        firePropertyChange(propertyName, new Double(oldVal), new Double(newVal));
     }
 
     public void firePropertyChange(String propertyName, boolean oldVal,
@@ -368,13 +389,13 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
     @Override
     public void lineDataChanged(Parameter param) {
         if (!updatingLine) {
-            float time = ParameterTimeManagerFactory.getInstance().getTime();
-            float level = levelParameter.getLine().getValue(time);
+            double time = ParameterTimeManagerFactory.getInstance().getTime();
+            double level = levelParameter.getLine().getValue(time);
 
-            float oldVal = this.level;
+            double oldVal = this.level;
             this.level = level;
 
-            firePropertyChange(LEVEL, new Float(oldVal), new Float(level));
+            firePropertyChange(LEVEL, new Double(oldVal), new Double(level));
         }
     }
 
@@ -382,17 +403,6 @@ public class Channel implements Serializable, Comparable<Channel>, ParameterList
     public void parameterChanged(Parameter param) {
         // TODO Auto-generated method stub
 
-    }
-
-    /*
-     * This gets called as part of Serialization by Java and will do default
-     * serialization plus reconnect this as a parameter listener
-     */
-    private void readObject(ObjectInputStream stream) throws IOException,
-            ClassNotFoundException {
-        stream.defaultReadObject();
-
-        levelParameter.addParameterListener(this);
     }
 
     public Send[] getPreFaderSends() {

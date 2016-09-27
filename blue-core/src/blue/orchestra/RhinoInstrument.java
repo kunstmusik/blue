@@ -9,7 +9,6 @@ import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.io.Serializable;
 import java.util.HashMap;
 
 /**
@@ -31,8 +30,7 @@ import java.util.HashMap;
  */
 
 @InstrumentPlugin(displayName = "RhinoInstrument", position = 30)
-public class RhinoInstrument extends AbstractInstrument implements
-        Serializable {
+public class RhinoInstrument extends AbstractInstrument {
 
     String instrumentText;
 
@@ -50,6 +48,15 @@ public class RhinoInstrument extends AbstractInstrument implements
         globalSco = "";
 
         opcodeList = new OpcodeList();
+    }
+
+    /** Copy Constructor */
+    public RhinoInstrument(RhinoInstrument jsInstr) {
+        super(jsInstr);
+        instrumentText = jsInstr.instrumentText; 
+        globalOrc = jsInstr.globalOrc; 
+        globalSco = jsInstr.globalSco; 
+        opcodeList = new OpcodeList(jsInstr.opcodeList); 
     }
 
     public String getText() {
@@ -75,11 +82,6 @@ public class RhinoInstrument extends AbstractInstrument implements
     }
 
     // -------------------------------------------
-
-    @Override
-    public Object clone() {
-        return ObjectUtilities.clone(this);
-    }
 
     @Override
     public String generateInstrument() {
@@ -199,5 +201,10 @@ public class RhinoInstrument extends AbstractInstrument implements
 
     public OpcodeList getOpcodeList() {
         return opcodeList;
+    }
+
+    @Override
+    public RhinoInstrument deepCopy() {
+        return new RhinoInstrument(this);
     }
 }
