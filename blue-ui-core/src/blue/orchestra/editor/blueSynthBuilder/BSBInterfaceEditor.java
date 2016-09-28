@@ -34,6 +34,7 @@ import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
+import blue.orchestra.editor.blueSynthBuilder.jfx.editors.BSBPropertyEditorFactory;
 import blue.orchestra.editor.blueSynthBuilder.jfx.PresetPane;
 import java.util.concurrent.CountDownLatch;
 import javafx.collections.ObservableList;
@@ -83,6 +84,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
                 bsbObjPropSheet = new PropertySheet();
                 bsbObjPropSheet.setSearchBoxVisible(false);
                 bsbObjPropSheet.setModeSwitcherVisible(false);
+                bsbObjPropSheet.setPropertyEditorFactory(new BSBPropertyEditorFactory());
+
                 gridPropSheet = new PropertySheet();
                 gridPropSheet.setSearchBoxVisible(false);
                 gridPropSheet.setModeSwitcherVisible(false);
