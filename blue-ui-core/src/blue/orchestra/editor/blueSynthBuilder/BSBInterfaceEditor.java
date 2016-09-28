@@ -35,8 +35,6 @@ import blue.orchestra.blueSynthBuilder.Preset;
 import blue.orchestra.blueSynthBuilder.PresetGroup;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
 import blue.orchestra.editor.blueSynthBuilder.jfx.PresetPane;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.concurrent.CountDownLatch;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -58,8 +56,7 @@ import org.openide.util.Exceptions;
 /**
  * @author Steven
  */
-public class BSBInterfaceEditor extends JComponent implements PresetListener,
-        PropertyChangeListener {
+public class BSBInterfaceEditor extends JComponent implements PresetListener {
 
     private BSBEditPane bsbEditPane = null;
     private TabPane rightPane;
@@ -72,6 +69,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
 
     private double dividerPosition = 0.8;
 
+    // TODO - move JFX code into FXML/Controller
     public BSBInterfaceEditor(BSBObjectEntry[] bsbObjectEntries,
             boolean showAutomatable) {
 
@@ -238,11 +236,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener,
                     -> bsbEditPane.editBSBGraphicInterface(gInterface)
             );
         }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private void updateBsbObjPropSheet() {
