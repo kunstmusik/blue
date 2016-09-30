@@ -145,6 +145,54 @@ public class BSBXYController extends AutomatableBSBObject implements
         return yValue;
     }
 
+    public final void setXValue(double val) {
+        xValue.setValue(val);
+    }
+
+    public final double getXValue() {
+        return xValue.getValue();
+    }
+
+    public final void setXMin(double value) {
+        xValue.setMin(value);
+    }
+
+    public final double getXMin() {
+        return xValue.getMin();
+    }
+
+    public final void setXMax(double value) {
+        xValue.setMax(value);
+    }
+
+    public final double getXMax() {
+        return xValue.getMax();
+    }
+
+    public final void setYValue(double val) {
+        yValue.setValue(val);
+    }
+
+    public final double getYValue() {
+        return yValue.getValue();
+    }
+
+    public final void setYMin(double value) {
+        yValue.setMin(value);
+    }
+
+    public final double getYMin() {
+        return yValue.getMin();
+    }
+
+    public final void setYMax(double value) {
+        yValue.setMax(value);
+    }
+
+    public final double getYMax() {
+        return yValue.getMax();
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBXYController xyController = new BSBXYController();
 
@@ -301,32 +349,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         yValue.setValue(yVal);
     }
 
-//    public int getHeight() {
-//        return height;
-//    }
-//
-//    public void setHeight(int height) {
-//        int oldHeight = this.height;
-//        this.height = height;
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("height", oldHeight, height);
-//        }
-//    }
-//
-//    public int getWidth() {
-//        return width;
-//    }
-//
-//    public void setWidth(int width) {
-//        int oldWidth = this.width;
-//        this.width = width;
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("width", oldWidth, width);
-//        }
-//    }
-//
+
 //    public double getXValue() {
 //        return xValue;
 //    }

@@ -109,29 +109,44 @@ public class BSBXYControllerView extends BorderPane {
                 label.textProperty().bind(
                         Bindings.format("x: %.4g y: %.4g",
                                 bsbXYController.xValueProperty().valueProperty(),
-                                bsbXYController.yValueProperty().valueProperty()));
+                                bsbXYController.xValueProperty().maxProperty(),
+                                bsbXYController.xValueProperty().minProperty(),
+                                bsbXYController.yValueProperty().valueProperty(),
+                                bsbXYController.yValueProperty().maxProperty(),
+                                bsbXYController.yValueProperty().minProperty()));
                 label.prefWidthProperty().bind(pane.prefWidthProperty());
                 yLine.widthProperty().bind(pane.widthProperty());
                 yLine.yProperty().bind(Bindings.createDoubleBinding(() -> {
                     double percent = bsbXYController.yValueProperty().getNormalizedValue();
                     return Math.floor(pane.getPrefHeight() * (1 - percent));
-                }, bsbXYController.yValueProperty().valueProperty()));
+                },
+                        bsbXYController.yValueProperty().valueProperty(),
+                        bsbXYController.yValueProperty().minProperty(),
+                        bsbXYController.yValueProperty().maxProperty()
+                ));
                 xLine.heightProperty().bind(pane.heightProperty());
                 xLine.xProperty().bind(Bindings.createDoubleBinding(() -> {
                     double percent = bsbXYController.xValueProperty().getNormalizedValue();
                     return Math.floor(pane.getPrefWidth() * percent);
-                }, bsbXYController.xValueProperty().valueProperty()));
+                },
+                        bsbXYController.xValueProperty().valueProperty(),
+                        bsbXYController.xValueProperty().minProperty(),
+                        bsbXYController.xValueProperty().maxProperty()
+                ));
                 rect.xProperty().bind(Bindings.createDoubleBinding(()
                         -> (int) (bsbXYController.xValueProperty().getNormalizedValue()
                         * pane.getPrefWidth()) - 1.0,
-                        bsbXYController.xValueProperty().valueProperty()));
+                        bsbXYController.xValueProperty().valueProperty(),
+                        bsbXYController.xValueProperty().maxProperty(),
+                        bsbXYController.xValueProperty().minProperty()));
 
                 rect.yProperty().bind(Bindings.createDoubleBinding(()
                         -> (int) ((1.0 - bsbXYController.yValueProperty().getNormalizedValue())
                         * pane.getPrefHeight()) - 1.0,
-                        bsbXYController.yValueProperty().valueProperty()));
+                        bsbXYController.yValueProperty().valueProperty(),
+                        bsbXYController.yValueProperty().maxProperty(),
+                        bsbXYController.yValueProperty().minProperty()));
             }
         });
     }
 }
-
