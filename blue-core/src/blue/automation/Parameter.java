@@ -26,7 +26,6 @@ import blue.components.lines.LineUtils;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.rmi.dgc.VMID;
-import java.util.Iterator;
 import java.util.Vector;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -50,10 +49,11 @@ public class Parameter implements TableModelListener {
     private String label = "";
     private double resolution = -1.0f;
     private Line line;
-    transient Vector listeners;
     private boolean automationEnabled = false;
+
     private boolean updatingLine = false;
     private String uniqueId;
+    transient Vector<ParameterListener> listeners;
 
     /* Used only at compilation time; not transient as it should be copied. 
     *  FIXME: this should be rewrittten. 
@@ -86,7 +86,7 @@ public class Parameter implements TableModelListener {
 
     public void addParameterListener(ParameterListener listener) {
         if (listeners == null) {
-            listeners = new Vector();
+            listeners = new Vector<>();
         }
         listeners.add(listener);
     }
@@ -102,9 +102,7 @@ public class Parameter implements TableModelListener {
             return;
         }
 
-        Iterator iter = new Vector(listeners).iterator();
-        while (iter.hasNext()) {
-            ParameterListener cl = (ParameterListener) iter.next();
+        for(ParameterListener cl :listeners) {
             cl.parameterChanged(this);
         }
     }
@@ -113,10 +111,7 @@ public class Parameter implements TableModelListener {
         if (listeners == null) {
             return;
         }
-
-        Iterator iter = new Vector(listeners).iterator();
-        while (iter.hasNext()) {
-            ParameterListener cl = (ParameterListener) iter.next();
+        for(ParameterListener cl :listeners) {
             cl.lineDataChanged(this);
         }
     }
