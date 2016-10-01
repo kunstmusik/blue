@@ -54,8 +54,8 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
             properties[PROPERTY_knobWidth] = new PropertyDescriptor ( "knobWidth", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getKnobWidth", "setKnobWidth" ); // NOI18N
-            properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMaximum", null ); // NOI18N
-            properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMinimum", null ); // NOI18N
+            properties[PROPERTY_maximum] = new PropertyDescriptor ( "maximum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMaximum", "setMaximum" ); // NOI18N
+            properties[PROPERTY_minimum] = new PropertyDescriptor ( "minimum", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getMinimum", "setMinimum" ); // NOI18N
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isRandomizable", "setRandomizable" ); // NOI18N
             properties[PROPERTY_value] = new PropertyDescriptor ( "value", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getValue", "setValue" ); // NOI18N

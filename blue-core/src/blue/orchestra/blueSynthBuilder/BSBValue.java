@@ -26,7 +26,6 @@ import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 
 /**
  * @author Steven Yi
@@ -34,68 +33,74 @@ import javafx.beans.property.SimpleDoubleProperty;
  */
 public class BSBValue extends AutomatableBSBObject implements ParameterListener {
 
-    private DoubleProperty defaultValue = new SimpleDoubleProperty(0.0) {
-        @Override
-        protected void invalidated() {
-        }
-    };
-    private DoubleProperty minimum = new SimpleDoubleProperty(0.0) {
-        @Override
-        protected void invalidated() {
+    private ClampedValue defaultValue;
 
-        }
-    };
-
-    private DoubleProperty maximum = new SimpleDoubleProperty(1.0) {
-        @Override
-        protected void invalidated() {
-        }
-    };
+//    private DoubleProperty defaultValue = new SimpleDoubleProperty(0.0) {
+//        @Override
+//        protected void invalidated() {
+//            if(get() < getMinimum()) {
+//                set(getMinimum());
+//            } else if(get() > getMaximum()) {
+//                set(getMaximum());
+//            }
+//        }
+//    };
+//    private DoubleProperty minimum = new SimpleDoubleProperty(0.0) {
+//        @Override
+//        protected void invalidated() {
+//
+//        }
+//    };
+//
+//    private DoubleProperty maximum = new SimpleDoubleProperty(1.0) {
+//        @Override
+//        protected void invalidated() {
+//        }
+//    };
 
     public BSBValue() {
+        defaultValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
     }
 
     public BSBValue(BSBValue val) {
         super(val);
-        setDefaultValue(val.getDefaultValue());
-        setMinimum(val.getMinimum());
-        setMaximum(val.getMaximum());
+        defaultValue = new ClampedValue(val.defaultValue);
     }
 
     public final void setDefaultValue(double value) {
-        defaultValue.set(value);
+        defaultValue.setValue(value);
     }
 
     public final double getDefaultValue() {
-        return defaultValue.get();
+        return defaultValue.getValue();
     }
 
     public final DoubleProperty defaultValueProperty() {
-        return defaultValue;
+        return defaultValue.valueProperty();
     }
 
     public final void setMinimum(double value) {
-        minimum.set(value);
+        defaultValue.setMin(value);
     }
 
     public final double getMinimum() {
-        return minimum.get();
+        return defaultValue.getMin();
     }
 
     public final DoubleProperty minimumProperty() {
-        return minimum;
+        return defaultValue.minProperty();
     }
 
     public final void setMaximum(double value) {
-        maximum.set(value);
+        defaultValue.setMax(value);
     }
 
     public final double getMaximum() {
-        return maximum.get();
+        return defaultValue.getMax();
     }
 
     public final DoubleProperty maximumProperty() {
-        return maximum;
+        return defaultValue.maxProperty();
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -127,14 +132,14 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
 
         // set min and max values
         if (minVal > 1.0f) {
-            value.setMaximum(maxVal);
-            value.setMinimum(minVal);
+            value.defaultValue.maxProperty().set(maxVal);
+            value.defaultValue.minProperty().set(minVal);
         } else {
-            value.setMinimum(minVal);
-            value.setMaximum(maxVal);
+            value.defaultValue.minProperty().set(minVal);
+            value.defaultValue.maxProperty().set(maxVal);
         }
 
-        value.setDefaultValue(val);
+        value.defaultValue.valueProperty().set(val);
 
         return value;
     }
@@ -257,10 +262,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
 //            }
 //        }
 //
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("defaultValue", new Double(oldValue),
-//                    new Double(this.defaultValue));
-//        }
 //    }
 
     /*
@@ -334,10 +335,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
 //        double oldValue = this.defaultValue;
 //        this.defaultValue = value;
 //
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("updateDefaultValue",
-//                    new Double(oldValue), new Double(this.defaultValue));
-//        }
 //    }
     @Override
     public void lineDataChanged(Parameter param) {

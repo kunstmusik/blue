@@ -109,9 +109,9 @@ public class BSBXYControllerView extends BorderPane {
                 label.textProperty().bind(
                         Bindings.format("x: %.4g y: %.4g",
                                 bsbXYController.xValueProperty().valueProperty(),
+                                bsbXYController.yValueProperty().valueProperty(),
                                 bsbXYController.xValueProperty().maxProperty(),
                                 bsbXYController.xValueProperty().minProperty(),
-                                bsbXYController.yValueProperty().valueProperty(),
                                 bsbXYController.yValueProperty().maxProperty(),
                                 bsbXYController.yValueProperty().minProperty()));
                 label.prefWidthProperty().bind(pane.prefWidthProperty());

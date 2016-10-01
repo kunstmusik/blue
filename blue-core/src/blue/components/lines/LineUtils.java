@@ -59,17 +59,7 @@ public class LineUtils {
      * @return
      */
     public static double truncate(double oldVal, double newMin, double newMax) {
-        double retVal = oldVal;
-
-        if (retVal < newMin) {
-            retVal = newMin;
-        }
-
-        if (retVal > newMax) {
-            retVal = newMax;
-        }
-
-        return retVal;
+        return Math.max(newMin, Math.min(newMax, oldVal));
     }
 
     /**

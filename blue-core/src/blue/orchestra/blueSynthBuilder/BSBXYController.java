@@ -41,8 +41,8 @@ public class BSBXYController extends AutomatableBSBObject implements
     private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     public BSBXYController() {
-        xValue = new ClampedValue(0.0, 1.0, 0.5);
-        yValue = new ClampedValue(0.0, 1.0, 0.5);
+        xValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
+        yValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
     }
 
     public BSBXYController(BSBXYController xy) {
@@ -206,6 +206,9 @@ public class BSBXYController extends AutomatableBSBObject implements
             version = Integer.parseInt(versionStr);
         }
 
+        double xmin = 0.0, xmax = 1.0, xval = 0.0;
+        double ymin = 0.0, ymax = 1.0, yval = 0.0;
+
         Elements nodes = data.getElements();
 
         while (nodes.hasMoreElements()) {
@@ -220,22 +223,22 @@ public class BSBXYController extends AutomatableBSBObject implements
                     xyController.setHeight(Integer.parseInt(nodeText));
                     break;
                 case "xMin":
-                    xyController.xValue.setMin(Double.parseDouble(nodeText));
+                    xmin = Double.parseDouble(nodeText);
                     break;
                 case "xMax":
-                    xyController.xValue.setMax(Double.parseDouble(nodeText));
+                    xmax = Double.parseDouble(nodeText);
                     break;
                 case "yMin":
-                    xyController.xValue.setMin(Double.parseDouble(nodeText));
+                    ymin = Double.parseDouble(nodeText);
                     break;
                 case "yMax":
-                    xyController.yValue.setMax(Double.parseDouble(nodeText));
+                    ymax = Double.parseDouble(nodeText);
                     break;
                 case "xValue":
-                    xyController.xValue.setValue(Double.parseDouble(nodeText));
+                    xval = Double.parseDouble(nodeText);
                     break;
                 case "yValue":
-                    xyController.yValue.setValue(Double.parseDouble(nodeText));
+                    yval = Double.parseDouble(nodeText);
                     break;
                 case "randomizable":
                     xyController.setRandomizable(XMLUtilities.readBoolean(node));
@@ -245,16 +248,34 @@ public class BSBXYController extends AutomatableBSBObject implements
 
         // convert from relative to absolute values (0.110.0)
         if (version == 1) {
-            double xrange = xyController.xValue.getMax() - xyController.xValue.getMin();
-            xyController.xValue.setValue(
-                    (xyController.xValue.getValue() * xrange)
-                    + xyController.xValue.getMin());
+            double xrange = xmax - xmin;
+            xval = (xrange *xval) +xmin;  
 
-            double yrange = xyController.yValue.getMax() - xyController.yValue.getMin();
-            xyController.yValue.setValue(
-                    (xyController.yValue.getValue() * yrange)
-                    + xyController.yValue.getMin());
+            double yrange = ymax - ymin;
+            yval = (yrange *yval) +ymin;  
         }
+
+        ClampedValue xProp = xyController.xValueProperty();
+        ClampedValue yProp = xyController.yValueProperty();
+
+        if(xmin > 1.0) {
+            xProp.maxProperty().set(xmax);
+            xProp.minProperty().set(xmin);
+        } else {
+            xProp.minProperty().set(xmin);
+            xProp.maxProperty().set(xmax);
+        }
+        xProp.valueProperty().set(xval);
+
+        if(ymin > 1.0) {
+            yProp.maxProperty().set(ymax);
+            yProp.minProperty().set(ymin);
+        } else {
+            yProp.minProperty().set(ymin);
+            yProp.maxProperty().set(ymax);
+        }
+        yProp.valueProperty().set(yval);
+
 
         return xyController;
     }
@@ -282,9 +303,6 @@ public class BSBXYController extends AutomatableBSBObject implements
         return retVal;
     }
 
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBXYControllerView(this);
-//    }
     @Override
     public String[] getReplacementKeys() {
         if (this.objectName == null || this.objectName.trim().length() == 0) {
@@ -348,7 +366,6 @@ public class BSBXYController extends AutomatableBSBObject implements
         xValue.setValue(xVal);
         yValue.setValue(yVal);
     }
-
 
 //    public double getXValue() {
 //        return xValue;

@@ -43,7 +43,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     public BSBKnob() {
-        knobValue = new ClampedValue(0.0, 1.0, 0.0);
+        knobValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
     }
 
     public BSBKnob(BSBKnob knob) {
@@ -147,11 +147,11 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         // set min and max values
         if (minVal > 1.0f) {
-            knob.setMaximum(maxVal);
-            knob.setMinimum(minVal);
+            knob.knobValue.maxProperty().set(maxVal);
+            knob.knobValue.minProperty().set(minVal);
         } else {
-            knob.setMinimum(minVal);
-            knob.setMaximum(maxVal);
+            knob.knobValue.minProperty().set(minVal);
+            knob.knobValue.maxProperty().set(maxVal);
         }
 
         // convert from relative to absolute values (0.110.0)
@@ -160,7 +160,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
             value = (value * range) + minVal;
         }
 
-        knob.setValue(value);
+        knob.knobValue.valueProperty().set(value);
 
         return knob;
     }
