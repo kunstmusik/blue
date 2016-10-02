@@ -52,7 +52,7 @@ public class BSBHSliderView extends BorderPane {
             if (newVal == null) {
                 slider.maxProperty().unbind();
                 slider.minProperty().unbind();
-                slider.valueProperty().unbind();
+                slider.valueProperty().unbindBidirectional(bsbHSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
 
                 valuePanel.valueProperty().unbind();

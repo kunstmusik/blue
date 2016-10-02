@@ -20,6 +20,8 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.components.lines.LineUtils;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.DoublePropertyBase;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -28,10 +30,10 @@ import javax.swing.JOptionPane;
 /**
  * Provides double value property that is clamped to reside between min and max
  * value properties, optionally using resolution.
- * 
+ *
  * The setters for this class contain code to query the user for how to handle
- * line boundary changes.  These setters should be used only by the end-user,
- * such as when editing the value from a property sheet.  To set values manually
+ * line boundary changes. These setters should be used only by the end-user,
+ * such as when editing the value from a property sheet. To set values manually
  * and avoid the querying, use the property directly and call .set() on it.
  *
  * @author stevenyi
@@ -42,6 +44,8 @@ public class ClampedValue {
     private DoubleProperty min;
     private DoubleProperty max;
     private DoubleProperty resolution;
+
+    List<ClampedValueListener> listeners = null;
 
     public ClampedValue() {
         this(0.0, 1.0, 0.5, -1.0);
@@ -120,14 +124,13 @@ public class ClampedValue {
 
         double newV = Math.max(min, Math.min(max, v));
 
-        if(resolution > 0.0) {
+        if (resolution > 0.0) {
             newV = LineUtils.snapToResolution(newV, min, max, resolution);
         }
         if (v != newV) {
             setValue(newV);
         }
     }
-
 
     public final void randomizeValue() {
         setNormalizedValue(Math.random());
@@ -144,7 +147,7 @@ public class ClampedValue {
         double range = getMax() - min;
         double newVal = (range * value) + min;
 
-        if(resolution > 0.0) {
+        if (resolution > 0.0) {
             newVal = LineUtils.snapToResolution(newVal, min, max, resolution);
         }
         setValue(newVal);
@@ -163,14 +166,16 @@ public class ClampedValue {
         return newVal;
     }
 
-
     public final void setValue(double val) {
         double v = Math.max(getMin(), Math.min(getMax(), val));
 
-        if(getResolution() > 0.0) {
+        if (getResolution() > 0.0) {
             v = LineUtils.snapToResolution(v, getMin(), getMax(), getResolution());
         }
         value.set(val);
+
+        notifyListeners(ClampedValueListener.PropertyType.MAX, 
+                ClampedValueListener.BoundaryType.NONE);
     }
 
     public final double getValue() {
@@ -191,20 +196,24 @@ public class ClampedValue {
         }
 
         String retVal = LineBoundaryDialog.getLinePointMethod();
+        ClampedValueListener.BoundaryType bType;
 
-        switch(retVal) {
+        switch (retVal) {
             case LineBoundaryDialog.TRUNCATE:
                 setValue(LineUtils.truncate(getValue(), value, getMax()));
+                bType = ClampedValueListener.BoundaryType.TRUNCATE;
                 break;
             case LineBoundaryDialog.RESCALE:
-                setValue(LineUtils.rescale(getValue(), getMin(), getMax(), 
+                setValue(LineUtils.rescale(getValue(), getMin(), getMax(),
                         value, getMax(), getResolution()));
+                bType = ClampedValueListener.BoundaryType.SCALE;
                 break;
             default:
                 return;
         }
 
         min.set(value);
+        notifyListeners(ClampedValueListener.PropertyType.MIN, bType);
     }
 
     public final double getMin() {
@@ -226,19 +235,23 @@ public class ClampedValue {
         }
 
         String retVal = LineBoundaryDialog.getLinePointMethod();
+        ClampedValueListener.BoundaryType bType;
 
-        switch(retVal) {
+        switch (retVal) {
             case LineBoundaryDialog.TRUNCATE:
                 setValue(LineUtils.truncate(getValue(), getMin(), value));
+                bType = ClampedValueListener.BoundaryType.TRUNCATE;
                 break;
             case LineBoundaryDialog.RESCALE:
-                setValue(LineUtils.rescale(getValue(), getMin(), getMax(), 
+                setValue(LineUtils.rescale(getValue(), getMin(), getMax(),
                         getMin(), value, getResolution()));
+                bType = ClampedValueListener.BoundaryType.SCALE;
                 break;
             default:
                 return;
         }
         max.set(value);
+        notifyListeners(ClampedValueListener.PropertyType.MAX, bType);
     }
 
     public final double getMax() {
@@ -252,6 +265,8 @@ public class ClampedValue {
     public final void setResolution(double value) {
         resolution.set(value);
         adjustValue();
+        notifyListeners(ClampedValueListener.PropertyType.RESOLUTION,
+                ClampedValueListener.BoundaryType.NONE);
     }
 
     public final double getResolution() {
@@ -261,4 +276,30 @@ public class ClampedValue {
     public final DoubleProperty resolutionProperty() {
         return resolution;
     }
+
+
+    /* Listener Code*/
+    public void addListener(ClampedValueListener cvl) {
+        if (listeners == null) {
+            listeners = new ArrayList<>();
+        }
+        listeners.add(cvl);
+    }
+
+    public void removeListener(ClampedValueListener cvl) {
+        if (listeners != null) {
+            listeners.remove(cvl);
+        }
+    }
+
+    public void notifyListeners(ClampedValueListener.PropertyType pType,
+            ClampedValueListener.BoundaryType bType) {
+        if (listeners != null) {
+            for (ClampedValueListener listener : listeners) {
+                listener.propertyChanged(pType, bType);
+            }
+        }
+
+    }
+
 }

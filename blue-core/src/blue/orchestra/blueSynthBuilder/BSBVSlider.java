@@ -41,93 +41,68 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBVSlider extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    private DoubleProperty minimum = new SimpleDoubleProperty(0.0);
-    private DoubleProperty maximum = new SimpleDoubleProperty(1.0);
-    private DoubleProperty resolution = new SimpleDoubleProperty(0.1);
-    private DoubleProperty value = new SimpleDoubleProperty(0.0) {
-        @Override
-        public void set(double newValue) {
-            double v = newValue;
-            if (getResolution() > 0) {
-                v = LineUtils.snapToResolution(v, getMinimum(),
-                        getMaximum(), getResolution());
-            }
-
-            super.set(v);
-
-            // FIXME - don't think this should be set here
-            if (parameters != null) {
-                Parameter param = parameters.getParameter(getObjectName());
-                if (param != null) {
-                    param.setValue( v);
-                }
-            }
-        }
-
-    };
+    private ClampedValue value;
 
     private IntegerProperty sliderHeight = new SimpleIntegerProperty(150);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     public BSBVSlider() {
+        value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
     }
 
     public BSBVSlider(BSBVSlider slider){
          super(slider);
-         setMinimum(slider.getMinimum());
-         setMaximum(slider.getMaximum());
-         setResolution(slider.getResolution());
-         setValue(slider.getValue());
+         value = new ClampedValue(slider.value);
          setSliderHeight(slider.getSliderHeight());
          setRandomizable(slider.isRandomizable());
     }        
 
-    public final void setMinimum(double value) {
-        minimum.set(value);
+    public final void setMinimum(double val) {
+        value.setMin(val);
     }
 
     public final double getMinimum() {
-        return minimum.get();
+        return value.getMin();
     }
 
     public final DoubleProperty minimumProperty() {
-        return minimum;
+        return value.minProperty();
     }
 
-    public final void setMaximum(double value) {
-        maximum.set(value);
+    public final void setMaximum(double val) {
+        value.setMax(val);
     }
 
     public final double getMaximum() {
-        return maximum.get();
+        return value.getMax();
     }
 
     public final DoubleProperty maximumProperty() {
-        return maximum;
+        return value.maxProperty();
     }
 
-    public final void setResolution(double value) {
-        resolution.set(value);
+    public final void setResolution(double val) {
+        value.setResolution(val);
     }
 
     public final double getResolution() {
-        return resolution.get();
+        return value.getResolution();
     }
 
     public final DoubleProperty resolutionProperty() {
-        return resolution;
+        return value.resolutionProperty();
     }
 
     public final void setValue(double val) {
-        value.set(val);
+        value.setValue(val);
     }
 
     public final double getValue() {
-        return value.get();
+        return value.getValue();
     }
 
     public final DoubleProperty valueProperty() {
-        return value;
+        return value.valueProperty();
     }
 
     public final void setSliderHeight(int value) {
@@ -163,8 +138,10 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
     public static BSBObject loadFromXML(Element data) {
         BSBVSlider slider = new BSBVSlider();
-        double minVal = 0;
-        double maxVal = 0;
+        double minVal = 0.0;
+        double maxVal = 1.0;
+        double val = 0.0;
+        double res = 0.1;
 
         initBasicFromXML(data, slider);
         String verString = data.getAttributeValue("version");
@@ -175,18 +152,19 @@ public class BSBVSlider extends AutomatableBSBObject implements
         while (nodes.hasMoreElements()) {
             Element node = nodes.next();
             String nodeName = node.getName();
+            final String nodeText = node.getTextString();
             switch (nodeName) {
                 case "minimum":
-                    minVal = parseNum(node.getTextString(), version);
+                    minVal = parseNum(nodeText, version);
                     break;
                 case "maximum":
-                    maxVal = parseNum(node.getTextString(), version);
+                    maxVal = parseNum(nodeText, version);
                     break;
                 case "resolution":
-                    slider.setResolution(parseNum(node.getTextString(), version));
+                    res = Double.parseDouble(nodeText);
                     break;
                 case "value":
-                    slider.setValue(parseNum(node.getTextString(), version));
+                    val = Double.parseDouble(nodeText);
                     break;
                 case "sliderHeight":
                     slider.setSliderHeight(Integer.parseInt(node.getTextString()));
@@ -197,14 +175,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
             }
         }
 
-        // set min and max values
-        if (minVal > slider.getMaximum()) {
-            slider.setMaximum(maxVal);
-            slider.setMinimum(minVal);
-        } else {
-            slider.setMinimum(minVal);
-            slider.setMaximum(maxVal);
-        }
+        slider.value = new ClampedValue(minVal, maxVal, val, res);
 
         return slider;
     }

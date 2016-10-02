@@ -35,29 +35,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
 
     private ClampedValue defaultValue;
 
-//    private DoubleProperty defaultValue = new SimpleDoubleProperty(0.0) {
-//        @Override
-//        protected void invalidated() {
-//            if(get() < getMinimum()) {
-//                set(getMinimum());
-//            } else if(get() > getMaximum()) {
-//                set(getMaximum());
-//            }
-//        }
-//    };
-//    private DoubleProperty minimum = new SimpleDoubleProperty(0.0) {
-//        @Override
-//        protected void invalidated() {
-//
-//        }
-//    };
-//
-//    private DoubleProperty maximum = new SimpleDoubleProperty(1.0) {
-//        @Override
-//        protected void invalidated() {
-//        }
-//    };
-
     public BSBValue() {
         defaultValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
     }
@@ -127,7 +104,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
                     val = Double.parseDouble(nodeText);
                     break;
             }
-
         }
 
         // set min and max values

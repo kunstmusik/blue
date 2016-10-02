@@ -27,11 +27,12 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -47,9 +48,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     private static MessageFormat KEY_FMT = new MessageFormat("{0}_{1}");
 
-    private DoubleProperty minimum = new SimpleDoubleProperty(0.0);
-    private DoubleProperty maximum = new SimpleDoubleProperty(1.0);
-    private DoubleProperty resolution = new SimpleDoubleProperty(0.1);
+    private ClampedValue value;
+
     private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
     private IntegerProperty gap = new SimpleIntegerProperty(5);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
@@ -109,13 +109,47 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         }
     };
 
+    ClampedValueListener cvl = (pType, bType) -> {
+        double v;
+        if (null != pType) {
+            switch (pType) {
+                case MIN:
+                    v = getMinimum();
+                    for (Parameter param : getParameters()) {
+                        param.setMin(v,
+                                bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                    }
+                    break;
+                case MAX:
+                    v = getMaximum();
+                    for (Parameter param : getParameters()) {
+                        param.setMax(v,
+                                bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                    }
+                    break;
+                case RESOLUTION:
+                    v = getResolution();
+                    for (Parameter param : getParameters()) {
+                        param.setResolution(v);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
+
     public BSBHSliderBank() {
+        value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
+        value.addListener(cvl);
         sliders.addListener(listChangeListener);
         sliders.add(new BSBHSlider());
     }
 
     public BSBHSliderBank(BSBHSliderBank bank) {
         super(bank);
+        value = new ClampedValue(bank.value);
+        value.addListener(cvl);
         sliders.addListener(listChangeListener);
 
         for (BSBHSlider slider : bank.sliders) {
@@ -123,40 +157,40 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         }
     }
 
-    public final void setMinimum(double value) {
-        minimum.set(value);
+    public final void setMinimum(double val) {
+        value.setMin(val);
     }
 
     public final double getMinimum() {
-        return minimum.get();
+        return value.getMin();
     }
 
     public final DoubleProperty minimumProperty() {
-        return minimum;
+        return value.minProperty();
     }
 
-    public final void setMaximum(double value) {
-        maximum.set(value);
+    public final void setMaximum(double val) {
+        value.setMax(val);
     }
 
     public final double getMaximum() {
-        return maximum.get();
+        return value.getMax();
     }
 
     public final DoubleProperty maximumProperty() {
-        return maximum;
+        return value.maxProperty();
     }
 
-    public final void setResolution(double value) {
-        resolution.set(value);
+    public final void setResolution(double val) {
+        value.setResolution(val);
     }
 
     public final double getResolution() {
-        return resolution.get();
+        return value.getResolution();
     }
 
     public final DoubleProperty resolutionProperty() {
-        return resolution;
+        return value.resolutionProperty();
     }
 
     public final void setSliderWidth(int value) {
@@ -292,6 +326,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         BSBHSliderBank sliderBank = new BSBHSliderBank();
         double minVal = 0;
         double maxVal = 1.0;
+        double resolution = 0.1;
         initBasicFromXML(data, sliderBank);
 
         Elements nodes = data.getElements();
@@ -309,8 +344,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                     maxVal = Double.parseDouble(node.getTextString());
                     break;
                 case "resolution":
-                    sliderBank
-                            .setResolution(Double.parseDouble(node.getTextString()));
+                    resolution = Double.parseDouble(node.getTextString());
                     break;
                 case "sliderWidth":
                     sliderBank.setSliderWidth(Integer
@@ -329,14 +363,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             }
         }
 
-        // set min and max values
-        if (minVal > 1.0) {
-            sliderBank.setMaximum(maxVal);
-            sliderBank.setMinimum(minVal);
-        } else {
-            sliderBank.setMinimum(minVal);
-            sliderBank.setMaximum(maxVal);
-        }
+        sliderBank.value = new ClampedValue(minVal, maxVal, 0.0, resolution);
 
         return sliderBank;
     }
@@ -783,4 +810,26 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         return new BSBHSliderBank(this);
     }
 
+    private List<Parameter> getParameters() {
+        List<Parameter> params = new ArrayList<>();
+
+        if (parameters != null) {
+
+            Object[] vals = new Object[2];
+            vals[0] = getObjectName();
+
+            for (int i = 0; i < sliders.size(); i++) {
+                vals[1] = new Integer(i);
+                String key = KEY_FMT.format(vals);
+
+                Parameter param = parameters.getParameter(key);
+
+                if (param != null) {
+                    params.add(param);
+                }
+            }
+
+        }
+        return params;
+    }
 }
