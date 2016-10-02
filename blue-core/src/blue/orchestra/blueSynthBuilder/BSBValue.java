@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
+import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
@@ -33,15 +34,35 @@ import javafx.beans.property.DoubleProperty;
  */
 public class BSBValue extends AutomatableBSBObject implements ParameterListener {
 
+    ClampedValueListener cvl = (pType, bType) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null) {
+                switch (pType) {
+                    case MIN:
+                        p.setMin(getMinimum(), bType == TRUNCATE);
+                        break;
+                    case MAX:
+                        p.setMax(getMaximum(), bType == TRUNCATE);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+
     private ClampedValue defaultValue;
 
     public BSBValue() {
         defaultValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
+        defaultValue.addListener(cvl);
     }
 
     public BSBValue(BSBValue val) {
         super(val);
         defaultValue = new ClampedValue(val.defaultValue);
+        defaultValue.addListener(cvl);
     }
 
     public final void setDefaultValue(double value) {
@@ -80,6 +101,14 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         return defaultValue.maxProperty();
     }
 
+    private final void setDefaultValueProperty(ClampedValue value) {
+        if(this.defaultValue != null) {
+            this.defaultValue.removeListener(cvl);
+        }
+        this.defaultValue = value;
+        defaultValue.addListener(cvl);
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBValue value = new BSBValue();
         double minVal = 0.0;
@@ -106,16 +135,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
             }
         }
 
-        // set min and max values
-        if (minVal > 1.0f) {
-            value.defaultValue.maxProperty().set(maxVal);
-            value.defaultValue.minProperty().set(minVal);
-        } else {
-            value.defaultValue.minProperty().set(minVal);
-            value.defaultValue.maxProperty().set(maxVal);
-        }
-
-        value.defaultValue.valueProperty().set(val);
+        value.setDefaultValueProperty(new ClampedValue(minVal, maxVal, val, -1.0));
 
         return value;
     }
@@ -140,15 +160,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
     /*
      * (non-Javadoc)
      * 
-     * @see blue.orchestra.blueSynthBuilder.BSBObject#getBSBObjectView()
-     */
-//    public BSBObjectView getBSBObjectView() {
-//        return new BSBKnobView(this);
-//    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see blue.orchestra.blueSynthBuilder.BSBObject#setupForCompilation(blue.orchestra.blueSynthBuilder.BSBCompilationUnit)
      */
     @Override
@@ -165,80 +176,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         compilationUnit.addReplacementValue(objectName,
                 Double.toString(getDefaultValue()));
     }
-
-//    /**
-//     * @param maximum The maximum to set.
-//     */
-//    public void setMaximum(double maximum, boolean truncate) {
-//        if (maximum <= getMinimum()) {
-//            return;
-//        }
-//        double oldMax = this.maximum;
-//
-//        this.maximum = maximum;
-//
-//        if (truncate) {
-//            setDefaultValue(LineUtils.truncate(getDefaultValue(),
-//                    minimum, maximum));
-//        } else {
-//            setDefaultValue(LineUtils.rescale(getDefaultValue(),
-//                    minimum, oldMax, minimum,
-//                    maximum, -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMax(this.maximum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//    /**
-//     * @param minimum The minimum to set.
-//     */
-//    public void setMinimum(double minimum, boolean truncate) {
-//        if (minimum >= maximum) {
-//            return;
-//        }
-//
-//        double oldMin = this.minimum;
-//        this.minimum = minimum;
-//
-//        if (truncate) {
-//            setDefaultValue(LineUtils.truncate(getDefaultValue(),
-//                    minimum, maximum));
-//        } else {
-//            setDefaultValue(LineUtils.rescale(getDefaultValue(),
-//                    oldMin, maximum, minimum,
-//                    maximum, -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMin(this.minimum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//    /**
-//     * @param value
-//     */
-//    public void setDefaultValue(double value) {
-//        double oldValue = this.defaultValue;
-//        this.defaultValue = value;
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setValue(this.defaultValue);
-//            }
-//        }
-//
-//    }
 
     /*
      * (non-Javadoc)
@@ -307,11 +244,6 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         parameters.addParameter(param);
     }
 
-//    private void updateValue(double value) {
-//        double oldValue = this.defaultValue;
-//        this.defaultValue = value;
-//
-//    }
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.objectName);

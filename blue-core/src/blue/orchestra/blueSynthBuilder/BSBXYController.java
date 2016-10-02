@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
+import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -36,19 +37,58 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     private final IntegerProperty width = new SimpleIntegerProperty(100);
     private final IntegerProperty height = new SimpleIntegerProperty(80);
-    private final ClampedValue xValue;
-    private final ClampedValue yValue;
+    private ClampedValue xValue;
+    private ClampedValue yValue;
     private final BooleanProperty randomizable = new SimpleBooleanProperty(true);
+
+    ClampedValueListener xcvl = (pType, bType) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName() + "X");
+            if (p != null) {
+                switch (pType) {
+                    case MIN:
+                        p.setMin(xValue.getMin(), bType == TRUNCATE);
+                        break;
+                    case MAX:
+                        p.setMax(xValue.getMax(), bType == TRUNCATE);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+    ClampedValueListener ycvl = (pType, bType) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName() + "Y");
+            if (p != null) {
+                switch (pType) {
+                    case MIN:
+                        p.setMin(yValue.getMin(), bType == TRUNCATE);
+                        break;
+                    case MAX:
+                        p.setMax(yValue.getMax(), bType == TRUNCATE);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
 
     public BSBXYController() {
         xValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
+        xValue.addListener(xcvl);
         yValue = new ClampedValue(0.0, 1.0, 0.5, -1.0);
+        yValue.addListener(ycvl);
     }
 
     public BSBXYController(BSBXYController xy) {
         super(xy);
         xValue = new ClampedValue(xy.xValueProperty());
+        xValue.addListener(xcvl);
         yValue = new ClampedValue(xy.yValueProperty());
+        yValue.addListener(ycvl);
     }
 
     // OVERRIDE to handle parameter name changes and multiple parameters
@@ -193,6 +233,22 @@ public class BSBXYController extends AutomatableBSBObject implements
         return yValue.getMax();
     }
 
+    private final void setXValueProperty(ClampedValue value) {
+        if (this.xValue != null) {
+            this.xValue.removeListener(xcvl);
+        }
+        this.xValue = value;
+        xValue.addListener(xcvl);
+    }
+
+    private final void setYValueProperty(ClampedValue value) {
+        if (this.yValue != null) {
+            this.yValue.removeListener(ycvl);
+        }
+        this.yValue = value;
+        yValue.addListener(ycvl);
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBXYController xyController = new BSBXYController();
 
@@ -249,33 +305,14 @@ public class BSBXYController extends AutomatableBSBObject implements
         // convert from relative to absolute values (0.110.0)
         if (version == 1) {
             double xrange = xmax - xmin;
-            xval = (xrange *xval) +xmin;  
+            xval = (xrange * xval) + xmin;
 
             double yrange = ymax - ymin;
-            yval = (yrange *yval) +ymin;  
+            yval = (yrange * yval) + ymin;
         }
 
-        ClampedValue xProp = xyController.xValueProperty();
-        ClampedValue yProp = xyController.yValueProperty();
-
-        if(xmin > 1.0) {
-            xProp.maxProperty().set(xmax);
-            xProp.minProperty().set(xmin);
-        } else {
-            xProp.minProperty().set(xmin);
-            xProp.maxProperty().set(xmax);
-        }
-        xProp.valueProperty().set(xval);
-
-        if(ymin > 1.0) {
-            yProp.maxProperty().set(ymax);
-            yProp.minProperty().set(ymin);
-        } else {
-            yProp.minProperty().set(ymin);
-            yProp.maxProperty().set(ymax);
-        }
-        yProp.valueProperty().set(yval);
-
+        xyController.setXValueProperty(new ClampedValue(xmin, xmax, xval, -1.0));
+        xyController.setYValueProperty(new ClampedValue(ymin, ymax, yval, -1.0));
 
         return xyController;
     }
@@ -367,181 +404,6 @@ public class BSBXYController extends AutomatableBSBObject implements
         yValue.setValue(yVal);
     }
 
-//    public double getXValue() {
-//        return xValue;
-//    }
-//
-//    public void setXValue(double value) {
-//        double oldVal = xValue;
-//        xValue = value;
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "X");
-//            if (param != null) {
-//                param.setValue(this.xValue);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("xValue", new Double(oldVal),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public double getYValue() {
-//        return yValue;
-//    }
-//
-//    public void setYValue(double value) {
-//        double oldVal = yValue;
-//        yValue = value;
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "Y");
-//            if (param != null) {
-//                param.setValue(this.yValue);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("yValue", new Double(oldVal),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public double getXMax() {
-//        return xMax;
-//    }
-//
-//    public void setXMax(double value, boolean truncate) {
-//        if (value <= getXMin()) {
-//            return;
-//        }
-//
-//        double oldMax = xMax;
-//        xMax = value;
-//
-//        if (truncate) {
-//            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
-//        } else {
-//            setXValue(LineUtils.rescale(getXValue(), xMin, oldMax, xMin, xMax,
-//                    -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "X");
-//            if (param != null) {
-//                param.setMax(this.xMax, truncate);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("xMax", new Double(oldMax),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public double getXMin() {
-//        return xMin;
-//    }
-//
-//    public void setXMin(double value, boolean truncate) {
-//        if (value >= getXMax()) {
-//            return;
-//
-//        }
-//        double oldMin = xMin;
-//        xMin = value;
-//
-//        if (truncate) {
-//            setXValue(LineUtils.truncate(getXValue(), xMin, xMax));
-//        } else {
-//            setXValue(LineUtils.rescale(getXValue(), oldMin, xMax, xMin, xMax,
-//                    -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "X");
-//            if (param != null) {
-//                param.setMin(this.xMin, truncate);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("xMin", new Double(oldMin),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public double getYMax() {
-//        return yMax;
-//    }
-//
-//    public void setYMax(double value, boolean truncate) {
-//        if (value <= getYMin()) {
-//            return;
-//        }
-//
-//        double oldMax = yMax;
-//        yMax = value;
-//
-//        if (truncate) {
-//            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
-//        } else {
-//            setYValue(LineUtils.rescale(getYValue(), yMin, oldMax, yMin, yMax,
-//                    -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "Y");
-//            if (param != null) {
-//                param.setMax(this.yMax, truncate);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("yMax", new Double(oldMax),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public double getYMin() {
-//        return yMin;
-//    }
-//
-//    public void setYMin(double value, boolean truncate) {
-//        if (value >= getYMax()) {
-//            return;
-//        }
-//
-//        double oldMin = yMin;
-//        yMin = value;
-//
-//        if (truncate) {
-//            setYValue(LineUtils.truncate(getYValue(), yMin, yMax));
-//        } else {
-//            setYValue(LineUtils.rescale(getYValue(), oldMin, yMax, yMin, yMax,
-//                    -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName()
-//                    + "Y");
-//            if (param != null) {
-//                param.setMin(this.yMin, truncate);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("yMin", new Double(oldMin),
-//                    new Double(value));
-//        }
-//    }
     @Override
     public void initializeParameters() {
         if (parameters == null) {
@@ -614,25 +476,6 @@ public class BSBXYController extends AutomatableBSBObject implements
         parameters.addParameter(param);
     }
 
-//    public void updateXValue(double value) {
-//        double oldVal = xValue.getValue();
-//        xValue.setValue(value);
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("xValue", new Double(oldVal),
-//                    new Double(value));
-//        }
-//    }
-//
-//    public void updateYValue(double value) {
-//        double oldVal = yValue;
-//        yValue = value;
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("yValue", new Double(oldVal),
-//                    new Double(value));
-//        }
-//    }
     @Override
     public void lineDataChanged(Parameter param) {
 

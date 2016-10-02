@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
+import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -39,6 +40,27 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBHSlider extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
+    ClampedValueListener cvl = (pType, bType) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null) {
+                switch (pType) {
+                    case MIN:
+                        p.setMin(getMinimum(), bType == TRUNCATE);
+                        break;
+                    case MAX:
+                        p.setMax(getMaximum(), bType == TRUNCATE);
+                        break;
+                    case RESOLUTION:
+                        p.setResolution(getResolution());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+
     private ClampedValue value;
 
     private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
@@ -47,11 +69,13 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     public BSBHSlider() {
         value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
+        value.addListener(cvl);
     }
 
     public BSBHSlider(BSBHSlider slider) {
          super(slider);
          value = new ClampedValue(slider.value);
+         value.addListener(cvl);
          setSliderWidth(slider.getSliderWidth());
          setRandomizable(slider.isRandomizable());
     }
@@ -102,6 +126,14 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     public final DoubleProperty valueProperty() {
         return value.valueProperty();
+    }
+
+    private final void setValueProperty(ClampedValue value) {
+        if(this.value != null) {
+            this.value.removeListener(cvl);
+        }
+        this.value = value;
+        this.value.addListener(cvl);
     }
 
     public final void setSliderWidth(Integer value) {
@@ -168,7 +200,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
             }
         }
 
-        slider.value = new ClampedValue(minVal, maxVal, val, res);
+        slider.setValueProperty(new ClampedValue(minVal, maxVal, val, res));
 
         return slider;
     }

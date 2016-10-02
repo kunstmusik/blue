@@ -22,6 +22,7 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
+import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -38,17 +39,37 @@ import javafx.beans.property.SimpleIntegerProperty;
 public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         Randomizable {
 
+    ClampedValueListener cvl = (pType, bType) -> {
+        if (parameters != null) {
+            Parameter p = parameters.getParameter(getObjectName());
+            if (p != null) {
+                switch (pType) {
+                    case MIN:
+                        p.setMin(getMinimum(), bType == TRUNCATE);
+                        break;
+                    case MAX:
+                        p.setMax(getMaximum(), bType == TRUNCATE);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+
     private ClampedValue knobValue;
     private IntegerProperty knobWidth = new SimpleIntegerProperty(60);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
+        knobValue.addListener(cvl);
     }
 
     public BSBKnob(BSBKnob knob) {
         super(knob);
         knobValue = new ClampedValue(knob.knobValueProperty());
+        knobValue.addListener(cvl);
         setKnobWidth(knob.getKnobWidth());
         setRandomizable(knob.isRandomizable());
     }
@@ -79,6 +100,14 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
     public final ClampedValue knobValueProperty() {
         return knobValue;
+    }
+
+    private final void setKnobValueProperty(ClampedValue value) {
+        if(this.knobValue != null) {
+            this.knobValue.removeListener(cvl);
+        }
+        this.knobValue = value;
+        knobValue.addListener(cvl);
     }
 
     public final void setValue(double val) {
@@ -145,22 +174,13 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         }
 
-        // set min and max values
-        if (minVal > 1.0f) {
-            knob.knobValue.maxProperty().set(maxVal);
-            knob.knobValue.minProperty().set(minVal);
-        } else {
-            knob.knobValue.minProperty().set(minVal);
-            knob.knobValue.maxProperty().set(maxVal);
-        }
-
         // convert from relative to absolute values (0.110.0)
         if (version == 1) {
             double range = maxVal - minVal;
             value = (value * range) + minVal;
         }
 
-        knob.knobValue.valueProperty().set(value);
+        knob.setKnobValueProperty(new ClampedValue(minVal, maxVal, value, -1.0));
 
         return knob;
     }
@@ -207,81 +227,6 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
                 knobValue.getValue()));
     }
 
-//    /**
-//     * @param maximum
-//     *            The maximum to set.
-//     */
-//    public void setMaximum(double maximum, boolean truncate) {
-//        if (maximum <= getMinimum()) {
-//            return;
-//        }
-//        double oldMax = this.maximum;
-//
-//        this.maximum = maximum;
-//
-//        if (truncate) {
-//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-//        } else {
-//            setValue(LineUtils.rescale(getValue(), minimum, oldMax, minimum,
-//                    maximum, -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMax(this.maximum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//    /**
-//     * @param minimum
-//     *            The minimum to set.
-//     */
-//    public void setMinimum(double minimum, boolean truncate) {
-//        if (minimum >= maximum) {
-//            return;
-//        }
-//
-//        double oldMin = this.minimum;
-//        this.minimum = minimum;
-//
-//        if (truncate) {
-//            setValue(LineUtils.truncate(getValue(), minimum, maximum));
-//        } else {
-//            setValue(LineUtils.rescale(getValue(), oldMin, maximum, minimum,
-//                    maximum, -1.0f));
-//        }
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setMin(this.minimum, truncate);
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//    /**
-//     * @param value
-//     */
-//    public void setValue(double value) {
-//        double oldValue = this.value;
-//        this.value = value;
-//
-//        if (parameters != null) {
-//            Parameter param = parameters.getParameter(this.getObjectName());
-//            if (param != null) {
-//                param.setValue(this.value);
-//            }
-//        }
-//
-//        if (propListeners != null) {
-//            propListeners.firePropertyChange("value", new Double(oldValue),
-//                    new Double(this.value));
-//        }
-//    }
     /*
      * (non-Javadoc)
      * 

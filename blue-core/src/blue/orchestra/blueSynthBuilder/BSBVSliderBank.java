@@ -322,6 +322,14 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return sliders;
     }
 
+    private final void setValueProperty(ClampedValue value) {
+        if (this.value != null) {
+            this.value.removeListener(cvl);
+        }
+        this.value = value;
+        value.addListener(cvl);
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBVSliderBank sliderBank = new BSBVSliderBank();
         double minVal = 0;
@@ -364,7 +372,7 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
             }
         }
 
-        sliderBank.value = new ClampedValue(minVal, maxVal, 0.0, resolution);
+        sliderBank.setValueProperty(new ClampedValue(minVal, maxVal, 0.0, resolution));
 
         return sliderBank;
     }
@@ -394,60 +402,6 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         return retVal;
     }
 
-//    /**
-//     * @param maximum The maximum to set.
-//     */
-//    public void setMaximum(double maximum, boolean truncate) {
-//        if (maximum <= minimum) {
-//            return;
-//        }
-//
-//        this.maximum = maximum;
-//
-//        if (parameters != null) {
-//            Object[] vals = new Object[2];
-//            vals[0] = getObjectName();
-//
-//            for (int i = 0; i < sliders.size(); i++) {
-//                vals[1] = new Integer(i);
-//                String key = KEY_FMT.format(vals);
-//
-//                Parameter param = parameters.getParameter(key);
-//                if (param != null) {
-//                    param.setMax(this.maximum, truncate);
-//                }
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
-//    /**
-//     * @param minimum The minimum to set.
-//     */
-//    public void setMinimum(double minimum, boolean truncate) {
-//        if (minimum >= maximum) {
-//            return;
-//        }
-//
-//        this.minimum = minimum;
-//
-//        if (parameters != null) {
-//            Object[] vals = new Object[2];
-//            vals[0] = getObjectName();
-//
-//            for (int i = 0; i < sliders.size(); i++) {
-//                vals[1] = new Integer(i);
-//                String key = KEY_FMT.format(vals);
-//
-//                Parameter param = parameters.getParameter(key);
-//                if (param != null) {
-//                    param.setMin(this.minimum, truncate);
-//                }
-//            }
-//        }
-//
-//        fireBSBObjectChanged();
-//    }
     public int getNumberOfSliders() {
         return sliders.size();
     }
@@ -567,27 +521,6 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
         }
     }
 
-//    /**
-//     * @param resolution The resolution to set.
-//     */
-//    public void setResolution(double resolution) {
-//        this.resolution = resolution;
-//
-//        if (parameters != null) {
-//            Object[] vals = new Object[2];
-//            vals[0] = getObjectName();
-//
-//            for (int i = 0; i < sliders.size(); i++) {
-//                vals[1] = new Integer(i);
-//                String key = KEY_FMT.format(vals);
-//
-//                Parameter param = parameters.getParameter(key);
-//                if (param != null) {
-//                    param.setResolution(this.resolution);
-//                }
-//            }
-//        }
-//    }
     /*
      * (non-Javadoc)
      * 
