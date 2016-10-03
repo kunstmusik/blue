@@ -21,6 +21,7 @@ package blue.jfx;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.layout.Region;
 
 /**
  *
@@ -30,6 +31,11 @@ public class BlueFX {
 
     public static void style(Scene scene) {
         scene.getStylesheets().add(
+                BlueFX.class.getResource("bluefx.css").toExternalForm());
+    }
+
+    public static void style(Region region) {
+        region.getStylesheets().add(
                 BlueFX.class.getResource("bluefx.css").toExternalForm());
     }
 

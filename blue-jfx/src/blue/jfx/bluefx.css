@@ -153,3 +153,22 @@
     -fx-padding: 0.25em; /* 3px */
 }
 
+
+/* DIALOGS */
+
+.dialog-pane {
+    -fx-background-color: black;
+}
+
+.dialog-pane .label {
+    -fx-text-fill: white;
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: black;
+}
+
+.dialog-pane:header .header-panel .label {
+    /*-fx-font-style: italic;*/
+    /*-fx-font-size: 2em;*/
+}

@@ -216,13 +216,15 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
             }
 
             bsbEditPane.editBSBGraphicInterface(gInterface);
+
+            presetPane.setVisible(pGroup != null);
+
+            if (pGroup != null) {
+                presetPane.setBSBInterface(gInterface);
+                presetPane.setPresetGroup(pGroup);
+            }
         });
 
-        presetPane.setVisible(pGroup != null);
-
-        if (pGroup != null) {
-            presetPane.setPresetGroup(pGroup);
-        }
 
     }
 
