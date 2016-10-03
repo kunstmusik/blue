@@ -127,9 +127,8 @@ public class ClampedValue {
         if (resolution > 0.0) {
             newV = LineUtils.snapToResolution(newV, min, max, resolution);
         }
-        if (v != newV) {
-            setValue(newV);
-        }
+
+        setValue(newV);
     }
 
     public final void randomizeValue() {
