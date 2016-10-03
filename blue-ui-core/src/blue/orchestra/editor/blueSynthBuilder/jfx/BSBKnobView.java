@@ -98,7 +98,7 @@ public class BSBKnobView extends BorderPane {
                         knob.knobValueProperty().valueProperty());
                 knobView.prefWidthProperty().bind(knob.knobWidthProperty());
                 knobView.prefHeightProperty().bind(knob.knobWidthProperty());
-                valuePanel.prefWidthProperty().bind(knobView.widthProperty());
+                valuePanel.prefWidthProperty().bind(knobView.prefWidthProperty());
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         knob.knobValueProperty().valueProperty(), converter);
             }
