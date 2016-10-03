@@ -20,35 +20,37 @@
 package blue.orchestra.blueSynthBuilder;
 
 import blue.automation.Parameter;
+import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
 
 /**
  * Base Class for BSBObjects which are automatable. Care must be taken to
  * correctly add and remove Parameters to the parameter list.
- * 
+ *
  * <ul>
- * <li>If automationAllowed is toggled, parameters need to be added or removed.</li>
+ * <li>If automationAllowed is toggled, parameters need to be added or
+ * removed.</li>
  * <li>If the objectName changes, the new name must be checked if it is unique.
  * If the object produces multiple values, it must check to see if all of the
  * generated values are unique. Old parameters must be removed and new
  * parameters added if the name changes. If the name changes to an empty string,
  * the parameters must be removed.</li>
  * </ul>
- * 
+ *
  * @author steven
  */
-
 public abstract class AutomatableBSBObject extends BSBObject {
+
     boolean automationAllowed = true;
 
     transient BSBParameterList parameters = null;
 
     public AutomatableBSBObject() {
-       super(); 
+        super();
     }
 
-    public AutomatableBSBObject(AutomatableBSBObject bsbObj){
+    public AutomatableBSBObject(AutomatableBSBObject bsbObj) {
         super(bsbObj);
         automationAllowed = bsbObj.isAutomationAllowed();
     }
@@ -103,7 +105,7 @@ public abstract class AutomatableBSBObject extends BSBObject {
         Element elem = data.getElement("automationAllowed");
 
         AutomatableBSBObject automatableBsbObj = ((AutomatableBSBObject) bsbObj);
-        
+
         if (elem != null) {
             automatableBsbObj.automationAllowed = Boolean
                     .valueOf(elem.getTextString()).booleanValue();
@@ -124,7 +126,7 @@ public abstract class AutomatableBSBObject extends BSBObject {
     /**
      * Method for BSBParameterList to call to make sure Parameters exist for
      * this object
-     * 
+     *
      * @param parameters
      */
     protected abstract void initializeParameters();
@@ -135,9 +137,25 @@ public abstract class AutomatableBSBObject extends BSBObject {
 
     public abstract void setAutomationAllowed(boolean allowAutomation);
 
-    // public void setAutomationAllowed(boolean allowAutomation) {
-    // this.automationAllowed = allowAutomation;
-    // }
-
-    // protected abstract void updateValue(Parameter param);
+    /** Used by sub-classes for ClampedValueListeners to adjust parameters*/
+    protected void updateParameter(ClampedValue cv, Parameter param, 
+            ClampedValueListener.PropertyType pType, 
+            ClampedValueListener.BoundaryType bType) {
+        switch (pType) {
+            case MIN:
+                param.setMin(cv.getMin(), bType == TRUNCATE);
+                break;
+            case MAX:
+                param.setMax(cv.getMax(), bType == TRUNCATE);
+                break;
+            case VALUE:
+                if (!param.isAutomationEnabled()) {
+                    param.setValue(cv.getValue());
+                }
+                break;
+            case RESOLUTION:
+                param.setResolution(cv.getResolution());
+                break;
+        }
+    }
 }

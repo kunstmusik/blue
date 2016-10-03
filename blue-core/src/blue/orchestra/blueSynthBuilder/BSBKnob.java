@@ -43,16 +43,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(getMinimum(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(getMaximum(), bType == TRUNCATE);
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(knobValueProperty(), p, pType, bType);
             }
         }
     };

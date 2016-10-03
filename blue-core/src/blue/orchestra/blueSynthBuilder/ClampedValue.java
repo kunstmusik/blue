@@ -174,7 +174,7 @@ public class ClampedValue {
         }
         value.set(val);
 
-        notifyListeners(ClampedValueListener.PropertyType.MAX, 
+        notifyListeners(ClampedValueListener.PropertyType.VALUE, 
                 ClampedValueListener.BoundaryType.NONE);
     }
 

@@ -22,7 +22,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -44,19 +43,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(getMinimum(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(getMaximum(), bType == TRUNCATE);
-                        break;
-                    case RESOLUTION:
-                        p.setResolution(getResolution());
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(getValueProperty(), p, pType, bType);
             }
         }
     };
@@ -71,13 +58,13 @@ public class BSBVSlider extends AutomatableBSBObject implements
         value.addListener(cvl);
     }
 
-    public BSBVSlider(BSBVSlider slider){
-         super(slider);
-         value = new ClampedValue(slider.value);
+    public BSBVSlider(BSBVSlider slider) {
+        super(slider);
+        value = new ClampedValue(slider.value);
         value.addListener(cvl);
-         setSliderHeight(slider.getSliderHeight());
-         setRandomizable(slider.isRandomizable());
-    }        
+        setSliderHeight(slider.getSliderHeight());
+        setRandomizable(slider.isRandomizable());
+    }
 
     public final void setMinimum(double val) {
         value.setMin(val);
@@ -128,7 +115,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
     }
 
     private final void setValueProperty(ClampedValue value) {
-        if(this.value != null) {
+        if (this.value != null) {
             this.value.removeListener(cvl);
         }
         this.value = value;
@@ -161,7 +148,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
     private static double parseNum(String string, int version) {
         if (version < 2) {
-            return  Double.parseDouble(string);
+            return Double.parseDouble(string);
         }
         return Double.parseDouble(string);
     }
@@ -438,20 +425,20 @@ public class BSBVSlider extends AutomatableBSBObject implements
             parameter.addParameterListener(this);
 
             if (!parameter.isAutomationEnabled()) {
-                parameter.setValue( getValue());
+                parameter.setValue(getValue());
             }
 
             return;
         }
 
         Parameter param = new Parameter();
-        param.setValue( getValue());
-        param.setMax( getMaximum(), true);
-        param.setMin( getMinimum(), true);
+        param.setValue(getValue());
+        param.setMax(getMaximum(), true);
+        param.setMin(getMinimum(), true);
         param.setName(getObjectName());
-        param.setResolution( getResolution());
+        param.setResolution(getResolution());
         param.addParameterListener(this);
-        param.setValue( getValue());
+        param.setValue(getValue());
 
         parameters.addParameter(param);
     }
@@ -528,5 +515,9 @@ public class BSBVSlider extends AutomatableBSBObject implements
     @Override
     public BSBObject deepCopy() {
         return new BSBVSlider(this);
+    }
+
+    private ClampedValue getValueProperty() {
+        return value;
     }
 }

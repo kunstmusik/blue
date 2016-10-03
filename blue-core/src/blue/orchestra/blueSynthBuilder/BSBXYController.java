@@ -45,16 +45,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName() + "X");
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(xValue.getMin(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(xValue.getMax(), bType == TRUNCATE);
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(xValueProperty(), p, pType, bType);
             }
         }
     };
@@ -62,16 +53,7 @@ public class BSBXYController extends AutomatableBSBObject implements
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName() + "Y");
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(yValue.getMin(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(yValue.getMax(), bType == TRUNCATE);
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(yValueProperty(), p, pType, bType);
             }
         }
     };

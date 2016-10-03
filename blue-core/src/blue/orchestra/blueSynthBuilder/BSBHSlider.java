@@ -44,19 +44,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(getMinimum(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(getMaximum(), bType == TRUNCATE);
-                        break;
-                    case RESOLUTION:
-                        p.setResolution(getResolution());
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(getValueProperty(), p, pType, bType);
             }
         }
     };
@@ -525,5 +513,9 @@ public class BSBHSlider extends AutomatableBSBObject implements
     @Override
     public BSBObject deepCopy() {
         return new BSBHSlider(this);
+    }
+
+    private ClampedValue getValueProperty() {
+        return value;
     }
 }

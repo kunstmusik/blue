@@ -127,6 +127,15 @@ public class BSBVSliderBank extends AutomatableBSBObject implements
                                 bType == ClampedValueListener.BoundaryType.TRUNCATE);
                     }
                     break;
+                case VALUE:
+                    v = getMaximum();
+                    for (Parameter param : getParameters()) {
+                        if(!param.isAutomationEnabled()) {
+                            param.setMax(v,
+                                    bType == ClampedValueListener.BoundaryType.TRUNCATE);
+                        }
+                    }
+                    break;
                 case RESOLUTION:
                     v = getResolution();
                     for (Parameter param : getParameters()) {

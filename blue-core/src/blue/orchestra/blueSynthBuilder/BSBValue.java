@@ -38,16 +38,7 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         if (parameters != null) {
             Parameter p = parameters.getParameter(getObjectName());
             if (p != null) {
-                switch (pType) {
-                    case MIN:
-                        p.setMin(getMinimum(), bType == TRUNCATE);
-                        break;
-                    case MAX:
-                        p.setMax(getMaximum(), bType == TRUNCATE);
-                        break;
-                    default:
-                        break;
-                }
+                updateParameter(getDefaultValueProperty(), p, pType, bType);
             }
         }
     };
@@ -107,6 +98,10 @@ public class BSBValue extends AutomatableBSBObject implements ParameterListener 
         }
         this.defaultValue = value;
         defaultValue.addListener(cvl);
+    }
+
+    private ClampedValue getDefaultValueProperty(){
+        return defaultValue;
     }
 
     public static BSBObject loadFromXML(Element data) {
