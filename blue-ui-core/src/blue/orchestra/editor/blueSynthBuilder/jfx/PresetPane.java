@@ -26,6 +26,7 @@ import blue.orchestra.editor.blueSynthBuilder.PresetsManagerDialog;
 import blue.orchestra.editor.blueSynthBuilder.PresetsUtilities;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
@@ -43,6 +44,8 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 
 /**
@@ -88,7 +91,7 @@ public class PresetPane extends HBox {
 
         Button presetsButton = new Button("Presets");
         presetsButton.setOnAction(e -> {
-           rootMenu.show(presetsButton, Side.TOP, USE_PREF_SIZE, USE_PREF_SIZE);
+            rootMenu.show(presetsButton, Side.TOP, USE_PREF_SIZE, USE_PREF_SIZE);
         });
         currentPresetText.setEditable(false);
         updateButton.setOnAction(e -> {
@@ -119,6 +122,7 @@ public class PresetPane extends HBox {
     public void setPresetGroup(PresetGroup presetGroup) {
         this.presetGroup.set(presetGroup);
         updatePresetMenu();
+        updateCurrentPresetUI();
     }
 
     public ObjectProperty<PresetGroup> presetGroupProperty() {
@@ -183,18 +187,32 @@ public class PresetPane extends HBox {
             });
             MenuItem managePresets = new MenuItem("Manage Presets");
             managePresets.setOnAction(e -> {
+                PresetGroup[] retVal = new PresetGroup[1];
 
-                // FIXME - this needs to be done on SWING thread
-                if (presetsManager == null) {
-                    presetsManager = new PresetsManagerDialog(
-                            WindowManager.getDefault().getMainWindow());
+                CountDownLatch latch = new CountDownLatch(1);
+
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        if (presetsManager == null) {
+                            presetsManager = new PresetsManagerDialog(
+                                    WindowManager.getDefault().getMainWindow());
+                        }
+
+                        retVal[0] = presetsManager.editPresetGroup(pGroup);
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+
+                try {
+                    latch.await();
+                } catch (InterruptedException ex) {
+                    Exceptions.printStackTrace(ex);
                 }
 
-                PresetGroup retVal = presetsManager.editPresetGroup(pGroup);
-
-                if (retVal != null) {
-                    pGroup.setPresets(retVal.getPresets());
-                    pGroup.setSubGroups(retVal.getSubGroups());
+                if (retVal[0] != null) {
+                    pGroup.setPresets(retVal[0].getPresets());
+                    pGroup.setSubGroups(retVal[0].getSubGroups());
                     updatePresetMenu();
 
                     Preset preset = pGroup.findPresetByUniqueId(pGroup.getCurrentPresetUniqueId());
@@ -237,7 +255,7 @@ public class PresetPane extends HBox {
      * @param currentPresetGroup
      */
     private void addPreset(PresetGroup currentPresetGroup) {
-       
+
         TextInputDialog dlg = new TextInputDialog();
         dlg.setTitle("Enter Preset Name");
         dlg.setHeaderText("Enter Preset Name");
@@ -245,7 +263,7 @@ public class PresetPane extends HBox {
         BlueFX.style(dlg.getDialogPane());
         Optional<String> str = dlg.showAndWait();
 
-        if(!str.isPresent() || str.get().length() == 0) {
+        if (!str.isPresent() || str.get().length() == 0) {
             return;
         }
 
@@ -273,7 +291,7 @@ public class PresetPane extends HBox {
         BlueFX.style(dlg.getDialogPane());
         Optional<String> str = dlg.showAndWait();
 
-        if(!str.isPresent() || str.get().length() == 0) {
+        if (!str.isPresent() || str.get().length() == 0) {
             return;
         }
 
@@ -292,6 +310,5 @@ public class PresetPane extends HBox {
 
         updatePresetMenu();
     }
-
 
 }
