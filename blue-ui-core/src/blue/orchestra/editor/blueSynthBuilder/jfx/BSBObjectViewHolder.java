@@ -24,13 +24,11 @@ import blue.orchestra.blueSynthBuilder.BSBObject;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventType;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
@@ -38,7 +36,7 @@ import javafx.scene.shape.Rectangle;
  *
  * @author stevenyi
  */
-public class BSBObjectViewHolder extends StackPane {
+public class BSBObjectViewHolder extends Pane {
 
     double startX = 0.0;
     double startY = 0.0;
@@ -119,6 +117,8 @@ public class BSBObjectViewHolder extends StackPane {
         rect.setMouseTransparent(true);
         rect.setFill(null);
         rect.setVisible(false);
+        rect.setLayoutX(0.5);
+        rect.setLayoutY(0.5);
 
         this.getChildren().addAll(bsbObjView, mousePane, rect);
 
@@ -142,19 +142,16 @@ public class BSBObjectViewHolder extends StackPane {
                     mousePane.mouseTransparentProperty().unbind();
                     layoutXProperty().unbind();
                     layoutYProperty().unbind();
-//                    selection.selection.removeListener(scl);
                 } else {
                     mousePane.prefWidthProperty().bind(
-                            bsbObjView.prefWidthProperty());
+                            bsbObjView.widthProperty());
                     mousePane.prefHeightProperty().bind(
-                            bsbObjView.prefHeightProperty());
+                            bsbObjView.heightProperty());
                     mousePane.mouseTransparentProperty().bind(
                             bsbGraphicInterface.editEnabledProperty().not());
 
                     layoutXProperty().bind(bsbObj.xProperty());
                     layoutYProperty().bind(bsbObj.yProperty());
-
-//                    selection.selection.addListener(scl);
                 }
             }
         });
