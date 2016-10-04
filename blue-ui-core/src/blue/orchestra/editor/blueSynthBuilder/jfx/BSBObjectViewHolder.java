@@ -21,11 +21,15 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
+import blue.utility.GUI;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -42,32 +46,6 @@ public class BSBObjectViewHolder extends Pane {
     double startY = 0.0;
 
     private static ContextMenu MENU = null;
-
-    private static ContextMenu getContextMenu() {
-        if (MENU == null) {
-            MENU = new ContextMenu();
-
-            MenuItem cut = new MenuItem("Cut");
-            cut.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
-                selection.cut();
-            });
-            MenuItem copy = new MenuItem("Copy");
-            copy.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
-                selection.copy();
-            });
-
-            MenuItem remove = new MenuItem("Remove");
-            remove.setOnAction(e -> {
-                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
-                selection.remove();
-            });
-            MENU.getItems().addAll(cut, copy, remove);
-            MENU.setOnHidden(e -> MENU.setUserData(null));
-        }
-        return MENU;
-    }
 
     public BSBObjectViewHolder(BSBGraphicInterface bsbGraphicInterface,
             BSBEditSelection selection,
@@ -159,4 +137,59 @@ public class BSBObjectViewHolder extends Pane {
 //        setBorder(new Border(new BorderStroke(Color.rgb(0, 255, 0), BorderStrokeStyle.SOLID, null, BorderWidths.DEFAULT)));
 //        border
     }
+
+
+    private static ContextMenu getContextMenu() {
+        if (MENU == null) {
+            MENU = new ContextMenu();
+
+            MenuItem cut = new MenuItem("Cut");
+            cut.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.cut();
+            });
+            MenuItem copy = new MenuItem("Copy");
+            copy.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.copy();
+            });
+
+            MenuItem remove = new MenuItem("Remove");
+            remove.setOnAction(e -> {
+                BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
+                selection.remove();
+            });
+
+
+//            String[] alignOptions = { "Left", "Horizontal Center", "Right", "Top",
+//            "Vertical Center", "Bottom" };
+//
+//            Menu align = new Menu("Align");
+//            Menu distribute = new Menu("Distribute");
+//
+//            EventHandler<ActionEvent> alignListener = ae -> {
+//                MenuItem source = (MenuItem) ae.getSource();
+//                int index = (Integer) source.getUserData();
+//                GUI.align(jComponents, index);
+//            };
+//
+//            for(int i = 0; i < alignOptions.length; i++) {
+//                String s = alignOptions[i];
+//
+//                MenuItem a = new MenuItem(s);
+//                a.setUserData(i);
+//                a.setOnAction();
+//
+//                MenuItem d = new MenuItem(s);
+//
+//                align.getItems().add(a);
+//                align.getItems().add(d);
+//            }
+            
+            MENU.getItems().addAll(cut, copy, remove);
+            MENU.setOnHidden(e -> MENU.setUserData(null));
+        }
+        return MENU;
+    }
+
 }
