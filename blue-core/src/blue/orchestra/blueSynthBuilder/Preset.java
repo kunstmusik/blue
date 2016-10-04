@@ -48,7 +48,7 @@ public class Preset implements Comparable<Preset> {
         // PresetGroup's currentUniqueId...
         this.uniqueId = preset.uniqueId;
 
-        valuesMap = new HashMap<>(valuesMap);
+        valuesMap = new HashMap<>(preset.valuesMap);
     }
 
     public static Preset createPreset(BSBGraphicInterface bsbInterface) {
