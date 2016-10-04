@@ -16,6 +16,7 @@ import javafx.embed.swing.SwingNode;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -55,6 +56,9 @@ public class BlueJFXControlsApplication extends Application {
         setupTextFieldsTest(root);
         setupButtonsTest(root);
         setTablesTest(root);
+
+        ComboBox cb = new ComboBox(FXCollections.observableArrayList("Test 1", "Test 2", "Test 3"));
+        root.getTabs().add(new Tab("ComboBox", cb));
         
         Scene scene = new Scene(new BorderPane(root));
         BlueFX.style(scene);
