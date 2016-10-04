@@ -113,6 +113,10 @@ public class PresetPane extends HBox {
         setMargin(updateButton, new Insets(5, 5, 5, 0));
 
         setAlignment(Pos.CENTER);
+
+        presetsButton.visibleProperty().bind(presetGroupProperty().isNotNull());
+        currentPresetText.visibleProperty().bind(presetGroupProperty().isNotNull());
+        updateButton.visibleProperty().bind(presetGroupProperty().isNotNull());
     }
 
     public PresetGroup getPresetGroup() {
@@ -233,6 +237,9 @@ public class PresetPane extends HBox {
     }
 
     protected void updateCurrentPresetUI() {
+        if(getPresetGroup() == null) {
+            return;
+        }
         if (getPresetGroup().getCurrentPresetUniqueId() == null) {
             currentPresetText.setText(" No Preset Selected");
             updateButton.setDisable(true);;
