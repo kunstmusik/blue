@@ -23,11 +23,24 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.ArrayList;
 import java.util.Iterator;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 
 /**
  * @author steven
  */
-public class BSBDropdownItemList extends ArrayList<BSBDropdownItem> {
+public class BSBDropdownItemList extends SimpleListProperty<BSBDropdownItem> {
+
+    public BSBDropdownItemList(){
+        super(FXCollections.observableArrayList());    
+    }
+
+    public BSBDropdownItemList(BSBDropdownItemList list) {
+        this();
+        for(BSBDropdownItem item :list) {
+            add(new BSBDropdownItem(item)); 
+        } 
+    }
 
     public static BSBDropdownItemList loadFromXML(Element data) {
         BSBDropdownItemList list = new BSBDropdownItemList();
@@ -59,6 +72,6 @@ public class BSBDropdownItemList extends ArrayList<BSBDropdownItem> {
 
     @Override
     public String toString() {
-        return "";
+        return "Dropdown Items";
     }
 }

@@ -31,7 +31,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 /**
@@ -40,19 +39,17 @@ import javafx.collections.ObservableList;
 public class BSBDropdown extends AutomatableBSBObject implements
         ParameterListener, Randomizable {
 
-    private ObservableList<BSBDropdownItem> dropdownItems = FXCollections.observableArrayList();
+    private BSBDropdownItemList dropdownItems;
     private IntegerProperty selectedIndex = new SimpleIntegerProperty(0);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
 
     public BSBDropdown() {
+        dropdownItems = new BSBDropdownItemList();
     }
 
     public BSBDropdown(BSBDropdown dropdown) {
         super(dropdown);
-
-        for (BSBDropdownItem item : dropdown.dropdownItemsProperty()) {
-            dropdownItems.add(new BSBDropdownItem(item));
-        }
+        dropdownItems = new BSBDropdownItemList(dropdown.dropdownItems);
 
         setSelectedIndex(dropdown.getSelectedIndex());
         setRandomizable(dropdown.isRandomizable());
@@ -71,11 +68,7 @@ public class BSBDropdown extends AutomatableBSBObject implements
             Elements subNodes;
             switch (nodeName) {
                 case "bsbDropdownItemList":
-                    subNodes = node.getElements();
-                    while (subNodes.hasMoreElements()) {
-                        dropDown.dropdownItems.add(
-                                BSBDropdownItem.loadFromXML(subNodes.next()));
-                    }
+                    dropDown.dropdownItems = BSBDropdownItemList.loadFromXML(node);
                     break;
                 case "selectedIndex":
                     selectedIndex = Integer.parseInt(node.getTextString());
@@ -142,6 +135,14 @@ public class BSBDropdown extends AutomatableBSBObject implements
             compilationUnit.addReplacementValue(objectName, replaceVal);
         }
 
+    }
+
+    public BSBDropdownItemList getBSBDropdownItemList(){
+        return dropdownItems;
+    }
+
+    public void setBSBDropdownItemList(BSBDropdownItemList list){
+        this.dropdownItems = list;
     }
 
     public ObservableList<BSBDropdownItem> dropdownItemsProperty() {

@@ -35,6 +35,21 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());
         setUserData(dropdown);
+
+//        getStylesheets().add(getClass().getResource("bsbDropdown.css").toExternalForm());
+//        ListCell<BSBDropdownItem> cell = new ListCell<BSBDropdownItem>() {
+//             public void updateItem(BSBDropdownItem item, boolean empty) {
+//                    super.updateItem(item, empty);
+//                    if (!empty) {
+//                        setText(item.getName());
+//                    } else {
+//                        setText(null);
+//                    }
+//                }
+//        };
+//        cell.setStyle("-fx-padding:4 1 4 1");
+//        setCellFactory(lv -> cell);
+
         this.dropdown = dropdown;
         setPrefWidth(USE_COMPUTED_SIZE);
 
@@ -50,6 +65,7 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
                 dropdown.selectedIndexProperty().addListener(cl);
             }
         });
+
     }
 
 }
