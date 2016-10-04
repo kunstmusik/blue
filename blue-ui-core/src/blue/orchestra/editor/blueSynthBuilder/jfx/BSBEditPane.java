@@ -50,13 +50,14 @@ import org.openide.util.Exceptions;
  */
 public class BSBEditPane extends Pane {
 
-    private static final Color GRID_COLOR = 
-        Color.rgb(38, 51, 76).brighter();
+    private static final Color GRID_COLOR
+            = Color.rgb(38, 51, 76).brighter();
 
     private BSBGraphicInterface bsbInterface;
     private BSBEditSelection selection;
 
     private ContextMenu popupMenu;
+    private ContextMenu nonEditPopupMenu;
 
     private SetChangeListener<BSBObject> scl;
 
@@ -74,11 +75,11 @@ public class BSBEditPane extends Pane {
 
     private InvalidationListener gridListener;
 
-    private BooleanProperty marqueeSelecting;    
+    private BooleanProperty marqueeSelecting;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
 
-        gridCanvas = new Canvas(); 
+        gridCanvas = new Canvas();
         interfaceItemsPane = new Pane();
 
         gridListener = cl -> {
@@ -121,9 +122,18 @@ public class BSBEditPane extends Pane {
         paste.setOnAction(ae -> paste(addX, addY));
         paste.disableProperty().bind(
                 Bindings.createBooleanBinding(
-                        () -> selection.copyBufferProperty().size() == 0, 
+                        () -> selection.copyBufferProperty().size() == 0,
                         selection.copyBufferProperty()));
         popupMenu.getItems().addAll(new SeparatorMenuItem(), paste);
+
+        nonEditPopupMenu = new ContextMenu();
+        MenuItem randomize = new MenuItem("Randomize");
+        randomize.setOnAction(ae -> {
+            if (bsbInterface != null) {
+                bsbInterface.randomize();
+            }
+        });
+        nonEditPopupMenu.getItems().add(randomize);
 
         marquee = new Rectangle();
         marquee.setFill(null);
@@ -132,40 +142,48 @@ public class BSBEditPane extends Pane {
         marqueeSelecting = new SimpleBooleanProperty(false);
 
         setOnMousePressed(me -> {
-            if (!me.isConsumed() && bsbInterface != null && bsbInterface.isEditEnabled()) {
-                if (me.isSecondaryButtonDown()) {
-                    addX = (int) me.getX();
-                    addY = (int) me.getY();
-                    popupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
-                } else if (me.isPrimaryButtonDown()) {
-                    if (!me.isShiftDown()) {
-                        selection.selection.clear();
-                    }
+            if (!me.isConsumed() && bsbInterface != null) {
+                if (bsbInterface.isEditEnabled()) {
+                    if (me.isSecondaryButtonDown()) {
+                        addX = (int) me.getX();
+                        addY = (int) me.getY();
+                        popupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
+                    } else if (me.isPrimaryButtonDown()) {
+                        if (!me.isShiftDown()) {
+                            selection.selection.clear();
+                        }
 
-                    startSet = new HashSet<>(selection.selection);
-                    startMarqueeX = me.getX();
-                    startMarqueeY = me.getY();
-                    setMarqueeSelecting(true);
-                    updateMarquee(startMarqueeX, startMarqueeY);
-                    getChildren().add(marquee);
-                }
+                        startSet = new HashSet<>(selection.selection);
+                        startMarqueeX = me.getX();
+                        startMarqueeY = me.getY();
+                        setMarqueeSelecting(true);
+                        updateMarquee(startMarqueeX, startMarqueeY);
+                        getChildren().add(marquee);
+                    }
+                } else if (me.isSecondaryButtonDown()) {
+                    nonEditPopupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
+                }             
             }
         });
 
-        setOnMouseDragged(me -> {
+        setOnMouseDragged(me
+                -> {
             if (startMarqueeX >= 0) {
                 updateMarquee(me.getX(), me.getY());
             }
-        });
+        }
+        );
 
-        setOnMouseReleased(me -> {
+        setOnMouseReleased(me
+                -> {
             if (startMarqueeX >= 0) {
                 startMarqueeX = -1.0;
                 startMarqueeY = -1.0;
                 getChildren().remove(marquee);
             }
             setMarqueeSelecting(false);
-        });
+        }
+        );
 
         scl = sce -> {
             if (sce.wasAdded()) {
@@ -254,7 +272,7 @@ public class BSBEditPane extends Pane {
         int minY = Integer.MAX_VALUE;
         GridSettings gridSettings = bsbInterface.getGridSettings();
 
-        if(gridSettings.isSnapEnabled()) {
+        if (gridSettings.isSnapEnabled()) {
             x = x - (x % gridSettings.getWidth());
             y = y - (y % gridSettings.getHeight());
         }
@@ -320,17 +338,17 @@ public class BSBEditPane extends Pane {
     }
 
     private double snap(double v) {
-        return ((int)v) + 0.5;
+        return ((int) v) + 0.5;
     }
 
     private void redrawGrid() {
-        int totalWidth = (int)getWidth();
-        int totalHeight = (int)getHeight();
+        int totalWidth = (int) getWidth();
+        int totalHeight = (int) getHeight();
 
         GraphicsContext gc = gridCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, getWidth(), getHeight());
 
-        if(this.bsbInterface == null) { 
+        if (this.bsbInterface == null) {
             return;
         }
 
@@ -340,7 +358,7 @@ public class BSBEditPane extends Pane {
 
         int w = grid.getWidth();
         int h = grid.getHeight();
-         
+
         if (w < 1 || h < 1) {
             return;
         }
