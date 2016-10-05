@@ -66,7 +66,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             }
 
             Object[] vals = new Object[2];
-            vals[0] = objectName;
+            vals[0] = getObjectName();
 
             vals[1] = new Integer(index);
             String key = KEY_FMT.format(vals);
@@ -315,12 +315,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         }
 
-        this.objectName = objectName;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("objectName", oldName,
-                    this.objectName);
-        }
+        this.objectNameProperty().set(objectName);
 
         if (doInitialize) {
             initializeParameters();
@@ -448,8 +443,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                     BSBHSlider copy = new BSBHSlider(lastSlider);
                     sliders.add(copy);
 
-                    if (parameters != null && this.objectName != null
-                            && this.objectName.trim().length() > 0) {
+                    if (parameters != null && getObjectName() != null
+                            && getObjectName().trim().length() > 0) {
 
                         vals[1] = new Integer(sliders.size() - 1);
                         String key = KEY_FMT.format(vals);
@@ -482,8 +477,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
                     sliders.remove(slider);
 
-                    if (parameters != null && this.objectName != null
-                            && this.objectName.trim().length() > 0) {
+                    if (parameters != null && getObjectName() != null
+                            && getObjectName().trim().length() > 0) {
 
                         vals[1] = new Integer(sliders.size());
                         String key = KEY_FMT.format(vals);
@@ -506,7 +501,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
         Object[] vals = new Object[2];
-        vals[0] = objectName;
+        vals[0] = getObjectName();
 
         for (int i = 0; i < sliders.size(); i++) {
             BSBHSlider slider = sliders.get(i);
@@ -585,7 +580,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         String[] retVal = new String[sliders.size()];
 
         Object[] vals = new Object[2];
-        vals[0] = objectName;
+        vals[0] = getObjectName();
 
         for (int i = 0; i < sliders.size(); i++) {
             vals[1] = new Integer(i);
@@ -605,6 +600,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         if (!automationAllowed) {
 
+            String objectName  = getObjectName();
             if (parameters != null) {
                 if (objectName != null && objectName.length() != 0) {
                     Object[] vals = new Object[2];
@@ -632,7 +628,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
             }
         }
 
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        if (getObjectName() == null || getObjectName().trim().length() == 0) {
             return;
         }
 
@@ -718,6 +714,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
+        String objectName = getObjectName();
 
         if (parameters != null) {
             if (allowAutomation) {

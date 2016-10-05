@@ -108,12 +108,7 @@ public class BSBXYController extends AutomatableBSBObject implements
             }
         }
 
-        this.objectName = objectName;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("objectName", oldName,
-                    this.objectName);
-        }
+        this.objectNameProperty().set(objectName);
 
         if (doInitialize) {
             initializeParameters();
@@ -324,11 +319,12 @@ public class BSBXYController extends AutomatableBSBObject implements
 
     @Override
     public String[] getReplacementKeys() {
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        String objectName = getObjectName();
+        if (objectName == null || objectName.trim().length() == 0) {
             return new String[]{};
         }
 
-        return new String[]{this.objectName + "X", this.objectName + "Y"};
+        return new String[]{objectName + "X", objectName + "Y"};
     }
 
     @Override
@@ -336,6 +332,7 @@ public class BSBXYController extends AutomatableBSBObject implements
 
         String xCompVal = null;
         String yCompVal = null;
+        String objectName = getObjectName();
 
         if (parameters != null) {
             Parameter param = parameters.getParameter(objectName + "X");
@@ -392,26 +389,28 @@ public class BSBXYController extends AutomatableBSBObject implements
             return;
         }
 
+        String objectName = getObjectName();
+
         if (!automationAllowed) {
             if (objectName != null && objectName.length() != 0) {
-                Parameter param = parameters.getParameter(this.objectName + "X");
+                Parameter param = parameters.getParameter(objectName + "X");
 
                 if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
-                    parameters.removeParameter(this.objectName + "X");
-                    parameters.removeParameter(this.objectName + "Y");
+                    parameters.removeParameter(objectName + "X");
+                    parameters.removeParameter(objectName + "Y");
                     return;
                 }
             }
         }
 
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        if (objectName == null || objectName.trim().length() == 0) {
             return;
         }
 
-        Parameter param = parameters.getParameter(this.objectName + "X");
-        Parameter param2 = parameters.getParameter(this.objectName + "Y");
+        Parameter param = parameters.getParameter(objectName + "X");
+        Parameter param2 = parameters.getParameter(objectName + "Y");
 
         if (param != null && param2 != null) {
             param.addParameterListener(this);
@@ -430,8 +429,8 @@ public class BSBXYController extends AutomatableBSBObject implements
 
         // in case of corrupted file
         if (param != null || param2 != null) {
-            parameters.removeParameter(this.objectName + "X");
-            parameters.removeParameter(this.objectName + "Y");
+            parameters.removeParameter(objectName + "X");
+            parameters.removeParameter(objectName + "Y");
             return;
         }
 
@@ -483,6 +482,7 @@ public class BSBXYController extends AutomatableBSBObject implements
     @Override
     public void setAutomationAllowed(boolean allowAutomation) {
         this.automationAllowed = allowAutomation;
+        String objectName = getObjectName();
 
         if (parameters != null) {
             if (allowAutomation) {

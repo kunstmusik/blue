@@ -120,7 +120,7 @@ public class BSBTextField extends BSBObject {
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        compilationUnit.addReplacementValue(objectName, getValue());
+        compilationUnit.addReplacementValue(getObjectName(), getValue());
     }
 
     @Override

@@ -328,13 +328,13 @@ public class BSBHSlider extends AutomatableBSBObject implements
         if (parameters != null) {
             Parameter param = parameters.getParameter(this.getObjectName());
             if (param != null && param.getCompilationVarName() != null) {
-                compilationUnit.addReplacementValue(objectName, param
+                compilationUnit.addReplacementValue(getObjectName(), param
                         .getCompilationVarName());
                 return;
             }
         }
 
-        compilationUnit.addReplacementValue(objectName, NumberUtilities
+        compilationUnit.addReplacementValue(getObjectName(), NumberUtilities
                 .formatDouble(getValue()));
     }
 
@@ -400,22 +400,22 @@ public class BSBHSlider extends AutomatableBSBObject implements
         }
 
         if (!automationAllowed) {
-            if (objectName != null && objectName.length() != 0) {
-                Parameter param = parameters.getParameter(objectName);
+            if (getObjectName() != null && getObjectName().length() != 0) {
+                Parameter param = parameters.getParameter(getObjectName());
                 if (param != null && param.isAutomationEnabled()) {
                     automationAllowed = true;
                 } else {
-                    parameters.removeParameter(objectName);
+                    parameters.removeParameter(getObjectName());
                     return;
                 }
             }
         }
 
-        if (this.objectName == null || this.objectName.trim().length() == 0) {
+        if (this.getObjectName() == null || this.getObjectName().trim().length() == 0) {
             return;
         }
 
-        Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.getObjectName());
 
         if (parameter != null) {
             parameter.addParameterListener(this);
@@ -451,7 +451,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
     @Override
     public void lineDataChanged(Parameter param) {
-        Parameter parameter = parameters.getParameter(this.objectName);
+        Parameter parameter = parameters.getParameter(this.getObjectName());
 
         if (parameter != null) {
             double time = ParameterTimeManagerFactory.getInstance().getTime();
@@ -473,8 +473,8 @@ public class BSBHSlider extends AutomatableBSBObject implements
         if (parameters != null) {
             if (allowAutomation) {
                 initializeParameters();
-            } else if (objectName != null && objectName.length() != 0) {
-                parameters.removeParameter(objectName);
+            } else if (getObjectName() != null && getObjectName().length() != 0) {
+                parameters.removeParameter(getObjectName());
             }
         }
     }

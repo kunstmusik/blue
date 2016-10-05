@@ -170,9 +170,9 @@ public class BSBFileSelector extends BSBObject implements StringChannelProvider 
             stringChannel.setValue(fileNameValue);
             stringChannel.setChannelName(stringChannel.getChannelName());
             
-            compilationUnit.addReplacementValue(objectName, stringChannel.getChannelName());
+            compilationUnit.addReplacementValue(getObjectName(), stringChannel.getChannelName());
         } else {
-            compilationUnit.addReplacementValue(objectName, fileNameValue);
+            compilationUnit.addReplacementValue(getObjectName(), fileNameValue);
         }
         
     }

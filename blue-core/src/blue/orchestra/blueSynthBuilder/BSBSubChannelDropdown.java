@@ -88,7 +88,7 @@ public class BSBSubChannelDropdown extends BSBObject {
 
     @Override
     public void setupForCompilation(BSBCompilationUnit compilationUnit) {
-        compilationUnit.addReplacementValue(objectName, getChannelOutput());
+        compilationUnit.addReplacementValue(getObjectName(), getChannelOutput());
     }
 
     @Override

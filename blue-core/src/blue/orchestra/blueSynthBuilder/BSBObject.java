@@ -28,6 +28,8 @@ import java.util.Iterator;
 import java.util.Vector;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 /**
@@ -40,7 +42,7 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
      * Object name should be non-null and unique within BSBGraphicsInterface
      * collection
      */
-    String objectName = "";
+    private StringProperty objectName;
 
     // String label = "";
 
@@ -50,12 +52,13 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
     public BSBObject() {
         x = new SimpleIntegerProperty(0);
         y = new SimpleIntegerProperty(0);
+        objectName = new SimpleStringProperty("");
     }
 
     public BSBObject(BSBObject bsbObj) {
         x = new SimpleIntegerProperty(bsbObj.getX());
         y = new SimpleIntegerProperty(bsbObj.getY());
-        objectName = bsbObj.objectName;
+        objectName = new SimpleStringProperty(bsbObj.getObjectName());
     }
 
     transient Vector listeners = null;
@@ -69,7 +72,7 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
      * @return Returns the objectName.
      */
     public String getObjectName() {
-        return objectName;
+        return objectName.get();
     }
 
     /**
@@ -77,7 +80,7 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
      *            The objectName to set.
      */
     public void setObjectName(String objectName) {
-        String oldName = this.objectName;
+        String oldName = this.objectName.get();
 
         if (oldName == objectName || oldName.equals(objectName)) {
             return;
@@ -90,12 +93,11 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
             }
         }
 
-        this.objectName = objectName;
+        this.objectName.set(objectName);
+    }
 
-        if (propListeners != null) {
-            propListeners.firePropertyChange("objectName", oldName,
-                    this.objectName);
-        }
+    public StringProperty objectNameProperty() {
+        return objectName;
     }
 
     public final void setX(int value) {
@@ -157,7 +159,7 @@ public abstract class BSBObject implements DeepCopyable<BSBObject> {
 
         name = (name == null) ? "" : name;
 
-        bsbObj.setObjectName(name);
+        bsbObj.objectName.set(name);
         bsbObj.setX(Integer.parseInt(data.getTextString("x")));
         bsbObj.setY(Integer.parseInt(data.getTextString("y")));
     }

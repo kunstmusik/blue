@@ -41,8 +41,8 @@ public class BSBValueView extends Label {
             if (newVal == null) {
                 textProperty().unbind();
             } else {
-                // FIXME - make objectname a JFX Property so that binding here will work
-                textProperty().bind(Bindings.format("Value: <%s>", bsbValue.getObjectName()));
+                textProperty().bind(Bindings.format("Value: <%s>", 
+                        bsbValue.objectNameProperty()));
             }
         });
     }
