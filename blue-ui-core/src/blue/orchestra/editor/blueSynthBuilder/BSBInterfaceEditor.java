@@ -151,6 +151,7 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
                         items.remove(rightPane);
                     }
                 });
+                bsbEditPane.requestFocus();
             } finally {
                 latch.countDown();
             }

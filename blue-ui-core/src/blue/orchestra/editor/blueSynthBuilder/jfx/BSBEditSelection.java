@@ -133,6 +133,30 @@ public class BSBEditSelection {
         }
     }
 
+    void nudgeHorizontal(int val) {
+        if(selection.size() == 0 ||
+                selection.stream()
+                        .mapToInt(BSBObject::getX)
+                        .summaryStatistics().getMin() + val <= 0) {
+            return;
+        }
+        for(BSBObject obj :selection) {
+            obj.setX(obj.getX() + val);
+        }
+    }
+
+    void nudgeVertical(int val) {
+        if(selection.size() == 0 ||
+                selection.stream()
+                        .mapToInt(BSBObject::getX)
+                        .summaryStatistics().getMin() + val <= 0) {
+            return;
+        }
+        for(BSBObject obj :selection) {
+            obj.setY(obj.getY() + val);
+        }
+    }
+
     private class Point {
 
         public final double x;

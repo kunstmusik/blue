@@ -21,15 +21,11 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
-import blue.utility.GUI;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -54,9 +50,11 @@ public class BSBObjectViewHolder extends Pane {
         final BSBObject bsbObj = (BSBObject) bsbObjView.getUserData();
         setUserData(bsbObj);
         Pane mousePane = new Pane();
+        setFocusTraversable(true);
 
         mousePane.setOnMousePressed(me -> {
             me.consume();
+            getParent().requestFocus();
             if (me.isSecondaryButtonDown()) {
                 ContextMenu menu = getContextMenu();
                 menu.setUserData(selection);

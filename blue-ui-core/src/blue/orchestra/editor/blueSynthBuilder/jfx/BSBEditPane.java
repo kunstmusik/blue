@@ -24,6 +24,7 @@ import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -38,6 +39,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -78,7 +80,7 @@ public class BSBEditPane extends Pane {
     private BooleanProperty marqueeSelecting;
 
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
-
+        setFocusTraversable(true);
         gridCanvas = new Canvas();
         interfaceItemsPane = new Pane();
 
@@ -162,7 +164,7 @@ public class BSBEditPane extends Pane {
                     }
                 } else if (me.isSecondaryButtonDown()) {
                     nonEditPopupMenu.show(BSBEditPane.this, me.getScreenX(), me.getScreenY());
-                }             
+                }
             }
         });
 
@@ -182,6 +184,7 @@ public class BSBEditPane extends Pane {
                 getChildren().remove(marquee);
             }
             setMarqueeSelecting(false);
+            BSBEditPane.this.requestFocus();
         }
         );
 
@@ -193,6 +196,7 @@ public class BSBEditPane extends Pane {
             }
         };
 
+        installKeyEventHandler();
     }
 
     public BSBEditSelection getSelection() {
@@ -381,5 +385,82 @@ public class BSBEditPane extends Pane {
                 break;
         }
 
+    }
+
+    private Optional<Integer> sizeOfGridSnap() {
+        if(bsbInterface == null || !bsbInterface.getGridSettings().isSnapEnabled()) {
+            return Optional.empty();
+        }
+        return Optional.of(bsbInterface.getGridSettings().getHeight());
+    }
+
+    private void installKeyEventHandler() {
+        EventHandler<KeyEvent> handler = new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getSource() != BSBEditPane.this
+                        || bsbInterface == null
+                        || !bsbInterface.isEditEnabled()) {
+                    return;
+                }
+                if (event.isControlDown()) {
+                    switch (event.getCode()) {
+                        case C:
+                            selection.copy();
+                            event.consume();
+                            break;
+                        case X:
+                            selection.cut();
+                            event.consume();
+                            break;
+                    }
+                } else if (event.isShiftDown()) {
+                    switch (event.getCode()) {
+                        case UP:
+                            selection.nudgeVertical(-sizeOfGridSnap().orElse(10)); 
+                            event.consume();
+                            break;
+                        case DOWN:
+                            selection.nudgeVertical(sizeOfGridSnap().orElse(10)); 
+                            event.consume();
+                            break;
+                        case LEFT:
+                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(10)); 
+                            event.consume();
+                            break;
+                        case RIGHT:
+                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(10)); 
+                            event.consume();
+                            break;
+                    }
+                } else {
+                    switch (event.getCode()) {
+                        case DELETE:
+                        case BACK_SPACE:
+                            selection.remove();
+                            event.consume();
+                            break;
+                        case UP:
+                            selection.nudgeVertical(-sizeOfGridSnap().orElse(1)); 
+                            event.consume();
+                            break;
+                        case DOWN:
+                            selection.nudgeVertical(sizeOfGridSnap().orElse(1)); 
+                            event.consume();
+                            break;
+                        case LEFT:
+                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(1)); 
+                            event.consume();
+                            break;
+                        case RIGHT:
+                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(1)); 
+                            event.consume();
+                            break;
+                    }
+                }
+            }
+        };
+
+        setOnKeyPressed(handler);
     }
 }
