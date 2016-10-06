@@ -49,6 +49,7 @@ public class Installer extends ModuleInstall {
     @Override
     public void validate() throws IllegalStateException {
         UIManager.put("Nb.BlueLFCustoms", customs);
+        UIManager.put("nb.dark.theme", true);
     }
 
     @Override
