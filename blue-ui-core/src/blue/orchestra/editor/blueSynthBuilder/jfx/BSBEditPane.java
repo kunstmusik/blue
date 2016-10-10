@@ -23,6 +23,7 @@ import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import blue.orchestra.blueSynthBuilder.BSBObjectEntry;
 import blue.orchestra.blueSynthBuilder.GridSettings;
+import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -250,6 +251,9 @@ public class BSBEditPane extends Pane {
             Region objectView = BSBObjectEditorFactory.getView(bsbObj);
             BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
                     selection, objectView);
+            if(objectView instanceof EditModeOnly) {
+                viewHolder.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            }
 
             interfaceItemsPane.getChildren().add(viewHolder);
         } catch (Exception e) {
@@ -268,6 +272,7 @@ public class BSBEditPane extends Pane {
 
         if (found != null) {
             interfaceItemsPane.getChildren().remove(found);
+            found.visibleProperty().unbind();
         }
     }
 

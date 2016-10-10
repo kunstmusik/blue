@@ -19,6 +19,7 @@
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.orchestra.blueSynthBuilder.BSBValue;
+import blue.orchestra.editor.blueSynthBuilder.EditModeOnly;
 import javafx.beans.binding.Bindings;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
@@ -29,7 +30,7 @@ import javafx.scene.paint.Color;
  *
  * @author stevenyi
  */
-public class BSBValueView extends Label {
+public class BSBValueView extends Label implements EditModeOnly {
 
     public BSBValueView(BSBValue bsbValue) {
         setUserData(bsbValue);
