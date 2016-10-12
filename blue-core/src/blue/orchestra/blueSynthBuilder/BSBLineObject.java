@@ -27,25 +27,28 @@ import blue.utility.XMLUtilities;
 import electric.xml.Element;
 import electric.xml.Elements;
 import java.util.Iterator;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.apache.commons.lang3.text.StrBuilder;
 
 public class BSBLineObject extends BSBObject {
 
-    int canvasWidth = 200;
-
-    int canvasHeight = 160;
-
-    double xMax = 1.0f;
+    IntegerProperty canvasWidth = new SimpleIntegerProperty(200);
+    IntegerProperty canvasHeight = new SimpleIntegerProperty(160);
+    DoubleProperty xMax = new SimpleDoubleProperty(1.0);
+    BooleanProperty relativeXValues = new SimpleBooleanProperty(true);
+    BooleanProperty leadingZero = new SimpleBooleanProperty(true);
+    ObjectProperty<SeparatorType> separatorType
+            = new SimpleObjectProperty<>(SeparatorType.NONE);
+    BooleanProperty locked = new SimpleBooleanProperty(false);
 
     private LineList lines;
-
-    boolean relativeXValues = true;
-
-    boolean leadingZero = true;
-
-    SeparatorType separatorType = SeparatorType.NONE;
-
-    boolean locked = false;
 
     public BSBLineObject() {
         lines = new LineList();
@@ -53,14 +56,14 @@ public class BSBLineObject extends BSBObject {
 
     public BSBLineObject(BSBLineObject lineObj) {
         super(lineObj);
-        canvasWidth = lineObj.canvasWidth;
-        canvasHeight = lineObj.canvasHeight;
-        xMax = lineObj.xMax;
+        setCanvasWidth(lineObj.getCanvasWidth());
+        setCanvasHeight(lineObj.getCanvasHeight());
+        setXMax(lineObj.getXMax());
+        setRelativeXValues(lineObj.isRelativeXValues());
+        setLeadingZero(lineObj.isLeadingZero());
+        setSeparatorType(lineObj.getSeparatorType());
+        setLocked(lineObj.isLocked());
         lines = new LineList(lineObj.lines);
-        relativeXValues = lineObj.relativeXValues;
-        leadingZero = lineObj.leadingZero;
-        separatorType = lineObj.separatorType;
-        locked = lineObj.locked;
     }
 
     public static BSBObject loadFromXML(Element data) {
@@ -114,16 +117,16 @@ public class BSBLineObject extends BSBObject {
     public Element saveAsXML() {
         Element retVal = getBasicXML(this);
 
-        retVal.addElement(XMLUtilities.writeInt("canvasWidth", canvasWidth));
-        retVal.addElement(XMLUtilities.writeInt("canvasHeight", canvasHeight));
-        retVal.addElement(XMLUtilities.writeDouble("xMax", xMax));
+        retVal.addElement(XMLUtilities.writeInt("canvasWidth", getCanvasWidth()));
+        retVal.addElement(XMLUtilities.writeInt("canvasHeight", getCanvasHeight()));
+        retVal.addElement(XMLUtilities.writeDouble("xMax", getXMax()));
         retVal.addElement(XMLUtilities.writeBoolean("relativeXValues",
-                relativeXValues));
-        retVal.addElement("separatorType").setText(separatorType.name());
+                isRelativeXValues()));
+        retVal.addElement("separatorType").setText(getSeparatorType().name());
         retVal
                 .addElement(XMLUtilities.writeBoolean("leadingZero",
-                        leadingZero));
-        retVal.addElement(XMLUtilities.writeBoolean("locked", locked));
+                        isLeadingZero()));
+        retVal.addElement(XMLUtilities.writeBoolean("locked", isLocked()));
         retVal.addElement(lines.saveAsXML());
 
         return retVal;
@@ -166,18 +169,18 @@ public class BSBLineObject extends BSBObject {
         for (int i = 0; i < line.size(); i++) {
             LinePoint p = line.getLinePoint(i);
 
-            xVals[i] = p.getX() * xMax;
+            xVals[i] = p.getX() * getXMax();
             yVals[i] = p.getY();
 
         }
 
-        if (relativeXValues) {
+        if (isRelativeXValues()) {
             for (int i = xVals.length - 1; i > 0; i--) {
                 xVals[i] = xVals[i] - xVals[i - 1];
             }
         }
 
-        String spacer = separatorType.getSeparatorString();
+        String spacer = getSeparatorType().getSeparatorString();
 
         if (isLeadingZero()) {
             buffer.append("0.0").append(spacer);
@@ -289,80 +292,88 @@ public class BSBLineObject extends BSBObject {
         return lines;
     }
 
-    public int getCanvasHeight() {
-        return canvasHeight;
+    public final void setCanvasWidth(int value) {
+        canvasWidth.set(value);
     }
 
-    public void setCanvasHeight(int canvasHeight) {
-        int oldHeight = this.canvasHeight;
-
-        this.canvasHeight = canvasHeight;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("canvasHeight", oldHeight,
-                    canvasHeight);
-        }
+    public final int getCanvasWidth() {
+        return canvasWidth.get();
     }
 
-    public int getCanvasWidth() {
+    public final IntegerProperty canvasWidthProperty() {
         return canvasWidth;
     }
 
-    public void setCanvasWidth(int canvasWidth) {
-        int oldWidth = this.canvasWidth;
-
-        this.canvasWidth = canvasWidth;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("canvasWidth", oldWidth,
-                    canvasWidth);
-        }
+    public final void setCanvasHeight(int value) {
+        canvasHeight.set(value);
     }
 
-    public double getXMax() {
+    public final int getCanvasHeight() {
+        return canvasHeight.get();
+    }
+
+    public final IntegerProperty canvasHeightProperty() {
+        return canvasHeight;
+    }
+
+    public final void setXMax(double value) {
+        xMax.set(value);
+    }
+
+    public final double getXMax() {
+        return xMax.get();
+    }
+
+    public final DoubleProperty xMaxProperty() {
         return xMax;
     }
 
-    public void setXMax(double max) {
-        double oldMax = xMax;
-        xMax = max;
-
-        if (propListeners != null) {
-            propListeners.firePropertyChange("yMax", new Double(oldMax),
-                    new Double(xMax));
-        }
+    public final void setRelativeXValues(boolean value) {
+        relativeXValues.set(value);
     }
 
-    public boolean isRelativeXValues() {
+    public final boolean isRelativeXValues() {
+        return relativeXValues.get();
+    }
+
+    public final BooleanProperty relativeXValuesProperty() {
         return relativeXValues;
     }
 
-    public void setRelativeXValues(boolean relativeXValues) {
-        this.relativeXValues = relativeXValues;
+    public final void setLeadingZero(boolean val) {
+        leadingZero.set(val);
     }
 
-    public boolean isLeadingZero() {
+    public final boolean isLeadingZero() {
+        return leadingZero.get();
+    }
+
+    public final BooleanProperty leadingZeroProperty() {
         return leadingZero;
     }
 
-    public void setLeadingZero(boolean leadingZero) {
-        this.leadingZero = leadingZero;
+    public final void setLocked(boolean value) {
+        locked.set(value);
     }
 
-    public boolean isLocked() {
+    public final boolean isLocked() {
+        return locked.get();
+    }
+
+    public final BooleanProperty lockedProperty() {
         return locked;
     }
 
-    public void setLocked(boolean locked) {
-        this.locked = locked;
+    public final SeparatorType getSeparatorType() {
+        return separatorType.get();
     }
 
-    public SeparatorType getSeparatorType() {
+    public final void setSeparatorType(SeparatorType sType) {
+        separatorType.set(sType);
+    }
+
+    public final ObjectProperty<SeparatorType> separatorTypeProperty() {
         return separatorType;
-    }
-
-    public void setSeparatorType(SeparatorType separatorType) {
-        this.separatorType = separatorType;
     }
 
     @Override

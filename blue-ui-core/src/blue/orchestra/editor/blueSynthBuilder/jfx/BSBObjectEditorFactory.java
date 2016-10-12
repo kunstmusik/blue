@@ -58,7 +58,7 @@ public class BSBObjectEditorFactory {
         } else if (bsbObject instanceof BSBLabel) {
             return new BSBLabelView((BSBLabel)bsbObject);
         } else if (bsbObject instanceof BSBLineObject) {
-            return new BSBJfxDummy((BSBLineObject)bsbObject);
+            return new BSBLineObjectView((BSBLineObject)bsbObject);
         } else if (bsbObject instanceof BSBSubChannelDropdown) {
             return new BSBSubChannelDropdownView((BSBSubChannelDropdown)bsbObject);
         } else if (bsbObject instanceof BSBTextField) {

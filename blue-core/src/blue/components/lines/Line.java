@@ -27,6 +27,7 @@ import java.awt.Color;
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.*;
+import javafx.scene.paint.Paint;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
@@ -364,6 +365,16 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
     
     public Color getColor() {
         return color;
+    }
+
+    public javafx.scene.paint.Color getColorFX(){
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        int a = color.getAlpha();
+
+        return javafx.scene.paint.Color.rgb(
+                r, g, b, a / 255.0);
     }
 
     public void setColor(Color color) {
