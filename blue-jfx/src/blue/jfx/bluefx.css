@@ -28,11 +28,15 @@
     -fx-faint-focus-color: rgba(198,226,255,0.1);
 }
 
+.value-panel {
+    -fx-alignment: center;
+}
 .value-panel:readonly, 
 .value-panel:focused {
     -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -10%), -fx-text-box-border), transparent;
     -fx-background-insets: 0, 1;
     -fx-background-radius: 3, 2;
+    -fx-padding: 1pt 0.583em 1pt 0.583em; /* 4 7 4 7 */
 }
 
 .text-input:focused {
