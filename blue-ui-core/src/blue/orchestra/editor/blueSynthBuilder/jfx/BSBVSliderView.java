@@ -21,9 +21,11 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
+import javafx.util.StringConverter;
 
 /**
  *
@@ -47,6 +49,22 @@ public class BSBVSliderView extends BorderPane {
         setCenter(slider);
         setBottom(valuePanel);
 
+        StringConverter<Number> converter = new StringConverter<Number>() {
+            @Override
+            public String toString(Number object) {
+                return (object == null) ? "" : object.toString();
+            }
+
+            @Override
+            public Number fromString(String string) {
+                try {
+                    return Double.parseDouble(string);
+                } catch (NumberFormatException nfe) {
+                    return 0.0;
+                }
+            }
+
+        };
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
@@ -55,14 +73,16 @@ public class BSBVSliderView extends BorderPane {
                 slider.valueProperty().unbindBidirectional(bsbVSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
 
-                valuePanel.valueProperty().unbind();
+                Bindings.unbindBidirectional(valuePanel.valueProperty(),
+                        bsbVSlider.valueProperty());
             } else {
                 slider.maxProperty().bind(bsbVSlider.maximumProperty());
                 slider.minProperty().bind(bsbVSlider.minimumProperty());
                 slider.valueProperty().bindBidirectional(bsbVSlider.valueProperty());
                 slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
 
-                valuePanel.valueProperty().bind(bsbVSlider.valueProperty().asString());
+                Bindings.bindBidirectional(valuePanel.valueProperty(),
+                        bsbVSlider.valueProperty(), converter);
             }
         });
     }
