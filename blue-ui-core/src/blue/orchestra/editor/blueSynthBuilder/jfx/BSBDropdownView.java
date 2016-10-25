@@ -31,6 +31,7 @@ import javafx.scene.control.ChoiceBox;
 public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
 
     private final BSBDropdown dropdown;
+    boolean mutating = false;
 
     public BSBDropdownView(BSBDropdown dropdown) {
         super(dropdown.dropdownItemsProperty());
@@ -54,8 +55,21 @@ public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
 //        setPrefWidth(USE_COMPUTED_SIZE);
 
         ChangeListener<? super Number> cl = (obs, old, newVal) -> {
+            if(mutating) return;
+
+            mutating = true;
             getSelectionModel().select(newVal.intValue());
+            mutating = false;
         };
+
+        getSelectionModel().selectedIndexProperty().addListener((obs, o, newVal) ->
+        {
+            if(mutating) return;
+
+            mutating = true;
+            dropdown.setSelectedIndex(newVal.intValue());
+            mutating = false;
+        });
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
