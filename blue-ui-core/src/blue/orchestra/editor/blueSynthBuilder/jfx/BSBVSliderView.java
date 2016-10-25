@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
+import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
@@ -32,6 +33,7 @@ import javafx.util.StringConverter;
  * @author stevenyi
  */
 public class BSBVSliderView extends BorderPane {
+
     Slider slider;
     ValuePanel valuePanel;
 
@@ -41,7 +43,7 @@ public class BSBVSliderView extends BorderPane {
         slider = new Slider();
         slider.setOrientation(Orientation.VERTICAL);
         slider.setPrefWidth(30.0);
-       
+
         valuePanel = new ValuePanel();
         valuePanel.setPrefHeight(30.0);
         valuePanel.setPrefWidth(50.0);
@@ -52,7 +54,8 @@ public class BSBVSliderView extends BorderPane {
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
             public String toString(Number object) {
-                return (object == null) ? "" : object.toString();
+                return (object == null) ? ""
+                        : NumberUtilities.formatDouble(object.doubleValue());
             }
 
             @Override
@@ -86,5 +89,5 @@ public class BSBVSliderView extends BorderPane {
             }
         });
     }
-    
+
 }

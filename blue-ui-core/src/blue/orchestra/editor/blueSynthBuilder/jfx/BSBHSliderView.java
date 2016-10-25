@@ -21,6 +21,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
+import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
@@ -53,7 +54,8 @@ public class BSBHSliderView extends BorderPane {
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
             public String toString(Number object) {
-                return (object == null) ? "" : object.toString();
+                return (object == null) ? ""
+                        : NumberUtilities.formatDouble(object.doubleValue());
             }
 
             @Override

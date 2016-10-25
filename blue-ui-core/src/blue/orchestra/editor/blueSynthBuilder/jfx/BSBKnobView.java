@@ -22,6 +22,7 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.jfx.controls.Knob;
 import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
+import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
@@ -66,7 +67,7 @@ public class BSBKnobView extends BorderPane {
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
             public String toString(Number object) {
-                return (object == null) ? "" : object.toString();
+                return (object == null) ? "" : NumberUtilities.formatDouble(object.doubleValue());
             }
 
             @Override
