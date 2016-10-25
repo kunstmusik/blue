@@ -22,13 +22,13 @@ package blue.orchestra.editor.blueSynthBuilder.jfx;
 import blue.orchestra.blueSynthBuilder.BSBDropdown;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItem;
 import javafx.beans.value.ChangeListener;
-import javafx.scene.control.ComboBox;
+import javafx.scene.control.ChoiceBox;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
+public class BSBDropdownView extends ChoiceBox<BSBDropdownItem> {
 
     private final BSBDropdown dropdown;
 
@@ -51,7 +51,7 @@ public class BSBDropdownView extends ComboBox<BSBDropdownItem> {
 //        setCellFactory(lv -> cell);
 
         this.dropdown = dropdown;
-        setPrefWidth(USE_COMPUTED_SIZE);
+//        setPrefWidth(USE_COMPUTED_SIZE);
 
         ChangeListener<? super Number> cl = (obs, old, newVal) -> {
             getSelectionModel().select(newVal.intValue());
