@@ -27,7 +27,8 @@ import java.awt.Color;
 import java.io.*;
 import java.rmi.dgc.VMID;
 import java.util.*;
-import javafx.scene.paint.Paint;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
@@ -810,5 +811,9 @@ public class Line implements TableModel, ChangeListener, Iterable<LinePoint> {
         }
         
         return linePoint == points.get(0);
+    }
+
+    public ObservableList<LinePoint> getObservableList() {
+        return FXCollections.observableArrayList(points);
     }
 }

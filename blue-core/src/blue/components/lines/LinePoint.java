@@ -23,6 +23,8 @@ package blue.components.lines;
 import electric.xml.Element;
 import java.util.Iterator;
 import java.util.Vector;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -31,18 +33,18 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
  * @author Steven Yi
  */
 public class LinePoint implements Comparable<LinePoint> {
-    private double y;
 
-    private double x;
+    private DoubleProperty x = new SimpleDoubleProperty(0.0);
+    private DoubleProperty y = new SimpleDoubleProperty(0.0);
 
     private transient Vector listeners = null;
+    private transient ChangeEvent changeEvent = new ChangeEvent(this);
 
-    private transient ChangeEvent changeEvent = null;
 
     public LinePoint(){}
     public LinePoint(LinePoint lp){
-        x = lp.x;
-        y = lp.y;
+        setX(lp.getX());
+        setY(lp.getY());
     }
 
     public static LinePoint loadFromXML(Element data) {
@@ -81,23 +83,36 @@ public class LinePoint implements Comparable<LinePoint> {
     }
 
     public void setLocation(double x, double y) {
-        this.x = x;
-        this.y = y;
-
-        if (changeEvent == null) {
-            changeEvent = new ChangeEvent(this);
-        }
-
-        fireChangeEvent(changeEvent);
+        setX(x);
+        setY(y);
     }
 
-    public double getX() {
+    public final void setX(double value) {
+        fireChangeEvent(changeEvent);
+        x.set(value);
+    }
+
+    public final double getX() {
+        return x.get();
+    }
+
+    public final DoubleProperty xProperty() {
         return x;
     }
 
-    public double getY() {
+    public final void setY(double value) {
+        y.set(value);
+        fireChangeEvent(changeEvent);
+    }
+
+    public final double getY() {
+        return y.get();
+    }
+
+    public final DoubleProperty yProperty() {
         return y;
     }
+
 
     /* EVENT CODE */
 

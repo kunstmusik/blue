@@ -21,15 +21,17 @@ package blue.components.lines;
 
 import electric.xml.Element;
 import electric.xml.Elements;
-import java.util.ArrayList;
+import javafx.beans.property.SimpleListProperty;
+import javafx.collections.FXCollections;
 
-public class LineList extends ArrayList<Line> {
+public class LineList extends SimpleListProperty<Line> {
 
     public LineList() {
+        super(FXCollections.observableArrayList());
     }
 
     public LineList(LineList ll) {
-        super(ll.size());
+        super(FXCollections.observableArrayList());
         for (Line line : ll) {
             add(new Line(line));
         }

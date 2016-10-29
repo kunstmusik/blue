@@ -22,12 +22,29 @@ import blue.components.DragDirection;
 import blue.components.lines.Line;
 import blue.components.lines.LineList;
 import blue.components.lines.LinePoint;
+import blue.jfx.BlueFX;
+import java.util.Optional;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.util.converter.DoubleStringConverter;
+import javax.swing.event.TableModelListener;
+import org.controlsfx.tools.Utils;
 
 /**
  *
@@ -36,7 +53,7 @@ import javafx.scene.paint.Color;
 public class LineView extends Canvas {
 
     private final LineList lineList;
-    Line currentLine = null;
+    ObjectProperty<Line> selectedLine = new SimpleObjectProperty<>();
     LinePoint selectedPoint = null;
     double leftBoundaryX = -1, rightBoundaryX = -1;
     double pressX = 0.0, pressY = 0.0;
@@ -44,22 +61,45 @@ public class LineView extends Canvas {
 
     BooleanProperty locked = new SimpleBooleanProperty(false);
 
+    ContextMenu editPointsMenu = new ContextMenu();
+
     public LineView(LineList lineList) {
         this.lineList = lineList;
 
         repaint();
 
         boundsInParentProperty().addListener((obs, old, newVal) -> repaint());
+        selectedLine.addListener((obs, old, newVal) -> repaint());
 
         if (lineList.size() > 0) {
             setSelectedLine(lineList.get(0));
         }
+
+        MenuItem editPoints = new MenuItem("Edit Points");
+        editPoints.setOnAction(e -> {
+            BlueFX.runOnFXThread(() -> {
+                editPoints();
+            });
+        });
+        editPointsMenu.getItems().add(editPoints);
 
         setOnMousePressed(e -> mousePressed(e));
         setOnMouseDragged(e -> mouseDragged(e));
         setOnMouseReleased(e -> mouseReleased(e));
         setOnMouseMoved(e -> mouseMoved(e));
 
+    }
+
+    public final void setSelectedLine(Line line) {
+        selectedLine.set(line);
+    }
+
+    public final Line getSelectedLine() {
+        return selectedLine.get();
+    }
+
+    public final ObjectProperty<Line> selectedLineProperty() {
+        return selectedLine;
     }
 
     public final void setLocked(boolean value) {
@@ -74,11 +114,6 @@ public class LineView extends Canvas {
         return locked;
     }
 
-    public void setSelectedLine(Line line) {
-        currentLine = line;
-        repaint();
-    }
-
     public void repaint() {
         GraphicsContext gc = getGraphicsContext2D();
         double w = getWidth();
@@ -89,7 +124,7 @@ public class LineView extends Canvas {
         gc.setLineWidth(0.0);
 
         for (Line line : lineList) {
-            boolean current = line == currentLine;
+            boolean current = (line == getSelectedLine());
             Color c = current ? line.getColorFX()
                     : line.getColorFX().darker();
             gc.setStroke(c);
@@ -142,8 +177,8 @@ public class LineView extends Canvas {
     private void drawSelectedPoint(GraphicsContext gc) {
 
         if (selectedPoint != null) {
-            double min = currentLine.getMin();
-            double max = currentLine.getMax();
+            double min = getSelectedLine().getMin();
+            double max = getSelectedLine().getMax();
 
             double x = selectedPoint.getX() * getWidth();
             double y = yToScreen(selectedPoint.getY(), min, max);
@@ -151,14 +186,12 @@ public class LineView extends Canvas {
             gc.setFill(Color.RED);
             gc.fillRect(x - 2.5, y - 2.5, 5, 5);
 
-            if (currentLine != null) {
 //                drawPointInformation(g2d, x, y);
-            }
         }
     }
 
     private void mousePressed(MouseEvent me) {
-        if (currentLine == null) {
+        if (getSelectedLine() == null) {
             return;
         }
 
@@ -173,12 +206,12 @@ public class LineView extends Canvas {
                     return;
                 }
 
-                LinePoint first = currentLine.getLinePoint(0);
-                LinePoint last = currentLine.getLinePoint(currentLine
+                LinePoint first = getSelectedLine().getLinePoint(0);
+                LinePoint last = getSelectedLine().getLinePoint(getSelectedLine()
                         .size() - 1);
 
                 if (selectedPoint != first && selectedPoint != last) {
-                    currentLine.removeLinePoint(selectedPoint);
+                    getSelectedLine().removeLinePoint(selectedPoint);
                     selectedPoint = null;
                     repaint();
                 }
@@ -187,7 +220,9 @@ public class LineView extends Canvas {
                 setBoundaryXValues();
             }
         } else {
-            if (me.isPrimaryButtonDown()) {
+            if (me.isSecondaryButtonDown()) {
+                editPointsMenu.show(LineView.this, me.getScreenX(), me.getScreenY());
+            } else if (me.isPrimaryButtonDown()) {
                 if (!isLocked()) {
                     selectedPoint = insertGraphPoint(me.getX(), me.getY());
                     repaint();
@@ -198,7 +233,7 @@ public class LineView extends Canvas {
     }
 
     private void mouseMoved(MouseEvent me) {
-        if (currentLine == null) {
+        if (getSelectedLine() == null) {
             return;
         }
 
@@ -222,14 +257,14 @@ public class LineView extends Canvas {
 
     private void mouseReleased(MouseEvent me) {
         direction = DragDirection.NOT_SET;
-        if (currentLine != null) {
+        if (getSelectedLine() != null) {
             me.consume();
             repaint();
         }
     }
 
     private void mouseDragged(MouseEvent me) {
-        if (currentLine == null || selectedPoint == null) {
+        if (getSelectedLine() == null || selectedPoint == null) {
             return;
         }
         me.consume();
@@ -245,14 +280,13 @@ public class LineView extends Canvas {
                     : DragDirection.UP_DOWN;
         }
 
-
-                if(me.isControlDown()) {
-                    if(direction == DragDirection.LEFT_RIGHT) {
-                        y = pressY;
-                    } else {
-                        x = pressX; 
-                    }
-                }
+        if (me.isControlDown()) {
+            if (direction == DragDirection.LEFT_RIGHT) {
+                y = pressY;
+            } else {
+                x = pressX;
+            }
+        }
 
         x = Math.min(rightBoundaryX,
                 Math.max(leftBoundaryX, x));
@@ -260,18 +294,18 @@ public class LineView extends Canvas {
         y = Math.min(getHeight(), Math.max(0, y));
 
         selectedPoint.setLocation(x / getWidth(),
-                screenToY(y, currentLine.getMin(),
-                        currentLine.getMax()));
+                screenToY(y, getSelectedLine().getMin(),
+                        getSelectedLine().getMax()));
 
         repaint();
     }
 
     public LinePoint findGraphPoint(double x, double y) {
-        double min = currentLine.getMin();
-        double max = currentLine.getMax();
+        double min = getSelectedLine().getMin();
+        double max = getSelectedLine().getMax();
 
-        for (int i = 0; i < currentLine.size(); i++) {
-            LinePoint point = currentLine.getLinePoint(i);
+        for (int i = 0; i < getSelectedLine().size(); i++) {
+            LinePoint point = getSelectedLine().getLinePoint(i);
 
             double tempX = point.getX() * getWidth();
             double tempY = yToScreen(point.getY(), min, max);
@@ -302,8 +336,8 @@ public class LineView extends Canvas {
             return null;
         }
 
-        double min = currentLine.getMin();
-        double max = currentLine.getMax();
+        double min = getSelectedLine().getMin();
+        double max = getSelectedLine().getMax();
 
         LinePoint point = new LinePoint();
         point.setLocation(x / getWidth(),
@@ -311,45 +345,90 @@ public class LineView extends Canvas {
 
         int index = 1;
 
-        for (int i = 0; i < currentLine.size() - 1; i++) {
-            LinePoint p1 = currentLine.getLinePoint(i);
-            LinePoint p2 = currentLine.getLinePoint(i + 1);
+        for (int i = 0; i < getSelectedLine().size() - 1; i++) {
+            LinePoint p1 = getSelectedLine().getLinePoint(i);
+            LinePoint p2 = getSelectedLine().getLinePoint(i + 1);
 
             if (point.getX() >= p1.getX() && point.getX() <= p2.getX()) {
                 index = i + 1;
                 break;
             }
         }
-        currentLine.addLinePoint(index, point);
+        getSelectedLine().addLinePoint(index, point);
         return point;
     }
 
     private void setBoundaryXValues() {
-        if (selectedPoint == null || currentLine == null) {
+        if (selectedPoint == null || getSelectedLine() == null) {
             return;
         }
 
-        int size = currentLine.size();
+        int size = getSelectedLine().size();
 
-        if (selectedPoint == currentLine.getLinePoint(0)) {
+        if (selectedPoint == getSelectedLine().getLinePoint(0)) {
             leftBoundaryX = 0.0;
             rightBoundaryX = 0.0;
             return;
-        } else if (selectedPoint == currentLine.getLinePoint(size - 1)) {
+        } else if (selectedPoint == getSelectedLine().getLinePoint(size - 1)) {
             leftBoundaryX = getWidth();
             rightBoundaryX = getWidth();
             return;
         }
 
         for (int i = 0; i < size; i++) {
-            if (currentLine.getLinePoint(i) == selectedPoint) {
+            if (getSelectedLine().getLinePoint(i) == selectedPoint) {
 
-                LinePoint p1 = currentLine.getLinePoint(i - 1);
-                LinePoint p2 = currentLine.getLinePoint(i + 1);
+                LinePoint p1 = getSelectedLine().getLinePoint(i - 1);
+                LinePoint p2 = getSelectedLine().getLinePoint(i + 1);
                 leftBoundaryX = p1.getX() * getWidth();
                 rightBoundaryX = p2.getX() * getWidth();
                 return;
             }
         }
+    }
+
+    private void editPoints() {
+        TableView<LinePoint> table = new TableView<>();
+        TableColumn<LinePoint, Double> xCol = new TableColumn<>("x");
+        TableColumn<LinePoint, Double> yCol = new TableColumn<>("y");
+        table.getColumns().setAll(xCol, yCol);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setItems(getSelectedLine().getObservableList());
+
+        table.setEditable(true);
+        xCol.setCellValueFactory(new PropertyValueFactory<LinePoint, Double>("x"));
+        xCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        xCol.setOnEditCommit(te -> {
+            LinePoint lp = te.getRowValue();
+            if (getSelectedLine().getLinePoint(0) == lp
+                    || getSelectedLine().getLinePoint(getSelectedLine().size() - 1) == lp) {
+                return;
+            }
+            lp.setX(Utils.clamp(0.0, te.getNewValue(), 1.0));
+        });
+        xCol.setEditable(true);
+        yCol.setCellValueFactory(new PropertyValueFactory<LinePoint, Double>("y"));
+        yCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        yCol.setOnEditCommit(te -> {
+            te.getRowValue().setY(
+                    Utils.clamp(getSelectedLine().getMin(), te.getNewValue(), getSelectedLine().getMax()));
+        });
+        yCol.setEditable(true);
+
+        Dialog<ButtonType> d = new Dialog<>();
+        d.initOwner(getScene().getWindow());
+        d.initModality(Modality.APPLICATION_MODAL);
+        d.getDialogPane().setContent(new ScrollPane(table));
+        d.getDialogPane().getStylesheets().add(BlueFX.getBlueFxCss());
+        d.getDialogPane().getButtonTypes().setAll(ButtonType.OK);
+        d.setTitle("Edit Points");
+
+        TableModelListener tml = tme -> {
+            repaint();
+        };
+        getSelectedLine().addTableModelListener(tml);
+
+        Optional<ButtonType> res = d.showAndWait();
+        getSelectedLine().removeTableModelListener(tml);
     }
 }
