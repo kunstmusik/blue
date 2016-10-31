@@ -33,7 +33,7 @@ import javafx.collections.transformation.FilteredList;
  */
 public class ClojureProjectData implements BlueDataObject {
 
-    ObservableList<ClojureLibraryEntry> libraryList = 
+    private ObservableList<ClojureLibraryEntry> libraryList = 
             FXCollections.observableArrayList();
 
     public ClojureProjectData() {

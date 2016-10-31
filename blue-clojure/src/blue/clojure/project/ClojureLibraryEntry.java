@@ -29,45 +29,44 @@ import javafx.beans.property.SimpleStringProperty;
  * @author stevenyi
  */
 public class ClojureLibraryEntry implements BlueDataObject {
-    private SimpleStringProperty dependencyCoordinates;
-    private SimpleStringProperty version;
+
+    private SimpleStringProperty dependencyCoordinates
+            = new SimpleStringProperty(this, "coordinates", "org/library-name");
+    ;
+    private SimpleStringProperty version = new SimpleStringProperty(this, "version", "1.0.0");
 
     public ClojureLibraryEntry() {
-       dependencyCoordinates = new SimpleStringProperty(this, "coordinates", 
-       "org/library-name");
-       version = new SimpleStringProperty(this, "version", "1.0.0");
     }
 
-    public ClojureLibraryEntry(ClojureLibraryEntry cle){
+    public ClojureLibraryEntry(ClojureLibraryEntry cle) {
         setDependencyCoordinates(cle.getDependencyCoordinates());
         setVersion(cle.getVersion());
     }
 
     public String getDependencyCoordinates() {
         return dependencyCoordinates.get();
-    } 
+    }
 
     public void setDependencyCoordinates(String coordinates) {
-       dependencyCoordinates.set(coordinates);
+        dependencyCoordinates.set(coordinates);
     }
 
     public SimpleStringProperty dependencyCoordinates() {
         return dependencyCoordinates;
     }
 
-
     public String getVersion() {
         return version.get();
-    } 
+    }
 
     public void setVersion(String versionString) {
-       version.set(versionString);
+        version.set(versionString);
     }
 
     public SimpleStringProperty version() {
         return version;
     }
-    
+
     public static ClojureLibraryEntry loadFromXML(Element data) {
         ClojureLibraryEntry lib = new ClojureLibraryEntry();
 
@@ -89,7 +88,7 @@ public class ClojureLibraryEntry implements BlueDataObject {
 
         return lib;
     }
-    
+
     @Override
     public Element saveAsXML() {
         Element elem = new Element("clojureLibraryEntry");
