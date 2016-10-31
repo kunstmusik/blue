@@ -73,7 +73,7 @@ public class BSBLineObjectView extends BorderPane {
 
         public LineSelector(BSBLineObject lines) {
             this.lines = lines;
-            Label label = new Label("Test");
+            Label label = new Label();
 
             Button leftButton = new Button();
             leftButton.getStyleClass().add("left-arrow");
@@ -88,9 +88,14 @@ public class BSBLineObjectView extends BorderPane {
             HBox.setHgrow(label, Priority.ALWAYS);
             getChildren().addAll(label, leftButton, rightButton);
 
+            selectedLine.addListener((obs, old, newVal) -> 
+                    label.setText(newVal.getVarName())
+            );
+
             if(lines.getLines().size() > 0) {
                 setSelectedLine(lines.getLines().get(0));
             }
+
         }
 
         private void nextLine(){

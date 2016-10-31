@@ -39,6 +39,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.effect.Glow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
@@ -64,6 +65,7 @@ public class LineView extends Canvas {
     ContextMenu editPointsMenu = new ContextMenu();
 
     public LineView(LineList lineList) {
+        getGraphicsContext2D().applyEffect(new Glow(0.75));
         this.lineList = lineList;
 
         repaint();

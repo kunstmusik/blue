@@ -18,6 +18,7 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx.editors;
 
+import blue.components.lines.LineList;
 import blue.orchestra.blueSynthBuilder.BSBDropdownItemList;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -104,6 +105,27 @@ public class BSBPropertyEditorFactory extends DefaultPropertyEditorFactory {
                 @Override
                 public void setValue(BSBDropdownItemList value) {
                     tf.setBSBDropdownItemList(value);
+                }
+
+            };
+        } else if (type == LineList.class) {
+
+            return new PropertyEditor<LineList>() {
+                LineListEditor tf = new LineListEditor();
+
+                @Override
+                public Node getEditor() {
+                    return tf;
+                }
+
+                @Override
+                public LineList getValue() {
+                    return tf.getLineList();
+                }
+
+                @Override
+                public void setValue(LineList value) {
+                    tf.setLineList(value);
                 }
 
             };
