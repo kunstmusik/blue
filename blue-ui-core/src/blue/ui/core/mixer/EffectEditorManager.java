@@ -19,28 +19,40 @@
  */
 package blue.ui.core.mixer;
 
+import blue.jfx.BlueFX;
 import blue.mixer.*;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
 import blue.orchestra.editor.blueSynthBuilder.BSBEditPanel;
+import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.CountDownLatch;
+import javafx.collections.ObservableList;
+import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Bounds;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 
 public class EffectEditorManager {
 
     private static EffectEditorManager manager = null;
 
     private Map<Effect, WeakReference<JDialog>> map = new WeakHashMap<>();
-    
-    private EffectEditorManager() {}
+
+    private EffectEditorManager() {
+    }
 
     public void clear() {
 
         for (WeakReference<JDialog> ref : map.values()) {
             JDialog dialog = ref.get();
-            if(dialog != null) {
+            if (dialog != null) {
                 dialog.setVisible(false);
                 dialog.dispose();
             }
@@ -63,29 +75,55 @@ public class EffectEditorManager {
 
     public void openEffectEditor(Frame root, Effect effect) {
         JDialog dialog = null;
-        
+
         WeakReference<JDialog> ref = map.get(effect);
-        if(ref != null) {
+        if (ref != null) {
             dialog = ref.get();
         }
-                
+
         if (dialog == null) {
             dialog = new JDialog(root);
 
-            BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-                    .getBSBObjects());
-            editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
+            JFXPanel panel = new JFXPanel();
+            CountDownLatch latch = new CountDownLatch(1);
 
-            dialog.getContentPane().add(editPanel);
+            double[] dims = new double[2];
+
+            BlueFX.runOnFXThread(() -> {
+                try {
+                    BSBEditPane editPanel = new BSBEditPane(BSBObjectRegistry
+                            .getBSBObjects());
+                    editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
+                    effect.getGraphicInterface().setEditEnabled(false);
+
+                    Scene scene = new Scene(editPanel);
+                    BlueFX.style(scene);
+                    panel.setScene(scene);
+
+                    System.out.println(editPanel.getChildren().get(1).getBoundsInParent());
+                } finally {
+                    latch.countDown();
+                }
+            });
+
+            try {
+                latch.await();
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+
+            dialog.getContentPane().add(panel);
             dialog.setTitle(effect.getName());
-            dialog.pack();
 
-            dialog.setSize(dialog.getWidth() + 5, dialog.getHeight() + 5);
-            // dialog.setModal(true);
-            
             dialog.getRootPane().putClientProperty("SeparateWindow", Boolean.TRUE);
 
             dialog.setVisible(true);
+
+            final JDialog dlg = dialog;
+            SwingUtilities.invokeLater(() -> {
+                dlg.pack();
+                dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() +5);
+            });
 
             map.put(effect, new WeakReference(dialog));
         } else {
@@ -98,7 +136,7 @@ public class EffectEditorManager {
 
         JDialog dialog = null;
         WeakReference<JDialog> ref = map.get(effect);
-        if(ref != null) {
+        if (ref != null) {
             dialog = ref.get();
         }
 
