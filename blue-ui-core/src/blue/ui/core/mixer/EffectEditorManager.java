@@ -22,18 +22,13 @@ package blue.ui.core.mixer;
 import blue.jfx.BlueFX;
 import blue.mixer.*;
 import blue.orchestra.blueSynthBuilder.BSBObjectRegistry;
-import blue.orchestra.editor.blueSynthBuilder.BSBEditPanel;
 import blue.orchestra.editor.blueSynthBuilder.jfx.BSBEditPane;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
-import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
-import javafx.geometry.Bounds;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
@@ -122,7 +117,7 @@ public class EffectEditorManager {
             final JDialog dlg = dialog;
             SwingUtilities.invokeLater(() -> {
                 dlg.pack();
-                dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() +5);
+                dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() + 5);
             });
 
             map.put(effect, new WeakReference(dialog));
@@ -141,17 +136,11 @@ public class EffectEditorManager {
         }
 
         if (dialog != null) {
-            dialog.getContentPane().removeAll();
-
-            BSBEditPanel editPanel = new BSBEditPanel(BSBObjectRegistry
-                    .getBSBObjects());
-            editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
-
-            dialog.getContentPane().add(editPanel);
-            dialog.setTitle(effect.getName());
-            dialog.pack();
-
-            dialog.setSize(dialog.getWidth() + 5, dialog.getHeight() + 5);
+            final JDialog dlg = dialog;
+            SwingUtilities.invokeLater(() -> {
+                dlg.pack();
+                dlg.setSize(dlg.getWidth() + 5, dlg.getHeight() + 5);
+            });
         }
     }
 
