@@ -446,7 +446,7 @@ public final class SoundLayer extends ArrayList<SoundObject>
 
     @Override
     public SoundLayer deepCopy() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return new SoundLayer(this);
     }
     
     
