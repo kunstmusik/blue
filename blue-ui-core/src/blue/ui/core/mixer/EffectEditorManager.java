@@ -87,9 +87,8 @@ public class EffectEditorManager {
             BlueFX.runOnFXThread(() -> {
                 try {
                     BSBEditPane editPanel = new BSBEditPane(BSBObjectRegistry
-                            .getBSBObjects());
+                            .getBSBObjects(), false);
                     editPanel.editBSBGraphicInterface(effect.getGraphicInterface());
-                    effect.getGraphicInterface().setEditEnabled(false);
 
                     Scene scene = new Scene(editPanel);
                     BlueFX.style(scene);

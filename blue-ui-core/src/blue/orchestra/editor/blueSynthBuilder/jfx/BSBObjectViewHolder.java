@@ -19,9 +19,9 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
-import blue.orchestra.blueSynthBuilder.BSBGraphicInterface;
 import blue.orchestra.blueSynthBuilder.BSBObject;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Scene;
@@ -43,7 +43,7 @@ public class BSBObjectViewHolder extends Pane {
 
     private static ContextMenu MENU = null;
 
-    public BSBObjectViewHolder(BSBGraphicInterface bsbGraphicInterface,
+    public BSBObjectViewHolder(BooleanProperty editEnabledProperty,
             BSBEditSelection selection,
             Region bsbObjView) {
 
@@ -101,13 +101,15 @@ public class BSBObjectViewHolder extends Pane {
 //        SetChangeListener<BSBObject> scl = e -> {
 //            rect.setVisible(e.getSet().contains(bsbObj));
 //        };
-        rect.visibleProperty().bind(
-                Bindings.createBooleanBinding(
-                        () -> bsbGraphicInterface.isEditEnabled()
-                        && selection.selection.contains(bsbObj),
-                        bsbGraphicInterface.editEnabledProperty(),
-                        selection.selection
-                ));
+        if (editEnabledProperty != null) {
+            rect.visibleProperty().bind(
+                    Bindings.createBooleanBinding(
+                            () -> editEnabledProperty.get()
+                            && selection.selection.contains(bsbObj),
+                            editEnabledProperty,
+                            selection.selection
+                    ));
+        }
 
         sceneProperty().addListener(new ChangeListener<Scene>() {
             @Override
@@ -123,8 +125,13 @@ public class BSBObjectViewHolder extends Pane {
                             bsbObjView.widthProperty());
                     mousePane.prefHeightProperty().bind(
                             bsbObjView.heightProperty());
-                    mousePane.mouseTransparentProperty().bind(
-                            bsbGraphicInterface.editEnabledProperty().not());
+
+                    if(editEnabledProperty != null) {
+                        mousePane.mouseTransparentProperty().bind(
+                                editEnabledProperty.not());
+                    } else {
+                        mousePane.setMouseTransparent(true);
+                    }
 
                     layoutXProperty().bind(bsbObj.xProperty());
                     layoutYProperty().bind(bsbObj.yProperty());
@@ -135,7 +142,6 @@ public class BSBObjectViewHolder extends Pane {
 //        setBorder(new Border(new BorderStroke(Color.rgb(0, 255, 0), BorderStrokeStyle.SOLID, null, BorderWidths.DEFAULT)));
 //        border
     }
-
 
     private static ContextMenu getContextMenu() {
         if (MENU == null) {
@@ -157,7 +163,6 @@ public class BSBObjectViewHolder extends Pane {
                 BSBEditSelection selection = (BSBEditSelection) MENU.getUserData();
                 selection.remove();
             });
-
 
 //            String[] alignOptions = { "Left", "Horizontal Center", "Right", "Top",
 //            "Vertical Center", "Bottom" };
@@ -183,7 +188,6 @@ public class BSBObjectViewHolder extends Pane {
 //                align.getItems().add(a);
 //                align.getItems().add(d);
 //            }
-            
             MENU.getItems().addAll(cut, copy, remove);
             MENU.setOnHidden(e -> MENU.setUserData(null));
         }

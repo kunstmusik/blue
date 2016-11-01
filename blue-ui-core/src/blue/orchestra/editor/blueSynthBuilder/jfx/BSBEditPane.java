@@ -80,8 +80,16 @@ public class BSBEditPane extends Pane {
 
     private BooleanProperty marqueeSelecting;
 
+    final boolean allowEditing;
+
     public BSBEditPane(BSBObjectEntry[] bsbObjectEntries) {
+        this(bsbObjectEntries, true);
+    }
+
+    public BSBEditPane(BSBObjectEntry[] bsbObjectEntries, boolean allowEditing) {
         setFocusTraversable(true);
+        this.allowEditing = allowEditing;
+
         gridCanvas = new Canvas();
         interfaceItemsPane = new Pane();
 
@@ -146,7 +154,7 @@ public class BSBEditPane extends Pane {
 
         setOnMousePressed(me -> {
             if (!me.isConsumed() && bsbInterface != null) {
-                if (bsbInterface.isEditEnabled()) {
+                if (bsbInterface.isEditEnabled() && allowEditing) {
                     if (me.isSecondaryButtonDown()) {
                         addX = (int) me.getX();
                         addY = (int) me.getY();
@@ -237,7 +245,11 @@ public class BSBEditPane extends Pane {
                 addBSBObject(bsbObj);
             }
             bsbInterface.interfaceItemsProperty().addListener(scl);
-            gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            if (allowEditing) {
+                gridCanvas.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            } else {
+                gridCanvas.setVisible(false);
+            }
             GridSettings gridSettings = bsbInterface.getGridSettings();
             gridSettings.widthProperty().addListener(gridListener);
             gridSettings.heightProperty().addListener(gridListener);
@@ -249,10 +261,15 @@ public class BSBEditPane extends Pane {
     protected void addBSBObject(BSBObject bsbObj) {
         try {
             Region objectView = BSBObjectEditorFactory.getView(bsbObj);
-            BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(bsbInterface,
+            BooleanProperty editEnabledProperty = allowEditing ? bsbInterface.editEnabledProperty() : null;
+            BSBObjectViewHolder viewHolder = new BSBObjectViewHolder(editEnabledProperty,
                     selection, objectView);
-            if(objectView instanceof EditModeOnly) {
-                viewHolder.visibleProperty().bind(bsbInterface.editEnabledProperty());
+            if (objectView instanceof EditModeOnly) {
+                if (allowEditing) {
+                    viewHolder.visibleProperty().bind(bsbInterface.editEnabledProperty());
+                } else {
+                    viewHolder.setVisible(false);
+                }
             }
 
             interfaceItemsPane.getChildren().add(viewHolder);
@@ -393,7 +410,7 @@ public class BSBEditPane extends Pane {
     }
 
     private Optional<Integer> sizeOfGridSnap() {
-        if(bsbInterface == null || !bsbInterface.getGridSettings().isSnapEnabled()) {
+        if (bsbInterface == null || !bsbInterface.getGridSettings().isSnapEnabled()) {
             return Optional.empty();
         }
         return Optional.of(bsbInterface.getGridSettings().getHeight());
@@ -405,7 +422,8 @@ public class BSBEditPane extends Pane {
             public void handle(KeyEvent event) {
                 if (event.getSource() != BSBEditPane.this
                         || bsbInterface == null
-                        || !bsbInterface.isEditEnabled()) {
+                        || !bsbInterface.isEditEnabled()
+                        || !allowEditing) {
                     return;
                 }
                 if (event.isControlDown()) {
@@ -422,19 +440,19 @@ public class BSBEditPane extends Pane {
                 } else if (event.isShiftDown()) {
                     switch (event.getCode()) {
                         case UP:
-                            selection.nudgeVertical(-sizeOfGridSnap().orElse(10)); 
+                            selection.nudgeVertical(-sizeOfGridSnap().orElse(10));
                             event.consume();
                             break;
                         case DOWN:
-                            selection.nudgeVertical(sizeOfGridSnap().orElse(10)); 
+                            selection.nudgeVertical(sizeOfGridSnap().orElse(10));
                             event.consume();
                             break;
                         case LEFT:
-                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(10)); 
+                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(10));
                             event.consume();
                             break;
                         case RIGHT:
-                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(10)); 
+                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(10));
                             event.consume();
                             break;
                     }
@@ -446,19 +464,19 @@ public class BSBEditPane extends Pane {
                             event.consume();
                             break;
                         case UP:
-                            selection.nudgeVertical(-sizeOfGridSnap().orElse(1)); 
+                            selection.nudgeVertical(-sizeOfGridSnap().orElse(1));
                             event.consume();
                             break;
                         case DOWN:
-                            selection.nudgeVertical(sizeOfGridSnap().orElse(1)); 
+                            selection.nudgeVertical(sizeOfGridSnap().orElse(1));
                             event.consume();
                             break;
                         case LEFT:
-                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(1)); 
+                            selection.nudgeHorizontal(-sizeOfGridSnap().orElse(1));
                             event.consume();
                             break;
                         case RIGHT:
-                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(1)); 
+                            selection.nudgeHorizontal(sizeOfGridSnap().orElse(1));
                             event.consume();
                             break;
                     }
