@@ -18,20 +18,32 @@
  */
 package blue.orchestra.editor.blueSynthBuilder.jfx;
 
+import blue.BlueData;
 import blue.mixer.Channel;
 import blue.orchestra.blueSynthBuilder.BSBSubChannelDropdown;
-import javafx.scene.control.ComboBox;
+import blue.projects.BlueProjectManager;
+import javafx.scene.control.ChoiceBox;
 
 /**
  *
  * @author stevenyi
  */
-public class BSBSubChannelDropdownView extends ComboBox<String> {
+public class BSBSubChannelDropdownView extends ChoiceBox<String> {
     
     public BSBSubChannelDropdownView(BSBSubChannelDropdown dropDown) {
         setUserData(dropDown);
 
+        BlueData data = BlueProjectManager.getInstance().getCurrentProject().getData();
         // FIXME - update once Mixer is updated for JFX ObservableList
         itemsProperty().get().add(Channel.MASTER);
+        for(Channel c : data.getMixer().getSubChannels()){
+            itemsProperty().get().add(c.getName());
+        }
+
+        getSelectionModel().select(dropDown.getChannelOutput());
+
+       getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
+           dropDown.setChannelOutput(newVal);
+       });
     }
 }
