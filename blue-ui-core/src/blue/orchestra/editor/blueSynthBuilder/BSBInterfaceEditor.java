@@ -220,6 +220,8 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
 
             presetPane.setBSBInterface(gInterface);
             presetPane.setPresetGroup(pGroup);
+
+            editEnabledCheckBox.setDisable(gInterface == null);
         });
 
 

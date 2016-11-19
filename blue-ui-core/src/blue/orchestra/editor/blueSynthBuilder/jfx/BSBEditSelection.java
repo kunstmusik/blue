@@ -54,7 +54,7 @@ public class BSBEditSelection {
 
     public void setBSBGraphicInterface(BSBGraphicInterface bsbInterface) {
         this.bsbInterface = bsbInterface;
-        this.gridSettings = bsbInterface.getGridSettings();
+        this.gridSettings = (bsbInterface != null) ? bsbInterface.getGridSettings(): null;
         selection.clear();
     }
 
