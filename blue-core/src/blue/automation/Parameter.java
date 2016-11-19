@@ -27,6 +27,8 @@ import electric.xml.Element;
 import electric.xml.Elements;
 import java.rmi.dgc.VMID;
 import java.util.Vector;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -48,11 +50,11 @@ public class Parameter implements TableModelListener {
     private String name = "";
     private String label = "";
     private double resolution = -1.0f;
-    private Line line;
-    private boolean automationEnabled = false;
+    private BooleanProperty automationEnabled = new SimpleBooleanProperty(false);
 
     private boolean updatingLine = false;
     private String uniqueId;
+    private Line line;
     transient Vector<ParameterListener> listeners;
 
     /* Used only at compilation time; not transient as it should be copied. 
@@ -77,7 +79,7 @@ public class Parameter implements TableModelListener {
         resolution = param.resolution;
         line = new Line(param.line);
         line.addTableModelListener(this);
-        automationEnabled = param.automationEnabled;
+        setAutomationEnabled(param.isAutomationEnabled());
         uniqueId = param.uniqueId;
         compilationVarName = param.compilationVarName;
     }
@@ -297,15 +299,20 @@ public class Parameter implements TableModelListener {
 
         return temp + min;
     }
-    
-    public boolean isAutomationEnabled() {
+
+    public final void setAutomationEnabled(boolean value) {
+        automationEnabled.set(value);
+    }
+
+    public final boolean isAutomationEnabled() {
+        return automationEnabled.get();
+    }
+
+    public final BooleanProperty automationEnabledProperty() {
         return automationEnabled;
     }
 
-    public void setAutomationEnabled(boolean automationEnabled) {
-        this.automationEnabled = automationEnabled;
-    }
-
+    
     /* SERIALIZATION CODE */
 
     public Element saveAsXML() {
@@ -318,7 +325,7 @@ public class Parameter implements TableModelListener {
         retVal.setAttribute("max", Double.toString(max));
         retVal.setAttribute("resolution", Double.toString(resolution));
         retVal.setAttribute("automationEnabled", Boolean
-                .toString(automationEnabled));
+                .toString(isAutomationEnabled()));
         retVal.setAttribute("value", Double.toString(value));
 
         retVal.addElement(line.saveAsXML());
@@ -361,7 +368,7 @@ public class Parameter implements TableModelListener {
 
         val = data.getAttributeValue("automationEnabled");
         if (val != null && val.length() > 0) {
-            retVal.automationEnabled = Boolean.valueOf(val).booleanValue();
+            retVal.setAutomationEnabled(Boolean.valueOf(val).booleanValue());
         }
 
         Elements nodes = data.getElements();
