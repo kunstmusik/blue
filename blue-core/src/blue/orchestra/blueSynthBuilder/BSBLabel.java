@@ -127,6 +127,7 @@ public class BSBLabel extends BSBObject {
         if (version < 2) {
             label.setFont(parseFont(labelText));
             labelText = stripHTML(labelText);
+            labelText = labelText.replace("&nbsp;", " ");
         } else {
             label.setFont(BSBFontUtil.loadFromXML(data.getElement("font")));
         }
