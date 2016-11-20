@@ -125,7 +125,7 @@ public class BSBFileSelectorView extends BorderPane {
             }
         });
 
-        setOnDragDone(new EventHandler<DragEvent>() {
+        setOnDragDropped(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
                 Dragboard dragboard = event.getDragboard();
@@ -136,6 +136,7 @@ public class BSBFileSelectorView extends BorderPane {
                     if (files.size() != 1) {
 
                         event.setDropCompleted(false);
+                        event.consume();
                         return;
                     }
 
@@ -153,6 +154,7 @@ public class BSBFileSelectorView extends BorderPane {
                             e1.printStackTrace();
                         }
                         event.setDropCompleted(true);
+                        event.consume();
                         return;
                     }
                     event.setDropCompleted(false);
@@ -160,6 +162,7 @@ public class BSBFileSelectorView extends BorderPane {
                     String s = dragboard.getString().trim();
                     if (!s.startsWith("file://")) {
                         event.setDropCompleted(false);
+                        event.consume();
                         return;
                     }
                     s = s.substring(7).trim();
@@ -181,6 +184,7 @@ public class BSBFileSelectorView extends BorderPane {
                             e1.printStackTrace();
                         }
                         event.setDropCompleted(true);
+                        event.consume();
                         return;
                     }
                 }
