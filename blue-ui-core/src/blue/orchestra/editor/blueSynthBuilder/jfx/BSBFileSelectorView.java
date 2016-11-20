@@ -118,7 +118,8 @@ public class BSBFileSelectorView extends BorderPane {
             @Override
             public void handle(DragEvent event) {
                 Dragboard dragboard = event.getDragboard();
-                if (dragboard.hasFiles() || dragboard.hasString()) {
+                if (dragboard.hasFiles() || dragboard.hasString() || 
+                        dragboard.hasUrl()) {
                     event.acceptTransferModes(TransferMode.LINK);
                 }
                 event.consume();
@@ -170,6 +171,27 @@ public class BSBFileSelectorView extends BorderPane {
                     s = s.replaceAll(" ", "\\ ");
 
                     File f = new File(s);
+
+                    if (f.exists() && f.isFile()) {
+
+                        try {
+                            String absFilePath = f.getCanonicalPath();
+                            String relPath = BlueSystem.getRelativePath(
+                                    absFilePath);
+
+                            fileSelector.setFileName(relPath);
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        event.setDropCompleted(true);
+                        event.consume();
+                        return;
+                    }
+                } else if(dragboard.hasUrl()) {
+                    String val = dragboard.getUrl();
+                    System.out.println("URL: " + val);
+                    File f = new File(val);
 
                     if (f.exists() && f.isFile()) {
 
