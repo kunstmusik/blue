@@ -1540,7 +1540,7 @@
       </opcode>
       <opcode>
         <name>streson</name>
-        <signature>ares 	streson	 asig, kfr, ifdbgain</signature>
+        <signature>ares 	streson	 asig, kfr, kfdbgain</signature>
       </opcode>
       <opcode>
         <name>wgbow</name>
@@ -1786,6 +1786,10 @@
       <opcode>
         <name>monitor</name>
         <signature>aout1 [,aout2 ... aoutX] 	monitor</signature>
+      </opcode>
+      <opcode>
+        <name>monitor</name>
+        <signature>aarra 	monitor</signature>
       </opcode>
       <opcode>
         <name>out</name>
@@ -2555,6 +2559,10 @@
       <opcode>
         <name>i</name>
         <signature>i	(x) (control-rate or init-rate arg)</signature>
+      </opcode>
+      <opcode>
+        <name>i</name>
+        <signature>i	(karray,index1, ...) (k-array with indices)</signature>
       </opcode>
       <opcode>
         <name>k</name>
@@ -4370,6 +4378,10 @@
       <signature>ifno 	ftgentmp	 ip1, ip2dummy, isize, igen, iarga, iargb, ...</signature>
     </opcode>
     <opcode>
+      <name>getftargs</name>
+      <signature>Sdst 	getftargs	 iftno, ktrig</signature>
+    </opcode>
+    <opcode>
       <name>sndload</name>
       <signature>sndload	 Sfname[, ifmt[, ichns[, isr[, ibas[, iamp[, istrt   \
       [, ilpmod[, ilps[, ilpe]]]]]]]]]</signature>
@@ -4537,6 +4549,10 @@
       <opcode>
         <name>FLslidBnk2</name>
         <signature>FLslidBnk2	 &quot;names&quot;, inumsliders, ioutable, iconfigtable [,iwidth, iheight, ix, iy, istart_index] </signature>
+      </opcode>
+      <opcode>
+        <name>FLslidBnk2</name>
+        <signature>FLslidBnk2	 istring, inumsliders, ioutable, iconfigtable [,iwidth, iheight, ix, iy, istart_index] </signature>
       </opcode>
       <opcode>
         <name>FLslidBnk2Set</name>
@@ -7090,6 +7106,12 @@ inum_parm, kupdate</signature>
       <opcode>
         <name>window</name>
         <signature>kout[] 	window	 kin[][, koff, itype]</signature>
+      </opcode>
+    </opcodeGroup>
+    <opcodeGroup name=" Mel scale filterbank">
+      <opcode>
+        <name>mfb</name>
+        <signature>kout[] 	mfb	 kin[],klow,khigh,ibands</signature>
       </opcode>
     </opcodeGroup>
   </opcodeGroup>
