@@ -197,6 +197,10 @@ public class ClampedValue {
         String retVal = LineBoundaryDialog.getLinePointMethod();
         ClampedValueListener.BoundaryType bType;
 
+        if(retVal == null) { 
+            return;
+        }
+
         switch (retVal) {
             case LineBoundaryDialog.TRUNCATE:
                 setValue(LineUtils.truncate(getValue(), value, getMax()));
@@ -235,6 +239,10 @@ public class ClampedValue {
 
         String retVal = LineBoundaryDialog.getLinePointMethod();
         ClampedValueListener.BoundaryType bType;
+
+        if(retVal == null) { 
+            return;
+        }
 
         switch (retVal) {
             case LineBoundaryDialog.TRUNCATE:
