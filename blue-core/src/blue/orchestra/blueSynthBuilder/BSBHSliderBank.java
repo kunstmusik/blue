@@ -53,6 +53,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
     private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
     private IntegerProperty gap = new SimpleIntegerProperty(5);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     private final ObservableList<BSBHSlider> sliders
             = FXCollections.observableArrayList();
@@ -94,6 +95,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                         remItem.sliderWidthProperty().unbind();
                         remItem.randomizableProperty().unbind();
                         remItem.resolutionProperty().unbind();
+                        remItem.valueDisplayEnabledProperty().unbind();
                         remItem.valueProperty().removeListener(cl);
                     }
                     for (BSBHSlider addItem : c.getAddedSubList()) {
@@ -102,6 +104,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                         addItem.sliderWidthProperty().bind(sliderWidthProperty());
                         addItem.randomizableProperty().bind(randomizableProperty());
                         addItem.resolutionProperty().bind(resolutionProperty());
+                        addItem.valueDisplayEnabledProperty().bind(
+                                valueDisplayEnabledProperty());
                         addItem.valueProperty().addListener(cl);
                     }
                 }
@@ -160,6 +164,7 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
         value = new ClampedValue(bank.value);
         value.addListener(cvl);
         sliders.addListener(listChangeListener);
+        setValueDisplayEnabled(bank.isValueDisplayEnabled());
 
         for (BSBHSlider slider : bank.sliders) {
             sliders.add(new BSBHSlider(slider));
@@ -238,6 +243,18 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
     public final BooleanProperty randomizableProperty() {
         return randomizable;
+    }
+
+    public final boolean isValueDisplayEnabled(){
+        return valueDisplayEnabled.get();
+    }
+
+    public final void setValueDisplayEnabled(boolean enabled){
+        valueDisplayEnabled.set(enabled);
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty(){
+        return valueDisplayEnabled;
     }
 
     // OVERRIDE to handle Parameter name changes and multiple parameters
@@ -368,6 +385,9 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
                 case "randomizable":
                     sliderBank.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
+                case "valueDisplayEnabled":
+                    sliderBank.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
+                    break;
                 case "bsbObject":
                     BSBHSlider hSlider = (BSBHSlider) BSBHSlider.loadFromXML(node);
                     sliderBank.getSliders().add(hSlider);
@@ -397,6 +417,8 @@ public class BSBHSliderBank extends AutomatableBSBObject implements
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
+        retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
+                isValueDisplayEnabled()));
 
         for (BSBHSlider hSlider : sliders) {
             retVal.addElement(hSlider.saveAsXML());

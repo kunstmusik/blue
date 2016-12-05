@@ -45,13 +45,14 @@ public class BSBHSliderBankBeanInfo extends SimpleBeanInfo {
     private static final int PROPERTY_randomizable = 6;
     private static final int PROPERTY_resolution = 7;
     private static final int PROPERTY_sliderWidth = 8;
-    private static final int PROPERTY_x = 9;
-    private static final int PROPERTY_y = 10;
+    private static final int PROPERTY_valueDisplayEnabled = 9;
+    private static final int PROPERTY_x = 10;
+    private static final int PROPERTY_y = 11;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[11];
+        PropertyDescriptor[] properties = new PropertyDescriptor[12];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
@@ -63,6 +64,7 @@ public class BSBHSliderBankBeanInfo extends SimpleBeanInfo {
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "isRandomizable", "setRandomizable" ); // NOI18N
             properties[PROPERTY_resolution] = new PropertyDescriptor ( "resolution", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getResolution", "setResolution" ); // NOI18N
             properties[PROPERTY_sliderWidth] = new PropertyDescriptor ( "sliderWidth", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getSliderWidth", "setSliderWidth" ); // NOI18N
+            properties[PROPERTY_valueDisplayEnabled] = new PropertyDescriptor ( "valueDisplayEnabled", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "isValueDisplayEnabled", "setValueDisplayEnabled" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBHSliderBank.class, "getY", "setY" ); // NOI18N
         }
