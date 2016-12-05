@@ -24,6 +24,7 @@ import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBKnob;
 import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.layout.BorderPane;
 import javafx.util.StringConverter;
 
@@ -60,7 +61,6 @@ public class BSBKnobView extends BorderPane {
         });
 
         this.setCenter(knobView);
-        this.setBottom(valuePanel);
 
         valuePanel.setPrefHeight(VALUE_HEIGHT);
 
@@ -80,6 +80,14 @@ public class BSBKnobView extends BorderPane {
             }
 
         };
+        final ChangeListener<Boolean> vdeListener = (obs, old, newVal) -> {
+            if(newVal) {
+                setBottom(valuePanel);
+            } else {
+                setBottom(null);
+            }
+        };
+
 
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
@@ -90,6 +98,7 @@ public class BSBKnobView extends BorderPane {
                 knobView.prefWidthProperty().unbind();
                 knobView.prefHeightProperty().unbind();
                 valuePanel.prefWidthProperty().unbind();
+                knob.valueDisplayEnabledProperty().removeListener(vdeListener);
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         knob.knobValueProperty().valueProperty());
             } else {
@@ -100,8 +109,15 @@ public class BSBKnobView extends BorderPane {
                 knobView.prefWidthProperty().bind(knob.knobWidthProperty());
                 knobView.prefHeightProperty().bind(knob.knobWidthProperty());
                 valuePanel.prefWidthProperty().bind(knobView.prefWidthProperty());
+                knob.valueDisplayEnabledProperty().addListener(vdeListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         knob.knobValueProperty().valueProperty(), converter);
+
+                if(knob.isValueDisplayEnabled()) {
+                    setBottom(valuePanel);
+                } else {
+                    setBottom(null);
+                }
             }
         });
     }

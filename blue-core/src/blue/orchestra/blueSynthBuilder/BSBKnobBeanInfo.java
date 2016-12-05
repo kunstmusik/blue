@@ -43,13 +43,14 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
     private static final int PROPERTY_objectName = 4;
     private static final int PROPERTY_randomizable = 5;
     private static final int PROPERTY_value = 6;
-    private static final int PROPERTY_x = 7;
-    private static final int PROPERTY_y = 8;
+    private static final int PROPERTY_valueDisplayEnabled = 7;
+    private static final int PROPERTY_x = 8;
+    private static final int PROPERTY_y = 9;
 
     // Property array 
     /*lazy PropertyDescriptor*/
     private static PropertyDescriptor[] getPdescriptor(){
-        PropertyDescriptor[] properties = new PropertyDescriptor[9];
+        PropertyDescriptor[] properties = new PropertyDescriptor[10];
     
         try {
             properties[PROPERTY_automationAllowed] = new PropertyDescriptor ( "automationAllowed", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isAutomationAllowed", "setAutomationAllowed" ); // NOI18N
@@ -59,6 +60,7 @@ public class BSBKnobBeanInfo extends SimpleBeanInfo {
             properties[PROPERTY_objectName] = new PropertyDescriptor ( "objectName", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getObjectName", "setObjectName" ); // NOI18N
             properties[PROPERTY_randomizable] = new PropertyDescriptor ( "randomizable", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isRandomizable", "setRandomizable" ); // NOI18N
             properties[PROPERTY_value] = new PropertyDescriptor ( "value", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getValue", "setValue" ); // NOI18N
+            properties[PROPERTY_valueDisplayEnabled] = new PropertyDescriptor ( "valueDisplayEnabled", blue.orchestra.blueSynthBuilder.BSBKnob.class, "isValueDisplayEnabled", "setValueDisplayEnabled" ); // NOI18N
             properties[PROPERTY_x] = new PropertyDescriptor ( "x", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getX", "setX" ); // NOI18N
             properties[PROPERTY_y] = new PropertyDescriptor ( "y", blue.orchestra.blueSynthBuilder.BSBKnob.class, "getY", "setY" ); // NOI18N
         }

@@ -22,7 +22,6 @@ package blue.orchestra.blueSynthBuilder;
 import blue.automation.Parameter;
 import blue.automation.ParameterListener;
 import blue.automation.ParameterTimeManagerFactory;
-import static blue.orchestra.blueSynthBuilder.ClampedValueListener.BoundaryType.TRUNCATE;
 import blue.utility.NumberUtilities;
 import blue.utility.XMLUtilities;
 import electric.xml.Element;
@@ -51,6 +50,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
     private ClampedValue knobValue;
     private IntegerProperty knobWidth = new SimpleIntegerProperty(60);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBKnob() {
         knobValue = new ClampedValue(0.0, 1.0, 0.0, -1.0);
@@ -63,6 +63,7 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         knobValue.addListener(cvl);
         setKnobWidth(knob.getKnobWidth());
         setRandomizable(knob.isRandomizable());
+        setValueDisplayEnabled(knob.isValueDisplayEnabled());
     }
 
     public final void setKnobWidth(int value) {
@@ -125,6 +126,18 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
         return knobValue.getMax();
     }
 
+    public final boolean isValueDisplayEnabled(){
+        return valueDisplayEnabled.get();
+    }
+
+    public final void setValueDisplayEnabled(boolean enabled){
+        valueDisplayEnabled.set(enabled);
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty(){
+        return valueDisplayEnabled;
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBKnob knob = new BSBKnob();
         double minVal = 0;
@@ -161,6 +174,9 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
                 case "randomizable":
                     knob.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
+                case "valueDisplayEnabled":
+                    knob.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
 
         }
@@ -194,7 +210,8 @@ public class BSBKnob extends AutomatableBSBObject implements ParameterListener,
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
-
+        retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
+                isValueDisplayEnabled()));
         return retVal;
     }
 
