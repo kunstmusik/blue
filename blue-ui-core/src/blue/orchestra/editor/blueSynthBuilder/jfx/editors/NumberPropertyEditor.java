@@ -41,7 +41,7 @@ public class NumberPropertyEditor extends TextField {
         this.focusedProperty().addListener((obs, o, n) -> {
             if (o && !n) {
                 editing = false;
-                this.setText(item.getValue().toString());
+                updateTextFromTextField();
             } else {
                 editing = true;
             }
