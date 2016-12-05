@@ -57,7 +57,7 @@ import org.openide.util.Exceptions;
 /**
  * @author Steven
  */
-public class BSBInterfaceEditor extends JComponent implements PresetListener {
+public class BSBInterfaceEditor extends JComponent {
 
     private BSBEditPane bsbEditPane = null;
     private TabPane rightPane;
@@ -225,21 +225,6 @@ public class BSBInterfaceEditor extends JComponent implements PresetListener {
         });
 
 
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see blue.orchestra.editor.blueSynthBuilder.PresetListener#presetSelected(blue.orchestra.blueSynthBuilder.Preset)
-     */
-    @Override
-    public void presetSelected(Preset preset) {
-        if (gInterface != null) {
-            preset.setInterfaceValues(gInterface);
-            BlueFX.runOnFXThread(()
-                    -> bsbEditPane.editBSBGraphicInterface(gInterface)
-            );
-        }
     }
 
     private void updateBsbObjPropSheet() {
