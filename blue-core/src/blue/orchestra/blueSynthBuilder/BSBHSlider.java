@@ -54,6 +54,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
     private IntegerProperty sliderWidth = new SimpleIntegerProperty(150);
 
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBHSlider() {
         value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
@@ -61,11 +62,12 @@ public class BSBHSlider extends AutomatableBSBObject implements
     }
 
     public BSBHSlider(BSBHSlider slider) {
-         super(slider);
-         value = new ClampedValue(slider.value);
-         value.addListener(cvl);
-         setSliderWidth(slider.getSliderWidth());
-         setRandomizable(slider.isRandomizable());
+        super(slider);
+        value = new ClampedValue(slider.value);
+        value.addListener(cvl);
+        setSliderWidth(slider.getSliderWidth());
+        setRandomizable(slider.isRandomizable());
+        setValueDisplayEnabled(slider.isValueDisplayEnabled());
     }
 
     public final void setMinimum(double val) {
@@ -117,7 +119,7 @@ public class BSBHSlider extends AutomatableBSBObject implements
     }
 
     private final void setValueProperty(ClampedValue value) {
-        if(this.value != null) {
+        if (this.value != null) {
             this.value.removeListener(cvl);
         }
         this.value = value;
@@ -147,7 +149,19 @@ public class BSBHSlider extends AutomatableBSBObject implements
     public final BooleanProperty randomizableProperty() {
         return randomizable;
     }
-    
+
+    public final boolean isValueDisplayEnabled(){
+        return valueDisplayEnabled.get();
+    }
+
+    public final void setValueDisplayEnabled(boolean enabled){
+        valueDisplayEnabled.set(enabled);
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty(){
+        return valueDisplayEnabled;
+    }
+
     public static BSBObject loadFromXML(Element data) {
         BSBHSlider slider = new BSBHSlider();
         double minVal = 0.0;
@@ -158,7 +172,6 @@ public class BSBHSlider extends AutomatableBSBObject implements
         initBasicFromXML(data, slider);
         String verString = data.getAttributeValue("version");
         int version = (verString == null) ? 1 : Integer.parseInt(verString);
-
 
         Elements nodes = data.getElements();
 
@@ -184,6 +197,9 @@ public class BSBHSlider extends AutomatableBSBObject implements
                     break;
                 case "randomizable":
                     slider.setRandomizable(XMLUtilities.readBoolean(node));
+                    break;
+                case "valueDisplayEnabled":
+                    slider.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
                     break;
             }
         }
@@ -211,6 +227,8 @@ public class BSBHSlider extends AutomatableBSBObject implements
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
+        retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
+                isValueDisplayEnabled()));
 
         return retVal;
     }
@@ -448,7 +466,6 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //                    new Double(oldValue), new Double(this.value));
 //        }
 //    }
-
     @Override
     public void lineDataChanged(Parameter param) {
         Parameter parameter = parameters.getParameter(this.getObjectName());
@@ -484,7 +501,6 @@ public class BSBHSlider extends AutomatableBSBObject implements
 //    public boolean isRandomizable() {
 //        return randomizable;
 //    }
-
     @Override
     public void randomize() {
         if (isRandomizable()) {

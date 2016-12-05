@@ -23,6 +23,7 @@ import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBHSlider;
 import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
@@ -49,7 +50,6 @@ public class BSBHSliderView extends BorderPane {
         valuePanel.setPrefWidth(50.0);
 
         setCenter(slider);
-        setRight(valuePanel);
 
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
@@ -69,12 +69,21 @@ public class BSBHSliderView extends BorderPane {
 
         };
 
+        final ChangeListener<Boolean> vdeListener = (obs, old, newVal) -> {
+            if(newVal) {
+                setRight(valuePanel);
+            } else {
+                setRight(null);
+            }
+        };
+        
         sceneProperty().addListener((obs, old, newVal) -> {
             if (newVal == null) {
                 slider.maxProperty().unbind();
                 slider.minProperty().unbind();
                 slider.valueProperty().unbindBidirectional(bsbHSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
+                bsbHSlider.valueDisplayEnabledProperty().removeListener(vdeListener);
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         bsbHSlider.valueProperty());
             } else {
@@ -82,8 +91,15 @@ public class BSBHSliderView extends BorderPane {
                 slider.minProperty().bind(bsbHSlider.minimumProperty());
                 slider.valueProperty().bindBidirectional(bsbHSlider.valueProperty());
                 slider.prefWidthProperty().bind(bsbHSlider.sliderWidthProperty());
+                bsbHSlider.valueDisplayEnabledProperty().addListener(vdeListener);
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbHSlider.valueProperty(), converter);
+
+                if(bsbHSlider.isValueDisplayEnabled()) {
+                    setRight(valuePanel);
+                } else {
+                    setRight(null);
+                }
             }
         });
     }
