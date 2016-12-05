@@ -52,6 +52,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
     private IntegerProperty sliderHeight = new SimpleIntegerProperty(150);
     private BooleanProperty randomizable = new SimpleBooleanProperty(true);
+    private BooleanProperty valueDisplayEnabled = new SimpleBooleanProperty(true);
 
     public BSBVSlider() {
         value = new ClampedValue(0.0, 1.0, 0.0, 0.1);
@@ -64,6 +65,7 @@ public class BSBVSlider extends AutomatableBSBObject implements
         value.addListener(cvl);
         setSliderHeight(slider.getSliderHeight());
         setRandomizable(slider.isRandomizable());
+        setValueDisplayEnabled(slider.isValueDisplayEnabled());
     }
 
     public final void setMinimum(double val) {
@@ -145,6 +147,18 @@ public class BSBVSlider extends AutomatableBSBObject implements
     public final BooleanProperty randomizableProperty() {
         return randomizable;
     }
+    
+    public final boolean isValueDisplayEnabled(){
+        return valueDisplayEnabled.get();
+    }
+
+    public final void setValueDisplayEnabled(boolean enabled){
+        valueDisplayEnabled.set(enabled);
+    }
+
+    public final BooleanProperty valueDisplayEnabledProperty(){
+        return valueDisplayEnabled;
+    }
 
     private static double parseNum(String string, int version) {
         if (version < 2) {
@@ -189,6 +203,9 @@ public class BSBVSlider extends AutomatableBSBObject implements
                 case "randomizable":
                     slider.setRandomizable(XMLUtilities.readBoolean(node));
                     break;
+                case "valueDisplayEnabled":
+                    slider.setValueDisplayEnabled(XMLUtilities.readBoolean(node));
+                    break;
             }
         }
 
@@ -215,6 +232,8 @@ public class BSBVSlider extends AutomatableBSBObject implements
 
         retVal.addElement(XMLUtilities.writeBoolean("randomizable",
                 isRandomizable()));
+        retVal.addElement(XMLUtilities.writeBoolean("valueDisplayEnabled",
+                isValueDisplayEnabled()));
 
         return retVal;
     }

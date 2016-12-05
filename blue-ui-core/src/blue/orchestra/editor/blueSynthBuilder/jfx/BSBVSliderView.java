@@ -23,6 +23,7 @@ import blue.jfx.controls.ValuePanel;
 import blue.orchestra.blueSynthBuilder.BSBVSlider;
 import blue.utility.NumberUtilities;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
@@ -49,7 +50,14 @@ public class BSBVSliderView extends BorderPane {
         valuePanel.setPrefWidth(50.0);
 
         setCenter(slider);
-        setBottom(valuePanel);
+        
+        final ChangeListener<Boolean> vdeListener = (obs, old, newVal) -> {
+            if(newVal) {
+                setBottom(valuePanel);
+            } else {
+                setBottom(null);
+            }
+        };
 
         StringConverter<Number> converter = new StringConverter<Number>() {
             @Override
@@ -75,6 +83,7 @@ public class BSBVSliderView extends BorderPane {
                 slider.minProperty().unbind();
                 slider.valueProperty().unbindBidirectional(bsbVSlider.valueProperty());
                 slider.prefWidthProperty().unbind();
+                bsbVSlider.valueDisplayEnabledProperty().removeListener(vdeListener);
 
                 Bindings.unbindBidirectional(valuePanel.valueProperty(),
                         bsbVSlider.valueProperty());
@@ -83,9 +92,16 @@ public class BSBVSliderView extends BorderPane {
                 slider.minProperty().bind(bsbVSlider.minimumProperty());
                 slider.valueProperty().bindBidirectional(bsbVSlider.valueProperty());
                 slider.prefHeightProperty().bind(bsbVSlider.sliderHeightProperty());
+                bsbVSlider.valueDisplayEnabledProperty().addListener(vdeListener);
 
                 Bindings.bindBidirectional(valuePanel.valueProperty(),
                         bsbVSlider.valueProperty(), converter);
+
+                if(bsbVSlider.isValueDisplayEnabled()) {
+                    setBottom(valuePanel);
+                } else {
+                    setBottom(null);
+                }
             }
         });
     }
