@@ -14,7 +14,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-public class RhinoProxy {
+public class JavaScriptProxy {
     private static ScriptEngine engine = null;    
     
     static {

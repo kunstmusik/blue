@@ -6,13 +6,12 @@ import blue.gui.InfoDialog;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
 import blue.soundObject.NoteList;
-import blue.soundObject.RhinoObject;
+import blue.soundObject.JavaScriptObject;
 import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -35,10 +34,10 @@ import org.openide.awt.UndoRedo;
  * @version 1.0
  */
 
-@ScoreObjectEditorPlugin(scoreObjectType = RhinoObject.class)
-public class RhinoObjectEditor extends ScoreObjectEditor {
+@ScoreObjectEditorPlugin(scoreObjectType = JavaScriptObject.class)
+public class JavaScriptObjectEditor extends ScoreObjectEditor {
 
-    RhinoObject sObj;
+    JavaScriptObject sObj;
 
     MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/javascript");
 
@@ -50,7 +49,7 @@ public class RhinoObjectEditor extends ScoreObjectEditor {
 
     UndoManager undo = new UndoRedo.Manager();
 
-    public RhinoObjectEditor() {
+    public JavaScriptObjectEditor() {
         try {
             jbInit();
         } catch (Exception e) {
@@ -74,7 +73,7 @@ public class RhinoObjectEditor extends ScoreObjectEditor {
 
         initActions();
 
-        editorLabel.setText("RhinoObject");
+        editorLabel.setText("JavaScriptObject");
 
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener((ActionEvent e) -> {
@@ -122,7 +121,7 @@ public class RhinoObjectEditor extends ScoreObjectEditor {
             return;
         }
 
-        if (!(sObj instanceof RhinoObject)) {
+        if (!(sObj instanceof JavaScriptObject)) {
             this.sObj = null;
             editorLabel.setText("no editor available");
             scoreEditPane
@@ -131,7 +130,7 @@ public class RhinoObjectEditor extends ScoreObjectEditor {
             return;
         }
 
-        this.sObj = (RhinoObject) sObj;
+        this.sObj = (JavaScriptObject) sObj;
         scoreEditPane.setText(this.sObj.getText());
         scoreEditPane.getJEditorPane().setEnabled(true);
         scoreEditPane.getJEditorPane().setCaretPosition(0);

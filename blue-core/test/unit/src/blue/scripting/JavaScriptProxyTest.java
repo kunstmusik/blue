@@ -11,9 +11,9 @@ import static org.junit.Assert.assertEquals;
  *
  * @author stevenyi
  */
-public class RhinoProxyTest {
+public class JavaScriptProxyTest {
     
-    public RhinoProxyTest() {
+    public JavaScriptProxyTest() {
     }
 
     @BeforeClass
@@ -33,7 +33,7 @@ public class RhinoProxyTest {
     }
 
     /**
-     * Test of processJavascriptScore method, of class RhinoProxy.
+     * Test of processJavascriptScore method, of class JavaScriptProxy.
      */
     @Test
     public void testProcessJavascriptScore() {
@@ -57,14 +57,14 @@ String testScore = "i1 0 1 2 3 4 5"
         + "\ni1 3 1 2 3 4 5"
         + "\ni1 4 1 2 3 4 5\n";
         
-        assertEquals(testScore, RhinoProxy.processJavascriptScore(script, 0.0f,
+        assertEquals(testScore, JavaScriptProxy.processJavascriptScore(script, 0.0f,
                 "unit test 1"));
 
-        System.out.println(RhinoProxy.processJavascriptScore(
+        System.out.println(JavaScriptProxy.processJavascriptScore(
                 "score += '\\nhi\\n'", 0.0f, "unit test 2"));
-        RhinoProxy.reinitialize();
+        JavaScriptProxy.reinitialize();
 
-        System.out.println(RhinoProxy.processJavascriptScore(
+        System.out.println(JavaScriptProxy.processJavascriptScore(
                 "score += '\\nhi\\n'", 0.0f, "unit test 3"));
     }
 
@@ -77,7 +77,7 @@ String testScore = "i1 0 1 2 3 4 5"
 //        String script = "";
 //        String instrumentId = "";
 //        String expResult = "";
-//        String result = RhinoProxy.processJavascriptInstrument(script, instrumentId);
+//        String result = JavaScriptProxy.processJavascriptInstrument(script, instrumentId);
 //        assertEquals(expResult, result);
 //        // TODO review the generated test code and remove the default call to fail.
 //        fail("The test case is a prototype.");

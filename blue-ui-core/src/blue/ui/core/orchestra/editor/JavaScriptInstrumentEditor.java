@@ -8,7 +8,7 @@ package blue.ui.core.orchestra.editor;
 import blue.BlueSystem;
 import blue.gui.InfoDialog;
 import blue.orchestra.Instrument;
-import blue.orchestra.RhinoInstrument;
+import blue.orchestra.JavaScriptInstrument;
 import blue.orchestra.editor.InstrumentEditor;
 import blue.plugin.InstrumentEditorPlugin;
 import blue.ui.core.udo.EmbeddedOpcodeListPanel;
@@ -26,8 +26,8 @@ import org.openide.awt.UndoRedo;
  * @author steven
  */
 
-@InstrumentEditorPlugin(instrumentType = RhinoInstrument.class)
-public class RhinoInstrumentEditor extends InstrumentEditor {
+@InstrumentEditorPlugin(instrumentType = JavaScriptInstrument.class)
+public class JavaScriptInstrumentEditor extends InstrumentEditor {
 
     private static HashMap tokenMarkerTypes = new HashMap();
     
@@ -40,14 +40,14 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
     protected MimeTypeEditorComponent globalScoEditor =
             new MimeTypeEditorComponent("text/x-csound-sco");
 
-    RhinoInstrument instr;
+    JavaScriptInstrument instr;
     EmbeddedOpcodeListPanel udoPanel = new EmbeddedOpcodeListPanel();
     UndoManager undo = new UndoRedo.Manager();
 
     /**
      * Creates new form GenericEditor2
      */
-    public RhinoInstrumentEditor() {
+    public JavaScriptInstrumentEditor() {
         initComponents();
 
         tabs.add("Instrument Text", codeEditor);
@@ -113,7 +113,7 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
             return;
         }
 
-        if (!(instr instanceof RhinoInstrument)) {
+        if (!(instr instanceof JavaScriptInstrument)) {
             this.instr = null;
             editorLabel.setText(BlueSystem
                     .getString("instrument.noEditorAvailable"));
@@ -124,7 +124,7 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
             return;
         }
 
-        this.instr = (RhinoInstrument) instr;
+        this.instr = (JavaScriptInstrument) instr;
 
         codeEditor.setText(this.instr.getText());
         codeEditor.getJEditorPane().setEnabled(true);
@@ -156,7 +156,7 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
         testButton = new javax.swing.JButton();
         tabs = new javax.swing.JTabbedPane();
 
-        editorLabel.setText("Rhino Instrument");
+        editorLabel.setText("JavaScript Instrument");
 
         testButton.setText(BlueSystem.getString("common.test"));
         testButton.addActionListener(new java.awt.event.ActionListener() {
@@ -175,7 +175,7 @@ public class RhinoInstrumentEditor extends InstrumentEditor {
                     .addComponent(tabs, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(editorLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 193, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 225, Short.MAX_VALUE)
                         .addComponent(testButton)))
                 .addContainerGap())
         );

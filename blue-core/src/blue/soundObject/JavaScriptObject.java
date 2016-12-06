@@ -37,8 +37,8 @@ import java.util.Map;
  * @version 1.0
  */
 
-@SoundObjectPlugin(displayName = "RhinoObject", live=true, position = 120)
-public class RhinoObject extends AbstractSoundObject {
+@SoundObjectPlugin(displayName = "JavaScriptObject", live=true, position = 120)
+public class JavaScriptObject extends AbstractSoundObject {
 
     private String javaScriptCode;
 
@@ -48,14 +48,14 @@ public class RhinoObject extends AbstractSoundObject {
 
     double repeatPoint = -1.0f;
 
-    public RhinoObject() {
-        setName("rhinoObject");
+    public JavaScriptObject() {
+        setName("javaScriptObject");
         javaScriptCode = BlueSystem.getString("rhinoObject.defaultCode");
         javaScriptCode += "\n\nscore = \"i1 0 2 3 4 5\";";
         timeBehavior = SoundObject.TIME_BEHAVIOR_SCALE;
     }
 
-    public RhinoObject(RhinoObject ro) {
+    public JavaScriptObject(JavaScriptObject ro) {
         super(ro);
         npc = new NoteProcessorChain(ro.npc);
         timeBehavior = ro.timeBehavior;
@@ -87,11 +87,11 @@ public class RhinoObject extends AbstractSoundObject {
     }
 
     public NoteList generateNotes(double renderStart, double renderEnd) throws SoundObjectException {
-        // System.out.println("[RhinoObject] attempting to generate score for
+        // System.out.println("[JavaScriptObject] attempting to generate score for
         // object " + this.name + " at time " + this.startTime);
         String soundObjectId = "[ " + this.name + " : " + this.startTime
                 + " ] ";
-        String tempScore = blue.scripting.RhinoProxy.processJavascriptScore(
+        String tempScore = blue.scripting.JavaScriptProxy.processJavascriptScore(
                 javaScriptCode, subjectiveDuration, soundObjectId);
 
         NoteList nl;
@@ -159,7 +159,7 @@ public class RhinoObject extends AbstractSoundObject {
      */
     public static SoundObject loadFromXML(Element data,
             Map<String, Object> objRefMap) throws Exception {
-        RhinoObject sObj = new RhinoObject();
+        JavaScriptObject sObj = new JavaScriptObject();
 
         SoundObjectUtilities.initBasicFromXML(data, sObj);
 
@@ -192,6 +192,6 @@ public class RhinoObject extends AbstractSoundObject {
 
     @Override
     public SoundObject deepCopy() {
-        return new RhinoObject(this);
+        return new JavaScriptObject(this);
     }
 }

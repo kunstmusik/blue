@@ -25,9 +25,21 @@ import electric.xml.Element;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ObjectUtilities {
+    private static final Map<String,String> classMap;
+
+    static {
+        classMap = new HashMap<>();
+
+        // Blue 2.7.0 - modified class name from "Rhino" to "JavaScript"
+        classMap.put("blue.orchestra.RhinoInstrument",
+                "blue.orchestra.JavaScriptInstrument");
+        classMap.put("blue.soundObject.RhinoObject",
+                "blue.soundObject.JavaScriptObject");
+    }
 
     public static Object serializeClone(Object obj) {
         try {
@@ -72,6 +84,10 @@ public class ObjectUtilities {
 
     public static Object loadFromXML(Element elem) throws Exception {
         String npClass = elem.getAttributeValue("type");
+
+        if(classMap.containsKey(npClass)) {
+            npClass = classMap.get(npClass);
+        }
         Class classToLoad = BlueSystem.getClassLoader().loadClass(npClass);
 
         Object retVal = null;
@@ -86,6 +102,9 @@ public class ObjectUtilities {
     public static Object loadFromXML(Element elem,
             Map<String, Object> objRefMap) throws Exception {
         String npClass = elem.getAttributeValue("type");
+        if(classMap.containsKey(npClass)) {
+            npClass = classMap.get(npClass);
+        }
         Class classToLoad = Thread.currentThread().getContextClassLoader().loadClass(npClass);
 
         Object retVal = null;

@@ -2,9 +2,8 @@ package blue.orchestra;
 
 import blue.Tables;
 import blue.plugin.InstrumentPlugin;
-import blue.scripting.RhinoProxy;
+import blue.scripting.JavaScriptProxy;
 import blue.udo.OpcodeList;
-import blue.utility.ObjectUtilities;
 import blue.utility.TextUtilities;
 import blue.utility.UDOUtilities;
 import electric.xml.Element;
@@ -29,8 +28,8 @@ import java.util.HashMap;
  * @version 1.0
  */
 
-@InstrumentPlugin(displayName = "RhinoInstrument", position = 30)
-public class RhinoInstrument extends AbstractInstrument {
+@InstrumentPlugin(displayName = "JavaScriptInstrument", position = 30)
+public class JavaScriptInstrument extends AbstractInstrument {
 
     String instrumentText;
 
@@ -40,7 +39,7 @@ public class RhinoInstrument extends AbstractInstrument {
 
     private transient HashMap udoReplacementValues;
 
-    public RhinoInstrument() {
+    public JavaScriptInstrument() {
         instrumentText = "//use variable instrument at end of script to "
                 + "bring instrument back into blue\n\n"
                 + "instrument = \"aout oscili 32000, 440, 1\";";
@@ -51,7 +50,7 @@ public class RhinoInstrument extends AbstractInstrument {
     }
 
     /** Copy Constructor */
-    public RhinoInstrument(RhinoInstrument jsInstr) {
+    public JavaScriptInstrument(JavaScriptInstrument jsInstr) {
         super(jsInstr);
         instrumentText = jsInstr.instrumentText; 
         globalOrc = jsInstr.globalOrc; 
@@ -85,7 +84,7 @@ public class RhinoInstrument extends AbstractInstrument {
 
     @Override
     public String generateInstrument() {
-        String retVal = RhinoProxy.processJavascriptInstrument(this.getText(),
+        String retVal = JavaScriptProxy.processJavascriptInstrument(this.getText(),
                 this.getName());
 
         if (udoReplacementValues != null) {
@@ -153,7 +152,7 @@ public class RhinoInstrument extends AbstractInstrument {
     }
 
     public static Instrument loadFromXML(Element data) throws Exception {
-        RhinoInstrument instr = new RhinoInstrument();
+        JavaScriptInstrument instr = new JavaScriptInstrument();
 
         InstrumentUtilities.initBasicFromXML(data, instr);
 
@@ -204,7 +203,7 @@ public class RhinoInstrument extends AbstractInstrument {
     }
 
     @Override
-    public RhinoInstrument deepCopy() {
-        return new RhinoInstrument(this);
+    public JavaScriptInstrument deepCopy() {
+        return new JavaScriptInstrument(this);
     }
 }

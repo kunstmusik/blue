@@ -23,6 +23,9 @@ UPDATED
   * Issue #257 - Select effect when right-clicking pre or post effects so that 
     popup menu reflects operation on where clicked 
 
+* Renamed RhinoObject and RhinoInstrument to JavaScriptObject and
+  JavaScriptInstrument to better reflect their purpose
+
 FIX
 
 * Mixer - using "Edit Effect" to edit the definition of an effect within the 
