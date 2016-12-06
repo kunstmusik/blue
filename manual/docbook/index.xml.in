@@ -84,7 +84,7 @@
     <!ENTITY patternObject SYSTEM "users/reference/soundObjects/patternObject.xml">
     <!ENTITY polyObject SYSTEM "users/reference/soundObjects/polyObject.xml">
     <!ENTITY pythonObject SYSTEM "users/reference/soundObjects/pythonObject.xml">
-    <!ENTITY rhinoObject SYSTEM "users/reference/soundObjects/rhinoObject.xml">
+    <!ENTITY javaScriptObject SYSTEM "users/reference/soundObjects/javaScriptObject.xml">
     <!ENTITY sound SYSTEM "users/reference/soundObjects/sound.xml">
     <!ENTITY tracker SYSTEM "users/reference/soundObjects/tracker.xml">
     <!ENTITY lineObject SYSTEM "users/reference/soundObjects/lineObject.xml">
@@ -114,7 +114,7 @@
     <!ENTITY instrumentsReference SYSTEM "users/reference/instruments/top.xml">
     <!ENTITY genericInstrument SYSTEM "users/reference/instruments/genericInstrument.xml">
     <!ENTITY pythonInstrument SYSTEM "users/reference/instruments/pythonInstrument.xml">
-    <!ENTITY rhinoInstrument SYSTEM "users/reference/instruments/rhinoInstrument.xml">
+    <!ENTITY javaScriptInstrument SYSTEM "users/reference/instruments/javaScriptInstrument.xml">
     <!ENTITY blueX7 SYSTEM "users/reference/instruments/blueX7.xml">
     <!ENTITY blueSynthBuilder SYSTEM "users/reference/instruments/blueSynthBuilder.xml">
 

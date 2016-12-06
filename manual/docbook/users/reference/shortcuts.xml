@@ -333,7 +333,7 @@
 
 
   <table>
-    <title>Editing GenericScore, PythonObject, RhinoObject</title>
+    <title>Editing GenericScore, PythonObject, JavaScriptObject</title>
     <tgroup cols="2">
       <thead>
         <row>

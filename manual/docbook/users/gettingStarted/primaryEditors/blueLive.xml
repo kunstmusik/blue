@@ -289,20 +289,20 @@
     <itemizedlist>
 
       <listitem>
-        <para>trying out SCO ideas with genericScore</para>
+        <para>Trying out SCO ideas with GenericScore</para>
       </listitem>
 
       <listitem>
-        <para>testing your python functions with the pythonObject</para>
+        <para>Testing your python functions with the PythonObject</para>
       </listitem>
 
       <listitem>
-        <para>testing your javaScript functions with the rhinoObject</para>
+        <para>Testing your javaScript functions with the JavaScriptOObject</para>
       </listitem>
 
       <listitem>
         <para>
-          using Cmask, nGen, Common Music, and other programs with the external
+          Using Cmask, nGen, Common Music, and other programs with the external
           soundObject to try out things live
         </para>
       </listitem>

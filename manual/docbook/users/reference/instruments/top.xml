@@ -9,7 +9,7 @@
     
 &genericInstrument;
 &pythonInstrument;
-&rhinoInstrument;
+&javaScriptInstrument;
 &blueX7;
 &blueSynthBuilder;
 

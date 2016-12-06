@@ -33,7 +33,7 @@
       of different SoundObjects in blue.  Each SoundObject in blue is useful for different
       purposes, with some being more appropriate for expressing certain musical ideas
       than others.  For example, using a scripting object like the PythonObject or 
-      RhinoObject would service a user who is trying to express a musical idea that
+      JavaScriptObject would service a user who is trying to express a musical idea that
       may require an algorithmic basis, while the PianoRoll would be useful for those
       interested in notating melodic and harmonic ideas. The variety of different
       SoundObjects allows for users to choose what tool will be the most appropriate
