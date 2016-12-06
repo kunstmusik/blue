@@ -15,6 +15,19 @@ information.
 > Notes for 2.7.x <
 [release 2016.xx.xx]
 
+NEW
+
+* BlueSynthBuilder:
+  * GUI editor (shared by ObjectBuilder and Sound SoundObject) rewritten using
+    JavaFX UI toolkit
+  * Issue #344 - Ability to hide/show value display added to Knob, Sliders, and 
+    SliderBanks
+
+* RhinoInstrument and RhinoObject were renamed as JavaScriptInstrument and
+  JavaScriptObject
+
+* JavaScriptObject now supports "Process on Load" option
+
 UPDATED
 
 * Mixer:

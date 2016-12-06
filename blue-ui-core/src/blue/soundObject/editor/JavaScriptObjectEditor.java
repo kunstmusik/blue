@@ -1,3 +1,21 @@
+/*
+ * blue - object composition environment for csound
+ * Copyright (C) 2002-2016 stevenyi
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 package blue.soundObject.editor;
 
 import blue.BlueSystem;
@@ -5,8 +23,8 @@ import blue.gui.ExceptionDialog;
 import blue.gui.InfoDialog;
 import blue.plugin.ScoreObjectEditorPlugin;
 import blue.score.ScoreObject;
-import blue.soundObject.NoteList;
 import blue.soundObject.JavaScriptObject;
+import blue.soundObject.NoteList;
 import blue.soundObject.SoundObject;
 import blue.ui.nbutilities.MimeTypeEditorComponent;
 import blue.ui.utilities.SimpleDocumentListener;
@@ -15,11 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -27,78 +41,50 @@ import javax.swing.undo.UndoManager;
 import org.openide.awt.UndoRedo;
 
 /**
- * Title: blue Description: an object composition environment for csound
- * Copyright: Copyright (c) 2001 Company: steven yi music
  *
- * @author steven yi
- * @version 1.0
+ * @author stevenyi
  */
-
 @ScoreObjectEditorPlugin(scoreObjectType = JavaScriptObject.class)
 public class JavaScriptObjectEditor extends ScoreObjectEditor {
 
     JavaScriptObject sObj;
 
-    MimeTypeEditorComponent scoreEditPane = new MimeTypeEditorComponent("text/javascript");
-
-    JLabel editorLabel = new JLabel();
-
-    JPanel topPanel = new JPanel();
-
-    JButton testButton = new JButton();
+    MimeTypeEditorComponent codeEditor = new MimeTypeEditorComponent("text/javascript");
 
     UndoManager undo = new UndoRedo.Manager();
 
+    /**
+     * Creates new form JavaScriptObjectEditor
+     */
     public JavaScriptObjectEditor() {
-        try {
-            jbInit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+        initComponents();
 
-    private void jbInit() throws Exception {
-        this.setLayout(new BorderLayout());
-        this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        initActions();
         
-        scoreEditPane.getDocument().addDocumentListener(new SimpleDocumentListener() {
+        this.add(codeEditor, BorderLayout.CENTER);
+
+        codeEditor.getDocument().addDocumentListener(new SimpleDocumentListener() {
 
             @Override
             public void documentChanged(DocumentEvent e) {
-                 if (sObj != null) {
-                    sObj.setText(scoreEditPane.getText());
+                if (sObj != null) {
+                    sObj.setText(codeEditor.getText());
                 }
             }
         });
 
-        initActions();
-
-        editorLabel.setText("JavaScriptObject");
-
-        testButton.setText(BlueSystem.getString("common.test"));
-        testButton.addActionListener((ActionEvent e) -> {
-            testSoundObject();
-        });
-
-        topPanel.setLayout(new BorderLayout());
-        topPanel.add(editorLabel, BorderLayout.CENTER);
-        topPanel.add(testButton, BorderLayout.EAST);
-
-        this.add(scoreEditPane, BorderLayout.CENTER);
-        this.add(topPanel, BorderLayout.NORTH);
-
-        scoreEditPane.getDocument().addUndoableEditListener(undo);
-        scoreEditPane.setUndoManager(undo);
+        codeEditor.setUndoManager(undo);
+        codeEditor.getDocument().addUndoableEditListener(undo);
 
         undo.setLimit(1000);
     }
-
+    
     private void initActions() {
-        InputMap inputMap = scoreEditPane.getInputMap();
-        ActionMap actions = scoreEditPane.getActionMap();
+        InputMap inputMap = codeEditor.getJEditorPane().getInputMap();
+        ActionMap actions = codeEditor.getJEditorPane().getActionMap();
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem
-                .getMenuShortcutKey()), "testSoundObject");
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_T, BlueSystem.
+                getMenuShortcutKey()), "testSoundObject");
 
         actions.put("testSoundObject", new AbstractAction() {
 
@@ -106,7 +92,6 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
             public void actionPerformed(ActionEvent e) {
                 testSoundObject();
             }
-
         });
 
     }
@@ -115,25 +100,27 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
     public final void editScoreObject(ScoreObject sObj) {
         if (sObj == null) {
             this.sObj = null;
-            editorLabel.setText("no editor available");
-            scoreEditPane.setText("null soundObject");
-            scoreEditPane.getJEditorPane().setEnabled(false);
+            codeEditor.setText("null soundObject");
+            codeEditor.getJEditorPane().setEnabled(false);
+            processOnLoadCheckBox.setEnabled(false);
             return;
         }
 
         if (!(sObj instanceof JavaScriptObject)) {
             this.sObj = null;
-            editorLabel.setText("no editor available");
-            scoreEditPane
+            codeEditor
                     .setText("[ERROR] GenericEditor::editSoundObject - not instance of GenericEditable");
-            scoreEditPane.getJEditorPane().setEnabled(false);
+            codeEditor.getJEditorPane().setEnabled(false);
+            processOnLoadCheckBox.setEnabled(false);
             return;
         }
 
         this.sObj = (JavaScriptObject) sObj;
-        scoreEditPane.setText(this.sObj.getText());
-        scoreEditPane.getJEditorPane().setEnabled(true);
-        scoreEditPane.getJEditorPane().setCaretPosition(0);
+        codeEditor.setText(this.sObj.getText());
+        codeEditor.getJEditorPane().setEnabled(true);
+        codeEditor.getJEditorPane().setCaretPosition(0);
+        processOnLoadCheckBox.setSelected(this.sObj.isOnLoadProcessable());
+        processOnLoadCheckBox.setEnabled(true);
 
         undo.discardAllEdits();
     }
@@ -157,4 +144,72 @@ public class JavaScriptObjectEditor extends ScoreObjectEditor {
                             .getString("soundObject.generatedScore"));
         }
     }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
+
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        processOnLoadCheckBox = new javax.swing.JCheckBox();
+        testButton = new javax.swing.JButton();
+
+        setLayout(new java.awt.BorderLayout());
+
+        jPanel1.setLayout(new java.awt.GridBagLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(JavaScriptObjectEditor.class, "JavaScriptObjectEditor.jLabel1.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(3, 6, 3, 0);
+        jPanel1.add(jLabel1, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(processOnLoadCheckBox, org.openide.util.NbBundle.getMessage(JavaScriptObjectEditor.class, "JavaScriptObjectEditor.processOnLoadCheckBox.text")); // NOI18N
+        processOnLoadCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                processOnLoadCheckBoxActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 0);
+        jPanel1.add(processOnLoadCheckBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(testButton, BlueSystem.getString("common.test"));
+        testButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(3, 3, 3, 3);
+        jPanel1.add(testButton, gridBagConstraints);
+
+        add(jPanel1, java.awt.BorderLayout.NORTH);
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void processOnLoadCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processOnLoadCheckBoxActionPerformed
+        if (this.sObj != null) {
+            this.sObj.setOnLoadProcessable(processOnLoadCheckBox.isSelected());
+        }
+    }//GEN-LAST:event_processOnLoadCheckBoxActionPerformed
+
+    private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
+        testSoundObject();
+    }//GEN-LAST:event_testButtonActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JCheckBox processOnLoadCheckBox;
+    private javax.swing.JButton testButton;
+    // End of variables declaration//GEN-END:variables
 }

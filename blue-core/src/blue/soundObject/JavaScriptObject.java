@@ -38,7 +38,8 @@ import java.util.Map;
  */
 
 @SoundObjectPlugin(displayName = "JavaScriptObject", live=true, position = 120)
-public class JavaScriptObject extends AbstractSoundObject {
+public class JavaScriptObject extends AbstractSoundObject 
+    implements OnLoadProcessable {
 
     private String javaScriptCode;
 
@@ -47,6 +48,8 @@ public class JavaScriptObject extends AbstractSoundObject {
     private int timeBehavior;
 
     double repeatPoint = -1.0f;
+
+    private boolean onLoadProcessable = false;
 
     public JavaScriptObject() {
         setName("javaScriptObject");
@@ -61,6 +64,7 @@ public class JavaScriptObject extends AbstractSoundObject {
         timeBehavior = ro.timeBehavior;
         repeatPoint = ro.repeatPoint;
         javaScriptCode = ro.javaScriptCode;
+        onLoadProcessable = ro.onLoadProcessable;
     }
 
     public void setText(String text) {
@@ -164,6 +168,13 @@ public class JavaScriptObject extends AbstractSoundObject {
         SoundObjectUtilities.initBasicFromXML(data, sObj);
 
         sObj.setText(data.getTextString("javaScriptCode"));
+        
+        String olpString = data.getAttributeValue("onLoadProcessable");
+
+        if (olpString != null) {
+            sObj.setOnLoadProcessable(
+                    Boolean.valueOf(olpString).booleanValue());
+        }
 
         return sObj;
     }
@@ -178,6 +189,8 @@ public class JavaScriptObject extends AbstractSoundObject {
         Element retVal = SoundObjectUtilities.getBasicXML(this);
 
         retVal.addElement("javaScriptCode").setText(this.getText());
+        retVal.setAttribute("onLoadProcessable",
+                Boolean.toString(onLoadProcessable));
 
         return retVal;
     }
@@ -193,5 +206,22 @@ public class JavaScriptObject extends AbstractSoundObject {
     @Override
     public SoundObject deepCopy() {
         return new JavaScriptObject(this);
+    }
+
+    @Override
+    public void setOnLoadProcessable(boolean onLoadProcessable) {
+        this.onLoadProcessable = onLoadProcessable;
+    }
+
+    @Override
+    public boolean isOnLoadProcessable() {
+        return this.onLoadProcessable;
+    }
+
+    @Override
+    public void processOnLoad() throws SoundObjectException {
+        if (onLoadProcessable) {
+            this.generateNotes(0.0f, -1.0f);
+        }
     }
 }
